@@ -51,6 +51,13 @@ public class C1XCompilation {
     public final int osrBCI;
 
     private boolean hasExceptionHandlers;
+
+    /**
+     * @see #setNotTypesafe()
+     * @see #isTypesafe()
+     */
+    private boolean typesafe = true;
+
     private int nextID = 1;
 
     private FrameMap frameMap;
@@ -121,12 +128,48 @@ public class C1XCompilation {
     }
 
     /**
+     * Records that this compilation encountered an instruction (e.g. {@link Bytecodes#UNSAFE_CAST})
+     * that breaks the type safety invariant of the input bytecode.
+     */
+    public void setNotTypesafe() {
+        typesafe = false;
+    }
+
+    /**
      * Checks whether this compilation is for an on-stack replacement.
      *
      * @return {@code true} if this compilation is for an on-stack replacement
      */
     public boolean isOsrCompilation() {
         return osrBCI >= 0;
+    }
+
+    /**
+     * Determines if this a compilation for a 64-bit platform.
+     */
+    public boolean is64Bit() {
+        return target.arch.is64bit();
+    }
+
+    /**
+     * Translates a given kind to a canonical architecture kind.
+     * This is an identity function for all but {@link CiKind#Word}
+     * which is translated to {@link CiKind#Int} or {@link CiKind#Long}
+     * depending on whether or not this is a {@linkplain #is64Bit() 64-bit}
+     * compilation.
+     */
+    public CiKind archKind(CiKind kind) {
+        if (kind.isWord()) {
+            return is64Bit() ? CiKind.Long : CiKind.Int;
+        }
+        return kind;
+    }
+
+    /**
+     * Determines if two given kinds are equal at the {@linkplain #archKind(CiKind) architecture} level.
+     */
+    public boolean archKindsEqual(CiKind kind1, CiKind kind2) {
+        return archKind(kind1) == archKind(kind2);
     }
 
     /**
@@ -246,6 +289,14 @@ public class C1XCompilation {
 
     public boolean hasExceptionHandlers() {
         return hasExceptionHandlers;
+    }
+
+    /**
+     * Determines if this compilation has encountered any instructions (e.g. {@link Bytecodes#UNSAFE_CAST})
+     * that break the type safety invariant of the input bytecode.
+     */
+    public boolean isTypesafe() {
+        return typesafe;
     }
 
     public CiResult compile() {

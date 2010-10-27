@@ -33,11 +33,11 @@ public final class Goto extends BlockEnd {
     /**
      * Constructs a new Goto instruction.
      * @param succ the successor block of the goto
-     * @param stateBefore the state before the goto
+     * @param stateAfter the frame state at the end of this block
      * @param isSafepoint {@code true} if the goto should be considered a safepoint (e.g. backward branch)
      */
-    public Goto(BlockBegin succ, FrameState stateBefore, boolean isSafepoint) {
-        super(CiKind.Illegal, stateBefore, isSafepoint);
+    public Goto(BlockBegin succ, FrameState stateAfter, boolean isSafepoint) {
+        super(CiKind.Illegal, stateAfter, isSafepoint);
         successors.add(succ);
     }
 

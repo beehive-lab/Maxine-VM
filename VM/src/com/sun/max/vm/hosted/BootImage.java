@@ -221,6 +221,8 @@ public class BootImage {
 
         /**
          * Offset to the variable that will hold the address of the virtual space reserved by the boot image loader at boot-load time.
+         *
+         * @see Heap#reservedVirtualSpace
          */
         public final int reservedVirtualSpaceFieldOffset;
 
@@ -353,7 +355,7 @@ public class BootImage {
             dynamicHeapRegionsArrayFieldOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "dynamicHeapMemoryRegions");
 
             reservedVirtualSpaceSize = vmConfiguration.heapScheme().reservedVirtualSpaceSize();
-            reservedVirtualSpaceFieldOffset =  staticFieldPointerOffset(dataPrototype, Heap.class, "reservedVirtualSpace");
+            reservedVirtualSpaceFieldOffset = staticFieldPointerOffset(dataPrototype, Heap.class, "reservedVirtualSpace");
             bootRegionMappingConstraint = vmConfiguration.heapScheme().bootRegionMappingConstraint().ordinal();
             threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
             primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");

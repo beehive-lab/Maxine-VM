@@ -47,6 +47,10 @@ public final class Heap {
     private Heap() {
     }
 
+    /**
+     * This field is set to a non-zero value by the native code iff the
+     * heap scheme returns a non-zero value for {@linkplain HeapScheme#reservedVirtualSpaceSize()}.
+     */
     private static Address reservedVirtualSpace = Address.zero();
 
     private static final Size MIN_HEAP_SIZE = Size.M.times(4); // To be adjusted

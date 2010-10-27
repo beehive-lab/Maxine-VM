@@ -27,36 +27,36 @@ public abstract class LayoutScheme extends AbstractVMScheme implements VMScheme 
     public final GeneralLayout generalLayout;
     public final TupleLayout tupleLayout;
     public final HybridLayout hybridLayout;
-    public final ArrayHeaderLayout arrayHeaderLayout;
-    public final ByteArrayLayout byteArrayLayout;
-    public final BooleanArrayLayout booleanArrayLayout;
-    public final ShortArrayLayout shortArrayLayout;
-    public final CharArrayLayout charArrayLayout;
-    public final IntArrayLayout intArrayLayout;
-    public final FloatArrayLayout floatArrayLayout;
-    public final LongArrayLayout longArrayLayout;
-    public final DoubleArrayLayout doubleArrayLayout;
-    public final WordArrayLayout wordArrayLayout;
-    public final ReferenceArrayLayout referenceArrayLayout;
+    public final ArrayLayout arrayLayout;
+    public final ArrayLayout byteArrayLayout;
+    public final ArrayLayout booleanArrayLayout;
+    public final ArrayLayout shortArrayLayout;
+    public final ArrayLayout charArrayLayout;
+    public final ArrayLayout intArrayLayout;
+    public final ArrayLayout floatArrayLayout;
+    public final ArrayLayout longArrayLayout;
+    public final ArrayLayout doubleArrayLayout;
+    public final ArrayLayout wordArrayLayout;
+    public final ArrayLayout referenceArrayLayout;
 
     protected LayoutScheme(final GeneralLayout generalLayout,
                     final TupleLayout tupleLayout,
                     final HybridLayout hybridLayout,
-                    final ArrayHeaderLayout arrayHeaderLayout,
-                    final ByteArrayLayout byteArrayLayout,
-                    final BooleanArrayLayout booleanArrayLayout,
-                    final ShortArrayLayout shortArrayLayout,
-                    final CharArrayLayout charArrayLayout,
-                    final IntArrayLayout intArrayLayout,
-                    final FloatArrayLayout floatArrayLayout,
-                    final LongArrayLayout longArrayLayout,
-                    final DoubleArrayLayout doubleArrayLayout,
-                    final WordArrayLayout wordArrayLayout,
-                    final ReferenceArrayLayout referenceArrayLayout) {
+                    final ArrayLayout arrayLayout,
+                    final ArrayLayout byteArrayLayout,
+                    final ArrayLayout booleanArrayLayout,
+                    final ArrayLayout shortArrayLayout,
+                    final ArrayLayout charArrayLayout,
+                    final ArrayLayout intArrayLayout,
+                    final ArrayLayout floatArrayLayout,
+                    final ArrayLayout longArrayLayout,
+                    final ArrayLayout doubleArrayLayout,
+                    final ArrayLayout wordArrayLayout,
+                    final ArrayLayout referenceArrayLayout) {
         this.generalLayout = generalLayout;
         this.tupleLayout = tupleLayout;
         this.hybridLayout = hybridLayout;
-        this.arrayHeaderLayout = arrayHeaderLayout;
+        this.arrayLayout = arrayLayout;
         this.byteArrayLayout = byteArrayLayout;
         this.booleanArrayLayout = booleanArrayLayout;
         this.shortArrayLayout = shortArrayLayout;

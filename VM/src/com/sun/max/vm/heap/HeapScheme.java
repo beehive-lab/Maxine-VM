@@ -73,7 +73,7 @@ public interface HeapScheme extends VMScheme {
      *
      * Help with heap scheme that requires the heap to be contiguous with, or at a specific location (above or below) with respect to the boot region.
      * By default, assume the heap scheme doesn't require any space contiguous to the boot image and returns 0, which indicates to the boot image
-     * loader that it only needs to reserve what's needed for the boot image only.
+     * loader that it only needs to reserve what's needed for the boot image.
      *
      * @return a size in KB
      */
@@ -275,9 +275,8 @@ public interface HeapScheme extends VMScheme {
     void disableImmortalMemoryAllocation();
 
     /**
-     *   Announces that the current thread is detaching from the VM.
-     *   GC pre-allocating resources to a thread may need to be informed to reclaim, or prepare, these resources
-     *   (e.g., TLABs).
+     * Announces that the current thread is detaching from the VM so that
+     * thread-local resources (e.g. TLABs) can be released.
      */
     void notifyCurrentThreadDetach();
 

@@ -352,7 +352,7 @@ public abstract class TargetMethod extends MemoryRegion {
         return linkedAll;
     }
 
-    private TargetMethod getTargetMethod(Object o) {
+    public TargetMethod getTargetMethod(Object o) {
         TargetMethod result = null;
         if (o instanceof ClassMethodActor) {
             result = CompilationScheme.Static.getCurrentTargetMethod((ClassMethodActor) o);

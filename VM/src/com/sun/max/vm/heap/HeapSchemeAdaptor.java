@@ -162,13 +162,12 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             case LINUX: {
                 return new LowAddressCodeManager();
             }
-
-            case GUESTVM:
-                return new FixedAddressCodeManager();
-
             case DARWIN:
             case SOLARIS: {
                 return new VariableAddressCodeManager();
+            }
+            case GUESTVM: {
+                return new FixedAddressCodeManager();
             }
             default: {
                 FatalError.unimplemented();

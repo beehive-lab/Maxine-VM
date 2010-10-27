@@ -674,7 +674,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             final int charsLength = breakpointClassDescriptorsString.length();
             final Reference charArrayReference = vm().teleFields().InspectableCodeInfo_breakpointClassDescriptorCharArray.readReference(vm());
             ProgramError.check(charArrayReference != null && !charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
-            final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
+            final ArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
             for (int index = 0; index < charsLength; index++) {
                 charArrayLayout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));
             }

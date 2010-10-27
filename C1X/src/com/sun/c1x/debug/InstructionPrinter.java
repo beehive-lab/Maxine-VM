@@ -414,6 +414,8 @@ public class InstructionPrinter extends ValueVisitor {
             } else {
                 out.print("<object: ").print(value.kind.format(object)).print('>');
             }
+        } else if (value.kind.isWord()) {
+            out.print("0x").print(Long.toHexString(value.asLong()));
         } else if (value.kind.isJsr()) {
             out.print("bci:").print(constant.asConstant().valueString());
         } else {
@@ -727,7 +729,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = target.sizeInBytes(i.kind);
+            int scale = target.sizeInBytes(i.dataKind);
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(")");
@@ -762,7 +764,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = target.sizeInBytes(i.pointer().kind);
+            int scale = target.sizeInBytes(i.dataKind);
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(") := ").print(i.value());

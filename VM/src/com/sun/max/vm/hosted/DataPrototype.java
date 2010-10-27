@@ -217,7 +217,7 @@ public final class DataPrototype extends Prototype {
         assert 0 < rest && rest < pageSize;
         int size = pageSize - rest;
 
-        final ByteArrayLayout byteArrayLayout = layoutScheme.byteArrayLayout;
+        final ArrayLayout byteArrayLayout = layoutScheme.byteArrayLayout;
         final int minSize = byteArrayLayout.getArraySize(0).toInt();
         if (size < minSize) {
             size += pageSize;
@@ -1051,7 +1051,7 @@ public final class DataPrototype extends Prototype {
      */
     private void assignMethodDispatchTableRelocationFlags() {
         Trace.begin(1, "assignMethodDispatchTableRelocationFlags");
-        final WordArrayLayout wordArrayLayout = layoutScheme.wordArrayLayout;
+        final ArrayLayout wordArrayLayout = layoutScheme.wordArrayLayout;
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (classActor instanceof ReferenceClassActor) {
                 final DynamicHub dynamicHub = classActor.dynamicHub();

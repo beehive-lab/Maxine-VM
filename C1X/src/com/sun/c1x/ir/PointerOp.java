@@ -30,6 +30,11 @@ import com.sun.cri.ci.*;
  */
 public abstract class PointerOp extends StateSplit {
 
+    /**
+     * The kind of value at the address accessed by the pointer operation.
+     */
+    public final CiKind dataKind;
+
     public final int opcode;
     protected Value pointer;
     protected Value displacement;
@@ -42,7 +47,8 @@ public abstract class PointerOp extends StateSplit {
      * computed as the pointer plus a byte displacement plus a scaled index. Otherwise, the effective address is computed as the
      * pointer plus a byte offset.
      *
-     * @param kind the kind of value at the address accessed by the pointer operation
+     * @param kind the kind of value produced by this operation
+     * @param dataKind the kind of value at the address accessed by the pointer operation
      * @param opcode the opcode of the instruction
      * @param pointer the value producing the pointer
      * @param displacement the value producing the displacement. This may be {@code null}.
@@ -50,10 +56,11 @@ public abstract class PointerOp extends StateSplit {
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public PointerOp(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
-        super(kind, stateBefore);
+    public PointerOp(CiKind kind, CiKind dataKind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, FrameState stateBefore, boolean isVolatile) {
+        super(kind.stackKind(), stateBefore);
         this.opcode = opcode;
         this.pointer = pointer;
+        this.dataKind = dataKind;
         this.displacement = displacement;
         this.offsetOrIndex = offsetOrIndex;
         this.isVolatile = isVolatile;

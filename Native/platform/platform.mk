@@ -318,8 +318,15 @@ ifeq ($(OS),guestvm)
         endif
         CFLAGS += -I $(XEN_ROOT)/tools/debugger/gdbsx/xg
     endif
+    
 else
     JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
+    ifeq ($(OS),darwin)
+        MACOSX_JDK_6_22_HEADER_DIR = /Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Headers/
+        ifneq "$(realpath $(MACOSX_JDK_6_22_HEADER_DIR))" ""
+            JNI_INCLUDES = -I $(MACOSX_JDK_6_22_HEADER_DIR)
+        endif
+    endif
 endif
 
 C_DEPENDENCIES_FLAGS += $(JNI_INCLUDES)

@@ -55,7 +55,7 @@ public class BlockPrinter implements BlockClosure {
         ip.printInstruction(block);
         LogStream out = ip.out();
         out.println();
-        printStack(block.stateBefore(), out);
+        printFrameState(block.stateBefore(), out);
         out.println();
 
         out.println("inlining depth " + block.stateBefore().scope().level);
@@ -71,7 +71,7 @@ public class BlockPrinter implements BlockClosure {
 
     }
 
-    private static void printStack(FrameState newFrameState, LogStream out) {
+    private static void printFrameState(FrameState newFrameState, LogStream out) {
         int startPosition = out.position();
         if (newFrameState.stackEmpty()) {
           out.print("empty stack");

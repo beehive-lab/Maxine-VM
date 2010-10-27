@@ -386,7 +386,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
         if (headerField != HeaderField.LENGTH) {
             return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
         } else {
-            return layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(headerField);
+            return layoutScheme.arrayLayout.getOffsetFromOrigin(headerField);
         }
     }
 

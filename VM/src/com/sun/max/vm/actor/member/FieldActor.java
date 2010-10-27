@@ -702,8 +702,8 @@ public class FieldActor extends MemberActor implements RiField {
 
 
     /**
-     * Determines if the value read from this field will always be the same if it is a non-default value for this
-     * field's type.
+     * Determines if the value read from this field will always be the same if
+     * it is a non-default value for this field's type.
      */
     public boolean isConstantWhenNotZero() {
         return isConstantWhenNotZero(flags());
@@ -746,7 +746,7 @@ public class FieldActor extends MemberActor implements RiField {
     }
 
     public final CiConstant constantValue(Object object) {
-        if (isConstant()) {
+        if (isConstant() || isConstantWhenNotZero()) {
             Value v;
             if (isStatic()) {
                 v = constantValue();
@@ -756,7 +756,9 @@ public class FieldActor extends MemberActor implements RiField {
             }
             if (C1XOptions.CanonicalizeFinalFields) {
                 v = getValue(object);
-                return v.asCiConstant();
+                if (!isConstantWhenNotZero() || !v.isZero()) {
+                    return v.asCiConstant();
+                }
             }
         }
         return null;

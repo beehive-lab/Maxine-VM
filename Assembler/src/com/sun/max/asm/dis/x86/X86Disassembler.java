@@ -139,10 +139,14 @@ public abstract class X86Disassembler extends Disassembler {
                 if (hexByte == X86Opcode.ADDRESS_SIZE) {
                     header.hasAddressSizePrefix = true;
                 } else if (hexByte == X86Opcode.OPERAND_SIZE) {
-                    assert header.instructionSelectionPrefix == null;
+                    if (header.instructionSelectionPrefix != null) {
+                        return X86InstructionHeader.INVALID;
+                    }
                     header.instructionSelectionPrefix = hexByte;
                 } else if (hexByte == X86Opcode.REPE || hexByte == X86Opcode.REPNE) {
-                    assert header.instructionSelectionPrefix == null;
+                    if (header.instructionSelectionPrefix != null) {
+                        return X86InstructionHeader.INVALID;
+                    }
                     header.instructionSelectionPrefix = hexByte;
                 } else if (isRexPrefix(hexByte)) {
                     header.rexPrefix = hexByte;
@@ -309,102 +313,104 @@ public abstract class X86Disassembler extends Disassembler {
     private static int serial;
 
     public DisassembledObject scanInstruction(BufferedInputStream stream, X86InstructionHeader header) throws IOException, AssemblyException {
-        serial++;
-        Trace.line(4, "instruction: " + serial);
-        if (header.opcode1 != null) {
-            boolean isFloatingPointEscape = false;
-            if (X86Opcode.isFloatingPointEscape(header.opcode1)) {
-                final int byte2 = stream.read();
-                if (byte2 >= 0xC0) {
-                    isFloatingPointEscape = true;
-                    header.opcode2 = HexByte.VALUES.get(byte2);
-                }
-            }
-            final List<X86Template> templates = headerToTemplates().get(header);
-            if (templates != null) {
-                for (X86Template template : templates) {
-                    stream.reset();
-                    scanInstructionHeader(stream, true);
-                    if (isFloatingPointEscape) {
-                        stream.read();
+        if (header != X86InstructionHeader.INVALID) {
+            serial++;
+            Trace.line(4, "instruction: " + serial);
+            if (header.opcode1 != null) {
+                boolean isFloatingPointEscape = false;
+                if (X86Opcode.isFloatingPointEscape(header.opcode1)) {
+                    final int byte2 = stream.read();
+                    if (byte2 >= 0xC0) {
+                        isFloatingPointEscape = true;
+                        header.opcode2 = HexByte.VALUES.get(byte2);
                     }
-                    try {
-                        byte modRMByte = 0;
-                        byte sibByte = 0;
-                        int modVariantParameterIndex = -1;
-                        List<Argument> arguments = null;
-                        if (template.hasModRMByte()) {
-                            modRMByte = endianness().readByte(stream);
-                            sibByte = getSibByte(stream, template, modRMByte);
-                            modVariantParameterIndex = getModVariantParameterIndex(template, modRMByte, sibByte);
+                }
+                final List<X86Template> templates = headerToTemplates().get(header);
+                if (templates != null) {
+                    for (X86Template template : templates) {
+                        stream.reset();
+                        scanInstructionHeader(stream, true);
+                        if (isFloatingPointEscape) {
+                            stream.read();
+                        }
+                        try {
+                            byte modRMByte = 0;
+                            byte sibByte = 0;
+                            int modVariantParameterIndex = -1;
+                            List<Argument> arguments = null;
+                            if (template.hasModRMByte()) {
+                                modRMByte = endianness().readByte(stream);
+                                sibByte = getSibByte(stream, template, modRMByte);
+                                modVariantParameterIndex = getModVariantParameterIndex(template, modRMByte, sibByte);
+                                if (modVariantParameterIndex >= 0) {
+                                    final X86Template modVariantTemplate = X86Assembly.getModVariantTemplate(templates, template, template.parameters().get(modVariantParameterIndex).type());
+                                    arguments = scanArguments(stream, modVariantTemplate, header, modRMByte, sibByte);
+                                }
+                            }
+                            if (arguments == null) {
+                                arguments = scanArguments(stream, template, header, modRMByte, sibByte);
+                            }
                             if (modVariantParameterIndex >= 0) {
-                                final X86Template modVariantTemplate = X86Assembly.getModVariantTemplate(templates, template, template.parameters().get(modVariantParameterIndex).type());
-                                arguments = scanArguments(stream, modVariantTemplate, header, modRMByte, sibByte);
-                            }
-                        }
-                        if (arguments == null) {
-                            arguments = scanArguments(stream, template, header, modRMByte, sibByte);
-                        }
-                        if (modVariantParameterIndex >= 0) {
-                            final Immediate8Argument immediateArgument = (Immediate8Argument) arguments.get(modVariantParameterIndex);
-                            if (immediateArgument.value() != 0) {
-                                continue;
-                            }
+                                final Immediate8Argument immediateArgument = (Immediate8Argument) arguments.get(modVariantParameterIndex);
+                                if (immediateArgument.value() != 0) {
+                                    continue;
+                                }
 
-                            // Remove the mod variant argument
-                            final Argument modVariantArgument = arguments.get(modVariantParameterIndex);
-                            final List<Argument> result = new ArrayList<Argument>();
-                            for (Argument argument : arguments) {
-                                if (modVariantArgument != argument) {
-                                    result.add(argument);
+                                // Remove the mod variant argument
+                                final Argument modVariantArgument = arguments.get(modVariantParameterIndex);
+                                final List<Argument> result = new ArrayList<Argument>();
+                                for (Argument argument : arguments) {
+                                    if (modVariantArgument != argument) {
+                                        result.add(argument);
+                                    }
+                                }
+                                arguments = result;
+                            }
+                            if (!(Utils.indexOfIdentical(arguments, null) != -1)) {
+                                byte[] bytes;
+                                if (true) {
+                                    final Assembler assembler = createAssembler(currentPosition);
+                                    assembly.assemble(assembler, template, arguments);
+                                    bytes = assembler.toByteArray();
+                                } else { // TODO: does not work yet
+                                    final X86TemplateAssembler templateAssembler = new X86TemplateAssembler(template, addressWidth());
+                                    bytes = templateAssembler.assemble(arguments);
+                                }
+                                if (bytes != null) {
+                                    stream.reset();
+                                    if (Streams.startsWith(stream, bytes)) {
+                                        final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
+                                        currentPosition += bytes.length;
+                                        return disassembledInstruction;
+                                    }
                                 }
                             }
-                            arguments = result;
+                        } catch (NoSuchAssemblerMethodError e) {
+                            // Until the X86TemplateAssembler is complete, only templates for which a generated assembler
+                            // method exists can be disassembled
+                        } catch (IOException ioException) {
+                            // this one did not work, so loop back up and try another template
                         }
-                        if (!(Utils.indexOfIdentical(arguments, null) != -1)) {
-                            byte[] bytes;
-                            if (true) {
-                                final Assembler assembler = createAssembler(currentPosition);
-                                assembly.assemble(assembler, template, arguments);
-                                bytes = assembler.toByteArray();
-                            } else { // TODO: does not work yet
-                                final X86TemplateAssembler templateAssembler = new X86TemplateAssembler(template, addressWidth());
-                                bytes = templateAssembler.assemble(arguments);
-                            }
-                            if (bytes != null) {
-                                stream.reset();
-                                if (Streams.startsWith(stream, bytes)) {
-                                    final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
-                                    currentPosition += bytes.length;
-                                    return disassembledInstruction;
-                                }
-                            }
-                        }
-                    } catch (NoSuchAssemblerMethodError e) {
-                        // Until the X86TemplateAssembler is complete, only templates for which a generated assembler
-                        // method exists can be disassembled
-                    } catch (IOException ioException) {
-                        // this one did not work, so loop back up and try another template
                     }
                 }
             }
-        }
-        if (header.instructionSelectionPrefix == X86Opcode.REPE || header.instructionSelectionPrefix == X86Opcode.REPNE) {
+            if (header.instructionSelectionPrefix == X86Opcode.REPE || header.instructionSelectionPrefix == X86Opcode.REPNE) {
 
-            stream.reset();
-            final int size = 1;
-            final byte[] data = new byte[size];
-            Streams.readFully(stream, data);
+                stream.reset();
+                final int size = 1;
+                final byte[] data = new byte[size];
+                Streams.readFully(stream, data);
 
-            final X86InstructionHeader prefixHeader = new X86InstructionHeader();
-            prefixHeader.opcode1 = header.instructionSelectionPrefix;
-            final List<X86Template> prefixTemplates = headerToTemplates().get(prefixHeader);
-            final X86Template template = Utils.first(prefixTemplates);
-            final byte[] bytes = new byte[]{header.instructionSelectionPrefix.byteValue()};
-            List<Argument> empty = Collections.emptyList();
-            final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, empty);
-            currentPosition++;
-            return disassembledInstruction;
+                final X86InstructionHeader prefixHeader = new X86InstructionHeader();
+                prefixHeader.opcode1 = header.instructionSelectionPrefix;
+                final List<X86Template> prefixTemplates = headerToTemplates().get(prefixHeader);
+                final X86Template template = Utils.first(prefixTemplates);
+                final byte[] bytes = new byte[]{header.instructionSelectionPrefix.byteValue()};
+                List<Argument> empty = Collections.emptyList();
+                final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, empty);
+                currentPosition++;
+                return disassembledInstruction;
+            }
         }
         if (INLINE_INVALID_INSTRUCTIONS_AS_BYTES) {
             stream.reset();

@@ -147,7 +147,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         return kind == this || isPrimitiveValue() && kind.isPrimitiveValue() && width.numberOfBytes == kind.width.numberOfBytes;
     }
 
-    public abstract ArrayLayout<Value_Type> arrayLayout(LayoutScheme layoutScheme);
+    public abstract ArrayLayout arrayLayout(LayoutScheme layoutScheme);
 
     public ArrayClassActor arrayClassActor() {
         throw new ClassCastException("there is no canonical array class for a non-primitive Java type");
@@ -220,7 +220,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout<VoidValue> arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             throw new ClassCastException("there is no array layout for void");
         }
 
@@ -279,7 +279,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final IntArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.intArrayLayout;
         }
     };
@@ -332,7 +332,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ByteArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.byteArrayLayout;
         }
     };
@@ -386,7 +386,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final BooleanArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.booleanArrayLayout;
         }
     };
@@ -440,7 +440,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ShortArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.shortArrayLayout;
         }
     };
@@ -494,7 +494,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final CharArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.charArrayLayout;
         }
     };
@@ -548,7 +548,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final FloatArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.floatArrayLayout;
         }
     };
@@ -602,7 +602,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final LongArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.longArrayLayout;
         }
     };
@@ -656,7 +656,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final DoubleArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.doubleArrayLayout;
         }
     };
@@ -713,7 +713,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final WordArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.wordArrayLayout;
         }
     };
@@ -761,7 +761,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ReferenceArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.referenceArrayLayout;
         }
     };

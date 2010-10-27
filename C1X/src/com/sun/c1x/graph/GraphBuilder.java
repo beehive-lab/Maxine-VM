@@ -28,12 +28,13 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.graph.ScopeData.*;
+import com.sun.c1x.graph.ScopeData.ReturnBlock;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.Bytecodes.JniOp;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
@@ -316,6 +317,10 @@ public final class GraphBuilder {
 
     Value pop(CiKind kind) {
         return curState.pop(kind);
+    }
+
+    Value peek() {
+        return curState.stackAt(curState.stackSize() - 1);
     }
 
     void loadLocal(int index, CiKind kind) {
@@ -646,10 +651,9 @@ public final class GraphBuilder {
     }
 
     void genCompareOp(CiKind kind, int opcode) {
-        FrameState stateBefore = curState.immutableCopy();
         Value y = pop(kind);
         Value x = pop(kind);
-        ipush(append(new CompareOp(opcode, x, y, stateBefore)));
+        ipush(append(new CompareOp(opcode, x, y)));
     }
 
     void genUnsignedCompareOp(CiKind kind, int opcode, int op) {
@@ -712,6 +716,7 @@ public final class GraphBuilder {
     }
 
     void genUnsafeCast(RiMethod method) {
+        compilation.setNotTypesafe();
         RiSignature signature = method.signature();
         int argCount = signature.argumentCount(false);
         RiType accessingClass = scope().method.holder();
@@ -723,10 +728,10 @@ public final class GraphBuilder {
             assert argCount == 0 : "method with @UNSAFE_CAST must have exactly 1 argument";
             fromType = method.holder();
         }
-        curState.unsafe = true;
         CiKind from = fromType.kind();
         CiKind to = toType.kind();
-        curState.push(to, append(new UnsafeCast(toType, curState.pop(from))));
+        boolean redundant = compilation.archKindsEqual(to, from);
+        curState.push(to, append(new UnsafeCast(toType, curState.pop(from), redundant)));
     }
 
     void genCheckCast() {
@@ -859,20 +864,10 @@ public final class GraphBuilder {
         push(kind.stackKind(), optimized);
     }
 
-    void genInvokeStatic(RiMethod target, int cpi, RiConstantPool constantPool) {
-        FrameState stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signature().argumentSlots(false));
-        if (!tryRemoveCall(target, args, true)) {
-            if (!tryInline(target, args, stateBefore)) {
-                appendInvoke(INVOKESTATIC, target, args, true, cpi, constantPool, stateBefore);
-            }
-        }
-    }
-
     /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      */
-    private RiMethod handleInvokeAccessor(RiMethod target) {
+    private RiMethod handleInvokeAccessorOrBuiltin(RiMethod target) {
         target = bindAccessorMethod(target);
         if (target.intrinsic() != 0) {
             int intrinsic = target.intrinsic();
@@ -891,8 +886,22 @@ public final class GraphBuilder {
         return target;
     }
 
+    void genInvokeStatic(RiMethod target, int cpi, RiConstantPool constantPool) {
+        target = handleInvokeAccessorOrBuiltin(target);
+        if (target == null) {
+            return;
+        }
+        FrameState stateBefore = curState.immutableCopy();
+        Value[] args = curState.popArguments(target.signature().argumentSlots(false));
+        if (!tryRemoveCall(target, args, true)) {
+            if (!tryInline(target, args, stateBefore)) {
+                appendInvoke(INVOKESTATIC, target, args, true, cpi, constantPool, stateBefore);
+            }
+        }
+    }
+
     void genInvokeInterface(RiMethod target, int cpi, RiConstantPool constantPool) {
-        target = handleInvokeAccessor(target);
+        target = handleInvokeAccessorOrBuiltin(target);
         if (target == null) {
             return;
         }
@@ -904,6 +913,10 @@ public final class GraphBuilder {
     }
 
     void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
+        target = handleInvokeAccessorOrBuiltin(target);
+        if (target == null) {
+            return;
+        }
         FrameState stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
@@ -912,6 +925,10 @@ public final class GraphBuilder {
     }
 
     void genInvokeSpecial(RiMethod target, RiType knownHolder, int cpi, RiConstantPool constantPool) {
+        target = handleInvokeAccessorOrBuiltin(target);
+        if (target == null) {
+            return;
+        }
         FrameState stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
@@ -941,7 +958,7 @@ public final class GraphBuilder {
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      */
     private static RiMethod bindAccessorMethod(RiMethod target) {
-        if (target.isResolved() && target.holder().javaClass() == Accessor) {
+        if (target.isResolved() && target.holder().javaClass() == Accessor && Accessor != null) {
             RiType accessor = boundAccessor.get();
             assert accessor != null : "Cannot compile call to method in " + target.holder() + " without enclosing @ACCESSOR annotated method";
             RiMethod newTarget = accessor.resolveMethodImpl(target);
@@ -960,6 +977,9 @@ public final class GraphBuilder {
             assert boundAccessor.get() == null;
             boundAccessor.set(compilation.runtime.getRiType(accessor));
             try {
+                // What looks like an object receiver in the bytecode may not be a word value
+                compilation.setNotTypesafe();
+
                 inline(target, args, forcedInline, stateBefore);
             } finally {
                 boundAccessor.set(null);
@@ -1149,9 +1169,7 @@ public final class GraphBuilder {
             // State at end of inlined method is the state of the caller
             // without the method parameters on stack, including the
             // return value, if any, of the inlined method on operand stack.
-            boolean unsafe = curState.unsafe;
             curState = scopeData.continuationState().copy();
-            curState.unsafe = unsafe;
             if (x != null) {
                 curState.push(x.kind, x);
             }
@@ -1275,7 +1293,7 @@ public final class GraphBuilder {
         } else if (array.isConstant()) {
             // the array itself is a constant
             return true;
-        } else if (array instanceof AccessField && ((AccessField) array).field().isConstant()) {
+        } else if (array instanceof LoadField && ((LoadField) array).constantValue() != null) {
             // the length is derived from a constant array
             return true;
         } else if (array instanceof NewArray) {
@@ -2096,8 +2114,8 @@ public final class GraphBuilder {
                 case IF_ICMPGE      : genIfSame(CiKind.Int, Condition.GE); break;
                 case IF_ICMPGT      : genIfSame(CiKind.Int, Condition.GT); break;
                 case IF_ICMPLE      : genIfSame(CiKind.Int, Condition.LE); break;
-                case IF_ACMPEQ      : genIfSame(CiKind.Object, Condition.EQ); break;
-                case IF_ACMPNE      : genIfSame(CiKind.Object, Condition.NE); break;
+                case IF_ACMPEQ      : genIfSame(peek().kind, Condition.EQ); break;
+                case IF_ACMPNE      : genIfSame(peek().kind, Condition.NE); break;
                 case GOTO           : genGoto(s.currentBCI(), s.readBranchDest()); break;
                 case JSR            : genJsr(s.readBranchDest()); break;
                 case RET            : genRet(s.readLocalIndex()); break;
@@ -2362,7 +2380,13 @@ public final class GraphBuilder {
         append(new StoreRegister(CiKind.Word, register, value));
     }
 
-    private static CiKind kindForPointerOp(int opcode) {
+    /**
+     * Gets the data kind corresponding to a given pointer operation opcode.
+     * The data kind may be more specific than a {@linkplain CiKind#stackKind()}.
+     *
+     * @return the kind of value at the address accessed by the pointer operation denoted by {@code opcode}
+     */
+    private static CiKind dataKindForPointerOp(int opcode) {
         switch (opcode) {
             case PGET_BYTE          :
             case PSET_BYTE          :
@@ -2422,7 +2446,7 @@ public final class GraphBuilder {
 
     private void genLoadPointer(int opcode) {
         FrameState stateBefore = curState.immutableCopy();
-        CiKind kind = kindForPointerOp(opcode);
+        CiKind dataKind = dataKindForPointerOp(opcode);
         Value offsetOrIndex;
         Value displacement;
         if ((opcode & 0xff) == PREAD) {
@@ -2433,13 +2457,13 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        push(kind.stackKind(), append(new LoadPointer(kind.stackKind(), opcode, pointer, displacement, offsetOrIndex, stateBefore, false)));
+        push(dataKind.stackKind(), append(new LoadPointer(dataKind, opcode, pointer, displacement, offsetOrIndex, stateBefore, false)));
     }
 
     private void genStorePointer(int opcode) {
         FrameState stateBefore = curState.immutableCopy();
-        CiKind kind = kindForPointerOp(opcode);
-        Value value = pop(kind);
+        CiKind dataKind = dataKindForPointerOp(opcode);
+        Value value = pop(dataKind.stackKind());
         Value offsetOrIndex;
         Value displacement;
         if ((opcode & 0xff) == PWRITE) {
@@ -2450,7 +2474,7 @@ public final class GraphBuilder {
             displacement = ipop();
         }
         Value pointer = wpop();
-        append(new StorePointer(opcode, pointer, displacement, offsetOrIndex, value, stateBefore, false));
+        append(new StorePointer(opcode, dataKind, pointer, displacement, offsetOrIndex, value, stateBefore, false));
     }
 
     private static CiKind kindForCompareAndSwap(int opcode) {

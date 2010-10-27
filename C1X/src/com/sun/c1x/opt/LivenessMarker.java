@@ -76,14 +76,15 @@ public class LivenessMarker {
         ir.startBlock.iteratePreOrder(new BlockClosure() {
             public void apply(BlockBegin block) {
                 Instruction prev = block;
-                Instruction i = block;
-                while ((i = i.next()) != null) {
+                Instruction i = block.next();
+                while (i != null) {
                     if (i.isLive()) {
                         prev.resetNext(i); // skip any previous dead instructions
+                        prev = i;
                     } else {
                         C1XMetrics.DeadCodeEliminated++;
                     }
-                    prev = i;
+                    i = i.next();
                 }
             }
         });
@@ -155,7 +156,7 @@ public class LivenessMarker {
         }
     }
 
-    private void markRootInstr(Instruction i) {
+    void markRootInstr(Instruction i) {
         FrameState stateBefore = i.stateBefore();
         if (stateBefore != null) {
             // stateBefore != null implies that this instruction may have side effects

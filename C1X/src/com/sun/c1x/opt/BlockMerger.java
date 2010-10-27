@@ -90,7 +90,7 @@ public class BlockMerger implements BlockClosure {
             }
             boolean atLeastOneSuxPhiMergesFromAnotherBlock = !sux.stateBefore().forEachPhi(sux, new PhiProcedure() {
                 public boolean doPhi(Phi phi) {
-                    if (phi.inputIn(sux.end().stateAfter()) != phi.inputIn(pred.end().stateAfter())) {
+                    if (phi.inputIn(sux.stateBefore()) != phi.inputIn(pred.end().stateAfter())) {
                         return false;
                     }
                     return true;

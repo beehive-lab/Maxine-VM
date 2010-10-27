@@ -757,11 +757,11 @@ public final class BytecodeIntrinsifier {
                 case ISTORE_0     :
                 case FSTORE_0     : store1(0); break;
                 case ISTORE_1     :
-                case FSTORE_1     : store1(0); break;
+                case FSTORE_1     : store1(1); break;
                 case ISTORE_2     :
-                case FSTORE_2     : store1(0); break;
+                case FSTORE_2     : store1(2); break;
                 case ISTORE_3     :
-                case FSTORE_3     : store1(0); break;
+                case FSTORE_3     : store1(3); break;
                 case LSTORE       :
                 case DSTORE       : store2(readVarIndex(wide)); break;
                 case LSTORE_0     :

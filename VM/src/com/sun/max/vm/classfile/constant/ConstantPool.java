@@ -21,6 +21,7 @@
 package com.sun.max.vm.classfile.constant;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
@@ -814,6 +815,11 @@ public final class ConstantPool implements RiConstantPool {
 
     private FieldActor checkResolvedFieldAccess(FieldActor field, int opcode) {
         if (opcode >= 0) {
+            if (isHosted() && ALIAS.Static.isAliased(field)) {
+                // The use of an aliased field is always ok.
+                return field;
+            }
+
             switch (opcode) {
                 case GETSTATIC: {
                     if (!field.isStatic()) {
@@ -877,6 +883,11 @@ public final class ConstantPool implements RiConstantPool {
 
     private MethodActor checkResolvedMethodAccess(MethodActor method, int opcode) {
         if (opcode >= 0) {
+            if (isHosted() && ALIAS.Static.isAliased(method)) {
+                // The use of an aliased method is always ok.
+                return method;
+            }
+
             switch (opcode) {
                 case INVOKESTATIC: {
                     if (!method.isStatic()) {
