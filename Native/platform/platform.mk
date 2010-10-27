@@ -322,12 +322,17 @@ ifeq ($(OS),guestvm)
 else
     JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
     ifeq ($(OS),darwin)
-        MACOSX_JDK_6_22_HEADER_DIR = /Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Headers/
-        ifneq "$(realpath $(MACOSX_JDK_6_22_HEADER_DIR))" ""
-            JNI_INCLUDES = -I $(MACOSX_JDK_6_22_HEADER_DIR)
+        JNI_HEADER=$(shell ls /Developer/SDKs/MacOSX10.*.sdk/System/Library/Frameworks/JavaVM.framework/Versions/1.6*/Headers/* 2>/dev/null | grep jni.h | tail -1)
+        ifneq ($(JNI_HEADER),"")
+            JNI_INCLUDES = -I $(dir $(JNI_HEADER))
         endif
     endif
 endif
 
-C_DEPENDENCIES_FLAGS += $(JNI_INCLUDES)
-CFLAGS += $(JNI_INCLUDES)
+JNI_H_PATH = $(wildcard $(word 2,$(JNI_INCLUDES))/jni.h)
+ifeq "$(JNI_H_PATH)" ""
+    $(error Could not find path to jni.h)
+endif
+
+C_DEPENDENCIES_FLAGS += $(JNI_INCLUDES) -DJNI_H_PATH=$(JNI_H_PATH)
+CFLAGS += $(JNI_INCLUDES) -DJNI_H_PATH=$(JNI_H_PATH)

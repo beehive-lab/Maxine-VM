@@ -29,7 +29,6 @@ import java.util.regex.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
-import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -93,22 +92,11 @@ public final class NativeInterfaces {
     private static StaticMethodActor[] checkAgainstJniHeaderFile(StaticMethodActor[] jniFunctionActors) {
         String jniHeaderFilePath = System.getProperty("max.jni.headerFile");
         if (jniHeaderFilePath == null) {
-            jniHeaderFilePath = System.getProperty("java.home");
-            final String jreTail = File.separator + "jre";
-            if (jniHeaderFilePath.endsWith(jreTail)) {
-                jniHeaderFilePath = Strings.chopSuffix(jniHeaderFilePath, jreTail);
-            }
-            jniHeaderFilePath += File.separator + "include" + File.separator + "jni.h";
+            jniHeaderFilePath = Platform.jniHeaderFilePath();
         }
 
         File jniHeaderFile = new File(jniHeaderFilePath);
-        if (!jniHeaderFile.exists()) {
-            if (Platform.platform().operatingSystem == OperatingSystem.DARWIN) {
-                // Needed for JDK 1.6.0_22 on Mac OS X
-                jniHeaderFile = new File("/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Headers/jni.h");
-            }
-            ProgramError.check(jniHeaderFile.exists(), "JNI header file " + jniHeaderFile + " does not exist");
-        }
+        ProgramError.check(jniHeaderFile.exists(), "JNI header file " + jniHeaderFile + " does not exist");
 
         List<String> jniFunctionNames = new ArrayList<String>();
 
