@@ -385,6 +385,15 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         super(name);
     }
 
+    public void test_lusearch() {
+        try {
+            Class testedClass = Class.forName("org.apache.lucene.queryParser.QueryParserTokenManager");
+            compileMethod(testedClass, "getNextToken");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void test_one() {
         compileMethod(test.output.HelloWorld.class, "main");
     }
