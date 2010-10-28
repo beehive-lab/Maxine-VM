@@ -987,30 +987,6 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         }
 
         /**
-         * Watchpoint setting for system watchpoint used to catch unexpected write to vm thread locals.
-         */
-        private final WatchpointSettings systemThreadLocalWatchpointSetting = new WatchpointSettings(false, true, false, true);
-
-        public TeleWatchpoint createSystemVmThreadLocalWatchpoint(String description, MaxThreadLocalVariable threadLocalVariable)
-            throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
-            if (!vm().tryLock(100))   {
-                throw new MaxVMBusyException();
-            }
-            TeleWatchpoint teleWatchpoint;
-            try {
-//                teleWatchpoint = new TeleVmThreadLocalWatchpoint(WatchpointKind.SYSTEM, this, description, threadLocalVariable, systemThreadLocalWatchpointSetting);
-//                teleWatchpoint = addSystemWatchpoint(teleWatchpoint);
-                teleWatchpoint = new TeleVmThreadLocalWatchpoint(WatchpointKind.CLIENT, this, description, threadLocalVariable, systemThreadLocalWatchpointSetting);
-                teleWatchpoint = addClientWatchpoint(teleWatchpoint);
-            } finally {
-                vm().unlock();
-            }
-            return teleWatchpoint;
-        }
-
-
-
-        /**
          * Find existing <strong>client</strong> watchpoints in the VM by location.
          * <br>
          * Returns an immutable collection; membership is thread-safe
