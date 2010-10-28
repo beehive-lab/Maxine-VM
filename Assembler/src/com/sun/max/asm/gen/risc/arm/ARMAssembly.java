@@ -37,7 +37,7 @@ public final class ARMAssembly extends RiscAssembly {
     public static final ARMAssembly ASSEMBLY = new ARMAssembly();
 
     private ARMAssembly() {
-        super(InstructionSet.ARM, RiscTemplate.class);
+        super(ISA.ARM, RiscTemplate.class);
     }
 
     @Override

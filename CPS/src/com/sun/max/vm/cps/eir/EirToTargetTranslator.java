@@ -48,8 +48,8 @@ import com.sun.max.vm.object.*;
  */
 public abstract class EirToTargetTranslator extends TargetGenerator {
 
-    protected EirToTargetTranslator(TargetGeneratorScheme targetGeneratorScheme, InstructionSet instructionSet, int registerReferenceMapSize) {
-        super(targetGeneratorScheme, instructionSet);
+    protected EirToTargetTranslator(TargetGeneratorScheme targetGeneratorScheme, ISA isa, int registerReferenceMapSize) {
+        super(targetGeneratorScheme, isa);
     }
 
     private Address fixLiteralLabels(EirTargetEmitter emitter, Collection<EirLiteral> literals, Address address) {

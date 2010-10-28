@@ -37,7 +37,7 @@ public final class SPARCAssembly extends RiscAssembly {
     private static final boolean GENERATING_V9_INSTRUCTIONS = true;
 
     private SPARCAssembly() {
-        super(InstructionSet.SPARC, RiscTemplate.class);
+        super(ISA.SPARC, RiscTemplate.class);
     }
 
     public boolean generatingDeprecatedInstructions() {

@@ -74,7 +74,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     @HOSTED_ONLY
     private static RiRegisterConfig selectStubRegisterConfig() {
         Platform platform = Platform.platform();
-        if (platform.instructionSet() == InstructionSet.AMD64) {
+        if (platform.isa() == ISA.AMD64) {
             switch (platform.os) {
                 case DARWIN:
                 case GUESTVM:
@@ -160,7 +160,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     @HOSTED_ONLY
     private TargetMethod genTrapStub() {
-        if (platform().instructionSet() == InstructionSet.AMD64) {
+        if (platform().isa() == ISA.AMD64) {
             AMD64UnixRegisterConfig registerConfig = AMD64UnixRegisterConfig.TRAP_STUB;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(compiler, registerConfig);
             CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;

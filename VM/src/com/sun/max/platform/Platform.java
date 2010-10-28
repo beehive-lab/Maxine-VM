@@ -44,8 +44,8 @@ import com.sun.max.vm.stack.sparc.*;
  * The system properties used to initialize the initial platform context are:
  * <ul>
  * <li>{@link #PLATFORM_PROPERTY}</li>
- * <li>{@link #PROCESSOR_MODEL_PROPERTY}</li>
- * <li>{@link #INSTRUCTION_SET_PROPERTY}</li>
+ * <li>{@link #CPU_PROPERTY}</li>
+ * <li>{@link #ISA_PROPERTY}</li>
  * <li>{@link #ENDIANNESS_PROPERTY}</li>
  * <li>{@link #WORD_WIDTH_PROPERTY}</li>
  * <li>{@link #OS_PROPERTY}</li>
@@ -66,16 +66,16 @@ public final class Platform {
 
     /**
      * The name of the system property whose value (if non-null) specifies the target CPU.
-     * Iff {@code null}, the value returned by {@link ProcessorModel#defaultForInstructionSet(InstructionSet)}
+     * Iff {@code null}, the value returned by {@link CPU#defaultForInstructionSet(ISA)}
      * is used.
      */
-    public static final String PROCESSOR_MODEL_PROPERTY = "max.cpu";
+    public static final String CPU_PROPERTY = "max.cpu";
 
     /**
      * The name of the system property whose value (if non-null) specifies the target ISA.
-     * Iff {@code null}, the value returned by {@link #nativeGetInstructionSet()} is used.
+     * Iff {@code null}, the value returned by {@link #nativeGetISA()} is used.
      */
-    public static final String INSTRUCTION_SET_PROPERTY = "max.isa";
+    public static final String ISA_PROPERTY = "max.isa";
 
     /**
      * The name of the system property whose value (if non-null) specifies the target endianness.
@@ -139,7 +139,7 @@ public final class Platform {
         this.os = oS;
         this.pageSize = pageSize;
 
-        if (processorKind.processorModel == ProcessorModel.SPARCV9 && oS == OS.SOLARIS) {
+        if (processorKind.cpu == CPU.SPARCV9 && oS == OS.SOLARIS) {
             this.stackBias = SPARCStackFrameLayout.STACK_BIAS;
         } else {
             this.stackBias = 0;
@@ -151,7 +151,7 @@ public final class Platform {
         CiRegisterSaveArea registerSaveArea = null;
         CiArchitecture arch = null;
         int stackAlignment = -1;
-        if (instructionSet() == InstructionSet.AMD64) {
+        if (isa() == ISA.AMD64) {
             arch = new AMD64();
             registerSaveArea = AMD64TrapStateAccess.RSA;
             if (os == OS.DARWIN) {
@@ -238,7 +238,7 @@ public final class Platform {
      * An element value that is not a {@linkplain Pattern regular expression}
      * is a simple string filter compared for {@linkplain String#equalsIgnoreCase(String) case-insensitive equality} against the
      * corresponding platform component. For example {@code @PLATFORM(os = "windows")} will match
-     * this platform object if {@code this.operatingSystem().name().equalsIgnoreCase("windows")}. A negative
+     * this platform object if {@code this.os().name().equalsIgnoreCase("windows")}. A negative
      * filter can be specified by prefixing {@code '!'} to the filter value. That is,
      * {@code @PLATFORM(os = "!windows")} can be used to match any platform with a non-Windows
      * operating system.
@@ -257,15 +257,15 @@ public final class Platform {
             if (!isAcceptedBy(os.name(), filter.os())) {
                 return false;
             }
-            if (!isAcceptedBy(processorModel().name(), filter.cpu())) {
+            if (!isAcceptedBy(cpu().name(), filter.cpu())) {
                 return false;
             }
         }
         return true;
     }
 
-    public Platform(ProcessorModel processorModel, OS oS, int pageSize) {
-        this(new ProcessorKind(processorModel, processorModel.instructionSet, processorModel.defaultDataModel), oS, pageSize);
+    public Platform(CPU cpu, OS oS, int pageSize) {
+        this(new ProcessorKind(cpu, cpu.isa, cpu.defaultDataModel), oS, pageSize);
     }
 
     /**
@@ -298,10 +298,10 @@ public final class Platform {
         return old;
     }
 
-    public Platform constrainedByInstructionSet(InstructionSet instructionSet) {
+    public Platform constrainedByInstructionSet(ISA isa) {
         ProcessorKind processor = processorKind;
-        if (processor.instructionSet != instructionSet) {
-            processor = ProcessorKind.defaultForInstructionSet(instructionSet);
+        if (processor.isa != isa) {
+            processor = ProcessorKind.defaultForInstructionSet(isa);
         }
         return new Platform(processor, os, pageSize);
     }
@@ -319,12 +319,12 @@ public final class Platform {
         return processorKind.dataModel.wordWidth;
     }
 
-    public InstructionSet instructionSet() {
-        return processorKind.instructionSet;
+    public ISA isa() {
+        return processorKind.isa;
     }
 
-    public ProcessorModel processorModel() {
-        return processorKind.processorModel;
+    public CPU cpu() {
+        return processorKind.cpu;
     }
 
     public DataModel dataModel() {
@@ -342,10 +342,10 @@ public final class Platform {
      */
     public static String getInstructionSet() {
         Prototype.loadHostedLibrary();
-        return nativeGetInstructionSet();
+        return nativeGetISA();
     }
 
-    private static native String nativeGetInstructionSet();
+    private static native String nativeGetISA();
 
     /**
      * Determine whether the underlying memory model is big-endian.
@@ -443,7 +443,7 @@ public final class Platform {
         }
 
 
-        InstructionSet isa = InstructionSet.valueOf(getProperty(INSTRUCTION_SET_PROPERTY) == null ? getInstructionSet() : getProperty(INSTRUCTION_SET_PROPERTY));
+        ISA isa = ISA.valueOf(getProperty(ISA_PROPERTY) == null ? getInstructionSet() : getProperty(ISA_PROPERTY));
         WordWidth word = WordWidth.fromInt(getInteger(WORD_WIDTH_PROPERTY) == null ? getWordWidth() : getInteger(WORD_WIDTH_PROPERTY));
         final Endianness endianness;
         final String endiannessProperty = getProperty(ENDIANNESS_PROPERTY);
@@ -452,17 +452,17 @@ public final class Platform {
         } else {
             endianness = isBigEndian() ? Endianness.BIG : Endianness.LITTLE;
         }
-        final String cpuName = getProperty(PROCESSOR_MODEL_PROPERTY);
-        final ProcessorModel processorModel;
+        final String cpuName = getProperty(CPU_PROPERTY);
+        final CPU cpu;
         if (cpuName == null) {
-            processorModel = ProcessorModel.defaultForInstructionSet(isa);
+            cpu = CPU.defaultForInstructionSet(isa);
         } else {
-            processorModel = ProcessorModel.valueOf(cpuName);
-            assert processorModel.instructionSet == isa;
+            cpu = CPU.valueOf(cpuName);
+            assert cpu.isa == isa;
         }
-        final int cacheAlignment = processorModel.defaultDataModel.cacheAlignment;
+        final int cacheAlignment = cpu.defaultDataModel.cacheAlignment;
         final DataModel dataModel = new DataModel(word, endianness, cacheAlignment);
-        final ProcessorKind processorKind = new ProcessorKind(processorModel, isa, dataModel);
+        final ProcessorKind processorKind = new ProcessorKind(cpu, isa, dataModel);
 
         String osName = getProperty(OS_PROPERTY) == null ? getOS() : getProperty(OS_PROPERTY);
         final OS os = OS.fromName(osName);
@@ -477,11 +477,11 @@ public final class Platform {
     public static final Map<String, Platform> Supported;
     static {
         Map<String, Platform> map = new TreeMap<String, Platform>();
-        map.put("solaris-amd64", new Platform(ProcessorModel.AMD64, OS.SOLARIS, Ints.K * 8));
-        map.put("solaris-sparcv9", new Platform(ProcessorModel.SPARCV9, OS.SOLARIS, Ints.K * 8));
-        map.put("linux-amd64", new Platform(ProcessorModel.AMD64, OS.LINUX, Ints.K * 8));
-        map.put("darwin-amd64", new Platform(ProcessorModel.AMD64, OS.DARWIN, Ints.K * 8));
-        map.put("guestvm-amd64", new Platform(ProcessorModel.AMD64, OS.GUESTVM, Ints.K * 8));
+        map.put("solaris-amd64", new Platform(CPU.AMD64, OS.SOLARIS, Ints.K * 8));
+        map.put("solaris-sparcv9", new Platform(CPU.SPARCV9, OS.SOLARIS, Ints.K * 8));
+        map.put("linux-amd64", new Platform(CPU.AMD64, OS.LINUX, Ints.K * 8));
+        map.put("darwin-amd64", new Platform(CPU.AMD64, OS.DARWIN, Ints.K * 8));
+        map.put("guestvm-amd64", new Platform(CPU.AMD64, OS.GUESTVM, Ints.K * 8));
         Supported = Collections.unmodifiableMap(map);
     }
 

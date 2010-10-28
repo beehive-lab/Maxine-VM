@@ -94,8 +94,8 @@ public final class BootImageTable extends InspectorTable {
 
             addRow("build level:", new DataLabel.EnumAsText(inspection(), vmConfiguration.buildLevel), null);
 
-            addRow("processor model:", new DataLabel.EnumAsText(inspection(), platform.processorModel()), null);
-            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), platform.instructionSet()), null);
+            addRow("processor model:", new DataLabel.EnumAsText(inspection(), platform.cpu()), null);
+            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), platform.isa()), null);
 
             addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth.numberOfBits), null);
             addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness), null);

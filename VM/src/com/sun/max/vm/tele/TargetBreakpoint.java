@@ -38,9 +38,9 @@ import com.sun.max.vm.runtime.*;
 public final class TargetBreakpoint {
 
     @HOSTED_ONLY
-    public static byte[] createBreakpointCode(InstructionSet instructionSet) {
+    public static byte[] createBreakpointCode(ISA isa) {
         try {
-            switch (instructionSet) {
+            switch (isa) {
                 case AMD64:
                 case IA32: {
                     return new byte[] {(byte) 0xCC};
@@ -62,7 +62,7 @@ public final class TargetBreakpoint {
         return null;
     }
 
-    public static final byte[] breakpointCode = createBreakpointCode(Platform.platform().instructionSet());
+    public static final byte[] breakpointCode = createBreakpointCode(Platform.platform().isa());
 
     private final Pointer instructionPointer;
     private byte[] originalCode;

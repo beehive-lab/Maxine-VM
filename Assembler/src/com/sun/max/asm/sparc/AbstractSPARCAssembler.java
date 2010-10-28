@@ -30,7 +30,7 @@ import com.sun.max.asm.*;
 public abstract class AbstractSPARCAssembler extends BigEndianAssembler {
 
     @Override
-    public final InstructionSet instructionSet() {
-        return InstructionSet.SPARC;
+    public final ISA isa() {
+        return ISA.SPARC;
     }
 }

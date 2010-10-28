@@ -130,7 +130,7 @@ public abstract class StackFrameWalker {
          * Gets the address of the next instruction that will be executed in this frame.
          * If this is not the {@linkplain #isTopFrame() top frame}, then this is the
          * return address saved by a call instruction. The exact interpretation of this
-         * return address depends on the {@linkplain InstructionSet#offsetToReturnPC platform}.
+         * return address depends on the {@linkplain ISA#offsetToReturnPC platform}.
          *
          * @return the current instruction pointer.
          */
@@ -269,7 +269,7 @@ public abstract class StackFrameWalker {
 
         while (!current.sp.isZero()) {
             Pointer adjustedIP;
-            if (!isTopFrame && Platform.platform().instructionSet().offsetToReturnPC == 0) {
+            if (!isTopFrame && Platform.platform().isa().offsetToReturnPC == 0) {
                 // Adjust the current IP to ensure it is within the call instruction of the current frame.
                 // This ensures we will always get the correct method, even if the call instruction was the
                 // last instruction in a method and calls a method never expected to return (such as a call

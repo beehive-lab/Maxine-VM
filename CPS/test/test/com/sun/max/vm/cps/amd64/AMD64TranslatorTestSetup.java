@@ -56,7 +56,7 @@ public class AMD64TranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
 
     @Override
     protected void initializeVM() {
-        Platform.set(platform().constrainedByInstructionSet(InstructionSet.AMD64));
+        Platform.set(platform().constrainedByInstructionSet(ISA.AMD64));
         VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

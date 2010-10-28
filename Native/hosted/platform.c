@@ -56,10 +56,10 @@ Java_com_sun_max_platform_Platform_nativeGetPageSize(JNIEnv *env, jclass c) {
 }
 
 /*
- *  ATTENTION: return value must correspond to an InstructionSet enum value.
+ *  ATTENTION: return value must correspond to an ISA enum value.
  */
 JNIEXPORT jobject JNICALL
-Java_com_sun_max_platform_Platform_nativeGetInstructionSet(JNIEnv *env, jclass c)
+Java_com_sun_max_platform_Platform_nativeGetISA(JNIEnv *env, jclass c)
 {
 #if isa_AMD64
     return (*env)->NewStringUTF(env, "AMD64");
