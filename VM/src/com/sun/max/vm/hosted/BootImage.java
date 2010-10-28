@@ -339,7 +339,7 @@ public class BootImage {
             version = VERSION;
             randomID = UUID.randomUUID().hashCode();
             wordSize = platform().wordWidth().numberOfBytes;
-            cacheAlignment = platform().dataModel().cacheAlignment;
+            cacheAlignment = platform().dataModel.cacheAlignment;
             pageSize = platform().pageSize;
             vmRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.MaxineVM_run, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadAddMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_add, CallEntryPoint.C_ENTRY_POINT).toInt();
@@ -509,8 +509,8 @@ public class BootImage {
         private StringInfo(VMConfiguration vmConfiguration, int offset) {
             super(offset);
             buildLevelName = vmConfiguration.buildLevel.name();
-            cpuName = platform().cpu().name();
-            isaName = platform().isa().name();
+            cpuName = platform().cpu.name();
+            isaName = platform().isa.name();
             osName = platform().os.name();
 
             referencePackageName = vmConfiguration.referencePackage.name();
@@ -669,8 +669,7 @@ public class BootImage {
                 BootImageException.check((codeOffset() % header.pageSize) == 0, "code offset is not page-size aligned");
 
                 final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.cacheAlignment);
-                final ProcessorKind processorKind = new ProcessorKind(stringInfo.cpu(), stringInfo.isa(), dataModel);
-                final Platform platform = new Platform(processorKind, stringInfo.os(), header.pageSize);
+                final Platform platform = new Platform(stringInfo.cpu(), stringInfo.isa(), dataModel, stringInfo.os(), header.pageSize);
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,

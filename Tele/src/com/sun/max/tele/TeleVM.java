@@ -516,8 +516,8 @@ public abstract class TeleVM implements MaxVM {
         initializeVM(bootImage.vmConfiguration);
 
         TeleVM teleVM = null;
-        final OS oS = platform().os;
-        final String className = "com.sun.max.tele.debug." + oS.asPackageName() + "." + oS.className + "TeleVM";
+        final OS os = platform().os;
+        final String className = "com.sun.max.tele.debug." + os.asPackageName() + "." + os.className + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
             final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class});

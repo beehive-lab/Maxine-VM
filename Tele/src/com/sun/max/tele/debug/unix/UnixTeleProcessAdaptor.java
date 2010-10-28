@@ -52,7 +52,7 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
     private UnixTeleProcessAdaptor(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, int id) throws BootImageException {
         super(teleVM, platform, ProcessState.STOPPED);
         protocol = TeleVM.teleChannelProtocol();
-        dataAccess = new PageDataAccess(this, platform.dataModel());
+        dataAccess = new PageDataAccess(this, platform.dataModel);
         protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize, platform().endianness() == Endianness.BIG ? true : false);
         if (commandLineArguments != null) {
             final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);

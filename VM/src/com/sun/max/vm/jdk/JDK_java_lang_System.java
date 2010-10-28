@@ -492,7 +492,7 @@ public final class JDK_java_lang_System {
      * @return the name of this VM's target ISA
      */
     private static String getISA() {
-        switch (Platform.platform().isa()) {
+        switch (Platform.platform().isa) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -514,7 +514,7 @@ public final class JDK_java_lang_System {
      * @return a list of this VM's target ISAs
      */
     private static String getISAList() {
-        switch (Platform.platform().isa()) {
+        switch (Platform.platform().isa) {
             case ARM:
                 FatalError.unimplemented();
                 break;

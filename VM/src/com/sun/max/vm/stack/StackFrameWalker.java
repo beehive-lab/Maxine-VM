@@ -269,7 +269,7 @@ public abstract class StackFrameWalker {
 
         while (!current.sp.isZero()) {
             Pointer adjustedIP;
-            if (!isTopFrame && Platform.platform().isa().offsetToReturnPC == 0) {
+            if (!isTopFrame && Platform.platform().isa.offsetToReturnPC == 0) {
                 // Adjust the current IP to ensure it is within the call instruction of the current frame.
                 // This ensures we will always get the correct method, even if the call instruction was the
                 // last instruction in a method and calls a method never expected to return (such as a call

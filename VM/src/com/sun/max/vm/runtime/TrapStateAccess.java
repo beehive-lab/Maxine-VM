@@ -57,7 +57,7 @@ public abstract class TrapStateAccess {
     @HOSTED_ONLY
     public static TrapStateAccess create(VMConfiguration vmConfiguration) {
         try {
-            final String isa = platform().isa().name();
+            final String isa = platform().isa.name();
             final Class<?> trapStateAccessClass = Class.forName(MaxPackage.fromClass(TrapStateAccess.class).subPackage(isa.toLowerCase()).name()
                                                   + "." + isa + TrapStateAccess.class.getSimpleName());
             final Constructor<?> constructor = trapStateAccessClass.getConstructor(VMConfiguration.class);
