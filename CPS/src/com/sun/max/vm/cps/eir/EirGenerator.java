@@ -54,7 +54,7 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
         final Platform platform = platform();
         wordWidth = platform.wordWidth();
         final MaxPackage eirPackage = new com.sun.max.vm.cps.eir.Package();
-        final MaxPackage p = eirPackage.subPackage(platform.instructionSet().name().toLowerCase(),
+        final MaxPackage p = eirPackage.subPackage(platform.isa().name().toLowerCase(),
                                                    platform.os.name().toLowerCase());
         eirABIsScheme = p.loadAndInstantiateScheme(EirABIsScheme.class);
     }

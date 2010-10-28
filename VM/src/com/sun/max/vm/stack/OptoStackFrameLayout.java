@@ -36,7 +36,7 @@ public class OptoStackFrameLayout extends CompiledStackFrameLayout {
     private final boolean isReturnAddressPushedByCall;
 
     public OptoStackFrameLayout(int frameSize) {
-        this(frameSize, platform().instructionSet().callsPushReturnAddressOnStack());
+        this(frameSize, platform().isa().callsPushReturnAddressOnStack());
     }
 
     public OptoStackFrameLayout(int frameSize, boolean isReturnAddressPushedByCall) {

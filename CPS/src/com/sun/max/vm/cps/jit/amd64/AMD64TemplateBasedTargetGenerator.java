@@ -33,7 +33,7 @@ import com.sun.max.vm.template.*;
 public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenerator {
 
     public AMD64TemplateBasedTargetGenerator(JitCompiler jitCompiler) {
-        super(jitCompiler, InstructionSet.AMD64);
+        super(jitCompiler, ISA.AMD64);
     }
 
     @Override

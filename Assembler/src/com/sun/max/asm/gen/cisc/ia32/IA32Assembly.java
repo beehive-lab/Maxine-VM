@@ -31,7 +31,7 @@ import com.sun.max.asm.gen.cisc.x86.*;
 public final class IA32Assembly extends X86Assembly<IA32Template> {
 
     private IA32Assembly() {
-        super(InstructionSet.IA32, IA32Template.class);
+        super(ISA.IA32, IA32Template.class);
     }
 
     @Override

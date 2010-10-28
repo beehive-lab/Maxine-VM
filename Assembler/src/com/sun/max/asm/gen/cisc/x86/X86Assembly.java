@@ -30,8 +30,8 @@ import com.sun.max.program.*;
  */
 public abstract class X86Assembly<Template_Type extends X86Template> extends Assembly<Template_Type> {
 
-    public X86Assembly(InstructionSet instructionSet, Class<Template_Type> templateType) {
-        super(instructionSet, templateType);
+    public X86Assembly(ISA isa, Class<Template_Type> templateType) {
+        super(isa, templateType);
     }
 
     @Override

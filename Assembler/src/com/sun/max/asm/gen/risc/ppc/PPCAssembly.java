@@ -36,7 +36,7 @@ public final class PPCAssembly extends RiscAssembly {
     private static final boolean GENERATING_POWER5_INSTRUCTIONS = false;
 
     private PPCAssembly() {
-        super(InstructionSet.PPC, RiscTemplate.class);
+        super(ISA.PPC, RiscTemplate.class);
     }
 
     public boolean generatingDeprecatedInstructions() {

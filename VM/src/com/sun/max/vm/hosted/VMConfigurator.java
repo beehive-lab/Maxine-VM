@@ -23,7 +23,7 @@ package com.sun.max.vm.hosted;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.*;
-import com.sun.max.asm.InstructionSet.Category;
+import com.sun.max.asm.ISA.Category;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -120,11 +120,11 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link BootstrapCompilerScheme}.
      */
     public static VMPackage defaultCompilerScheme() {
-        switch (platform().instructionSet()) {
+        switch (platform().isa()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             default:
-                throw FatalError.unexpected(platform().instructionSet().toString());
+                throw FatalError.unexpected(platform().isa().toString());
         }
     }
 
@@ -132,7 +132,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link RuntimeCompilerScheme}.
      */
     public static VMPackage defaultJitCompilerScheme() {
-        switch (platform().instructionSet()) {
+        switch (platform().isa()) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
             default:
@@ -151,7 +151,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link TargetABIsScheme}.
      */
     public static VMPackage defaultTargetABIsScheme() {
-        switch (platform().instructionSet()) {
+        switch (platform().isa()) {
             case AMD64:
                 return new com.sun.max.vm.compiler.target.amd64.Package();
             default:
@@ -177,7 +177,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link LayoutScheme}.
      */
     public static VMPackage defaultLayoutScheme() {
-        if (platform().instructionSet().category == Category.RISC) {
+        if (platform().isa().category == Category.RISC) {
             // On SPARC, the HOM layout enables more optimized code for accessing array elements
             // smaller than a word as there is no need to perform address arithmetic to skip
             // over the header; the origin is pointing at array element 0.

@@ -275,7 +275,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
                 if (MaxineVM.isHosted()) {
                     Platform platform = Platform.platform();
-                    disassemble(System.out, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    disassemble(System.out, code, platform.isa(), platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }
@@ -284,7 +284,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
                 if (MaxineVM.isHosted()) {
                     Platform platform = Platform.platform();
-                    disassemble(System.out, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    disassemble(System.out, code, platform.isa(), platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }

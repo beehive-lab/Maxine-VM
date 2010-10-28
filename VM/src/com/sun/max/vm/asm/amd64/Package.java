@@ -36,7 +36,7 @@ import com.sun.max.vm.*;
 public class Package extends VMPackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return platform().instructionSet() == InstructionSet.AMD64;
+        return platform().isa() == ISA.AMD64;
     }
 
     @Override

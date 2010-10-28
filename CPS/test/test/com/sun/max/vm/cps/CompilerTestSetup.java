@@ -64,7 +64,7 @@ public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
     public final Disassembler disassemblerFor(TargetMethod targetMethod) {
         Platform platform = Platform.platform();
         InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
-        return createDisassembler(platform.instructionSet(), platform.wordWidth(), targetMethod.codeStart().toLong(), inlineDataDecoder);
+        return createDisassembler(platform.isa(), platform.wordWidth(), targetMethod.codeStart().toLong(), inlineDataDecoder);
     }
 
     public static BootstrapCompilerScheme compilerScheme() {

@@ -38,7 +38,7 @@ import com.sun.max.program.*;
 public class MaxineTesterConfiguration {
 
     static final Expectation FAIL_ALL = new Expectation(null, null, ExpectedResult.FAIL);
-    static final Expectation FAIL_SPARC = new Expectation(OS.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.FAIL);
+    static final Expectation FAIL_SPARC = new Expectation(OS.SOLARIS, CPU.SPARCV9, ExpectedResult.FAIL);
     static final Expectation FAIL_SOLARIS = new Expectation(OS.SOLARIS, null, ExpectedResult.FAIL);
     static final Expectation FAIL_DARWIN = new Expectation(OS.DARWIN, null, ExpectedResult.FAIL);
     static final Expectation FAIL_LINUX = new Expectation(OS.LINUX, null, ExpectedResult.FAIL);
@@ -46,11 +46,11 @@ public class MaxineTesterConfiguration {
     static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
     static final Expectation RAND_LINUX = new Expectation(OS.LINUX, null, ExpectedResult.NONDETERMINISTIC);
     static final Expectation RAND_DARWIN = new Expectation(OS.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
-    static final Expectation RAND_AMD64 = new Expectation(null, ProcessorModel.AMD64, ExpectedResult.NONDETERMINISTIC);
-    static final Expectation RAND_SPARC = new Expectation(OS.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_AMD64 = new Expectation(null, CPU.AMD64, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_SPARC = new Expectation(OS.SOLARIS, CPU.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
-    static final Expectation PASS_SOLARIS_AMD64 = new Expectation(OS.SOLARIS, ProcessorModel.AMD64, ExpectedResult.PASS);
-    static final Expectation PASS_DARWIN_AMD64 = new Expectation(OS.DARWIN, ProcessorModel.AMD64, ExpectedResult.PASS);
+    static final Expectation PASS_SOLARIS_AMD64 = new Expectation(OS.SOLARIS, CPU.AMD64, ExpectedResult.PASS);
+    static final Expectation PASS_DARWIN_AMD64 = new Expectation(OS.DARWIN, CPU.AMD64, ExpectedResult.PASS);
 
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapo2006Tests = new LinkedList<String>();
@@ -389,7 +389,7 @@ public class MaxineTesterConfiguration {
 
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.platform();
-        if (platform.processorModel() == ProcessorModel.SPARCV9) {
+        if (platform.cpu() == CPU.SPARCV9) {
             return "cpscps,cpsjit,jitcps,jitjit";
         }
         return "cpsc1x,cpscps,jitcps,cpsjit,jitjit";
@@ -514,10 +514,10 @@ public class MaxineTesterConfiguration {
 
     private static class Expectation {
         private final OS os; // null indicates all OSs
-        private final ProcessorModel processor; // null indicates all processors
+        private final CPU processor; // null indicates all processors
         private final ExpectedResult expectedResult;
 
-        Expectation(OS os, ProcessorModel pm, ExpectedResult e) {
+        Expectation(OS os, CPU pm, ExpectedResult e) {
             this.os = os;
             this.processor = pm;
             expectedResult = e;
@@ -525,7 +525,7 @@ public class MaxineTesterConfiguration {
 
         public boolean matches(Platform platform) {
             if (os == null || os == platform.os) {
-                if (processor == null || processor == platform.processorModel()) {
+                if (processor == null || processor == platform.cpu()) {
                     return true;
                 }
             }

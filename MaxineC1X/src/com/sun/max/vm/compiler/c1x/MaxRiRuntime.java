@@ -178,7 +178,7 @@ public class MaxRiRuntime implements RiRuntime {
             final InlineDataDecoder inlineDataDecoder = null;
             final Pointer startAddress = Pointer.fromInt(0);
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false);
-            Disassembler.disassemble(byteArrayOutputStream, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, platform.isa(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";
@@ -241,7 +241,7 @@ public class MaxRiRuntime implements RiRuntime {
                 }
             };
             byte[] code = Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize());
-            Disassembler.disassemble(byteArrayOutputStream, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+            Disassembler.disassemble(byteArrayOutputStream, code, platform.isa(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }
         return "";
@@ -391,7 +391,7 @@ public class MaxRiRuntime implements RiRuntime {
     public RiRegisterConfig getRegisterConfig(RiMethod method) {
         ClassMethodActor compilee = (ClassMethodActor) method;
         Platform platform = Platform.platform();
-        if (platform.instructionSet() == InstructionSet.AMD64) {
+        if (platform.isa() == ISA.AMD64) {
             switch (platform.os) {
                 case DARWIN:
                 case GUESTVM:

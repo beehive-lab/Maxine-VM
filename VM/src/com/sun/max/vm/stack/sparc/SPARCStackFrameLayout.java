@@ -178,7 +178,7 @@ public final class SPARCStackFrameLayout {
     }
 
     public static Pointer getReturnAddress(Cursor current, StackFrameWalker stackFrameWalker) {
-        return getCallerPC(current, stackFrameWalker).plus(InstructionSet.SPARC.offsetToReturnPC);
+        return getCallerPC(current, stackFrameWalker).plus(ISA.SPARC.offsetToReturnPC);
     }
 
     public static Pointer getCallerFramePointer(Cursor current, StackFrameWalker stackFrameWalker) {

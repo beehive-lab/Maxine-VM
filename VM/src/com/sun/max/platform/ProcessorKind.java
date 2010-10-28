@@ -30,19 +30,19 @@ import com.sun.max.lang.*;
  */
 public class ProcessorKind {
 
-    public final ProcessorModel processorModel;
-    public final InstructionSet instructionSet;
+    public final CPU cpu;
+    public final ISA isa;
     public final DataModel dataModel;
 
-    public ProcessorKind(ProcessorModel processorModel, InstructionSet instructionSet, DataModel dataModel) {
-        this.processorModel = processorModel;
-        this.instructionSet = instructionSet;
+    public ProcessorKind(CPU cpu, ISA isa, DataModel dataModel) {
+        this.cpu = cpu;
+        this.isa = isa;
         this.dataModel = dataModel;
     }
 
-    public static ProcessorKind defaultForInstructionSet(InstructionSet instructionSet) {
-        final ProcessorModel processorModel = ProcessorModel.defaultForInstructionSet(instructionSet);
-        return new ProcessorKind(processorModel, instructionSet, processorModel.defaultDataModel);
+    public static ProcessorKind defaultForInstructionSet(ISA isa) {
+        final CPU cpu = CPU.defaultForInstructionSet(isa);
+        return new ProcessorKind(cpu, isa, cpu.defaultDataModel);
     }
 
     @Override
@@ -51,12 +51,12 @@ public class ProcessorKind {
             return false;
         }
         final ProcessorKind pk = (ProcessorKind) other;
-        return processorModel.equals(pk.processorModel) && instructionSet.equals(pk.instructionSet) && dataModel.equals(pk.dataModel);
+        return cpu.equals(pk.cpu) && isa.equals(pk.isa) && dataModel.equals(pk.dataModel);
     }
 
     @Override
     public String toString() {
-        return processorModel.toString().toLowerCase() + ", isa=" + instructionSet + ", " + dataModel;
+        return cpu.toString().toLowerCase() + ", isa=" + isa + ", " + dataModel;
     }
 
 }

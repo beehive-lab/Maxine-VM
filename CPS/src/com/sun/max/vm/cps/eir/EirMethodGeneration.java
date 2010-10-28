@@ -93,7 +93,7 @@ public abstract class EirMethodGeneration {
     protected EirMethodGeneration(EirGenerator eirGenerator, EirABI abi, boolean isTemplate, boolean usesSharedEpilogue) {
         this.eirGenerator = eirGenerator;
         this.abi = abi;
-        this.memoryModel = platform().processorModel().memoryModel;
+        this.memoryModel = platform().cpu().memoryModel;
         this.isTemplate = isTemplate;
         this.usesSharedEpilogue = usesSharedEpilogue;
 

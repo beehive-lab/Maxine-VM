@@ -31,7 +31,7 @@ import com.sun.max.asm.*;
 public abstract class AbstractPPCAssembler extends BigEndianAssembler {
 
     @Override
-    public final InstructionSet instructionSet() {
-        return InstructionSet.PPC;
+    public final ISA isa() {
+        return ISA.PPC;
     }
 }
