@@ -38,19 +38,19 @@ import com.sun.max.program.*;
 public class MaxineTesterConfiguration {
 
     static final Expectation FAIL_ALL = new Expectation(null, null, ExpectedResult.FAIL);
-    static final Expectation FAIL_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.FAIL);
-    static final Expectation FAIL_SOLARIS = new Expectation(OperatingSystem.SOLARIS, null, ExpectedResult.FAIL);
-    static final Expectation FAIL_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.FAIL);
-    static final Expectation FAIL_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.FAIL);
+    static final Expectation FAIL_SPARC = new Expectation(OS.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.FAIL);
+    static final Expectation FAIL_SOLARIS = new Expectation(OS.SOLARIS, null, ExpectedResult.FAIL);
+    static final Expectation FAIL_DARWIN = new Expectation(OS.DARWIN, null, ExpectedResult.FAIL);
+    static final Expectation FAIL_LINUX = new Expectation(OS.LINUX, null, ExpectedResult.FAIL);
 
     static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
-    static final Expectation RAND_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.NONDETERMINISTIC);
-    static final Expectation RAND_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_LINUX = new Expectation(OS.LINUX, null, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_DARWIN = new Expectation(OS.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
     static final Expectation RAND_AMD64 = new Expectation(null, ProcessorModel.AMD64, ExpectedResult.NONDETERMINISTIC);
-    static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_SPARC = new Expectation(OS.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
-    static final Expectation PASS_SOLARIS_AMD64 = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.AMD64, ExpectedResult.PASS);
-    static final Expectation PASS_DARWIN_AMD64 = new Expectation(OperatingSystem.DARWIN, ProcessorModel.AMD64, ExpectedResult.PASS);
+    static final Expectation PASS_SOLARIS_AMD64 = new Expectation(OS.SOLARIS, ProcessorModel.AMD64, ExpectedResult.PASS);
+    static final Expectation PASS_DARWIN_AMD64 = new Expectation(OS.DARWIN, ProcessorModel.AMD64, ExpectedResult.PASS);
 
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapo2006Tests = new LinkedList<String>();
@@ -64,7 +64,7 @@ public class MaxineTesterConfiguration {
     static final Map<String, Expectation[]> configResultMap = new HashMap<String, Expectation[]>();
     static final Map<String, Expectation[]> resultMap = new HashMap<String, Expectation[]>();
     static final Map<Object, Object[]> inputMap = new HashMap<Object, Object[]>();
-    static final Map<String, String[]> imageParams = new HashMap<String, String[]>();
+    static final Map<String, String[]> imageParams = new TreeMap<String, String[]>();
     static final Map<String, String[]> jtLoadParams = new HashMap<String, String[]>();
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
 
@@ -275,15 +275,15 @@ public class MaxineTesterConfiguration {
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
         maxvmConfig("GC", "-Xmx2g");
 
-        imageConfig("jit-c1x0",  "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0");
-        imageConfig("jit-c1x1",  "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=1");
-        imageConfig("jit-c1x2",  "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=2");
-        imageConfig("jit-c1x3",  "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=3");
+        imageConfig("jit-c1x0",  "-jit=" + c1xPackage, "--C1X:OptLevel=0");
+        imageConfig("jit-c1x1",  "-jit=" + c1xPackage, "--C1X:OptLevel=1");
+        imageConfig("jit-c1x2",  "-jit=" + c1xPackage, "--C1X:OptLevel=2");
+        imageConfig("jit-c1x3",  "-jit=" + c1xPackage, "--C1X:OptLevel=3");
 
-        imageConfig("opt-c1x0",  "-opt=c1x", "-vmargs=-C1X:OptLevel=0");
-        imageConfig("opt-c1x1",  "-opt=c1x", "-vmargs=-C1X:OptLevel=1");
-        imageConfig("opt-c1x2",  "-opt=c1x", "-vmargs=-C1X:OptLevel=2");
-        imageConfig("opt-c1x3",  "-opt=c1x", "-vmargs=-C1X:OptLevel=3");
+        imageConfig("opt-c1x0",  "-opt=c1x", "--C1X:OptLevel=0", "--XX:+FailOverC1X");
+        imageConfig("opt-c1x1",  "-opt=c1x", "--C1X:OptLevel=1", "--XX:+FailOverC1X");
+        imageConfig("opt-c1x2",  "-opt=c1x", "--C1X:OptLevel=2", "--XX:+FailOverC1X");
+        imageConfig("opt-c1x3",  "-opt=c1x", "--C1X:OptLevel=3", "--XX:+FailOverC1X");
 
         // Alternate GC configs
         imageConfig("ms",         "-run=java", "-heap=gcx.ms");
@@ -513,18 +513,18 @@ public class MaxineTesterConfiguration {
     }
 
     private static class Expectation {
-        private final OperatingSystem os; // null indicates all OSs
+        private final OS os; // null indicates all OSs
         private final ProcessorModel processor; // null indicates all processors
         private final ExpectedResult expectedResult;
 
-        Expectation(OperatingSystem os, ProcessorModel pm, ExpectedResult e) {
+        Expectation(OS os, ProcessorModel pm, ExpectedResult e) {
             this.os = os;
             this.processor = pm;
             expectedResult = e;
         }
 
         public boolean matches(Platform platform) {
-            if (os == null || os == platform.operatingSystem) {
+            if (os == null || os == platform.os) {
                 if (processor == null || processor == platform.processorModel()) {
                     return true;
                 }

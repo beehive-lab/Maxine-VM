@@ -20,26 +20,14 @@
  */
 package com.sun.c0x;
 
-import static java.lang.reflect.Modifier.isStatic;
+import static java.lang.reflect.Modifier.*;
 
-import java.util.Arrays;
+import java.util.*;
 
-import com.sun.c1x.util.Util;
-import com.sun.cri.bytecode.BytecodeLookupSwitch;
-import com.sun.cri.bytecode.BytecodeStream;
-import com.sun.cri.bytecode.BytecodeTableSwitch;
-import com.sun.cri.bytecode.Bytecodes;
-import com.sun.cri.ci.CiBailout;
-import com.sun.cri.ci.CiConstant;
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ri.RiConstantPool;
-import com.sun.cri.ri.RiExceptionHandler;
-import com.sun.cri.ri.RiField;
-import com.sun.cri.ri.RiMethod;
-import com.sun.cri.ri.RiRuntime;
-import com.sun.cri.ri.RiSignature;
-import com.sun.cri.ri.RiType;
+import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code C0XCompiler} class is a sketch of a new baseline compiler design which borrows
@@ -172,6 +160,7 @@ public class C0XCompilation {
     int[] blockQueue = new int[3];
     int blockQueuePos;
     int regNum;
+    RiRegisterConfig registerConfig;
 
     public C0XCompilation(RiRuntime runtime, RiMethod method, CiTarget target) {
         this.runtime = runtime;

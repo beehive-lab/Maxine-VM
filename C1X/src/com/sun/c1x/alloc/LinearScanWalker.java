@@ -25,12 +25,16 @@ import static com.sun.cri.ci.CiUtil.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.alloc.Interval.RegisterBinding;
+import com.sun.c1x.alloc.Interval.RegisterPriority;
+import com.sun.c1x.alloc.Interval.SpillState;
+import com.sun.c1x.alloc.Interval.State;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 /**
  *
@@ -40,7 +44,6 @@ final class LinearScanWalker extends IntervalWalker {
 
     private CiRegister[] availableRegs;
 
-    private final CiRegister.AllocationSpec allocatableRegisters;
     private final int[] usePos;
     private final int[] blockPos;
 
@@ -64,13 +67,12 @@ final class LinearScanWalker extends IntervalWalker {
     LinearScanWalker(LinearScan allocator, Interval unhandledFixedFirst, Interval unhandledAnyFirst) {
         super(allocator, unhandledFixedFirst, unhandledAnyFirst);
         moveResolver = new MoveResolver(allocator);
-        allocatableRegisters = allocator.allocationSpec;
-        spillIntervals = Util.uncheckedCast(new List[allocatableRegisters.nofRegs]);
-        for (int i = 0; i < allocatableRegisters.nofRegs; i++) {
+        spillIntervals = Util.uncheckedCast(new List[allocator.registers.length]);
+        for (int i = 0; i < allocator.registers.length; i++) {
             spillIntervals[i] = new ArrayList<Interval>(2);
         }
-        usePos = new int[allocatableRegisters.nofRegs];
-        blockPos = new int[allocatableRegisters.nofRegs];
+        usePos = new int[allocator.registers.length];
+        blockPos = new int[allocator.registers.length];
     }
 
     void initUseLists(boolean onlyProcessUsePos) {
@@ -828,13 +830,14 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     void initVarsForAlloc(Interval interval) {
+        EnumMap<RegisterFlag, CiRegister[]> categorizedRegs = allocator.compilation.registerConfig.getCategorizedAllocatableRegisters();
         if (allocator.operands.mustBeByteRegister(interval.operand)) {
             assert interval.kind() != CiKind.Float && interval.kind() != CiKind.Double : "cpu regs only";
-            availableRegs = allocatableRegisters.allocatableByteRegisters;
+            availableRegs = categorizedRegs.get(RegisterFlag.Byte);
         } else if (interval.kind() == CiKind.Float || interval.kind() == CiKind.Double) {
-            availableRegs = allocatableRegisters.allocatableFPRegisters;
+            availableRegs = categorizedRegs.get(RegisterFlag.FPU);
         } else {
-            availableRegs = allocatableRegisters.allocatableCpuRegisters;
+            availableRegs = categorizedRegs.get(RegisterFlag.CPU);
         }
     }
 

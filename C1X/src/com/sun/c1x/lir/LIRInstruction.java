@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import static com.sun.c1x.C1XCompilation.*;
+
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -437,10 +439,9 @@ public abstract class LIRInstruction {
     }
 
     protected static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map, boolean frameRefMap) {
-        CiRegister[] registerReferenceMapOrder = null;
+        CiRegisterSaveArea regSaveArea = null;
         if (!frameRefMap) {
-            C1XCompilation current = C1XCompilation.current();
-            registerReferenceMapOrder = current.target.registerConfig.getRegisterReferenceMapOrder();
+            regSaveArea = compilation().target.registerSaveArea;
         }
         for (int i = 0; i < map.length; i++) {
             int b = map[i] & 0xff;
@@ -454,7 +455,7 @@ public abstract class LIRInstruction {
                         if (frameRefMap) {
                             buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, index)));
                         } else {
-                            CiRegisterValue register = registerReferenceMapOrder[index].asValue(CiKind.Object);
+                            CiRegisterValue register = regSaveArea.registerAt(index).asValue(CiKind.Object);
                             buf.append(operandFmt.format(register));
                         }
                     }

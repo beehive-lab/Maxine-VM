@@ -80,8 +80,6 @@ public class C1XTest {
         "Use the C1X compiler to compile all the way to a TargetMethod instance.");
     private static final Option<Integer> timingOption = options.newIntegerOption("timing", 0,
         "Perform the specified number of timing runs.");
-    private static final Option<Boolean> c1xOptionsOption = options.newBooleanOption("c1x-options", false,
-        "Print settings of C1XOptions.");
     private static final Option<Boolean> scatterOption = options.newBooleanOption("scatter-data", false,
         "Report timings in X\\tY\\n format for easy cut and paste to scatter plot.");
     private static final Option<Boolean> averageOption = options.newBooleanOption("average", true,
@@ -144,7 +142,6 @@ public class C1XTest {
         }
 
         options.setValuesAgain();
-        reportC1XOptions();
         final String[] arguments = expandArguments(options.getArguments());
 
         if (helpOption.getValue()) {
@@ -192,7 +189,7 @@ public class C1XTest {
 
         String compilerName = compilerOption.getValue();
         if (compilerName.equals("c1x")) {
-            compilerScheme = C1XCompilerScheme.create();
+            compilerScheme = new C1XCompilerScheme();
         } else if (compilerName.equals("boot")) {
             configuration.initializeSchemes(MaxineVM.Phase.COMPILING);
             compilerScheme = configuration.bootCompilerScheme();
@@ -244,7 +241,7 @@ public class C1XTest {
                 boolean result;
                 if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
                     C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
-                    result = compile(c1x.getCompiler(), c1x.getRuntime(), c1x.getXirGenerator(), methodActor, printBailoutOption.getValue(), false);
+                    result = compile(c1x.getCompiler(), c1x.runtime, c1x.getXirGenerator(), methodActor, printBailoutOption.getValue(), false);
                 } else {
                     result = compile(compilerScheme, methodActor, printBailoutOption.getValue(), false);
                 }
@@ -284,7 +281,7 @@ public class C1XTest {
         if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
             C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
             for (MethodActor methodActor : methods) {
-                if (!compile(c1x.getCompiler(), c1x.getRuntime(), c1x.getXirGenerator(), methodActor, false, true)) {
+                if (!compile(c1x.getCompiler(), c1x.runtime, c1x.getXirGenerator(), methodActor, false, true)) {
                     totalFailures++;
                 }
             }
@@ -315,7 +312,7 @@ public class C1XTest {
                 if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
                     C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
                     for (MethodActor actor : methods) {
-                        compile(c1x.getCompiler(), c1x.getRuntime(), c1x.getXirGenerator(), actor, false, false);
+                        compile(c1x.getCompiler(), c1x.runtime, c1x.getXirGenerator(), actor, false, false);
                     }
                 } else {
                     for (MethodActor actor : methods) {
@@ -355,7 +352,7 @@ public class C1XTest {
 
     private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
         final long startNs = System.nanoTime();
-        CiResult result = compiler.compileMethod(method, xirGenerator);
+        CiResult result = compiler.compileMethod(method, -1, xirGenerator);
         if (timing && result.bailout() == null) {
             long timeNs = System.nanoTime() - startNs;
             recordTime(method, result.statistics().byteCount, result.statistics().nodeCount, timeNs);
@@ -539,12 +536,6 @@ public class C1XTest {
 
     private static double averageTime() {
         return (cumulNs / (double) timingOption.getValue()) / ONE_BILLION;
-    }
-
-    private static void reportC1XOptions() {
-        if (c1xOptionsOption.getValue()) {
-            printClassFields(C1XOptions.class);
-        }
     }
 
     private static String printMap(Map m) {

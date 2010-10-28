@@ -31,23 +31,16 @@ import com.sun.cri.ci.*;
  */
 public final class LoadRegister extends Instruction {
 
-    final CiRegister register;
+    public final CiRegister register;
 
     /**
      * Creates a new LoadPointer instance.
      * @param kind the kind of value loaded from the register
-     * @param register the register to laod
+     * @param register the register to load
      */
     public LoadRegister(CiKind kind, CiRegister register) {
         super(kind);
         this.register = register;
-        if (register.isNonZero()) {
-            setFlag(Flag.NonNull);
-        }
-    }
-
-    public CiRegister register() {
-        return register;
     }
 
     /**

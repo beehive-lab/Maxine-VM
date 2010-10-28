@@ -219,7 +219,7 @@ public final class VirtualMemory {
      * @throws IOException
      */
     public static Pointer mapFileIn31BitSpace(int size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
-        if (Platform.platform().operatingSystem != OperatingSystem.LINUX) {
+        if (Platform.platform().os != OS.LINUX) {
             throw new UnsupportedOperationException();
         }
         final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");

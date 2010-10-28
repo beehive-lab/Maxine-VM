@@ -147,9 +147,14 @@ public abstract class Trap {
     public static final int stackGuardSize = 12 * Ints.K;
 
     /**
-     * Handle to {@link #isTrapStub(MethodActor)}.
+     * Handle to {@link #trapStub(int, Pointer, Address)}.
      */
-    private static final CriticalMethod trapStub = new CriticalMethod(Trap.class, "trapStub", null, CallEntryPoint.C_ENTRY_POINT);
+    public static final CriticalMethod trapStub = new CriticalMethod(Trap.class, "trapStub", null, CallEntryPoint.C_ENTRY_POINT);
+
+    /**
+     * Handle to {@link #handleTrap(int, Pointer, Address)}.
+     */
+    public static final CriticalMethod handleTrap = new CriticalMethod(Trap.class, "handleTrap", null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
     /**
      * Determines if a given method actor denotes the method used to handle runtime traps.
@@ -218,6 +223,17 @@ public abstract class Trap {
      */
     @VM_ENTRY_POINT
     private static void trapStub(int trapNumber, Pointer trapState, Address faultAddress) {
+        handleTrap(trapNumber, trapState, faultAddress);
+    }
+
+    /**
+     * This method does the actual trap handling.
+     *
+     * @param trapNumber the trap that occurred
+     * @param trapState a pointer to the stack location where trap state is stored
+     * @param faultAddress the faulting address that caused this trap (memory faults only)
+     */
+    private static void handleTrap(int trapNumber, Pointer trapState, Address faultAddress) {
         // From this point on until we return from the trap stub,
         // this variable is used to communicate to the VM operation thread
         // whether a thread was stopped at a safepoint or

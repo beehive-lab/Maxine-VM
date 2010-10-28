@@ -1050,7 +1050,7 @@ public class IRChecker extends ValueVisitor {
 
     @Override
     public void visitLoadRegister(LoadRegister i) {
-        assertNonNull(i.register(), "Register must not be null");
+        assertNonNull(i.register, "Register must not be null");
     }
 
     @Override

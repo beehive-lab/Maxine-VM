@@ -40,8 +40,8 @@ public class AMD64 extends CiArchitecture {
     public static final CiRegister rbx = new CiRegister(3, 3, "rbx", CPU, RegisterFlag.Byte);
     public static final CiRegister rsp = new CiRegister(4, 4, "rsp", CPU);
     public static final CiRegister rbp = new CiRegister(5, 5, "rbp", CPU);
-    public static final CiRegister rsi = new CiRegister(6, 6, "rsi", CPU, RegisterFlag.Byte); // (tw) check if byte flag is correct
-    public static final CiRegister rdi = new CiRegister(7, 7, "rdi", CPU, RegisterFlag.Byte); // (tw) check if byte flag is correct
+    public static final CiRegister rsi = new CiRegister(6, 6, "rsi", CPU);
+    public static final CiRegister rdi = new CiRegister(7, 7, "rdi", CPU);
 
     public static final CiRegister r8 = new CiRegister(8, 8, "r8", CPU);
     public static final CiRegister r9 = new CiRegister(9, 9, "r9", CPU);
@@ -49,9 +49,13 @@ public class AMD64 extends CiArchitecture {
     public static final CiRegister r11 = new CiRegister(11, 11, "r11", CPU);
     public static final CiRegister r12 = new CiRegister(12, 12, "r12", CPU);
     public static final CiRegister r13 = new CiRegister(13, 13, "r13", CPU);
-    public static final CiRegister r14 = new CiRegister(14, 14, "r14", CPU, NonZero);
+    public static final CiRegister r14 = new CiRegister(14, 14, "r14", CPU);
     public static final CiRegister r15 = new CiRegister(15, 15, "r15", CPU);
-    public static final CiRegister[] cpuRegisters = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15};
+
+    public static final CiRegister[] cpuRegisters = {
+        rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi,
+        r8, r9, r10, r11, r12, r13, r14, r15
+    };
 
     // XMM registers
     public static final CiRegister xmm0 = new CiRegister(16, 0, "xmm0", FPU);

@@ -27,11 +27,15 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.sun.c1x.target.amd64.*;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.sparc.*;
 
 /**
@@ -44,7 +48,7 @@ import com.sun.max.vm.stack.sparc.*;
  * <li>{@link #INSTRUCTION_SET_PROPERTY}</li>
  * <li>{@link #ENDIANNESS_PROPERTY}</li>
  * <li>{@link #WORD_WIDTH_PROPERTY}</li>
- * <li>{@link #OPERATING_SYSTEM_PROPERTY}</li>
+ * <li>{@link #OS_PROPERTY}</li>
  * <li>{@link #PAGE_SIZE_PROPERTY}</li>
  * <li>{@link #NUMBER_OF_SIGNALS_PROPERTY}</li>
  * </ul>
@@ -87,9 +91,9 @@ public final class Platform {
 
     /**
      * The name of the system property whose value (if non-null) specifies the target OS.
-     * Iff {@code null}, the value returned by {@link #nativeGetOperatingSystem()} is used.
+     * Iff {@code null}, the value returned by {@link #nativeGetOS()} is used.
      */
-    public static final String OPERATING_SYSTEM_PROPERTY = "max.os";
+    public static final String OS_PROPERTY = "max.os";
 
     /**
      * The name of the system property whose value (if non-null) specifies the target page size.
@@ -116,7 +120,7 @@ public final class Platform {
     /**
      * The operating system.
      */
-    public final OperatingSystem operatingSystem;
+    public final OS os;
 
     /**
      * The number of bytes in a virtual page.
@@ -128,16 +132,68 @@ public final class Platform {
      */
     public final int stackBias;
 
-    public Platform(ProcessorKind processorKind, OperatingSystem operatingSystem, int pageSize) {
+    public final CiTarget target;
+
+    public Platform(ProcessorKind processorKind, OS oS, int pageSize) {
         this.processorKind = processorKind;
-        this.operatingSystem = operatingSystem;
+        this.os = oS;
         this.pageSize = pageSize;
 
-        if (processorKind.processorModel == ProcessorModel.SPARCV9 && operatingSystem == OperatingSystem.SOLARIS) {
+        if (processorKind.processorModel == ProcessorModel.SPARCV9 && oS == OS.SOLARIS) {
             this.stackBias = SPARCStackFrameLayout.STACK_BIAS;
         } else {
             this.stackBias = 0;
         }
+        target = createTarget();
+    }
+
+    private CiTarget createTarget() {
+        CiRegisterSaveArea registerSaveArea = null;
+        CiArchitecture arch = null;
+        int stackAlignment = -1;
+        if (instructionSet() == InstructionSet.AMD64) {
+            arch = new AMD64();
+            registerSaveArea = AMD64TrapStateAccess.RSA;
+            if (os == OS.DARWIN) {
+                // Darwin requires 16-byte stack frame alignment.
+                stackAlignment = 16;
+            } else if (os == OS.LINUX) {
+                // Linux apparently also requires it for functions that pass floating point functions on the stack.
+                // One such function in the Maxine code base is log_print_float() in log.c which passes a float
+                // value to fprintf on the stack. However, gcc doesn't fix the alignment itself so we simply
+                // adopt the global convention on Linux of 16-byte alignment for stacks. If this is a performance issue,
+                // this can later be refined to only be for JNI stubs that pass a float or double to native code.
+                stackAlignment = 16;
+            } else if (os == OS.SOLARIS || os == OS.GUESTVM) {
+                stackAlignment = 8;
+            } else {
+                throw FatalError.unexpected("Unimplemented stack alignment: " + os);
+            }
+
+        } else {
+            return null;
+        }
+
+        int wordSize = processorKind.dataModel.wordWidth.numberOfBytes;
+        boolean isMP = true;
+        int spillSlotSize = wordSize;
+        int cacheAlignment = wordSize;
+        int heapAlignment = wordSize;
+        int codeAlignment = wordSize;
+        boolean inlineObjects = false;
+        int referenceSize = wordSize;
+        return new CiTarget(arch,
+                        registerSaveArea,
+                        isMP,
+                        spillSlotSize,
+                        wordSize,
+                        referenceSize,
+                        stackAlignment,
+                        pageSize,
+                        cacheAlignment,
+                        heapAlignment,
+                        codeAlignment,
+                        inlineObjects);
     }
 
     private static final Pattern NON_REGEX_TEST_PATTERN = Pattern.compile("\\w+");
@@ -198,7 +254,7 @@ public final class Platform {
      */
     public boolean isAcceptedBy(PLATFORM filter) {
         if (filter != null) {
-            if (!isAcceptedBy(operatingSystem.name(), filter.os())) {
+            if (!isAcceptedBy(os.name(), filter.os())) {
                 return false;
             }
             if (!isAcceptedBy(processorModel().name(), filter.cpu())) {
@@ -208,8 +264,8 @@ public final class Platform {
         return true;
     }
 
-    public Platform(ProcessorModel processorModel, OperatingSystem operatingSystem, int pageSize) {
-        this(new ProcessorKind(processorModel, processorModel.instructionSet, processorModel.defaultDataModel), operatingSystem, pageSize);
+    public Platform(ProcessorModel processorModel, OS oS, int pageSize) {
+        this(new ProcessorKind(processorModel, processorModel.instructionSet, processorModel.defaultDataModel), oS, pageSize);
     }
 
     /**
@@ -219,6 +275,15 @@ public final class Platform {
     @FOLD
     public static Platform platform() {
         return current;
+    }
+
+    /**
+     * Gets the {@linkplain #target target} associated with the {@linkplain #platform() current} platform context.
+     */
+    @FOLD
+    public static CiTarget target() {
+        assert current.target != null;
+        return current.target;
     }
 
     /**
@@ -238,12 +303,12 @@ public final class Platform {
         if (processor.instructionSet != instructionSet) {
             processor = ProcessorKind.defaultForInstructionSet(instructionSet);
         }
-        return new Platform(processor, operatingSystem, pageSize);
+        return new Platform(processor, os, pageSize);
     }
 
     @Override
     public String toString() {
-        return operatingSystem.toString().toLowerCase() + "-" + processorKind + ", page size=" + pageSize;
+        return os.toString().toLowerCase() + "-" + processorKind + ", page size=" + pageSize;
     }
 
     public Endianness endianness() {
@@ -317,12 +382,12 @@ public final class Platform {
      *
      * @return a string representing the name of the OS on which this VM is running
      */
-    public static String getOperatingSystem() {
+    public static String getOS() {
         Prototype.loadHostedLibrary();
-        return nativeGetOperatingSystem();
+        return nativeGetOS();
     }
 
-    private static native String nativeGetOperatingSystem();
+    private static native String nativeGetOS();
 
     /**
      * Gets the page size in bytes of the platform on which this VM is running.
@@ -399,8 +464,8 @@ public final class Platform {
         final DataModel dataModel = new DataModel(word, endianness, cacheAlignment);
         final ProcessorKind processorKind = new ProcessorKind(processorModel, isa, dataModel);
 
-        String osName = getProperty(OPERATING_SYSTEM_PROPERTY) == null ? getOperatingSystem() : getProperty(OPERATING_SYSTEM_PROPERTY);
-        final OperatingSystem os = OperatingSystem.fromName(osName);
+        String osName = getProperty(OS_PROPERTY) == null ? getOS() : getProperty(OS_PROPERTY);
+        final OS os = OS.fromName(osName);
         final int pageSize = getInteger(PAGE_SIZE_PROPERTY) == null ? getPageSize() : getInteger(PAGE_SIZE_PROPERTY);
 
         return new Platform(processorKind, os, pageSize);
@@ -412,11 +477,11 @@ public final class Platform {
     public static final Map<String, Platform> Supported;
     static {
         Map<String, Platform> map = new TreeMap<String, Platform>();
-        map.put("solaris-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.SOLARIS, Ints.K * 8));
-        map.put("solaris-sparcv9", new Platform(ProcessorModel.SPARCV9, OperatingSystem.SOLARIS, Ints.K * 8));
-        map.put("linux-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.LINUX, Ints.K * 8));
-        map.put("darwin-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.DARWIN, Ints.K * 8));
-        map.put("guestvm-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.GUESTVM, Ints.K * 8));
+        map.put("solaris-amd64", new Platform(ProcessorModel.AMD64, OS.SOLARIS, Ints.K * 8));
+        map.put("solaris-sparcv9", new Platform(ProcessorModel.SPARCV9, OS.SOLARIS, Ints.K * 8));
+        map.put("linux-amd64", new Platform(ProcessorModel.AMD64, OS.LINUX, Ints.K * 8));
+        map.put("darwin-amd64", new Platform(ProcessorModel.AMD64, OS.DARWIN, Ints.K * 8));
+        map.put("guestvm-amd64", new Platform(ProcessorModel.AMD64, OS.GUESTVM, Ints.K * 8));
         Supported = Collections.unmodifiableMap(map);
     }
 
@@ -443,7 +508,7 @@ public final class Platform {
         if (pageSizeString != null) {
             long pageSize = Longs.parseScaledValue(pageSizeString);
             assert pageSize == (int) pageSize;
-            platform = new Platform(platform.processorKind, platform.operatingSystem, (int) pageSize);
+            platform = new Platform(platform.processorKind, platform.os, (int) pageSize);
         }
         return platform;
     }
@@ -474,4 +539,6 @@ public final class Platform {
             out.println("    " + entry.getKey());
         }
     }
+
+
 }

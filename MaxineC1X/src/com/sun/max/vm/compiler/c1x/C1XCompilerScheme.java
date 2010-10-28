@@ -21,33 +21,75 @@
 package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.target.amd64.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
 
 /**
+ * Integration of the C1X compiler into Maxine's compilation framework.
+ *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompilerScheme {
 
-    private MaxRiRuntime c1xRuntime;
-    private C1XCompiler c1xCompiler;
-    private RiXirGenerator c1xXirGenerator;
-    private CiTarget c1xTarget;
+    /**
+     * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
+     */
+    public final MaxRiRuntime runtime = new MaxRiRuntime();
 
-    public static MaxRiRuntime globalRuntime;
+    /**
+     * The {@linkplain CiTarget target} environment derived from a Maxine {@linkplain Platform platform} description.
+     */
+    public final CiTarget target = platform().target;
+
+    /**
+     * The Maxine specific implementation of the {@linkplain RiXirGenerator interface} used by C1X
+     * to incorporate runtime specific details when translating bytecode methods.
+     */
+    private RiXirGenerator xirGenerator;
+
+    /**
+     * The C1X compiler instance configured for the Maxine runtime.
+     */
+    private C1XCompiler compiler;
+
+    @HOSTED_ONLY
+    private static RiRegisterConfig selectStubRegisterConfig() {
+        Platform platform = Platform.platform();
+        if (platform.instructionSet() == InstructionSet.AMD64) {
+            switch (platform.os) {
+                case DARWIN:
+                case GUESTVM:
+                case LINUX:
+                case SOLARIS: {
+                    return AMD64UnixRegisterConfig.STUB;
+                }
+                default:
+                    throw FatalError.unimplemented();
+
+            }
+        }
+        throw FatalError.unimplemented();
+    }
+
     public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 1,
         "Set the optimization level of C1X.") {
             @Override
@@ -63,8 +105,29 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     @HOSTED_ONLY
     public C1XCompilerScheme() {
-        super();
-        globalRuntime = new MaxRiRuntime(this);
+        VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
+    }
+
+    /**
+     * Gets the Maxine specific implementation of the {@linkplain RiXirGenerator interface} used by C1X
+     * to incorporate runtime specific details when translating bytecode methods.
+     */
+    public RiXirGenerator getXirGenerator() {
+        if (isHosted() && xirGenerator == null) {
+            // Lazy initialization to resolve Maxine scheme initialization boot strapping
+            xirGenerator = new MaxXirGenerator(vmConfig(), target, runtime);
+        }
+        return xirGenerator;
+    }
+
+    /**
+     * Gets the C1X compiler instance configured for the Maxine runtime.
+     */
+    public C1XCompiler getCompiler() {
+        if (isHosted() && compiler == null) {
+            compiler = new C1XCompiler(runtime, target, getXirGenerator(), selectStubRegisterConfig());
+        }
+        return compiler;
     }
 
     @Override
@@ -73,41 +136,15 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         return Utils.cast(type, C1XTargetMethod.class);
     }
 
-    @Override
-    public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isHosted()) {
-            if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
-                if (MaxineVM.isHosted()) {
-                    VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
-                }
-                // create the RiRuntime object passed to C1X
-                c1xRuntime = new MaxRiRuntime(this);
-                // create the CiTarget object passed to C1X
-                MaxRiRegisterConfig config = new MaxRiRegisterConfig(vmConfig());
-                InstructionSet isa = platform().instructionSet();
-                CiArchitecture arch;
-                switch (isa) {
-                    case AMD64:
-                        arch = new AMD64();
-                        break;
-                    default:
-                        throw FatalError.unimplemented();
-                }
-
-                TargetABI<?, ?> targetABI = vmConfig().targetABIsScheme().optimizedJavaABI;
-
-                int wordSize = arch.wordSize;
-
-                c1xTarget = new CiTarget(arch, config, true, wordSize, wordSize, wordSize, targetABI.stackFrameAlignment, platform().pageSize, wordSize, wordSize, 16, false);
-                c1xXirGenerator = new MaxXirGenerator(vmConfig(), c1xTarget, c1xRuntime);
-                c1xCompiler = new C1XCompiler(c1xRuntime, c1xTarget, c1xXirGenerator);
-            }
-        }
-    }
-
     public final TargetMethod compile(final ClassMethodActor classMethodActor) {
         RiMethod method = classMethodActor;
-        CiTargetMethod compiledMethod = c1xCompiler.compileMethod(method, c1xXirGenerator).targetMethod();
+        if (classMethodActor.isTrapStub()) {
+            if (isHosted()) {
+                return genTrapStub();
+            }
+            FatalError.unexpected("Trap stub must be compiled into boot image");
+        }
+        CiTargetMethod compiledMethod = getCompiler().compileMethod(method, -1, getXirGenerator()).targetMethod();
         if (compiledMethod != null) {
             C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
             CompilationScheme.Inspect.notifyCompilationComplete(c1xTargetMethod);
@@ -116,31 +153,71 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         throw FatalError.unexpected("bailout"); // compilation failed
     }
 
-    @HOSTED_ONLY
-    public static C1XCompilerScheme create() {
-        C1XCompilerScheme compilerScheme = new C1XCompilerScheme();
-        compilerScheme.initialize(MaxineVM.Phase.BOOTSTRAPPING);
-        return compilerScheme;
-    }
-
     @Override
     public CallEntryPoint calleeEntryPoint() {
         return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
     }
 
-    public final MaxRiRuntime getRuntime() {
-        return c1xRuntime;
-    }
+    @HOSTED_ONLY
+    private TargetMethod genTrapStub() {
+        if (platform().instructionSet() == InstructionSet.AMD64) {
+            AMD64UnixRegisterConfig registerConfig = AMD64UnixRegisterConfig.TRAP_STUB;
+            AMD64MacroAssembler asm = new AMD64MacroAssembler(compiler, registerConfig);
+            CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;
+            CiRegister latch = AMD64Safepoint.LATCH_REGISTER;
+            CiRegister scratch = registerConfig.getScratchRegister();
+            int frameSize = rsa.size;
 
-    public final C1XCompiler getCompiler() {
-        return c1xCompiler;
-    }
+            // the very first instruction must save the flags.
+            // we save them twice and overwrite one copy with the trap instruction/return address.
+            int pushfq = 0x9c;
+            asm.emitByte(pushfq);
+            asm.emitByte(pushfq);
 
-    public final RiXirGenerator getXirGenerator() {
-        return c1xXirGenerator;
-    }
+            // now allocate the frame for this method
+            asm.subq(AMD64.rsp, frameSize - 16);
+            asm.setFrameSize(frameSize);
 
-    public final CiTarget getTarget() {
-        return c1xTarget;
+            // save all the general purpose registers
+            CiRegister[] calleeSave = registerConfig.getCalleeSaveRegisters();
+            asm.save(calleeSave, rsa, 0);
+
+            // Now that we have saved all general purpose registers (including the scratch register),
+            // store the value of the latch register from the thread locals into the trap state
+            asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_LATCH_REGISTER.offset));
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), rsa.offsetOf(latch)), scratch);
+
+            // write the return address pointer to the end of the frame
+            asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize), scratch);
+
+            // save the trap number
+            asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_NUMBER.offset));
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), AMD64TrapStateAccess.TRAP_NUMBER_OFFSET), scratch);
+
+            // now load the trap parameter information into registers from the VM thread locals
+            CiKind[] trapStubParameters = Util.signatureToKinds(Trap.trapStub.classMethodActor.signature(), null);
+            CiValue[] locations = registerConfig.getJavaCallingConvention(trapStubParameters, false, target).locations;
+
+            // load the trap number into the first parameter register
+            asm.movq(locations[0].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_NUMBER.offset));
+            // load the trap state pointer into the second parameter register
+            asm.leaq(locations[1].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize));
+            // load the fault address into the third parameter register
+            asm.movq(locations[2].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_FAULT_ADDRESS.offset));
+
+            asm.directCall(Trap.handleTrap.classMethodActor, null);
+
+            asm.restore(calleeSave, rsa, 0);
+
+            // now pop the flags register off the stack before returning
+            int popfq = 0x9D;
+            asm.addq(AMD64.rsp, frameSize - 16);
+            asm.emitByte(popfq);
+            asm.ret(0);
+
+            return new C1XTargetMethod("trap-stub", asm.finishTargetMethod("trap-stub", runtime, -1));
+        }
+        throw FatalError.unimplemented();
     }
 }

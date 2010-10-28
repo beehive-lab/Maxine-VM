@@ -27,7 +27,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
@@ -59,15 +58,10 @@ import com.sun.max.vm.value.*;
  */
 public class MaxRiRuntime implements RiRuntime {
 
-    private final C1XCompilerScheme compilerScheme;
     private RiSnippets snippets;
 
-    public MaxRiRuntime(C1XCompilerScheme compilerScheme) {
-        this.compilerScheme = compilerScheme;
+    public MaxRiRuntime() {
     }
-
-    private static final CiRegister[] generalParameterRegisters = new CiRegister[]{AMD64.rdi, AMD64.rsi, AMD64.rdx, AMD64.rcx, AMD64.r8, AMD64.r9};
-    private static final CiRegister[] xmmParameterRegisters = new CiRegister[]{AMD64.xmm0, AMD64.xmm1, AMD64.xmm2, AMD64.xmm3, AMD64.xmm4, AMD64.xmm5, AMD64.xmm6, AMD64.xmm7};
 
     /**
      * Gets the constant pool for a specified method.
@@ -386,7 +380,6 @@ public class MaxRiRuntime implements RiRuntime {
         return snippets;
     }
 
-    @Override
     public boolean compareConstantObjects(Object x, Object y) {
         return x == y;
     }
@@ -395,4 +388,35 @@ public class MaxRiRuntime implements RiRuntime {
         return ClassDirectory.recordLeafMethodAssumption(method);
     }
 
+    public RiRegisterConfig getRegisterConfig(RiMethod method) {
+        ClassMethodActor compilee = (ClassMethodActor) method;
+        Platform platform = Platform.platform();
+        if (platform.instructionSet() == InstructionSet.AMD64) {
+            switch (platform.os) {
+                case DARWIN:
+                case GUESTVM:
+                case LINUX:
+                case SOLARIS: {
+                    if (compilee.isTrapStub()) {
+                        return AMD64UnixRegisterConfig.TRAP_STUB;
+                    }
+                    if (compilee.isVmEntryPoint()) {
+                        return AMD64UnixRegisterConfig.N2J;
+                    }
+                    if (compilee.isCFunction()) {
+                        return AMD64UnixRegisterConfig.J2N;
+                    }
+                    assert !compilee.isTemplate();
+                    if (compilee.isTrampoline()) {
+                        return AMD64UnixRegisterConfig.TRAMPOLINE;
+                    }
+                    return AMD64UnixRegisterConfig.STANDARD;
+                }
+                default:
+                    throw FatalError.unimplemented();
+
+            }
+        }
+        throw FatalError.unimplemented();
+    }
 }

@@ -522,7 +522,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitLoadRegister(LoadRegister x) {
-        x.setOperand(x.register().asValue(CiKind.Word));
+        x.setOperand(x.register.asValue(CiKind.Word));
     }
 
     @Override
@@ -886,7 +886,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitStoreRegister(StoreRegister x) {
-        CiValue reg = x.register().asValue(x.kind);
+        CiValue reg = x.register.asValue(x.kind);
         LIRItem src = new LIRItem(x.value(), this);
         lir.move(src.result(), reg);
     }
@@ -1867,7 +1867,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (kind == CiKind.Void) {
             return IllegalValue;
         }
-        CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(kind);
+        CiRegister returnRegister = compilation.registerConfig.getReturnRegister(kind);
         return returnRegister.asValue(kind);
     }
 

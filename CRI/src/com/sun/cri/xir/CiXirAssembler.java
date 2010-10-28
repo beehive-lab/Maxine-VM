@@ -515,11 +515,11 @@ public abstract class CiXirAssembler {
          */
         StackOverflowCheck,
         /**
-         * Creates the stack frame for the method.
+         * Creates the stack frame for the method and spills callee-save registers (if any) to the {@linkplain CiRegisterSaveArea register save area}.
          */
         PushFrame,
         /**
-         * Removes the stack frame of the method.
+         * Restores all callee-save registers (if any) and removes the stack frame of the method.
          */
         PopFrame,
         /**

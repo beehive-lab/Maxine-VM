@@ -60,7 +60,7 @@ public class JVMFunctions {
 
         // Collect method actors corresponding to frames:
         // N.B. In GuestVM there are no native frames, or JNI calls on the stack that need to be ignored, but we do not want a zero length result from the native frame at the base of the stack!
-        final List<ClassMethodActor> methodActors = StackFrameWalker.extractClassMethodActors(stackFrames, false, false, false, Platform.platform().operatingSystem != OperatingSystem.GUESTVM);
+        final List<ClassMethodActor> methodActors = StackFrameWalker.extractClassMethodActors(stackFrames, false, false, false, Platform.platform().os != OS.GUESTVM);
 
         // Append the class of each method to the array:
         final List<Class> result = new ArrayList<Class>();

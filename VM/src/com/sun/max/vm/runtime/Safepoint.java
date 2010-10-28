@@ -32,7 +32,6 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.thread.*;
@@ -176,8 +175,6 @@ public abstract class Safepoint {
     public static void safepoint() {
         SafepointBuiltin.safepointBuiltin();
     }
-
-    public abstract Symbol latchRegister();
 
     @HOSTED_ONLY
     protected abstract byte[] createCode();
