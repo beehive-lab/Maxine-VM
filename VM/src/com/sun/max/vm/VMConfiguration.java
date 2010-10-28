@@ -332,7 +332,7 @@ public final class VMConfiguration {
         }
         if (maxPackage instanceof AsmPackage) {
             final AsmPackage asmPackage = (AsmPackage) maxPackage;
-            return asmPackage.isPartOfAssembler(platform().isa());
+            return asmPackage.isPartOfAssembler(platform().isa);
         }
         if (maxPackage instanceof VMPackage) {
             final VMPackage vmPackage = (VMPackage) maxPackage;

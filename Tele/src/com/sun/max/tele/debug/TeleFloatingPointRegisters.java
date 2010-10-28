@@ -75,7 +75,7 @@ public final class TeleFloatingPointRegisters extends TeleRegisters {
      * configuration.
      */
     public static Symbolizer<? extends Symbol> createSymbolizer() {
-        switch (platform().isa()) {
+        switch (platform().isa) {
             case AMD64:
                 return AMD64XMMRegister.ENUMERATOR;
             case SPARC:

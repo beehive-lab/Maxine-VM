@@ -50,6 +50,6 @@ public class C1XStackFrameLayout extends CompiledStackFrameLayout {
 
     @Override
     public boolean isReturnAddressPushedByCall() {
-        return Platform.platform().isa().callsPushReturnAddressOnStack();
+        return Platform.platform().isa.callsPushReturnAddressOnStack();
     }
 }

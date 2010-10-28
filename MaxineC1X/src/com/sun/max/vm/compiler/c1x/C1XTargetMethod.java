@@ -843,7 +843,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @Override
     public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean implicitExceptionPoint) {
-        if (!implicitExceptionPoint && Platform.platform().isa().offsetToReturnPC == 0) {
+        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
             ip = ip.minus(1);
         }
 

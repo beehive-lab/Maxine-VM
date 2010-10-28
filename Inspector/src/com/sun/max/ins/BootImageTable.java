@@ -85,7 +85,7 @@ public final class BootImageTable extends InspectorTable {
             final BootImage.Header header = bootImage.header;
             final VMConfiguration vmConfiguration = bootImage.vmConfiguration;
             final Platform platform = platform();
-            final DataModel processorDataModel = platform.dataModel();
+            final DataModel processorDataModel = platform.dataModel;
             dummyLabel = new PlainLabel(inspection, "");
 
             addRow("identification:", new DataLabel.IntAsHex(inspection(), header.identification), null);
@@ -94,8 +94,8 @@ public final class BootImageTable extends InspectorTable {
 
             addRow("build level:", new DataLabel.EnumAsText(inspection(), vmConfiguration.buildLevel), null);
 
-            addRow("processor model:", new DataLabel.EnumAsText(inspection(), platform.cpu()), null);
-            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), platform.isa()), null);
+            addRow("processor model:", new DataLabel.EnumAsText(inspection(), platform.cpu), null);
+            addRow("instruction set:", new DataLabel.EnumAsText(inspection(), platform.isa), null);
 
             addRow("bits/word:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.wordWidth.numberOfBits), null);
             addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness), null);

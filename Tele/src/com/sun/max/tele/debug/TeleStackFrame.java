@@ -143,7 +143,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
                 }
                 if (location == null) {
                     // An ordinary call; apply a platform-specific adjustment to get the real return address.
-                    final int offsetToReturnPC = platform().isa().offsetToReturnPC;
+                    final int offsetToReturnPC = platform().isa.offsetToReturnPC;
                     location = teleVM.codeManager().createMachineCodeLocation(instructionPointer.plus(offsetToReturnPC), "stack frame return");
                 }
             }

@@ -225,7 +225,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
         eirMethod.emit(emitter);
 
-        final DataModel dataModel = Platform.platform().dataModel();
+        final DataModel dataModel = Platform.platform().dataModel;
 
         final Collection<EirLiteral> scalarLiterals = eirMethod.literalPool().scalarLiterals();
         final Collection<EirLiteral> referenceLiterals = eirMethod.literalPool().referenceLiterals();

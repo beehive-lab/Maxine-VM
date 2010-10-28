@@ -325,7 +325,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
     }
 
     public void visitCiscInstructionSet(PointerLoadBuiltin builtin, IR_Type result, IR_Type[] arguments) {
-        assert Platform.platform().isa().category == ISA.Category.CISC;
+        assert Platform.platform().isa.category == ISA.Category.CISC;
         visitPointerLoadBuiltin(builtin, result, arguments);
     }
 
@@ -450,7 +450,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
     }
 
     public void visitCiscInstructionSet(PointerStoreBuiltin builtin, IR_Type result, IR_Type[] arguments) {
-        assert Platform.platform().isa().category == ISA.Category.CISC;
+        assert Platform.platform().isa.category == ISA.Category.CISC;
         visitPointerStoreBuiltin(builtin, result, arguments);
     }
 

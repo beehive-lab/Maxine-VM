@@ -95,7 +95,7 @@ public final class TeleDisassembler {
     // Synchronize on class to avoid use of the disassembler before the initial call made during initialization.
     // This might be tidier if not all static.
     private static synchronized Disassembler createDisassembler(final Platform platform, Address startAddress, InlineDataDecoder inlineDataDecoder) {
-        return Disassembler.createDisassembler(platform.isa(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder);
+        return Disassembler.createDisassembler(platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder);
     }
 
     private abstract static class LoadLiteralParser {
@@ -308,7 +308,7 @@ public final class TeleDisassembler {
 
     private static LoadLiteralParser createLiteralParser(final Platform platform, Disassembler disassembler, Address codeStart, byte [] code) {
         //final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
-        switch (platform.isa()) {
+        switch (platform.isa) {
             case ARM:
                 FatalError.unimplemented();
                 return null;

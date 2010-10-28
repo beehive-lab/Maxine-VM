@@ -295,7 +295,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
                 return string;
             }
         };
-        disassemble(printStream, getCode(), platform.isa(), platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+        disassemble(printStream, getCode(), platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
 
 }

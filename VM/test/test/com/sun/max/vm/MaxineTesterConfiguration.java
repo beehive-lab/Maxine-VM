@@ -389,7 +389,7 @@ public class MaxineTesterConfiguration {
 
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.platform();
-        if (platform.cpu() == CPU.SPARCV9) {
+        if (platform.cpu == CPU.SPARCV9) {
             return "cpscps,cpsjit,jitcps,jitjit";
         }
         return "cpsc1x,cpscps,jitcps,cpsjit,jitjit";
@@ -525,7 +525,7 @@ public class MaxineTesterConfiguration {
 
         public boolean matches(Platform platform) {
             if (os == null || os == platform.os) {
-                if (processor == null || processor == platform.cpu()) {
+                if (processor == null || processor == platform.cpu) {
                     return true;
                 }
             }

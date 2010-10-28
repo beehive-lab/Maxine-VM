@@ -62,7 +62,7 @@ public final class TargetBreakpoint {
         return null;
     }
 
-    public static final byte[] breakpointCode = createBreakpointCode(Platform.platform().isa());
+    public static final byte[] breakpointCode = createBreakpointCode(Platform.platform().isa);
 
     private final Pointer instructionPointer;
     private byte[] originalCode;

@@ -647,7 +647,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        ISA isa = platform().isa();
+        ISA isa = platform().isa;
         switch (isa) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;

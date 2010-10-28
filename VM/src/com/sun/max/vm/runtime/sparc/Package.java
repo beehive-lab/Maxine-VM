@@ -38,7 +38,7 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return platform().isa() == ISA.SPARC;
+        return platform().isa == ISA.SPARC;
     }
 
 }

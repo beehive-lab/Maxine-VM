@@ -112,10 +112,11 @@ public final class Platform {
      */
     private static Platform current = Platform.createDefaultPlatform();
 
-    /**
-     * Details about the processor of this platform.
-     */
-    private final ProcessorKind processorKind;
+    public final CPU cpu;
+
+    public final ISA isa;
+
+    public final DataModel dataModel;
 
     /**
      * The operating system.
@@ -134,24 +135,11 @@ public final class Platform {
 
     public final CiTarget target;
 
-    public Platform(ProcessorKind processorKind, OS oS, int pageSize) {
-        this.processorKind = processorKind;
-        this.os = oS;
-        this.pageSize = pageSize;
-
-        if (processorKind.cpu == CPU.SPARCV9 && oS == OS.SOLARIS) {
-            this.stackBias = SPARCStackFrameLayout.STACK_BIAS;
-        } else {
-            this.stackBias = 0;
-        }
-        target = createTarget();
-    }
-
     private CiTarget createTarget() {
         CiRegisterSaveArea registerSaveArea = null;
         CiArchitecture arch = null;
         int stackAlignment = -1;
-        if (isa() == ISA.AMD64) {
+        if (isa == ISA.AMD64) {
             arch = new AMD64();
             registerSaveArea = AMD64TrapStateAccess.RSA;
             if (os == OS.DARWIN) {
@@ -174,7 +162,7 @@ public final class Platform {
             return null;
         }
 
-        int wordSize = processorKind.dataModel.wordWidth.numberOfBytes;
+        int wordSize = dataModel.wordWidth.numberOfBytes;
         boolean isMP = true;
         int spillSlotSize = wordSize;
         int cacheAlignment = wordSize;
@@ -257,15 +245,30 @@ public final class Platform {
             if (!isAcceptedBy(os.name(), filter.os())) {
                 return false;
             }
-            if (!isAcceptedBy(cpu().name(), filter.cpu())) {
+            if (!isAcceptedBy(cpu.name(), filter.cpu())) {
                 return false;
             }
         }
         return true;
     }
 
-    public Platform(CPU cpu, OS oS, int pageSize) {
-        this(new ProcessorKind(cpu, cpu.isa, cpu.defaultDataModel), oS, pageSize);
+    public Platform(CPU cpu, OS os, int pageSize) {
+        this(cpu, cpu.isa, cpu.defaultDataModel, os, pageSize);
+    }
+
+    public Platform(CPU cpu, ISA isa, DataModel dataModel, OS os, int pageSize) {
+        this.isa = isa;
+        this.cpu = cpu;
+        this.os = os;
+        this.dataModel = dataModel;
+        this.pageSize = pageSize;
+
+        if (cpu == CPU.SPARCV9 && os == OS.SOLARIS) {
+            this.stackBias = SPARCStackFrameLayout.STACK_BIAS;
+        } else {
+            this.stackBias = 0;
+        }
+        target = createTarget();
     }
 
     /**
@@ -299,40 +302,30 @@ public final class Platform {
     }
 
     public Platform constrainedByInstructionSet(ISA isa) {
-        ProcessorKind processor = processorKind;
-        if (processor.isa != isa) {
-            processor = ProcessorKind.defaultForInstructionSet(isa);
+        CPU cpu = this.cpu;
+        DataModel dataModel = this.dataModel;
+        if (this.isa != isa) {
+            cpu = CPU.defaultForInstructionSet(isa);
+            dataModel = cpu.defaultDataModel;
         }
-        return new Platform(processor, os, pageSize);
+        return new Platform(cpu, isa, dataModel, os, pageSize);
     }
 
     @Override
     public String toString() {
-        return os.toString().toLowerCase() + "-" + processorKind + ", page size=" + pageSize;
+        return os.toString().toLowerCase() + "-" + cpu.toString().toLowerCase() + ", isa=" + isa + ", " + dataModel + ", page size=" + pageSize;
     }
 
     public Endianness endianness() {
-        return processorKind.dataModel.endianness;
+        return dataModel.endianness;
     }
 
     public WordWidth wordWidth() {
-        return processorKind.dataModel.wordWidth;
-    }
-
-    public ISA isa() {
-        return processorKind.isa;
-    }
-
-    public CPU cpu() {
-        return processorKind.cpu;
-    }
-
-    public DataModel dataModel() {
-        return processorKind.dataModel;
+        return dataModel.wordWidth;
     }
 
     public int cacheAlignment() {
-        return processorKind.dataModel.cacheAlignment;
+        return dataModel.cacheAlignment;
     }
 
     /**
@@ -462,13 +455,12 @@ public final class Platform {
         }
         final int cacheAlignment = cpu.defaultDataModel.cacheAlignment;
         final DataModel dataModel = new DataModel(word, endianness, cacheAlignment);
-        final ProcessorKind processorKind = new ProcessorKind(cpu, isa, dataModel);
 
         String osName = getProperty(OS_PROPERTY) == null ? getOS() : getProperty(OS_PROPERTY);
         final OS os = OS.fromName(osName);
         final int pageSize = getInteger(PAGE_SIZE_PROPERTY) == null ? getPageSize() : getInteger(PAGE_SIZE_PROPERTY);
 
-        return new Platform(processorKind, os, pageSize);
+        return new Platform(cpu, isa, dataModel, os, pageSize);
     }
 
     /**
@@ -508,7 +500,7 @@ public final class Platform {
         if (pageSizeString != null) {
             long pageSize = Longs.parseScaledValue(pageSizeString);
             assert pageSize == (int) pageSize;
-            platform = new Platform(platform.processorKind, platform.os, (int) pageSize);
+            platform = new Platform(platform.cpu, platform.isa, platform.dataModel, platform.os, (int) pageSize);
         }
         return platform;
     }
