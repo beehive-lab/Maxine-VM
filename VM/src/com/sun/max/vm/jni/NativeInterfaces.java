@@ -96,7 +96,7 @@ public final class NativeInterfaces {
         }
 
         File jniHeaderFile = new File(jniHeaderFilePath);
-        ProgramError.check(jniHeaderFile.exists(), "JNI header file " + jniHeaderFile + " does not exist");
+        ProgramError.check(jniHeaderFile.isFile(), "JNI header file " + jniHeaderFile + " does not exist or is not a file");
 
         List<String> jniFunctionNames = new ArrayList<String>();
 

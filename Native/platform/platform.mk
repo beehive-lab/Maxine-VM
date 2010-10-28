@@ -320,16 +320,15 @@ ifeq ($(OS),guestvm)
     endif
     
 else
-    JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
     ifeq ($(OS),darwin)
-        JNI_HEADER=$(shell ls /Developer/SDKs/MacOSX10.*.sdk/System/Library/Frameworks/JavaVM.framework/Versions/1.6*/Headers/* 2>/dev/null | grep jni.h | tail -1)
-        ifneq ($(JNI_HEADER),"")
-            JNI_INCLUDES = -I $(dir $(JNI_HEADER))
-        endif
+        JNI_H_PATH=$(shell ls $(foreach base,/Developer/SDKs/MacOSX10.*.sdk/ /,$(base)System/Library/Frameworks/JavaVM.framework/Versions/1.6*/Headers/jni.h) 2>/dev/null | tail -1)
+        JNI_INCLUDES = -I $(dir $(JNI_H_PATH))
+    else
+        JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
+        JNI_H_PATH = $(wildcard $(word 2,$(JNI_INCLUDES))/jni.h)
     endif
 endif
 
-JNI_H_PATH = $(wildcard $(word 2,$(JNI_INCLUDES))/jni.h)
 ifeq "$(JNI_H_PATH)" ""
     $(error Could not find path to jni.h)
 endif
