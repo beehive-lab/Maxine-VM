@@ -45,8 +45,8 @@ public class InspectorAgent {
     private static int port = TCPTeleChannelProtocol.DEFAULT_PORT;
     private static int pdbLevel = 0;
     private static boolean quitOnClose = false;
-    private static OperatingSystem target;
-    private static String targetSub = "";
+    private static OS os;
+    private static String osSub = "";
     private static final OptionSet options = new OptionSet(true);
     private static final Option<Integer> portOption = options.newIntegerOption("port", TCPTeleChannelProtocol.DEFAULT_PORT,
                     "Port used for communication between Inspector and Agent");
@@ -68,13 +68,13 @@ public class InspectorAgent {
         options.parseArguments(args).getArguments();
         port = portOption.getValue();
         quitOnClose = quitOnCloseOption.getValue();
-        targetSub = targetSubOption.getValue();
+        osSub = targetSubOption.getValue();
         pdbLevel = pdbLevelOption.getValue();
         if (osOption.getValue() != null) {
-            System.setProperty(Platform.OPERATING_SYSTEM_PROPERTY, osOption.getValue());
+            System.setProperty(Platform.OS_PROPERTY, osOption.getValue());
         }
 
-        target = OperatingSystem.fromName(System.getProperty(Platform.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()));
+        os = OS.fromName(System.getProperty(Platform.OS_PROPERTY, OS.current().name()));
 
         Prototype.loadLibrary(TeleVM.TELE_LIBRARY_NAME);
         listen();
@@ -117,7 +117,7 @@ public class InspectorAgent {
                 close();
                 throw ex;
             }
-            final String protocolClassName = "com.sun.max.tele.channel.agent." + target.asPackageName() + ".Agent" + target.asClassName() + targetSub + "NativeTeleChannelProtocol";
+            final String protocolClassName = "com.sun.max.tele.channel.agent." + os.asPackageName() + ".Agent" + os.className + osSub + "NativeTeleChannelProtocol";
             protocol = (RemoteInvocationProtocolAdaptor) Class.forName(protocolClassName).newInstance();
             if (pdbLevel > 0) {
                 ((TeleChannelProtocol) protocol).setTransportDebugLevel(pdbLevel);

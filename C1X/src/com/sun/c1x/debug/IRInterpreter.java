@@ -897,7 +897,7 @@ public class IRInterpreter {
             try {
                 IR methodHir = compiledMethods.get(targetMethod.holder().name() + methodName + targetMethod.signature().toString());
                 if (methodHir == null) {
-                    C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, runtime, targetMethod);
+                    C1XCompilation compilation = new C1XCompilation(compiler, targetMethod, -1);
                     methodHir = compilation.emitHIR();
                     compiledMethods.put(targetMethod.holder().name() + methodName + targetMethod.signature().toString(), methodHir);
                 }

@@ -20,37 +20,37 @@
  */
 package com.sun.max.platform;
 
+import static com.sun.max.platform.OS.UnixFlag.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
-public enum OperatingSystem implements PoolObject {
-    DARWIN("Darwin", 4),
-    LINUX("Linux", 4),
-    SOLARIS("Solaris", 8),
-    WINDOWS("Windows", 4),
-    GUESTVM("GuestVM", 4);
+/**
+ * Enumerated type for operating systems.
+ *
+ * @author Doug Simon
+ */
+public enum OS {
 
-    private final int defaultPageSize;
-    private String hName;
+    DARWIN("Darwin",    UNIX),
+    LINUX("Linux",      UNIX),
+    SOLARIS("Solaris",  UNIX),
+    WINDOWS("Windows", !UNIX),
+    GUESTVM("GuestVM", !UNIX);
+
+    /**
+     * Specifies if this is a Unix OS.
+     */
+    public final boolean unix;
+
+    /**
+     * The identifier of this OS as part of a class name.
+     */
+    public final String className;
 
     public int serial() {
         return ordinal();
     }
-
-    public int defaultPageSize() {
-        return defaultPageSize;
-    }
-
-    /**
-     * Returns a string that can be used in a class name.
-     * @return
-     */
-    public String asClassName() {
-        return hName;
-    }
-
     /**
      * Returns a string that can be used in a package name.
      * @return
@@ -59,16 +59,20 @@ public enum OperatingSystem implements PoolObject {
         return name().toLowerCase();
     }
 
-    private OperatingSystem(String name, int pageKBytes) {
-        hName = name;
-        defaultPageSize = pageKBytes * Ints.K;
+    private OS(String className) {
+        this(className, true);
     }
 
-    public static OperatingSystem fromName(String name) {
-        return OperatingSystem.valueOf(name.toUpperCase());
+    private OS(String className, boolean unix) {
+        this.className = className;
+        this.unix = unix;
     }
 
-    private static OperatingSystem getCurrent() {
+    public static OS fromName(String name) {
+        return OS.valueOf(name.toUpperCase());
+    }
+
+    private static OS getCurrent() {
         final String name = System.getProperty("os.name");
         if (name.equals("Linux")) {
             return LINUX;
@@ -82,22 +86,20 @@ public enum OperatingSystem implements PoolObject {
         if (name.equals("GuestVM")) {
             return GUESTVM;
         }
-        throw ProgramError.unexpected("unknown operating system: " + name);
+        throw ProgramError.unexpected("unknown OS: " + name);
     }
 
     @RESET
-    private static OperatingSystem current;
+    private static OS current;
 
-    public static OperatingSystem current() {
+    public static OS current() {
         if (current == null) {
             current = getCurrent();
         }
         return current;
     }
 
-    private static final Pool<OperatingSystem> VALUE_POOL = new ArrayPool<OperatingSystem>(values());
-
-    public static final PoolSet<OperatingSystem> UNIX = PoolSet.of(VALUE_POOL, DARWIN, LINUX, SOLARIS);
-
-    public static final PoolSet<OperatingSystem> UNIX_GUESTVM = PoolSet.of(VALUE_POOL, DARWIN, LINUX, SOLARIS, GUESTVM);
+    static class UnixFlag {
+        public static final boolean UNIX = true;
+    }
 }

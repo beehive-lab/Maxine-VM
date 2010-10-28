@@ -76,8 +76,8 @@ public class LIRDebugInfo {
         return new LIRDebugInfo(this);
     }
 
-    public void allocateDebugInfo(int registerSize, int frameSize, CiTarget target) {
-        byte[] registerRefMap = registerSize > 0 ? newRefMap(registerSize) : null;
+    public void allocateDebugInfo(int registerSlots, int frameSize, CiTarget target) {
+        byte[] registerRefMap = registerSlots > 0 ? newRefMap(registerSlots) : null;
         byte[] stackRefMap = frameSize > 0 ? newRefMap(frameSize / target.spillSlotSize) : null;
         Frame frame = scopeDebugInfo == null ? null : makeFrame(scopeDebugInfo);
         debugInfo = new CiDebugInfo(state.scope().toCodeSite(bci), frame, registerRefMap, stackRefMap);
@@ -142,7 +142,7 @@ public class LIRDebugInfo {
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterValue registerLocation = (CiRegisterValue) location;
-            int index = target.allocationSpec.refMapIndexMap[registerLocation.reg.number];
+            int index = target.registerSaveArea.indexOf(registerLocation.reg);
             assert index >= 0 : "object cannot be in non-object register " + registerLocation.reg;
             setBit(debugInfo.registerRefMap, index);
         }

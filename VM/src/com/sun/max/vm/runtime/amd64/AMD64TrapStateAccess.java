@@ -20,10 +20,12 @@
  */
 package com.sun.max.vm.runtime.amd64;
 
-import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
+import static com.sun.c1x.target.amd64.AMD64.*;
 import static com.sun.max.vm.runtime.amd64.AMD64Safepoint.*;
 
-import com.sun.max.asm.amd64.*;
+import java.util.*;
+
+import com.sun.cri.ci.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
@@ -63,37 +65,37 @@ import com.sun.max.vm.runtime.*;
  */
 public final class AMD64TrapStateAccess extends TrapStateAccess {
 
-    private static final AMD64GeneralRegister64 RETURN_VALUE_REGISTER = RAX;
-    private static final AMD64GeneralRegister64 STACK_POINTER_REGISTER = RSP;
-
     public static final int TRAP_STATE_SIZE_WITH_RIP;
     public static final int TRAP_STATE_SIZE_WITHOUT_RIP;
     public static final int TRAP_NUMBER_OFFSET;
     public static final int FLAGS_OFFSET;
+    public static final int RIP_OFFSET;
 
-    private static final String[] gprNames;
-    private static final String[] xmmNames;
-
+    public static final CiRegisterSaveArea RSA;
     static {
-        final int gprCount = AMD64GeneralRegister64.ENUMERATOR.size();
-        final int xmmCount = AMD64XMMRegister.ENUMERATOR.size();
-        gprNames = new String[gprCount];
-        xmmNames = new String[xmmCount];
-        for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {
-            gprNames[register.ordinal()] = register.name();
+        int offset = 0;
+        CiRegister[] rsaRegs = {
+            rax,  rcx,  rdx,   rbx,   rsp,   rbp,   rsi,   rdi,
+            r8,   r9,   r10,   r11,   r12,   r13,   r14,   r15,
+            xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
+            xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
+        };
+        Map<CiRegister, Integer> registerOffsets = new HashMap<CiRegister, Integer>(rsaRegs.length);
+        for (CiRegister reg : rsaRegs) {
+            registerOffsets.put(reg, offset);
+            offset += reg.isFpu() ? 16 : 8;
         }
-        for (AMD64XMMRegister register : AMD64XMMRegister.ENUMERATOR) {
-            xmmNames[register.ordinal()] = register.name();
-        }
-        final int generalPurposeRegisterWords = gprCount;
-        final int xmmRegisterWords = 2 * xmmCount;
-        final int flagRegisterWords = 1;
-        final int trapNumberWords = 1;
-        final int wordSize = 8;
-        TRAP_NUMBER_OFFSET = wordSize * (generalPurposeRegisterWords + xmmRegisterWords);
-        FLAGS_OFFSET = TRAP_NUMBER_OFFSET + wordSize;
-        TRAP_STATE_SIZE_WITHOUT_RIP = TRAP_NUMBER_OFFSET + (wordSize * (flagRegisterWords + trapNumberWords));
-        TRAP_STATE_SIZE_WITH_RIP = TRAP_STATE_SIZE_WITHOUT_RIP + wordSize;
+
+        TRAP_NUMBER_OFFSET = offset;
+        offset += 8;
+        FLAGS_OFFSET = offset;
+        offset += 8;
+
+        RSA = new CiRegisterSaveArea(offset, registerOffsets, 8, rax, r15);
+
+        RIP_OFFSET = RSA.size;
+        TRAP_STATE_SIZE_WITHOUT_RIP = RSA.size;
+        TRAP_STATE_SIZE_WITH_RIP = TRAP_STATE_SIZE_WITHOUT_RIP + 8;
     }
 
     public AMD64TrapStateAccess(VMConfiguration vmConfiguration) {
@@ -124,17 +126,21 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
     @Override
     public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
         // TODO: get the frame pointer register from the ABI
-        return trapState.readWord(AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
+        return trapState.readWord(RSA.offsetOf(rbp)).asPointer();
     }
 
     @Override
     public Pointer getSafepointLatch(Pointer trapState) {
-        return trapState.readWord(LATCH_REGISTER.value() * Word.size()).asPointer();
+        Pointer rsa = getRegisterState(trapState);
+        int offset = RSA.offsetOf(LATCH_REGISTER);
+        return rsa.readWord(offset).asPointer();
     }
 
     @Override
     public void setSafepointLatch(Pointer trapState, Pointer value) {
-        trapState.writeWord(LATCH_REGISTER.value() * Word.size(), value);
+        Pointer rsa = getRegisterState(trapState);
+        int offset = RSA.offsetOf(LATCH_REGISTER);
+        rsa.writeWord(offset, value);
     }
 
     @Override
@@ -154,48 +160,47 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
 
     @Override
     public void logTrapState(Pointer trapState) {
-        Pointer register = getRegisterState(trapState);
+        final Pointer rsa = getRegisterState(trapState);
         Log.println("Non-zero registers:");
-        for (String gpr : gprNames) {
-            final Word value = register.readWord(0);
-            if (!value.isZero()) {
-                Log.print("  ");
-                Log.print(gpr);
-                Log.print("=");
-                Log.println(value);
+
+        for (CiRegister reg : RSA.registers) {
+            if (reg.isCpu()) {
+                int offset = RSA.offsetOf(reg);
+                final Word value = rsa.readWord(offset);
+                if (!value.isZero()) {
+                    Log.print("  ");
+                    Log.print(reg.name);
+                    Log.print("=");
+                    Log.println(value);
+                }
             }
-            register = register.plus(Word.size());
         }
-        Log.print("  RIP=");
+        Log.print("  rip=");
         Log.println(getInstructionPointer(trapState));
-        Log.print("  RFLAGS=");
-        final Word flags = trapState.readWord(FLAGS_OFFSET);
+        Log.print("  rflags=");
+        final Word flags = rsa.readWord(FLAGS_OFFSET);
         Log.print(flags);
         Log.print(' ');
         logFlags(flags.asAddress().toInt());
         Log.println();
-        if (false)  {
-            /* Doug: This code is disabled until there is a mechanism for clearing and restoring'
-             * the %mxcsr (floating point status register) before and after the printing.
-             * Without this, the printing of a float or double seems to cause a trap
-             * due to some value in %mxcsr. */
-            boolean seenNonZeroXMM = false;
-            for (String xmm : xmmNames) {
-                final double value = register.readDouble(0);
+        boolean seenNonZeroXMM = false;
+        for (CiRegister reg : RSA.registers) {
+            if (reg.isFpu()) {
+                int offset = RSA.offsetOf(reg);
+                final double value = rsa.readDouble(offset);
                 if (value != 0) {
                     if (!seenNonZeroXMM) {
                         Log.println("Non-zero XMM registers:");
                         seenNonZeroXMM = true;
                     }
                     Log.print("  ");
-                    Log.print(xmm);
+                    Log.print(reg.name);
                     Log.print("=");
                     Log.print(value);
                     Log.print("  {bits: ");
                     Log.print(Address.fromLong(Double.doubleToRawLongBits(value)));
                     Log.println("}");
                 }
-                register = register.plus(Word.size() * 2);
             }
         }
         final int trapNumber = getTrapNumber(trapState);

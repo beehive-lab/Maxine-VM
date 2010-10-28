@@ -315,6 +315,24 @@ public class VMOption {
         matchedVmArguments = new String[vmArguments.length];
     }
 
+    @HOSTED_ONLY
+    public static String[] extractVMArgs(String[] args) {
+        ArrayList<String> vmArgs = new ArrayList<String>();
+        ArrayList<String> otherArgs = new ArrayList<String>();
+        for (String arg : args) {
+            if (arg.startsWith("--")) {
+                vmArgs.add(arg.substring(1));
+            } else {
+                otherArgs.add(arg);
+            }
+        }
+        if (!vmArgs.isEmpty()) {
+            setVMArguments(vmArgs.toArray(new String[vmArgs.size()]));
+            args = otherArgs.toArray(new String[otherArgs.size()]);
+        }
+        return args;
+    }
+
     /**
      * Gets all of the VM arguments provided to {@link #setVMArguments(String[])} that have not been matched
      * against a VM option.

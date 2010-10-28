@@ -212,7 +212,7 @@ public abstract class AdapterGenerator {
             return null;
         }
 
-        if (callee.isTemplate()) {
+        if (callee.isTemplate() || callee.isTrapStub() || callee.isVmEntryPoint()) {
             // Templates do not have adapters as they are not complete methods that are called
             return null;
         }

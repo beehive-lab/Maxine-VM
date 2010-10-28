@@ -108,7 +108,7 @@ public final class JDK_java_lang_Thread {
         if (name == null) {
             name = String.valueOf(nextThreadNum());
         }
-        if (Platform.platform().operatingSystem == OperatingSystem.DARWIN) {
+        if (Platform.platform().os == OS.DARWIN) {
             // The Thread.init() method on Apple takes an extra boolean parameter named 'set_priority'
             // which indicates if the priority should be explicitly set. For all calls to init() this
             // argument is true *except* for a call for the purpose of attaching a thread when it is false.

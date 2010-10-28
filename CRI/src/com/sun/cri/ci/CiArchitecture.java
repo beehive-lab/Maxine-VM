@@ -71,6 +71,9 @@ public abstract class CiArchitecture {
      */
     public final CiRegister[] registers;
 
+    /**
+     * Map of all registers keyed by their {@linkplain CiRegister#name names}.
+     */
     public final HashMap<String, CiRegister> registersByName;
 
     /**

@@ -737,7 +737,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitLoadRegister(LoadRegister i) {
-        out.print(i.register().toString());
+        out.print(i.register.toString());
     }
 
     @Override
@@ -772,7 +772,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitStoreRegister(StoreRegister i) {
-        out.print(i.register().toString()).print(" := ").print(i.value());
+        out.print(i.register.toString()).print(" := ").print(i.value());
     }
 
     @Override

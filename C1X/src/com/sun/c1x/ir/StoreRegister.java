@@ -31,7 +31,7 @@ import com.sun.cri.ci.*;
  */
 public final class StoreRegister extends Instruction {
 
-    final CiRegister register;
+    public final CiRegister register;
     Value value;
 
     /**
@@ -54,10 +54,6 @@ public final class StoreRegister extends Instruction {
     @Override
     public void accept(ValueVisitor v) {
         v.visitStoreRegister(this);
-    }
-
-    public CiRegister register() {
-        return register;
     }
 
     public Value value() {

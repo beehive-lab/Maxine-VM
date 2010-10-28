@@ -59,23 +59,20 @@ public class C1XCompiler extends CiCompiler {
      */
     public final Backend backend;
 
-    public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen) {
+    public final RiRegisterConfig stubRegisterConfig;
+
+    public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig stubRegisterConfig) {
         this.runtime = runtime;
         this.target = target;
         this.xir = xirGen;
-
+        this.stubRegisterConfig = stubRegisterConfig;
         this.backend = Backend.create(target.arch, this);
         init();
     }
 
     @Override
-    public CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator) {
-        return compileMethod(method, -1, xirGenerator);
-    }
-
-    @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
-        C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
+        C1XCompilation compilation = new C1XCompilation(this, method, osrBCI);
         CiResult result = compilation.compile();
         if (false) {
             if (result.bailout() != null) {
@@ -83,7 +80,7 @@ public class C1XCompiler extends CiCompiler {
                 String oldFilter = C1XOptions.PrintFilter;
                 C1XOptions.TraceBytecodeParserLevel = 2;
                 C1XOptions.PrintFilter = null;
-                new C1XCompilation(this, target, runtime, method, osrBCI).compile();
+                new C1XCompilation(this, method, osrBCI).compile();
                 C1XOptions.TraceBytecodeParserLevel = oldLevel;
                 C1XOptions.PrintFilter = oldFilter;
             }

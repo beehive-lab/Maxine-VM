@@ -30,12 +30,14 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.target.amd64.*;
+import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
-import com.sun.cri.ri.RiType.*;
+import com.sun.cri.ri.RiType.Representation;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.CiXirAssembler.XirLabel;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.cri.xir.CiXirAssembler.XirParameter;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -44,10 +46,20 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.classfile.constant.UnresolvedType.*;
+import com.sun.max.vm.classfile.constant.UnresolvedType.ByAccessingClass;
+import com.sun.max.vm.classfile.constant.UnresolvedType.InPool;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveArrayClass;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClass;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClassForNew;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForReading;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForWriting;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInterfaceMethod;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForReading;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForWriting;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveVirtualMethod;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -164,6 +176,19 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
+
+        // search for the runtime call and register critical methods
+        for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
+            int flags = m.getModifiers();
+            if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
+
+                if (MaxineVM.isHosted()) {
+                    // Log.out.println("Registered critical method: " + m.getName() + " / " + SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()).toString());
+                    new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
+                }
+            }
+        }
+
         CiKind[] kinds = CiKind.values();
 
         this.asm = asm;
@@ -250,7 +275,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         assert method.isResolved() : "Cannot generate prologue for unresolved method: " + method;
         ClassMethodActor callee = (ClassMethodActor) method;
 
-        // Cannot share 'asm' across con-current compilations.
+        // Cannot share 'asm' across concurrent compilations.
         CiXirAssembler asm = this.asm.copy();
         asm.restart(CiKind.Void);
 
@@ -260,8 +285,12 @@ public class MaxXirGenerator implements RiXirGenerator {
             generator.adapt(callee, os);
             asm.rawBytes(os.toByteArray());
         }
+
         asm.pushFrame();
-        asm.stackOverflowCheck();
+
+        if (!callee.isVmEntryPoint()) {
+            asm.stackOverflowCheck();
+        }
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
 
@@ -1205,20 +1234,6 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     private void addWriteBarrier(CiXirAssembler asm, XirOperand object, XirOperand value) {
         // XXX: add write barrier mechanism
-    }
-
-    static {
-        // search for the runtime call and register critical methods
-        for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
-            int flags = m.getModifiers();
-            if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
-
-                if (MaxineVM.isHosted()) {
-                    // Log.out.println("Registered critical method: " + m.getName() + " / " + SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()).toString());
-                    new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
-                }
-            }
-        }
     }
 
     private void callRuntimeThroughStub(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {

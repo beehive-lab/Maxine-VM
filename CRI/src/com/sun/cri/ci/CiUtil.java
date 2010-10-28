@@ -29,7 +29,6 @@ import com.sun.cri.ri.*;
 
 /**
  * Miscellaneous collection of utility methods used in the {@code CRI} project.
- * This methods may also be used by the compiler and runtime classes.
  * 
  * @author Doug Simon
  */
@@ -76,9 +75,11 @@ public class CiUtil {
     public static boolean isOdd(int n) {
         return (n & 1) == 1;
     }
+    
     public static boolean isEven(int n) {
         return (n & 1) == 0;
     }
+    
     /**
      * Checks whether the specified integer is a power of two.
      *
@@ -88,6 +89,7 @@ public class CiUtil {
     public static boolean isPowerOf2(int val) {
         return val != 0 && (val & val - 1) == 0;
     }
+    
     /**
      * Checks whether the specified long is a power of two.
      *
@@ -97,6 +99,7 @@ public class CiUtil {
     public static boolean isPowerOf2(long val) {
         return val != 0 && (val & val - 1) == 0;
     }
+    
     /**
      * Computes the log (base 2) of the specified integer, rounding down.
      * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
@@ -108,6 +111,7 @@ public class CiUtil {
         assert val > 0 && isPowerOf2(val);
         return 31 - Integer.numberOfLeadingZeros(val);
     }
+    
     /**
      * Computes the log (base 2) of the specified long, rounding down.
      * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
@@ -119,10 +123,12 @@ public class CiUtil {
         assert val > 0 && isPowerOf2(val);
         return 63 - Long.numberOfLeadingZeros(val);
     }
+    
     public static int align(int size, int align) {
         assert isPowerOf2(align);
         return (size + align - 1) & ~(align - 1);
     }
+    
     /**
      * Gets a word with the nth bit set.
      * @param n the nth bit to set
@@ -131,6 +137,7 @@ public class CiUtil {
     public static int nthBit(int n) {
         return (n >= Integer.SIZE ? 0 : 1 << (n));
     }
+    
     /**
      * Gets a word with the right-most n bits set.
      * @param n the number of right most bits to set
@@ -139,6 +146,7 @@ public class CiUtil {
     public static int rightNBits(int n) {
         return nthBit(n) - 1;
     }
+    
     /**
      * Converts a given type to its Java programming language name. The following are examples of strings returned by
      * this method:
@@ -411,5 +419,53 @@ public class CiUtil {
      */
     public static <T> Set<T> newIdentityHashSet() {
         return Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
+    }
+    
+    /**
+     * Formats a given table as a string. The value of each cell is produced by {@link String#valueOf(Object)}.
+     * 
+     * @param cells the cells of the table in row-major order
+     * @param cols the number of columns per row
+     * @param lpad the number of space padding inserted before each formatted cell value
+     * @param rpad the number of space padding inserted after each formatted cell value
+     * @return a string with one line per row and each column left-aligned
+     */
+    public static String tabulate(Object[] cells, int cols, int lpad, int rpad) {
+        int rows = (cells.length + (cols - 1)) % cols;
+        int[] colWidths = new int[cols];
+        for (int col = 0; col < cols; col++) {
+            for (int row = 0; row < rows; row++) {
+                int index = col + (row * cols);
+                if (index < cells.length) {
+                    Object cell = cells[index];
+                    colWidths[col] = Math.max(colWidths[col], String.valueOf(cell).length());
+                }
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        String nl = String.format("%n");
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                int index = col + (row * cols);
+                if (index < cells.length) {
+                    for (int i = 0; i < lpad; i++) {
+                        sb.append(' ');
+                    }
+                    Object cell = cells[index];
+                    String s = String.valueOf(cell);
+                    int w = s.length();
+                    sb.append(s);
+                    while (w < colWidths[col]) {
+                        sb.append(' ');
+                        w++;
+                    }
+                    for (int i = 0; i < rpad; i++) {
+                        sb.append(' ');
+                    }
+                }
+            }
+            sb.append(nl);
+        }
+        return sb.toString();
     }
 }

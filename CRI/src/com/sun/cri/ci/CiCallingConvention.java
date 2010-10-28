@@ -31,7 +31,7 @@ package com.sun.cri.ci;
 public class CiCallingConvention {
 
     /**
-     * The amount of stack space (in bytes) required for the call.
+     * The amount of stack space (in bytes) required for the stack-based arguments of the call.
      */
     public final int stackSize;
 

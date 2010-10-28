@@ -101,7 +101,7 @@ public final class BootImageTable extends InspectorTable {
             addRow("endianness:", new DataLabel.EnumAsText(inspection(), processorDataModel.endianness), null);
             addRow("cache alignment:", new DataLabel.IntAsDecimal(inspection(), processorDataModel.cacheAlignment), null);
 
-            addRow("operating system:", new DataLabel.EnumAsText(inspection(), platform.operatingSystem), null);
+            addRow("operating system:", new DataLabel.EnumAsText(inspection(), platform.os), null);
             addRow("page size:", new DataLabel.IntAsDecimal(inspection(), platform.pageSize), null);
 
             addRow("reference scheme:", new JavaNameLabel(inspection(), vmConfiguration.referenceScheme().name(), vmConfiguration.referenceScheme().getClass().getName()), null);

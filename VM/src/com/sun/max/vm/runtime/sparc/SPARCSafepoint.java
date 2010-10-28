@@ -77,11 +77,6 @@ public final class SPARCSafepoint extends Safepoint {
      */
     public static final GPR LATCH_REGISTER = G2;
 
-    @Override
-    public GPR latchRegister() {
-        return LATCH_REGISTER;
-    }
-
     @HOSTED_ONLY
     private SPARCAssembler createAssembler() {
         if (is32Bit) {

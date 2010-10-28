@@ -58,7 +58,7 @@ public final class BootImageGenerator {
     public static final String STATS_FILE_NAME = "maxine.stats";
 
     public static final String DEFAULT_VM_DIRECTORY = "Native" + File.separator + "generated" + File.separator +
-        OperatingSystem.fromName(System.getProperty(Platform.OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name())).name().toLowerCase();
+        OS.fromName(System.getProperty(Platform.OS_PROPERTY, OS.current().name())).name().toLowerCase();
 
     private final OptionSet options = new OptionSet();
 
@@ -91,10 +91,6 @@ public final class BootImageGenerator {
 
     public final Option<Boolean> prototypeJit = options.newBooleanOption("prototype-jit", false,
         "Selects JIT as the default for building the boot image.");
-
-    private final Option<String> vmArguments = options.newStringOption("vmargs", null,
-            "A set of one or more VM arguments. This is useful for exercising VM functionality or " +
-            "enabling VM tracing while bootstrapping.");
 
     /**
      * Used in the Java tester to indicate whether to test the resolution and linking mechanism for
@@ -190,6 +186,7 @@ public final class BootImageGenerator {
             PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
+            programArguments = VMOption.extractVMArgs(programArguments);
             options.parseArguments(programArguments);
 
             if (help.getValue()) {
@@ -200,11 +197,6 @@ public final class BootImageGenerator {
             String[] extraClassesAndPackages = options.getArguments();
             if (extraClassesAndPackages.length != 0) {
                 System.setProperty(JavaPrototype.EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME, Utils.toString(extraClassesAndPackages, " "));
-            }
-
-
-            if (vmArguments.getValue() != null) {
-                VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
             }
 
             BootImageGenerator.calleeC1X = testCalleeC1X.getValue();
