@@ -26,23 +26,74 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
  * @author Bernd Mathiske
  */
-public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> extends OhmArrayHeaderLayout implements ArrayLayout<Value_Type> {
+public class OhmArrayLayout extends OhmGeneralLayout implements ArrayLayout {
 
-    protected final Kind<Value_Type> elementKind;
+    /**
+     * The cell offset of the word in the header containing the array length.
+     */
+    public final int lengthOffset;
 
-    public OhmArrayLayout(Kind<Value_Type> elementKind) {
+    public final int headerSize;
+
+    public final Kind elementKind;
+
+    @INLINE
+    public final int headerSize() {
+        return headerSize;
+    }
+
+    public HeaderField[] headerFields() {
+        return new HeaderField[] {HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH};
+    }
+
+    OhmArrayLayout(Kind elementKind) {
+        lengthOffset = miscOffset + Word.size();
+        headerSize = lengthOffset + Word.size();
         this.elementKind = elementKind;
     }
 
+    public boolean isArrayLayout() {
+        return true;
+    }
+
     @INLINE
-    public final Kind<Value_Type> elementKind() {
+    public final Size getArraySize(Kind kind, int length) {
+        return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize).wordAligned();
+    }
+
+    @Override
+    public Offset getOffsetFromOrigin(HeaderField headerField) {
+        if (headerField == HeaderField.LENGTH) {
+            return Offset.fromInt(lengthOffset);
+        }
+        return super.getOffsetFromOrigin(headerField);
+    }
+
+    public int arrayLengthOffset() {
+        return lengthOffset;
+    }
+
+    @INLINE
+    public final int readLength(Accessor accessor) {
+        return accessor.readInt(lengthOffset);
+    }
+
+    @INLINE
+    public final void writeLength(Accessor accessor, int length) {
+        accessor.writeInt(lengthOffset, length);
+    }
+
+    @INLINE
+    public final Kind elementKind() {
         return elementKind;
     }
 
@@ -151,4 +202,26 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
     public void copyElements(Accessor src, int srcIndex, Object dst, int dstIndex, int length) {
         src.copyElements(originDisplacement(), srcIndex, dst, dstIndex, length);
     }
+
+    @INLINE public final boolean   getBoolean(Accessor accessor, int index) { return accessor.getBoolean(originDisplacement(), index); }
+    @INLINE public final byte      getByte(Accessor accessor, int index) { return accessor.getByte(originDisplacement(), index); }
+    @INLINE public final char      getChar(Accessor accessor, int index) { return accessor.getChar(originDisplacement(), index); }
+    @INLINE public final short     getShort(Accessor accessor, int index) { return accessor.getShort(originDisplacement(), index);  }
+    @INLINE public final int       getInt(Accessor accessor, int index) { return accessor.getInt(originDisplacement(), index); }
+    @INLINE public final float     getFloat(Accessor accessor, int index) { return accessor.getFloat(originDisplacement(), index); }
+    @INLINE public final long      getLong(Accessor accessor, int index) { return accessor.getLong(originDisplacement(), index); }
+    @INLINE public final double    getDouble(Accessor accessor, int index) { return accessor.getDouble(originDisplacement(), index); }
+    @INLINE public final Word      getWord(Accessor accessor, int index) { return accessor.getWord(originDisplacement(), index); }
+    @INLINE public final Reference getReference(Accessor accessor, int index) { return accessor.getReference(originDisplacement(), index); }
+
+    @INLINE public final void setBoolean(Accessor accessor, int index, boolean value) { accessor.setBoolean(originDisplacement(), index, value); }
+    @INLINE public final void setByte(Accessor accessor, int index, byte value) {  accessor.setByte(originDisplacement(), index, value); }
+    @INLINE public final void setChar(Accessor accessor, int index, char value) { accessor.setChar(originDisplacement(), index, value); }
+    @INLINE public final void setShort(Accessor accessor, int index, short value) { accessor.setShort(originDisplacement(), index, value); }
+    @INLINE public final void setInt(Accessor accessor, int index, int value) { accessor.setInt(originDisplacement(), index, value); }
+    @INLINE public final void setFloat(Accessor accessor, int index, float value) { accessor.setFloat(originDisplacement(), index, value); }
+    @INLINE public final void setLong(Accessor accessor, int index, long value) { accessor.setLong(originDisplacement(), index, value); }
+    @INLINE public final void setDouble(Accessor accessor, int index, double value) { accessor.setDouble(originDisplacement(), index, value); }
+    @INLINE public final void setWord(Accessor accessor, int index, Word value) { accessor.setWord(originDisplacement(), index, value); }
+    @INLINE public final void setReference(Accessor accessor, int index, Reference element) { accessor.setReference(originDisplacement(), index, element); }
 }

@@ -137,8 +137,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     // Check for the special case where we can't determine what caused the VM to stop
                     boolean eventCauseFound = false;
 
+                    assert vm().lockHeldByCurrentThread();
+                    vm().unlock();
                     // Wait here for VM process to stop
                     ProcessState newState = waitUntilStopped();
+                    vm().lock();
+
                     ++epoch;
 
                     // Case 1. The process has died; throw an exception.
@@ -161,6 +165,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     TeleProcess.this.updateCache();
                     targetBreakpointManager().setActiveAll(false);
 
+                    int newlystarted = 0;
                     // Look through all the threads to see which, if any, have events triggered that caused the stop
                     for (TeleNativeThread thread : threads()) {
                         switch(thread.state()) {
@@ -182,7 +187,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                                 if (systemTeleWatchpoint != null && systemTeleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE + 1, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering system watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
+                                    final int triggeredWatchpointCode = readWatchpointAccessCode();
+                                    teleWatchpointEvent = new TeleWatchpointEvent(systemTeleWatchpoint, thread, triggeredWatchpointAddress, triggeredWatchpointCode);
                                     resumeExecution = false;
+                                    break;
                                 }
                                 final TeleWatchpoint clientTeleWatchpoint = watchpointManager.findClientWatchpointContaining(triggeredWatchpointAddress);
                                 if (clientTeleWatchpoint != null && clientTeleWatchpoint.handleTriggerEvent(thread)) {
@@ -207,6 +215,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                         pauseRequestPending = false;
                     }
                     ProgramError.check(eventCauseFound, "Process halted for no apparent cause");
+                    if (newlystarted > 0) {
+                        Trace.line(TRACE_VALUE + 1, tracePrefix() + "Hit " + newlystarted + "VmThread.run() breakpoints " + request);
+                    }
                     if (resumeExecution) {
                         Trace.line(TRACE_VALUE + 1, tracePrefix() + "Resuming execution after handling event triggers: " + request);
                         restoreBreakpointsAndResume(request.withClientBreakpoints);

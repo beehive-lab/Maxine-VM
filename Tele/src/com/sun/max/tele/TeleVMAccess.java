@@ -64,5 +64,4 @@ public interface TeleVMAccess {
      * null if watchpoints not supported.
      */
     TeleWatchpoint.WatchpointManager watchpointManager();
-
 }

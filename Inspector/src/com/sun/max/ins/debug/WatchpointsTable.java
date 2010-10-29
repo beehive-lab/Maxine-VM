@@ -490,7 +490,7 @@ public final class WatchpointsTable extends InspectorTable {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             final TeleObject teleObject = watchpoint.getTeleObject();
             final StringBuilder sb = new StringBuilder();
-            sb.append(watchpoint.memoryRegion().regionName());
+            sb.append(watchpoint.description());
             if (teleObject != null) {
                 sb.append(": ").append(inspection().nameDisplay().referenceLabelText(teleObject));
             }
@@ -498,7 +498,7 @@ public final class WatchpointsTable extends InspectorTable {
             setText(description);
             setToolTipText(description);
             // TODO (mlvdv)  Abstract this string, or come up with a method/predicate instead
-            if (description.equals("RegionWatchpoint - GC removed corresponding Object")) {
+            if (watchpoint.memoryRegion().regionName().equals("RegionWatchpoint - GC removed corresponding Object")) {
                 setForeground(Color.RED);
             } else {
                 setForeground(getRowTextColor(row));

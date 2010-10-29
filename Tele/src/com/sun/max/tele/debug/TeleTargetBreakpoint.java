@@ -427,12 +427,11 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          * @throws MaxVMBusyException
          */
         TeleTargetBreakpoint makeSystemBreakpoint(CodeLocation codeLocation, VMTriggerEventHandler handler, TeleBytecodeBreakpoint owner) throws MaxVMBusyException {
+            vm().lock();
             assert codeLocation.hasAddress();
             final Address address = codeLocation.address();
             ProgramError.check(!address.isZero());
-            if (!vm().tryLock()) {
-                throw new MaxVMBusyException();
-            }
+
             SystemTargetBreakpoint systemBreakpoint;
             try {
                 systemBreakpoint = systemBreakpoints.get(address.toLong());
@@ -578,7 +577,9 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         void removeTransientBreakpoints() {
             assert vm().lockHeldByCurrentThread();
-            transientBreakpoints.clear();
+            if (transientBreakpoints.size() > 0) {
+                transientBreakpoints.clear();
+            }
             updateAfterBreakpointChanges(false);
         }
 

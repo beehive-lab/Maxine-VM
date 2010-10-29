@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.layout.hom;
 
+import static com.sun.max.vm.type.Kind.*;
+
 import com.sun.max.vm.layout.*;
 
 /**
@@ -34,17 +36,17 @@ public class HomLayoutScheme extends LayoutScheme {
         super(new HomGeneralLayout(),
               new HomTupleLayout(),
               new HomHybridLayout(),
-              new HomArrayHeaderLayout(),
-              new HomByteArrayLayout(),
-              new HomBooleanArrayLayout(),
-              new HomShortArrayLayout(),
-              new HomCharArrayLayout(),
-              new HomIntArrayLayout(),
-              new HomFloatArrayLayout(),
-              new HomLongArrayLayout(),
-              new HomDoubleArrayLayout(),
-              new HomWordArrayLayout(),
-              new HomReferenceArrayLayout());
+              new HomArrayLayout(null),
+              new HomArrayLayout(BYTE),
+              new HomArrayLayout(BOOLEAN),
+              new HomArrayLayout(SHORT),
+              new HomArrayLayout(CHAR),
+              new HomArrayLayout(INT),
+              new HomArrayLayout(FLOAT),
+              new HomArrayLayout(LONG),
+              new HomArrayLayout(DOUBLE),
+              new HomArrayLayout(WORD),
+              new HomArrayLayout(REFERENCE));
     }
 
 }

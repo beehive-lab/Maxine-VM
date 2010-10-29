@@ -34,7 +34,7 @@ import com.sun.max.vm.layout.Layout.*;
  *
  * @author Bernd Mathiske
  */
-public interface HybridLayout extends TupleLayout, WordArrayLayout {
+public interface HybridLayout extends TupleLayout, ArrayLayout {
 
     int firstAvailableWordArrayIndex(Size tupleSize);
 

@@ -407,8 +407,10 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         return rootsRegion;
     }
 
+    private static  final int MAX_VM_LOCK_TRIALS = 100;
+
     public TeleObject findTeleObject(Reference reference) throws MaxVMBusyException {
-        if (vm().tryLock()) {
+        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
                 return makeTeleObject(reference);
             } finally {
@@ -429,7 +431,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
     }
 
     public TeleObject findObjectAt(Address origin) {
-        if (vm().tryLock()) {
+        if (vm().tryLock(MAX_VM_LOCK_TRIALS)) {
             try {
                 return makeTeleObject(vm().originToReference(origin.asPointer()));
             } catch (Throwable throwable) {

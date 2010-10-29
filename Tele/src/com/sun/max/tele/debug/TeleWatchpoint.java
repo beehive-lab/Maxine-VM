@@ -973,7 +973,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         public TeleWatchpoint createVmThreadLocalWatchpoint(String description, MaxThreadLocalVariable threadLocalVariable, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
-            if (!vm().tryLock()) {
+            if (!vm().tryLock(100)) {
                 throw new MaxVMBusyException();
             }
             TeleWatchpoint teleWatchpoint;
@@ -985,6 +985,30 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             }
             return teleWatchpoint;
         }
+
+        /**
+         * Watchpoint setting for system watchpoint used to catch unexpected write to vm thread locals.
+         */
+        private final WatchpointSettings systemThreadLocalWatchpointSetting = new WatchpointSettings(false, true, false, true);
+
+        public TeleWatchpoint createSystemVmThreadLocalWatchpoint(String description, MaxThreadLocalVariable threadLocalVariable)
+            throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
+            if (!vm().tryLock(100))   {
+                throw new MaxVMBusyException();
+            }
+            TeleWatchpoint teleWatchpoint;
+            try {
+//                teleWatchpoint = new TeleVmThreadLocalWatchpoint(WatchpointKind.SYSTEM, this, description, threadLocalVariable, systemThreadLocalWatchpointSetting);
+//                teleWatchpoint = addSystemWatchpoint(teleWatchpoint);
+                teleWatchpoint = new TeleVmThreadLocalWatchpoint(WatchpointKind.CLIENT, this, description, threadLocalVariable, systemThreadLocalWatchpointSetting);
+                teleWatchpoint = addClientWatchpoint(teleWatchpoint);
+            } finally {
+                vm().unlock();
+            }
+            return teleWatchpoint;
+        }
+
+
 
         /**
          * Find existing <strong>client</strong> watchpoints in the VM by location.
@@ -1053,7 +1077,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @param address a location in VM memory
          * @return a system watchpoint, null if none exists at the address.
          */
-        TeleWatchpoint findSystemWatchpoint(Address address) {
+        public TeleWatchpoint findSystemWatchpoint(Address address) {
             for (MaxWatchpoint maxWatchpoint : systemWatchpointsCache) {
                 if (maxWatchpoint.memoryRegion().contains(address)) {
                     return (TeleWatchpoint) maxWatchpoint;

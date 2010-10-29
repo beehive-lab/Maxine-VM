@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.layout.hosted;
 
+import static com.sun.max.vm.type.Kind.*;
+
 import com.sun.max.vm.layout.*;
 
 /**
@@ -31,17 +33,16 @@ public class HostedLayoutScheme extends LayoutScheme {
         super(new HostedGeneralLayout(),
               new HostedTupleLayout(),
               new HostedHybridLayout(),
-              new HostedArrayHeaderLayout(),
-              new HostedByteArrayLayout(),
-              new HostedBooleanArrayLayout(),
-              new HostedShortArrayLayout(),
-              new HostedCharArrayLayout(),
-              new HostedIntArrayLayout(),
-              new HostedFloatArrayLayout(),
-              new HostedLongArrayLayout(),
-              new HostedDoubleArrayLayout(),
-              new HostedWordArrayLayout(),
-              new HostedReferenceArrayLayout());
+              new HostedArrayLayout(null),
+              new HostedArrayLayout(BYTE),
+              new HostedArrayLayout(BOOLEAN),
+              new HostedArrayLayout(SHORT),
+              new HostedArrayLayout(CHAR),
+              new HostedArrayLayout(INT),
+              new HostedArrayLayout(FLOAT),
+              new HostedArrayLayout(LONG),
+              new HostedArrayLayout(DOUBLE),
+              new HostedArrayLayout(WORD),
+              new HostedArrayLayout(REFERENCE));
     }
-
 }

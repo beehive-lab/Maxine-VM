@@ -497,15 +497,16 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
     public void refresh(boolean force) {
         final MaxVMState maxVMState = inspection.vm().state();
+        final boolean invalidReferenceDetected = !inspection.vm().invalidReferencesLogger().isEmpty();
         if (maxVMState.newerThan(lastRefreshedState)) {
             lastRefreshedState = maxVMState;
             setTitle(inspection.currentInspectionTitle());
             switch (maxVMState.processState()) {
                 case STOPPED:
                     if (maxVMState.isInGC()) {
-                        menuBar.setStateColor(inspection.style().vmStoppedinGCBackgroundColor());
+                        menuBar.setStateColor(inspection.style().vmStoppedinGCBackgroundColor(invalidReferenceDetected));
                     } else {
-                        menuBar.setStateColor(inspection.style().vmStoppedBackgroundColor());
+                        menuBar.setStateColor(inspection.style().vmStoppedBackgroundColor(invalidReferenceDetected));
                     }
                     break;
                 case RUNNING:

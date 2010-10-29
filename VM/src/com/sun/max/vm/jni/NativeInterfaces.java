@@ -29,7 +29,7 @@ import java.util.regex.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
-import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -92,16 +92,11 @@ public final class NativeInterfaces {
     private static StaticMethodActor[] checkAgainstJniHeaderFile(StaticMethodActor[] jniFunctionActors) {
         String jniHeaderFilePath = System.getProperty("max.jni.headerFile");
         if (jniHeaderFilePath == null) {
-            jniHeaderFilePath = System.getProperty("java.home");
-            final String jreTail = File.separator + "jre";
-            if (jniHeaderFilePath.endsWith(jreTail)) {
-                jniHeaderFilePath = Strings.chopSuffix(jniHeaderFilePath, jreTail);
-            }
-            jniHeaderFilePath += File.separator + "include" + File.separator + "jni.h";
+            jniHeaderFilePath = Platform.jniHeaderFilePath();
         }
 
-        final File jniHeaderFile = new File(jniHeaderFilePath);
-        ProgramError.check(jniHeaderFile.exists(), "JNI header file " + jniHeaderFile + " does not exist");
+        File jniHeaderFile = new File(jniHeaderFilePath);
+        ProgramError.check(jniHeaderFile.isFile(), "JNI header file " + jniHeaderFile + " does not exist or is not a file");
 
         List<String> jniFunctionNames = new ArrayList<String>();
 
