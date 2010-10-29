@@ -743,6 +743,8 @@ public class VmOperation {
                 }
             }
         }
+        EXCEPTION_OBJECT.checkConstantWord(vmThreadLocals, Word.zero());
+
         doAfterFrozen(thread);
 
         if (TraceVmOperations) {
