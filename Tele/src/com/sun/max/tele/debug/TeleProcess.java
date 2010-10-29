@@ -185,7 +185,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                                     } else if (breakpoint.codeLocation().equals(vm().teleMethods().vmThreadDetached())) {
                                         newlydetached++;
                                     }
-                                    Trace.line(TRACE_VALUE + 1, tracePrefix() + " resuming execution after thread [id=" + thread.id() + "] triggered breakpoint");
+                                    Trace.line(TRACE_VALUE, tracePrefix() + (resumeExecution ? " RESUMING" : " STOPPING") + " execution after thread [id=" + thread.id() + "] triggered breakpoint");
                                 }
                                 break;
                             case WATCHPOINT:
