@@ -149,37 +149,31 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     private List<XirTemplate> stubs = new ArrayList<XirTemplate>();
 
-    @HOSTED_ONLY
     @FOLD
     int hubOffset() {
         return generalLayout().getOffsetFromOrigin(Layout.HeaderField.HUB).toInt();
     }
 
-    @HOSTED_ONLY
     @FOLD
     int offsetOfFirstArrayElement() {
         return byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
     }
 
-    @HOSTED_ONLY
     @FOLD
     int offsetOfMTableStartIndex() {
         return FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
     }
 
-    @HOSTED_ONLY
     @FOLD
     int offsetOfMTableLength() {
         return FieldActor.findInstance(Hub.class, "mTableLength").offset();
     }
 
-    @HOSTED_ONLY
     public MaxXirGenerator() {
     }
 
     private CiXirAssembler asm;
 
-    @HOSTED_ONLY
     @Override
     public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
 
