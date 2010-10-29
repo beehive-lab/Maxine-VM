@@ -241,7 +241,7 @@ public class C1XTest {
                 boolean result;
                 if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
                     C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
-                    result = compile(c1x.getCompiler(), c1x.runtime, c1x.getXirGenerator(), methodActor, printBailoutOption.getValue(), false);
+                    result = compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, methodActor, printBailoutOption.getValue(), false);
                 } else {
                     result = compile(compilerScheme, methodActor, printBailoutOption.getValue(), false);
                 }
@@ -281,7 +281,7 @@ public class C1XTest {
         if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
             C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
             for (MethodActor methodActor : methods) {
-                if (!compile(c1x.getCompiler(), c1x.runtime, c1x.getXirGenerator(), methodActor, false, true)) {
+                if (!compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, methodActor, false, true)) {
                     totalFailures++;
                 }
             }
@@ -312,7 +312,7 @@ public class C1XTest {
                 if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
                     C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
                     for (MethodActor actor : methods) {
-                        compile(c1x.getCompiler(), c1x.runtime, c1x.getXirGenerator(), actor, false, false);
+                        compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, actor, false, false);
                     }
                 } else {
                     for (MethodActor actor : methods) {

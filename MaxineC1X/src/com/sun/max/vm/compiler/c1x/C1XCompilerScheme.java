@@ -22,8 +22,9 @@ package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import java.lang.reflect.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.target.amd64.*;
@@ -36,11 +37,14 @@ import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Integration of the C1X compiler into Maxine's compilation framework.
@@ -64,7 +68,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
      * The Maxine specific implementation of the {@linkplain RiXirGenerator interface} used by C1X
      * to incorporate runtime specific details when translating bytecode methods.
      */
-    private RiXirGenerator xirGenerator;
+    public final RiXirGenerator xirGenerator = new MaxXirGenerator();
 
     /**
      * The C1X compiler instance configured for the Maxine runtime.
@@ -108,32 +112,33 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
     }
 
-    /**
-     * Gets the Maxine specific implementation of the {@linkplain RiXirGenerator interface} used by C1X
-     * to incorporate runtime specific details when translating bytecode methods.
-     */
-    public RiXirGenerator getXirGenerator() {
-        if (isHosted() && xirGenerator == null) {
-            // Lazy initialization to resolve Maxine scheme initialization boot strapping
-            xirGenerator = new MaxXirGenerator(vmConfig(), target, runtime);
-        }
-        return xirGenerator;
-    }
-
-    /**
-     * Gets the C1X compiler instance configured for the Maxine runtime.
-     */
-    public C1XCompiler getCompiler() {
-        if (isHosted() && compiler == null) {
-            compiler = new C1XCompiler(runtime, target, getXirGenerator(), selectStubRegisterConfig());
-        }
-        return compiler;
+    @Override
+    public <T extends TargetMethod> Class<T> compiledType() {
+        Class<Class<T>> type = null;
+        return Utils.cast(type, C1XTargetMethod.class);
     }
 
     @Override
-    public <Type extends TargetMethod> Class<Type> compiledType() {
-        Class<Class<Type>> type = null;
-        return Utils.cast(type, C1XTargetMethod.class);
+    public void initialize(Phase phase) {
+        if (isHosted() && phase == Phase.BOOTSTRAPPING) {
+            compiler = new C1XCompiler(runtime, target, xirGenerator, selectStubRegisterConfig());
+            // search for the runtime call and register critical methods
+            for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
+                int flags = m.getModifiers();
+                if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
+                    // Log.out.println("Registered critical method: " + m.getName() + " / " + SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()).toString());
+                    new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
+                }
+            }
+        }
+    }
+
+    @HOSTED_ONLY
+    public C1XCompiler compiler() {
+        if (compiler == null) {
+            initialize(Phase.BOOTSTRAPPING);
+        }
+        return compiler;
     }
 
     public final TargetMethod compile(final ClassMethodActor classMethodActor) {
@@ -144,7 +149,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             }
             FatalError.unexpected("Trap stub must be compiled into boot image");
         }
-        CiTargetMethod compiledMethod = getCompiler().compileMethod(method, -1, getXirGenerator()).targetMethod();
+        CiTargetMethod compiledMethod = compiler.compileMethod(method, -1, xirGenerator).targetMethod();
         if (compiledMethod != null) {
             C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
             CompilationScheme.Inspect.notifyCompilationComplete(c1xTargetMethod);
