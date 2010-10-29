@@ -37,7 +37,7 @@ import com.sun.cri.xir.*;
  */
 public class C1XCompiler extends CiCompiler {
 
-    private final Map<Object, GlobalStub> map = new HashMap<Object, GlobalStub>();
+    private final Map<Object, GlobalStub> stubs = new HashMap<Object, GlobalStub>();
 
     /**
      * The target that this compiler has been configured for.
@@ -96,7 +96,7 @@ public class C1XCompiler extends CiCompiler {
             for (XirTemplate template : xirTemplateStubs) {
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, template.name);
                 try {
-                    map.put(template, emitter.emit(template, runtime));
+                    stubs.put(template, emitter.emit(template, runtime));
                 } finally {
                     filter.remove();
                 }
@@ -106,7 +106,7 @@ public class C1XCompiler extends CiCompiler {
         for (GlobalStub.Id id : GlobalStub.Id.values()) {
             TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
             try {
-                map.put(id, emitter.emit(id, runtime));
+                stubs.put(id, emitter.emit(id, runtime));
             } finally {
                 suppressor.remove();
             }
@@ -114,22 +114,22 @@ public class C1XCompiler extends CiCompiler {
     }
 
     public GlobalStub lookupGlobalStub(GlobalStub.Id id) {
-        GlobalStub globalStub = map.get(id);
+        GlobalStub globalStub = stubs.get(id);
         assert globalStub != null : "no stub for global stub id: " + id;
         return globalStub;
     }
 
     public GlobalStub lookupGlobalStub(XirTemplate template) {
-        GlobalStub globalStub = map.get(template);
+        GlobalStub globalStub = stubs.get(template);
         assert globalStub != null : "no stub for XirTemplate: " + template;
         return globalStub;
     }
 
     public GlobalStub lookupGlobalStub(CiRuntimeCall runtimeCall) {
-        GlobalStub globalStub = map.get(runtimeCall);
+        GlobalStub globalStub = stubs.get(runtimeCall);
         if (globalStub == null) {
             globalStub = backend.newGlobalStubEmitter().emit(runtimeCall, runtime);
-            map.put(runtimeCall, globalStub);
+            stubs.put(runtimeCall, globalStub);
         }
 
         assert globalStub != null : "could not find global stub for runtime call: " + runtimeCall;

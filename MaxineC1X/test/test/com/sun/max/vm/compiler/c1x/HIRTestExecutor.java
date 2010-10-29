@@ -51,7 +51,7 @@ public class HIRTestExecutor implements Executor {
 
         runtime = compilerScheme.runtime;
         // create MaxineRuntime
-        generator = new HIRGenerator(runtime, Platform.platform().target, compilerScheme.getCompiler());
+        generator = new HIRGenerator(runtime, Platform.platform().target, compilerScheme.compiler());
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {
