@@ -23,7 +23,6 @@ package com.sun.max.ins.object;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.layout.*;
 
 /**
  * An object inspector specialized for displaying a low-level object

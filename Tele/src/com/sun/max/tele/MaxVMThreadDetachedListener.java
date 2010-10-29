@@ -18,18 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.layout;
+package com.sun.max.tele;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.value.*;
 
 /**
- * @author Bernd Mathiske
+ * Listener interface for VM thread detach.
+ * Notification of thread detach is made when a VMThread has detached itself from the ACTIVE list.
+ *
+ * @author Laurent Daynes
  */
-public interface ByteArrayLayout extends ArrayLayout<ByteValue> {
-
-    byte getByte(Accessor accessor, int index);
-
-    void setByte(Accessor accessor, int index, byte value);
-
+public interface MaxVMThreadDetachedListener {
+    void detached(MaxThread thread);
 }

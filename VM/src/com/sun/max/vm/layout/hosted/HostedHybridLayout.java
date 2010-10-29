@@ -25,11 +25,12 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
  */
-public class HostedHybridLayout extends HostedWordArrayLayout implements HybridLayout {
+public class HostedHybridLayout extends HostedArrayLayout implements HybridLayout {
 
     @Override
     public Layout.Category category() {
@@ -53,6 +54,7 @@ public class HostedHybridLayout extends HostedWordArrayLayout implements HybridL
     private final HostedTupleLayout tupleLayout;
 
     public HostedHybridLayout() {
+        super(Kind.WORD);
         tupleLayout = new HostedTupleLayout();
     }
 

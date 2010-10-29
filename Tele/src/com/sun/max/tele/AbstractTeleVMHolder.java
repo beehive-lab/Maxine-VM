@@ -67,5 +67,4 @@ public abstract class AbstractTeleVMHolder implements TeleVMAccess {
     public TeleWatchpoint.WatchpointManager watchpointManager() {
         return vm.watchpointManager();
     }
-
 }

@@ -32,7 +32,7 @@ import com.sun.max.vm.value.*;
 /**
  * @author Bernd Mathiske
  */
-public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridLayout {
+public final class OhmHybridLayout extends OhmArrayLayout implements HybridLayout {
 
     @Override
     public Layout.Category category() {
@@ -50,11 +50,12 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
     }
 
     private final OhmTupleLayout tupleLayout;
-    private final IntArrayLayout intArrayLayout;
+    private final OhmArrayLayout intArrayLayout;
 
     OhmHybridLayout() {
+        super(Kind.WORD);
         tupleLayout = new OhmTupleLayout();
-        intArrayLayout = new OhmIntArrayLayout();
+        intArrayLayout = new OhmArrayLayout(Kind.INT);
     }
 
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {

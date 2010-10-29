@@ -70,7 +70,7 @@ public class PageDataAccess extends DataAccessAdapter {
 
     private static void checkNullPointer(Address address) {
         if (address.isZero()) {
-            throw new NullPointerException("Cannot access address ZERO");
+            throw new DataIOError(address, "Cannot access address ZERO");
         }
     }
 

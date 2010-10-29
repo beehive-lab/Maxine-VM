@@ -103,3 +103,13 @@ Java_com_sun_max_platform_Platform_nativeNumberOfSignals(JNIEnv *env, jclass c)
 #   error
 #endif
 }
+
+JNIEXPORT jstring JNICALL
+Java_com_sun_max_platform_Platform_jniHeaderFilePath(JNIEnv *env, jclass c)
+{
+#ifndef JNI_H_PATH
+#error JNI_H_PATH should be defined
+#endif
+    return (*env)->NewStringUTF(env, STRINGIZE(JNI_H_PATH));
+}
+

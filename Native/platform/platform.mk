@@ -318,9 +318,20 @@ ifeq ($(OS),guestvm)
         endif
         CFLAGS += -I $(XEN_ROOT)/tools/debugger/gdbsx/xg
     endif
+    
 else
-    JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
+    ifeq ($(OS),darwin)
+        JNI_H_PATH=$(shell ls $(foreach base,/Developer/SDKs/MacOSX10.*.sdk/ /,$(base)System/Library/Frameworks/JavaVM.framework/Versions/1.6*/Headers/jni.h) 2>/dev/null | tail -1)
+        JNI_INCLUDES = -I $(dir $(JNI_H_PATH))
+    else
+        JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
+        JNI_H_PATH = $(wildcard $(word 2,$(JNI_INCLUDES))/jni.h)
+    endif
 endif
 
-C_DEPENDENCIES_FLAGS += $(JNI_INCLUDES)
-CFLAGS += $(JNI_INCLUDES)
+ifeq "$(JNI_H_PATH)" ""
+    $(error Could not find path to jni.h)
+endif
+
+C_DEPENDENCIES_FLAGS += $(JNI_INCLUDES) -DJNI_H_PATH=$(JNI_H_PATH)
+CFLAGS += $(JNI_INCLUDES) -DJNI_H_PATH=$(JNI_H_PATH)

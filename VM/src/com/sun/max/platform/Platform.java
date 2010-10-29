@@ -295,6 +295,12 @@ public final class Platform {
     private static native boolean nativeIsBigEndian();
 
     /**
+     * Gets the absolute path to the "jni.h" file against which the native code was compiled.
+     */
+    @HOSTED_ONLY
+    public static native String jniHeaderFilePath();
+
+    /**
      * Gets the width of the native word in bits (typically 32 or 64 bits).
      *
      * @return the width of the native word in bits

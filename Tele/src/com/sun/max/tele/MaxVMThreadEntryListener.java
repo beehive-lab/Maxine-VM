@@ -18,18 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.layout.hosted;
+package com.sun.max.tele;
 
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
- * @author Bernd Mathiske
+ * Listener interface for VM thread entry.
+ * Notification of thread enter is made when a thread hit the first instruction of the VMThread run method.
+ *
+ * @author Laurent Daynes
+ *
  */
-public class HostedPrimitiveArrayLayout<Value_Type extends Value<Value_Type>> extends HostedArrayLayout<Value_Type> {
-
-    protected HostedPrimitiveArrayLayout(Kind<Value_Type> elementKind) {
-        super(elementKind);
-    }
-
+public interface MaxVMThreadEntryListener {
+    void entered(MaxThread thread);
 }

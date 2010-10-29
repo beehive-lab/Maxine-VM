@@ -23,6 +23,7 @@ package com.sun.max.tele.object;
 import java.util.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -87,11 +88,16 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
             Reference regionsReference = vm().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethodsReference);
             int index = teleTargetMethods.size();
             while (index < size) {
-                Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, regionsReference, index).asReference();
-                TeleTargetMethod teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
-                assert teleTargetMethod != null;
-                teleTargetMethods.add(teleTargetMethod);
-                index++;
+                try {
+                    Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, regionsReference, index).asReference();
+                    TeleTargetMethod teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
+                    assert teleTargetMethod != null;
+                    teleTargetMethods.add(teleTargetMethod);
+                } catch (InvalidReferenceException e) {
+                    vm().invalidReferencesLogger().record(e.getReference(), TeleTargetMethod.class);
+                } finally {
+                    index++;
+                }
             }
             statsPrinter.addStat(localStatsPrinter);
         } else {
