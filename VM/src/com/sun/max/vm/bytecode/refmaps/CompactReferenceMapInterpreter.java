@@ -32,6 +32,7 @@ package com.sun.max.vm.bytecode.refmaps;
  *  |<---- maxLocals ---->|<----- maxStack ------>
  *
  *  I: the frame is initialized if I == 1;
+ *  sp: stack depth (encoded on 4 bits, max depth being 15).
  *
  * @author Doug Simon
  */

@@ -583,6 +583,25 @@ public class VmThreadLocal {
     }
 
     /**
+     * Verifies that all three ({@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled},
+     * {@linkplain #SAFEPOINTS_TRIGGERED_THREAD_LOCALS triggered} and {@linkplain #SAFEPOINTS_DISABLED_THREAD_LOCALS disabled}) thread local
+     * variable storage areas have are assigned to the same value.
+     *
+     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of all the
+     *            thread local variable storage areas can be obtained
+     * @param value the value this variable should have
+     */
+    public final void checkConstantWord(Pointer vmThreadLocals, Word value) {
+        if (MaxineVM.isDebug()) {
+            final boolean result =
+                vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().getWord(index).equals(value) &&
+                vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index).asPointer().getWord(index).equals(value) &&
+                vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index).asPointer().getWord(index).equals(value);
+            FatalError.check(result, "unexpected value for thread locals");
+        }
+    }
+
+    /**
      * Updates the value of this variable in all three ({@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled},
      * {@linkplain #SAFEPOINTS_TRIGGERED_THREAD_LOCALS triggered} and {@linkplain #SAFEPOINTS_DISABLED_THREAD_LOCALS disabled}) thread local
      * variable storage areas.
