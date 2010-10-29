@@ -167,6 +167,8 @@ static void* loadSymbol(void* handle, const char* symbol) {
 
 #if os_DARWIN
 #include <crt_externs.h>
+#elif os_LINUX
+#include <sys/prctl.h>
 #elif os_SOLARIS
 #define _STRUCTURED_PROC 1 /* Use new definitions in procfs.h instead of those in procfs_old.h */
 #include <sys/procfs.h>
@@ -185,6 +187,20 @@ void debugger_initialize() {
 
     char *port = getenv("MAX_AGENT_PORT");
     if (port != NULL) {
+
+#if os_LINUX && defined(PR_SET_PTRACER)
+        /* See info about PR_SET_PTRACER at https://wiki.ubuntu.com/Security/Features#ptrace */
+        char *val = getenv("MAX_AGENT_PID");
+        if (val == NULL) {
+            log_exit(11, "MAX_AGENT_PID must be set to the agent's PID so that ptrace can access the VM process");
+        }
+        long pid = strtol(val, NULL, 10);
+        if (errno != 0) {
+            log_exit(11, "Error converting MAX_AGENT_PID value \"%s\" to a long value: %s", val, strerror(errno));
+        }
+        prctl(PR_SET_PTRACER, pid, 0, 0, 0);
+#endif
+
         char *hostName = "localhost";
 #if log_TELE
         log_println("Opening agent socket connection to %s:%s", hostName, port);

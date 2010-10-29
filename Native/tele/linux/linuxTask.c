@@ -35,6 +35,7 @@
 #include <dirent.h>
 #include <sys/wait.h>
 #include <sys/time.h>
+#include <sys/prctl.h>
 
 #include "log.h"
 #include "ptrace.h"
@@ -662,6 +663,16 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env
             log_exit(1, "Could not allocate space for setting MAX_AGENT_PORT environment variable");
         }
         putenv(portDef);
+
+#ifdef PR_SET_PTRACER
+        /* See info about PR_SET_PTRACER at https://wiki.ubuntu.com/Security/Features#ptrace */
+        char *pidDef;
+        int parentPid = getppid();
+        if (asprintf(&pidDef, "MAX_AGENT_PID=%u", parentPid) == -1) {
+            log_exit(1, "Could not allocate space for setting MAX_AGENT_PID environment variable");
+        }
+        putenv(pidDef);
+#endif
 
         /* Put the VM in its own process group so that SIGSTOP can be used to
          * stop all threads in the child. */
