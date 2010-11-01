@@ -20,11 +20,16 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import java.io.*;
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.target.amd64.*;
@@ -35,15 +40,21 @@ import com.sun.cri.xir.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
+import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.stack.amd64.*;
+import com.sun.max.vm.trampoline.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -52,7 +63,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Doug Simon
  */
-public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompilerScheme {
+public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompilerScheme, DynamicTrampolineScheme {
 
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
@@ -118,6 +129,29 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         return Utils.cast(type, C1XTargetMethod.class);
     }
 
+    private byte[] vTableTrampolinePrologue;
+    private byte[] iTableTrampolinePrologue;
+    private TargetMethod staticTrampoline;
+
+    @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.VIRTUAL)
+    private static native Address vTableTrampoline() throws Throwable;
+
+    @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.INTERFACE)
+    private static native Address iTableTrampoline() throws Throwable;
+
+    @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.STATIC)
+    private static native Address staticTrampoline() throws Throwable;
+
+    @HOSTED_ONLY
+    private byte[] adapterPrologueFor(String methodName) {
+        AdapterGenerator generator = AdapterGenerator.forCallee(ClassMethodActor.fromJava(getDeclaredMethod(C1XCompilerScheme.class, methodName)), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        if (generator != null) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream(8);
+            return os.toByteArray();
+        }
+        return new byte[0];
+    }
+
     @Override
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.BOOTSTRAPPING) {
@@ -130,6 +164,14 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                     new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
                 }
             }
+
+            vTableTrampolinePrologue = adapterPrologueFor("vTableTrampoline");
+            iTableTrampolinePrologue = adapterPrologueFor("iTableTrampoline");
+
+            staticTrampoline = genStaticTrampoline(adapterPrologueFor("staticTrampoline"));
+            StaticTrampoline.codeStart = staticTrampoline.codeStart();
+        } else if (phase == Phase.PRIMORDIAL) {
+            StaticTrampoline.codeStart = staticTrampoline.codeStart();
         }
     }
 
@@ -202,7 +244,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
             // now load the trap parameter information into registers from the VM thread locals
             CiKind[] trapStubParameters = Util.signatureToKinds(Trap.trapStub.classMethodActor.signature(), null);
-            CiValue[] locations = registerConfig.getJavaCallingConvention(trapStubParameters, false, target).locations;
+            CiValue[] locations = registerConfig.getCallingConvention(Java, trapStubParameters, false, target).locations;
 
             // load the trap number into the first parameter register
             asm.movq(locations[0].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_NUMBER.offset));
@@ -225,4 +267,146 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         }
         throw FatalError.unimplemented();
     }
+
+    private static void patchStaticTrampolineCallSite(Pointer callSite) {
+        final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
+
+        final ClassMethodActor callee = caller.callSiteToCallee(callSite);
+
+        // Use the caller's abi to get the correct entry point.
+        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
+        final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
+        callSite.writeInt(1, calleeOffset);
+    }
+
+    @HOSTED_ONLY
+    private TargetMethod genStaticTrampoline(byte[] adapterPrologue) {
+        if (platform().isa == ISA.AMD64) {
+            AMD64UnixRegisterConfig registerConfig = AMD64UnixRegisterConfig.TRAMPOLINE;
+            AMD64MacroAssembler asm = new AMD64MacroAssembler(compiler, registerConfig);
+            CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;
+            int frameSize = rsa.size;
+
+            for (byte b : adapterPrologue) {
+                asm.emitByte(0xff & b);
+            }
+
+            // compute the static trampoline call site
+            CiRegister callSite = registerConfig.getScratchRegister();
+            asm.movq(callSite, new CiAddress(CiKind.Word, AMD64.rsp.asValue()));
+            asm.subq(callSite, AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue()), callSite);
+
+            // now allocate the frame for this method
+            asm.subq(AMD64.rsp, frameSize);
+            asm.setFrameSize(frameSize);
+
+            // save all the parameter registers
+            CiRegister[] parameterRegs = registerConfig.getCallingConventionRegisters(Java);
+            asm.save(parameterRegs, rsa, 0);
+
+            ClassMethodActor patchStaticTrampolineCallSite = ClassMethodActor.fromJava(Classes.getDeclaredMethod(C1XCompilerScheme.class, "patchStaticTrampolineCallSite", Pointer.class));
+            CiKind[] trampolineParameters = {CiKind.Object};
+            CiValue[] locations = registerConfig.getCallingConvention(Java, trampolineParameters, true, target).locations;
+
+            // load the static trampoline call site into the first parameter register
+            asm.movq(locations[0].asRegister(), callSite);
+
+            asm.directCall(patchStaticTrampolineCallSite, null);
+
+            // Restore all parameter registers before returning
+            asm.restore(parameterRegs, rsa, 0);
+
+            asm.ret(0);
+
+            String trampolineName = "static-trampoline";
+            return new C1XTargetMethod(trampolineName, asm.finishTargetMethod(trampolineName, runtime, -1));
+        }
+        throw FatalError.unimplemented();
+    }
+
+    private TargetMethod genDynamicTrampoline(int index, boolean isInterface) {
+        if (platform().isa == ISA.AMD64) {
+            AMD64UnixRegisterConfig registerConfig = AMD64UnixRegisterConfig.TRAMPOLINE;
+            AMD64MacroAssembler asm = new AMD64MacroAssembler(compiler, registerConfig);
+            CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;
+            int frameSize = rsa.size;
+            DynamicTrampoline trampoline = new DynamicTrampoline(index, null);
+
+            byte[] prologue = isInterface ? iTableTrampolinePrologue : vTableTrampolinePrologue;
+            for (byte b : prologue) {
+                asm.emitByte(0xff & b);
+            }
+
+            // now allocate the frame for this method
+            asm.subq(AMD64.rsp, frameSize);
+            asm.setFrameSize(frameSize);
+
+            // save all the parameter registers
+            CiRegister[] parameterRegs = registerConfig.getCallingConventionRegisters(Java);
+            asm.save(parameterRegs, rsa, 0);
+
+            CiKind[] trampolineParameters = Util.signatureToKinds(DynamicTrampoline.trampolineReturnAddress.classMethodActor.signature(), CiKind.Object);
+            CiValue[] locations = registerConfig.getCallingConvention(Java, trampolineParameters, true, target).locations;
+
+            // load the receiver into the second parameter register
+            asm.movq(locations[1].asRegister(), locations[0].asRegister());
+
+            // load the trampoline object into the first parameter register
+            asm.movq(locations[0].asRegister(), asm.recordDataReferenceInCode(CiConstant.forObject(trampoline)));
+
+            // load the stack pointer into the third parameter register
+            asm.movq(locations[2].asRegister(), AMD64.rsp);
+
+            asm.directCall(DynamicTrampoline.trampolineReturnAddress.classMethodActor, null);
+
+            // Put the entry point of the resolved method on the stack just below the
+            // return address of the trampoline itself. By adjusting RSP to point at
+            // this second return address and executing a 'ret' instruction, execution
+            // continues in the resolved method as if it was called by the trampoline's
+            // caller which is exactly what we want.
+            CiRegister returnReg = registerConfig.getReturnRegister(CiKind.Word);
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize - 8), returnReg);
+
+            // Restore all parameter registers before returning
+            asm.restore(parameterRegs, rsa, 0);
+
+            // Adjust RSP as mentioned above and do the 'ret' that lands us in the
+            // trampolined-to method.
+            asm.addq(AMD64.rsp, frameSize - 8);
+            asm.ret(0);
+
+            String trampName = "vtable[" + index + "]-trampoline";
+            return new C1XTargetMethod(trampName, asm.finishTargetMethod(trampName, runtime, -1));
+        }
+        throw FatalError.unimplemented();
+    }
+
+    private final ArrayList<TargetMethod> vTrampolines = new ArrayList<TargetMethod>();
+    private final ArrayList<TargetMethod> iTrampolines = new ArrayList<TargetMethod>();
+
+
+    public synchronized Address makeInterfaceCallEntryPoint(int iIndex) {
+        if (iTrampolines.size() <= iIndex) {
+            for (int i = iTrampolines.size(); i <= iIndex; i++) {
+                iTrampolines.add(genDynamicTrampoline(i, true));
+            }
+        }
+        return VTABLE_ENTRY_POINT.in(iTrampolines.get(iIndex));
+    }
+
+    public synchronized Address makeVirtualCallEntryPoint(int vTableIndex) {
+        if (iTrampolines.size() <= vTableIndex) {
+            for (int i = iTrampolines.size(); i <= vTableIndex; i++) {
+                iTrampolines.add(genDynamicTrampoline(i, false));
+            }
+        }
+        return VTABLE_ENTRY_POINT.in(iTrampolines.get(vTableIndex));
+    }
+
+    public DynamicTrampolineExit dynamicTrampolineExit() {
+        return dynamicTrampolineExit;
+    }
+
+    private DynamicTrampolineExit dynamicTrampolineExit = DynamicTrampolineExit.create();
 }

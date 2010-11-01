@@ -29,6 +29,12 @@ package com.sun.cri.ci;
  * @author Doug Simon
  */
 public class CiCallingConvention {
+    
+    public enum Type {
+        Java,
+        Runtime,
+        Native
+    }
 
     /**
      * The amount of stack space (in bytes) required for the stack-based arguments of the call.

@@ -21,18 +21,24 @@
 package com.sun.c1x.target.amd64;
 
 import static com.sun.c1x.C1XCompilation.*;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.target.amd64.AMD64Assembler.*;
+import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiRegister.*;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.CiXirAssembler.XirConstant;
+import com.sun.cri.xir.CiXirAssembler.XirConstantOperand;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.cri.xir.CiXirAssembler.XirParameter;
+import com.sun.cri.xir.CiXirAssembler.XirRegister;
+import com.sun.cri.xir.CiXirAssembler.XirTemp;
 
 public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
@@ -413,7 +419,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void forwardRuntimeCall(CiRuntimeCall call) {
         // Load arguments
-        CiCallingConvention cc = compiler.stubRegisterConfig.getRuntimeCallingConvention(call.arguments, target);
+        CiCallingConvention cc = compiler.stubRegisterConfig.getCallingConvention(Runtime, call.arguments, true, target);
         for (int i = 0; i < cc.locations.length; ++i) {
             CiValue location = cc.locations[i];
             loadArgument(i, location.asRegister());

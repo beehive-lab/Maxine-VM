@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiKind.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -133,7 +134,7 @@ public final class FrameMap {
      * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
     public CiCallingConvention runtimeCallingConvention(CiKind[] signature) {
-        CiCallingConvention cc = compilation.registerConfig.getRuntimeCallingConvention(signature, compilation.target);
+        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(Runtime, signature, true, compilation.target);
         assert cc.stackSize == 0 : "runtime call should not have stack arguments";
         return cc;
     }
@@ -146,7 +147,7 @@ public final class FrameMap {
      * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
     public CiCallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing) {
-        CiCallingConvention cc = compilation.registerConfig.getJavaCallingConvention(signature, outgoing, compilation.target);
+        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(Java, signature, outgoing, compilation.target);
         if (outgoing) {
             assert frameSize == -1 : "frame size must not yet be fixed!";
             reserveOutgoing(cc.stackSize);
@@ -162,7 +163,7 @@ public final class FrameMap {
      * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
     public CiCallingConvention nativeCallingConvention(CiKind[] signature, boolean outgoing) {
-        CiCallingConvention cc = compilation.registerConfig.getNativeCallingConvention(signature, outgoing, compilation.target);
+        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(Native, signature, outgoing, compilation.target);
         if (outgoing) {
             assert frameSize == -1 : "frame size must not yet be fixed!";
             reserveOutgoing(cc.stackSize);
