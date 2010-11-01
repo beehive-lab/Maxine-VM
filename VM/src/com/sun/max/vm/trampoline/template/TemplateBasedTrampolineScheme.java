@@ -23,7 +23,6 @@ package com.sun.max.vm.trampoline.template;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.trampoline.*;
 
@@ -40,10 +39,6 @@ public class TemplateBasedTrampolineScheme extends AbstractVMScheme implements D
     @HOSTED_ONLY
     public TemplateBasedTrampolineScheme() {
         dynamicTrampolineExit = DynamicTrampolineExit.create();
-    }
-
-    public boolean isDynamicTrampoline(ClassMethodActor classMethodActor) {
-        return TemplateBasedVTableTrampoline.isVTableTrampoline(classMethodActor) || TemplateBasedITableTrampoline.isITableTrampoline(classMethodActor);
     }
 
     public Address makeInterfaceCallEntryPoint(int iIndex) {

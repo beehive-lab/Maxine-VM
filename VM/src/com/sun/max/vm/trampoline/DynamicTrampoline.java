@@ -102,4 +102,5 @@ public final class DynamicTrampoline {
         return trampolineExit().trampolineReturnAddress(this, vtableEntryPoint, stackPointer);
     }
 
+    public static final CriticalMethod trampolineReturnAddress = new CriticalMethod(DynamicTrampoline.class, "trampolineReturnAddress", null);
 }
