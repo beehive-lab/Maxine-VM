@@ -412,7 +412,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     if (preMainClassName == null) {
                         Log.println("could not find premain class in jarfile: " + jarPath);
                     }
-                    final URL url = new URL("file://" + jarPath);
+                    final URL url = new URL("file://" + new File(jarPath).getAbsolutePath());
                     addURLToAppClassLoader.invoke(Launcher.getLauncher().getClassLoader(), url);
                     invokeAgentMethod(url, preMainClassName, "premain", agentArgs);
                 } finally {
