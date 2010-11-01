@@ -53,25 +53,17 @@ public interface RiRegisterConfig {
      * @param outgoing if {@code true}, this is a call to Java code otherwise it's a call from Java code
      * @param target the target platform
      */
-    CiCallingConvention getJavaCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target);
+    CiCallingConvention getCallingConvention(CiCallingConvention.Type type, CiKind[] parameters, boolean outgoing, CiTarget target);
     
     /**
-     * Gets the calling convention describing a call to the runtime.
-     * 
-     * @param parameters the types of the arguments of the call
-     * @param target the target platform
-     */
-    CiCallingConvention getRuntimeCallingConvention(CiKind[] parameters, CiTarget target);
+     * Gets the complete set of registers that are can be used to pass parameters
+     * according to a given calling convention.
 
-    /**
-     * Gets the calling convention describing a call to or from native code.
-     * 
-     * @param parameters the types of the arguments of the call
-     * @param outgoing if {@code true}, this is a call to native code otherwise it's a call from native code
-     * @param target the target platform
+     * @param type the type of calling convention
+     * @return the set of registers that may be used to pass parameters in a call conforming to {@code type}
      */
-    CiCallingConvention getNativeCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target);
-
+    CiRegister[] getCallingConventionRegisters(CiCallingConvention.Type type);
+    
     /**
      * Gets the set of registers that can be used by the register allocator.
      */

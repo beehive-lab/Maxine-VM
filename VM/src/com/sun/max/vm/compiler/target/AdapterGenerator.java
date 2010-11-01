@@ -106,11 +106,6 @@ public abstract class AdapterGenerator {
     public final Adapter.Type adapterType;
 
     /**
-     * The special adapter called by a dynamic trampoline.
-     */
-    //protected Adapter dynamicTrampolineAdapter;
-
-    /**
      * The ABI for code compiled with the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT OPT} calling convention.
      */
     protected final TargetABI optABI;

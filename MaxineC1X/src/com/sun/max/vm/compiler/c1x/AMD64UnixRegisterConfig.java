@@ -30,6 +30,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.*;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -101,7 +102,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
      * This configuration lists all parameter registers as callee saved.
      */
     public static final AMD64UnixRegisterConfig TRAMPOLINE = STANDARD.
-        withCalleeSave(rdi, rsi, rdx, rcx, r8, r9, rbx,
+        withCalleeSave(rdi, rsi, rdx, rcx, r8, r9, rbx, rbp,
                        xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7);
 
     /**
@@ -117,6 +118,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
     private final EnumMap<Role, CiRegister> registersByRole = new EnumMap<VMRegister.Role, CiRegister>(Role.class);
     private final CiRegister[] allocatable;
     private final EnumMap<RegisterFlag, CiRegister[]> categorized;
+    private final CiRegister[] parameters;
     private final CiRegister[] cpuParameters;
     private final CiRegister[] fpuParameters;
     private final CiRegister[] callerSave;
@@ -132,6 +134,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         this.calleeSave = calleeSave;
         assert !Arrays.asList(allocatable).contains(scratch);
         this.scratch = scratch;
+        this.parameters = parameters;
         EnumMap<RegisterFlag, CiRegister[]> categorizedParameters = CiRegister.categorize(parameters);
         this.cpuParameters = categorizedParameters.get(RegisterFlag.CPU);
         this.fpuParameters = categorizedParameters.get(RegisterFlag.FPU);
@@ -162,6 +165,8 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
              "Allocatable: " + Arrays.toString(getAllocatableRegisters()) + "%n" +
              "CallerSave:  " + Arrays.toString(getCallerSaveRegisters()) + "%n" +
              "CalleeSave:  " + Arrays.toString(getCalleeSaveRegisters()) + "%n" +
+             "CPU Params:  " + Arrays.toString(cpuParameters) + "%n" +
+             "FPU Params:  " + Arrays.toString(fpuParameters) + "%n" +
              "VMRoles:     " + registersByRole + "%n" +
              "Scratch:     " + getScratchRegister() + "%n");
         return res;
@@ -179,16 +184,12 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         return scratch;
     }
 
-    public CiCallingConvention getJavaCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target) {
-        return callingConvention(parameters, outgoing, target);
+    public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, boolean outgoing, CiTarget target) {
+        return callingConvention(parameters, type == Type.Runtime ? true : outgoing, target);
     }
 
-    public CiCallingConvention getRuntimeCallingConvention(CiKind[] parameters, CiTarget target) {
-        return callingConvention(parameters, true, target);
-    }
-
-    public CiCallingConvention getNativeCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target) {
-        return callingConvention(parameters, outgoing, target);
+    public CiRegister[] getCallingConventionRegisters(Type type) {
+        return parameters;
     }
 
     public CiRegister[] getAllocatableRegisters() {
