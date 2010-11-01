@@ -20,26 +20,24 @@
  */
 package com.sun.max.vm.stack;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
- * A visitor for traversing the frames on a thread's stack. The details of each frame traversed in the
- * stack walk are passed as individual parameters to {@link #visitFrame(TargetMethod, Pointer, Pointer, Pointer, boolean)}
- * to avoid the allocation required to box them in an allocated {@link StackFrame} object.
+ * A visitor for traversing the frames on a thread's stack. This visitor avoids any allocation
+ * by the stack frame walker.
  *
  * @see StackFrameVisitor
  * @author Doug Simon
  */
-public interface RawStackFrameVisitor {
+public abstract class RawStackFrameVisitor {
 
-    int IS_TOP_FRAME = 0x0001;
-    int IS_ADAPTER   = 0x0002;
+    public static final int IS_TOP_FRAME = 0x0001;
+    public static final int IS_ADAPTER   = 0x0002;
 
     /**
      * Processes a given frame that is being traversed as part of a {@linkplain StackFrameWalker#walk stack walk}.
      *
      * @return true if the walk should continue to the caller of {@code stackFrame}, false if it should terminate now
      */
-    boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame);
+    public abstract boolean visitFrame(Cursor current, Cursor callee);
 }

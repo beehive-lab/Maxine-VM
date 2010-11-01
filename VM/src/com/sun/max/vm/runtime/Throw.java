@@ -33,6 +33,7 @@ import com.sun.max.vm.compiler.snippet.ArrayGetSnippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -54,11 +55,12 @@ public final class Throw {
     public static VMBooleanXXOption scanStackOnFatalError = register(new VMBooleanXXOption("-XX:-ScanStackOnFatalError",
         "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
 
-    public static class StackFrameDumper implements RawStackFrameVisitor {
-        public boolean visitFrame(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame) {
+    public static class StackFrameDumper extends RawStackFrameVisitor {
+        @Override
+        public boolean visitFrame(Cursor current, Cursor callee) {
             final boolean lockDisabledSafepoints = Log.lock();
             // N.B. use "->" to make dumped stacks look slightly different than exception stack traces.
-            dumpFrame("        -> ", targetMethod, ip, isTopFrame);
+            dumpFrame("        -> ", current.targetMethod(), current.ip(), current.isTopFrame());
             Log.unlock(lockDisabledSafepoints);
             return true;
         }
