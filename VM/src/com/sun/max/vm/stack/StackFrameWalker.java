@@ -310,7 +310,9 @@ public abstract class StackFrameWalker {
                     }
                 } else if (purpose == RAW_INSPECTING) {
                     final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                    if (!stackFrameVisitor.visitFrame(null, current.ip, current.fp, current.sp, isTopFrame)) {
+                    current.targetMethod = null;
+                    current.isTopFrame = isTopFrame;
+                    if (!stackFrameVisitor.visitFrame(current, callee)) {
                         break;
                     }
                 }
@@ -381,7 +383,7 @@ public abstract class StackFrameWalker {
         } else if (purpose == Purpose.RAW_INSPECTING) {
             // walk the frame for inspect (compiled frames)
             RawStackFrameVisitor visitor = (RawStackFrameVisitor) context;
-            proceed = visitor.visitFrame(current.targetMethod(), current.ip(), current.sp(), current.sp(), current.isTopFrame());
+            proceed = visitor.visitFrame(current, callee);
         }
         // in any case, advance to the next frame
         targetMethod.advance(current);

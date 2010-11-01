@@ -39,6 +39,7 @@ import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.thread.*;
 
@@ -50,16 +51,17 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     /**
      * Utility class used to find and patch a call to a {@linkplain StaticTrampoline static trampoline}.
      */
-    static class StaticTrampolineContext implements RawStackFrameVisitor {
+    static class StaticTrampolineContext extends RawStackFrameVisitor {
 
         @Override
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
-            if (isTopFrame) {
+        public boolean visitFrame(Cursor current, Cursor ignore) {
+            if (current.isTopFrame()) {
                 return true;
             }
-            Pointer callSite = instructionPointer.minus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
+            Pointer ip = current.ip();
+            Pointer callSite = ip.minus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
             if (callSite.readByte(0) == CALL) {
-                Pointer target = instructionPointer.plus(callSite.readInt(1));
+                Pointer target = ip.plus(callSite.readInt(1));
                 if (StaticTrampoline.isEntryPoint(target)) {
                     final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
 
@@ -70,7 +72,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
                     patchRipCallSite(callSite, calleeEntryPoint);
 
                     // Make the trampoline's caller re-executes the now modified CALL instruction after we return from the trampoline:
-                    Pointer trampolineCallerRipPointer = stackPointer.minus(Word.size());
+                    Pointer trampolineCallerRipPointer = current.sp().minus(Word.size());
                     trampolineCallerRipPointer.setWord(callSite); // patch return address
                     return false;
                 }

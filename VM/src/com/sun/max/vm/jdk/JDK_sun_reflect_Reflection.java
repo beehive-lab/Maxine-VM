@@ -32,6 +32,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -49,7 +50,7 @@ final class JDK_sun_reflect_Reflection {
      * This class implements a closure that records the method actor at a particular
      * position in the stack.
      */
-    static class Context implements RawStackFrameVisitor {
+    static class Context extends RawStackFrameVisitor {
         MethodActor methodActorResult;
         Pointer framePointerResult;
         int realFramesToSkip;
@@ -57,11 +58,14 @@ final class JDK_sun_reflect_Reflection {
         Context(int realFramesToSkip) {
             this.realFramesToSkip = realFramesToSkip;
         }
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
-            if (isTopFrame) {
+
+        @Override
+        public boolean visitFrame(Cursor current, Cursor callee) {
+            if (current.isTopFrame()) {
                 // skip 'getCallerMethod()'
                 return true;
             }
+            TargetMethod targetMethod = current.targetMethod();
             if (targetMethod instanceof Adapter) {
                 // adapter frame
                 return true;
@@ -76,11 +80,11 @@ final class JDK_sun_reflect_Reflection {
                 return true;
             }
 
-            BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(instructionPointer, false);
+            BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(current.ip(), false);
             if (bytecodeLocation == null) {
                 if (realFramesToSkip == 0) {
                     methodActorResult = targetMethod.classMethodActor();
-                    framePointerResult = framePointer;
+                    framePointerResult = current.fp();
                     return false;
                 }
                 realFramesToSkip--;
@@ -90,7 +94,7 @@ final class JDK_sun_reflect_Reflection {
                     if (!classMethodActor.holder().isGenerated()) {
                         if (realFramesToSkip == 0) {
                             methodActorResult = classMethodActor;
-                            framePointerResult = framePointer;
+                            framePointerResult = current.fp();
                             return false;
                         }
                         realFramesToSkip--;
