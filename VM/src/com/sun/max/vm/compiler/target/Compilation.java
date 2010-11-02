@@ -32,6 +32,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * This class represents an ongoing or completed compilation.
@@ -39,6 +40,11 @@ import com.sun.max.vm.stack.*;
  * @author Ben L. Titzer
  */
 public class Compilation implements Future<TargetMethod> {
+
+    /**
+     * Used to detect re-entrant compilation which indicates the boot image closure was not incomplete.
+     */
+    private static final ObjectThreadLocal<Compilation> COMPILATION = new ObjectThreadLocal<Compilation>("COMPILATION", "current compilation");
 
     private static final VMBooleanXXOption GC_ON_COMPILE_OPTION = register(new VMBooleanXXOption("-XX:-GCOnCompilation",
         "When specified, the compiler will request GC before every compilation operation."), MaxineVM.Phase.STARTING);
@@ -171,6 +177,12 @@ public class Compilation implements Future<TargetMethod> {
                 startCompile = System.currentTimeMillis();
             }
 
+
+            if (COMPILATION.get() != null) {
+                FatalError.unexpected("Compilation of " + classMethodActor + " while compiling " + COMPILATION.get().classMethodActor);
+            }
+            COMPILATION.set(this);
+
             // attempt the compilation
             methodString = logBeforeCompilation(compiler);
             targetMethod = compiler.compile(classMethodActor);
@@ -202,6 +214,8 @@ public class Compilation implements Future<TargetMethod> {
                 // notify any waiters on this compilation
                 classMethodActor.notifyAll();
             }
+
+            COMPILATION.set(null);
 
             // notify any compilation observers
             observeAfterCompilation(observers, compiler, targetMethod);
