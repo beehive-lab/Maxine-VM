@@ -32,7 +32,6 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.thread.*;
@@ -79,7 +78,7 @@ public abstract class Safepoint {
     @HOSTED_ONLY
     public static Safepoint create(VMConfiguration vmConfiguration) {
         try {
-            final String isa = platform().instructionSet().name();
+            final String isa = platform().isa.name();
             final Class<?> safepointClass = Class.forName(MaxPackage.fromClass(Safepoint.class).subPackage(isa.toLowerCase()).name() + "." + isa + Safepoint.class.getSimpleName());
             final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
             return (Safepoint) constructor.newInstance(vmConfiguration);
@@ -176,8 +175,6 @@ public abstract class Safepoint {
     public static void safepoint() {
         SafepointBuiltin.safepointBuiltin();
     }
-
-    public abstract Symbol latchRegister();
 
     @HOSTED_ONLY
     protected abstract byte[] createCode();

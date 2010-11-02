@@ -32,21 +32,20 @@ import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 
 /**
- * This class implements the X86-specific portion of the macro assembler.
+ * This class implements the AMD64-specific portion of the macro assembler.
  *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
 public class AMD64MacroAssembler extends AMD64Assembler {
 
-    private CiRegister rscratch1;
+    private final CiRegister rscratch1;
     private final C1XCompiler compiler;
-    public static final int LONG_SIZE = 8;
 
-    public AMD64MacroAssembler(C1XCompiler compiler, CiTarget target) {
-        super(target);
+    public AMD64MacroAssembler(C1XCompiler compiler, RiRegisterConfig registerConfig) {
+        super(compiler.target, registerConfig);
         this.compiler = compiler;
-        this.rscratch1 = compiler.target.scratchRegister;
+        this.rscratch1 = registerConfig.getScratchRegister();
     }
 
     public final int callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, Object... args) {
@@ -229,13 +228,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
             // TODO: pass a pointer to the message
             directCall(CiRuntimeCall.Debug, null);
             hlt();
-        }
-    }
-
-    @Override
-    public void align(int modulus) {
-        if (codeBuffer.position() % modulus != 0) {
-            nop(modulus - (codeBuffer.position() % modulus));
         }
     }
 
@@ -506,39 +498,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    int lockObject(RiRuntime runtime, CiRegister hdr, CiRegister obj, CiRegister dispHdr, CiRegister scratch, Label slowCase) {
-        jmp(slowCase);
-        return 0;
-    }
-
-    public void unlockObject(RiRuntime runtime, CiRegister hdr, CiRegister obj, CiRegister dispHdr, Label slowCase) {
-        jmp(slowCase);
-    }
-
-    void invalidateRegisters(boolean invRax, boolean invRbx, boolean invRcx, boolean invRdx, boolean invRsi, boolean invRdi) {
-
-        if (C1XOptions.GenAssertionCode) {
-            if (invRax) {
-                mov64(AMD64.rax, 0xDEAD);
-            }
-            if (invRbx) {
-                mov64(AMD64.rbx, 0xDEAD);
-            }
-            if (invRcx) {
-                mov64(AMD64.rcx, 0xDEAD);
-            }
-            if (invRdx) {
-                mov64(AMD64.rdx, 0xDEAD);
-            }
-            if (invRsi) {
-                mov64(AMD64.rsi, 0xDEAD);
-            }
-            if (invRdi) {
-                mov64(AMD64.rdi, 0xDEAD);
-            }
-        }
-    }
-
     public void verifyOop(CiRegister r) {
         Util.nonFatalUnimplemented();
     }
@@ -558,5 +517,29 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         imm16 >>= 8;
         emitByte(imm16 & 0xff);
         emitByte(imm8);
+    }
+
+    /**
+     * Emit code to save a given set of callee save registers to the
+     * {@linkplain CiRegisterSaveArea RSA} within the frame.
+     *
+     * @param registers the registers to be saved
+     * @param rsa the description of the RSA
+     * @param frameToRSA offset from the frame pointer to the RSA
+     */
+    public void save(CiRegister[] registers, CiRegisterSaveArea rsa, int frameToRSA) {
+        CiRegisterValue frame = frameRegister.asValue();
+        for (CiRegister r : registers) {
+            int offset = rsa.offsetOf(r);
+            movq(new CiAddress(CiKind.Word, frame, frameToRSA + offset), r);
+        }
+    }
+
+    public void restore(CiRegister[] registers, CiRegisterSaveArea rsa, int frameToRSA) {
+        CiRegisterValue frame = frameRegister.asValue();
+        for (CiRegister r : registers) {
+            int offset = rsa.offsetOf(r);
+            movq(r, new CiAddress(CiKind.Word, frame, frameToRSA + offset));
+        }
     }
 }

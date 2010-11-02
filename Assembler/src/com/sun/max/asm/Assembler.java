@@ -41,7 +41,7 @@ public abstract class Assembler {
         this.directives = new Directives(byteData, isValidCode);
     }
 
-    public abstract InstructionSet instructionSet();
+    public abstract ISA isa();
 
     public final Directives directives() {
         return directives;
@@ -571,7 +571,7 @@ public abstract class Assembler {
      * @throws AssemblyException
      */
     public final int offsetInstructionRelative(Label label, AssemblyObject assembledObject) throws AssemblyException {
-        final int position = (instructionSet().relativeBranchFromStart) ? assembledObject.startPosition() : assembledObject.endPosition();
+        final int position = (isa().relativeBranchFromStart) ? assembledObject.startPosition() : assembledObject.endPosition();
         return labelOffsetRelative(label, position);
     }
 }

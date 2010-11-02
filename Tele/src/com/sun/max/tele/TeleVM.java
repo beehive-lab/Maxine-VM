@@ -312,11 +312,11 @@ public abstract class TeleVM implements MaxVM {
 
     /**
      * Create the correct instance of {@link TeleChannelProtocol} based on {@link #targetLocation} and
-     * {@link OperatingSystem}.
+     * {@link OS}.
      *
-     * @param operatingSystem
+     * @param os
      */
-    private void setTeleChannelProtocol(OperatingSystem operatingSystem) {
+    private void setTeleChannelProtocol(OS os) {
         if (mode == Mode.IMAGE) {
             teleChannelProtocol = new ReadOnlyTeleChannelProtocol();
             return;
@@ -326,7 +326,7 @@ public abstract class TeleVM implements MaxVM {
          * com.sun.max.tele.debug.<ospackage>.<os><kind>TeleChannelProtocol, where Kind == Native for LOCAL, TCP for
          * REMOTE and Dump for FILE. os is sanitized to conform to standard class naming rules. E.g. SOLARIS -> Solaris
          */
-        final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() +
+        final String className = "com.sun.max.tele.debug." + os.asPackageName() + "." + os.className +
                         targetLocation.kind.classNameComponent + "TeleChannelProtocol";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -516,8 +516,8 @@ public abstract class TeleVM implements MaxVM {
         initializeVM(bootImage.vmConfiguration);
 
         TeleVM teleVM = null;
-        final OperatingSystem operatingSystem = platform().operatingSystem;
-        final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() + "TeleVM";
+        final OS os = platform().os;
+        final String className = "com.sun.max.tele.debug." + os.asPackageName() + "." + os.className + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
             final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class});
@@ -738,7 +738,7 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        setTeleChannelProtocol(platform().operatingSystem);
+        setTeleChannelProtocol(platform().os);
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
 

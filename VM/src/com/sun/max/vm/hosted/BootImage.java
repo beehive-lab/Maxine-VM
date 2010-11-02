@@ -339,7 +339,7 @@ public class BootImage {
             version = VERSION;
             randomID = UUID.randomUUID().hashCode();
             wordSize = platform().wordWidth().numberOfBytes;
-            cacheAlignment = platform().dataModel().cacheAlignment;
+            cacheAlignment = platform().dataModel.cacheAlignment;
             pageSize = platform().pageSize;
             vmRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.MaxineVM_run, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadAddMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_add, CallEntryPoint.C_ENTRY_POINT).toInt();
@@ -413,9 +413,9 @@ public class BootImage {
      */
     public static final class StringInfo extends FieldSection {
         public final String buildLevelName;
-        public final String processorModelName;
-        public final String instructionSetName;
-        public final String operatingSystemName;
+        public final String cpuName;
+        public final String isaName;
+        public final String osName;
 
         public final String referencePackageName;
         public final String layoutPackageName;
@@ -432,16 +432,16 @@ public class BootImage {
             return Enums.fromString(BuildLevel.class, buildLevelName);
         }
 
-        public ProcessorModel processorModel() {
-            return Enums.fromString(ProcessorModel.class, processorModelName);
+        public CPU cpu() {
+            return Enums.fromString(CPU.class, cpuName);
         }
 
-        public InstructionSet instructionSet() {
-            return Enums.fromString(InstructionSet.class, instructionSetName);
+        public ISA isa() {
+            return Enums.fromString(ISA.class, isaName);
         }
 
-        public OperatingSystem operatingSystem() {
-            return Enums.fromString(OperatingSystem.class, operatingSystemName);
+        public OS os() {
+            return Enums.fromString(OS.class, osName);
         }
 
         public VMPackage referencePackage() {
@@ -490,9 +490,9 @@ public class BootImage {
         private StringInfo(InputStream inputStream, int offset) throws IOException, Utf8Exception {
             super(offset);
             buildLevelName = Utf8.readString(inputStream);
-            processorModelName = Utf8.readString(inputStream);
-            instructionSetName = Utf8.readString(inputStream);
-            operatingSystemName = Utf8.readString(inputStream);
+            cpuName = Utf8.readString(inputStream);
+            isaName = Utf8.readString(inputStream);
+            osName = Utf8.readString(inputStream);
 
             referencePackageName = Utf8.readString(inputStream);
             layoutPackageName = Utf8.readString(inputStream);
@@ -509,9 +509,9 @@ public class BootImage {
         private StringInfo(VMConfiguration vmConfiguration, int offset) {
             super(offset);
             buildLevelName = vmConfiguration.buildLevel.name();
-            processorModelName = platform().processorModel().name();
-            instructionSetName = platform().instructionSet().name();
-            operatingSystemName = platform().operatingSystem.name();
+            cpuName = platform().cpu.name();
+            isaName = platform().isa.name();
+            osName = platform().os.name();
 
             referencePackageName = vmConfiguration.referencePackage.name();
             layoutPackageName = vmConfiguration.layoutPackage.name();
@@ -537,9 +537,9 @@ public class BootImage {
 
         public void check() throws BootImageException {
             BootImageException.check(buildLevel() != null, "unknown build level: " + buildLevelName);
-            BootImageException.check(processorModel() != null, "unknown processor model: " + processorModelName);
-            BootImageException.check(instructionSet() != null, "unknown instruction set: " + instructionSetName);
-            BootImageException.check(operatingSystem() != null, "unknown operating system: " + operatingSystemName);
+            BootImageException.check(cpu() != null, "unknown processor model: " + cpuName);
+            BootImageException.check(isa() != null, "unknown instruction set: " + isaName);
+            BootImageException.check(os() != null, "unknown operating system: " + osName);
 
             checkPackage(referencePackageName);
             checkPackage(layoutPackageName);
@@ -669,8 +669,7 @@ public class BootImage {
                 BootImageException.check((codeOffset() % header.pageSize) == 0, "code offset is not page-size aligned");
 
                 final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.cacheAlignment);
-                final ProcessorKind processorKind = new ProcessorKind(stringInfo.processorModel(), stringInfo.instructionSet(), dataModel);
-                final Platform platform = new Platform(processorKind, stringInfo.operatingSystem(), header.pageSize);
+                final Platform platform = new Platform(stringInfo.cpu(), stringInfo.isa(), dataModel, stringInfo.os(), header.pageSize);
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,

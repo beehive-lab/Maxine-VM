@@ -33,7 +33,7 @@ public class Package extends AsmPackage {
     }
 
     @Override
-    public boolean isPartOfAssembler(InstructionSet instructionSet) {
+    public boolean isPartOfAssembler(ISA isa) {
         return true;
     }
 }

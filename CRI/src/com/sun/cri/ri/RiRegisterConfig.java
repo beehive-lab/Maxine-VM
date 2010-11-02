@@ -20,23 +20,29 @@
  */
 package com.sun.cri.ri;
 
+import java.util.*;
+
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 /**
- * Represents the register configuration specified by the runtime system
- * to the compiler, including such information as the return value register, the set
- * of allocatable registers, the order of registers within a reference map, calling
- * convention, etc.
- *
+ * A register configuration binds roles and {@linkplain RiRegisterAttributes attributes}
+ * to physical registers.
+ * 
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public interface RiRegisterConfig {
 
+    /**
+     * Gets the register to be used for returning a value of a given kind.
+     */
     CiRegister getReturnRegister(CiKind kind);
 
-    CiRegister getStackPointerRegister();
-
-    CiRegister getFramePointerRegister();
+    /**
+     * Gets the register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
+     */
+    CiRegister getFrameRegister();
 
     CiRegister getScratchRegister();
 
@@ -47,40 +53,56 @@ public interface RiRegisterConfig {
      * @param outgoing if {@code true}, this is a call to Java code otherwise it's a call from Java code
      * @param target the target platform
      */
-    CiCallingConvention getJavaCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target);
+    CiCallingConvention getCallingConvention(CiCallingConvention.Type type, CiKind[] parameters, boolean outgoing, CiTarget target);
     
     /**
-     * Gets the calling convention describing a call to the runtime.
-     * 
-     * @param parameters the types of the arguments of the call
-     * @param target the target platform
-     */
-    CiCallingConvention getRuntimeCallingConvention(CiKind[] parameters, CiTarget target);
+     * Gets the complete set of registers that are can be used to pass parameters
+     * according to a given calling convention.
 
+     * @param type the type of calling convention
+     * @return the set of registers that may be used to pass parameters in a call conforming to {@code type}
+     */
+    CiRegister[] getCallingConventionRegisters(CiCallingConvention.Type type);
+    
     /**
-     * Gets the calling convention describing a call to or from native code.
-     * 
-     * @param parameters the types of the arguments of the call
-     * @param outgoing if {@code true}, this is a call to native code otherwise it's a call from native code
-     * @param target the target platform
+     * Gets the set of registers that can be used by the register allocator.
      */
-    CiCallingConvention getNativeCallingConvention(CiKind[] parameters, boolean outgoing, CiTarget target);
-
     CiRegister[] getAllocatableRegisters();
 
+    /**
+     * Gets the set of registers that can be used by the register allocator,
+     * {@linkplain CiRegister#categorize(CiRegister[]) categorized} by register {@linkplain RegisterFlag flags}.
+     * 
+     * @return a map from each {@link RegisterFlag} constant to the list of {@linkplain #getAllocatableRegisters()
+     *         allocatable} registers for which the flag is {@linkplain #isSet(RegisterFlag) set}
+     * 
+     */
+    EnumMap<RegisterFlag, CiRegister[]> getCategorizedAllocatableRegisters();
+
+    /**
+     * Denotes the registers whose values must be preserved by a method across any call it makes. 
+     */
     CiRegister[] getCallerSaveRegisters();
-
-    int getMinimumCalleeSaveFrameSize();
-
-    int getCalleeSaveRegisterOffset(CiRegister register);
-
-    CiRegister[] getRegisterReferenceMapOrder();
     
     /**
-     * Gets the integer register corresponding to a runtime-defined role.
+     * Denotes the registers whose values must be preserved by a method for its caller. 
+     */
+    CiRegister[] getCalleeSaveRegisters();
+
+    /**
+     * Gets a map from register {@linkplain CiRegister#number numbers} to register
+     * {@linkplain RiRegisterAttributes attributes} for this register configuration.
+     * 
+     * @return an array where an element at index i holds the attributes of the register whose number is i
+     * @see CiRegister#categorize(CiRegister[])
+     */
+    RiRegisterAttributes[] getAttributesMap();
+    
+    /**
+     * Gets the register corresponding to a runtime-defined role.
      * 
      * @param id the identifier of a runtime-defined register role
-     * @return the integer register playing the role specified by {@code id}
+     * @return the register playing the role specified by {@code id}
      */
-    CiRegister getIntegerRegister(int id);
+    CiRegister getRegister(int id);
 }

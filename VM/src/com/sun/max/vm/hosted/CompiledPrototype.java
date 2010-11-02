@@ -76,11 +76,6 @@ public class CompiledPrototype extends Prototype {
     private static RuntimeCompilerScheme c1xCompiler;
 
     /**
-     * Methods that must be statically compiled in the boot image.
-     */
-    private static final Set<ClassMethodActor> imageMethodActors = Collections.newSetFromMap(new IdentityHashMap<ClassMethodActor, Boolean>());
-
-    /**
      * The link from a <i>referrer</i> method to a <i>referent</i> method where the referrer caused the referent to be
      * compiled in the image.
      */
@@ -364,14 +359,6 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    /**
-     * Registers a given method that must be statically compiled in the boot image.
-     */
-    public static void registerImageMethod(ClassMethodActor imageMethodActor) {
-        ProgramError.check(imageMethodActor != null);
-        imageMethodActors.add(imageMethodActor);
-    }
-
     public static void registerJitClass(Class javaClass) {
         ClassActor classActor = ClassActor.fromJava(javaClass);
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
@@ -425,23 +412,40 @@ public class CompiledPrototype extends Prototype {
         return c1xCompiler;
     }
 
-    private static List<MethodActor> imageInvocationStubMethodActors = new LinkedList<MethodActor>();
-    private static List<MethodActor> imageConstructorStubMethodActors = new LinkedList<MethodActor>();
+    /**
+     * Methods that must be statically compiled in the boot image.
+     */
+    private static Set<MethodActor> imageMethodActors = new HashSet<MethodActor>();
+    private static Set<MethodActor> imageInvocationStubMethodActors = new HashSet<MethodActor>();
+    private static Set<MethodActor> imageConstructorStubMethodActors = new HashSet<MethodActor>();
+
+    /**
+     * Registers a given method that must be statically compiled in the boot image.
+     */
+    public static void registerImageMethod(ClassMethodActor m) {
+        assert imageMethodActors != null : "too late to add VM entry point " + m;
+        ProgramError.check(m != null);
+        imageMethodActors.add(m);
+    }
 
     /**
      * Request the given method have a statically generated and compiled invocation stub in the boot image.
      */
-    public static void registerImageInvocationStub(MethodActor methodActorWithInvocationStub) {
-        imageInvocationStubMethodActors.add(methodActorWithInvocationStub);
+    public static void registerImageInvocationStub(MethodActor m) {
+        assert imageInvocationStubMethodActors != null : "too late to add VM entry point " + m;
+        imageInvocationStubMethodActors.add(m);
     }
 
     /**
      * Request that the given method have a statically generated and compiled constructor stub in the boot image.
-     * @param methodActor
+     * @param m
      */
-    public static void registerImageConstructorStub(MethodActor methodActor) {
-        imageConstructorStubMethodActors.add(methodActor);
+    public static void registerImageConstructorStub(MethodActor m) {
+        assert imageConstructorStubMethodActors != null : "too late to add VM entry point " + m;
+        imageConstructorStubMethodActors.add(m);
     }
+
+    private boolean vmEntryPointsDone;
 
     private void addVMEntryPoints() {
         final Relationship vmEntryPoint = null;
@@ -484,6 +488,11 @@ public class CompiledPrototype extends Prototype {
         add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary0"), null, vmEntryPoint);
         add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary"), null, vmEntryPoint);
         add(ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).findLocalStaticMethodActor("<clinit>"), null, vmEntryPoint);
+
+        // It's too late now to register any further methods to be compiled into the boot image
+        imageMethodActors = null;
+        imageConstructorStubMethodActors = null;
+        imageInvocationStubMethodActors = null;
     }
 
     private void addStaticAndVirtualMethods(ClassActor classActor) {
@@ -624,9 +633,6 @@ public class CompiledPrototype extends Prototype {
         final CodeRegion region = Code.bootCodeRegion;
         region.setSize(Size.fromInt(Integer.MAX_VALUE / 4)); // enable virtually infinite allocations
         // 2. add only entrypoint methods and methods not to be compiled.
-
-        //add(MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(String.class, int[].class, int.class, int.class)), null, null);
-
         addMethodsReferencedByExistingTargetCode();
         addVMEntryPoints();
     }

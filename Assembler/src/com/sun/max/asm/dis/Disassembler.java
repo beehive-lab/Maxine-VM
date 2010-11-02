@@ -44,7 +44,7 @@ public abstract class Disassembler {
     private static final Map<String, Constructor> disassemblerConstructors = new HashMap<String, Constructor>();
 
     /**
-     * Gets a constructor for instantiating a disassembler for a given {@linkplain InstructionSet ISA}
+     * Gets a constructor for instantiating a disassembler for a given {@linkplain ISA ISA}
      * and {@linkplain WordWidth word size}. If a non-null constructor is returned, it's signature
      * will be {@code (long, InlineDataDecoder)} or {@code (int, InlineDataDecoder)} depending on whether
      * {@code wordWidth} is {@link WordWidth#BITS_64} or {@link WordWidth#BITS_32}.
@@ -53,7 +53,7 @@ public abstract class Disassembler {
      * @param wordWidth a word size
      * @return a disassembler for {@code isa} and {@code wordWidth} or {@code null} if none exists
      */
-    public static Constructor getDisassemblerConstructor(InstructionSet isa, WordWidth wordWidth) {
+    public static Constructor getDisassemblerConstructor(ISA isa, WordWidth wordWidth) {
         String key = isa + " " + wordWidth;
         Constructor con = disassemblerConstructors.get(key);
         if (con == null) {
@@ -88,7 +88,7 @@ public abstract class Disassembler {
     }
 
     /**
-     * Gets a disassembler for a given {@linkplain InstructionSet ISA} and {@linkplain WordWidth word size}
+     * Gets a disassembler for a given {@linkplain ISA ISA} and {@linkplain WordWidth word size}
      * that can be used to disassemble an instruction stream located at a given address.
      *
      * @param isa an instruction set
@@ -98,7 +98,7 @@ public abstract class Disassembler {
      * @return the created disassembler
      * @throws IllegalArgumentException if no disassembler exists for {@code isa} and {@code wordWidth}
      */
-    public static Disassembler createDisassembler(InstructionSet isa, WordWidth wordWidth, long startAddress, InlineDataDecoder inlineDataDecoder) {
+    public static Disassembler createDisassembler(ISA isa, WordWidth wordWidth, long startAddress, InlineDataDecoder inlineDataDecoder) {
         Constructor con = getDisassemblerConstructor(isa, wordWidth);
         if (con == null) {
             throw new IllegalArgumentException("No disassembler is available for " + isa + " with word size " + wordWidth.numberOfBits);
@@ -116,18 +116,18 @@ public abstract class Disassembler {
      *
      * @param out where to print the disassembly
      * @param code the machine code to be disassembled and printed
-     * @param instructionSet the instruction set
+     * @param isa the instruction set
      * @param wordWidth the word width
      * @param startAddress the address at which {@code code} is located
      * @param inlineDataDecoder used to decode any inline data in {@code code}
      * @param disassemblyPrinter the printer utility to use for the printing. If {@code null}, then a new instance of
      *            {@link DisassemblyPrinter} is created and used.
      */
-    public static void disassemble(OutputStream out, byte[] code, InstructionSet instructionSet, WordWidth wordWidth, long startAddress, InlineDataDecoder inlineDataDecoder, DisassemblyPrinter disassemblyPrinter) {
+    public static void disassemble(OutputStream out, byte[] code, ISA isa, WordWidth wordWidth, long startAddress, InlineDataDecoder inlineDataDecoder, DisassemblyPrinter disassemblyPrinter) {
         if (code.length == 0) {
             return;
         }
-        final Disassembler disassembler = createDisassembler(instructionSet, wordWidth, startAddress, inlineDataDecoder);
+        final Disassembler disassembler = createDisassembler(isa, wordWidth, startAddress, inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(code));
         try {
             disassembler.scanAndPrint(stream, out, disassemblyPrinter);

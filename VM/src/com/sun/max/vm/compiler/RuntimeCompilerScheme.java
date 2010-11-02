@@ -36,10 +36,10 @@ import com.sun.max.vm.compiler.target.*;
 public interface RuntimeCompilerScheme extends VMScheme {
 
     /**
-     * Compiles a method to an internal representation (typically a {@link TargetMethod}).
+     * Compiles a method to an internal representation.
      *
      * @param classMethodActor the method to compile
-     * @return a reference to the IR method created by this compiler for the specified method
+     * @return a reference to the target method created by this compiler for {@code classMethodActor}
      */
     TargetMethod compile(ClassMethodActor classMethodActor);
 

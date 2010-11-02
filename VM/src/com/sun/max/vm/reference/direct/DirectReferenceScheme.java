@@ -420,12 +420,12 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
 
     @HOSTED_ONLY
     public byte[] asBytes(Pointer origin) {
-        return platform().dataModel().toBytes(origin);
+        return platform().dataModel.toBytes(origin);
     }
 
     @HOSTED_ONLY
     public byte[] nullAsBytes() {
-        return platform().dataModel().toBytes(Word.zero());
+        return platform().dataModel.toBytes(Word.zero());
     }
 
     @Override

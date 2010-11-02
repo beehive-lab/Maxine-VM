@@ -26,18 +26,22 @@ import static java.lang.reflect.Modifier.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.alloc.Interval.RegisterBinding;
+import com.sun.c1x.alloc.Interval.RegisterPriority;
+import com.sun.c1x.alloc.Interval.SpillState;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.BlockBegin.*;
+import com.sun.c1x.ir.BlockBegin.BlockFlag;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.LIRInstruction.*;
+import com.sun.c1x.lir.LIRInstruction.OperandMode;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.value.FrameState.*;
+import com.sun.c1x.value.FrameState.PhiProcedure;
+import com.sun.c1x.value.FrameState.ValueProcedure;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * An implementation of the linear scan register allocator algorithm described
@@ -54,8 +58,8 @@ public class LinearScan {
     final IR ir;
     final LIRGenerator gen;
     final FrameMap frameMap;
-
-    final CiRegister.AllocationSpec allocationSpec;
+    final RiRegisterAttributes[] registerAttributes;
+    final CiRegister[] registers;
 
     private static final int INITIAL_SPLIT_INTERVALS_CAPACITY = 32;
 
@@ -65,8 +69,6 @@ public class LinearScan {
     final BlockBegin[] sortedBlocks;
 
     final OperandPool operands;
-
-    private final int numRegs;
 
     /**
      * Number of stack slots used for intervals allocated to memory.
@@ -125,8 +127,12 @@ public class LinearScan {
         this.maxSpills = frameMap.initialSpillSlot();
         this.unusedSpillSlot = null;
         this.sortedBlocks = ir.linearScanOrder().toArray(new BlockBegin[ir.linearScanOrder().size()]);
-        this.allocationSpec = compilation.target.allocationSpec;
-        this.numRegs = allocationSpec.nofRegs;
+        CiRegister[] allocatableRegisters = compilation.registerConfig.getAllocatableRegisters();
+        this.registers = new CiRegister[CiRegister.maxRegisterNumber(allocatableRegisters) + 1];
+        for (CiRegister reg : allocatableRegisters) {
+            registers[reg.number] = reg;
+        }
+        this.registerAttributes = compilation.registerConfig.getAttributesMap();
         this.operands = gen.operands;
     }
 
@@ -159,6 +165,13 @@ public class LinearScan {
             return !i.operand.isRegister() && i.kind() == CiKind.Object;
         }
     };
+
+    /**
+     * Gets an object describing the attributes of a given register according to this register configuration.
+     */
+    RiRegisterAttributes attributes(CiRegister reg) {
+        return registerAttributes[reg.number];
+    }
 
     /**
      * Allocates the next available spill slot for a value of a given kind.
@@ -913,7 +926,7 @@ public class LinearScan {
     }
 
     boolean isProcessed(CiValue operand) {
-        return !operand.isRegister() || allocationSpec.isAllocatable(operand.asRegister());
+        return !operand.isRegister() || attributes(operand.asRegister()).isAllocatable;
     }
 
     void addDef(CiValue operand, int defPos, RegisterPriority registerPriority, CiKind kind) {
@@ -1163,7 +1176,8 @@ public class LinearScan {
         intervals = new Interval[intervalsSize + INITIAL_SPLIT_INTERVALS_CAPACITY];
 
         // create a list with all caller-save registers (cpu, fpu, xmm)
-        CiRegister[] callerSaveRegs = compilation.target.allocationSpec.callerSaveAllocatableRegisters;
+        RiRegisterConfig registerConfig = compilation.registerConfig;
+        CiRegister[] callerSaveRegs = registerConfig.getCallerSaveRegisters();
 
         // iterate all blocks in reverse order
         for (int i = blockCount() - 1; i >= 0; i--) {
@@ -1206,7 +1220,9 @@ public class LinearScan {
                 // add a temp range for each register if operation destroys caller-save registers
                 if (op.hasCall()) {
                     for (CiRegister r : callerSaveRegs) {
-                        addTemp(r.asValue(), opId, RegisterPriority.None, CiKind.Illegal);
+                        if (attributes(r).isAllocatable) {
+                            addTemp(r.asValue(), opId, RegisterPriority.None, CiKind.Illegal);
+                        }
                     }
                     if (C1XOptions.TraceLinearScanLevel >= 4) {
                         TTY.println("operation destroys all caller-save registers");
@@ -1301,7 +1317,7 @@ public class LinearScan {
                 }
                 int opId = op.id;
 
-                for (CiRegister r : compilation.target.allocationSpec.callerSaveRegisters) {
+                for (CiRegister r : compilation.registerConfig.getCallerSaveRegisters()) {
                     if (r.isFpu()) {
                         addTemp(r.asValue(), opId, RegisterPriority.None, CiKind.Illegal);
                     }
@@ -1950,7 +1966,7 @@ public class LinearScan {
         // included in the oop map
         iw.walkBefore(op.id);
 
-        info.allocateDebugInfo(compilation.target.allocationSpec.refMapSize, compilation.frameMap().frameSize(), compilation.target);
+        info.allocateDebugInfo(compilation.target.registerSaveArea.referenceSlotsCount, compilation.frameMap().frameSize(), compilation.target);
 
         if (info.scopeDebugInfo != null && info.scopeDebugInfo.monitors != null) {
             for (CiValue monitor : info.scopeDebugInfo.monitors) {
@@ -1997,7 +2013,7 @@ public class LinearScan {
     }
 
     private boolean isCallerSave(CiValue operand) {
-        return allocationSpec.isCallerSave(operand.asRegister());
+        return attributes(operand.asRegister()).isCallerSave;
     }
 
     void computeOopMap(IntervalWalker iw, LIRInstruction op) {

@@ -20,16 +20,25 @@
  */
 package com.sun.c1x.target.amd64;
 
+import static com.sun.c1x.C1XCompilation.*;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
+
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.target.amd64.AMD64Assembler.*;
+import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.CiXirAssembler.XirConstant;
+import com.sun.cri.xir.CiXirAssembler.XirConstantOperand;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.cri.xir.CiXirAssembler.XirParameter;
+import com.sun.cri.xir.CiXirAssembler.XirRegister;
+import com.sun.cri.xir.CiXirAssembler.XirTemp;
 
 public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
@@ -54,19 +63,16 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     private C1XCompiler compiler;
     private CiRegister[] registersSaved;
 
-    private List<CiRegister> allocatableRegisters = new ArrayList<CiRegister>();
-    private CiRegister[] allRegisters;
     private boolean savedAllRegisters;
 
     public AMD64GlobalStubEmitter(C1XCompiler compiler) {
         this.compiler = compiler;
         this.target = compiler.target;
         this.runtime = compiler.runtime;
-        allRegisters = AMD64.allRegisters;
     }
 
     private void reset(CiKind resultKind, CiKind[] argTypes) {
-        asm = new AMD64MacroAssembler(compiler, compiler.target);
+        asm = new AMD64MacroAssembler(compiler, compiler.stubRegisterConfig);
         saveSize = 0;
         argsSize = 0;
         argOffsets = new int[argTypes.length];
@@ -134,36 +140,38 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         return new CiAddress(result.kind, AMD64.RSP, argumentIndexToStackOffset(0));
     }
 
-    private CiValue allocateOperand(XirTemp temp) {
+    private CiValue allocateOperand(XirTemp temp, ArrayList<CiRegister> allocatableRegisters) {
         if (temp instanceof XirRegister) {
             XirRegister fixed = (XirRegister) temp;
             return fixed.register;
         }
 
-        return newRegister(temp.kind);
+        return newRegister(temp.kind, allocatableRegisters);
     }
 
-    private CiValue newRegister(CiKind kind) {
+    private CiValue newRegister(CiKind kind, ArrayList<CiRegister> allocatableRegisters) {
         assert kind != CiKind.Float && kind != CiKind.Double;
         assert allocatableRegisters.size() > 0;
         return allocatableRegisters.remove(allocatableRegisters.size() - 1).asValue(kind);
     }
 
     public GlobalStub emit(XirTemplate template, RiRuntime runtime) {
-        reset(template.resultOperand.kind, getArgumentKinds(template));
+        C1XCompilation compilation = setCurrent(new C1XCompilation(compiler, null, -1));
+        try {
+            return emit(template, compilation);
+        } finally {
+            setCurrent(null);
+        }
+    }
 
-        C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, compiler.runtime, null);
+    public GlobalStub emit(XirTemplate template, C1XCompilation compilation) {
+        reset(template.resultOperand.kind, getArgumentKinds(template));
         compilation.initFrameMap(0);
         compilation.frameMap().setFrameSize(frameSize());
         AMD64LIRAssembler assembler = new AMD64LIRAssembler(compilation);
         asm = assembler.masm;
 
-        for (CiRegister reg : compiler.target.allocationSpec.allocatableRegisters) {
-            if (reg.isCpu()) {
-                allocatableRegisters.add(reg);
-            }
-        }
-
+        ArrayList<CiRegister> allocatableRegisters = new ArrayList<CiRegister>(Arrays.asList(compiler.stubRegisterConfig.getCategorizedAllocatableRegisters().get(RegisterFlag.CPU)));
         for (XirTemp t : template.temps) {
             if (t instanceof XirRegister) {
                 final XirRegister fixed = (XirRegister) t;
@@ -197,7 +205,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
             // Is the value destroyed?
             if (template.isParameterDestroyed(param.parameterIndex)) {
-                CiValue newOp = newRegister(op.kind);
+                CiValue newOp = newRegister(op.kind, allocatableRegisters);
                 assembler.moveOp(op, newOp, op.kind, null, false);
                 operands[param.index] = newOp;
             } else {
@@ -211,7 +219,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         }
 
         for (XirTemp t : template.temps) {
-            CiValue op = allocateOperand(t);
+            CiValue op = allocateOperand(t, allocatableRegisters);
             assert operands[t.index] == null;
             operands[t.index] = op;
         }
@@ -367,7 +375,8 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void completeSavePrologue() {
-        this.saveSize = target.registerConfig.getMinimumCalleeSaveFrameSize();
+        CiRegisterSaveArea rsa = target.registerSaveArea;
+        this.saveSize = rsa.size;
         int entryCodeOffset = runtime.codeOffset();
         if (entryCodeOffset != 0) {
             // align to code size
@@ -375,16 +384,9 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         }
         asm.subq(AMD64.rsp, frameSize());
         asm.setFrameSize(frameSize());
-        int rspToRegisterState = frameSize() - saveSize;
-        assert rspToRegisterState >= 0;
-        // save all registers
-        for (CiRegister r : allRegisters) {
-            int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
-            assert offset >= 0;
-            if (r != AMD64.rsp && offset >= 0) {
-                asm.movq(new CiAddress(CiKind.Word, AMD64.RSP, rspToRegisterState + offset), r);
-            }
-        }
+        int frameToRSA = frameSize() - saveSize;
+        CiRegister[] calleeSave = compiler.stubRegisterConfig.getCalleeSaveRegisters();
+        asm.save(calleeSave, rsa, frameToRSA);
         this.savedAllRegisters = true;
     }
 
@@ -393,14 +395,10 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         registerRestoreEpilogueOffset = asm.codeBuffer.position();
 
         if (savedAllRegisters) {
-            // saved all registers, restore all registers
-            int rspToRegisterState = frameSize() - saveSize;
-            for (CiRegister r : allRegisters) {
-                int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
-                if (r != AMD64.rsp && offset >= 0) {
-                    asm.movq(r, new CiAddress(CiKind.Word, AMD64.RSP, rspToRegisterState + offset));
-                }
-            }
+            CiRegisterSaveArea rsa = target.registerSaveArea;
+            int frameToRSA = frameSize() - rsa.size;
+            CiRegister[] calleeSave = compiler.stubRegisterConfig.getCalleeSaveRegisters();
+            asm.restore(calleeSave, rsa, frameToRSA);
         } else {
             // saved only select registers
             for (int index = 0; index < registersSaved.length; index++) {
@@ -421,7 +419,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void forwardRuntimeCall(CiRuntimeCall call) {
         // Load arguments
-        CiCallingConvention cc = target.registerConfig.getRuntimeCallingConvention(call.arguments, target);
+        CiCallingConvention cc = compiler.stubRegisterConfig.getCallingConvention(Runtime, call.arguments, true, target);
         for (int i = 0; i < cc.locations.length; ++i) {
             CiValue location = cc.locations[i];
             loadArgument(i, location.asRegister());
@@ -431,7 +429,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         asm.directCall(call, null);
 
         if (call.resultKind != CiKind.Void) {
-            CiRegister returnRegister = target.registerConfig.getReturnRegister(call.resultKind);
+            CiRegister returnRegister = compiler.stubRegisterConfig.getReturnRegister(call.resultKind);
             this.storeArgument(0, returnRegister);
         }
     }

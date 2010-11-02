@@ -33,15 +33,10 @@ public abstract class CiCompiler {
 
     /**
      * Compile the specified method.
+     * 
      * @param method the method to compile
-     * @return a {@link CiResult result} representing the compilation result
-     */
-    public abstract CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator);
-
-    /**
-     * Compile the specified method.
-     * @param method the method to compile
-     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
+     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement or {@code -1} if this is not an
+     *            on-stack-replacement compilation
      * @return a {@link CiResult result} representing the compilation result
      */
     public abstract CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator);

@@ -129,7 +129,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     @HOSTED_ONLY
     @Override
     public CodeManager createCodeManager() {
-        switch (Platform.platform().operatingSystem) {
+        switch (Platform.platform().os) {
             case LINUX: {
                 return new LowAddressCodeManager();
             }

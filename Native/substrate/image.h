@@ -96,9 +96,9 @@ extern image_Header image_header(void);
  */
 typedef struct image_StringInfo {
     char *buildLevel;
-    char *processorModel;
-    char *instructionSet;
-    char *operatingSystem;
+    char *cpu;
+    char *isa;
+    char *os;
 
     char *referencePackageName;
     char *layoutPackageName;

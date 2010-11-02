@@ -47,6 +47,7 @@ public abstract class LIRAssembler {
     public final C1XCompilation compilation;
     public final AbstractAssembler asm;
     public final FrameMap frameMap;
+    public int registerRestoreEpilogueOffset = -1;
 
     protected final List<SlowPath> xirSlowPath;
     protected final List<BlockBegin> branchTargetBlocks;

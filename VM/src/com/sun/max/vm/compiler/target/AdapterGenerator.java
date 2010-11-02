@@ -106,11 +106,6 @@ public abstract class AdapterGenerator {
     public final Adapter.Type adapterType;
 
     /**
-     * The special adapter called by a dynamic trampoline.
-     */
-    //protected Adapter dynamicTrampolineAdapter;
-
-    /**
      * The ABI for code compiled with the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT OPT} calling convention.
      */
     protected final TargetABI optABI;
@@ -212,7 +207,7 @@ public abstract class AdapterGenerator {
             return null;
         }
 
-        if (callee.isTemplate()) {
+        if (callee.isTemplate() || callee.isTrapStub() || callee.isVmEntryPoint()) {
             // Templates do not have adapters as they are not complete methods that are called
             return null;
         }

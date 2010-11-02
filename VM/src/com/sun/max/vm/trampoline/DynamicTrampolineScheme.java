@@ -22,7 +22,6 @@ package com.sun.max.vm.trampoline;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -31,8 +30,6 @@ import com.sun.max.vm.runtime.*;
  * @author Laurent Daynes
  */
 public interface DynamicTrampolineScheme extends VMScheme {
-
-    boolean isDynamicTrampoline(ClassMethodActor classMethodActor);
 
     Address makeVirtualCallEntryPoint(int vTableIndex);
 

@@ -41,6 +41,6 @@ public class Package extends VMPackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return vmConfiguration.bootCompilerScheme() instanceof AMD64EirGeneratorScheme &&
-               platform().operatingSystem == OperatingSystem.LINUX;
+               platform().os == OS.LINUX;
     }
 }

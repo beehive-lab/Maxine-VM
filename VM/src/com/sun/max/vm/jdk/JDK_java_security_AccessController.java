@@ -27,7 +27,6 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -35,6 +34,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -139,7 +139,7 @@ final class JDK_java_security_AccessController {
      * This class implements a closure that analyzes protection domains on the call stack. It is based on the HotSpot
      * implementation.
      */
-    private static class Context implements RawStackFrameVisitor {
+    private static class Context extends RawStackFrameVisitor {
 
         final List<ProtectionDomain> protectionDomains = new LinkedList<ProtectionDomain>();
         final VmThread.PrivilegedElement privilegedElement = VmThread.current().getTopPrivilegedElement();
@@ -150,11 +150,13 @@ final class JDK_java_security_AccessController {
         Context() {
         }
 
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
-            if (isTopFrame) {
+        @Override
+        public boolean visitFrame(Cursor current, Cursor callee) {
+            if (current.isTopFrame()) {
                 // skip caller, i.e., 'getAccessControlContext()'
                 return true;
             }
+            TargetMethod targetMethod = current.targetMethod();
             if (targetMethod == null || targetMethod instanceof Adapter) {
                 // native or adapter frame
                 return true;
@@ -163,12 +165,12 @@ final class JDK_java_security_AccessController {
             isPrivileged = false;
             ProtectionDomain protectionDomain = null;
             // check the privileged frames for a match
-            if (privilegedElement != null && privilegedElement.frameId == framePointer) {
+            if (privilegedElement != null && privilegedElement.frameId == current.fp()) {
                 isPrivileged = true;
                 privilegedContext = privilegedElement.context;
                 protectionDomain = privilegedElement.classActor.protectionDomain();
             } else {
-                BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(instructionPointer, false);
+                BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(current.ip(), false);
                 if (bytecodeLocation == null) {
                     protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
                 } else {

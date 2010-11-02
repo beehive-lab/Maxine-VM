@@ -41,7 +41,7 @@ public final class TeleStateRegisters extends TeleRegisters {
 
     public TeleStateRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
         super(teleVM, teleRegisterSet, createSymbolizer());
-        switch (platform().instructionSet()) {
+        switch (platform().isa) {
             case AMD64: {
                 instructionPointerRegister = Amd64StateRegister.RIP;
                 flagsRegister = Amd64StateRegister.FLAGS;
@@ -135,7 +135,7 @@ public final class TeleStateRegisters extends TeleRegisters {
      * Gets the symbols representing all the state registers of the instruction set denoted by a given VM configuration.
      */
     private static Symbolizer<? extends Symbol> createSymbolizer() {
-        switch (platform().instructionSet()) {
+        switch (platform().isa) {
             case AMD64:
                 return Amd64StateRegister.ENUMERATOR;
             case SPARC:
@@ -156,7 +156,7 @@ public final class TeleStateRegisters extends TeleRegisters {
     }
 
     public static String flagsToString(TeleVM teleVM, long flags) {
-        switch (platform().instructionSet()) {
+        switch (platform().isa) {
             case AMD64: {
                 return Amd64StateRegister.flagsToString(flags);
             }

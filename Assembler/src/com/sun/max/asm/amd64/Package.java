@@ -34,7 +34,7 @@ public class Package extends AsmPackage {
     }
 
     @Override
-    public boolean isPartOfAssembler(InstructionSet instructionSet) {
-        return instructionSet == InstructionSet.AMD64;
+    public boolean isPartOfAssembler(ISA isa) {
+        return isa == ISA.AMD64;
     }
 }

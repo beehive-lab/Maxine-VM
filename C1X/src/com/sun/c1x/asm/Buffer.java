@@ -20,18 +20,17 @@
  */
 package com.sun.c1x.asm;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.CiArchitecture.*;
+import com.sun.cri.ci.CiArchitecture.ByteOrder;
 
 /**
  *
  * @author Thomas Wuerthinger
  */
-public final class Buffer extends OutputStream {
+public final class Buffer {
 
     private byte[] data;
     private int position;
@@ -44,11 +43,14 @@ public final class Buffer extends OutputStream {
     }
 
     /**
-     * After calling this method, the buffer must no longer be used!
-     * @return the byte array that contains the finished data
+     * Closes this buffer. No extra data can be written to this buffer after this call.
+     *
+     * @param trimmedCopy if {@code true}, then a copy of the underlying byte array up to (but not including)
+     *            {@code position()} is returned
+     * @return the data in this buffer or a trimmed copy if {@code trimmedCopy} is {@code true}
      */
-    public byte[] finished() {
-        byte[] result = data;
+    public byte[] close(boolean trimmedCopy) {
+        byte[] result = trimmedCopy ? Arrays.copyOf(data, position()) : data;
         data = null;
         return result;
     }
@@ -171,10 +173,5 @@ public final class Buffer extends OutputStream {
 
     public byte[] getData(int start, int end) {
         return Arrays.copyOfRange(data, start, end);
-    }
-
-    @Override
-    public void write(int b) throws IOException {
-        emitByte(b & 0xFF);
     }
 }

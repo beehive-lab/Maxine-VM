@@ -20,8 +20,6 @@
  */
 package com.sun.cri.ci;
 
-import com.sun.cri.ci.CiRegister.*;
-import com.sun.cri.ri.*;
 
 /**
  * Represents the target machine for a compiler, including the CPU architecture, the size of pointers and references,
@@ -32,13 +30,15 @@ import com.sun.cri.ri.*;
 public class CiTarget {
     public final CiArchitecture arch;
 
-    public final AllocationSpec allocationSpec;
-    public final CiRegister stackPointerRegister;
-    public final CiRegister scratchRegister;
-    public final RiRegisterConfig registerConfig;
+    public final CiRegisterSaveArea registerSaveArea;
+    
     public final int pageSize;
     public final boolean isMP;
     private final int[] spillSlotsPerKindMap;
+    
+    /**
+     * Specifies if this target supports encoding objects inline in the machine code.
+     */
     public final boolean inlineObjects;
 
     /**
@@ -54,7 +54,7 @@ public class CiTarget {
     public final int heapAlignment;
 
     public CiTarget(CiArchitecture arch,
-             RiRegisterConfig registerConfig,
+             CiRegisterSaveArea registerSaveArea,
              boolean isMP,
              int spillSlotSize,
              int wordSize,
@@ -66,7 +66,7 @@ public class CiTarget {
              int codeAlignment,
              boolean inlineObjects) {
         this.arch = arch;
-        this.registerConfig = registerConfig;
+        this.registerSaveArea = registerSaveArea;
         this.pageSize = pageSize;
         this.isMP = isMP;
         this.spillSlotSize = spillSlotSize;
@@ -77,10 +77,6 @@ public class CiTarget {
         this.codeAlignment = codeAlignment;
         this.heapAlignment = heapAlignment;
         this.inlineObjects = inlineObjects;
-        
-        this.stackPointerRegister = registerConfig.getStackPointerRegister();
-        this.scratchRegister = registerConfig.getScratchRegister();
-        this.allocationSpec = new AllocationSpec(registerConfig.getAllocatableRegisters(), registerConfig.getRegisterReferenceMapOrder(), registerConfig.getCallerSaveRegisters());
         this.spillSlotsPerKindMap = new int[CiKind.values().length];
 
         for (CiKind k : CiKind.values()) {

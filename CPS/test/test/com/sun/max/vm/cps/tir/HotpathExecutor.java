@@ -147,7 +147,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
     }
 
     protected static void createVMConfiguration() {
-        Platform.set(platform().constrainedByInstructionSet(InstructionSet.SPARC));
+        Platform.set(platform().constrainedByInstructionSet(ISA.SPARC));
         VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.Package());
     }
 }

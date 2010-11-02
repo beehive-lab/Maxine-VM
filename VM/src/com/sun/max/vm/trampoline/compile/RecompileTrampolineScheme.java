@@ -39,10 +39,6 @@ public class RecompileTrampolineScheme extends AbstractVMScheme implements Dynam
         dynamicTrampolineExit = DynamicTrampolineExit.create();
     }
 
-    public boolean isDynamicTrampoline(ClassMethodActor classMethodActor) {
-        return VTableTrampolineSnippet.isVTableTrampoline(classMethodActor) || ITableTrampolineSnippet.isITableTrampoline(classMethodActor);
-    }
-
     public Address makeInterfaceCallEntryPoint(int vTableIndex) {
         return ITableTrampolineSnippet.makeCallEntryPoint(vTableIndex);
     }

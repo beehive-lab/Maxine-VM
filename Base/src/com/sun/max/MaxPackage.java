@@ -169,9 +169,15 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
 
     private Map<Class<? extends Scheme>, Class<? extends Scheme>> schemeTypeToImplementation;
 
+    /**
+     * Registers a class in this package that implements a given scheme type.
+     *
+     * @param schemeType a scheme type
+     * @param schemeImplementation a class that implements {@code schemType}
+     */
     public synchronized <S extends Scheme> void registerScheme(Class<S> schemeType, Class<? extends S> schemeImplementation) {
         assert schemeType.isInterface() || Modifier.isAbstract(schemeType.getModifiers());
-        assert schemeImplementation.getPackage().getName().equals(name());
+        assert schemeImplementation.getPackage().getName().equals(name()) : "cannot register implmentation class from another package: " + schemeImplementation;
         if (schemeTypeToImplementation == null) {
             schemeTypeToImplementation = new IdentityHashMap<Class<? extends Scheme>, Class<? extends Scheme>>();
         }
@@ -273,21 +279,12 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
      * Instantiates the scheme implementation class in this package implementing a given scheme type.
      *
      * @param schemeType the interface or abstract class defining a scheme type
-     * @param arguments arguments passed to constructor of the scheme implementation class
      * @return a new instance of the scheme implementation class
      */
-    public synchronized <S extends Scheme> S loadAndInstantiateScheme(Class<S> schemeType, Object... arguments) {
+    public synchronized <S extends Scheme> S loadAndInstantiateScheme(Class<S> schemeType) {
         final Class<? extends S> schemeImplementation = loadSchemeImplementation(schemeType);
         try {
-            final Class[] argumentTypes = new Class[arguments.length];
-            for (int i = 0; i < arguments.length; i++) {
-                argumentTypes[i] = arguments[i].getClass();
-            }
-            final Constructor constructor = Classes.findConstructor(schemeImplementation, arguments);
-            if (constructor != null) {
-                return schemeImplementation.cast(constructor.newInstance(arguments));
-            }
-            throw ProgramError.unexpected("could not find matching constructor of class: " + schemeImplementation.getName());
+            return schemeImplementation.newInstance();
         } catch (Throwable throwable) {
             throw ProgramError.unexpected("could not instantiate class: " + schemeImplementation.getName(), throwable);
         }

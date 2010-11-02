@@ -39,11 +39,13 @@ public abstract class CodeGen {
     protected final RiRuntime runtime;
     protected final CiTarget target;
     protected final RiMethod method;
+    protected final C0XCompilation compilation;
 
     public CodeGen(C0XCompilation compilation, CiTarget target) {
         this.runtime = compilation.runtime;
         this.target = compilation.target;
         this.method = compilation.method;
+        this.compilation = compilation;
     }
 
     abstract void genBreakpoint(int bci);
