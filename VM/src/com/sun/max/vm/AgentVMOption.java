@@ -60,7 +60,7 @@ public class AgentVMOption extends VMOption {
 
     @Override
     public boolean parseValue(Pointer optionValue) {
-        VMStringOption option = new VMStringOption();
+        VMStringOption option = new VMStringOption(prefix);
         optionList.add(option);
         return option.parseValue(optionValue);
     }
