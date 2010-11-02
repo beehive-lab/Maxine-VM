@@ -701,16 +701,16 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Analyzes the target method that this compiler produced to build a call graph. This method appends the direct
-     * calls (i.e. static and special calls), the virtual calls, and the interface calls to the appendable sequences
-     * supplied.
+     * Analyzes the target method that this compiler produced to build a call graph. This method gathers the
+     * methods called directly or indirectly by this target method as well as the methods it inlined.
      *
-     * @param directCalls a sequence of the direct calls to which this method should append
-     * @param virtualCalls a sequence of virtual calls to which this method should append
-     * @param interfaceCalls a sequence of interface calls to which this method should append
+     * @param directCalls the set of direct calls to which this method should append
+     * @param virtualCalls the set of virtual calls to which this method should append
+     * @param interfaceCalls the set of interface calls to which this method should append
+     * @param inlinedMethods the set of inlined methods to which this method should append
      */
     @HOSTED_ONLY
-    public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls);
+    public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods);
 
     public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
 

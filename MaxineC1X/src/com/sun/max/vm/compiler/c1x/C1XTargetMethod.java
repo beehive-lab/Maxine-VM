@@ -26,8 +26,10 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiDebugInfo.Frame;
+import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
+import com.sun.cri.ci.CiTargetMethod.Site;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
@@ -45,8 +47,8 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
 
 /**
@@ -636,9 +638,18 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         return exceptionClassActors == null ? 0 : exceptionClassActors.length;
     }
 
+    private void gatherInlinedMethods(Site site, Set<MethodActor> inlinedMethods) {
+        CiDebugInfo debugInfo = site.debugInfo();
+        if (debugInfo != null) {
+            for (CiCodePos pos = debugInfo.codePos; pos != null; pos = pos.caller) {
+                inlinedMethods.add((MethodActor) pos.method);
+            }
+        }
+    }
+
     @Override
     @HOSTED_ONLY
-    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
         // first gather methods in the directCallees array
         if (directCallees != null) {
             for (Object o : directCallees) {
@@ -656,6 +667,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
                 MethodActor methodActor = (MethodActor) site.method;
                 directCalls.add(methodActor);
             }
+            gatherInlinedMethods(site, inlinedMethods);
         }
 
         // iterate over all the calls and append them to the appropriate lists
@@ -670,6 +682,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
                     }
                 }
             }
+            gatherInlinedMethods(site, inlinedMethods);
         }
     }
 

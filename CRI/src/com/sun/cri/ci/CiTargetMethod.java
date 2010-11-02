@@ -44,6 +44,10 @@ public class CiTargetMethod implements Serializable {
         public Site(int pcOffset) {
             this.pcOffset = pcOffset;
         }
+        
+        public CiDebugInfo debugInfo() {
+            return null;
+        }
     }
 
     /**
@@ -55,6 +59,11 @@ public class CiTargetMethod implements Serializable {
         Safepoint(int pcOffset, CiDebugInfo debugInfo) {
             super(pcOffset);
             this.debugInfo = debugInfo;
+        }
+
+        @Override
+        public CiDebugInfo debugInfo() {
+            return debugInfo;
         }
 
         @Override
@@ -93,6 +102,11 @@ public class CiTargetMethod implements Serializable {
             this.debugInfo = debugInfo;
         }
 
+        @Override
+        public CiDebugInfo debugInfo() {
+            return debugInfo;
+        }
+        
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();

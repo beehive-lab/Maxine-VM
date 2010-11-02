@@ -95,7 +95,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
 
     @HOSTED_ONLY
     @Override
-    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
         final BytecodeVisitor bytecodeVisitor = new InvokedMethodRecorder(classMethodActor, directCalls, virtualCalls, interfaceCalls);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodeVisitor);
         bytecodeScanner.scan(classMethodActor);
