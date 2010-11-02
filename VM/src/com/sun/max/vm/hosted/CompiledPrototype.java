@@ -261,13 +261,6 @@ public class CompiledPrototype extends Prototype {
     private void processNewTargetMethod(TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-        // if this method contains anonymous classes, add them:
-        final Set<ClassActor> anonymousClasses = lookupAnonymousClasses(classMethodActor);
-        if (anonymousClasses != null) {
-            for (ClassActor classActor : anonymousClasses) {
-                processNewClass(classActor);
-            }
-        }
         // add the methods referenced in the target method's literals
         if (targetMethod.referenceLiterals() != null) {
             for (Object literal : targetMethod.referenceLiterals()) {
@@ -279,11 +272,25 @@ public class CompiledPrototype extends Prototype {
         final Set<MethodActor> directCalls = new HashSet<MethodActor>();
         final Set<MethodActor> virtualCalls = new HashSet<MethodActor>();
         final Set<MethodActor> interfaceCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> inlinedMethods = new HashSet<MethodActor>();
         // gather all direct, virtual, and interface calls and add them
-        targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
+        targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls, inlinedMethods);
         addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
         addMethods(classMethodActor, virtualCalls, Relationship.VIRTUAL_CALL);
         addMethods(classMethodActor, interfaceCalls, Relationship.INTERFACE_CALL);
+
+        // if this method (or any that it inlines) contains anonymous classes, add them:
+        inlinedMethods.add(classMethodActor);
+        for (MethodActor m : inlinedMethods) {
+            if (m != null) {
+                final Set<ClassActor> anonymousClasses = lookupAnonymousClasses(m);
+                if (anonymousClasses != null) {
+                    for (ClassActor classActor : anonymousClasses) {
+                        processNewClass(classActor);
+                    }
+                }
+            }
+        }
     }
 
     private void traceNewTargetMethod(TargetMethod targetMethod) {

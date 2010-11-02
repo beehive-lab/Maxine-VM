@@ -495,7 +495,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     @HOSTED_ONLY
     @Override
-    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
         if (directCallees != null) {
             for (Object o : directCallees) {
                 if (o instanceof MethodActor) {
@@ -508,13 +508,19 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             final List<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
             final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
             for (int stopIndex = numberOfDirectCalls(); stopIndex < numberOfCalls; ++stopIndex) {
-                final BytecodeLocation location = frameDescriptors.get(stopIndex);
+                BytecodeLocation location = frameDescriptors.get(stopIndex);
                 if (location != null) {
                     final InvokedMethodRecorder invokedMethodRecorder = new InvokedMethodRecorder(location.classMethodActor, directCalls, virtualCalls, interfaceCalls);
                     final BytecodeScanner bytecodeScanner = new BytecodeScanner(invokedMethodRecorder);
                     final byte[] bytecode = location.classMethodActor.codeAttribute().code();
                     if (bytecode != null && location.bytecodePosition < bytecode.length) {
                         bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition);
+                    }
+                    inlinedMethods.add(location.classMethodActor);
+                    location = location.parent();
+                    while (location != null) {
+                        inlinedMethods.add(location.classMethodActor);
+                        location = location.parent();
                     }
                 }
             }
