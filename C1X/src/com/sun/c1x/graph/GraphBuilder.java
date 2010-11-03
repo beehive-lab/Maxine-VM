@@ -2447,16 +2447,37 @@ public final class GraphBuilder {
         }
     }
 
+    /**
+     * Pops the value producing the scaled-index or the byte offset for a pointer operation.
+     * If compiling for a 64-bit platform and the value is an {@link CiKind#Int} parameter,
+     * then a conversion is inserted to sign extend the int to a word.
+     *
+     * This is required as the value is used as a 64-bit value and so the high 32 bits
+     * need to be correct.
+     *
+     * @param isInt specifies if the value is an {@code int}
+     */
+    private Value popOffsetOrIndexForPointerOp(boolean isInt) {
+        if (isInt) {
+            Value offsetOrIndex = ipop();
+            if (compilation.is64Bit() && offsetOrIndex instanceof Local) {
+                return append(new Convert(I2L, offsetOrIndex, CiKind.Word));
+            }
+            return offsetOrIndex;
+        }
+        return wpop();
+    }
+
     private void genLoadPointer(int opcode) {
         FrameState stateBefore = curState.immutableCopy();
         CiKind dataKind = dataKindForPointerOp(opcode);
         Value offsetOrIndex;
         Value displacement;
         if ((opcode & 0xff) == PREAD) {
-            offsetOrIndex = (opcode >= PREAD_BYTE_I && opcode <= PREAD_REFERENCE_I) ? ipop() : wpop();
+            offsetOrIndex = popOffsetOrIndexForPointerOp(opcode >= PREAD_BYTE_I && opcode <= PREAD_REFERENCE_I);
             displacement = null;
         } else {
-            offsetOrIndex = ipop();
+            offsetOrIndex = popOffsetOrIndexForPointerOp(true);
             displacement = ipop();
         }
         Value pointer = wpop();
@@ -2470,10 +2491,10 @@ public final class GraphBuilder {
         Value offsetOrIndex;
         Value displacement;
         if ((opcode & 0xff) == PWRITE) {
-            offsetOrIndex = (opcode >= PWRITE_BYTE_I && opcode <= PWRITE_REFERENCE_I) ? ipop() : wpop();
+            offsetOrIndex = popOffsetOrIndexForPointerOp(opcode >= PWRITE_BYTE_I && opcode <= PWRITE_REFERENCE_I);
             displacement = null;
         } else {
-            offsetOrIndex = ipop();
+            offsetOrIndex = popOffsetOrIndexForPointerOp(true);
             displacement = ipop();
         }
         Value pointer = wpop();
@@ -2498,7 +2519,8 @@ public final class GraphBuilder {
         CiKind kind = kindForCompareAndSwap(opcode);
         Value newValue = pop(kind);
         Value expectedValue = pop(kind);
-        Value offset = (opcode >= PCMPSWP_INT_I && opcode <= PCMPSWP_REFERENCE_I) ? ipop() : wpop();
+        Value offset;
+        offset = popOffsetOrIndexForPointerOp(opcode >= PCMPSWP_INT_I && opcode <= PCMPSWP_REFERENCE_I);
         Value pointer = wpop();
         push(kind, append(new CompareAndSwap(opcode, pointer, offset, expectedValue, newValue, stateBefore, false)));
     }
