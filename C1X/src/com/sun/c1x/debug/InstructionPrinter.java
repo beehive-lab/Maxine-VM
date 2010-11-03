@@ -299,7 +299,11 @@ public class InstructionPrinter extends ValueVisitor {
             while (!hasPhisOnStack && i < state.stackSize()) {
                 Value value = state.stackAt(i);
                 hasPhisOnStack = isPhiAtBlock(value, block);
-                i += value.kind.sizeInSlots();
+                if (value != null && !value.isIllegal()) {
+                    i += value.kind.sizeInSlots();
+                } else {
+                    i++;
+                }
             }
 
             do {
