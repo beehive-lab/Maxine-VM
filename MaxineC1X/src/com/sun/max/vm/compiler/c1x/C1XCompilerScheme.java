@@ -278,7 +278,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.emitByte(popfq);
             asm.ret(0);
 
-            return new C1XTargetMethod("trap-stub", asm.finishTargetMethod("trap-stub", runtime, -1));
+            return new C1XTargetMethod(Trap.trapStub.classMethodActor, asm.finishTargetMethod(Trap.trapStub.classMethodActor, runtime, -1));
         }
         throw FatalError.unimplemented();
     }
@@ -310,7 +310,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             CiRegister callSite = registerConfig.getScratchRegister();
             asm.movq(callSite, new CiAddress(CiKind.Word, AMD64.rsp.asValue()));
             asm.subq(callSite, AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue()), callSite);
 
             // now allocate the frame for this method
             asm.subq(AMD64.rsp, frameSize);
@@ -329,8 +328,16 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
             asm.directCall(patchStaticTrampolineCallSite, null);
 
-            // Restore all parameter registers before returning
+            // restore all parameter registers before returning
             asm.restore(parameterRegs, rsa, 0);
+
+            // undo the frame
+            asm.addq(AMD64.rsp, frameSize);
+
+            // patch the return address to re-execute the static call
+            asm.movq(callSite, new CiAddress(CiKind.Word, AMD64.rsp.asValue()));
+            asm.subq(callSite, AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue()), callSite);
 
             asm.ret(0);
 
