@@ -100,7 +100,7 @@ public class AMD64OptStackWalking {
         final int unwindFrameSize = getUnwindFrameSize();
 
         // Put the exception where the exception handler expects to find it
-        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(throwable));
+        VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
 
         if (throwable instanceof StackOverflowError) {
             // This complete call-chain must be inlined down to the native call
