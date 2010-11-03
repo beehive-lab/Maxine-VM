@@ -71,8 +71,8 @@ public abstract class AbstractARMAssembler extends BigEndianAssembler implements
     }
 
     @Override
-    public final InstructionSet instructionSet() {
-        return InstructionSet.ARM;
+    public final ISA isa() {
+        return ISA.ARM;
     }
 
     @Override

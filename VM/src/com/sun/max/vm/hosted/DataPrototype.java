@@ -1133,7 +1133,7 @@ public final class DataPrototype extends Prototype {
         this.graphPrototype = graphPrototype;
         final Platform platform = platform();
         pageSize = platform.pageSize;
-        dataModel = platform.dataModel();
+        dataModel = platform.dataModel;
         alignment = Word.size();
         layoutScheme = vmConfig().layoutScheme();
         referenceScheme = vmConfig().referenceScheme();

@@ -70,7 +70,7 @@ public abstract class AssemblerTestCase extends MaxTestCase {
         configure(tester);
         tester.setTemplatePattern(templateOption.getValue());
         if (sourceOption.getValue()) {
-            final File sourceFile = new File(tester.assembly().instructionSet().name().toLowerCase() + "-asmTest.s");
+            final File sourceFile = new File(tester.assembly().isa().name().toLowerCase() + "-asmTest.s");
             try {
                 final IndentWriter indentWriter = new IndentWriter(new PrintWriter(new BufferedWriter(new FileWriter(sourceFile))));
                 tester.createExternalSource(startSerialOption.getValue(), endSerialOption.getValue(), indentWriter);

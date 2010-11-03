@@ -92,7 +92,8 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         final StringBuilder sb = new StringBuilder("Target breakpoint");
         sb.append("{0x").append(address().toHexString()).append(", ");
         sb.append(kind().toString()).append(", ");
-        sb.append(isEnabled() ? "enabled" : "disabled");
+        sb.append(isEnabled() ? "enabled" : "disabled").append(", ");
+        sb.append(isActive() ? "active" : "inactive");
         if (getDescription() != null) {
             sb.append(", \"").append(getDescription()).append("\"");
         }
@@ -315,7 +316,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         TargetBreakpointManager(TeleVM teleVM) {
             super(teleVM);
-            this.code = TargetBreakpoint.createBreakpointCode(platform().instructionSet());
+            this.code = TargetBreakpoint.createBreakpointCode(platform().isa);
         }
 
         /**

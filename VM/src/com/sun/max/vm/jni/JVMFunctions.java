@@ -28,12 +28,12 @@ import sun.reflect.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -60,7 +60,7 @@ public class JVMFunctions {
 
         // Collect method actors corresponding to frames:
         // N.B. In GuestVM there are no native frames, or JNI calls on the stack that need to be ignored, but we do not want a zero length result from the native frame at the base of the stack!
-        final List<ClassMethodActor> methodActors = StackFrameWalker.extractClassMethodActors(stackFrames, false, false, false, Platform.platform().operatingSystem != OperatingSystem.GUESTVM);
+        final List<ClassMethodActor> methodActors = StackFrameWalker.extractClassMethodActors(stackFrames, false, false, false, Platform.platform().os != OS.GUESTVM);
 
         // Append the class of each method to the array:
         final List<Class> result = new ArrayList<Class>();
@@ -73,10 +73,12 @@ public class JVMFunctions {
     static final CriticalMethod javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke",
         SignatureDescriptor.create(Object.class, Object.class, Object[].class));
 
-    static class LatestUserDefinedLoaderVisitor implements RawStackFrameVisitor {
+    static class LatestUserDefinedLoaderVisitor extends RawStackFrameVisitor {
         ClassLoader result;
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
-            if (isTopFrame || targetMethod == null || targetMethod instanceof Adapter || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
+        @Override
+        public boolean visitFrame(Cursor current, Cursor callee) {
+            TargetMethod targetMethod = current.targetMethod();
+            if (current.isTopFrame() || targetMethod == null || targetMethod instanceof Adapter || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
                 return true;
             }
             final ClassLoader cl = targetMethod.classMethodActor().holder().classLoader;

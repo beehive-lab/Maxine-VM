@@ -381,7 +381,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the path of the Java home
      */
     private static String findJavaHome() {
-        switch (platform().operatingSystem) {
+        switch (platform().os) {
             case GUESTVM:
             case SOLARIS:
             case LINUX: {
@@ -427,7 +427,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the java library path as determined from the OS environment
      */
     private static String getenvJavaLibraryPath() {
-        switch (platform().operatingSystem) {
+        switch (platform().os) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -448,7 +448,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the Java class path as determined from the OS environment
      */
     private static String getenvClassPath() {
-        switch (platform().operatingSystem) {
+        switch (platform().os) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -492,7 +492,7 @@ public final class JDK_java_lang_System {
      * @return the name of this VM's target ISA
      */
     private static String getISA() {
-        switch (Platform.platform().instructionSet()) {
+        switch (Platform.platform().isa) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -514,7 +514,7 @@ public final class JDK_java_lang_System {
      * @return a list of this VM's target ISAs
      */
     private static String getISAList() {
-        switch (Platform.platform().instructionSet()) {
+        switch (Platform.platform().isa) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -686,7 +686,7 @@ public final class JDK_java_lang_System {
         ApplicationShutdownHooks_clinit();
 
         // 4. perform OS-specific initialization
-        switch (Platform.platform().operatingSystem) {
+        switch (Platform.platform().os) {
             case DARWIN:
                 setIfAbsent(properties, "os.name", "Mac OS X");
                 initBasicUnixProperties(properties);
@@ -730,9 +730,9 @@ public final class JDK_java_lang_System {
 
         // 7. set up classpath and library path
         final String[] javaAndZipLibraryPaths = new String[2];
-        if (Platform.platform().operatingSystem == OperatingSystem.DARWIN) {
+        if (Platform.platform().os == OS.DARWIN) {
             initDarwinPathProperties(properties, javaHome, javaAndZipLibraryPaths);
-        } else if (Platform.platform().operatingSystem == OperatingSystem.WINDOWS) {
+        } else if (Platform.platform().os == OS.WINDOWS) {
             initWindowsPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else {
             initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
@@ -817,12 +817,12 @@ public final class JDK_java_lang_System {
         javaAndZipLibraryPaths[0] = jreLibIsaPath;
         javaAndZipLibraryPaths[1] = jreLibIsaPath;
 
-        final OperatingSystem os = Platform.platform().operatingSystem;
-        if (os == OperatingSystem.LINUX) {
+        final OS os = Platform.platform().os;
+        if (os == OS.LINUX) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
-        } else if (os == OperatingSystem.SOLARIS) {
+        } else if (os == OS.SOLARIS) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/jdk/packages/lib/ext"));
-        } else if (os == OperatingSystem.GUESTVM) {
+        } else if (os == OS.GUESTVM) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext")));
         } else {
             ProgramError.unknownCase(os.toString());
@@ -932,7 +932,7 @@ public final class JDK_java_lang_System {
         if (libraryName == null) {
             throw new NullPointerException();
         }
-        switch (platform().operatingSystem) {
+        switch (platform().os) {
             case DARWIN:
                 // System.loadLibrary() first wants to look for a library with the extension ".jnilib",
                 // then if the library was not found, try again with extension ".dylib".

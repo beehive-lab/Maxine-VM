@@ -41,14 +41,12 @@ public abstract class AbstractAssembler {
     public final CiTarget target;
     public final CiTargetMethod targetMethod;
     public final List<ExceptionInfo> exceptionInfoList;
-    protected final int wordSize;
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
-        this.targetMethod = new CiTargetMethod(target.allocationSpec.refMapSize);
+        this.targetMethod = new CiTargetMethod(target.registerSaveArea.referenceSlotsCount);
         this.codeBuffer = new Buffer(target.arch.byteOrder);
         this.exceptionInfoList = new ArrayList<ExceptionInfo>();
-        this.wordSize = target.wordSize;
     }
 
     public final void bind(Label l) {
@@ -68,7 +66,7 @@ public abstract class AbstractAssembler {
 
     public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset) {
         // Install code, data and frame size
-        targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
+        targetMethod.setTargetCode(codeBuffer.close(false), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
         // Record exception handlers if they exist

@@ -30,34 +30,34 @@ import com.sun.max.memory.*;
  * @author Bernd Mathiske
  * @author Paul Caprioli
  */
-public enum ProcessorModel {
+public enum CPU {
 
     /* Generic default cores: */
     // TODO: Obtain the cache alignment at runtime, e.g. by using sysconf(_SC_LEVEL2_CACHE_LINESIZE)
-    AMD64(InstructionSet.AMD64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.AMD64),
-    ARM32(InstructionSet.ARM, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.SequentialConsistency),
-    IA32(InstructionSet.IA32, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.RelaxedMemoryOrder),
-    PPC(InstructionSet.PPC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.RelaxedMemoryOrder),
-    SPARC(InstructionSet.SPARC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),
-    SPARCV9(InstructionSet.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, 64), MemoryModel.TotalStoreOrder);
+    AMD64(ISA.AMD64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.AMD64),
+    ARM32(ISA.ARM, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.SequentialConsistency),
+    IA32(ISA.IA32, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.RelaxedMemoryOrder),
+    PPC(ISA.PPC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.RelaxedMemoryOrder),
+    SPARC(ISA.SPARC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),
+    SPARCV9(ISA.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, 64), MemoryModel.TotalStoreOrder);
 
-    public final InstructionSet instructionSet;
+    public final ISA isa;
 
     public final DataModel defaultDataModel;
 
     public final MemoryModel memoryModel;
 
-    private ProcessorModel(InstructionSet instructionSet, DataModel defaultDataModel, MemoryModel memoryModel) {
-        this.instructionSet = instructionSet;
+    private CPU(ISA isa, DataModel defaultDataModel, MemoryModel memoryModel) {
+        this.isa = isa;
         this.defaultDataModel = defaultDataModel;
         this.memoryModel = memoryModel;
     }
 
-    public static ProcessorModel defaultForInstructionSet(InstructionSet instructionSet) {
-        if (instructionSet.equals(InstructionSet.SPARC)) {
+    public static CPU defaultForInstructionSet(ISA isa) {
+        if (isa.equals(ISA.SPARC)) {
             return SPARCV9;
         }
-        return valueOf(instructionSet.name());
+        return valueOf(isa.name());
     }
 
 }

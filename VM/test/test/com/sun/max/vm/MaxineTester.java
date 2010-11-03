@@ -23,6 +23,7 @@ package test.com.sun.max.vm;
 import static test.com.sun.max.vm.MaxineTester.Logs.*;
 
 import java.io.*;
+import java.io.FileReader;
 import java.text.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -38,6 +39,7 @@ import org.junit.runners.AllTests;
 import test.com.sun.max.vm.ExternalCommand.OutputComparison;
 import test.com.sun.max.vm.ExternalCommand.Result;
 import test.com.sun.max.vm.MaxineTesterConfiguration.ExpectedResult;
+import test.output.*;
 
 import com.sun.max.*;
 import com.sun.max.io.*;
@@ -619,7 +621,7 @@ public class MaxineTester {
      */
     private static int runMaxineVM(JavaCommand command, File imageDir, File workingDir, File inputFile, Logs logs, String name, int timeout) {
         String[] envp = null;
-        if (OperatingSystem.current() == OperatingSystem.LINUX) {
+        if (OS.current() == OS.LINUX) {
             // Since the executable may not be in the default location, then the -rpath linker option used when
             // building the executable may not point to the location of libjvm.so any more. In this case,
             // LD_LIBRARY_PATH needs to be set appropriately.
@@ -680,7 +682,7 @@ public class MaxineTester {
         if (exitValue == 0) {
             // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
             copyBinary(imageDir, "maxvm");
-            if (OperatingSystem.current() == OperatingSystem.DARWIN) {
+            if (OS.current() == OS.DARWIN) {
                 copyBinary(imageDir, mapLibraryName("jvmlinkage"));
             } else {
                 copyBinary(imageDir, mapLibraryName("jvm"));
@@ -818,7 +820,7 @@ public class MaxineTester {
 
     private static String mapLibraryName(String name) {
         final String libName = System.mapLibraryName(name);
-        if (OperatingSystem.current() == OperatingSystem.DARWIN && libName.endsWith(".jnilib")) {
+        if (OS.current() == OS.DARWIN && libName.endsWith(".jnilib")) {
             return Strings.chopSuffix(libName, ".jnilib") + ".dylib";
         }
         return libName;
@@ -1168,7 +1170,7 @@ public class MaxineTester {
         JavaCommand maxvmCommand = command.copy();
         maxvmCommand.addVMOptions(MaxineTesterConfiguration.getVMOptions(config));
         String[] envp = null;
-        if (OperatingSystem.current() == OperatingSystem.LINUX) {
+        if (OS.current() == OS.LINUX) {
             // Since the executable may not be in the default location, then the -rpath linker option used when
             // building the executable may not point to the location of libjvm.so any more. In this case,
             // LD_LIBRARY_PATH needs to be set appropriately.
@@ -1377,6 +1379,8 @@ public class MaxineTester {
         }
 
         void runOutputTests(final File outputDir, final File imageDir) {
+            List<Class> mscpscpsSkippedTests = Arrays.asList(new Class[] {GCTest5.class, GCTest6.class});
+
             out().println("Output tests key:");
             out().println("      OK: test passed");
             out().println("  failed: test failed (go debug)");
@@ -1385,6 +1389,12 @@ public class MaxineTester {
             out().println("  noluck: non-deterministic test failed (ignore)");
             out().println("   lucky: non-deterministic test passed (ignore)");
             for (Class mainClass : testList) {
+
+                if (imageDir.getName().equals("mscpscps") && mscpscpsSkippedTests.contains(mainClass)) {
+                    out().println("*** Skipping too slow test: " + mainClass.getName());
+                    continue;
+                }
+
                 runOutputTest(outputDir, imageDir, mainClass);
             }
         }

@@ -23,7 +23,7 @@ package com.sun.cri.ri;
 
 /**
  * Set of runtime calls to be used when translating bytecodes. These calls
- * must be woven into the IR during translation as a phase where they are
+ * must be woven into the IR during translation in a phase where they are
  * subject to inlining and folding.
  *  
  * @author Doug Simon

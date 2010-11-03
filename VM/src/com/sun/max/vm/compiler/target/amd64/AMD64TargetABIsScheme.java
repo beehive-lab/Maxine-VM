@@ -28,8 +28,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 
@@ -68,7 +66,7 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
     static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> createAMD64TargetABI(RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment, CallEntryPoint callEntryPoint) {
         return  new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(registerRoleAssignment, callEntryPoint,
                         integerParameterRegisters, integerParameterRegisters, floatingPointParameterRegisters,
-                        false, true, stackFrameAlignment(), NULL_STACK_BIAS);
+                        false, true, target().stackAlignment, NULL_STACK_BIAS);
     }
 
     @HOSTED_ONLY
@@ -76,22 +74,5 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
         super(createAMD64TargetABI(nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT),
               createAMD64TargetABI(jitRegisterRoleAssignment, CallEntryPoint.JIT_ENTRY_POINT),
               createAMD64TargetABI(optimizedJavaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT));
-    }
-
-    @HOSTED_ONLY
-    private static int stackFrameAlignment() {
-        if (platform().operatingSystem == OperatingSystem.DARWIN) {
-            // Darwin requires 16-byte stack frame alignment.
-            return 16;
-        }
-        if (platform().operatingSystem == OperatingSystem.LINUX) {
-            // Linux apparently also requires it for functions that pass floating point functions on the stack.
-            // One such function in the Maxine code base is log_print_float() in log.c which passes a float
-            // value to fprintf on the stack. However, gcc doesn't fix the alignment itself so we simply
-            // adopt the global convention on Linux of 16-byte alignment for stacks. If this is a performance issue,
-            // this can later be refined to only be for JNI stubs that pass a float or double to native code.
-            return 16;
-        }
-        return Word.size();
     }
 }

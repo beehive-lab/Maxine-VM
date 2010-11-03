@@ -328,7 +328,7 @@ public abstract class Pointer extends Address implements Accessor {
     @UNSAFE
     @FOLD
     private static boolean risc() {
-        return Platform.platform().instructionSet().category == InstructionSet.Category.RISC;
+        return Platform.platform().isa.category == ISA.Category.RISC;
     }
 
     @BUILTIN(ReadByteAtIntOffset.class)

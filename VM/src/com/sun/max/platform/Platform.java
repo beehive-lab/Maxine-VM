@@ -27,11 +27,15 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.sun.c1x.target.amd64.*;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.sparc.*;
 
 /**
@@ -40,11 +44,11 @@ import com.sun.max.vm.stack.sparc.*;
  * The system properties used to initialize the initial platform context are:
  * <ul>
  * <li>{@link #PLATFORM_PROPERTY}</li>
- * <li>{@link #PROCESSOR_MODEL_PROPERTY}</li>
- * <li>{@link #INSTRUCTION_SET_PROPERTY}</li>
+ * <li>{@link #CPU_PROPERTY}</li>
+ * <li>{@link #ISA_PROPERTY}</li>
  * <li>{@link #ENDIANNESS_PROPERTY}</li>
  * <li>{@link #WORD_WIDTH_PROPERTY}</li>
- * <li>{@link #OPERATING_SYSTEM_PROPERTY}</li>
+ * <li>{@link #OS_PROPERTY}</li>
  * <li>{@link #PAGE_SIZE_PROPERTY}</li>
  * <li>{@link #NUMBER_OF_SIGNALS_PROPERTY}</li>
  * </ul>
@@ -62,16 +66,16 @@ public final class Platform {
 
     /**
      * The name of the system property whose value (if non-null) specifies the target CPU.
-     * Iff {@code null}, the value returned by {@link ProcessorModel#defaultForInstructionSet(InstructionSet)}
+     * Iff {@code null}, the value returned by {@link CPU#defaultForInstructionSet(ISA)}
      * is used.
      */
-    public static final String PROCESSOR_MODEL_PROPERTY = "max.cpu";
+    public static final String CPU_PROPERTY = "max.cpu";
 
     /**
      * The name of the system property whose value (if non-null) specifies the target ISA.
-     * Iff {@code null}, the value returned by {@link #nativeGetInstructionSet()} is used.
+     * Iff {@code null}, the value returned by {@link #nativeGetISA()} is used.
      */
-    public static final String INSTRUCTION_SET_PROPERTY = "max.isa";
+    public static final String ISA_PROPERTY = "max.isa";
 
     /**
      * The name of the system property whose value (if non-null) specifies the target endianness.
@@ -87,9 +91,9 @@ public final class Platform {
 
     /**
      * The name of the system property whose value (if non-null) specifies the target OS.
-     * Iff {@code null}, the value returned by {@link #nativeGetOperatingSystem()} is used.
+     * Iff {@code null}, the value returned by {@link #nativeGetOS()} is used.
      */
-    public static final String OPERATING_SYSTEM_PROPERTY = "max.os";
+    public static final String OS_PROPERTY = "max.os";
 
     /**
      * The name of the system property whose value (if non-null) specifies the target page size.
@@ -108,15 +112,16 @@ public final class Platform {
      */
     private static Platform current = Platform.createDefaultPlatform();
 
-    /**
-     * Details about the processor of this platform.
-     */
-    private final ProcessorKind processorKind;
+    public final CPU cpu;
+
+    public final ISA isa;
+
+    public final DataModel dataModel;
 
     /**
      * The operating system.
      */
-    public final OperatingSystem operatingSystem;
+    public final OS os;
 
     /**
      * The number of bytes in a virtual page.
@@ -128,16 +133,55 @@ public final class Platform {
      */
     public final int stackBias;
 
-    public Platform(ProcessorKind processorKind, OperatingSystem operatingSystem, int pageSize) {
-        this.processorKind = processorKind;
-        this.operatingSystem = operatingSystem;
-        this.pageSize = pageSize;
+    public final CiTarget target;
 
-        if (processorKind.processorModel == ProcessorModel.SPARCV9 && operatingSystem == OperatingSystem.SOLARIS) {
-            this.stackBias = SPARCStackFrameLayout.STACK_BIAS;
+    private CiTarget createTarget() {
+        CiRegisterSaveArea registerSaveArea = null;
+        CiArchitecture arch = null;
+        int stackAlignment = -1;
+        if (isa == ISA.AMD64) {
+            arch = new AMD64();
+            registerSaveArea = AMD64TrapStateAccess.RSA;
+            if (os == OS.DARWIN) {
+                // Darwin requires 16-byte stack frame alignment.
+                stackAlignment = 16;
+            } else if (os == OS.LINUX) {
+                // Linux apparently also requires it for functions that pass floating point functions on the stack.
+                // One such function in the Maxine code base is log_print_float() in log.c which passes a float
+                // value to fprintf on the stack. However, gcc doesn't fix the alignment itself so we simply
+                // adopt the global convention on Linux of 16-byte alignment for stacks. If this is a performance issue,
+                // this can later be refined to only be for JNI stubs that pass a float or double to native code.
+                stackAlignment = 16;
+            } else if (os == OS.SOLARIS || os == OS.GUESTVM) {
+                stackAlignment = 8;
+            } else {
+                throw FatalError.unexpected("Unimplemented stack alignment: " + os);
+            }
+
         } else {
-            this.stackBias = 0;
+            return null;
         }
+
+        int wordSize = dataModel.wordWidth.numberOfBytes;
+        boolean isMP = true;
+        int spillSlotSize = wordSize;
+        int cacheAlignment = wordSize;
+        int heapAlignment = wordSize;
+        int codeAlignment = wordSize;
+        boolean inlineObjects = false;
+        int referenceSize = wordSize;
+        return new CiTarget(arch,
+                        registerSaveArea,
+                        isMP,
+                        spillSlotSize,
+                        wordSize,
+                        referenceSize,
+                        stackAlignment,
+                        pageSize,
+                        cacheAlignment,
+                        heapAlignment,
+                        codeAlignment,
+                        inlineObjects);
     }
 
     private static final Pattern NON_REGEX_TEST_PATTERN = Pattern.compile("\\w+");
@@ -182,7 +226,7 @@ public final class Platform {
      * An element value that is not a {@linkplain Pattern regular expression}
      * is a simple string filter compared for {@linkplain String#equalsIgnoreCase(String) case-insensitive equality} against the
      * corresponding platform component. For example {@code @PLATFORM(os = "windows")} will match
-     * this platform object if {@code this.operatingSystem().name().equalsIgnoreCase("windows")}. A negative
+     * this platform object if {@code this.os().name().equalsIgnoreCase("windows")}. A negative
      * filter can be specified by prefixing {@code '!'} to the filter value. That is,
      * {@code @PLATFORM(os = "!windows")} can be used to match any platform with a non-Windows
      * operating system.
@@ -198,18 +242,33 @@ public final class Platform {
      */
     public boolean isAcceptedBy(PLATFORM filter) {
         if (filter != null) {
-            if (!isAcceptedBy(operatingSystem.name(), filter.os())) {
+            if (!isAcceptedBy(os.name(), filter.os())) {
                 return false;
             }
-            if (!isAcceptedBy(processorModel().name(), filter.cpu())) {
+            if (!isAcceptedBy(cpu.name(), filter.cpu())) {
                 return false;
             }
         }
         return true;
     }
 
-    public Platform(ProcessorModel processorModel, OperatingSystem operatingSystem, int pageSize) {
-        this(new ProcessorKind(processorModel, processorModel.instructionSet, processorModel.defaultDataModel), operatingSystem, pageSize);
+    public Platform(CPU cpu, OS os, int pageSize) {
+        this(cpu, cpu.isa, cpu.defaultDataModel, os, pageSize);
+    }
+
+    public Platform(CPU cpu, ISA isa, DataModel dataModel, OS os, int pageSize) {
+        this.isa = isa;
+        this.cpu = cpu;
+        this.os = os;
+        this.dataModel = dataModel;
+        this.pageSize = pageSize;
+
+        if (cpu == CPU.SPARCV9 && os == OS.SOLARIS) {
+            this.stackBias = SPARCStackFrameLayout.STACK_BIAS;
+        } else {
+            this.stackBias = 0;
+        }
+        target = createTarget();
     }
 
     /**
@@ -219,6 +278,15 @@ public final class Platform {
     @FOLD
     public static Platform platform() {
         return current;
+    }
+
+    /**
+     * Gets the {@linkplain #target target} associated with the {@linkplain #platform() current} platform context.
+     */
+    @FOLD
+    public static CiTarget target() {
+        assert current.target != null;
+        return current.target;
     }
 
     /**
@@ -233,41 +301,31 @@ public final class Platform {
         return old;
     }
 
-    public Platform constrainedByInstructionSet(InstructionSet instructionSet) {
-        ProcessorKind processor = processorKind;
-        if (processor.instructionSet != instructionSet) {
-            processor = ProcessorKind.defaultForInstructionSet(instructionSet);
+    public Platform constrainedByInstructionSet(ISA isa) {
+        CPU cpu = this.cpu;
+        DataModel dataModel = this.dataModel;
+        if (this.isa != isa) {
+            cpu = CPU.defaultForInstructionSet(isa);
+            dataModel = cpu.defaultDataModel;
         }
-        return new Platform(processor, operatingSystem, pageSize);
+        return new Platform(cpu, isa, dataModel, os, pageSize);
     }
 
     @Override
     public String toString() {
-        return operatingSystem.toString().toLowerCase() + "-" + processorKind + ", page size=" + pageSize;
+        return os.toString().toLowerCase() + "-" + cpu.toString().toLowerCase() + ", isa=" + isa + ", " + dataModel + ", page size=" + pageSize;
     }
 
     public Endianness endianness() {
-        return processorKind.dataModel.endianness;
+        return dataModel.endianness;
     }
 
     public WordWidth wordWidth() {
-        return processorKind.dataModel.wordWidth;
-    }
-
-    public InstructionSet instructionSet() {
-        return processorKind.instructionSet;
-    }
-
-    public ProcessorModel processorModel() {
-        return processorKind.processorModel;
-    }
-
-    public DataModel dataModel() {
-        return processorKind.dataModel;
+        return dataModel.wordWidth;
     }
 
     public int cacheAlignment() {
-        return processorKind.dataModel.cacheAlignment;
+        return dataModel.cacheAlignment;
     }
 
     /**
@@ -277,10 +335,10 @@ public final class Platform {
      */
     public static String getInstructionSet() {
         Prototype.loadHostedLibrary();
-        return nativeGetInstructionSet();
+        return nativeGetISA();
     }
 
-    private static native String nativeGetInstructionSet();
+    private static native String nativeGetISA();
 
     /**
      * Determine whether the underlying memory model is big-endian.
@@ -317,12 +375,12 @@ public final class Platform {
      *
      * @return a string representing the name of the OS on which this VM is running
      */
-    public static String getOperatingSystem() {
+    public static String getOS() {
         Prototype.loadHostedLibrary();
-        return nativeGetOperatingSystem();
+        return nativeGetOS();
     }
 
-    private static native String nativeGetOperatingSystem();
+    private static native String nativeGetOS();
 
     /**
      * Gets the page size in bytes of the platform on which this VM is running.
@@ -378,7 +436,7 @@ public final class Platform {
         }
 
 
-        InstructionSet isa = InstructionSet.valueOf(getProperty(INSTRUCTION_SET_PROPERTY) == null ? getInstructionSet() : getProperty(INSTRUCTION_SET_PROPERTY));
+        ISA isa = ISA.valueOf(getProperty(ISA_PROPERTY) == null ? getInstructionSet() : getProperty(ISA_PROPERTY));
         WordWidth word = WordWidth.fromInt(getInteger(WORD_WIDTH_PROPERTY) == null ? getWordWidth() : getInteger(WORD_WIDTH_PROPERTY));
         final Endianness endianness;
         final String endiannessProperty = getProperty(ENDIANNESS_PROPERTY);
@@ -387,23 +445,22 @@ public final class Platform {
         } else {
             endianness = isBigEndian() ? Endianness.BIG : Endianness.LITTLE;
         }
-        final String cpuName = getProperty(PROCESSOR_MODEL_PROPERTY);
-        final ProcessorModel processorModel;
+        final String cpuName = getProperty(CPU_PROPERTY);
+        final CPU cpu;
         if (cpuName == null) {
-            processorModel = ProcessorModel.defaultForInstructionSet(isa);
+            cpu = CPU.defaultForInstructionSet(isa);
         } else {
-            processorModel = ProcessorModel.valueOf(cpuName);
-            assert processorModel.instructionSet == isa;
+            cpu = CPU.valueOf(cpuName);
+            assert cpu.isa == isa;
         }
-        final int cacheAlignment = processorModel.defaultDataModel.cacheAlignment;
+        final int cacheAlignment = cpu.defaultDataModel.cacheAlignment;
         final DataModel dataModel = new DataModel(word, endianness, cacheAlignment);
-        final ProcessorKind processorKind = new ProcessorKind(processorModel, isa, dataModel);
 
-        String osName = getProperty(OPERATING_SYSTEM_PROPERTY) == null ? getOperatingSystem() : getProperty(OPERATING_SYSTEM_PROPERTY);
-        final OperatingSystem os = OperatingSystem.fromName(osName);
+        String osName = getProperty(OS_PROPERTY) == null ? getOS() : getProperty(OS_PROPERTY);
+        final OS os = OS.fromName(osName);
         final int pageSize = getInteger(PAGE_SIZE_PROPERTY) == null ? getPageSize() : getInteger(PAGE_SIZE_PROPERTY);
 
-        return new Platform(processorKind, os, pageSize);
+        return new Platform(cpu, isa, dataModel, os, pageSize);
     }
 
     /**
@@ -412,11 +469,11 @@ public final class Platform {
     public static final Map<String, Platform> Supported;
     static {
         Map<String, Platform> map = new TreeMap<String, Platform>();
-        map.put("solaris-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.SOLARIS, Ints.K * 8));
-        map.put("solaris-sparcv9", new Platform(ProcessorModel.SPARCV9, OperatingSystem.SOLARIS, Ints.K * 8));
-        map.put("linux-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.LINUX, Ints.K * 8));
-        map.put("darwin-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.DARWIN, Ints.K * 8));
-        map.put("guestvm-amd64", new Platform(ProcessorModel.AMD64, OperatingSystem.GUESTVM, Ints.K * 8));
+        map.put("solaris-amd64", new Platform(CPU.AMD64, OS.SOLARIS, Ints.K * 8));
+        map.put("solaris-sparcv9", new Platform(CPU.SPARCV9, OS.SOLARIS, Ints.K * 8));
+        map.put("linux-amd64", new Platform(CPU.AMD64, OS.LINUX, Ints.K * 8));
+        map.put("darwin-amd64", new Platform(CPU.AMD64, OS.DARWIN, Ints.K * 8));
+        map.put("guestvm-amd64", new Platform(CPU.AMD64, OS.GUESTVM, Ints.K * 8));
         Supported = Collections.unmodifiableMap(map);
     }
 
@@ -443,7 +500,7 @@ public final class Platform {
         if (pageSizeString != null) {
             long pageSize = Longs.parseScaledValue(pageSizeString);
             assert pageSize == (int) pageSize;
-            platform = new Platform(platform.processorKind, platform.operatingSystem, (int) pageSize);
+            platform = new Platform(platform.cpu, platform.isa, platform.dataModel, platform.os, (int) pageSize);
         }
         return platform;
     }
@@ -474,4 +531,6 @@ public final class Platform {
             out.println("    " + entry.getKey());
         }
     }
+
+
 }

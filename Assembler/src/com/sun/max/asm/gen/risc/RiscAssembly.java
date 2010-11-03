@@ -35,8 +35,8 @@ import com.sun.max.collect.*;
  */
 public abstract class RiscAssembly extends Assembly<RiscTemplate> {
 
-    protected RiscAssembly(InstructionSet instructionSet, Class<RiscTemplate> templateType) {
-        super(instructionSet, templateType);
+    protected RiscAssembly(ISA isa, Class<RiscTemplate> templateType) {
+        super(isa, templateType);
     }
 
     private List<SpecificityGroup> specificityGroups;

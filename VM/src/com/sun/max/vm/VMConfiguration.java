@@ -192,7 +192,7 @@ public final class VMConfiguration {
         return vmSchemes;
     }
 
-    private <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(List<VMScheme> loadedSchemes, MaxPackage p, Class<VMScheme_Type> vmSchemeType, Object... arguments) {
+    private <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(List<VMScheme> loadedSchemes, MaxPackage p, Class<VMScheme_Type> vmSchemeType) {
         if (p == null) {
             throw ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
         }
@@ -207,7 +207,16 @@ public final class VMConfiguration {
             }
         }
 
-        final VMScheme_Type vmScheme = p.loadAndInstantiateScheme(vmSchemeType, arguments);
+        // If one implementation class in package p implements multiple schemes, then only a single
+        // instance of that class is created and shared by the VM configuration for all the schemes
+        // it implements.
+        for (VMScheme vmScheme : vmSchemes) {
+            if (vmSchemeType.isInstance(vmScheme) && p.loadSchemeImplementation(vmSchemeType).equals(vmScheme.getClass())) {
+                return vmSchemeType.cast(vmScheme);
+            }
+        }
+
+        final VMScheme_Type vmScheme = p.loadAndInstantiateScheme(vmSchemeType);
         vmSchemes.add(vmScheme);
         return vmScheme;
     }
@@ -332,7 +341,7 @@ public final class VMConfiguration {
         }
         if (maxPackage instanceof AsmPackage) {
             final AsmPackage asmPackage = (AsmPackage) maxPackage;
-            return asmPackage.isPartOfAssembler(platform().instructionSet());
+            return asmPackage.isPartOfAssembler(platform().isa);
         }
         if (maxPackage instanceof VMPackage) {
             final VMPackage vmPackage = (VMPackage) maxPackage;

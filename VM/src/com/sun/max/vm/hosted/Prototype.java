@@ -52,7 +52,7 @@ public abstract class Prototype {
     /**
      * The default place where native libraries are placed by the make system.
      */
-    private static final String LIBRARY_BUILD_PATH = "Native/generated/" + OperatingSystem.current().asPackageName() + "/";
+    private static final String LIBRARY_BUILD_PATH = "Native/generated/" + OS.current().asPackageName() + "/";
 
     /**
      * The name of the default hosted native library.

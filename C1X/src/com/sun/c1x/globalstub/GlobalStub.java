@@ -29,8 +29,8 @@ import com.sun.cri.ci.*;
  * Typically the routine is too large to inline, is infrequent, or requires runtime support.
  * Global stubs are called with a callee-save convention; the global stub must save any
  * registers it may destroy and then restore them upon return. This allows the register
- * allocator to ignore calls to global stubs. Parameters to global stubs are typically
- * passed on the stack in order to conserve registers for the rest of the code.
+ * allocator to ignore calls to global stubs. Parameters to global stubs are
+ * passed on the stack in order to preserve registers for the rest of the code.
  *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer

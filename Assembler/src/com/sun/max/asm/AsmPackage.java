@@ -30,7 +30,7 @@ public class AsmPackage extends MaxPackage {
         super();
     }
 
-    public boolean isPartOfAssembler(InstructionSet instructionSet) {
+    public boolean isPartOfAssembler(ISA isa) {
         return false;
     }
 }

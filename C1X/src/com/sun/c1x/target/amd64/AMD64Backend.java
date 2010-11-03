@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.target.amd64;
 
+import static com.sun.c1x.C1XCompilation.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.*;
@@ -61,11 +63,11 @@ public class AMD64Backend extends Backend {
 
     @Override
     public FrameMap newFrameMap(RiMethod method, int numberOfLocks) {
-        return new FrameMap(compiler, method, numberOfLocks);
+        return new FrameMap(compilation(), method, numberOfLocks);
     }
     @Override
-    public AbstractAssembler newAssembler() {
-        return new AMD64MacroAssembler(compiler, compiler.target);
+    public AbstractAssembler newAssembler(RiRegisterConfig registerConfig) {
+        return new AMD64MacroAssembler(compiler, registerConfig);
     }
 
     @Override

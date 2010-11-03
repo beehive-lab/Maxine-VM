@@ -26,7 +26,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiRegister.*;
 
 /**
  * An ordered, 0-based indexable pool of instruction operands for a method being compiled.
@@ -46,7 +45,7 @@ public class OperandPool {
     /**
      * The physical registers occupying the head of the operand pool. This is the complete
      * {@linkplain CiArchitecture#registers register set} of the target architecture, not
-     * just the {@linkplain AllocationSpec#allocatableRegisters allocatable registers}.
+     * just the allocatable registers.
      */
     private final CiRegister[] registers;
 
@@ -134,7 +133,7 @@ public class OperandPool {
      */
     public OperandPool(CiTarget target) {
         CiRegister[] registers = target.arch.registers;
-        this.firstVariableNumber = target.allocationSpec.nofRegs;
+        this.firstVariableNumber = registers.length;
         this.registers = registers;
         variables = new ArrayList<CiVariable>(INITIAL_VARIABLE_CAPACITY);
         variableDefs = C1XOptions.DetailedAsserts ? new ArrayList<Value>(INITIAL_VARIABLE_CAPACITY) : null;

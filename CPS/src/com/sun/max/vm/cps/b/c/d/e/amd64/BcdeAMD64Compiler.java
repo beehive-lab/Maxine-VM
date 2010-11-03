@@ -44,8 +44,8 @@ public class BcdeAMD64Compiler extends BcdeCompiler<AMD64EirGenerator> implement
     public BcdeAMD64Compiler() {
         Platform platform = Platform.platform();
         ProgramError.check(platform.endianness() == Endianness.LITTLE);
-        ProgramError.check(platform.instructionSet() == InstructionSet.AMD64);
-        ProgramError.check(platform.processorModel() == ProcessorModel.AMD64);
+        ProgramError.check(platform.isa == ISA.AMD64);
+        ProgramError.check(platform.cpu == CPU.AMD64);
         ProgramError.check(platform.wordWidth() == WordWidth.BITS_64);
         dirToEirTranslator = new DirToAMD64EirTranslator(this);
     }

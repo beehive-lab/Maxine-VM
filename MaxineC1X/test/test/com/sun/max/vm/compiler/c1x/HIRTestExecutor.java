@@ -29,6 +29,7 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.platform.*;
 import com.sun.max.test.*;
 import com.sun.max.test.JavaExecHarness.Executor;
 import com.sun.max.vm.actor.holder.*;
@@ -46,11 +47,11 @@ public class HIRTestExecutor implements Executor {
         C1XOptions.setOptimizationLevel(Integer.parseInt(JavaTester.options.getStringValue("c1x-optlevel")));
         JavaPrototype.initialize(loadingPackages);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
-        C1XCompilerScheme compilerScheme = C1XCompilerScheme.create();
+        C1XCompilerScheme compilerScheme = new C1XCompilerScheme();
 
-        runtime = C1XCompilerScheme.globalRuntime;
+        runtime = compilerScheme.runtime;
         // create MaxineRuntime
-        generator = new HIRGenerator(runtime, compilerScheme.getTarget(), compilerScheme.getCompiler());
+        generator = new HIRGenerator(runtime, Platform.platform().target, compilerScheme.compiler());
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {
@@ -96,7 +97,7 @@ public class HIRTestExecutor implements Executor {
          * @return the IR for the method
          */
         public IR makeHirMethod(RiMethod classMethodActor) {
-            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, classMethodActor);
+            C1XCompilation compilation = new C1XCompilation(compiler, classMethodActor, -1);
             return compilation.emitHIR();
         }
     }
