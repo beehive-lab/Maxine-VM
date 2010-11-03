@@ -380,12 +380,12 @@ public final class Watchpoints {
                     for (MaxThread thread : inspection.vm().state().threads()) {
                         setWatchpoint(threadLocalVariable(thread));
                     }
-                    //threadEventListener.add(inspection, this);
+                    threadEventListener.add(inspection, this);
                 } else {
                     for (MaxThread thread : inspection.vm().state().threads()) {
                         removeWatchpoint(threadLocalVariable(thread));
                     }
-                    //threadEventListener.remove(inspection, this);
+                    threadEventListener.remove(inspection, this);
                 }
                 watched = state;
             }
