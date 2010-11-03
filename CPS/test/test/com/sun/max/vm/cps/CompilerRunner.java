@@ -80,14 +80,13 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
     private static final Option<Boolean> cirGui = options.newBooleanOption("cir-gui", false, "Enable the CIR visualizer.");
     private static final Option<Boolean> useJit = options.newBooleanOption("use-jit", false, "Compile with the JIT compiler.");
     private static final Option<Boolean> help = options.newBooleanOption("help", false, "Show help message and exits.");
-    private static final Option<String> vmArguments = options.newStringOption("vmargs", null, "A set of one or VM arguments.");
 
     private static final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
 
     public static void main(String[] args) {
         VMConfigurator vmConfigurator = new VMConfigurator(options);
         Trace.addTo(options);
-        options.parseArguments(args);
+        options.parseArguments(VMOption.extractVMArgs(args));
 
         if (help.getValue()) {
             options.printHelp(System.out, 80);
@@ -95,9 +94,6 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         }
 
         vmConfigurator.create(true);
-        if (vmArguments.getValue() != null) {
-            VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
-        }
 
         System.setProperty(IrObserverConfiguration.IR_TRACE_PROPERTY, irTraceLevel.getValue() + ":");
         if (cirGui.getValue()) {

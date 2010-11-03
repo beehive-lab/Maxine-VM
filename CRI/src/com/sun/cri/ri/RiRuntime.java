@@ -205,4 +205,10 @@ public interface RiRuntime {
      */
     boolean recordLeafMethodAssumption(RiMethod method);
 
+    /**
+     * Gets the register configuration to use when compiling a given method.
+     * 
+     * @param method the top level method of a compilation
+     */
+    RiRegisterConfig getRegisterConfig(RiMethod method);
 }

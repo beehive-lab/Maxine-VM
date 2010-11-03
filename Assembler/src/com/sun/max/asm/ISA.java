@@ -26,7 +26,7 @@ package com.sun.max.asm;
  * @author Bernd Mathiske
  * @author Paul Caprioli
  */
-public enum InstructionSet {
+public enum ISA {
 
     AMD64(Category.CISC, 0, false, 0),
     ARM(Category.RISC, 4, false, 0),
@@ -59,7 +59,7 @@ public enum InstructionSet {
      */
     public final int instructionWidth;
 
-    private InstructionSet(Category category, int instructionWidth, boolean relativeBranchFromStart, int offsetToReturnPC) {
+    private ISA(Category category, int instructionWidth, boolean relativeBranchFromStart, int offsetToReturnPC) {
         this.category = category;
         this.instructionWidth = instructionWidth;
         this.relativeBranchFromStart = relativeBranchFromStart;

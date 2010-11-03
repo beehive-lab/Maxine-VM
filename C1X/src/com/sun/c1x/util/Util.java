@@ -331,7 +331,7 @@ public class Util {
 
     /**
      * Determines if the kinds of two given IR nodes are equal at the {@linkplain #archKind(CiKind) architecture}
-     * level in the context of the {@linkplain C1XCompilation#current()} compilation.
+     * level in the context of the {@linkplain C1XCompilation#compilation()} compilation.
      */
     public static boolean archKindsEqual(Value i, Value other) {
         return archKindsEqual(i.kind, other.kind);
@@ -339,20 +339,20 @@ public class Util {
 
     /**
      * Determines if two given kinds are equal at the {@linkplain #archKind(CiKind) architecture} level
-     * in the context of the {@linkplain C1XCompilation#current()} compilation.
+     * in the context of the {@linkplain C1XCompilation#compilation()} compilation.
      */
     public static boolean archKindsEqual(CiKind k1, CiKind k2) {
-        C1XCompilation compilation = C1XCompilation.current();
+        C1XCompilation compilation = C1XCompilation.compilation();
         assert compilation != null : "missing compilation context";
         return compilation.archKindsEqual(k1, k2);
     }
 
     /**
      * Translates a given kind to a {@linkplain C1XCompilation#archKind(CiKind) canonical architecture}
-     * kind in the context of the {@linkplain C1XCompilation#current() current} compilation.
+     * kind in the context of the {@linkplain C1XCompilation#compilation() current} compilation.
      */
     public static CiKind archKind(CiKind kind) {
-        C1XCompilation compilation = C1XCompilation.current();
+        C1XCompilation compilation = C1XCompilation.compilation();
         assert compilation != null : "missing compilation context";
         return compilation.archKind(kind);
     }

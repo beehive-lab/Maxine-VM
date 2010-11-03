@@ -66,7 +66,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
     protected AssemblerGenerator(Assembly<Template_Type> assembly, boolean sortAssemblerMethods) {
         Trace.addTo(options);
         this.assembly = assembly;
-        final String isa = assembly.instructionSet().name();
+        final String isa = assembly.isa().name();
         final String defaultOutputPackage = MaxPackage.fromClass(Assembler.class).subPackage(isa.toLowerCase()).name() + ".complete";
         this.rawAssemblerClassNameOption.setDefaultValue(defaultOutputPackage + "." + isa + "RawAssembler");
         this.labelAssemblerClassNameOption.setDefaultValue(defaultOutputPackage + "." + isa + "LabelAssembler");

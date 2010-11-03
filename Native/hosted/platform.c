@@ -30,10 +30,10 @@ JVM_OnLoad(JavaVM *vm, char *options, void *arg)
 }
 
 /*
- *  ATTENTION: return value must correspond to an OperatingSystem enum value.
+ *  ATTENTION: return value must correspond to an OS enum value.
  */
 JNIEXPORT jobject JNICALL
-Java_com_sun_max_platform_Platform_nativeGetOperatingSystem(JNIEnv *env, jclass c)
+Java_com_sun_max_platform_Platform_nativeGetOS(JNIEnv *env, jclass c)
 {
 #if os_DARWIN
     return (*env)->NewStringUTF(env, "DARWIN");
@@ -56,10 +56,10 @@ Java_com_sun_max_platform_Platform_nativeGetPageSize(JNIEnv *env, jclass c) {
 }
 
 /*
- *  ATTENTION: return value must correspond to an InstructionSet enum value.
+ *  ATTENTION: return value must correspond to an ISA enum value.
  */
 JNIEXPORT jobject JNICALL
-Java_com_sun_max_platform_Platform_nativeGetInstructionSet(JNIEnv *env, jclass c)
+Java_com_sun_max_platform_Platform_nativeGetISA(JNIEnv *env, jclass c)
 {
 #if isa_AMD64
     return (*env)->NewStringUTF(env, "AMD64");
@@ -110,6 +110,6 @@ Java_com_sun_max_platform_Platform_jniHeaderFilePath(JNIEnv *env, jclass c)
 #ifndef JNI_H_PATH
 #error JNI_H_PATH should be defined
 #endif
-    return (*env)->NewStringUTF(env, STRINGIZE(JNI_H_PATH));
+    return (*env)->NewStringUTF(env, JNI_H_PATH);
 }
 

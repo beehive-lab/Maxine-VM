@@ -60,11 +60,10 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     public AMD64LIRAssembler(C1XCompilation compilation) {
         super(compilation);
-
         masm = (AMD64MacroAssembler) compilation.masm();
         target = compilation.target;
         wordSize = target.wordSize;
-        rscratch1 = target.scratchRegister;
+        rscratch1 = compilation.registerConfig.getScratchRegister();
     }
 
     private CiAddress asAddress(CiValue value) {
@@ -494,7 +493,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
         CiValue dest = op.result();
         Label endLabel = new Label();
         CiRegister srcRegister = src.asRegister();
-        CiRegister rscratch1 = compilation.target.scratchRegister;
         switch (op.bytecode) {
             case I2L:
                 masm.movslq(dest.asRegister(), srcRegister);
@@ -1264,7 +1262,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress) {
-        CiRegister reg = compilation.target.scratchRegister;
+        CiRegister reg = rscratch1;
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
@@ -1280,7 +1278,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress) {
-        CiRegister reg = compilation.target.scratchRegister;
+        CiRegister reg = rscratch1;
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
@@ -1691,7 +1689,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     masm.directCall(inst.extra, info);
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
-                        CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(inst.result.kind);
+                        CiRegister returnRegister = compilation.registerConfig.getReturnRegister(inst.result.kind);
                         CiValue resultLocation = returnRegister.asValue(inst.result.kind.stackKind());
                         moveOp(resultLocation, operands[inst.result.index], inst.result.kind.stackKind(), null, false);
                     }
@@ -1768,7 +1766,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case StackOverflowCheck: {
-                    int framePages = initialFrameSizeInBytes() / target.pageSize;
+                    int frameSize = initialFrameSizeInBytes();
+                    int framePages = frameSize / target.pageSize;
                     // emit multiple stack bangs for methods with frames larger than a page
                     for (int i = 0; i <= framePages; i++) {
                         bangStackWithOffset((i + C1XOptions.StackShadowPages) * target.pageSize);
@@ -1776,11 +1775,31 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case PushFrame: {
-                    masm.decrementq(AMD64.rsp, initialFrameSizeInBytes()); // does not emit code for frameSize == 0
+                    int frameSize = initialFrameSizeInBytes();
+                    masm.decrementq(AMD64.rsp, frameSize); // does not emit code for frameSize == 0
+                    CiRegister[] calleeSave = compilation.registerConfig.getCalleeSaveRegisters();
+                    if (calleeSave.length != 0) {
+                        CiRegisterSaveArea rsa = target.registerSaveArea;
+                        int frameToRSA = frameSize - rsa.size;
+                        assert frameToRSA >= 0;
+                        masm.save(calleeSave, rsa, frameToRSA);
+                    }
                     break;
                 }
                 case PopFrame: {
-                    masm.incrementq(AMD64.rsp, initialFrameSizeInBytes());
+                    int frameSize = initialFrameSizeInBytes();
+
+                    CiRegister[] calleeSave = compilation.registerConfig.getCalleeSaveRegisters();
+                    if (calleeSave.length != 0) {
+                        registerRestoreEpilogueOffset = masm.codeBuffer.position();
+
+                        // saved all registers, restore all registers
+                        CiRegisterSaveArea rsa = target.registerSaveArea;
+                        int frameToRSA = frameSize - rsa.size;
+                        masm.restore(calleeSave, rsa, frameToRSA);
+                    }
+
+                    masm.incrementq(AMD64.rsp, frameSize);
                     break;
                 }
                 case Push: {
@@ -1793,8 +1812,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     if (result.isRegister()) {
                         masm.pop(result.asRegister());
                     } else {
-                        masm.pop(compilation.target.scratchRegister);
-                        moveOp(compilation.target.scratchRegister.asValue(), result, result.kind, null, true);
+                        masm.pop(rscratch1);
+                        moveOp(rscratch1.asValue(), result, result.kind, null, true);
                     }
                     break;
                 }
@@ -1843,7 +1862,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     private CiRegisterValue assureInRegister(CiValue pointer) {
         if (pointer.isConstant()) {
-            CiRegisterValue register = compilation.target.scratchRegister.asValue(pointer.kind);
+            CiRegisterValue register = rscratch1.asValue(pointer.kind);
             moveOp(pointer, register, pointer.kind, null, false);
             return register;
         }

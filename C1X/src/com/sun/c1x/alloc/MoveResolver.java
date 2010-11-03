@@ -45,7 +45,6 @@ final class MoveResolver {
     private final List<Interval> mappingTo;
     private boolean multipleReadsAllowed;
     private final int[] registerBlocked;
-    private final CiRegister.AllocationSpec allocatableRegisters;
 
     private int registerBlocked(int reg) {
         return registerBlocked[reg];
@@ -73,14 +72,13 @@ final class MoveResolver {
         this.mappingTo = new ArrayList<Interval>(8);
         this.insertIdx = -1;
         this.insertionBuffer = new LIRInsertionBuffer();
-        this.allocatableRegisters = allocator.allocationSpec;
-        this.registerBlocked = new int[allocator.allocationSpec.nofRegs];
+        this.registerBlocked = new int[allocator.registers.length];
         assert checkEmpty();
     }
 
     boolean checkEmpty() {
         assert mappingFrom.size() == 0 && mappingFromOpr.size() == 0 && mappingTo.size() == 0 : "list must be empty before and after processing";
-        for (int i = 0; i < allocatableRegisters.nofRegs; i++) {
+        for (int i = 0; i < allocator.registers.length; i++) {
             assert registerBlocked(i) == 0 : "register map must be empty before and after processing";
         }
         assert !multipleReadsAllowed : "must have default value";

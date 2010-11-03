@@ -350,7 +350,7 @@ public class MutableFrameState extends FrameState {
      * Determines if the current compilation is typesafe.
      */
     private static boolean isTypesafe() {
-        return C1XCompilation.current().isTypesafe();
+        return C1XCompilation.compilation().isTypesafe();
     }
 
     private static void assertHigh(Value x) {

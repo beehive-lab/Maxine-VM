@@ -158,7 +158,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     @HOSTED_ONLY
     public CodeManager createCodeManager() {
-        switch (Platform.platform().operatingSystem) {
+        switch (Platform.platform().os) {
             case LINUX: {
                 return new LowAddressCodeManager();
             }

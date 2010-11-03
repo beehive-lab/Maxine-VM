@@ -31,7 +31,7 @@ import com.sun.max.asm.gen.cisc.x86.*;
 public final class AMD64Assembly extends X86Assembly<AMD64Template> {
 
     private AMD64Assembly() {
-        super(InstructionSet.AMD64, AMD64Template.class);
+        super(ISA.AMD64, AMD64Template.class);
     }
 
     @Override

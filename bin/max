@@ -887,15 +887,19 @@ configs_usage=""
 configs_help="prints the predefined image configurations"
 
 function run_configs() {
-    image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
-    configs_message=$(printf "    %-15s %s\n " "Configuration" "Expansion")
+    #image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration`
+    
+    #echo $image_configs
+    
+    printf "The available preconfigured option sets are:\n\n"
+    printf "    %-15s %s\n" "Configuration" "Expansion"
 
-    for image_config in ${image_configs[@]}; do
+    ${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | \
+    while read image_config; do
         image_config_args="${image_config/*\#/}"
-        configs_message=$(printf "%s\n    @%-15s %s" "$configs_message" "${image_config/\#*/}" "${image_config_args//,/ }")
+        printf "    @%-15s %s\n" "${image_config/\#*/}" "${image_config_args//,/ }"
     done
 
-    printf "The available preconfigured option sets are:\n\n%s\n" "$configs_message"
 }
 
 #=======================================
@@ -904,7 +908,6 @@ function run_configs() {
 
 image_usage="[options] classes|packages..."
 function image_help() {
-    image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
     image_help_message="build a boot image
 
     Run the BootImageGenerator to build a Maxine boot image. The classes
@@ -948,14 +951,13 @@ function image_help() {
 
 function run_image() {
     system_props=""
-    vm_args=""
     image_args=""
     while [ "$1" != "" ]; do
         case $1 in
             @*)
                 if [ -z "$image_configs" ]; then
                     # Lazily construct this variable as it requires running a Java program
-                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort)
+                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration)
                 fi
                 image_config_arg=${1/@/}
                 for image_config in ${image_configs[@]}; do
@@ -975,22 +977,6 @@ function run_image() {
                 run_help image
                 exit 1
                 ;;
-            -vmargs=* )
-                # Merge with VM args specified by '--' prefix
-                if [ -z "$vm_args" ]; then
-                    vm_args="${1/-vmargs=/}"
-                else
-                    vm_args="$vm_args ${1/-vmargs=/}"
-                fi
-                ;;
-            --* )
-                # Merge with VM args specified by explicit '-vmarg' option
-                if [ -z "$vm_args" ]; then
-                    vm_args="${1/-/}"
-                else
-                    vm_args="$vm_args ${1/-/}"
-                fi
-                ;;
             -platform | -cpu | -isa | -os | -endianness | -bits | -page | -nsig )
                 prop_name="max.${1/-/}"
                 shift
@@ -1003,11 +989,7 @@ function run_image() {
         shift
     done
 
-    if [ -z "$vm_args" ]; then
-        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args
-    else
-        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
-    fi
+	run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args
 }
 
 #=======================================
@@ -1712,7 +1694,11 @@ function usage() {
         command=${run_command/run_/}
         help=""
         help_var="${command}_help"
-        help=${!help_var}
+        if [ "`type -t ${help_var}`" = "function" ]; then
+            help=`$help_var`
+        else
+            help=${!help_var}
+        fi
         if [ -z "$help" ]; then
             help="[no description available]"
         fi

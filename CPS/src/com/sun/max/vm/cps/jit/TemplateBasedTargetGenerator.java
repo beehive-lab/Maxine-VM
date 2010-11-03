@@ -69,8 +69,8 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         }
     }
 
-    protected TemplateBasedTargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, InstructionSet instructionSet) {
-        super(dynamicCompilerScheme, instructionSet);
+    protected TemplateBasedTargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, ISA isa) {
+        super(dynamicCompilerScheme, isa);
     }
 
     protected abstract BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor);

@@ -31,8 +31,8 @@ import com.sun.max.lang.*;
 public abstract class AbstractAMD64Assembler extends LittleEndianAssembler implements Assembler64 {
 
     @Override
-    public final InstructionSet instructionSet() {
-        return InstructionSet.AMD64;
+    public final ISA isa() {
+        return ISA.AMD64;
     }
 
     @Override

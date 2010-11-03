@@ -47,6 +47,7 @@ public class C1XCompilation {
     public final CiTarget target;
     public final RiRuntime runtime;
     public final RiMethod method;
+    public final RiRegisterConfig registerConfig;
     public final CiStatistics stats;
     public final int osrBCI;
 
@@ -82,18 +83,17 @@ public class C1XCompilation {
      * Creates a new compilation for the specified method and runtime.
      *
      * @param compiler the compiler
-     * @param target the target of the compilation, including architecture information
-     * @param runtime the runtime implementation
-     * @param method the method to be compiled
+     * @param method the method to be compiled or {@code null} if generating code for a stub
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, RiMethod method, int osrBCI) {
+    public C1XCompilation(C1XCompiler compiler, RiMethod method, int osrBCI) {
         this.compiler = compiler;
-        this.target = target;
-        this.runtime = runtime;
+        this.target = compiler.target;
+        this.runtime = compiler.runtime;
         this.method = method;
         this.osrBCI = osrBCI;
         this.stats = new CiStatistics();
+        this.registerConfig = method == null ? compiler.stubRegisterConfig : runtime.getRegisterConfig(method);
 
         CFGPrinter cfgPrinter = null;
         if (C1XOptions.PrintCFGToFile && method != null && TTY.Filter.matches(C1XOptions.PrintFilter, method)) {
@@ -102,18 +102,6 @@ public class C1XCompilation {
             cfgPrinter.printCompilation(method);
         }
         this.cfgPrinter = cfgPrinter;
-    }
-
-    /**
-     * Creates a new compilation for the specified method and runtime.
-     *
-     * @param compiler the compiler
-     * @param target the target of the compilation, including architecture information
-     * @param runtime the runtime implementation
-     * @param method the method to be compiled
-     */
-    public C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, RiMethod method) {
-        this(compiler, target, runtime, method, -1);
     }
 
     public IR hir() {
@@ -281,7 +269,7 @@ public class C1XCompilation {
 
     public AbstractAssembler masm() {
         if (assembler == null) {
-            assembler = compiler.backend.newAssembler();
+            assembler = compiler.backend.newAssembler(registerConfig);
             assembler.setFrameSize(frameMap.frameSize());
         }
         return assembler;
@@ -384,7 +372,7 @@ public class C1XCompilation {
             // generate exception adapters
             lirAssembler.emitExceptionEntries();
 
-            CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, -1);
+            CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset);
 
             if (cfgPrinter() != null) {
                 cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);
@@ -412,11 +400,15 @@ public class C1XCompilation {
         return nextID++;
     }
 
-    public static C1XCompilation current() {
-        return currentCompilation.get();
+    public static C1XCompilation compilation() {
+        C1XCompilation compilation = currentCompilation.get();
+        assert compilation != null;
+        return compilation;
     }
 
-    private static void setCurrent(C1XCompilation compilation) {
+    public static C1XCompilation setCurrent(C1XCompilation compilation) {
+        assert compilation == null || currentCompilation.get() == null : "cannot have more than one current compilation per thread";
         currentCompilation.set(compilation);
+        return compilation;
     }
 }

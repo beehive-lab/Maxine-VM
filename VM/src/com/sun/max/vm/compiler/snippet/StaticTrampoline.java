@@ -58,7 +58,7 @@ public final class StaticTrampoline extends Snippet {
     }
 
     @RESET
-    private static Pointer codeStart = Pointer.zero();
+    public static Pointer codeStart = Pointer.zero();
     @RESET
     private static Pointer jitEntryPoint;
     @RESET

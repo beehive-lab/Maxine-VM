@@ -20,14 +20,12 @@
  */
 package com.sun.max.vm.runtime.amd64;
 
-import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
+import static com.sun.max.platform.Platform.*;
 
+import com.sun.c1x.target.amd64.*;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
-import com.sun.max.asm.amd64.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -69,26 +67,17 @@ public final class AMD64Safepoint extends Safepoint {
     /**
      * ATTENTION: must be callee-saved by all C ABIs in use.
      */
-    public static final AMD64GeneralRegister64 LATCH_REGISTER = R14;
+    public static final CiRegister LATCH_REGISTER = AMD64.r14;
 
     @HOSTED_ONLY
     public AMD64Safepoint(VMConfiguration vmConfiguration) {
     }
 
-    @Override
-    public AMD64GeneralRegister64 latchRegister() {
-        return LATCH_REGISTER;
-    }
-
     @HOSTED_ONLY
     @Override
     protected byte[] createCode() {
-        final AMD64Assembler asm = new AMD64Assembler(0L);
-        try {
-            asm.mov(LATCH_REGISTER, LATCH_REGISTER.indirect());
-            return asm.toByteArray();
-        } catch (AssemblyException assemblyException) {
-            throw ProgramError.unexpected("could not assemble safepoint code");
-        }
+        final AMD64Assembler asm = new AMD64Assembler(target(), null);
+        asm.movq(LATCH_REGISTER, new CiAddress(CiKind.Word, LATCH_REGISTER.asValue()));
+        return asm.codeBuffer.close(true);
     }
 }

@@ -30,6 +30,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.ScopeData.ReturnBlock;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.ir.Value.Flag;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -2362,17 +2363,19 @@ public final class GraphBuilder {
     }
 
     private void genLoadRegister(int registerId) {
-        RiRegisterConfig registerConfig = compilation.target.registerConfig;
-        CiRegister register = registerConfig.getIntegerRegister(registerId);
+        CiRegister register = compilation.registerConfig.getRegister(registerId);
         if (register == null) {
             throw new CiBailout("Unsupported READREG operand " + registerId);
         }
-        wpush(append(new LoadRegister(CiKind.Word, register)));
+        LoadRegister load = new LoadRegister(CiKind.Word, register);
+        if (compilation.registerConfig.getAttributesMap()[register.number].isNonZero) {
+            load.setFlag(Flag.NonNull);
+        }
+        wpush(append(load));
     }
 
     private void genStoreRegister(int registerId) {
-        RiRegisterConfig registerConfig = compilation.target.registerConfig;
-        CiRegister register = registerConfig.getIntegerRegister(registerId);
+        CiRegister register = compilation.registerConfig.getRegister(registerId);
         if (register == null) {
             throw new CiBailout("Unsupported WRITEREG operand " + registerId);
         }

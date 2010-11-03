@@ -56,7 +56,7 @@ public abstract class DynamicTrampolineExit {
     @HOSTED_ONLY
     public static DynamicTrampolineExit create() {
         try {
-            final String isa = platform().instructionSet().name();
+            final String isa = platform().isa.name();
             final Class<?> dynamicTrampolineExitClass = Class.forName(MaxPackage.fromClass(DynamicTrampolineExit.class).subPackage(isa.toLowerCase()).name() + "." + isa + DynamicTrampolineExit.class.getSimpleName());
             return (DynamicTrampolineExit) dynamicTrampolineExitClass.newInstance();
         } catch (Exception exception) {

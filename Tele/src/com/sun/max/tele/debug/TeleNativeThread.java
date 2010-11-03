@@ -152,7 +152,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             final String name = this.entityName + " Locals";
             this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name, params.threadLocalsRegion.start(), params.threadLocalsRegion.size());
         }
-        this.breakpointIsAtInstructionPointer = platform().instructionSet() == InstructionSet.SPARC;
+        this.breakpointIsAtInstructionPointer = platform().isa == ISA.SPARC;
         final String stackName = this.entityName + " Stack";
         this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.size());
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");

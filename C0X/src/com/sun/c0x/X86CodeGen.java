@@ -52,7 +52,7 @@ public class X86CodeGen extends CodeGen {
 
     public X86CodeGen(C0XCompilation compilation, CiTarget target) {
         super(compilation, target);
-        asm = new AMD64MacroAssembler(null, target);
+        asm = new AMD64MacroAssembler(null, compilation.registerConfig);
         is64bit = target.arch.is64bit();
     }
 
@@ -200,7 +200,7 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genReturn(CiKind kind, Location value) {
-        allocDst(target.registerConfig.getReturnRegister(kind), kind);
+        allocDst(compilation.registerConfig.getReturnRegister(kind), kind);
         // TODO: adjust stack pointer
         asm.ret(0);
     }
@@ -306,7 +306,7 @@ public class X86CodeGen extends CodeGen {
             }
             case Bytecodes.F2L: {
                 Label endLabel = new Label();
-            CiRegister rscratch1 = target.scratchRegister;
+                CiRegister rscratch1 = compilation.registerConfig.getScratchRegister();
                 asm.cvttss2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
@@ -329,7 +329,7 @@ public class X86CodeGen extends CodeGen {
             }
             case Bytecodes.D2L: {
                 Label endLabel = new Label();
-            CiRegister rscratch1 = target.scratchRegister;
+                CiRegister rscratch1 = compilation.registerConfig.getScratchRegister();
                 asm.cvttsd2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);

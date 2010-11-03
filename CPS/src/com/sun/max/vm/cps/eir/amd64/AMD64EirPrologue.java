@@ -70,7 +70,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
     }
 
     private static void emitTrapStubPrologue(EirMethod eirMethod, final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int originalFrameSize) {
-        final AMD64GeneralRegister64 latchRegister = AMD64Safepoint.LATCH_REGISTER;
+        final AMD64GeneralRegister64 latchRegister = AMD64GeneralRegister64.values()[AMD64Safepoint.LATCH_REGISTER.number];
         final AMD64GeneralRegister64 scratchRegister = AMD64GeneralRegister64.R11;
         // expand the frame size for this method to allow for the saved register state
         final int frameSize = originalFrameSize + AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP;
@@ -80,7 +80,6 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         // the very first instruction must save the flags.
         // we save them twice and overwrite one copy with the trap instruction/return address.
         asm.pushfq();
-
         asm.pushfq();
 
         // now allocate the frame for this method

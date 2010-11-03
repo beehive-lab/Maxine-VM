@@ -83,7 +83,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         this.assembly = assembly;
         this.addressWidth = addressWidth;
         this.components = components;
-        this.tmpFilePrefix = System.getProperty("user.name") + "-" + assembly.instructionSet().name().toLowerCase() + "-asmTest-";
+        this.tmpFilePrefix = System.getProperty("user.name") + "-" + assembly.isa().name().toLowerCase() + "-asmTest-";
     }
 
     public Assembly<Template_Type> assembly() {

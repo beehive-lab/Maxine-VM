@@ -60,8 +60,8 @@ public class VMStringOption extends VMOption {
     /**
      * Package private constructor for {@link AgentVMOption} to use at runtime.
      */
-    VMStringOption() {
-        super("", "");
+    VMStringOption(String prefix) {
+        super(prefix, "");
         space = false;
     }
 

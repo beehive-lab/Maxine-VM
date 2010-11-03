@@ -32,8 +32,8 @@ import com.sun.max.lang.*;
 public abstract class AbstractIA32Assembler extends LittleEndianAssembler implements Assembler32 {
 
     @Override
-    public final InstructionSet instructionSet() {
-        return InstructionSet.IA32;
+    public final ISA isa() {
+        return ISA.IA32;
     }
 
     @Override

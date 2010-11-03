@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.trampoline.*;
 
 /**
  * The package class that describes the C1X packages to the Maxine configurator.
@@ -33,10 +34,14 @@ import com.sun.max.vm.hosted.*;
 public class Package extends VMPackage {
     public Package() {
         registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
+        registerScheme(DynamicTrampolineScheme.class, C1XCompilerScheme.class);
     }
 
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return BootImageGenerator.calleeC1X || equals(vmConfiguration.jitCompilerPackage) || equals(vmConfiguration.optCompilerPackage);
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return BootImageGenerator.calleeC1X ||
+            equals(vmConfig.trampolinePackage) ||
+            equals(vmConfig.jitCompilerPackage) ||
+            equals(vmConfig.optCompilerPackage);
     }
 }
