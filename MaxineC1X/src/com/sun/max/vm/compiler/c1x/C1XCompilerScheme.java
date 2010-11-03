@@ -129,9 +129,12 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         return Utils.cast(type, C1XTargetMethod.class);
     }
 
+    private ClassMethodActor vTableTrampoline;
+    private ClassMethodActor iTableTrampoline;
+    private ClassMethodActor staticTrampoline;
     private byte[] vTableTrampolinePrologue;
     private byte[] iTableTrampolinePrologue;
-    private TargetMethod staticTrampoline;
+    private TargetMethod staticTrampolineCode;
 
     @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.VIRTUAL)
     private static native Address vTableTrampoline() throws Throwable;
@@ -143,10 +146,11 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     private static native Address staticTrampoline() throws Throwable;
 
     @HOSTED_ONLY
-    private byte[] adapterPrologueFor(String methodName) {
-        AdapterGenerator generator = AdapterGenerator.forCallee(ClassMethodActor.fromJava(getDeclaredMethod(C1XCompilerScheme.class, methodName)), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    private byte[] adapterPrologueFor(ClassMethodActor callee) {
+        AdapterGenerator generator = AdapterGenerator.forCallee(callee, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         if (generator != null) {
             ByteArrayOutputStream os = new ByteArrayOutputStream(8);
+            generator.adapt(callee, os);
             return os.toByteArray();
         }
         return new byte[0];
@@ -165,13 +169,16 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                 }
             }
 
-            vTableTrampolinePrologue = adapterPrologueFor("vTableTrampoline");
-            iTableTrampolinePrologue = adapterPrologueFor("iTableTrampoline");
+            vTableTrampoline = ClassMethodActor.fromJava(getDeclaredMethod(C1XCompilerScheme.class, "vTableTrampoline"));
+            iTableTrampoline = ClassMethodActor.fromJava(getDeclaredMethod(C1XCompilerScheme.class, "iTableTrampoline"));
+            staticTrampoline = ClassMethodActor.fromJava(getDeclaredMethod(C1XCompilerScheme.class, "staticTrampoline"));
+            vTableTrampolinePrologue = adapterPrologueFor(vTableTrampoline);
+            iTableTrampolinePrologue = adapterPrologueFor(iTableTrampoline);
 
-            staticTrampoline = genStaticTrampoline(adapterPrologueFor("staticTrampoline"));
-            StaticTrampoline.codeStart = staticTrampoline.codeStart();
+            staticTrampolineCode = genStaticTrampoline(adapterPrologueFor(staticTrampoline));
+            StaticTrampoline.codeStart = staticTrampolineCode.codeStart();
         } else if (phase == Phase.PRIMORDIAL) {
-            StaticTrampoline.codeStart = staticTrampoline.codeStart();
+            StaticTrampoline.codeStart = staticTrampolineCode.codeStart();
         }
     }
 
@@ -191,6 +198,14 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             }
             FatalError.unexpected("Trap stub must be compiled into boot image");
         }
+        if (classMethodActor.isInterfaceTrampoline()) {
+            return genDynamicTrampoline(0, true);
+        }
+
+        if (classMethodActor.isVirtualTrampoline()) {
+            return genDynamicTrampoline(0, false);
+        }
+
         CiTargetMethod compiledMethod = compiler.compileMethod(method, -1, xirGenerator).targetMethod();
         if (compiledMethod != null) {
             C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
@@ -319,8 +334,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
             asm.ret(0);
 
-            String trampolineName = "static-trampoline";
-            return new C1XTargetMethod(trampolineName, asm.finishTargetMethod(trampolineName, runtime, -1));
+            return new C1XTargetMethod(staticTrampoline, asm.finishTargetMethod(staticTrampoline, runtime, -1));
         }
         throw FatalError.unimplemented();
     }
@@ -376,8 +390,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.addq(AMD64.rsp, frameSize - 8);
             asm.ret(0);
 
-            String trampName = "vtable[" + index + "]-trampoline";
-            return new C1XTargetMethod(trampName, asm.finishTargetMethod(trampName, runtime, -1));
+            ClassMethodActor classMethodActor = isInterface ? iTableTrampoline : vTableTrampoline;
+            return new C1XTargetMethod(classMethodActor, asm.finishTargetMethod(classMethodActor, runtime, -1));
         }
         throw FatalError.unimplemented();
     }

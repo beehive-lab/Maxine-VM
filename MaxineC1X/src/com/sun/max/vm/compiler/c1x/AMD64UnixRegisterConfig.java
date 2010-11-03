@@ -82,9 +82,9 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
 
     /**
      * The register configuration for a method called directly from native/C code.
-     * This configuration preserves all callee saved registers.
+     * This configuration preserves all native ABI specified callee saved registers.
      */
-    public static final AMD64UnixRegisterConfig N2J = STANDARD.withCalleeSave(rbx, rbp, r12, r13, r15);
+    public static final AMD64UnixRegisterConfig N2J = STANDARD.withCalleeSave(rbx, rbp, r12, r13, r14, r15);
 
     /**
      * The register configuration for a direct call to native/C code.
