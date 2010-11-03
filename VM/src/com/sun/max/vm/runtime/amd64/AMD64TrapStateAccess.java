@@ -183,23 +183,25 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         Log.print(' ');
         logFlags(flags.asAddress().toInt());
         Log.println();
-        boolean seenNonZeroXMM = false;
-        for (CiRegister reg : RSA.registers) {
-            if (reg.isFpu()) {
-                int offset = RSA.offsetOf(reg);
-                final double value = rsa.readDouble(offset);
-                if (value != 0) {
-                    if (!seenNonZeroXMM) {
-                        Log.println("Non-zero XMM registers:");
-                        seenNonZeroXMM = true;
+        if (false) {
+            boolean seenNonZeroXMM = false;
+            for (CiRegister reg : RSA.registers) {
+                if (reg.isFpu()) {
+                    int offset = RSA.offsetOf(reg);
+                    final double value = rsa.readDouble(offset);
+                    if (value != 0) {
+                        if (!seenNonZeroXMM) {
+                            Log.println("Non-zero XMM registers:");
+                            seenNonZeroXMM = true;
+                        }
+                        Log.print("  ");
+                        Log.print(reg.name);
+                        Log.print("=");
+                        Log.print(value);
+                        Log.print("  {bits: ");
+                        Log.print(Address.fromLong(Double.doubleToRawLongBits(value)));
+                        Log.println("}");
                     }
-                    Log.print("  ");
-                    Log.print(reg.name);
-                    Log.print("=");
-                    Log.print(value);
-                    Log.print("  {bits: ");
-                    Log.print(Address.fromLong(Double.doubleToRawLongBits(value)));
-                    Log.println("}");
                 }
             }
         }
