@@ -592,6 +592,7 @@ public class BlockMap {
             case LSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
             case FSTORE:   storeOne(code[bci + 1] & 0xff); return 2;
             case DSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
+            case WSTORE:
             case ASTORE:   storeOne(code[bci + 1] & 0xff); return 2;
             case ISTORE_0: storeOne(0); return 1;
             case ISTORE_1: storeOne(1); return 1;
@@ -613,6 +614,10 @@ public class BlockMap {
             case ASTORE_1: storeOne(1); return 1;
             case ASTORE_2: storeOne(2); return 1;
             case ASTORE_3: storeOne(3); return 1;
+            case WSTORE_0: storeOne(0); return 1;
+            case WSTORE_1: storeOne(1); return 1;
+            case WSTORE_2: storeOne(2); return 1;
+            case WSTORE_3: storeOne(3); return 1;
         }
         throw Util.shouldNotReachHere();
     }

@@ -1097,16 +1097,16 @@ public class Bytecodes {
         def("jsr_w"           , "boooo", STOP | BRANCH);
         def("breakpoint"      , "b"    , TRAP);
 
-        def("wload"           , "bi"   , EXTENSION);
-        def("wload_0"         , "b"    , EXTENSION);
-        def("wload_1"         , "b"    , EXTENSION);
-        def("wload_2"         , "b"    , EXTENSION);
-        def("wload_3"         , "b"    , EXTENSION);
-        def("wstore"          , "bi"   , EXTENSION);
-        def("wstore_0"        , "b"    , EXTENSION);
-        def("wstore_1"        , "b"    , EXTENSION);
-        def("wstore_2"        , "b"    , EXTENSION);
-        def("wstore_3"        , "b"    , EXTENSION);
+        def("wload"           , "bi"   , EXTENSION | LOAD);
+        def("wload_0"         , "b"    , EXTENSION | LOAD);
+        def("wload_1"         , "b"    , EXTENSION | LOAD);
+        def("wload_2"         , "b"    , EXTENSION | LOAD);
+        def("wload_3"         , "b"    , EXTENSION | LOAD);
+        def("wstore"          , "bi"   , EXTENSION | STORE);
+        def("wstore_0"        , "b"    , EXTENSION | STORE);
+        def("wstore_1"        , "b"    , EXTENSION | STORE);
+        def("wstore_2"        , "b"    , EXTENSION | STORE);
+        def("wstore_3"        , "b"    , EXTENSION | STORE);
         def("wconst_0"        , "bii"  , EXTENSION);
         def("wdiv"            , "bii"  , EXTENSION | TRAP);
         def("wdivi"           , "bii"  , EXTENSION | TRAP);

@@ -23,9 +23,8 @@ package com.sun.max.ide;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.program.*;
-import com.sun.max.program.Classpath.*;
+import com.sun.max.program.Classpath.Entry;
 
 /**
  * Software project-dependent configuration. This is all derived from the
@@ -57,7 +56,7 @@ public final class JavaProject {
     public static final String TEST_SOURCE_DIRECTORY_NAME = "test";
 
     /**
-     * Gets the paths on which all the class files produced by the current Java project can be found.
+     * Gets the paths on which all the class files referenced by the current Java project can be found.
      *
      * @param includeDependencies  if true, the returned path includes the location of the
      *                             class files produced by each of the projects that the current
@@ -67,8 +66,7 @@ public final class JavaProject {
         ArrayList<Entry> classPathEntries = new ArrayList<Entry>();
         for (Entry entry : Classpath.fromSystem().entries()) {
             if (entry.isDirectory()) {
-                final String packageName = MaxPackage.class.getPackage().getName();
-                final File file = new File(entry.path(), packageName.replace('.', File.separatorChar));
+                final File file = new File(entry.path());
                 if (file.exists() && file.isDirectory() && !classPathEntries.contains(entry)) {
                     classPathEntries.add(entry);
                     if (!includeDependencies) {
