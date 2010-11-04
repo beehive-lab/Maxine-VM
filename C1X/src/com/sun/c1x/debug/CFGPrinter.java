@@ -528,9 +528,6 @@ public class CFGPrinter {
         out.printf("%d %s ", interval.operandNumber, (interval.operand.isRegister() ? "fixed" : interval.kind().name()));
         if (interval.operand.isRegister()) {
             out.printf("\"[%s|%c]\"", interval.operand.name(), interval.operand.kind.typeChar);
-            if (!true) {
-                out.print(' ');
-            }
         } else {
             if (interval.location() != null) {
                 out.printf("\"[%s|%c]\"", interval.location().name(), interval.location().kind.typeChar);
