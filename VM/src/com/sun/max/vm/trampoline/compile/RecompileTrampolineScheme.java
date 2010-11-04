@@ -22,7 +22,6 @@ package com.sun.max.vm.trampoline.compile;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.trampoline.*;
 
