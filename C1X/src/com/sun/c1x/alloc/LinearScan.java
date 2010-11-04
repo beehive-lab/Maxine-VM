@@ -2384,6 +2384,10 @@ public class LinearScan {
         eliminateSpillMoves();
         assignLocations();
 
+        if (C1XOptions.DetailedAsserts) {
+            verifyIntervals();
+        }
+
         if (C1XOptions.PrintTimers) {
             C1XTimers.DEBUG_INFO.stop();
             C1XTimers.CODE_CREATE.start();
@@ -2536,7 +2540,6 @@ public class LinearScan {
                 if (i2.from() == 1 && i2.to() == 2) {
                     continue;
                 }
-
                 CiValue l1 = i1.location();
                 CiValue l2 = i2.location();
                 if (i1.intersects(i2) && (l1.equals(l2))) {
