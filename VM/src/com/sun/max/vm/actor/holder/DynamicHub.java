@@ -42,9 +42,6 @@ public final class DynamicHub extends Hub {
 
     DynamicHub(Size tupleSize, SpecificLayout specificLayout, ClassActor classActor, BitSet superClassActorSerials, Iterable<InterfaceActor> allInterfaceActors, int vTableLength, TupleReferenceMap referenceMap) {
         super(tupleSize, specificLayout, classActor, superClassActorSerials, allInterfaceActors, vTableLength, referenceMap);
-        if (classActor.name().contains("MyThread")) {
-            System.console();
-        }
     }
 
     private void initializeMTable(BitSet superClassActorSerials, Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup, int[] iToV) {
