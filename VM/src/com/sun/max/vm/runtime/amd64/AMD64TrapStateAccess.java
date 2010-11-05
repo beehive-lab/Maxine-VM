@@ -69,7 +69,6 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
     public static final int TRAP_STATE_SIZE_WITHOUT_RIP;
     public static final int TRAP_NUMBER_OFFSET;
     public static final int FLAGS_OFFSET;
-    public static final int RIP_OFFSET;
 
     public static final CiRegisterSaveArea RSA;
     static {
@@ -93,13 +92,8 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
 
         RSA = new CiRegisterSaveArea(offset, registerOffsets, 8, rax, r15);
 
-        RIP_OFFSET = RSA.size;
         TRAP_STATE_SIZE_WITHOUT_RIP = RSA.size;
         TRAP_STATE_SIZE_WITH_RIP = TRAP_STATE_SIZE_WITHOUT_RIP + 8;
-    }
-
-    public AMD64TrapStateAccess(VMConfiguration vmConfiguration) {
-        super();
     }
 
     public static Pointer getTrapStateFromRipPointer(Pointer ripPointer) {
