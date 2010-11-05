@@ -116,7 +116,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         this.safepointState = safepointState;
         final String entityName = teleNativeThread.entityName() + " locals(" + safepointState + ")";
         this.threadLocalsAreaMemoryRegion =
-            new ThreadLocalsAreaMemoryRegion(teleVM, this, entityName, start.asAddress(), VmThreadLocal.threadLocalsAreaSize());
+            new ThreadLocalsAreaMemoryRegion(teleVM, this, entityName, start.asAddress(), VmThreadLocal.tlaSize());
         this.threadLocalAreaVariableCount = VmThreadLocal.values().size();
         this.threadLocalVariables = new TeleThreadLocalVariable[threadLocalAreaVariableCount];
         final Size wordSize = teleNativeThread.vm().wordSize();

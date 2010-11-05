@@ -225,25 +225,25 @@ public final class VmThreadMap {
 
     @INLINE
     private static Pointer getPrev(Pointer threadLocals) {
-        return VmThreadLocal.BACKWARD_LINK.getConstantWord(threadLocals).asPointer();
+        return VmThreadLocal.BACKWARD_LINK.loadPtr(threadLocals);
     }
 
     @INLINE
     private static Pointer getNext(Pointer threadLocals) {
-        return VmThreadLocal.FORWARD_LINK.getConstantWord(threadLocals).asPointer();
+        return VmThreadLocal.FORWARD_LINK.loadPtr(threadLocals);
     }
 
     @INLINE
     private static void setPrev(Pointer threadLocals, Pointer prev) {
         if (!threadLocals.isZero()) {
-            VmThreadLocal.BACKWARD_LINK.setConstantWord(threadLocals, prev);
+            VmThreadLocal.BACKWARD_LINK.store3(threadLocals, prev);
         }
     }
 
     @INLINE
     private static void setNext(Pointer threadLocals, Pointer next) {
         if (!threadLocals.isZero()) {
-            VmThreadLocal.FORWARD_LINK.setConstantWord(threadLocals, next);
+            VmThreadLocal.FORWARD_LINK.store3(threadLocals, next);
         }
     }
 

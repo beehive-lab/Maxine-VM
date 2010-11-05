@@ -350,11 +350,11 @@ public class VmThread {
      *
      * @return a value of C type JNIEnv*
      */
-    public static Pointer currentJniEnvironmentPointer() {
+    public static Pointer jniEnv() {
         if (MaxineVM.isHosted()) {
             return Pointer.zero();
         }
-        return JNI_ENV.pointer(currentVmThreadLocals());
+        return JNI_ENV.addressIn(currentVmThreadLocals());
     }
 
     @INLINE
@@ -362,7 +362,7 @@ public class VmThread {
         if (MaxineVM.isHosted()) {
             return mainThread;
         }
-        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
+        return UnsafeCast.asVmThread(VM_THREAD.loadRef(currentVmThreadLocals()).toJava());
     }
 
     /**
@@ -441,9 +441,9 @@ public class VmThread {
                     Pointer stackYellowZone) {
 
         // Disable safepoints:
-        Safepoint.setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer());
+        Safepoint.setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(threadLocals));
 
-        JNI_ENV.setConstantWord(threadLocals, NativeInterfaces.jniEnv());
+        JNI_ENV.store3(threadLocals, NativeInterfaces.jniEnv());
 
         // Add the VM thread locals to the active map
         VmThread thread;
@@ -460,7 +460,7 @@ public class VmThread {
             if (!daemon && !VmThreadMap.incrementNonDaemonThreads()) {
                 return -2;
             }
-            ID.setConstantWord(threadLocals, Address.fromLong(thread.id));
+            ID.store3(threadLocals, Address.fromLong(thread.id));
         } else {
             thread = VmThreadMap.ACTIVE.getVmThreadForID(id);
             daemon = thread.javaThread().isDaemon();
@@ -471,8 +471,8 @@ public class VmThread {
             threadLocal.initialize();
         }
 
-        HIGHEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackEnd);
-        LOWEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackYellowZone.plus(platform().pageSize));
+        HIGHEST_STACK_SLOT_ADDRESS.store3(threadLocals, stackEnd);
+        LOWEST_STACK_SLOT_ADDRESS.store3(threadLocals, stackYellowZone.plus(platform().pageSize));
 
         thread.nativeThread = nativeThread;
         thread.vmThreadLocals = threadLocals;
@@ -480,7 +480,7 @@ public class VmThread {
         thread.stackDumpStackFrameWalker.setVmThreadLocals(threadLocals);
         thread.stackYellowZone = stackYellowZone;
 
-        VM_THREAD.setConstantReference(threadLocals, Reference.fromJava(thread));
+        VM_THREAD.store3(threadLocals, Reference.fromJava(thread));
         VmThreadMap.addThreadLocals(thread, threadLocals, daemon);
 
         return thread.isVmOperationThread() ? 1 : 0;
@@ -510,7 +510,7 @@ public class VmThread {
                     Pointer stackEnd) {
 
         // Enable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.pointer(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer()), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(threadLocals)), null);
 
         final VmThread thread = VmThread.current();
 
@@ -590,7 +590,7 @@ public class VmThread {
                     Pointer threadLocals) {
 
         // Enable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.pointer(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer()), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(threadLocals)), null);
 
         VmThread thread = VmThread.current();
 
@@ -651,7 +651,7 @@ public class VmThread {
     @VM_ENTRY_POINT
     private static void detach(Pointer threadLocals) {
         // Disable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.pointer(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer()), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(threadLocals)), null);
 
         VmThread thread = VmThread.current();
 
@@ -724,7 +724,7 @@ public class VmThread {
         if (MaxineVM.isHosted()) {
             return mainThread;
         }
-        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
+        return UnsafeCast.asVmThread(VM_THREAD.loadRef(vmThreadLocals).toJava());
     }
 
     public static void yield() {
@@ -993,13 +993,13 @@ public class VmThread {
             lastRegionStart = traceRegion("Stack red zone", stackBase, stackRedZone(), stackYellowZone, lastRegionStart, stackSize);
 
             lastRegionStart = Address.zero();
-            Address ntl = NATIVE_THREAD_LOCALS.getConstantWord().asAddress();
-            Pointer triggeredTL = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord().asPointer();
-            Pointer enabledTL = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
-            Pointer disabledTL = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer();
+            Address ntl = NATIVE_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+            Pointer triggeredTL = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()).asPointer();
+            Pointer enabledTL = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()).asPointer();
+            Pointer disabledTL = SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()).asPointer();
             Pointer tlb = triggeredTL.roundedDownBy(platform().pageSize);
-            Address refMap = STACK_REFERENCE_MAP.getConstantWord().asAddress();
-            Address tlbEnd = refMap.plus(STACK_REFERENCE_MAP_SIZE.getConstantWord().asAddress());
+            Address refMap = STACK_REFERENCE_MAP.loadPtr(currentVmThreadLocals());
+            Address tlbEnd = refMap.plus(STACK_REFERENCE_MAP_SIZE.loadPtr(currentVmThreadLocals()).asAddress());
             int tlbSize = tlbEnd.minus(tlb).toInt();
             Log.println();
             Log.println("Thread locals block layout:");

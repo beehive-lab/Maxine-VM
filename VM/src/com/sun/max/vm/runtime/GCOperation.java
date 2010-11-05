@@ -61,10 +61,10 @@ public abstract class GCOperation extends VmOperation {
     protected void doAtSafepointBeforeBlocking(Pointer trapState) {
         // note that this procedure always runs with safepoints disabled
         final Pointer vmThreadLocals = Safepoint.getLatchRegister();
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
         Heap.disableAllocationForCurrentThread();
 
-        if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
+        if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.loadPtr(enabledVmThreadLocals).isZero()) {
             FatalError.unexpected("Stack reference map preparer should be cleared before GC");
         }
 
@@ -74,8 +74,8 @@ public abstract class GCOperation extends VmOperation {
     @Override
     public void doAtSafepointAfterBlocking(Pointer trapState) {
         final Pointer vmThreadLocals = Safepoint.getLatchRegister();
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
+        if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.loadPtr(enabledVmThreadLocals).isZero()) {
             FatalError.unexpected("Stack reference map preparer should be cleared after GC");
         }
 
@@ -87,7 +87,7 @@ public abstract class GCOperation extends VmOperation {
 
         Pointer vmThreadLocals = vmThread.vmThreadLocals();
 
-        final boolean threadWasInNative = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero();
+        final boolean threadWasInNative = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.loadPtr(vmThreadLocals).isZero();
         if (threadWasInNative) {
             if (VmOperationThread.TraceVmOperations) {
                 Log.print("Building full stack reference map for ");
@@ -113,7 +113,7 @@ public abstract class GCOperation extends VmOperation {
     @Override
     protected void doBeforeThawingThread(VmThread thread) {
         // Indicates that the stack reference map for the thread is once-again unprepared.
-        LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(thread.vmThreadLocals(), Address.zero());
+        LOWEST_ACTIVE_STACK_SLOT_ADDRESS.store3(thread.vmThreadLocals(), Address.zero());
     }
 
     long stackReferenceMapPreparationTime;

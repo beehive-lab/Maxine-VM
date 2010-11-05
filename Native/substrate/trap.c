@@ -415,24 +415,24 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
         }
     }
 
-    /* save the trap information in the disabled VM thread locals */
-    setThreadLocal(disabled_tl, TRAP_NUMBER, trapNumber);
-    setThreadLocal(disabled_tl, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
-    setThreadLocal(disabled_tl, TRAP_FAULT_ADDRESS, faultAddress);
+    /* save the trap information in the thread locals */
+    setConstantThreadLocal(disabled_tl, TRAP_NUMBER, trapNumber);
+    setConstantThreadLocal(disabled_tl, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
+    setConstantThreadLocal(disabled_tl, TRAP_FAULT_ADDRESS, faultAddress);
 
 #if os_SOLARIS && isa_SPARC
 	/* save the value of the safepoint latch at the trapped instruction */
-    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_G2]);
+    setConstantThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_G2]);
     /* set the safepoint latch register of the trapped frame to the disabled state */
     ucontext->uc_mcontext.gregs[REG_G2] = (Address) disabled_tl;
 #elif isa_AMD64 && (os_SOLARIS || os_LINUX)
-    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_R14]);
+    setConstantThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_R14]);
     ucontext->uc_mcontext.gregs[REG_R14] = (Address) disabled_tl;
 #elif isa_AMD64 && os_DARWIN
-    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext->__ss.__r14);
+    setConstantThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext->__ss.__r14);
     ucontext->uc_mcontext->__ss.__r14 = (Address) disabled_tl;
 #elif isa_AMD64 && os_GUESTVMXEN
-    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->r14);
+    setConstantThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->r14);
     ucontext->r14 = (Address) disabled_tl;
 #else
     c_UNIMPLEMENTED();

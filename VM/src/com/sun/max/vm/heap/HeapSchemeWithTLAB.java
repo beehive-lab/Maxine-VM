@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -125,11 +126,11 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         }
 
         public void run(Pointer vmThreadLocals) {
-            final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
-            Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
+            final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
+            final Pointer tlabMark = TLAB_MARK.loadPtr(enabledVmThreadLocals);
+            Pointer tlabTop = TLAB_TOP.loadPtr(enabledVmThreadLocals);
             if (traceTLAB()) {
-                final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+                final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(enabledVmThreadLocals).toJava());
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.printThread(vmThread, false);
                 Log.print(": Resetting TLAB [TOP=");
@@ -147,7 +148,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
                     // No TLABs, so nothing to reset.
                     return;
                 }
-                FatalError.check(!ALLOCATION_DISABLED.getConstantWord().isZero(), "inconsistent TLAB state");
+                FatalError.check(!ALLOCATION_DISABLED.loadPtr(currentVmThreadLocals()).isZero(), "inconsistent TLAB state");
                 TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
                 if (refillPolicy != null) {
                     // Go fetch the actual TLAB top in case the heap scheme needs it for its doBeforeReset handler.
@@ -157,8 +158,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
                 }
             }
             doBeforeReset(enabledVmThreadLocals, tlabMark, tlabTop);
-            enabledVmThreadLocals.setWord(TLAB_TOP.index, Address.zero());
-            enabledVmThreadLocals.setWord(TLAB_MARK.index, Address.zero());
+            TLAB_TOP.store(enabledVmThreadLocals, Address.zero());
+            TLAB_MARK.store(enabledVmThreadLocals, Address.zero());
         }
     }
 
@@ -207,46 +208,46 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @Override
     public void disableAllocationForCurrentThread() {
-        final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
-        final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+        final Address value = ALLOCATION_DISABLED.loadPtr(enabledVmThreadLocals).asAddress();
         if (value.isZero()) {
             //Log.println("disabling heap allocation");
             // Saves TLAB's top and set it to null to force TLAB allocation to route to slow path and check if allocation is enabled.
-            final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(vmThreadLocals);
-            final Address tlabTop = TLAB_TOP.getVariableWord(vmThreadLocals).asAddress();
+            final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
+            final Address tlabTop = TLAB_TOP.loadPtr(enabledVmThreadLocals);
             if (refillPolicy == null) {
                 // TLAB was never refill. So TLAB's top must be null, and we'll take the slow path anyway.
                 FatalError.check(tlabTop.isZero(), "cannot have null refill policy with non-null TLAB top");
             } else {
                 refillPolicy.saveTlabTop(tlabTop);
-                TLAB_TOP.setVariableWord(vmThreadLocals, Address.zero());
+                TLAB_TOP.store(enabledVmThreadLocals, Address.zero());
             }
         }
-        ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.plus(1));
+        ALLOCATION_DISABLED.store3(enabledVmThreadLocals, value.plus(1));
     }
 
     @Override
     public void enableAllocationForCurrentThread() {
-        final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
-        final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+        final Address value = ALLOCATION_DISABLED.loadPtr(enabledVmThreadLocals).asAddress();
         if (value.isZero()) {
             FatalError.unexpected("Unbalanced calls to disable/enable allocation for current thread");
         }
         if (value.minus(1).isZero()) {
             //Log.println("enabling heap allocation");
             // Restore TLAB's top if needed.
-            final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(vmThreadLocals);
+            final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
             if (refillPolicy != null) {
-                final Address tlabTop = TLABRefillPolicy.getForCurrentThread(vmThreadLocals).getSavedTlabTop();
-                TLAB_TOP.setVariableWord(vmThreadLocals, tlabTop);
+                final Address tlabTop = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals).getSavedTlabTop();
+                TLAB_TOP.store(enabledVmThreadLocals, tlabTop);
             }
         }
-        ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.minus(1));
+        ALLOCATION_DISABLED.store3(enabledVmThreadLocals, value.minus(1));
     }
 
     @Override
     public final boolean isAllocationDisabledForCurrentThread() {
-        return !ALLOCATION_DISABLED.getConstantWord().isZero();
+        return !ALLOCATION_DISABLED.loadPtr(currentVmThreadLocals()).isZero();
     }
 
     @INLINE(override = true)
@@ -260,7 +261,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     public void refillTLAB(Pointer tlab, Size size) {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(VmThread.currentVmThreadLocals());
         refillTLAB(enabledVmThreadLocals, tlab, size);
     }
 
@@ -272,20 +273,20 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     public void refillTLAB(Pointer enabledVmThreadLocals, Pointer tlab, Size size) {
         final Pointer tlabTop = tlab.plus(size); // top of the new TLAB
-        final Pointer allocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+        final Pointer allocationMark = TLAB_MARK.loadPtr(enabledVmThreadLocals);
         if (!allocationMark.isZero()) {
             // It is a refill, not an initial fill. So invoke handler.
-            doBeforeTLABRefill(allocationMark, enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer());
+            doBeforeTLABRefill(allocationMark, TLAB_TOP.loadPtr(enabledVmThreadLocals));
         } else {
-            ProgramError.check(enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION_ENABLED.index).isZero(),
+            ProgramError.check(IMMORTAL_ALLOCATION_ENABLED.loadPtr(enabledVmThreadLocals).isZero(),
                 "Must not refill TLAB when in Immortal allocation");
         }
 
-        enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
-        enabledVmThreadLocals.setWord(TLAB_MARK.index, tlab);
+        TLAB_TOP.store(enabledVmThreadLocals, tlabTop);
+        TLAB_MARK.store(enabledVmThreadLocals, tlab);
         if (traceTLAB() || Heap.traceAllocation() || Heap.traceGC()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+            final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(enabledVmThreadLocals).toJava());
             Log.printThread(vmThread, false);
             Log.print(": Refill TLAB with [MARK = ");
             Log.print(tlab);
@@ -302,8 +303,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @INLINE
     protected final void fastRefillTLAB(Pointer enabledVmThreadLocals, Pointer tlab, Size size) {
-        enabledVmThreadLocals.setWord(TLAB_TOP.index, tlab.plus(size));
-        enabledVmThreadLocals.setWord(TLAB_MARK.index, tlab);
+        TLAB_TOP.store(enabledVmThreadLocals, tlab.plus(size));
+        TLAB_MARK.store(enabledVmThreadLocals, tlab);
     }
 
     /**
@@ -338,15 +339,15 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (MaxineVM.isDebug() && !size.isWordAligned()) {
             FatalError.unexpected("size is not word aligned in heap allocation request");
         }
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        final Pointer oldAllocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
-        final Pointer tlabEnd = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+        final Pointer oldAllocationMark = TLAB_MARK.loadPtr(enabledVmThreadLocals);
+        final Pointer tlabEnd = TLAB_TOP.loadPtr(enabledVmThreadLocals);
         final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
         if (end.greaterThan(tlabEnd)) {
             return slowPathAllocate(size, enabledVmThreadLocals, oldAllocationMark, tlabEnd);
         }
-        enabledVmThreadLocals.setWord(TLAB_MARK.index, end);
+        TLAB_MARK.store(enabledVmThreadLocals, end);
         return cell;
     }
 
@@ -358,7 +359,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         // Check for the second here.
         checkAllocationEnabled(size);
         // Check for Immortal memory allocation.
-        final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION_ENABLED.index).asPointer();
+        final Pointer immortalAllocation = IMMORTAL_ALLOCATION_ENABLED.loadPtr(enabledVmThreadLocals);
         if (!immortalAllocation.isZero()) {
             return ImmortalHeap.allocate(size, true);
         }
@@ -368,7 +369,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @NEVER_INLINE
     private void checkAllocationEnabled(Size size) {
-        if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
+        if (!ALLOCATION_DISABLED.loadPtr(currentVmThreadLocals()).isZero()) {
             Log.print("Trying to allocate ");
             Log.print(size.toLong());
             Log.print(" bytes on thread ");
@@ -418,14 +419,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public void enableImmortalMemoryAllocation() {
         super.enableImmortalMemoryAllocation();
         if (usesTLAB()) {
-            final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            final Pointer allocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
-            final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
+            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(VmThread.currentVmThreadLocals());
+            final Pointer allocationMark = TLAB_MARK.loadPtr(enabledVmThreadLocals);
+            final Pointer tlabTop = TLAB_TOP.loadPtr(enabledVmThreadLocals);
 
-            enabledVmThreadLocals.setWord(TLAB_MARK_TMP.index, allocationMark);
-            enabledVmThreadLocals.setWord(TLAB_TOP_TMP.index, tlabTop);
-            enabledVmThreadLocals.setWord(TLAB_MARK.index, Word.zero());
-            enabledVmThreadLocals.setWord(TLAB_TOP.index, Word.zero());
+            TLAB_MARK_TMP.store(enabledVmThreadLocals, allocationMark);
+            TLAB_TOP_TMP.store(enabledVmThreadLocals, tlabTop);
+            TLAB_MARK.store(enabledVmThreadLocals, Word.zero());
+            TLAB_TOP.store(enabledVmThreadLocals, Word.zero());
         }
     }
 
@@ -433,14 +434,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public void disableImmortalMemoryAllocation() {
         super.disableImmortalMemoryAllocation();
         if (usesTLAB()) {
-            final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            final Pointer allocationMarkTmp = enabledVmThreadLocals.getWord(TLAB_MARK_TMP.index).asPointer();
-            final Pointer tlabTopTmp = enabledVmThreadLocals.getWord(TLAB_TOP_TMP.index).asPointer();
+            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(VmThread.currentVmThreadLocals());
+            final Pointer allocationMarkTmp = TLAB_MARK_TMP.loadPtr(enabledVmThreadLocals);
+            final Pointer tlabTopTmp = TLAB_TOP_TMP.loadPtr(enabledVmThreadLocals);
 
-            enabledVmThreadLocals.setWord(TLAB_MARK.index, allocationMarkTmp);
-            enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTopTmp);
-            enabledVmThreadLocals.setWord(TLAB_MARK_TMP.index, Word.zero());
-            enabledVmThreadLocals.setWord(TLAB_TOP_TMP.index, Word.zero());
+            TLAB_MARK.store(enabledVmThreadLocals, allocationMarkTmp);
+            TLAB_TOP.store(enabledVmThreadLocals, tlabTopTmp);
+            TLAB_MARK_TMP.store(enabledVmThreadLocals, Word.zero());
+            TLAB_TOP_TMP.store(enabledVmThreadLocals, Word.zero());
         }
     }
 

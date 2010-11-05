@@ -22,6 +22,7 @@ package com.sun.max.vm.jni;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
@@ -98,7 +99,7 @@ public final class JniFunctions {
      */
     @INLINE
     public static Pointer reenterJavaFromNative(Pointer enabledVmThreadLocals) {
-        Word previousAnchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord();
+        Word previousAnchor = LAST_JAVA_FRAME_ANCHOR.loadPtr(enabledVmThreadLocals);
         Pointer anchor = JavaFrameAnchor.create(Word.zero(), Word.zero(), Word.zero(), previousAnchor);
         // a JNI upcall is similar to a native method returning; reuse the native call epilogue sequence
         NativeCallEpilogue.nativeCallEpilogue0(enabledVmThreadLocals, anchor);
@@ -107,8 +108,8 @@ public final class JniFunctions {
 
     @INLINE
     public static Pointer prologue(Pointer env, String name) {
-        Safepoint.setLatchRegister(fromJniEnv(env));
-        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
+        Safepoint.setLatchRegister(env.minus(JNI_ENV.offset));
+        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
         Pointer anchor = reenterJavaFromNative(enabledVmThreadLocals);
         traceEntry(name, anchor);
         return anchor;
@@ -126,7 +127,7 @@ public final class JniFunctions {
         traceExit(name);
 
         // returning from a JNI upcall is similar to a entering a native method returning; reuse the native call prologue sequence
-        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
+        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
         NativeCallPrologue.nativeCallPrologue0(enabledVmThreadLocals, JavaFrameAnchor.PREVIOUS.get(anchor));
     }
 

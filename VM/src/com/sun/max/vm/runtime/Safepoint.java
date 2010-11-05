@@ -21,6 +21,8 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
@@ -117,7 +119,7 @@ public abstract class Safepoint {
      * @return {@code true} if safepoints are disabled
      */
     public static boolean isDisabled() {
-        return getLatchRegister().equals(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
+        return getLatchRegister().equals(SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()));
     }
 
     /**
@@ -126,7 +128,11 @@ public abstract class Safepoint {
      */
     @INLINE
     public static boolean isTriggered() {
-        return !MaxineVM.isHosted() && SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
+        if (isHosted()) {
+            return false;
+        }
+        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+        return SAFEPOINT_LATCH.loadPtr(enabledVmThreadLocals).equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()));
     }
 
     /**
@@ -145,8 +151,8 @@ public abstract class Safepoint {
      */
     @INLINE
     public static boolean disable() {
-        final boolean wasDisabled = getLatchRegister().equals(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
-        setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
+        final boolean wasDisabled = getLatchRegister().equals(SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()));
+        setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()).asPointer());
         return wasDisabled;
     }
 
@@ -157,14 +163,14 @@ public abstract class Safepoint {
      */
     @INLINE
     public static void enable() {
-        setLatchRegister(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer());
+        setLatchRegister(SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()));
     }
 
     public static void initializePrimordial(Pointer primordialVmThreadLocals) {
-        primordialVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index, primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index, primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index, primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(SAFEPOINT_LATCH.index, primordialVmThreadLocals);
+        SAFEPOINTS_ENABLED_THREAD_LOCALS.store(primordialVmThreadLocals, primordialVmThreadLocals);
+        SAFEPOINTS_DISABLED_THREAD_LOCALS.store(primordialVmThreadLocals, primordialVmThreadLocals);
+        SAFEPOINTS_TRIGGERED_THREAD_LOCALS.store(primordialVmThreadLocals, primordialVmThreadLocals);
+        SAFEPOINT_LATCH.store(primordialVmThreadLocals, primordialVmThreadLocals);
         Safepoint.setLatchRegister(primordialVmThreadLocals);
     }
 

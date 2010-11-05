@@ -72,7 +72,7 @@ public abstract class TLABRefillPolicy {
 
     @INLINE
     public static TLABRefillPolicy getForCurrentThread(Pointer enabledVmThreadLocals) {
-        final Reference reference = TLAB_REFILL_POLICY.getVariableReference(enabledVmThreadLocals);
+        final Reference reference = TLAB_REFILL_POLICY.loadRef(enabledVmThreadLocals);
         if (reference.isZero()) {
             return null;
         }
@@ -82,7 +82,7 @@ public abstract class TLABRefillPolicy {
 
     @INLINE
     public static void setForCurrentThread(Pointer enabledVmThreadLocals, TLABRefillPolicy policy) {
-        TLAB_REFILL_POLICY.setVariableReference(enabledVmThreadLocals, Reference.fromJava(policy));
+        TLAB_REFILL_POLICY.store(enabledVmThreadLocals, Reference.fromJava(policy));
     }
 
 }

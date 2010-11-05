@@ -52,8 +52,8 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
          * executed past the point in VmThread.run() where it is added to the active
          * thread list.
          */
-        setThreadLocal(tl, ID, id < 0 ? id : -id);
-        setThreadLocal(tl, NATIVE_THREAD_LOCALS, ntl);
+        setConstantThreadLocal(tl, ID, id < 0 ? id : -id);
+        setConstantThreadLocal(tl, NATIVE_THREAD_LOCALS, ntl);
     } else {
         ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
     }
@@ -94,7 +94,7 @@ static boolean isThreadLocalsForStackPointer(ProcessHandle ph, Address stackPoin
     readProcessMemory(ph, tl, tlCopy, threadLocalsAreaSize());
     ntl = getThreadLocal(Address, tlCopy, NATIVE_THREAD_LOCALS);
     readProcessMemory(ph, ntl, ntlCopy, sizeof(NativeThreadLocalsStruct));
-    setThreadLocal(tlCopy, NATIVE_THREAD_LOCALS, ntlCopy);
+    setConstantThreadLocal(tlCopy, NATIVE_THREAD_LOCALS, ntlCopy);
 #if log_TELE
     log_print("teleProcess_findThreadLocals(%p): ", stackPointer);
     threadLocals_println(tlCopy);

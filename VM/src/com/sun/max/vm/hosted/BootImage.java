@@ -360,7 +360,7 @@ public class BootImage {
             threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
             primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
 
-            threadLocalsAreaSize = VmThreadLocal.threadLocalsAreaSize().toInt();
+            threadLocalsAreaSize = VmThreadLocal.tlaSize().toInt();
 
             SAFEPOINT_LATCH = VmThreadLocal.SAFEPOINT_LATCH.index;
             SAFEPOINTS_ENABLED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index;

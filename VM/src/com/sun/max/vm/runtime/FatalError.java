@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -168,7 +169,7 @@ public final class FatalError extends Error {
         }
 
         if (vmThread == null || trappedInNative || Throw.scanStackOnFatalError.getValue()) {
-            final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord();
+            final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.loadPtr(currentVmThreadLocals());
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }
         Log.unlock(lockDisabledSafepoints);
@@ -255,7 +256,7 @@ public final class FatalError extends Error {
 
     static final class DumpStackOfNonCurrentThread implements Pointer.Procedure {
         public void run(Pointer vmThreadLocals) {
-            if (SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals) != SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord()) {
+            if (SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals) != SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals())) {
                 dumpStackAndThreadLocals(vmThreadLocals, false);
             }
         }

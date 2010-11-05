@@ -881,9 +881,9 @@ public final class Log {
                 }
             } else {
                 final List<VmThreadLocal> values = VmThreadLocal.values();
-                final Pointer enabled = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                final Pointer disabled = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                final Pointer triggered = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                final Pointer enabled = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
+                final Pointer disabled = SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
+                final Pointer triggered = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.loadPtr(vmThreadLocals);
                 for (int i = 0; i != values.size(); i++) {
                     final VmThreadLocal vmThreadLocal = values.get(i);
                     for (int j = 0; j < 45 - vmThreadLocal.name.length(); j++) {

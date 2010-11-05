@@ -46,7 +46,7 @@ import com.sun.max.vm.type.*;
  * <p>
  * <ol>
  *   <li>Record the {@linkplain JniHandles#top() top} of {@linkplain VmThread#jniHandles() the current thread's JNI handle stack}.</li>
- *   <li>Push the pointer to the {@linkplain VmThread#currentJniEnvironmentPointer() current thread's native JNI environment data structure}.</li>
+ *   <li>Push the pointer to the {@linkplain VmThread#jniEnv() current thread's native JNI environment data structure}.</li>
  *   <li>If the native method is static, {@linkplain JniHandles#createStackHandle(Object) handlize} and push the class reference
  *       otherwise handlize and push the receiver reference.</li>
  *   <li>Push the remaining parameters, handlizing non-null references before they are pushed.</li>
@@ -107,7 +107,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     /**
      * These methods may be called from a generated native stub.
      */
-    private static final ClassMethodRefConstant currentJniEnvironmentPointer = createClassMethodConstant(VmThread.class, makeSymbol("currentJniEnvironmentPointer"));
+    private static final ClassMethodRefConstant jniEnv = createClassMethodConstant(VmThread.class, makeSymbol("jniEnv"));
     private static final ClassMethodRefConstant currentThread = createClassMethodConstant(VmThread.class, makeSymbol("current"));
     private static final ClassMethodRefConstant traceCurrentThreadPrefix = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("traceCurrentThreadPrefix"));
     private static final ClassMethodRefConstant throwPendingException = createClassMethodConstant(VmThread.class, makeSymbol("throwPendingException"));
@@ -159,9 +159,9 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             istore(top);
 
             // Push the JNI environment variable
-            invokestatic(currentJniEnvironmentPointer, 0, 1);
+            invokestatic(jniEnv, 0, 1);
 
-            final TypeDescriptor jniEnvDescriptor = currentJniEnvironmentPointer.signature(constantPool()).resultDescriptor();
+            final TypeDescriptor jniEnvDescriptor = jniEnv.signature(constantPool()).resultDescriptor();
             nativeFunctionDescriptor.append(jniEnvDescriptor);
             nativeFunctionArgSlots += jniEnvDescriptor.toKind().stackSlots;
 

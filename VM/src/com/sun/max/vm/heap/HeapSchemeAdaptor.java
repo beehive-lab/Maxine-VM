@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.management.*;
@@ -213,13 +214,13 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     public void disableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.zero());
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+        IMMORTAL_ALLOCATION_ENABLED.store(enabledVmThreadLocals, Word.zero());
     }
 
     public void enableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.allOnes());
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+        IMMORTAL_ALLOCATION_ENABLED.store(enabledVmThreadLocals, Word.allOnes());
     }
 
     public long maxObjectInspectionAge() {

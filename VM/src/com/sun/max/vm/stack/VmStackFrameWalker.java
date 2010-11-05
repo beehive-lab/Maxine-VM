@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.stack;
 
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -70,8 +72,9 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     }
 
     @Override
-    public Word readWord(VmThreadLocal local) {
-        return local.getVariableWord(vmThreadLocals);
+    public Pointer readPointer(VmThreadLocal tl) {
+        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
+        return tl.loadPtr(enabledVmThreadLocals);
     }
 
     public boolean isDumpingFatalStackTrace() {

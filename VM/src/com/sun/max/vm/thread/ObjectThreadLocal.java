@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.thread;
 
+import static com.sun.max.vm.thread.VmThread.*;
+
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
@@ -52,7 +54,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
 
     @Override
     public void initialize() {
-        setVariableReference(Reference.fromJava(UNINITIALIZED));
+        store3(Reference.fromJava(UNINITIALIZED));
     }
 
     /**
@@ -67,10 +69,10 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
         if (MaxineVM.isHosted()) {
             return hosted.get();
         }
-        Object value = getVariableReference().toJava();
+        Object value = loadRef(currentVmThreadLocals()).toJava();
         if (value == UNINITIALIZED) {
             value = initialValue();
-            setVariableReference(Reference.fromJava(value));
+            store3(Reference.fromJava(value));
         }
         Class<Type> type = null;
         return Utils.cast(type, value);
@@ -87,7 +89,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
         if (MaxineVM.isHosted()) {
             return hosted.get();
         }
-        Object value = getVariableReference().toJava();
+        Object value = loadRef(currentVmThreadLocals()).toJava();
         if (value == UNINITIALIZED) {
             return null;
         }
@@ -108,7 +110,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
         if (MaxineVM.isHosted()) {
             hosted.set(value);
         } else {
-            setVariableReference(Reference.fromJava(value));
+            store3(Reference.fromJava(value));
         }
     }
 
