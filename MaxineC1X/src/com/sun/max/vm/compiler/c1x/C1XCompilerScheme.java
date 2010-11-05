@@ -228,53 +228,51 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;
             CiRegister latch = AMD64Safepoint.LATCH_REGISTER;
             CiRegister scratch = registerConfig.getScratchRegister();
-            int frameSize = rsa.size;
+            int frameSize = platform().target.alignFrameSize(rsa.size);
+            int frameToRSA = frameSize - rsa.size;
+            CiKind[] trapStubParameters = Util.signatureToKinds(Trap.trapStub.classMethodActor.signature(), null);
+            CiValue[] locations = registerConfig.getCallingConvention(Java, trapStubParameters, false, target).locations;
 
             // the very first instruction must save the flags.
-            // we save them twice and overwrite one copy with the trap instruction/return address.
+            // we save them twice and overwrite the first copy with the trap instruction/return address.
             int pushfq = 0x9c;
             asm.emitByte(pushfq);
             asm.emitByte(pushfq);
 
-            // now allocate the frame for this method
-            asm.subq(AMD64.rsp, frameSize - 16);
+            // now allocate the frame for this method (first word of which was allocated by the second pushfq above)
+            asm.subq(AMD64.rsp, frameSize - 8);
             asm.setFrameSize(frameSize);
 
             // save all the general purpose registers
             CiRegister[] calleeSave = registerConfig.getCalleeSaveRegisters();
-            asm.save(calleeSave, rsa, 0);
+            asm.save(calleeSave, rsa, frameToRSA);
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap state
             asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_LATCH_REGISTER.offset));
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), rsa.offsetOf(latch)), scratch);
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToRSA + rsa.offsetOf(latch)), scratch);
 
             // write the return address pointer to the end of the frame
             asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize), scratch);
 
-            // save the trap number
-            asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_NUMBER.offset));
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), AMD64TrapStateAccess.TRAP_NUMBER_OFFSET), scratch);
 
-            // now load the trap parameter information into registers from the VM thread locals
-            CiKind[] trapStubParameters = Util.signatureToKinds(Trap.trapStub.classMethodActor.signature(), null);
-            CiValue[] locations = registerConfig.getCallingConvention(Java, trapStubParameters, false, target).locations;
-
-            // load the trap number into the first parameter register
+            // load the trap number from the thread locals into the first parameter register
             asm.movq(locations[0].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_NUMBER.offset));
+            // also save the trap number into the trap state
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToRSA + AMD64TrapStateAccess.TRAP_NUMBER_OFFSET), locations[0].asRegister());
             // load the trap state pointer into the second parameter register
-            asm.leaq(locations[1].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize));
-            // load the fault address into the third parameter register
+            asm.leaq(locations[1].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToRSA));
+            // load the fault address from the thread locals into the third parameter register
             asm.movq(locations[2].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_FAULT_ADDRESS.offset));
 
             asm.directCall(Trap.handleTrap.classMethodActor, null);
 
-            asm.restore(calleeSave, rsa, 0);
+            asm.restore(calleeSave, rsa, frameToRSA);
 
             // now pop the flags register off the stack before returning
             int popfq = 0x9D;
-            asm.addq(AMD64.rsp, frameSize - 16);
+            asm.addq(AMD64.rsp, frameSize - 8);
             asm.emitByte(popfq);
             asm.ret(0);
 
@@ -300,7 +298,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             AMD64UnixRegisterConfig registerConfig = AMD64UnixRegisterConfig.TRAMPOLINE;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(compiler, registerConfig);
             CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;
-            int frameSize = rsa.size;
+            int frameSize = platform().target.alignFrameSize(rsa.size);
 
             for (byte b : adapterPrologue) {
                 asm.emitByte(0xff & b);
@@ -351,7 +349,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             AMD64UnixRegisterConfig registerConfig = AMD64UnixRegisterConfig.TRAMPOLINE;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(compiler, registerConfig);
             CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;
-            int frameSize = rsa.size;
+            int frameSize = platform().target.alignFrameSize(rsa.size);
             DynamicTrampoline trampoline = new DynamicTrampoline(index, null);
 
             byte[] prologue = isInterface ? iTableTrampolinePrologue : vTableTrampolinePrologue;
