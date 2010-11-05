@@ -264,7 +264,7 @@ public class CFGPrinter {
                     i++;
                 }
             }
-            state = state.scope().callerState();
+            state = state.callerState();
             end("locals");
         } while (state != null);
 
@@ -281,7 +281,7 @@ public class CFGPrinter {
 
         StringBuilder buf = new StringBuilder();
 
-        boolean multipleScopes = state.scope().callerState() != null;
+        boolean multipleScopes = state.callerState() != null;
         int bci = -1;
         do {
             // Only qualify state with method name if there are multiple scopes (due to inlining)
@@ -330,7 +330,7 @@ public class CFGPrinter {
             }
             buf.append("\n");
             bci = state.scope().callerBCI();
-            state = state.scope().callerState();
+            state = state.callerState();
         } while (state != null);
         return buf.toString();
     }
