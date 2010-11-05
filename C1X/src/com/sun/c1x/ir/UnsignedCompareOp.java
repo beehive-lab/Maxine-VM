@@ -57,7 +57,7 @@ public final class UnsignedCompareOp extends Op2 {
     }
 
     /**
-     * Gets the value stack representing the state before the comparison is performed.
+     * Gets the frame state before the comparison is performed.
      * @return the state before the comparison is performed
      */
     @Override

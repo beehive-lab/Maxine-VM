@@ -25,7 +25,7 @@ import com.sun.cri.ci.*;
 
 /**
  * The {@code StateSplit} class is the abstract base class of all instructions
- * that store a copy of the value stack state.
+ * that store an immutable copy of the frame state.
  *
  * @author Ben L. Titzer
  */

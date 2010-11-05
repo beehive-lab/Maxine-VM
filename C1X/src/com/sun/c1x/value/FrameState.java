@@ -58,6 +58,12 @@ public abstract class FrameState {
     protected final IRScope scope;
 
     /**
+     * The bytecode index to which this frame state applies. This will be {@code -1}
+     * iff this state is mutable.
+     */
+    public final int bci;
+
+    /**
      * The list of locks held by this frame state.
      * This does not include locks held by parent frames.
      */
@@ -75,25 +81,30 @@ public abstract class FrameState {
      * Creates a {@code FrameState} for the given scope and maximum number of stack and local variables.
      *
      * @param irScope the inlining context of the method
+     * @param bci the bytecode index of the frame state
      * @param maxLocals maximum number of locals
      * @param maxStack maximum size of the stack
      */
-    public FrameState(IRScope irScope, int maxLocals, int maxStack) {
+    public FrameState(IRScope irScope, int bci, int maxLocals, int maxStack) {
         this.scope = irScope;
+        this.bci = bci;
         this.values = new Value[maxLocals + Math.max(maxStack, MINIMUM_STACK_SLOTS)];
         this.maxLocals = maxLocals;
+
+        toString();
     }
 
     /**
      * Copies the contents of this frame state so that further updates to either stack aren't reflected in the other.
-     *
+     * @param bci the bytecode index of the copy
      * @param withLocals indicates whether to copy the local state
      * @param withStack indicates whether to copy the stack state
      * @param withLocks indicates whether to copy the lock state
+     *
      * @return a new frame state with the specified components
      */
-    public MutableFrameState copy(boolean withLocals, boolean withStack, boolean withLocks) {
-        final MutableFrameState other = new MutableFrameState(scope, localsSize(), maxStackSize());
+    public MutableFrameState copy(int bci, boolean withLocals, boolean withStack, boolean withLocks) {
+        final MutableFrameState other = new MutableFrameState(scope, bci, localsSize(), maxStackSize());
         if (withLocals && withStack) {
             // fast path: use array copy
             int valuesSize = valuesSize();
@@ -119,14 +130,14 @@ public abstract class FrameState {
      * Gets a mutable copy ({@link MutableFrameState}) of this frame state.
      */
     public MutableFrameState copy() {
-        return copy(true, true, true);
+        return copy(bci, true, true, true);
     }
 
     /**
      * Gets an immutable copy of this frame state but without the stack.
      */
     public FrameState immutableCopyWithEmptyStack() {
-        return copy(true, false, true);
+        return copy(bci, true, false, true);
     }
 
     public boolean isSameAcrossScopes(FrameState other) {
@@ -346,7 +357,7 @@ public abstract class FrameState {
     }
 
     public int callerStackSize() {
-        FrameState callerState = scope().callerState();
+        FrameState callerState = scope().callerState;
         return callerState == null ? 0 : callerState.stackSize();
     }
 
@@ -513,7 +524,7 @@ public abstract class FrameState {
                     }
                 }
             }
-            state = state.scope().callerState();
+            state = state.callerState();
         } while (state != null);
     }
 
@@ -546,13 +557,40 @@ public abstract class FrameState {
                     proc.doValue(value);
                 }
             }
-            state = state.scope().callerState();
+            state = state.callerState();
         }
+    }
+
+    public static String toString(FrameState fs) {
+        StringBuilder sb = new StringBuilder();
+        while (fs != null) {
+            StackTraceElement ste = fs.scope.method.toStackTraceElement(fs.bci);
+            if (ste.getFileName() != null && ste.getLineNumber() > 0) {
+                sb.append(ste);
+            } else {
+                sb.append(CiUtil.format("%H.%n(%p)", fs.scope.method, false));
+            }
+            sb.append(String.format(" [bci: %d, nr locals: %d, stack depth: %d]%n", fs.bci, fs.localsSize(), fs.stackSize()));
+            for (int i = 0; i < fs.localsSize(); ++i) {
+                Value value = fs.localAt(i);
+                sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            }
+            for (int i = 0; i < fs.stackSize(); ++i) {
+                Value value = fs.stackAt(i);
+                sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            }
+            for (int i = 0; i < fs.locksSize(); ++i) {
+                Value value = fs.lockAt(i);
+                sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            }
+            fs = fs.callerState();
+        }
+        return sb.toString();
     }
 
     @Override
     public String toString() {
-        return "state [locals=" + maxLocals + ", stack=" + stackSize() + ", locks=" + locksSize() + "] " + scope;
+        return toString(this);
     }
 
     /**
@@ -563,7 +601,7 @@ public abstract class FrameState {
     public MutableFrameState pushScope(IRScope scope) {
         assert scope.caller == this.scope;
         RiMethod method = scope.method;
-        return new MutableFrameState(scope, method.maxLocals(), method.maxStackSize());
+        return new MutableFrameState(scope, -1, method.maxLocals(), method.maxStackSize());
     }
 
     /**
@@ -574,12 +612,21 @@ public abstract class FrameState {
     public MutableFrameState popScope() {
         IRScope callingScope = scope.caller;
         assert callingScope != null;
-        FrameState callerState = scope.callerState();
-        MutableFrameState res = new MutableFrameState(callingScope, callerState.maxLocals, callerState.maxStackSize() + stackIndex);
+        FrameState callerState = scope.callerState;
+        MutableFrameState res = new MutableFrameState(callingScope, bci, callerState.maxLocals, callerState.maxStackSize() + stackIndex);
         System.arraycopy(callerState.values, 0, res.values, 0, callerState.values.length);
         System.arraycopy(values, maxLocals, res.values, res.maxLocals + callerState.stackIndex, stackIndex);
         res.stackIndex = callerState.stackIndex + stackIndex;
         res.replaceLocks(callerState);
         return res;
+    }
+
+    /**
+     * Gets the caller frame state.
+     *
+     * @return the caller frame state or {@code null} if this is a top-level state
+     */
+    public FrameState callerState() {
+        return scope.callerState;
     }
 }

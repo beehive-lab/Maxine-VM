@@ -1639,7 +1639,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
                 // walk up the inlined scopes until locals match
                 while (curState.scope() != suxState.scope()) {
-                    curState = curState.scope().callerState();
+                    curState = curState.callerState();
                     assert curState != null : "scopes don't match up";
                 }
 
@@ -1647,7 +1647,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                     moveToPhi(resolver, curState.localAt(index), suxState.localAt(index));
                 }
 
-                assert curState.scope().callerState() == suxState.scope().callerState() : "caller states must be equal";
+                assert curState.scope().callerState == suxState.scope().callerState : "caller states must be equal";
                 resolver.dispose();
             }
         }
@@ -1770,7 +1770,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 }
             }
             bci = scope.callerBCI();
-            s = s.scope().callerState();
+            s = s.callerState();
         }
     }
 
@@ -1803,11 +1803,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected LIRDebugInfo stateFor(Instruction x, FrameState state) {
-        return stateFor(x, state, false);
-    }
-
-    protected LIRDebugInfo stateFor(Instruction x, FrameState state, boolean ignoreXhandler) {
-        return new LIRDebugInfo(state, x.bci(), ignoreXhandler ? null : x.exceptionHandlers());
+        return new LIRDebugInfo(state, x.bci(), x.exceptionHandlers());
     }
 
     List<CiValue> visitInvokeArguments(CiCallingConvention cc, Value[] args) {

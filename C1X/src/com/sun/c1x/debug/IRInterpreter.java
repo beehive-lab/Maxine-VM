@@ -1764,7 +1764,7 @@ public class IRInterpreter {
                     closure.apply(state.lockAt(i));
                 }
             }
-            FrameState callerState = state.scope().callerState();
+            FrameState callerState = state.callerState();
             if (callerState != null) {
                 System.out.println("\n** Caller state **");
                 valuesDo(callerState, closure);

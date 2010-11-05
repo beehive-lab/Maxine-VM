@@ -317,7 +317,7 @@ public class InstructionPrinter extends ValueVisitor {
                         i++;
                     }
                 }
-                state = state.scope().callerState();
+                state = state.callerState();
             } while (state != null);
         }
 
@@ -340,7 +340,7 @@ public class InstructionPrinter extends ValueVisitor {
                     }
                 }
                 out.println();
-                state = state.scope().callerState();
+                state = state.callerState();
             } while (state != null);
         }
 
