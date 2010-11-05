@@ -774,7 +774,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     @Override
     protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
         if (MaxineVM.isDebug()) {
-            final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(VmThread.currentVmThreadLocals());
             padTLAB(enabledVmThreadLocals, tlabAllocationMark, tlabEnd);
         }
     }
@@ -911,7 +911,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
         if (traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+            final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(enabledVmThreadLocals).toJava());
             Log.printThread(vmThread, false);
             Log.print(": Placed TLAB padding at ");
             Log.print(tlabMark);
@@ -1178,8 +1178,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     @Override
     public void disableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.zero());
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(VmThread.currentVmThreadLocals());
+        IMMORTAL_ALLOCATION_ENABLED.store(enabledVmThreadLocals, Word.zero());
         if (usesTLAB()) {
             super.disableImmortalMemoryAllocation();
         }
@@ -1187,8 +1187,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     @Override
     public void enableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.allOnes());
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(VmThread.currentVmThreadLocals());
+        IMMORTAL_ALLOCATION_ENABLED.store(enabledVmThreadLocals, Word.allOnes());
         if (usesTLAB()) {
             super.enableImmortalMemoryAllocation();
         }

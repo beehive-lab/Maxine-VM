@@ -319,16 +319,17 @@ public class VmOperation {
              * of a safepoint instruction will not cause a trap until safepoints
              * are once again triggered.
              */
-            SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
+            SAFEPOINT_LATCH.store(enabledVmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals));
 
-            VM_OPERATION.setVariableReference(vmThreadLocals, null);
+            VM_OPERATION.store(enabledVmThreadLocals, Reference.zero());
 
             if (UseCASBasedThreadFreezing) {
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, THREAD_IN_NATIVE);
+                MUTATOR_STATE.store(enabledVmThreadLocals, THREAD_IN_NATIVE);
             } else {
                 // This must be last so that a frozen thread trying to return out of native code stays
                 // frozen until its safepoint related state has been completely reset
-                FROZEN.setVariableWord(vmThreadLocals, Address.zero());
+                FROZEN.store(enabledVmThreadLocals, Address.zero());
             }
         }
     }
@@ -582,16 +583,16 @@ public class VmOperation {
         }
 
         Pointer vmThreadLocals = thread.vmThreadLocals();
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
 
         // Freeze a thread already in native code
         if (!UseCASBasedThreadFreezing) {
-            FROZEN.setVariableWord(vmThreadLocals, Address.fromInt(1));
+            FROZEN.store(enabledVmThreadLocals, Address.fromInt(1));
         }
 
         // spin until the VM_OPERATION variable is null
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         while (true) {
-            if (enabledVmThreadLocals.getReference(VM_OPERATION.index).isZero()) {
+            if (VM_OPERATION.loadRef(enabledVmThreadLocals).isZero()) {
                 if (enabledVmThreadLocals.compareAndSwapReference(VM_OPERATION.offset, null, Reference.fromJava(this)).isZero()) {
                     /*
                      * Set the value of the safepoint latch in the safepoints-enabled VM
@@ -599,7 +600,7 @@ public class VmOperation {
                      * This will cause a safepoint trap the next time a safepoint
                      * instruction is executed while safepoints are enabled.
                      */
-                    SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
+                    SAFEPOINT_LATCH.store(enabledVmThreadLocals, SAFEPOINTS_TRIGGERED_THREAD_LOCALS.loadPtr(vmThreadLocals));
                     return;
                 }
             }
@@ -673,11 +674,12 @@ public class VmOperation {
      */
     private boolean frozenByEnclosing(VmThread thread) {
         if (enclosing != null && enclosing.operateOnThread(thread)) {
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(thread.vmThreadLocals());
             // This is a nested operation that operates on 'thread' -> the enclosing operation must have 'thread'
             if (UseCASBasedThreadFreezing) {
-                FatalError.check(MUTATOR_STATE.getVariableWord(thread.vmThreadLocals()).equals(THREAD_IS_FROZEN), "Parent operation did not freeze thread");
+                FatalError.check(MUTATOR_STATE.loadPtr(enabledVmThreadLocals).equals(THREAD_IS_FROZEN), "Parent operation did not freeze thread");
             } else {
-                FatalError.check(!MUTATOR_STATE.getVariableWord(thread.vmThreadLocals()).equals(THREAD_IN_JAVA), "Parent operation did not freeze thread");
+                FatalError.check(!MUTATOR_STATE.loadPtr(enabledVmThreadLocals).equals(THREAD_IN_JAVA), "Parent operation did not freeze thread");
             }
             return true;
         }
@@ -716,26 +718,25 @@ public class VmOperation {
      */
     final void waitForThreadFreeze(VmThread thread) {
         Pointer vmThreadLocals = thread.vmThreadLocals();
+        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
 
         int steps = 0;
         if (!frozenByEnclosing(thread)) {
-
             if (UseCASBasedThreadFreezing) {
-                final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
                 while (true) {
-                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
+                    if (MUTATOR_STATE.loadPtr(enabledVmThreadLocals).equals(THREAD_IN_NATIVE)) {
                         if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IS_FROZEN).equals(THREAD_IN_NATIVE)) {
                             // Transitioned thread into frozen state
                             break;
                         }
-                    } else if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IS_FROZEN)) {
+                    } else if (MUTATOR_STATE.loadPtr(enabledVmThreadLocals).equals(THREAD_IS_FROZEN)) {
                         FatalError.unexpected("VM operation thread found an already frozen thread");
                     }
                     waitForThreadFreezePause(thread, steps);
                     steps++;
                 }
             } else {
-                while (MUTATOR_STATE.getVariableWord(vmThreadLocals).equals(THREAD_IN_JAVA)) {
+                while (MUTATOR_STATE.loadPtr(enabledVmThreadLocals).equals(THREAD_IN_JAVA)) {
                     // Wait for thread to be in native code, either as a result of a safepoint or because
                     // that's where it was when its FROZEN variable was set to true.
                     waitForThreadFreezePause(thread, steps);
@@ -743,7 +744,7 @@ public class VmOperation {
                 }
             }
         }
-        EXCEPTION_OBJECT.checkConstantWord(vmThreadLocals, Word.zero());
+        EXCEPTION_OBJECT.check(vmThreadLocals, Word.zero());
 
         doAfterFrozen(thread);
 
@@ -753,7 +754,7 @@ public class VmOperation {
             Log.print(name);
             Log.print("]: Froze ");
             Log.printThread(thread, false);
-            Log.println(TRAP_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero() ? " in native code" : " at safepoint");
+            Log.println(TRAP_INSTRUCTION_POINTER.loadPtr(vmThreadLocals).isZero() ? " in native code" : " at safepoint");
             Log.unlock(lockDisabledSafepoints);
         }
     }
@@ -795,16 +796,17 @@ public class VmOperation {
          * of a safepoint instruction will not cause a trap until safepoints
          * are once again triggered.
          */
-        SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
+        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
+        SAFEPOINT_LATCH.store(enabledVmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals));
 
-        VM_OPERATION.setVariableReference(vmThreadLocals, null);
+        VM_OPERATION.store(enabledVmThreadLocals, Reference.zero());
 
         if (UseCASBasedThreadFreezing) {
-            MUTATOR_STATE.setVariableWord(vmThreadLocals, THREAD_IN_NATIVE);
+            MUTATOR_STATE.store(enabledVmThreadLocals, THREAD_IN_NATIVE);
         } else {
             // This must be last so that a frozen thread trying to return out of native code stays
             // frozen until its safepoint related state has been completely reset
-            FROZEN.setVariableWord(vmThreadLocals, Address.zero());
+            FROZEN.store(enabledVmThreadLocals, Address.zero());
         }
     }
 

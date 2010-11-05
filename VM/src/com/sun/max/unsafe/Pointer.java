@@ -608,11 +608,6 @@ public abstract class Pointer extends Address implements Accessor {
     }
 
     @INLINE
-    public final Word getWord(VmThreadLocal tl) {
-        return getWord(0, tl.index);
-    }
-
-    @INLINE
     public final Word getWord() {
         return getWord(0);
     }

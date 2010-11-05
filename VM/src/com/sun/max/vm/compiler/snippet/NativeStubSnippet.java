@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.snippet;
 import static com.sun.max.vm.runtime.VmOperation.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.stack.JavaFrameAnchor.*;
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
@@ -72,8 +73,8 @@ public abstract class NativeStubSnippet extends Snippet {
      * on every native call. It could be removed or disabled in a product build of the VM once GC is debugged.
      */
     public static void disableNativeCallsForCurrentThread() {
-        final Address value = NATIVE_CALLS_DISABLED.getConstantWord().asAddress();
-        NATIVE_CALLS_DISABLED.setConstantWord(value.plus(1));
+        final Address value = NATIVE_CALLS_DISABLED.loadPtr(currentVmThreadLocals());
+        NATIVE_CALLS_DISABLED.store3(value.plus(1));
     }
 
     /**
@@ -85,11 +86,11 @@ public abstract class NativeStubSnippet extends Snippet {
      * are unbalanced.
      */
     public static void enableNativeCallsForCurrentThread() {
-        final Address value = NATIVE_CALLS_DISABLED.getConstantWord().asAddress();
+        final Address value = NATIVE_CALLS_DISABLED.loadPtr(currentVmThreadLocals());
         if (value.isZero()) {
             FatalError.unexpected("Unbalanced calls to disable/enable native calls for current thread");
         }
-        NATIVE_CALLS_DISABLED.setConstantWord(value.minus(1));
+        NATIVE_CALLS_DISABLED.store3(value.minus(1));
     }
 
     /**
@@ -99,8 +100,8 @@ public abstract class NativeStubSnippet extends Snippet {
         @SNIPPET
         @INLINE
         public static void nativeCallPrologue() {
-            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
-            Word previousAnchor = enabledVmThreadLocals.getWord(LAST_JAVA_FRAME_ANCHOR.index);
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+            Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.loadPtr(enabledVmThreadLocals);
             Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), getInstructionPointer(), previousAnchor);
 
             nativeCallPrologue0(enabledVmThreadLocals, anchor);
@@ -115,19 +116,19 @@ public abstract class NativeStubSnippet extends Snippet {
          */
         @INLINE
         public static void nativeCallPrologue0(Pointer enabledVmThreadLocals, Word anchor) {
-            if (!NATIVE_CALLS_DISABLED.getConstantWord().isZero()) {
+            if (!NATIVE_CALLS_DISABLED.loadPtr(currentVmThreadLocals()).isZero()) {
                 FatalError.unexpected("Calling native code while native calls are disabled");
             }
 
             // Update the last Java frame anchor for the current thread:
-            enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, anchor);
+            LAST_JAVA_FRAME_ANCHOR.store(enabledVmThreadLocals, anchor);
 
             if (UseCASBasedThreadFreezing) {
-                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
+                MUTATOR_STATE.store(enabledVmThreadLocals, THREAD_IN_NATIVE);
             } else {
                 MemoryBarriers.memopStore();
                 // The following store must be last:
-                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
+                MUTATOR_STATE.store(enabledVmThreadLocals, THREAD_IN_NATIVE);
             }
         }
 
@@ -141,8 +142,8 @@ public abstract class NativeStubSnippet extends Snippet {
         @SNIPPET
         @INLINE
         public static void nativeCallEpilogue() {
-            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
-            Pointer anchor = enabledVmThreadLocals.getWord(LAST_JAVA_FRAME_ANCHOR.index).asPointer();
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+            Pointer anchor = LAST_JAVA_FRAME_ANCHOR.loadPtr(enabledVmThreadLocals);
             nativeCallEpilogue0(enabledVmThreadLocals, PREVIOUS.get(anchor));
         }
 
@@ -157,7 +158,7 @@ public abstract class NativeStubSnippet extends Snippet {
         @INLINE
         public static void nativeCallEpilogue0(Pointer enabledVmThreadLocals, Pointer anchor) {
             spinWhileFrozen(enabledVmThreadLocals);
-            enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, anchor);
+            LAST_JAVA_FRAME_ANCHOR.store(enabledVmThreadLocals, anchor);
         }
 
         /**
@@ -168,12 +169,12 @@ public abstract class NativeStubSnippet extends Snippet {
         private static void spinWhileFrozen(Pointer enabledVmThreadLocals) {
             if (UseCASBasedThreadFreezing) {
                 while (true) {
-                    if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
+                    if (MUTATOR_STATE.loadPtr(enabledVmThreadLocals).equals(THREAD_IN_NATIVE)) {
                         if (enabledVmThreadLocals.compareAndSwapWord(MUTATOR_STATE.offset, THREAD_IN_NATIVE, THREAD_IN_JAVA).equals(THREAD_IN_NATIVE)) {
                             break;
                         }
                     } else {
-                        if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_JAVA)) {
+                        if (MUTATOR_STATE.loadPtr(enabledVmThreadLocals).equals(THREAD_IN_JAVA)) {
                             FatalError.unexpected("Thread transitioned itself from THREAD_IS_FROZEN to THREAD_IN_JAVA -- only the VM operation thread should do that");
                         }
                     }
@@ -182,21 +183,21 @@ public abstract class NativeStubSnippet extends Snippet {
             } else {
                 while (true) {
                     // Signal that we intend to go back into Java:
-                    enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_JAVA);
+                    MUTATOR_STATE.store(enabledVmThreadLocals, THREAD_IN_JAVA);
 
                     // Ensure that the freezer thread sees the above state transition:
                     MemoryBarriers.storeLoad();
 
                     // Ask if current thread is frozen:
-                    if (enabledVmThreadLocals.getWord(FROZEN.index).isZero()) {
+                    if (FROZEN.loadPtr(enabledVmThreadLocals).isZero()) {
                         // If current thread is not frozen then the state transition above was valid (common case)
                         return;
                     }
 
                     // Current thread is frozen so above state transition is invalid
                     // so undo it and spin until freezer thread thaws the current thread then retry transition
-                    enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
-                    while (!enabledVmThreadLocals.getWord(FROZEN.index).isZero()) {
+                    MUTATOR_STATE.store(enabledVmThreadLocals, THREAD_IN_NATIVE);
+                    while (!FROZEN.loadPtr(enabledVmThreadLocals).isZero()) {
                         // Spin without doing unnecessary stores
                         SpecialBuiltin.pause();
                     }
@@ -218,10 +219,10 @@ public abstract class NativeStubSnippet extends Snippet {
         @SNIPPET
         @INLINE
         public static void nativeCallPrologueForC() {
-            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
-            Word previousAnchor = enabledVmThreadLocals.getWord(LAST_JAVA_FRAME_ANCHOR.index);
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+            Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.loadPtr(enabledVmThreadLocals);
             Pointer anchor = JavaFrameAnchor.create(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), previousAnchor);
-            enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, anchor);
+            LAST_JAVA_FRAME_ANCHOR.store(enabledVmThreadLocals, anchor);
         }
 
         public static final NativeCallPrologueForC SNIPPET = new NativeCallPrologueForC();
@@ -231,9 +232,9 @@ public abstract class NativeStubSnippet extends Snippet {
         @SNIPPET
         @INLINE
         public static void nativeCallEpilogueForC() {
-            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
-            Pointer anchor = enabledVmThreadLocals.getWord(LAST_JAVA_FRAME_ANCHOR.index).asPointer();
-            enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, PREVIOUS.get(anchor));
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
+            Pointer anchor = LAST_JAVA_FRAME_ANCHOR.loadPtr(enabledVmThreadLocals).asPointer();
+            LAST_JAVA_FRAME_ANCHOR.store(enabledVmThreadLocals, PREVIOUS.get(anchor));
         }
 
         public static final NativeCallEpilogueForC SNIPPET = new NativeCallEpilogueForC();

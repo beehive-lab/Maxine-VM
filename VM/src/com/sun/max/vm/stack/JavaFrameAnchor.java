@@ -94,7 +94,8 @@ public enum JavaFrameAnchor {
      * @return the Java frame anchor recorded for the thread denoted by {@code vmThreadLocals}
      */
     public static Pointer from(Pointer vmThreadLocals) {
-        return LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
+        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
+        return LAST_JAVA_FRAME_ANCHOR.loadPtr(enabledVmThreadLocals);
     }
 
     /**
