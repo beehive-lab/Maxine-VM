@@ -23,7 +23,6 @@ package com.sun.max.vm.runtime.sparc;
 import static com.sun.max.asm.sparc.GPR.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -98,10 +97,6 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
      */
     public static int registerReferenceMapSize() {
         return ByteArrayBitMap.computeBitMapSize(INTEGER_NON_SYSTEM_RESERVED_GLOBAL_REGISTERS.length + OUT_REGISTERS.length);
-    }
-
-    @HOSTED_ONLY
-    public SPARCTrapStateAccess(VMConfiguration vmConfiguration) {
     }
 
     @Override
