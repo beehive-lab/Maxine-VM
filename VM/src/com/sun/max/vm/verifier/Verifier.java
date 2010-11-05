@@ -109,6 +109,16 @@ public class Verifier implements VerificationRegistry {
     }
 
     /**
+     * Hotspot supports this undocumented option. Maxine must do some verification because it must process class files
+     * whose version is older than 50.0 to remove jsr/ret constriucts, which it does by using the verifier. So this
+     * option simply turns of the error reporting and lets the verifier continue.
+     */
+    static VMOption noVerify = new VMOption("-noverify ", "suppress all verification");
+    static {
+        VMOptions.register(noVerify, MaxineVM.Phase.PRISTINE);
+    }
+
+    /**
      * Determines if a class loaded by a given class loader needs bytecode verification.
      * The answer depends upon {@code classLoader} <i>and</i> the values of
      * {@link #BytecodeVerificationLocal} and {@link #BytecodeVerificationRemote}.
