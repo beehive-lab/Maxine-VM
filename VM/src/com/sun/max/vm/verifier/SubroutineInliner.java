@@ -310,13 +310,13 @@ public class SubroutineInliner {
             dataStream.close();
             return newCodeStream.toByteArray();
         } catch (IOException ioe) {
-            throw verifier.verifyError("IO error while fixing up code: " + ioe);
+            throw verifier.fatalVerifyError("IO error while fixing up code: " + ioe);
         }
     }
 
     private void checkOffset(int offset, Range allowableOffsetRange) {
         if (!allowableOffsetRange.contains(offset)) {
-            throw verifier.verifyError("Subroutine inlining expansion caused an offset to grow beyond what a branch instruction can encode");
+            verifier.verifyError("Subroutine inlining expansion caused an offset to grow beyond what a branch instruction can encode");
         }
     }
 
@@ -339,7 +339,7 @@ public class SubroutineInliner {
                 return offset;
             }
         }
-        throw verifier.verifyError("Cannot find new position for instruction that used to be at " + oldToPosition);
+        throw verifier.fatalVerifyError("Cannot find new position for instruction that used to be at " + oldToPosition);
     }
 
     private ExceptionHandlerEntry[] fixupExceptionHandlers(byte[] newCode) {
