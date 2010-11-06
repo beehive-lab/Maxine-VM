@@ -80,7 +80,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
      */
     @INLINE
     protected static final int encodeCurrentThreadIDForLockword() {
-        return VmThreadLocal.ID.loadPtr(currentVmThreadLocals()).toInt();
+        return VmThreadLocal.ID.load(currentTLA()).toInt();
     }
 
     /**

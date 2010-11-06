@@ -55,7 +55,7 @@ public class JVMFunctions {
 
     public static Class[] GetClassContext() {
         // Use the stack walker to collect the frames:
-        final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().vmThreadLocals());
+        final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().tla());
         final List<StackFrame> stackFrames = stackFrameWalker.frames(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
 
         // Collect method actors corresponding to frames:
@@ -92,7 +92,7 @@ public class JVMFunctions {
 
     public static ClassLoader LatestUserDefinedLoader() {
         LatestUserDefinedLoaderVisitor visitor = new LatestUserDefinedLoaderVisitor();
-        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
+        new VmStackFrameWalker(VmThread.current().tla()).inspect(VMRegister.getInstructionPointer(),
             VMRegister.getCpuStackPointer(),
             VMRegister.getCpuFramePointer(),
             visitor);

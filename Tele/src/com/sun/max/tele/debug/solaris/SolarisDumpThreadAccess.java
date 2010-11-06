@@ -60,8 +60,8 @@ public class SolarisDumpThreadAccess extends ThreadAccess {
 
     private List<LwpData> lwpDataList;
 
-    SolarisDumpThreadAccess(SolarisDumpTeleChannelProtocol protocol, int threadLocalsAreaSize, List<LwpData> lwpDataList) {
-        super(protocol, threadLocalsAreaSize);
+    SolarisDumpThreadAccess(SolarisDumpTeleChannelProtocol protocol, int tlaSize, List<LwpData> lwpDataList) {
+        super(protocol, tlaSize);
         this.lwpDataList = lwpDataList;
     }
 

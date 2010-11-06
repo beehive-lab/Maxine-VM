@@ -36,7 +36,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -214,13 +213,13 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     public void disableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
-        IMMORTAL_ALLOCATION_ENABLED.store(enabledVmThreadLocals, Word.zero());
+        final Pointer etla = ETLA.load(currentTLA());
+        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.zero());
     }
 
     public void enableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
-        IMMORTAL_ALLOCATION_ENABLED.store(enabledVmThreadLocals, Word.allOnes());
+        final Pointer etla = ETLA.load(currentTLA());
+        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.allOnes());
     }
 
     public long maxObjectInspectionAge() {

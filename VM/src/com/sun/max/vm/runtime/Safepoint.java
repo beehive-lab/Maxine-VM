@@ -56,9 +56,9 @@ public abstract class Safepoint {
      * {@linkplain VmThreadLocal thread local areas}.
      */
     public enum State implements PoolObject {
-        TRIGGERED(SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
-        ENABLED(SAFEPOINTS_ENABLED_THREAD_LOCALS),
-        DISABLED(SAFEPOINTS_DISABLED_THREAD_LOCALS);
+        TRIGGERED(TTLA),
+        ENABLED(ETLA),
+        DISABLED(DTLA);
 
         public static final List<State> CONSTANTS = Arrays.asList(values());
 
@@ -106,12 +106,12 @@ public abstract class Safepoint {
     /**
      * Updates the current value of the safepoint latch register.
      *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
+     * @param tla a pointer to a copy of the thread locals from which the base of the safepoints-enabled
      *            thread locals can be obtained
      */
     @INLINE
-    public static void setLatchRegister(Pointer vmThreadLocals) {
-        VMRegister.setSafepointLatchRegister(vmThreadLocals);
+    public static void setLatchRegister(Pointer tla) {
+        VMRegister.setSafepointLatchRegister(tla);
     }
 
     /**
@@ -119,7 +119,7 @@ public abstract class Safepoint {
      * @return {@code true} if safepoints are disabled
      */
     public static boolean isDisabled() {
-        return getLatchRegister().equals(SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()));
+        return getLatchRegister().equals(DTLA.load(currentTLA()));
     }
 
     /**
@@ -131,8 +131,8 @@ public abstract class Safepoint {
         if (isHosted()) {
             return false;
         }
-        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals());
-        return SAFEPOINT_LATCH.loadPtr(enabledVmThreadLocals).equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()));
+        Pointer etla = ETLA.load(currentTLA());
+        return SAFEPOINT_LATCH.load(etla).equals(TTLA.load(currentTLA()));
     }
 
     /**
@@ -151,8 +151,8 @@ public abstract class Safepoint {
      */
     @INLINE
     public static boolean disable() {
-        final boolean wasDisabled = getLatchRegister().equals(SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()));
-        setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()).asPointer());
+        final boolean wasDisabled = getLatchRegister().equals(DTLA.load(currentTLA()));
+        setLatchRegister(DTLA.load(currentTLA()));
         return wasDisabled;
     }
 
@@ -163,15 +163,15 @@ public abstract class Safepoint {
      */
     @INLINE
     public static void enable() {
-        setLatchRegister(SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(currentVmThreadLocals()));
+        setLatchRegister(ETLA.load(currentTLA()));
     }
 
-    public static void initializePrimordial(Pointer primordialVmThreadLocals) {
-        SAFEPOINTS_ENABLED_THREAD_LOCALS.store(primordialVmThreadLocals, primordialVmThreadLocals);
-        SAFEPOINTS_DISABLED_THREAD_LOCALS.store(primordialVmThreadLocals, primordialVmThreadLocals);
-        SAFEPOINTS_TRIGGERED_THREAD_LOCALS.store(primordialVmThreadLocals, primordialVmThreadLocals);
-        SAFEPOINT_LATCH.store(primordialVmThreadLocals, primordialVmThreadLocals);
-        Safepoint.setLatchRegister(primordialVmThreadLocals);
+    public static void initializePrimordial(Pointer tla) {
+        ETLA.store(tla, tla);
+        DTLA.store(tla, tla);
+        TTLA.store(tla, tla);
+        SAFEPOINT_LATCH.store(tla, tla);
+        Safepoint.setLatchRegister(tla);
     }
 
     /**

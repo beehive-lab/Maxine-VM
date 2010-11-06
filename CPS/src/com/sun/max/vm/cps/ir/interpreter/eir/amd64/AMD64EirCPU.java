@@ -47,7 +47,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     private final Value[] generalRegisterContents;
     private final Value[] xmmRegisterContents;
     private final boolean[] conditionFlags;
-    private final Pointer vmThreadLocals;
+    private final Pointer tla;
 
     public AMD64EirCPU(AMD64EirInterpreter interpreter) {
         super(interpreter);
@@ -69,24 +69,24 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         }
 
         // Configure VM thread locals as done in VmThread.run() and thread_runJava in threads.c
-        vmThreadLocals = topSP.asPointer().roundedUpBy(2 * Word.size());
+        tla = topSP.asPointer().roundedUpBy(2 * Word.size());
 
         for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
             if (!threadLocal.isReference) {
-                stack.writeWord(vmThreadLocals.plusWords(threadLocal.index), Word.zero());
+                stack.writeWord(tla.plusWords(threadLocal.index), Word.zero());
             } else {
-                stack.write(vmThreadLocals.plusWords(threadLocal.index), ReferenceValue.NULL);
+                stack.write(tla.plusWords(threadLocal.index), ReferenceValue.NULL);
             }
         }
 
-        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index), vmThreadLocals);
-        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index), vmThreadLocals);
-        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index), vmThreadLocals);
-        stack.writeWord(vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index), Pointer.fromInt(-1));
-        stack.write(vmThreadLocals.plusWords(VmThreadLocal.VM_THREAD.index), ReferenceValue.from(VmThread.current()));
+        stack.writeWord(tla.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index), tla);
+        stack.writeWord(tla.plusWords(VmThreadLocal.ETLA.index), tla);
+        stack.writeWord(tla.plusWords(VmThreadLocal.DTLA.index), tla);
+        stack.writeWord(tla.plusWords(VmThreadLocal.TTLA.index), Pointer.fromInt(-1));
+        stack.write(tla.plusWords(VmThreadLocal.VM_THREAD.index), ReferenceValue.from(VmThread.current()));
 
         // Set up the latch register
-        write(AMD64EirRegister.General.R14, new WordValue(vmThreadLocals));
+        write(AMD64EirRegister.General.R14, new WordValue(tla));
     }
 
     private AMD64EirCPU(AMD64EirCPU cpu) {
@@ -94,7 +94,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         generalRegisterContents = cpu.generalRegisterContents.clone();
         xmmRegisterContents = cpu.generalRegisterContents.clone();
         conditionFlags = cpu.conditionFlags.clone();
-        vmThreadLocals = cpu.vmThreadLocals;
+        tla = cpu.tla;
     }
 
     @Override

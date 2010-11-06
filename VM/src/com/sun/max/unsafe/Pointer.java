@@ -88,7 +88,6 @@ import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWord;
 import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWordAtIntOffset;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**

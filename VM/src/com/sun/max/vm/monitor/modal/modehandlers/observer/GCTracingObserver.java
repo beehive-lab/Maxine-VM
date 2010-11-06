@@ -36,7 +36,7 @@ public class GCTracingObserver implements MonitorObserver {
 
     public void notify(Event event, Object object) {
         // Test for GC thread by id, as we might be in the middle of moving VmThread objects.
-        if (VmThreadLocal.ID.loadPtr(currentVmThreadLocals()).toInt() == 1) {
+        if (VmThreadLocal.ID.load(currentTLA()).toInt() == 1) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print(event.name());
             Log.print(" on instance of class defined in: ");

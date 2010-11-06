@@ -213,17 +213,17 @@ public final class Throw {
      * no inlining performed).
      *
      * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
-     * @param vmThreadLocals
+     * @param tla
      */
     @NEVER_INLINE
-    public static void stackDump(String message, final Pointer vmThreadLocals) {
+    public static void stackDump(String message, final Pointer tla) {
         if (message != null) {
             Log.println(message);
         }
 
-        Pointer anchor = JavaFrameAnchor.from(vmThreadLocals);
+        Pointer anchor = JavaFrameAnchor.from(tla);
         final Pointer instructionPointer = anchor.isZero() ? Pointer.zero() : JavaFrameAnchor.PC.get(anchor);
-        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+        final VmThread vmThread = VmThread.fromTLA(tla);
         if (instructionPointer.isZero()) {
             Log.print("Cannot dump stack for non-stopped thread ");
             Log.printThread(vmThread, true);

@@ -23,6 +23,7 @@ package com.sun.max.vm.heap.sequential.semiSpace;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.management.*;
@@ -146,16 +147,16 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     private final ResetTLAB resetTLAB = new ResetTLAB(){
         @Override
-        protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
+        protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabEnd) {
             if (MaxineVM.isDebug()) {
-                padTLAB(enabledVmThreadLocals, tlabMark, tlabEnd);
+                padTLAB(etla, tlabMark, tlabEnd);
             }
         }
     };
 
     @Override
-    protected void tlabReset(Pointer vmThreadLocals) {
-        resetTLAB.run(vmThreadLocals);
+    protected void tlabReset(Pointer tla) {
+        resetTLAB.run(tla);
     }
 
     // Create timing facilities.
@@ -774,19 +775,19 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     @Override
     protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
         if (MaxineVM.isDebug()) {
-            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(VmThread.currentVmThreadLocals());
-            padTLAB(enabledVmThreadLocals, tlabAllocationMark, tlabEnd);
+            final Pointer etla = ETLA.load(currentTLA());
+            padTLAB(etla, tlabAllocationMark, tlabEnd);
         }
     }
 
     /**
      * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
-     * @param enabledVmThreadLocals the thread whose TLAB will be refilled
+     * @param etla the thread whose TLAB will be refilled
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
-    private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
+    private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = retryAllocate(tlabSize, false);
-        refillTLAB(enabledVmThreadLocals, tlab, tlabSize);
+        refillTLAB(etla, tlab, tlabSize);
     }
     /**
      * Handling of TLAB Overflow. This may refill the TLAB or allocate memory directly from the underlying heap.
@@ -794,7 +795,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      * compare-and-swap on {@link #allocationMark} will dominate.
      *
      * @param size the allocation size requested to the tlab
-     * @param enabledVmThreadLocals
+     * @param etla
      * @param tlabMark allocation mark of the tlab
      * @param tlabEnd soft limit in the tlab to trigger overflow (may equals the actual end of the TLAB, depending on implementation).
      * @throws OutOfMemoryError if the allocation request cannot be satisfied.
@@ -804,24 +805,24 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      */
     @Override
     @NEVER_INLINE
-    protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
+    protected Pointer handleTLABOverflow(Size size, Pointer etla, Pointer tlabMark, Pointer tlabEnd) {
         // Should we refill the TLAB ?
-        final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
+        final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(etla);
         if (refillPolicy == null) {
             // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
             FatalError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
 
             if (!usesTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
-                TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
+                TLABRefillPolicy.setForCurrentThread(etla, NEVER_REFILL_TLAB);
                 return retryAllocate(size, true);
             }
             // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
             final Size tlabSize = initialTlabSize();
-            allocateAndRefillTLAB(enabledVmThreadLocals, tlabSize);
+            allocateAndRefillTLAB(etla, tlabSize);
             // Let's do a bit of meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
             // So the TLAB allocation is going to succeed here
-            TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, new SimpleTLABRefillPolicy(tlabSize));
+            TLABRefillPolicy.setForCurrentThread(etla, new SimpleTLABRefillPolicy(tlabSize));
             // Now, address the initial request. Note that we may recurse down to handleTLABOverflow again here if the
             // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the TLAB.
             return tlabAllocate(size);
@@ -838,7 +839,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             return retryAllocate(size, true);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
-        allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
+        allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
     }
 
@@ -904,14 +905,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      * This is required if {@linkplain DebugHeap#verifyRegion(String, Pointer, Address, MemoryRegion, PointerOffsetVisitor) verification}
      * of the heap will be performed.
      *
-     * @param enabledVmThreadLocals the pointer to the safepoint-enabled VM thread locals for the thread whose TLAB is
+     * @param etla the pointer to the safepoint-enabled VM thread locals for the thread whose TLAB is
      *            to be padded
      */
-    static void padTLAB(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
+    static void padTLAB(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
         final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
         if (traceTLAB()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(enabledVmThreadLocals).toJava());
+            final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(etla).toJava());
             Log.printThread(vmThread, false);
             Log.print(": Placed TLAB padding at ");
             Log.print(tlabMark);
@@ -1178,8 +1179,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     @Override
     public void disableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(VmThread.currentVmThreadLocals());
-        IMMORTAL_ALLOCATION_ENABLED.store(enabledVmThreadLocals, Word.zero());
+        final Pointer etla = ETLA.load(currentTLA());
+        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.zero());
         if (usesTLAB()) {
             super.disableImmortalMemoryAllocation();
         }
@@ -1187,8 +1188,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
     @Override
     public void enableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(VmThread.currentVmThreadLocals());
-        IMMORTAL_ALLOCATION_ENABLED.store(enabledVmThreadLocals, Word.allOnes());
+        final Pointer etla = ETLA.load(currentTLA());
+        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.allOnes());
         if (usesTLAB()) {
             super.enableImmortalMemoryAllocation();
         }

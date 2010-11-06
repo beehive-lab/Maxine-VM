@@ -63,8 +63,8 @@ public class DarwinDumpThreadAccess extends ThreadAccess {
 
     private List<ThreadLoadCommand> threadDataList;
 
-    DarwinDumpThreadAccess(DarwinDumpTeleChannelProtocol protocol, int threadLocalsAreaSize, List<ThreadLoadCommand> threadDataList) {
-        super(protocol, threadLocalsAreaSize);
+    DarwinDumpThreadAccess(DarwinDumpTeleChannelProtocol protocol, int tlaSize, List<ThreadLoadCommand> threadDataList) {
+        super(protocol, tlaSize);
         this.threadDataList = threadDataList;
     }
 
