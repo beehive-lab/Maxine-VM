@@ -108,7 +108,7 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
     @Override
     public Pointer getInstructionPointer(Pointer trapState) {
         // We're in the trap stub. The latch register is set to the disabled vm thread locals.
-        return TRAP_INSTRUCTION_POINTER.loadPtr(currentVmThreadLocals());
+        return TRAP_INSTRUCTION_POINTER.load(currentTLA());
     }
 
     /**

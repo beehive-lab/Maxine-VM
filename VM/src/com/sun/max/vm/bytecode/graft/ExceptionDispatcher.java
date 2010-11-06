@@ -78,7 +78,7 @@ public class ExceptionDispatcher {
             return hostedSafepointAndLoadExceptionObject();
         }
         Safepoint.safepoint();
-        Throwable exception = UnsafeCast.asThrowable(EXCEPTION_OBJECT.loadRef(currentVmThreadLocals()).toJava());
+        Throwable exception = UnsafeCast.asThrowable(EXCEPTION_OBJECT.loadRef(currentTLA()).toJava());
         EXCEPTION_OBJECT.store3(Reference.zero());
         return exception;
     }

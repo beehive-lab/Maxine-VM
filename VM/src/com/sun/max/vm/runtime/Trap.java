@@ -23,6 +23,7 @@ package com.sun.max.vm.runtime;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Trap.Number.*;
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -349,11 +350,11 @@ public abstract class Trap {
      * @param faultAddress the address that caused the fault
      */
     private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapState, Address faultAddress) {
-        final Pointer disabledVmThreadLocals = VmThread.currentVmThreadLocals();
+        final Pointer dtla = currentTLA();
 
         final Safepoint safepoint = vmConfig().safepoint;
         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-        final Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.loadPtr(disabledVmThreadLocals);
+        final Pointer ttla = TTLA.load(dtla);
         final Pointer safepointLatch = trapStateAccess.getSafepointLatch(trapState);
 
         if (VmThread.current().isVmOperationThread()) {
@@ -361,10 +362,10 @@ public abstract class Trap {
         }
 
         // check to see if a safepoint has been triggered for this thread
-        if (safepointLatch.equals(triggeredVmThreadLocals) && safepoint.isAt(instructionPointer)) {
+        if (safepointLatch.equals(ttla) && safepoint.isAt(instructionPointer)) {
             // a safepoint has been triggered for this thread
-            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(disabledVmThreadLocals);
-            final Reference reference = VM_OPERATION.loadRef(enabledVmThreadLocals);
+            final Pointer etla = ETLA.load(dtla);
+            final Reference reference = VM_OPERATION.loadRef(etla);
             final VmOperation vmOperation = (VmOperation) reference.toJava();
             trapStateAccess.setTrapNumber(trapState, Number.SAFEPOINT);
             if (vmOperation != null) {
@@ -400,9 +401,9 @@ public abstract class Trap {
             // The state of the safepoint latch was TRIGGERED when the trap happened. It must be reset back to ENABLED
             // here otherwise another trap will occur as soon as the trap stub returns and re-executes the
             // safepoint instruction.
-            trapStateAccess.setSafepointLatch(trapState, enabledVmThreadLocals);
+            trapStateAccess.setSafepointLatch(trapState, etla);
 
-        } else if (inJava(disabledVmThreadLocals)) {
+        } else if (inJava(dtla)) {
             trapStateAccess.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
             raiseImplicitException(trapState, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);

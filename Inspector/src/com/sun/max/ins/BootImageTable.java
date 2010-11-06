@@ -149,8 +149,8 @@ public final class BootImageTable extends InspectorTable {
             final Pointer dynamicHeapRegionsFieldPointer = bootHeapStart.plus(header.dynamicHeapRegionsArrayFieldOffset);
             addRow("dynamic heap regions array field:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, dynamicHeapRegionsFieldPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), dynamicHeapRegionsFieldPointer));
 
-            final Pointer vmThreadLocalsListHead = bootImageStart.plus(header.threadLocalsListHeadOffset);
-            addRow("VM thread locals list head:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, vmThreadLocalsListHead, BootImageTable.this), new MemoryRegionValueLabel(inspection(), vmThreadLocalsListHead));
+            final Pointer tlaListHead = bootImageStart.plus(header.tlaListHeadOffset);
+            addRow("VM thread locals list head:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, tlaListHead, BootImageTable.this), new MemoryRegionValueLabel(inspection(), tlaListHead));
         }
 
         /**

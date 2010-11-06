@@ -56,8 +56,8 @@ public class LinuxDumpThreadAccess extends ThreadAccess {
 
     private List<TaskData> taskDataList;
 
-    LinuxDumpThreadAccess(LinuxDumpTeleChannelProtocol protocol, int threadLocalsAreaSize, List<TaskData> taskDataList) {
-        super(protocol, threadLocalsAreaSize);
+    LinuxDumpThreadAccess(LinuxDumpTeleChannelProtocol protocol, int tlaSize, List<TaskData> taskDataList) {
+        super(protocol, tlaSize);
         this.taskDataList = taskDataList;
     }
 

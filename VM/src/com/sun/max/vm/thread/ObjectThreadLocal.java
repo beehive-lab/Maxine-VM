@@ -69,7 +69,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
         if (MaxineVM.isHosted()) {
             return hosted.get();
         }
-        Object value = loadRef(currentVmThreadLocals()).toJava();
+        Object value = loadRef(currentTLA()).toJava();
         if (value == UNINITIALIZED) {
             value = initialValue();
             store3(Reference.fromJava(value));
@@ -89,7 +89,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
         if (MaxineVM.isHosted()) {
             return hosted.get();
         }
-        Object value = loadRef(currentVmThreadLocals()).toJava();
+        Object value = loadRef(currentTLA()).toJava();
         if (value == UNINITIALIZED) {
             return null;
         }

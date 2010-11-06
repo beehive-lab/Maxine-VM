@@ -37,18 +37,18 @@ import com.sun.max.vm.thread.*;
  */
 public final class VmStackFrameWalker extends StackFrameWalker {
 
-    private Pointer vmThreadLocals;
+    private Pointer tla;
 
     private boolean dumpingFatalStackTrace;
 
-    public VmStackFrameWalker(Pointer vmThreadLocals) {
+    public VmStackFrameWalker(Pointer tla) {
         super();
-        this.vmThreadLocals = vmThreadLocals;
+        this.tla = tla;
     }
 
-    public void setVmThreadLocals(Pointer vmThreadLocals) {
-        assert this.vmThreadLocals.isZero();
-        this.vmThreadLocals = vmThreadLocals;
+    public void setTLA(Pointer tla) {
+        assert this.tla.isZero();
+        this.tla = tla;
     }
 
     @Override
@@ -73,8 +73,8 @@ public final class VmStackFrameWalker extends StackFrameWalker {
 
     @Override
     public Pointer readPointer(VmThreadLocal tl) {
-        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.loadPtr(vmThreadLocals);
-        return tl.loadPtr(enabledVmThreadLocals);
+        Pointer etla = ETLA.load(tla);
+        return tl.load(etla);
     }
 
     public boolean isDumpingFatalStackTrace() {
@@ -93,7 +93,7 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     public static ClassMethodActor getCallerClassMethodActor() {
         // TODO: a full stack walk is not necessary here.
         LinkedList<StackFrame> frames = new LinkedList<StackFrame>();
-        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).frames(frames, VMRegister.getInstructionPointer(),
+        new VmStackFrameWalker(VmThread.current().tla()).frames(frames, VMRegister.getInstructionPointer(),
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer());
         return getCallerClassMethodActor(frames, false);

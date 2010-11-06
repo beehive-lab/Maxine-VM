@@ -115,7 +115,7 @@ final class JDK_sun_reflect_Reflection {
     @NEVER_INLINE
     private static MethodActor getCallerMethod(int realFramesToSkip) {
         final Context context = new Context(realFramesToSkip);
-        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
+        new VmStackFrameWalker(VmThread.current().tla()).inspect(VMRegister.getInstructionPointer(),
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer(),
                                                        context);
@@ -131,7 +131,7 @@ final class JDK_sun_reflect_Reflection {
      */
     static Context getCallerContext(int realFramesToSkip) {
         final Context context = new Context(realFramesToSkip);
-        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
+        new VmStackFrameWalker(VmThread.current().tla()).inspect(VMRegister.getInstructionPointer(),
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer(),
                                                        context);

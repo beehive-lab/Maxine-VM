@@ -121,7 +121,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     @Override
     @NEVER_INLINE
     public void staticTrampoline() {
-        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
+        new VmStackFrameWalker(VmThread.current().tla()).inspect(VMRegister.getInstructionPointer(),
                 VMRegister.getCpuStackPointer(),
                 VMRegister.getCpuFramePointer(),
                 staticTrampolineContext);

@@ -30,21 +30,21 @@
 
 static jmethodID jniGatherThreadID = NULL;
 
-void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadList, jlong localHandle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl) {
+void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadList, jlong localHandle, ThreadState_t state, jlong instructionPointer, TLA tla) {
     if (jniGatherThreadID == NULL) {
         jclass c = (*env)->GetObjectClass(env, teleProcess);
         c_ASSERT(c != NULL);
         jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Ljava/util/List;IJJIJJJJJI)V");
         c_ASSERT(jniGatherThreadID != NULL);
     }
-    const int tlaSize = threadLocalsAreaSize();
-    ThreadLocals noThreadLocals = (ThreadLocals) alloca(tlaSize);
+    const int size = tlaSize();
+    TLA noTLA = (TLA) alloca(size);
     NativeThreadLocalsStruct noNativeThreadLocalsStruct;
     NativeThreadLocals ntl;
-    if (tl == 0) {
-        tl = noThreadLocals;
+    if (tla == 0) {
+        tla = noTLA;
         ntl = &noNativeThreadLocalsStruct;
-        memset((void *) tl, 0, threadLocalsAreaSize());
+        memset((void *) tla, 0, size);
         memset(ntl, 0, sizeof(NativeThreadLocalsStruct));
         jint id = localHandle;
         /* Make id negative to indicate no thread locals were available for the thread.
@@ -52,10 +52,10 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
          * executed past the point in VmThread.run() where it is added to the active
          * thread list.
          */
-        setConstantThreadLocal(tl, ID, id < 0 ? id : -id);
-        setConstantThreadLocal(tl, NATIVE_THREAD_LOCALS, ntl);
+        setConstantThreadLocal(tla, ID, id < 0 ? id : -id);
+        setConstantThreadLocal(tla, NATIVE_THREAD_LOCALS, ntl);
     } else {
-        ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
+        ntl = getThreadLocal(NativeThreadLocals, tla, NATIVE_THREAD_LOCALS);
     }
 
 #if defined(_LP64)
@@ -64,7 +64,7 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
     // for 32 bit hosting
     tele_log_println("Gathered thread[id=%d, localHandle=%llu, handle=%llx, pc=%llx, stackBase=%llx, stackEnd=%llx, stackSize=%llu, tlb=%llx, tlbSize=%lld, tlaSize=%d]",
 #endif
-                    getThreadLocal(int, tl, ID),
+                    getThreadLocal(int, tla, ID),
                     localHandle,
                     ntl->handle,
                     instructionPointer,
@@ -76,7 +76,7 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
                     tlaSize);
 
     (*env)->CallVoidMethod(env, teleProcess, jniGatherThreadID, threadList,
-                    getThreadLocal(int, tl, ID),
+                    getThreadLocal(int, tla, ID),
                     localHandle,
                     ntl->handle,
                     state,
@@ -88,38 +88,38 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
                     tlaSize);
 }
 
-static boolean isThreadLocalsForStackPointer(ProcessHandle ph, Address stackPointer, Address tl, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
+static boolean isTLAForStackPointer(ProcessHandle ph, Address stackPointer, Address tla, TLA tlaCopy, NativeThreadLocals ntlCopy) {
     Address ntl;
 
-    readProcessMemory(ph, tl, tlCopy, threadLocalsAreaSize());
-    ntl = getThreadLocal(Address, tlCopy, NATIVE_THREAD_LOCALS);
+    readProcessMemory(ph, tla, tlaCopy, tlaSize());
+    ntl = getThreadLocal(Address, tlaCopy, NATIVE_THREAD_LOCALS);
     readProcessMemory(ph, ntl, ntlCopy, sizeof(NativeThreadLocalsStruct));
-    setConstantThreadLocal(tlCopy, NATIVE_THREAD_LOCALS, ntlCopy);
+    setConstantThreadLocal(tlaCopy, NATIVE_THREAD_LOCALS, ntlCopy);
 #if log_TELE
-    log_print("teleProcess_findThreadLocals(%p): ", stackPointer);
-    threadLocals_println(tlCopy);
+    log_print("teleProcess_findTLA(%p): ", stackPointer);
+    tla_println(tlaCopy);
 #endif
     Address stackBase = ntlCopy->stackBase;
     Size stackSize = ntlCopy->stackSize;
     return stackBase <= stackPointer && stackPointer < (stackBase + stackSize);
 }
 
-ThreadLocals teleProcess_findThreadLocals(ProcessHandle ph, Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
-    memset((void *) tlCopy, 0, threadLocalsAreaSize());
+TLA teleProcess_findTLA(ProcessHandle ph, Address tlaList, Address primordialTLA, Address stackPointer, TLA tlaCopy, NativeThreadLocals ntlCopy) {
+    memset((void *) tlaCopy, 0, tlaSize());
     memset((void *) ntlCopy, 0, sizeof(NativeThreadLocalsStruct));
 
-    if (threadLocalsList != 0) {
-        Address tl = threadLocalsList;
-        while (tl != 0) {
-            if (isThreadLocalsForStackPointer(ph, stackPointer, tl, tlCopy, ntlCopy)) {
-                return tlCopy;
+    if (tlaList != 0) {
+        Address tla = tlaList;
+        while (tla != 0) {
+            if (isTLAForStackPointer(ph, stackPointer, tla, tlaCopy, ntlCopy)) {
+                return tlaCopy;
             }
-            tl = getThreadLocal(Address, tlCopy, FORWARD_LINK);
+            tla = getThreadLocal(Address, tlaCopy, FORWARD_LINK);
         };
     }
-    if (primordialThreadLocals != 0) {
-        if (isThreadLocalsForStackPointer(ph, stackPointer, primordialThreadLocals, tlCopy, ntlCopy)) {
-            return tlCopy;
+    if (primordialTLA != 0) {
+        if (isTLAForStackPointer(ph, stackPointer, primordialTLA, tlaCopy, ntlCopy)) {
+            return tlaCopy;
         }
     }
     return 0;

@@ -53,7 +53,7 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
         super(teleVM, platform, ProcessState.STOPPED);
         protocol = TeleVM.teleChannelProtocol();
         dataAccess = new PageDataAccess(this, platform.dataModel);
-        protocol.initialize(teleVM.bootImage().header.threadLocalsAreaSize, platform().endianness() == Endianness.BIG ? true : false);
+        protocol.initialize(teleVM.bootImage().header.tlaSize, platform().endianness() == Endianness.BIG ? true : false);
         if (commandLineArguments != null) {
             final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);
             if (processHandle < 0) {
@@ -118,9 +118,9 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
 
     @Override
     protected void gatherThreads(List<TeleNativeThread> threads) {
-        final Word primordialVmThreadLocals = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialThreadLocalsOffset));
-        final Word threadLocalsList = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.threadLocalsListHeadOffset));
-        protocol.gatherThreads(this, threads, threadLocalsList.asAddress().toLong(), primordialVmThreadLocals.asAddress().toLong());
+        final Word primordialTLA = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialTLAOffset));
+        final Word tlaList = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.tlaListHeadOffset));
+        protocol.gatherThreads(this, threads, tlaList.asAddress().toLong(), primordialTLA.asAddress().toLong());
     }
 
     @Override
