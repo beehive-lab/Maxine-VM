@@ -167,9 +167,9 @@ public abstract class Safepoint {
     }
 
     public static void initializePrimordial(Pointer tla) {
-        ETLA.store(tla, tla);
-        DTLA.store(tla, tla);
-        TTLA.store(tla, tla);
+        tla.setWord(ETLA.index, tla);
+        tla.setWord(DTLA.index, tla);
+        tla.setWord(TTLA.index, tla);
         SAFEPOINT_LATCH.store(tla, tla);
         Safepoint.setLatchRegister(tla);
     }

@@ -87,28 +87,28 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_TOP
-        = new VmThreadLocal(TLAB_TOP_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
+        = new VmThreadLocal(TLAB_TOP_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: top of current TLAB, zero if not used", Nature.Single);
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_MARK
-        = new VmThreadLocal(TLAB_MARK_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
+        = new VmThreadLocal(TLAB_MARK_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used", Nature.Single);
 
     /**
      * The temporary top of the current thread-local allocation buffer. This will remain zero if TLABs are not
      * {@linkplain #useTLABOption enabled}. Used when thread is allocating on the global immortal heap.
      */
     private static final VmThreadLocal TLAB_TOP_TMP
-        = new VmThreadLocal("TLAB_TOP_TMP", false, "HeapSchemeWithTLAB: temporary top of current TLAB, zero if not used");
+        = new VmThreadLocal("TLAB_TOP_TMP", false, "HeapSchemeWithTLAB: temporary top of current TLAB, zero if not used", Nature.Single);
 
     /**
      * The temporary allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}. Used when thread is allocating on the global immortal heap.
      */
     private static final VmThreadLocal TLAB_MARK_TMP
-        = new VmThreadLocal("TLAB_MARK_TMP", false, "HeapSchemeWithTLAB: temporary allocation mark of current TLAB, zero if not used");
+        = new VmThreadLocal("TLAB_MARK_TMP", false, "HeapSchemeWithTLAB: temporary allocation mark of current TLAB, zero if not used", Nature.Single);
 
     /**
      * Thread-local used to disable allocation per thread.

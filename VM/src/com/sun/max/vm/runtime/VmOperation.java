@@ -744,7 +744,6 @@ public class VmOperation {
                 }
             }
         }
-        EXCEPTION_OBJECT.check(tla, Word.zero());
 
         doAfterFrozen(thread);
 
