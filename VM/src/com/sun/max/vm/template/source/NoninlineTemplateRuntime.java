@@ -31,6 +31,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.object.*;
@@ -371,4 +372,8 @@ public class NoninlineTemplateRuntime {
         return CreateTupleOrHybrid.createTupleOrHybrid(classActor);
     }
 
+    @NEVER_INLINE
+    public static Throwable loadException() {
+        return ExceptionDispatcher.safepointAndLoadExceptionObject();
+    }
 }

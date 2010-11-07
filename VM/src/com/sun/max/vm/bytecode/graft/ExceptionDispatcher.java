@@ -25,8 +25,9 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.bytecode.graft.BytecodeAssembler.*;
+import com.sun.max.vm.bytecode.graft.BytecodeAssembler.Label;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
@@ -44,7 +45,10 @@ import com.sun.max.vm.type.*;
  */
 public class ExceptionDispatcher {
 
-    static final ClassMethodRefConstant safepointAndLoadExceptionObject = PoolConstantFactory.createClassMethodConstant(Classes.getDeclaredMethod(ExceptionDispatcher.class, "safepointAndLoadExceptionObject"));
+    /**
+     * A handle used by the CPS and JIT compiler to retrieve the exception object on entry to an exception handler.
+     */
+    public static final ClassMethodActor safepointAndLoadExceptionObject = ClassMethodActor.fromJava(Classes.getDeclaredMethod(ExceptionDispatcher.class, "safepointAndLoadExceptionObject"));
 
     private final int position;
 
@@ -76,6 +80,7 @@ public class ExceptionDispatcher {
         Safepoint.safepoint();
         Throwable exception = UnsafeCast.asThrowable(VmThreadLocal.EXCEPTION_OBJECT.getVariableReference().toJava());
         VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(null);
+        FatalError.check(exception != null, "Exception object lost during unwinding");
         return exception;
     }
 
@@ -111,8 +116,6 @@ public class ExceptionDispatcher {
     }
 
     private void assemble(BytecodeAssembler assembler, ExceptionHandler handler) {
-        assembler.pop();
-        assembler.invokestatic(safepointAndLoadExceptionObject, 0, 1);
         ExceptionHandler h = handler;
         while (h != null) {
 
