@@ -56,8 +56,8 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
-        return impl.initialize(threadLocalsAreaSize, bigEndian);
+    public boolean initialize(int tlaSize, boolean bigEndian) {
+        return impl.initialize(tlaSize, bigEndian);
     }
     @Override
     public boolean activateWatchpoint(long start, long size, boolean after, boolean read, boolean write, boolean exec) {
@@ -169,9 +169,9 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
     private int numThreads;
 
     @Override
-    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+    public int gatherThreads(long tlaList, long primordialTLA) {
         List<TeleNativeThread> threads = new ArrayList<TeleNativeThread>();
-        impl.gatherThreads(teleProcess, threads, threadLocalsList, primordialThreadLocals);
+        impl.gatherThreads(teleProcess, threads, tlaList, primordialTLA);
         numThreads = threads.size();
         TeleChannelDataIOProtocol.GatherThreadData[] data = new TeleChannelDataIOProtocol.GatherThreadData[numThreads];
         int index = 0;

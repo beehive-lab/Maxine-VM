@@ -118,9 +118,9 @@ public class LinuxDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdap
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
-        super.initialize(threadLocalsAreaSize, bigEndian);
-        linuxDumpThreadAccess = new LinuxDumpThreadAccess(this, threadLocalsAreaSize, taskDataList);
+    public boolean initialize(int tlaSize, boolean bigEndian) {
+        super.initialize(tlaSize, bigEndian);
+        linuxDumpThreadAccess = new LinuxDumpThreadAccess(this, tlaSize, taskDataList);
         return true;
     }
 
@@ -135,8 +135,8 @@ public class LinuxDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdap
     }
 
     @Override
-    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
-        return linuxDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, threadLocalsList, primordialThreadLocals);
+    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long tlaList, long primordialTLA) {
+        return linuxDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, tlaList, primordialTLA);
     }
 
 }

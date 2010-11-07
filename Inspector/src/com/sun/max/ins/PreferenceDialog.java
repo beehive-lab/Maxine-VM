@@ -162,14 +162,14 @@ public class PreferenceDialog extends SimpleDialog {
         javaStackFramePanel.setBorder(border);
         prefPanel.add(javaStackFramePanel);
 
-        final JPanel vmThreadLocalsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
-        vmThreadLocalsLabelPanel.setBorder(border);
-        vmThreadLocalsLabelPanel.add(new TextLabel(inspection, "VM Thread Locals"), BorderLayout.WEST);
-        prefPanel.add(vmThreadLocalsLabelPanel);
+        final JPanel tlaLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        tlaLabelPanel.setBorder(border);
+        tlaLabelPanel.add(new TextLabel(inspection, "VM Thread Locals"), BorderLayout.WEST);
+        prefPanel.add(tlaLabelPanel);
 
-        final JPanel vmThreadLocalsInspectorPanel = ThreadLocalsViewPreferences.globalPreferencesPanel(inspection);
-        vmThreadLocalsInspectorPanel.setBorder(border);
-        prefPanel.add(vmThreadLocalsInspectorPanel);
+        final JPanel tlaInspectorPanel = ThreadLocalsViewPreferences.globalPreferencesPanel(inspection);
+        tlaInspectorPanel.setBorder(border);
+        prefPanel.add(tlaInspectorPanel);
 
         final JPanel bootImageLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         bootImageLabelPanel.setBorder(border);

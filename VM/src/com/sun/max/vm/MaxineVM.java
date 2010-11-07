@@ -104,10 +104,10 @@ public final class MaxineVM {
     /**
      * The primordial thread locals.
      *
-     * The address of this field is exposed to native code via {@link Header#primordialThreadLocalsOffset}
+     * The address of this field is exposed to native code via {@link Header#primordialTLAOffset}
      * so that it can be initialized by the C substrate. It also enables a debugger attached to the VM to find it.
      */
-    private static Pointer primordialThreadLocals;
+    private static Pointer primordialTLA;
 
     private static int exitCode = 0;
 
@@ -358,8 +358,8 @@ public final class MaxineVM {
         exitCode = code;
     }
 
-    public static Pointer primordialVmThreadLocals() {
-        return primordialThreadLocals;
+    public static Pointer primordialTLA() {
+        return primordialTLA;
     }
 
     /**
@@ -384,9 +384,9 @@ public final class MaxineVM {
         // Fix it manually:
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
-        Pointer vmThreadLocals = primordialThreadLocals;
+        Pointer tla = primordialTLA;
 
-        Safepoint.initializePrimordial(vmThreadLocals);
+        Safepoint.initializePrimordial(tla);
 
         // The primordial thread should never allocate from the heap
         Heap.disableAllocationForCurrentThread();
