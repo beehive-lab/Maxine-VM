@@ -29,7 +29,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.Log.*;
+import com.sun.max.vm.Log.LogPrintStream;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
@@ -41,8 +41,8 @@ import com.sun.max.vm.stack.*;
  * are defined as static field of this class itself. However, thread locals can also be defined
  * in other {@linkplain VMScheme scheme}-specific classes.
  *
- * All thread local variables occupy one word and
- * the {@linkplain #SAFEPOINT_LATCH safepoint latch} must be first.
+ * All thread local variables occupy one word and have a constant {@linkplain Nature nature}.
+ *
  * <p>
  * All thread locals are in a contiguous block of memory called a thread locals area (TLA) and there
  * are three TLAs per thread, one for each of the {@linkplain Safepoint safepoint} states:
@@ -96,12 +96,36 @@ import com.sun.max.vm.stack.*;
  */
 public class VmThreadLocal {
 
+    /**
+     * Constants describing the read and write protocol for a thread local.
+     *
+     * @author Doug Simon
+     */
+    public enum Nature {
+        /**
+         * Denotes a thread local that has it's value maintained only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA.
+         * This should be used for thread locals that need to be written atomically (e.g. {@link VmThreadLocal#MUTATOR_STATE}) and/or in a fast path
+         * (e.g. {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} which is written in JNI stubs).
+         *
+         * Note that the TLA variable used to access this variable must be the ETLA value. This
+         * invariant is tested in a {@linkplain MaxineVM#isDebug() debug} VM.
+         */
+        Single,
+
+        /**
+         * Denotes a thread local that has it's value maintained in all three TLAs for a thread.
+         * This is used for thread locals that are initialized only once or whose update is not performance critical.
+         * These local variables must be updated using one of the {@code store3(...)} methods in {@link VmThreadLocal}.
+         */
+        Triple;
+    }
+
     private static final List<VmThreadLocal> VALUES = new ArrayList<VmThreadLocal>();
 
     /**
      * Must be first.
      */
-    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", false, "memory location loaded by safepoint instruction");
+    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", false, "memory location loaded by safepoint instruction", Nature.Single);
 
     /**
      * The {@linkplain VmThread#currentTLA() current} thread local storage when safepoints for the thread are
@@ -140,7 +164,7 @@ public class VmThreadLocal {
      * The {@link VmOperation} whose {@link VmOperation#doAtSafepoint(Pointer)} is invoked on a thread when it traps at a {@linkplain Safepoint safepoint}.
      */
     public static final VmThreadLocal VM_OPERATION
-        = new VmThreadLocal("VM_OPERATION", true, "Procedure to run when a safepoint is triggered");
+        = new VmThreadLocal("VM_OPERATION", true, "Procedure to run when a safepoint is triggered", Nature.Single);
 
     /**
      * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
@@ -182,20 +206,20 @@ public class VmThreadLocal {
     /**
      * The address of the current {@linkplain JavaFrameAnchor anchor list} for a thread.
      */
-    public static final VmThreadLocal LAST_JAVA_FRAME_ANCHOR = new VmThreadLocal("LAST_JAVA_FRAME_ANCHOR", false, "");
+    public static final VmThreadLocal LAST_JAVA_FRAME_ANCHOR = new VmThreadLocal("LAST_JAVA_FRAME_ANCHOR", false, "", Nature.Single);
 
     /**
      * The state of this thread with respect to {@linkplain VmOperation freezing}.
      * This will be one of the {@code THREAD_IN_...} constants defined in {@link Safepoint}.
      */
-    public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt freezing");
+    public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt freezing", Nature.Single);
 
     /**
      * A boolean denoting whether this thread has been {@linkplain VmOperation frozen}.
      * A non-zero value means true, a zero value means false.
      * This variable is only used when {@link VmOperation#UseCASBasedThreadFreezing} is {@code false}.
      */
-    public static final VmThreadLocal FROZEN = new VmThreadLocal("FROZEN", false, "Non-zero if frozen");
+    public static final VmThreadLocal FROZEN = new VmThreadLocal("FROZEN", false, "Non-zero if frozen", Nature.Single);
 
     /**
      * The number of the trap (i.e. signal) that occurred.
@@ -261,7 +285,7 @@ public class VmThreadLocal {
         = new VmThreadLocal("STACK_REFERENCE_SIZE", false, "size of stack reference map");
 
     public static final VmThreadLocal IMMORTAL_ALLOCATION_ENABLED
-        = new VmThreadLocal("IMMORTAL_ALLOCATION_ENABLED", false, "Non-zero if thread is allocating on the immortal heap");
+        = new VmThreadLocal("IMMORTAL_ALLOCATION_ENABLED", false, "Non-zero if thread is allocating on the immortal heap", Nature.Single);
 
     private static VmThreadLocal[] valuesNeedingInitialization;
 
@@ -281,9 +305,14 @@ public class VmThreadLocal {
     public final int index;
 
     /**
-     * The offset of this variable from the base of a thread locals.
+     * The offset of this variable in a TLA.
      */
     public final int offset;
+
+    /**
+     * The nature of this variable.
+     */
+    public final Nature nature;
 
     /**
      * A very short string describing the variable, useful for debugging.
@@ -519,6 +548,11 @@ public class VmThreadLocal {
         }
     }
 
+    @HOSTED_ONLY
+    public VmThreadLocal(String name, boolean isReference, String description) {
+        this(name, isReference, description, Nature.Triple);
+    }
+
     /**
      * Creates a new thread local variable and adds a slot for it to the map.
      *
@@ -527,9 +561,10 @@ public class VmThreadLocal {
      * @param description a very short textual description, useful for debugging
      */
     @HOSTED_ONLY
-    public VmThreadLocal(String name, boolean isReference, String description) {
+    public VmThreadLocal(String name, boolean isReference, String description, Nature nature) {
         this.isReference = isReference;
         this.name = name;
+        this.nature = nature;
         this.index = VALUES.size();
         this.offset = index * Word.size();
         VALUES.add(this);
@@ -580,38 +615,43 @@ public class VmThreadLocal {
     }
 
     /**
-     * Verifies that this variable has a given value in all the TLAs denoted by a given TLA.
+     * Stores the value of this {@linkplain Nature#Single single} variable.
      *
-     * @param value the value this variable should have
+     * This operation is a single store.
+     *
+     * @param etla this must be the value of the {@link #ETLA} thread local
+     * @param value the value to store
      */
-    public final void check(Pointer tla, Word value) {
+    @INLINE
+    public final void store(Pointer etla, Reference value) {
         if (MaxineVM.isDebug()) {
-            final boolean result =
-                ETLA.load(tla).getWord(index).equals(value) &&
-                DTLA.load(tla).getWord(index).equals(value) &&
-                TTLA.load(tla).getWord(index).equals(value);
-            FatalError.check(result, "unexpected value for thread locals");
+            if (nature != Nature.Single || !etla.readWord(ETLA.offset).equals(etla)) {
+                Log.print("Triple thread local being stored to as a single: ");
+                Log.println(name);
+                FatalError.unexpected("Triple thread local updated as a single");
+            }
         }
+        etla.setReference(index, value);
     }
 
     /**
-     * Stores the value of this variable in a given TLA.
+     * Stores the value of this {@linkplain Nature#Single single} variable.
      *
      * This operation is a single store.
-     */
-    @INLINE
-    public final void store(Pointer tla, Reference value) {
-        tla.setReference(index, value);
-    }
-
-    /**
-     * Stores the value of this variable in a given TLA.
      *
-     * This operation is a single store.
+     * @param etla this must be the value of the {@link #ETLA} thread local
+     * @param value the value to store
      */
     @INLINE
-    public final void store(Pointer tla, Word value) {
-        tla.setWord(index, value);
+    public final void store(Pointer etla, Word value) {
+        if (MaxineVM.isDebug()) {
+            if (nature != Nature.Single || !etla.readWord(ETLA.offset).equals(etla)) {
+                Log.print("Triple thread local being stored to as a single: ");
+                Log.println(name);
+                FatalError.unexpected("Triple thread local updated as a single");
+            }
+        }
+        etla.setWord(index, value);
     }
 
     /**
@@ -658,16 +698,29 @@ public class VmThreadLocal {
         store3(currentTLA(), value);
     }
 
+    private void checkLoad(Pointer tla) {
+        if (nature == Nature.Single) {
+            if (!tla.readWord(ETLA.offset).equals(tla)) {
+                Log.print("Single thread local must be loaded from ETLA: ");
+                Log.println(name);
+                FatalError.unexpected("Single thread local must be loaded from ETLA", false, null, Pointer.zero());
+            }
+        }
+    }
+
     /**
      * Loads the value of this variable from a given TLA.
      *
      * This operation is a single load.
      *
-     * @param tla
+     * @param tla this must be the value of the {@link #ETLA} thread local if this is a {@linkplain Nature#Single single} thread local
      * @return the value of this variable in {@code tla} as a pointer
      */
     @INLINE
     public final Pointer load(Pointer tla) {
+        if (MaxineVM.isDebug()) {
+            checkLoad(tla);
+        }
         return tla.readWord(offset).asPointer();
     }
 
@@ -676,11 +729,14 @@ public class VmThreadLocal {
      *
      * This operation is a single load.
      *
-     * @param tla
+     * @param tla this must be the value of the {@link #ETLA} thread local if this is a {@linkplain Nature#Single single} thread local
      * @return the value of this variable in {@code tla} as a reference
      */
     @INLINE
     public final Reference loadRef(Pointer tla) {
+        if (MaxineVM.isDebug()) {
+            checkLoad(tla);
+        }
         return tla.readReference(offset);
     }
 
