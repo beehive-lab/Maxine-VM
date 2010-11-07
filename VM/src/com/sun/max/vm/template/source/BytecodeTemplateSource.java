@@ -52,6 +52,11 @@ import com.sun.max.vm.type.*;
  */
 public class BytecodeTemplateSource {
 
+    @BYTECODE_TEMPLATE(LOAD_EXCEPTION)
+    public static void loadException() {
+        JitStackFrameOperation.pushObject(NoninlineTemplateRuntime.loadException());
+    }
+
     @BYTECODE_TEMPLATE(NOP$instrumented$MethodEntry)
     public static void nop(MethodProfile mpo) {
         // entrypoint counters count down to zero ("overflow")

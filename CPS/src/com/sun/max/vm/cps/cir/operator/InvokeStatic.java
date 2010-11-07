@@ -34,6 +34,11 @@ public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
         super(CALL_STOP, constantPool, index, constantPool.methodAt(index).signature(constantPool).resultKind());
     }
 
+    public InvokeStatic(StaticMethodActor method) {
+        super(CALL_STOP, null, 0, method.resultKind());
+        actor = method;
+    }
+
     @Override
     public boolean requiresClassInitialization() {
         return true;
@@ -51,6 +56,9 @@ public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
 
     @Override
     public Kind[] parameterKinds() {
+        if (actor != null) {
+            return actor.getParameterKinds();
+        }
         return constantPool.methodAt(index).signature(constantPool).copyParameterKinds(null, 0);
     }
 }
