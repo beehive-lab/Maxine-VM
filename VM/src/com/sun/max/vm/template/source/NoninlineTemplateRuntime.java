@@ -376,4 +376,24 @@ public class NoninlineTemplateRuntime {
     public static Throwable loadException() {
         return ExceptionDispatcher.safepointAndLoadExceptionObject();
     }
+
+    @NEVER_INLINE
+    public static int f2i(float value) {
+        return (int) value;
+    }
+
+    @NEVER_INLINE
+    public static long f2l(float value) {
+        return (long) value;
+    }
+
+    @NEVER_INLINE
+    public static int d2i(double value) {
+        return (int) value;
+    }
+
+    @NEVER_INLINE
+    public static long d2l(double value) {
+        return (long) value;
+    }
 }
