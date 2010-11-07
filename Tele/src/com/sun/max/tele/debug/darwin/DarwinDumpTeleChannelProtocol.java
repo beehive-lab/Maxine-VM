@@ -41,7 +41,7 @@ import com.sun.max.vm.runtime.*;
  *
  */
 public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdaptor implements DarwinTeleChannelProtocol {
-    protected int threadLocalsAreaSize;
+    protected int tlaSize;
     public boolean bigEndian;
     protected RandomAccessFile dumpRaf;
     protected DarwinMachO.Header header;
@@ -151,9 +151,9 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
-        this.threadLocalsAreaSize = threadLocalsAreaSize;
-        darwinDumpThreadAccess = new DarwinDumpThreadAccess(this, threadLocalsAreaSize, threadDataList);
+    public boolean initialize(int tlaSize, boolean bigEndian) {
+        this.tlaSize = tlaSize;
+        darwinDumpThreadAccess = new DarwinDumpThreadAccess(this, tlaSize, threadDataList);
         return true;
     }
 
@@ -168,12 +168,12 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
     }
 
     @Override
-    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
-        return darwinDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, threadLocalsList, primordialThreadLocals);
+    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long tlaList, long primordialTLA) {
+        return darwinDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, tlaList, primordialTLA);
     }
 
     @Override
-    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+    public int gatherThreads(long tlaList, long primordialTLA) {
         inappropriate("gatherThreads");
         return 0;
     }

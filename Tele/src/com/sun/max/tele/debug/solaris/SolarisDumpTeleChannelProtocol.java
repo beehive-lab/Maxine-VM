@@ -138,9 +138,9 @@ public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAd
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
-        super.initialize(threadLocalsAreaSize, bigEndian);
-        solarisDumpThreadAccess = new SolarisDumpThreadAccess(this, threadLocalsAreaSize, lwpDataList);
+    public boolean initialize(int tlaSize, boolean bigEndian) {
+        super.initialize(tlaSize, bigEndian);
+        solarisDumpThreadAccess = new SolarisDumpThreadAccess(this, tlaSize, lwpDataList);
         return true;
     }
 
@@ -155,8 +155,8 @@ public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAd
     }
 
     @Override
-    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
-        return solarisDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, threadLocalsList, primordialThreadLocals);
+    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long tlaList, long primordialTLA) {
+        return solarisDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, tlaList, primordialTLA);
     }
 
 }

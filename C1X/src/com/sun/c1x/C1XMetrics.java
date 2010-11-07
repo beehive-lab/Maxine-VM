@@ -28,6 +28,7 @@ package com.sun.c1x;
  * @author Ben L. Titzer
  */
 public class C1XMetrics {
+    public static int CompiledMethods;
     public static int TargetMethods;
     public static int LocalValueNumberHits;
     public static int GlobalValueNumberHits;

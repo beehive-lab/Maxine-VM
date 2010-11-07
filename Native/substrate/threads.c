@@ -252,7 +252,7 @@ void *thread_run(void *arg) {
     threadLocalsBlock_setCurrent(tlBlock);
     // initialize the threadLocalsBlock
     threadLocalsBlock_create(id, JNI_TRUE, 0);
-    ThreadLocals tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
+    TLA tla = TLA_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
     /* Grab the global thread lock so that:
@@ -281,7 +281,7 @@ void *thread_run(void *arg) {
     int result = (*addMethod)(id,
               false,
               nativeThread,
-              tl,
+              tla,
               ntl->stackBase,
               stackEnd,
               ntl->stackYellowZone);
@@ -305,7 +305,7 @@ void *thread_run(void *arg) {
     image_printAddress((Address) runMethod);
     log_println("");
 #endif
-    (*runMethod)(tl, ntl->stackBase, stackEnd);
+    (*runMethod)(tla, ntl->stackBase, stackEnd);
 
 #if log_THREADS
     log_println("thread_run: END t=%p", nativeThread);
@@ -324,7 +324,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
 #if log_THREADS
     log_println("thread_attach: BEGIN t=%p", nativeThread);
 #endif
-    if (threadLocals_current() != 0) {
+    if (tla_current() != 0) {
         // If the thread has been attached, this operation is a no-op
         extern JNIEnv *currentJniEnv();
         *penv = (void *) currentJniEnv();
@@ -343,7 +343,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
     if (tlBlock == 0) {
         return JNI_ENOMEM;
     }
-    ThreadLocals tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
+    TLA tla = TLA_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
     while (true) {
@@ -371,7 +371,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
         int result = (*addMethod)(id,
                         daemon,
                         nativeThread,
-                        tl,
+                        tla,
                         ntl->stackBase,
                         stackEnd,
                         ntl->stackYellowZone);
@@ -381,7 +381,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
 #endif
 
         if (result == 0) {
-            id = getThreadLocal(jint, tl, ID);
+            id = getThreadLocal(jint, tla, ID);
 
             /* TODO: Save current thread signal mask so that it can be restored when this thread is detached. */
             setCurrentThreadSignalMask(false);
@@ -417,14 +417,14 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
               daemon,
               ntl->stackBase,
               stackEnd,
-              tl);
+              tla);
 
 #if log_THREADS
     log_println("thread_attach: END id=%d, t=%p", id, nativeThread);
 #endif
 
     if (result == JNI_OK) {
-        *penv = (JNIEnv *) getThreadLocalAddress(tl, JNI_ENV);
+        *penv = (JNIEnv *) getThreadLocalAddress(tla, JNI_ENV);
     } else {
         if (result == JNI_EDETACHED) {
             log_println("Cannot attach thread to a VM whose main thread has exited");

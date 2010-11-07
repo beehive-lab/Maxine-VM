@@ -78,9 +78,9 @@ JNIEnv jniEnv() {
  * Gets the thread-local pointer to the pointer to the global JNI function table.
  */
 JNIEnv *currentJniEnv() {
-    ThreadLocals tl = threadLocals_current();
-    c_ASSERT(tl != 0);
-    JNIEnv *env = (JNIEnv *) getThreadLocalAddress(tl, JNI_ENV);
+    TLA tla = tla_current();
+    c_ASSERT(tla != 0);
+    JNIEnv *env = (JNIEnv *) getThreadLocalAddress(tla, JNI_ENV);
     c_ASSERT(env != NULL);
     return env;
 }

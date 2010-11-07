@@ -335,7 +335,7 @@ public final class Watchpoints {
             return VmThreadLocal.values().get(threadLocalIndex).name;
         }
         private MaxThreadLocalVariable threadLocalVariable(MaxThread thread) {
-            return  thread.localsBlock().threadLocalsAreaFor(Safepoint.State.ENABLED).getThreadLocalVariable(threadLocalIndex);
+            return  thread.localsBlock().tlaFor(Safepoint.State.ENABLED).getThreadLocalVariable(threadLocalIndex);
         }
 
         ThreadLocalWatchpointItemListener(Inspection inspection, VmThreadLocal threadLocal) {
@@ -380,12 +380,12 @@ public final class Watchpoints {
                     for (MaxThread thread : inspection.vm().state().threads()) {
                         setWatchpoint(threadLocalVariable(thread));
                     }
-                    //threadEventListener.add(inspection, this);
+                    threadEventListener.add(inspection, this);
                 } else {
                     for (MaxThread thread : inspection.vm().state().threads()) {
                         removeWatchpoint(threadLocalVariable(thread));
                     }
-                    //threadEventListener.remove(inspection, this);
+                    threadEventListener.remove(inspection, this);
                 }
                 watched = state;
             }

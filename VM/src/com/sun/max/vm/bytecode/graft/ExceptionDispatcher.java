@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
+import static com.sun.max.vm.thread.VmThread.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -30,6 +33,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.BytecodeAssembler.Label;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -78,8 +82,8 @@ public class ExceptionDispatcher {
             return hostedSafepointAndLoadExceptionObject();
         }
         Safepoint.safepoint();
-        Throwable exception = UnsafeCast.asThrowable(VmThreadLocal.EXCEPTION_OBJECT.getVariableReference().toJava());
-        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(null);
+        Throwable exception = UnsafeCast.asThrowable(EXCEPTION_OBJECT.loadRef(currentTLA()).toJava());
+        EXCEPTION_OBJECT.store3(Reference.zero());
         FatalError.check(exception != null, "Exception object lost during unwinding");
         return exception;
     }

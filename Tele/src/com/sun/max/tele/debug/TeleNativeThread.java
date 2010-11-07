@@ -129,7 +129,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
         @Override
         public String toString() {
-            return String.format("id=%d, localHandle=0x%08x, handle=%d, stackRegion=%s, threadLocalsAreasRegion=%s", id, localHandle, handle, MaxMemoryRegion.Util.asString(stackRegion), MaxMemoryRegion.Util.asString(threadLocalsRegion));
+            return String.format("id=%d, localHandle=0x%08x, handle=%d, stackRegion=%s, tlasRegion=%s", id, localHandle, handle, MaxMemoryRegion.Util.asString(stackRegion), MaxMemoryRegion.Util.asString(threadLocalsRegion));
         }
     }
 

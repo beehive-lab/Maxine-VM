@@ -167,7 +167,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             if (typeState != null) {
                 final Instruction targetedInstruction = instructionMap[position];
                 if (targetedInstruction == null) {
-                    throw verifyError("Invalid branch target or exception handler entry position (" + position + ")");
+                    verifyError("Invalid branch target or exception handler entry position (" + position + ")");
                 }
                 typeState.setTargetedInstruction(targetedInstruction);
             }
@@ -188,7 +188,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
                 }
                 instruction = instruction.next();
                 if (instruction == null) {
-                    throw verifyError("Execution falls off end of method");
+                    verifyError("Execution falls off end of method");
                 }
             }
         }
@@ -208,7 +208,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
             // fall through
         }
-        throw verifyError("Invalid bytecode position " + position + "(" + positionDescription + ")");
+        verifyError("Invalid bytecode position " + position + "(" + positionDescription + ")");
     }
 
     @Override
@@ -236,7 +236,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             }
             return typeState;
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            throw verifyError("Branch target outside of code range");
+            throw fatalVerifyError("Branch target outside of code range");
         }
     }
 
@@ -629,7 +629,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
                 this.ret = ret;
             } else {
                 if (this.ret != ret) {
-                    throw verifyError("Multiple returns to single JSR");
+                    verifyError("Multiple returns to single JSR");
                 }
             }
         }
