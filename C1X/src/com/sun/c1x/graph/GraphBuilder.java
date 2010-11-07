@@ -1152,7 +1152,7 @@ public final class GraphBuilder {
                 if (object instanceof Instruction) {
                     Instruction obj = (Instruction) object;
                     if (!obj.isAppended()) {
-                        appendWithoutOptimization(obj, Instruction.SYNCHRONIZATION_ENTRY_BCI);
+                        appendWithoutOptimization(obj, obj.bci());
                     }
                 }
                 genMonitorExit(object, Instruction.SYNCHRONIZATION_ENTRY_BCI);
@@ -1779,9 +1779,9 @@ public final class GraphBuilder {
         }
         curState = syncHandler.stateBefore().copy();
 
-        Value exception = appendWithoutOptimization(new ExceptionObject(), Instruction.SYNCHRONIZATION_ENTRY_BCI);
-
         int bci = Instruction.SYNCHRONIZATION_ENTRY_BCI;
+        Value exception = appendWithoutOptimization(new ExceptionObject(curState.immutableCopy(bci)), bci);
+
         assert lock != null;
         assert curState.locksSize() > 0 && curState.lockAt(locksSize() - 1) == lock;
         if (lock instanceof Instruction) {
@@ -1941,7 +1941,8 @@ public final class GraphBuilder {
 
             // push an exception object onto the stack if we are parsing an exception handler
             if (pushException) {
-                apush(append(new ExceptionObject()));
+                FrameState stateBefore = curState.immutableCopy(bci());
+                apush(append(new ExceptionObject(stateBefore)));
                 pushException = false;
             }
 
