@@ -564,9 +564,9 @@ public class CiUtil {
      * @return the value of {@code sb}
      */
     public static StringBuilder appendBitmap(StringBuilder sb, byte[] bitmap) {
+        boolean first = true;
         for (int i = 0; i < bitmap.length; i++) {
             int b = bitmap[i] & 0xff;
-            boolean first = true;
             for (int j = 0; j < 8; j++) {
                 if ((b & 1) != 0) {
                     if (first) {
@@ -574,7 +574,7 @@ public class CiUtil {
                     } else {
                         sb.append(", ");
                     }
-                    sb.append(i * 8 + j);
+                    sb.append((i * 8) + j);
                 }
                 b = b >>> 1;
             }
