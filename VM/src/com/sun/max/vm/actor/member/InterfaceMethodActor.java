@@ -48,4 +48,8 @@ public class InterfaceMethodActor extends MethodActor {
         assert iIndexInInterface > 0;
         this.iIndexInInterface = iIndexInInterface;
     }
+
+    public StackTraceElement toStackTraceElement(int bci) {
+        return new StackTraceElement(holder().name.string, name.string, holder().sourceFileName, -1);
+    }
 }

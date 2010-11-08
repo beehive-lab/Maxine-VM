@@ -59,8 +59,7 @@ public abstract class BlockEnd extends Instruction {
     }
 
     /**
-     * Get the state after the end of this block.
-     * @return the value stack representing the state
+     * Gets the state after the end of this block.
      */
     @Override
     public FrameState stateAfter() {

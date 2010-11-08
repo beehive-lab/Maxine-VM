@@ -1218,8 +1218,11 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand result = asm.restart(CiKind.Object);
         XirOperand latch = asm.createRegister("latch", CiKind.Word, AMD64.r14);
         XirOperand temp = asm.createTemp("temp", CiKind.Word);
+        // Emit a safepoint
+        asm.safepoint();
+        asm.pload(CiKind.Word, latch, latch, true);
         // Load safepoints-enabled thread locals pointer
-        asm.pload(CiKind.Word, temp, latch, asm.i(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.offset), false);
+        asm.pload(CiKind.Word, temp, latch, asm.i(VmThreadLocal.ETLA.offset), false);
         // Load exception object from thread locals
         asm.pload(CiKind.Object, result, temp, asm.i(VmThreadLocal.EXCEPTION_OBJECT.offset), false);
         // Clear the exception object out of thread locals

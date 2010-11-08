@@ -2140,7 +2140,7 @@ public class LinearScan {
         int stackBegin;
         int locksBegin;
 
-        FrameState callerState = curScope.callerState();
+        FrameState callerState = curScope.callerState;
         if (callerState != null) {
             // process recursively to compute outermost scope first
             stackBegin = callerState.stackSize();

@@ -20,8 +20,10 @@
  */
 package com.sun.max.vm.stack.amd64;
 
+import static com.sun.max.platform.Platform.*;
+
+import com.sun.c1x.target.amd64.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.amd64.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -100,7 +102,7 @@ public class AMD64OptStackWalking {
         final int unwindFrameSize = getUnwindFrameSize();
 
         // Put the exception where the exception handler expects to find it
-        VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
+        VmThreadLocal.EXCEPTION_OBJECT.store3(Reference.fromJava(throwable));
 
         if (throwable instanceof StackOverflowError) {
             // This complete call-chain must be inlined down to the native call
@@ -192,7 +194,7 @@ public class AMD64OptStackWalking {
         if (Trap.isTrapStub(targetMethod.classMethodActor)) {
             // RBP is whatever was in the frame pointer register at the time of the trap
             Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
-            callerFP = stackFrameWalker.readWord(trapState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
+            callerFP = stackFrameWalker.readWord(trapState, platform().target.registerSaveArea.offsetOf(AMD64.rbp)).asPointer();
         } else {
             // Propagate RBP unchanged as OPT methods do not touch this register.
             callerFP = current.fp();

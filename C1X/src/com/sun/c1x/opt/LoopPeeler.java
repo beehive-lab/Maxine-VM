@@ -625,7 +625,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitExceptionObject(ExceptionObject i) {
-        ExceptionObject other = new ExceptionObject();
+        ExceptionObject other = new ExceptionObject(i.stateBefore);
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);

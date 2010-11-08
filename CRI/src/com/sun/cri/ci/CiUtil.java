@@ -374,6 +374,14 @@ public class CiUtil {
         }
         return sb.toString();
     }
+    
+    /**
+     * Gets a stack trace element for a given method and bytecode index.
+     */
+    public static StackTraceElement toStackTraceElement(RiMethod method, int bci) {
+        return new StackTraceElement(CiUtil.toJavaName(method.holder()), method.name(), null, -1);
+    }
+    
     /**
      * Converts a Java source-language class name into the internal form.
      *

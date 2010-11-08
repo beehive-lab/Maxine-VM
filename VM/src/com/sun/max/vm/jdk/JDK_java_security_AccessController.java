@@ -202,7 +202,7 @@ final class JDK_java_security_AccessController {
     @NEVER_INLINE
     private static Context getContext() {
         final Context context = new Context();
-        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
+        new VmStackFrameWalker(VmThread.current().tla()).inspect(VMRegister.getInstructionPointer(),
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer(),
                                                        context);

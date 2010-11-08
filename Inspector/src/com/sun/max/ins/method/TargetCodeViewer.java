@@ -63,16 +63,20 @@ public abstract class TargetCodeViewer extends CodeViewer {
             final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
-                teleConstantPool = teleCodeAttribute.getTeleConstantPool();
-                ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
-                localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().constantPool;
-                for (int index = 0; index < instructionMap.length(); index++) {
-                    final int opcode = instructionMap.opcode(index);
-                    if (instructionMap.isBytecodeBoundary(index) && opcode >= 0) {
-                        rowToTagText[index] = instructionMap.bytecodeLocation(index).bytecodePosition + ": " + Bytecodes.nameOf(opcode);
-                    } else {
-                        rowToTagText[index] = "";
+                if (teleCodeAttribute != null) {
+                    teleConstantPool = teleCodeAttribute.getTeleConstantPool();
+                    ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
+                    localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().constantPool;
+                    for (int index = 0; index < instructionMap.length(); index++) {
+                        final int opcode = instructionMap.opcode(index);
+                        if (instructionMap.isBytecodeBoundary(index) && opcode >= 0) {
+                            rowToTagText[index] = instructionMap.bytecodeLocation(index).bytecodePosition + ": " + Bytecodes.nameOf(opcode);
+                        } else {
+                            rowToTagText[index] = "";
+                        }
                     }
+                } else {
+                    // Must be a hand crafted stub that has been linked with a ClassMethodActor (e.g C1XCompilerScheme.getTrapStub()).
                 }
             }
         }

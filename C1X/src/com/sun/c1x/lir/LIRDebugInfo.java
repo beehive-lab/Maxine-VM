@@ -170,7 +170,7 @@ public class LIRDebugInfo {
     }
 
     private CiDebugInfo.Frame makeFrame(FrameState state, int bci, ValueLocator locator) {
-        // XXX: cache the debug information for each value stack if equivalent to previous
+        // XXX: cache the debug information for each frame state if equivalent to previous
         return createFrame(state, bci, locator);
     }
 
@@ -222,7 +222,7 @@ public class LIRDebugInfo {
             values[pos] = locator.getLocation(v);
         }
 
-        FrameState caller = state.scope().callerState();
+        FrameState caller = state.callerState();
         CiDebugInfo.Frame parent = null;
         if (caller != null) {
              parent = makeFrame(caller, state.scope().callerBCI(), locator);
