@@ -22,6 +22,8 @@ package com.sun.cri.ci;
 
 import java.util.*;
 
+import com.sun.cri.ci.CiRegister.RegisterFlag;
+
 
 /**
  * Represents a CPU architecture, including information such as its endianness, CPU
@@ -70,7 +72,7 @@ public abstract class CiArchitecture {
      * array is equal to its {@linkplain CiRegister#number number}.
      */
     public final CiRegister[] registers;
-
+    
     /**
      * Map of all registers keyed by their {@linkplain CiRegister#name names}.
      */
@@ -87,6 +89,22 @@ public abstract class CiArchitecture {
     public final int machineCodeCallDisplacementOffset;
 
     public final int returnAddressSize;
+
+    private final EnumMap<RegisterFlag, CiRegister[]> registersByTypeAndEncoding;
+    
+    /**
+     * Gets the register for a given {@linkplain CiRegister#encoding encoding} and type.
+     * 
+     * @param encoding a register value as used in a machine instruction 
+     * @param type the type of the register
+     */
+    public CiRegister registerFor(int encoding, RegisterFlag type) {
+        CiRegister[] regs = registersByTypeAndEncoding.get(type);
+        assert encoding >= 0 && encoding < regs.length;
+        CiRegister reg = regs[encoding];
+        assert reg != null;
+        return reg;
+    }
 
     protected CiArchitecture(String name, int wordSize, String backend, ByteOrder byteOrder, CiRegister[] registers, int nativeCallDisplacementOffset, int returnAddressSize) {
         this.name = name;
@@ -109,6 +127,18 @@ public abstract class CiArchitecture {
         for (CiRegister register : registers) {
             registersByName.put(register.name, register);
             assert registers[register.number] == register;
+        }
+
+        registersByTypeAndEncoding = new EnumMap<CiRegister.RegisterFlag, CiRegister[]>(RegisterFlag.class);
+        EnumMap<RegisterFlag, CiRegister[]> categorizedRegs = CiRegister.categorize(registers);
+        for (RegisterFlag type : RegisterFlag.values()) {
+            CiRegister[] regs = categorizedRegs.get(type);
+            int max = CiRegister.maxRegisterEncoding(regs);
+            CiRegister[] regsByEnc = new CiRegister[max + 1];
+            for (CiRegister reg : regs) {
+                regsByEnc[reg.encoding] = reg;
+            }
+            registersByTypeAndEncoding.put(type, regsByEnc);
         }
     }
 

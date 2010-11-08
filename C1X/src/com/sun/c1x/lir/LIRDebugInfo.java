@@ -79,8 +79,8 @@ public class LIRDebugInfo {
     public void allocateDebugInfo(int registerSlots, int frameSize, CiTarget target) {
         byte[] registerRefMap = registerSlots > 0 ? newRefMap(registerSlots) : null;
         byte[] stackRefMap = frameSize > 0 ? newRefMap(frameSize / target.spillSlotSize) : null;
-        Frame frame = scopeDebugInfo == null ? null : makeFrame(scopeDebugInfo);
-        debugInfo = new CiDebugInfo(state.scope().toCodeSite(bci), frame, registerRefMap, stackRefMap);
+        CiCodePos codePos = scopeDebugInfo == null ? state.scope().toCodeSite(bci) : makeFrame(scopeDebugInfo);
+        debugInfo = new CiDebugInfo(codePos, registerRefMap, stackRefMap);
     }
 
     private static Frame makeFrame(IRScopeDebugInfo scope) {
@@ -125,7 +125,7 @@ public class LIRDebugInfo {
                 }
             }
         }
-        return new Frame(caller, scope.scope.toCodeSite(scope.bci), values.toArray(new CiValue[values.size()]), numLocals, numStack, numLocks);
+        return new Frame(caller, scope.scope.method, scope.bci, values.toArray(new CiValue[values.size()]), numLocals, numStack, numLocks);
     }
 
     public void setOop(CiValue location, CiTarget target) {
@@ -224,10 +224,11 @@ public class LIRDebugInfo {
 
         FrameState caller = state.callerState();
         CiDebugInfo.Frame parent = null;
+        IRScope scope = state.scope();
         if (caller != null) {
-             parent = makeFrame(caller, state.scope().callerBCI(), locator);
+             parent = makeFrame(caller, scope.callerBCI(), locator);
         }
-        return new CiDebugInfo.Frame(parent, state.scope().toCodeSite(bci), values, numLocals, numStack, numLocks);
+        return new CiDebugInfo.Frame(parent, scope.method, bci, values, numLocals, numStack, numLocks);
     }
 
 }

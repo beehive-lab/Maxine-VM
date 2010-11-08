@@ -25,6 +25,7 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ri.*;
 
 /**
@@ -475,5 +476,137 @@ public class CiUtil {
             sb.append(nl);
         }
         return sb.toString();
+    }
+    
+    public static StringBuilder appendLocation(StringBuilder sb, RiMethod method, int bci) {
+        StackTraceElement ste = method.toStackTraceElement(bci);
+        if (ste.getFileName() != null && ste.getLineNumber() > 0) {
+            sb.append(ste);
+        } else {
+            sb.append(CiUtil.format("%h.%n(%p)", method, false));
+        }
+        sb.append(String.format(" [bci: %d]", bci));
+        return sb;
+    }
+
+    /**
+     * Appends a formatted code position to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param pos the code position to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder append(StringBuilder sb, CiCodePos pos) {
+        appendLocation(sb, pos.method, pos.bci);
+        if (pos.caller != null) {
+            sb.append(String.format("%n--> "));
+            append(sb, pos.caller);
+        }
+        return sb;
+    }
+
+    /**
+     * Appends the formatted values of a given frame to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param separator the string to be inserted between each slot-value string.
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder appendValues(StringBuilder sb, Frame frame, String separator) {
+        String sep = "";
+        if (frame.numLocals != 0) {
+            for (int i = 0; i < frame.numLocals; i++) {
+                sb.append(sep).append("local[").append(i).append("] = ").append(frame.getLocalValue(i));
+                sep = separator;
+            }
+        }
+        if (frame.numStack != 0) {
+            for (int i = 0; i < frame.numStack; i++) {
+                sb.append(sep).append("stack[").append(i).append("] = ").append(frame.getStackValue(i));
+                sep = separator;
+            }
+        }
+        if (frame.numLocks != 0) {
+            for (int i = 0; i < frame.numLocks; i++) {
+                sb.append(sep).append("lock[").append(i).append("] = ").append(frame.getLockValue(i));
+                sep = separator;
+            }
+        }
+        return sb;
+    }
+
+    /**
+     * Appends a formatted frame to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param frame the frame to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder append(StringBuilder sb, Frame frame) {
+        appendLocation(sb, frame.method, frame.bci);
+        String sep = String.format("%n  ");
+        if (frame.values.length > 0) {
+            sb.append(sep);
+            appendValues(sb, frame, sep);
+        }
+        if (frame.caller != null) {
+            sb.append(String.format("%n--> "));
+            append(sb, frame.caller);
+        }
+        return sb;
+    }
+    
+    /**
+     * Appends a formatted bit map to a {@link StringBuilder}. For example:
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param bitmap the bit map to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder appendBitmap(StringBuilder sb, byte[] bitmap) {
+        for (int i = 0; i < bitmap.length; i++) {
+            int b = bitmap[i] & 0xff;
+            boolean first = true;
+            for (int j = 0; j < 8; j++) {
+                if ((b & 1) != 0) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        sb.append(", ");
+                    }
+                    sb.append(i * 8 + j);
+                }
+                b = b >>> 1;
+            }
+        }
+        sb.append(" [0x");
+        for (int i = bitmap.length - 1; i >= 0; i--) {
+            sb.append(String.format("%02x", bitmap[i] & 0xff));
+        }
+        return sb.append(']');
+    }
+
+    /**
+     * Appends a formatted debuginfo to a {@link StringBuilder}. For example:
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param info the debug info to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder append(StringBuilder sb, CiDebugInfo info) {
+        String nl = String.format("%s");
+        if (info.hasRegisterRefMap()) {
+            appendBitmap(sb.append("reg-ref-map: "), info.registerRefMap).append(nl);
+        }
+        if (info.hasStackRefMap()) {
+            appendBitmap(sb.append("frame-ref-map: "), info.frameRefMap).append(nl);
+        }
+        Frame frame = info.frame();
+        if (frame != null) {
+            append(sb, frame);
+        } else {
+            append(sb, info.codePos);
+        }
+        return sb;
     }
 }

@@ -32,7 +32,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.transform.*;

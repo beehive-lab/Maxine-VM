@@ -637,6 +637,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         return exceptionClassActors == null ? 0 : exceptionClassActors.length;
     }
 
+    @HOSTED_ONLY
     private void gatherInlinedMethods(Site site, Set<MethodActor> inlinedMethods) {
         CiDebugInfo debugInfo = site.debugInfo();
         if (debugInfo != null) {
@@ -854,6 +855,19 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
+    public CiDebugInfo getDebugInfo(Pointer ip, boolean implicitExceptionPoint) {
+        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
+            ip = ip.minus(1);
+        }
+
+        int stopIndex = findClosestStopIndex(ip);
+        if (stopIndex < 0) {
+            return null;
+        }
+        return decodeDebugInfo(classMethodActor, sourceInfo, sourceMethods, stopIndex);
+    }
+
+    @Override
     public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean implicitExceptionPoint) {
         if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
             ip = ip.minus(1);
@@ -899,5 +913,27 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             return null;
         }
 
+    }
+
+    public static CiDebugInfo decodeDebugInfo(ClassMethodActor classMethodActor, Object sourceInfoObject, ClassMethodActor[] sourceMethods, int index) {
+        if (sourceInfoObject instanceof int[]) {
+            int[] sourceInfo = (int[]) sourceInfoObject;
+            if (index < 0) {
+                return null;
+            }
+            int start = index * 3;
+            ClassMethodActor sourceMethod = sourceMethods[sourceInfo[start]];
+            int bci = sourceInfo[start + 1];
+            int parentIndex = sourceInfo[start + 2];
+            final CiDebugInfo caller = decodeDebugInfo(classMethodActor, sourceInfo, sourceMethods, parentIndex);
+            CiCodePos callerPos = caller == null ? null : caller.codePos;
+            return new CiDebugInfo(new CiCodePos(callerPos, sourceMethod, bci), null, null);
+        } else if (sourceInfoObject instanceof char[]) {
+            // no inlined methods; just recover the bytecode index
+            char[] array = (char[]) sourceInfoObject;
+            return new CiDebugInfo(new CiCodePos(null, classMethodActor, array[index]), null, null);
+        } else {
+            return null;
+        }
     }
 }
