@@ -23,10 +23,10 @@ package com.sun.c1x.util;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ir.Value;
-import com.sun.c1x.ir.Instruction;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ri.*;
 
 /**
@@ -389,4 +389,39 @@ public class Util {
         return value == null ? "-" : "" + value.kind.typeChar + value.id();
     }
 
+    /**
+     * Prints a given list of {@link CiDebugInfo} objects to {@link TTY}.
+     * <p>
+     * Sample output:
+     * <pre>
+     *     java.lang.ClassLoader.loadClass(ClassLoader.java:296) [bci: 28], frame-ref-map: 0, 1, 4 [0x13]
+     *         local[0] = stack:0:w
+     *         local[1] = stack:1:w
+     *         local[2] = stack:2:w
+     *         local[3] = stack:4:w
+     * </pre>
+     */
+    public static void printDebugInfoStack(CiDebugInfo[] infos, String indent) {
+        for (CiDebugInfo info : infos) {
+            String indentTwice = indent + indent;
+            StringBuilder refMaps = new StringBuilder();
+            if (info.hasRegisterRefMap()) {
+                CiUtil.appendBitmap(refMaps.append(", reg-ref-map:"), info.registerRefMap);
+            }
+            if (info.hasStackRefMap()) {
+                CiUtil.appendBitmap(refMaps.append(", frame-ref-map: "), info.frameRefMap);
+            }
+            CiCodePos pos = info.codePos;
+            while (pos != null) {
+                TTY.println(CiUtil.appendLocation(new StringBuilder(indent), pos.method, pos.bci).append(refMaps).toString());
+                refMaps.setLength(0);
+                if (pos instanceof Frame) {
+                    Frame frame = (Frame) pos;
+                    String sep = "\n" + indentTwice;
+                    TTY.println(CiUtil.appendValues(new StringBuilder(indentTwice), frame, sep).toString());
+                }
+                pos = pos.caller;
+            }
+        }
+    }
 }

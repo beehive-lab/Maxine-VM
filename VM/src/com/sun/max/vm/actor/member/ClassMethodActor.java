@@ -253,9 +253,6 @@ public abstract class ClassMethodActor extends MethodActor {
                     final boolean isConstructor = isInitializer();
                     final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
                     if (substitute != null) {
-                        if (isConstructor) {
-                            System.console();
-                        }
                         compilee = substitute.compilee();
                         codeAttribute = compilee.codeAttribute;
                         originalCodeAttribute = compilee.originalCodeAttribute;
