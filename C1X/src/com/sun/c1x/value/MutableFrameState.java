@@ -36,14 +36,14 @@ import com.sun.cri.ci.*;
  * {@link FrameState#copy()}.
  * Contrariwise and as an optimization, an instance referenced as {@code MutableFrameState} can be assigned to
  * a variable, field, or method parameter of type {@link FrameState} without creating an immutable copy before
- * (using {@link #immutableCopy()}) if the state is not mutated after the assignment.
+ * (using {@link #immutableCopy(int)}) if the state is not mutated after the assignment.
  *
  * @author Michael Duller
  */
 public class MutableFrameState extends FrameState {
 
-    public MutableFrameState(IRScope irScope, int maxLocals, int maxStack) {
-        super(irScope, maxLocals, maxStack);
+    public MutableFrameState(IRScope irScope, int bci, int maxLocals, int maxStack) {
+        super(irScope, bci, maxLocals, maxStack);
     }
 
     /**
@@ -341,9 +341,10 @@ public class MutableFrameState extends FrameState {
 
     /**
      * Gets an immutable copy of this state.
+     * @param bci the bytecode index of the new frame state
      */
-    public FrameState immutableCopy() {
-        return copy(true, true, true);
+    public FrameState immutableCopy(int bci) {
+        return copy(bci, true, true, true);
     }
 
     /**

@@ -158,6 +158,11 @@ public interface RiMethod {
      * @return the list of exception handlers
      */
     RiExceptionHandler[] exceptionHandlers();
+
+    /**
+     * Gets a stack trace element for this method and a given bytecode index.
+     */
+    StackTraceElement toStackTraceElement(int bci);
     
     /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.

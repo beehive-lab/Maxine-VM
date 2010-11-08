@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers;
 
+import static com.sun.max.vm.thread.VmThread.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -78,7 +80,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
      */
     @INLINE
     protected static final int encodeCurrentThreadIDForLockword() {
-        return VmThreadLocal.ID.getConstantWord().asAddress().toInt();
+        return VmThreadLocal.ID.load(currentTLA()).toInt();
     }
 
     /**

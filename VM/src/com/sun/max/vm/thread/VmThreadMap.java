@@ -208,11 +208,11 @@ public final class VmThreadMap {
      * The head of the VM thread locals list.
      *
      * The address of this field in {@link #ACTIVE} is exposed to native code via
-     * {@link Header#threadLocalsListHeadOffset}.
+     * {@link Header#tlaListHeadOffset}.
      * This allows a debugger attached to the VM to discover all Java threads without using
      * platform specific mechanisms (such as thread_db on Solaris and Linux or Mach APIs on Darwin).
      */
-    private Pointer threadLocalsListHead = Pointer.zero();
+    private Pointer tlaListHead = Pointer.zero();
 
     /**
      * Once true, no more threads can be started.
@@ -224,26 +224,26 @@ public final class VmThreadMap {
     }
 
     @INLINE
-    private static Pointer getPrev(Pointer threadLocals) {
-        return VmThreadLocal.BACKWARD_LINK.getConstantWord(threadLocals).asPointer();
+    private static Pointer getPrev(Pointer tla) {
+        return VmThreadLocal.BACKWARD_LINK.load(tla);
     }
 
     @INLINE
-    private static Pointer getNext(Pointer threadLocals) {
-        return VmThreadLocal.FORWARD_LINK.getConstantWord(threadLocals).asPointer();
+    private static Pointer getNext(Pointer tla) {
+        return VmThreadLocal.FORWARD_LINK.load(tla);
     }
 
     @INLINE
-    private static void setPrev(Pointer threadLocals, Pointer prev) {
-        if (!threadLocals.isZero()) {
-            VmThreadLocal.BACKWARD_LINK.setConstantWord(threadLocals, prev);
+    private static void setPrev(Pointer tla, Pointer prev) {
+        if (!tla.isZero()) {
+            VmThreadLocal.BACKWARD_LINK.store3(tla, prev);
         }
     }
 
     @INLINE
-    private static void setNext(Pointer threadLocals, Pointer next) {
-        if (!threadLocals.isZero()) {
-            VmThreadLocal.FORWARD_LINK.setConstantWord(threadLocals, next);
+    private static void setNext(Pointer tla, Pointer next) {
+        if (!tla.isZero()) {
+            VmThreadLocal.FORWARD_LINK.store3(tla, next);
         }
     }
 
@@ -264,13 +264,13 @@ public final class VmThreadMap {
      * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
      *
      * @param thread the VmThread to add
-     * @param threadLocals a pointer to the VM thread locals for the thread
+     * @param tla a pointer to the VM thread locals for the thread
      * @param daemon specifies if {@code thread} is a daemon
      */
-    public static void addThreadLocals(VmThread thread, Pointer threadLocals, boolean daemon) {
-        setNext(threadLocals, ACTIVE.threadLocalsListHead);
-        setPrev(ACTIVE.threadLocalsListHead, threadLocals);
-        ACTIVE.threadLocalsListHead = threadLocals;
+    public static void addThreadLocals(VmThread thread, Pointer tla, boolean daemon) {
+        setNext(tla, ACTIVE.tlaListHead);
+        setPrev(ACTIVE.tlaListHead, tla);
+        ACTIVE.tlaListHead = tla;
     }
 
     /**
@@ -321,20 +321,20 @@ public final class VmThreadMap {
      * @param daemon specifies if the thread is a daemon
      */
     public void removeThreadLocals(VmThread thread) {
-        Pointer threadLocals = thread.vmThreadLocals();
-        if (threadLocalsListHead == threadLocals) {
+        Pointer tla = thread.tla();
+        if (tlaListHead == tla) {
             // this vm thread locals is at the head of list
-            threadLocalsListHead = getNext(threadLocalsListHead);
+            tlaListHead = getNext(tlaListHead);
         } else {
             // this vm thread locals is somewhere in the middle
-            final Pointer prev = getPrev(threadLocals);
-            final Pointer next = getNext(threadLocals);
+            final Pointer prev = getPrev(tla);
+            final Pointer next = getNext(tla);
             setPrev(next, prev);
             setNext(prev, next);
         }
         // set this vm thread locals' links to zero
-        setPrev(threadLocals, Pointer.zero());
-        setNext(threadLocals, Pointer.zero());
+        setPrev(tla, Pointer.zero());
+        setNext(tla, Pointer.zero());
         // release the ID for a later thread's use
         idMap.release(thread.id());
         if (!thread.daemon && thread != VmThread.mainThread) {
@@ -418,12 +418,12 @@ public final class VmThreadMap {
      * @param procedure the procedure to apply to each VM thread locals
      */
     public void forAllThreadLocals(Pointer.Predicate predicate, Pointer.Procedure procedure) {
-        Pointer threadLocals = threadLocalsListHead;
-        while (!threadLocals.isZero()) {
-            if (predicate == null || predicate.evaluate(threadLocals)) {
-                procedure.run(threadLocals);
+        Pointer tla = tlaListHead;
+        while (!tla.isZero()) {
+            if (predicate == null || predicate.evaluate(tla)) {
+                procedure.run(tla);
             }
-            threadLocals = getNext(threadLocals);
+            tla = getNext(tla);
         }
     }
 
@@ -448,8 +448,8 @@ public final class VmThreadMap {
     public static Thread[] getThreads(final boolean includeGCThreads) {
         final ArrayList<Thread> threads = new ArrayList<Thread>();
         Pointer.Procedure proc = new Pointer.Procedure() {
-            public void run(Pointer vmThreadLocals) {
-                VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+            public void run(Pointer tla) {
+                VmThread vmThread = VmThread.fromTLA(tla);
                 if (vmThread.javaThread() != null && (includeGCThreads || !vmThread.isVmOperationThread())) {
                     threads.add(vmThread.javaThread());
                 }

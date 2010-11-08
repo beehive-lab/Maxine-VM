@@ -82,7 +82,7 @@ public class TypeState extends Frame {
 
     public void pushSubroutine(Subroutine subroutine) {
         if (subroutineFrame.contains(subroutine)) {
-            throw verifyError("Recursive subroutine call");
+            verifyError("Recursive subroutine call");
         }
         subroutineFrame = new SubroutineFrame(subroutine, subroutineFrame);
     }
@@ -107,7 +107,7 @@ public class TypeState extends Frame {
      */
     public int popSubroutine(Subroutine subroutine) {
         if (subroutineFrame == SubroutineFrame.TOP) {
-            throw verifyError("Should be in a subroutine");
+            verifyError("Should be in a subroutine");
         }
         int numberOfSubroutineFramesPopped = 1;
         try {
@@ -117,7 +117,7 @@ public class TypeState extends Frame {
             }
             subroutineFrame = subroutineFrame.parent();
         } catch (NullPointerException nullPointerException) {
-            throw verifyError("Illegal return from subroutine");
+            verifyError("Illegal return from subroutine");
         }
         return numberOfSubroutineFramesPopped;
     }
@@ -133,7 +133,7 @@ public class TypeState extends Frame {
                 final VerificationType value = locals[index];
                 if (SUBROUTINE.isAssignableFrom(value)) {
                     if (value != type) {
-                        throw verifyError(String.format("Two subroutines cannot merge to a single RET:%n" +
+                        verifyError(String.format("Two subroutines cannot merge to a single RET:%n" +
                             "  subroutine 1: %s%n  subroutine 2: %s", value, type));
                     }
                 }
@@ -214,7 +214,7 @@ public class TypeState extends Frame {
     public boolean mergeStackFrom(TypeState fromTypeState, int thisPosition) {
         boolean changed = false;
         if (stackSize != fromTypeState.stackSize) {
-            throw verifyError("Inconsistent height for stacks being merged at bytecode position " + thisPosition);
+            verifyError("Inconsistent height for stacks being merged at bytecode position " + thisPosition);
         }
 
         for (int i = 0; i < stackSize; i++) {

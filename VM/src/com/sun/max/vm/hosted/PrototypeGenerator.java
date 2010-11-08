@@ -102,7 +102,7 @@ public final class PrototypeGenerator {
      */
     DataPrototype createDataPrototype(boolean tree, boolean prototypeJit) {
         final GraphPrototype graphPrototype = createGraphPrototype(tree, prototypeJit);
-        final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null);
+        final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null, threadsOption.getValue());
         return dataPrototype;
     }
 

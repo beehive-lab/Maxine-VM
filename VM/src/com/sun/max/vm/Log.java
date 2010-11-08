@@ -351,8 +351,8 @@ public final class Log {
     /**
      * Equivalent to calling {@link LogPrintStream#printThreadLocals(Pointer, boolean)} on {@link #out}.
      */
-    public static void printThreadLocals(Pointer vmThreadLocals, boolean all) {
-        out.printThreadLocals(vmThreadLocals, all);
+    public static void printThreadLocals(Pointer tla, boolean all) {
+        out.printThreadLocals(tla, all);
     }
 
     private static final class LogOutputStream extends OutputStream {
@@ -859,10 +859,10 @@ public final class Log {
         /**
          * Convenience routine for printing {@linkplain VmThreadLocal VM thread locals} to this stream.
          *
-         * @param vmThreadLocals a pointer to VM thread locals
+         * @param tla a pointer to VM thread locals
          * @param all specifies if all 3 {@linkplain VmThreadLocal TLS} areas are to be printed
          */
-        public void printThreadLocals(Pointer vmThreadLocals, boolean all) {
+        public void printThreadLocals(Pointer tla, boolean all) {
             boolean lockDisabledSafepoints = false;
             if (!MaxineVM.isHosted()) {
                 lockDisabledSafepoints = lock();
@@ -876,14 +876,14 @@ public final class Log {
                     }
                     print(vmThreadLocal.name);
                     print(": ");
-                    vmThreadLocal.log(this, vmThreadLocals, false);
+                    vmThreadLocal.log(this, tla, false);
                     println();
                 }
             } else {
                 final List<VmThreadLocal> values = VmThreadLocal.values();
-                final Pointer enabled = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                final Pointer disabled = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-                final Pointer triggered = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+                final Pointer enabled = ETLA.load(tla);
+                final Pointer disabled = DTLA.load(tla);
+                final Pointer triggered = TTLA.load(tla);
                 for (int i = 0; i != values.size(); i++) {
                     final VmThreadLocal vmThreadLocal = values.get(i);
                     for (int j = 0; j < 45 - vmThreadLocal.name.length(); j++) {

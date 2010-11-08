@@ -50,7 +50,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         super();
         this.teleVM = teleVM;
         this.teleNativeThread = teleNativeThread;
-        this.teleEnabledVmThreadLocalValues = teleNativeThread.localsBlock().threadLocalsAreaFor(Safepoint.State.ENABLED);
+        this.teleEnabledVmThreadLocalValues = teleNativeThread.localsBlock().tlaFor(Safepoint.State.ENABLED);
         final TeleRegisterSet registers = teleNativeThread.registers();
         this.cpuInstructionPointer = registers.instructionPointer();
         this.cpuStackPointer = registers.stackPointer();
@@ -127,8 +127,8 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     }
 
     @Override
-    public Word readWord(VmThreadLocal local) {
-        return teleEnabledVmThreadLocalValues == null ? Pointer.zero() : teleEnabledVmThreadLocalValues.getWord(local);
+    public Pointer readPointer(VmThreadLocal local) {
+        return teleEnabledVmThreadLocalValues == null ? Pointer.zero() : teleEnabledVmThreadLocalValues.getWord(local).asPointer();
     }
 
     @Override

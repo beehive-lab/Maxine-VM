@@ -836,20 +836,10 @@ public abstract class StackFrameWalker {
     /**
      * Reads the value of a given VM thread local from the safepoint-enabled thread locals.
      *
-     * @param local the VM thread local to read
-     * @return the value (as a word) of {@code local} in the safepoint-enabled thread locals
-     */
-    public abstract Word readWord(VmThreadLocal local);
-
-    /**
-     * Reads the value of a given VM thread local from the safepoint-enabled thread locals.
-     *
-     * @param local the VM thread local to read
+     * @param tl the VM thread local to read
      * @return the value (as a pointer) of {@code local} in the safepoint-enabled thread locals
      */
-    public Pointer readPointer(VmThreadLocal local) {
-        return readWord(local).asPointer();
-    }
+    public abstract Pointer readPointer(VmThreadLocal tl);
 
     /**
      * Updates the stack walker's frame and stack pointers with those specified by the target ABI (use the ABI stack and frame pointers).

@@ -553,7 +553,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return RiExceptionHandler.NONE;
     }
 
-    @Override
     public boolean hasBalancedMonitors() {
         return true; // TODO: do the required analysis
     }

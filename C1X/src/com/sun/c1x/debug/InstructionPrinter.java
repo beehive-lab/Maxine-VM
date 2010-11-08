@@ -299,7 +299,11 @@ public class InstructionPrinter extends ValueVisitor {
             while (!hasPhisOnStack && i < state.stackSize()) {
                 Value value = state.stackAt(i);
                 hasPhisOnStack = isPhiAtBlock(value, block);
-                i += value.kind.sizeInSlots();
+                if (value != null && !value.isIllegal()) {
+                    i += value.kind.sizeInSlots();
+                } else {
+                    i++;
+                }
             }
 
             do {
@@ -313,7 +317,7 @@ public class InstructionPrinter extends ValueVisitor {
                         i++;
                     }
                 }
-                state = state.scope().callerState();
+                state = state.callerState();
             } while (state != null);
         }
 
@@ -336,7 +340,7 @@ public class InstructionPrinter extends ValueVisitor {
                     }
                 }
                 out.println();
-                state = state.scope().callerState();
+                state = state.callerState();
             } while (state != null);
         }
 

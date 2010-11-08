@@ -80,7 +80,7 @@ public abstract class AccessArray extends StateSplit {
      */
     @Override
     public boolean canTrap() {
-        return needsNullCheck();
+        return needsNullCheck() || needsBoundsCheck();
     }
 
     /**

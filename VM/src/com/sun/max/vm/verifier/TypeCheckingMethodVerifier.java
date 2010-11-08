@@ -134,7 +134,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 try {
                     frameMap[position] = frame;
                 } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-                    throw verifyError("Invalid bytecode position (" + position + ") in frame " + frameIndex + " of StackMapTable attribute");
+                    verifyError("Invalid bytecode position (" + position + ") in frame " + frameIndex + " of StackMapTable attribute");
                 }
                 previousFrame = frame;
                 previousFramePosition = position;
@@ -147,7 +147,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(interpreter);
         bytecodeScanner.scan(new BytecodeBlock(codeAttribute().code()));
         if (fallsThrough) {
-            throw verifyError("Execution falls off end of method");
+            verifyError("Execution falls off end of method");
         }
     }
 
@@ -169,7 +169,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             verifyIsValidInstructionPosition(info.endPosition(), "end_pc in exception handler");
         }
         if (info.startPosition() >= info.endPosition()) {
-            throw verifyError("Exception handler has a start_pc (" + info.startPosition() + ") not less than end_pc (" + info.endPosition() + ")");
+            verifyError("Exception handler has a start_pc (" + info.startPosition() + ") not less than end_pc (" + info.endPosition() + ")");
         }
     }
 
@@ -178,7 +178,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             final Frame recordedFrame = frameMap[position];
             if (recordedFrame != null) {
                 if (!opcodeMap[position]) {
-                    throw verifyError("Offset (" +  position + ") in a frame of the StackMapTable attribute does not point to an instruction");
+                    verifyError("Offset (" +  position + ") in a frame of the StackMapTable attribute does not point to an instruction");
                 }
             }
         }
@@ -191,7 +191,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
         }
-        throw verifyError("Invalid bytecode position " + position + "(" + positionDescription + ")");
+        verifyError("Invalid bytecode position " + position + "(" + positionDescription + ")");
     }
 
     /**
@@ -209,7 +209,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
         }
-        throw verifyError("Missing stackmap frame for bytecode position " + position + " (" + targetDescription + ")");
+        throw fatalVerifyError("Missing stackmap frame for bytecode position " + position + " (" + targetDescription + ")");
     }
 
     @Override
@@ -309,7 +309,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         final VerificationType declaredReturnType = getVerificationType(classMethodActor().descriptor().resultDescriptor());
         if (declaredReturnType == TOP) {
             if (returnType != TOP) {
-                throw verifyError("Invalid return for void method");
+                verifyError("Invalid return for void method");
             }
         } else {
             final VerificationType returnValue = frame.pop(returnType);
@@ -350,11 +350,11 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     }
 
     protected void performJsr(int offset) {
-        throw verifyError("JSR instruction is not supported");
+        verifyError("JSR instruction is not supported");
     }
 
     protected void performRet(int index) {
-        throw verifyError("RET instruction is not supported");
+        verifyError("RET instruction is not supported");
     }
 
     /**
@@ -427,7 +427,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 final ReferenceOrWordType element = (ReferenceOrWordType) getVerificationType(elementDescriptor);
                 frame.push(getObjectType(JavaTypeDescriptor.getArrayDescriptorForDescriptor(element.typeDescriptor(), 1)));
             } catch (ClassCastException classCastException) {
-                throw verifyError("Invalid use of primitive type in ANEWARRAY: " + elementDescriptor);
+                verifyError("Invalid use of primitive type in ANEWARRAY: " + elementDescriptor);
             }
         }
 
@@ -440,7 +440,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void arraylength() {
             final VerificationType array = frame.pop(REFERENCE);
             if (array != NULL && !array.isArray()) {
-                throw verifyError("Require array type in ARRAYLENGTH");
+                verifyError("Require array type in ARRAYLENGTH");
             }
             frame.push(INTEGER);
         }
@@ -481,7 +481,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             frame.pop(INTEGER);
             final VerificationType array = frame.pop(REFERENCE);
             if (array != BYTE_ARRAY && array != BOOLEAN_ARRAY && array != NULL) {
-                throw verifyError("Invalid array type for BALOAD");
+                verifyError("Invalid array type for BALOAD");
             }
             frame.push(BYTE);
         }
@@ -492,7 +492,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             frame.pop(INTEGER);
             final VerificationType array = frame.pop(REFERENCE);
             if (array != BYTE_ARRAY && array != BOOLEAN_ARRAY && array != NULL) {
-                throw verifyError("Invalid array type for BASTORE");
+                verifyError("Invalid array type for BASTORE");
             }
         }
 
@@ -526,7 +526,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             final ClassConstant classConstant = constantPool().classAt(index);
             final TypeDescriptor toType = classConstant.typeDescriptor();
             if (JavaTypeDescriptor.isPrimitive(toType)) {
-                throw verifyError("Invalid use of primitive type in CHECKCAST: " + toType);
+                verifyError("Invalid use of primitive type in CHECKCAST: " + toType);
             }
             frame.push(getObjectType(toType));
         }
@@ -1264,7 +1264,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             final InterfaceMethodRefConstant methodConstant = constantPool().interfaceMethodAt(index);
             final Utf8Constant methodName = methodConstant.name(constantPool());
             if (methodName.toString().startsWith("<")) {
-                throw verifyError("Invalid INVOKEINTERFACE on initialization method");
+                verifyError("Invalid INVOKEINTERFACE on initialization method");
             }
 
             final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
@@ -1272,7 +1272,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             frame.pop(OBJECT);
 
             if (actualCount != count) {
-                throw verifyError("INVOKEINTERFACE count operand does not match method signature");
+                verifyError("INVOKEINTERFACE count operand does not match method signature");
             }
 
             final TypeDescriptor holder = methodConstant.holder(constantPool());
@@ -1302,7 +1302,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             final MethodRefConstant methodConstant = constantPool().methodAt(index);
             final Utf8Constant name = methodConstant.name(constantPool());
             if (name.equals(SymbolTable.CLINIT)) {
-                throw verifyError("Cannot invoke <clinit> method");
+                verifyError("Cannot invoke <clinit> method");
             }
 
             final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
@@ -1310,7 +1310,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
             if (name.equals(SymbolTable.INIT)) {
                 if (methodSignature.resultDescriptor() != JavaTypeDescriptor.VOID) {
-                    throw verifyError("<init> must return void");
+                    verifyError("<init> must return void");
                 }
 
                 final UninitializedType uninitializedObject = (UninitializedType) frame.pop(UNINITIALIZED);
@@ -1345,7 +1345,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 final int constantPoolIndex = ((bytecodes[position + 1] & 0xFF) << 8) | (bytecodes[position + 2] & 0xFF);
                 return constantPool().classAt(constantPoolIndex).typeDescriptor();
             } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-                throw verifyError("Invalid NEW instruction at bytecode position " + position);
+                throw fatalVerifyError("Invalid NEW instruction at bytecode position " + position);
             }
         }
 
@@ -1353,7 +1353,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void invokestatic(int index) {
             final MethodRefConstant methodConstant = constantPool().methodAt(index);
             if (methodConstant.name(constantPool()).toString().startsWith("<")) {
-                throw verifyError("Invalid INVOKESTATIC on initialization method");
+                verifyError("Invalid INVOKESTATIC on initialization method");
             }
             final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
             popMethodParameters(methodSignature);
@@ -1364,7 +1364,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void invokevirtual(int index) {
             final MethodRefConstant methodConstant = constantPool().methodAt(index);
             if (methodConstant.name(constantPool()).toString().startsWith("<")) {
-                throw verifyError("Invalid INVOKEVIRTUAL on initialization method");
+                verifyError("Invalid INVOKEVIRTUAL on initialization method");
             }
 
             final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
@@ -1515,7 +1515,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     frame.push(CLASS);
                     break;
                 default:
-                    throw verifyError("LDC instruction for invalid constant pool type " + tag);
+                    verifyError("LDC instruction for invalid constant pool type " + tag);
             }
         }
 
@@ -1527,7 +1527,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             } else if (tag.equals(ConstantPool.Tag.DOUBLE)) {
                 frame.push(DOUBLE);
             } else {
-                throw verifyError("LDC2_W instruction for invalid constant pool type " + tag);
+                verifyError("LDC2_W instruction for invalid constant pool type " + tag);
             }
         }
 
@@ -1586,7 +1586,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 final int match = scanner.readSwitchCase();
                 final int offset = scanner.readSwitchOffset();
                 if (i > 0 && match < lastMatch) {
-                    throw verifyError("Unordered lookupswitch (case " + i + " < case " + (i - 1) + ")");
+                    verifyError("Unordered lookupswitch (case " + i + " < case " + (i - 1) + ")");
                 }
                 performBranch(currentOpcodePosition() + offset);
                 lastMatch = match;
@@ -1678,9 +1678,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         @Override
         public void multianewarray(int index, int dimensions) {
             if (dimensions < 1) {
-                throw verifyError("Dimensions in MULTIANEWARRAY operand must be >= 1");
+                verifyError("Dimensions in MULTIANEWARRAY operand must be >= 1");
             } else if (dimensions > 255) {
-                throw verifyError("Array with too many dimensions");
+                verifyError("Array with too many dimensions");
             }
 
             for (int i = 0; i < dimensions; i++) {
@@ -1690,10 +1690,10 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             final ClassConstant classConstant = constantPool().classAt(index);
             final TypeDescriptor type = classConstant.typeDescriptor();
             if (!JavaTypeDescriptor.isArray(type)) {
-                throw verifyError("MULTIANEWARRAY cannot be applied to non-array type " + type);
+                verifyError("MULTIANEWARRAY cannot be applied to non-array type " + type);
             }
             if (JavaTypeDescriptor.getArrayDimensions(type) < dimensions) {
-                throw verifyError("MULTIANEWARRAY cannot create more dimensions than in the array type " + type);
+                verifyError("MULTIANEWARRAY cannot create more dimensions than in the array type " + type);
             }
             frame.push(getObjectType(type));
         }
@@ -1702,11 +1702,11 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void new_(int index) {
             final UninitializedNewType value = classVerifier().getUninitializedNewType(currentOpcodePosition());
             if (frame.isTypeOnStack(value)) {
-                throw verifyError("Uninitialized type already exists on the stack: " + value);
+                verifyError("Uninitialized type already exists on the stack: " + value);
             }
 
             if (JavaTypeDescriptor.isArray(constantPool().classAt(index, "array type descriptor").typeDescriptor())) {
-                throw verifyError("Invalid use of NEW instruction to create an array");
+                verifyError("Invalid use of NEW instruction to create an array");
             }
 
             frame.push(value);
@@ -1796,7 +1796,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
             frame.pop(INTEGER);
             if (lowMatch > highMatch) {
-                throw verifyError("Low match greater than high match in TABLESWITCH: " + lowMatch + " > " + highMatch);
+                verifyError("Low match greater than high match in TABLESWITCH: " + lowMatch + " > " + highMatch);
             }
             performBranch(currentOpcodePosition() + defaultOffset);
             final BytecodeScanner scanner = bytecodeScanner();
@@ -1812,7 +1812,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             performReturn(TOP);
 
             if (classMethodActor().isInstanceInitializer() && thisObjectType != OBJECT && !constructorInvoked) {
-                throw verifyError("Constructor must call super() or this()");
+                verifyError("Constructor must call super() or this()");
             }
         }
 
@@ -1937,7 +1937,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case MEMBAR_STORE_STORE:
                         case MEMBAR_MEMOP_STORE:
                         case MEMBAR_FENCE:           break;
-                        default:                     throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
+                        default:                     verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
                     }
                     break;
                 }
@@ -1953,7 +1953,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case ABOVE_THAN:  performCompare(WORD); break;
                         case BELOW_EQUAL: performCompare(WORD); break;
                         case BELOW_THAN:  performCompare(WORD); break;
-                        default:          throw verifyError("Unsupported UWCMP operand: " + operand);
+                        default:          verifyError("Unsupported UWCMP operand: " + operand);
                     }
                     break;
                 }
@@ -1963,7 +1963,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case ABOVE_THAN : performCompare(INTEGER); break;
                         case BELOW_EQUAL: performCompare(INTEGER); break;
                         case BELOW_THAN : performCompare(INTEGER); break;
-                        default:          throw verifyError("Unsupported UCMP operand: " + operand);
+                        default:          verifyError("Unsupported UCMP operand: " + operand);
                     }
                     break;
                 }
@@ -1973,7 +1973,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 }
                 case JNIOP: {
                     if (!classMethodActor().isNative()) {
-                        throw verifyError("Cannot use " + Bytecodes.nameOf(JNIOP) + " instruction in non-native method " + classMethodActor());
+                        verifyError("Cannot use " + Bytecodes.nameOf(JNIOP) + " instruction in non-native method " + classMethodActor());
                     }
                     switch (operand) {
                         case LINK: {
@@ -1984,7 +1984,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case N2J:
                             break;
                         default:
-                            throw verifyError("Unsupported JNIOP operand: " + operand);
+                            verifyError("Unsupported JNIOP operand: " + operand);
                     }
                     break;
                 }
@@ -1998,7 +1998,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case WRITEREG           : frame.pop(WORD); break;
 
                 default: {
-                    throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
+                    verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
                 }
                 // Checkstyle: resume
             }

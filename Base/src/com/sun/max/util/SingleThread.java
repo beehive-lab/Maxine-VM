@@ -43,6 +43,7 @@ public class SingleThread extends Thread {
         public Thread newThread(Runnable runnable) {
             ProgramError.check(worker == null, "Single worker thread died unexpectedly");
             worker = new Thread(runnable);
+            worker.setName("SingleThread");
             return worker;
         }
     });

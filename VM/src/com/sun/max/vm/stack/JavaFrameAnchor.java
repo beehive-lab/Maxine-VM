@@ -90,11 +90,12 @@ public enum JavaFrameAnchor {
     /**
      * Gets the current anchor (which may be null) for a given thread.
      *
-     * @param vmThreadLocals the thread locals for a thread
-     * @return the Java frame anchor recorded for the thread denoted by {@code vmThreadLocals}
+     * @param tla the thread locals for a thread
+     * @return the Java frame anchor recorded for the thread denoted by {@code tla}
      */
-    public static Pointer from(Pointer vmThreadLocals) {
-        return LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
+    public static Pointer from(Pointer tla) {
+        Pointer etla = ETLA.load(tla);
+        return LAST_JAVA_FRAME_ANCHOR.load(etla);
     }
 
     /**
