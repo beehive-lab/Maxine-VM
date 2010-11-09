@@ -166,7 +166,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
         return (Thread) 0;
     }
 
-    setThreadLocal(tlBlock, ID, id);
+    tla_store(tlBlock, ID, id);
 
 #if os_GUESTVMXEN
     thread = guestvmXen_create_thread(
@@ -242,7 +242,7 @@ static int thread_join(Thread thread) {
 void *thread_run(void *arg) {
 
     Address tlBlock = (Address) arg;
-    jint id = getThreadLocal(jint, tlBlock, ID);
+    jint id = tla_load(jint, tlBlock, ID);
     Address nativeThread = (Address) thread_current();
 
 #if log_THREADS
@@ -381,7 +381,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
 #endif
 
         if (result == 0) {
-            id = getThreadLocal(jint, tla, ID);
+            id = tla_load(jint, tla, ID);
 
             /* TODO: Save current thread signal mask so that it can be restored when this thread is detached. */
             setCurrentThreadSignalMask(false);
@@ -424,7 +424,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
 #endif
 
     if (result == JNI_OK) {
-        *penv = (JNIEnv *) getThreadLocalAddress(tla, JNI_ENV);
+        *penv = (JNIEnv *) tla_addressOf(tla, JNI_ENV);
     } else {
         if (result == JNI_EDETACHED) {
             log_println("Cannot attach thread to a VM whose main thread has exited");

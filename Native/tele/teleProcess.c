@@ -52,10 +52,10 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
          * executed past the point in VmThread.run() where it is added to the active
          * thread list.
          */
-        setConstantThreadLocal(tla, ID, id < 0 ? id : -id);
-        setConstantThreadLocal(tla, NATIVE_THREAD_LOCALS, ntl);
+        tla_store(tla, ID, id < 0 ? id : -id);
+        tla_store(tla, NATIVE_THREAD_LOCALS, ntl);
     } else {
-        ntl = getThreadLocal(NativeThreadLocals, tla, NATIVE_THREAD_LOCALS);
+        ntl = tla_load(NativeThreadLocals, tla, NATIVE_THREAD_LOCALS);
     }
 
 #if defined(_LP64)
@@ -64,7 +64,7 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
     // for 32 bit hosting
     tele_log_println("Gathered thread[id=%d, localHandle=%llu, handle=%llx, pc=%llx, stackBase=%llx, stackEnd=%llx, stackSize=%llu, tlb=%llx, tlbSize=%lld, tlaSize=%d]",
 #endif
-                    getThreadLocal(int, tla, ID),
+                    tla_load(int, tla, ID),
                     localHandle,
                     ntl->handle,
                     instructionPointer,
@@ -73,10 +73,10 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
                     ntl->stackSize,
                     ntl->tlBlock,
                     ntl->tlBlockSize,
-                    tlaSize);
+                    size);
 
     (*env)->CallVoidMethod(env, teleProcess, jniGatherThreadID, threadList,
-                    getThreadLocal(int, tla, ID),
+                    tla_load(int, tla, ID),
                     localHandle,
                     ntl->handle,
                     state,
@@ -85,16 +85,16 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
                     ntl->stackSize,
                     ntl->tlBlock,
                     ntl->tlBlockSize,
-                    tlaSize);
+                    size);
 }
 
 static boolean isTLAForStackPointer(ProcessHandle ph, Address stackPointer, Address tla, TLA tlaCopy, NativeThreadLocals ntlCopy) {
     Address ntl;
 
     readProcessMemory(ph, tla, tlaCopy, tlaSize());
-    ntl = getThreadLocal(Address, tlaCopy, NATIVE_THREAD_LOCALS);
+    ntl = tla_load(Address, tlaCopy, NATIVE_THREAD_LOCALS);
     readProcessMemory(ph, ntl, ntlCopy, sizeof(NativeThreadLocalsStruct));
-    setConstantThreadLocal(tlaCopy, NATIVE_THREAD_LOCALS, ntlCopy);
+    tla_store(tlaCopy, NATIVE_THREAD_LOCALS, ntlCopy);
 #if log_TELE
     log_print("teleProcess_findTLA(%p): ", stackPointer);
     tla_println(tlaCopy);
@@ -114,7 +114,7 @@ TLA teleProcess_findTLA(ProcessHandle ph, Address tlaList, Address primordialTLA
             if (isTLAForStackPointer(ph, stackPointer, tla, tlaCopy, ntlCopy)) {
                 return tlaCopy;
             }
-            tla = getThreadLocal(Address, tlaCopy, FORWARD_LINK);
+            tla = tla_load(Address, tlaCopy, FORWARD_LINK);
         };
     }
     if (primordialTLA != 0) {

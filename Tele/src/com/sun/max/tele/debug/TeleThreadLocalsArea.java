@@ -141,7 +141,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
                     final Word word = dataAccess.readWord(memoryRegion().start(), offset);
                     threadLocalVariables[index].setValue(new WordValue(word));
                 } catch (DataIOError dataIOError) {
-                    ProgramWarning.message("Could not read value of " + vmThreadLocalVariable + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
+                    ProgramWarning.message("Could not read value of " + vmThreadLocalVariable + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals: " + dataIOError);
                     threadLocalVariables[index].setValue(VoidValue.VOID);
                 }
             }

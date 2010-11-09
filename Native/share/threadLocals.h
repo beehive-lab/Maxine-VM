@@ -165,7 +165,7 @@ extern int tlaSize();
  * @param name the name of the thread local to access (a ThreadLocal_t value)
  * @param value the value to which the named thread local should be set
  */
-#define setThreadLocal(tla, name, value) do { *((Address *) tla + name) = (Address) (value); } while (0)
+#define tla_store(tla, name, value) do { *((Address *) tla + name) = (Address) (value); } while (0)
 
 /**
  * Gets the value of a specified thread local.
@@ -175,7 +175,7 @@ extern int tlaSize();
  * @param name the name of the thread local to access (a ThreadLocal_t value)
  * @return the value of the named thread local, cast to 'type'
  */
-#define getThreadLocal(type, tla, name) ((type) *((Address *) tla + name))
+#define tla_load(type, tla, name) ((type) *((Address *) tla + name))
 
 /**
  * Gets the address of a specified thread local.
@@ -184,7 +184,7 @@ extern int tlaSize();
  * @param name the name of the thread local to address
  * @return the address of the named thread local, cast to Address
  */
-#define getThreadLocalAddress(tla, name) ((Address) tla + (name * sizeof(Address)))
+#define tla_addressOf(tla, name) ((Address) tla + (name * sizeof(Address)))
 
 /**
  * Sets the value of a specified thread local to all three thread local spaces.
@@ -193,10 +193,10 @@ extern int tlaSize();
  * @param name the name of the thread local to access (a ThreadLocal_t value)
  * @param value the value to which the named thread local should be set
  */
-#define setConstantThreadLocal(tla, name, value) do { \
-    *((Address *) getThreadLocal(TLA, tla, ETLA) + name) = (Address) (value); \
-    *((Address *) getThreadLocal(TLA, tla, DTLA) + name) = (Address) (value); \
-    *((Address *) getThreadLocal(TLA, tla, TTLA) + name) = (Address) (value); \
+#define tla_store3(tla, name, value) do { \
+    *((Address *) tla_load(TLA, tla, ETLA) + name) = (Address) (value); \
+    *((Address *) tla_load(TLA, tla, DTLA) + name) = (Address) (value); \
+    *((Address *) tla_load(TLA, tla, TTLA) + name) = (Address) (value); \
 } while (0)
 
 typedef struct {
