@@ -231,7 +231,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             int frameSize = platform().target.alignFrameSize(rsa.size);
             int frameToRSA = frameSize - rsa.size;
             CiKind[] trapStubParameters = Util.signatureToKinds(Trap.trapStub.classMethodActor.signature(), null);
-            CiValue[] locations = registerConfig.getCallingConvention(Java, trapStubParameters, false, target).locations;
+            CiValue[] locations = registerConfig.getCallingConvention(JavaCallee, trapStubParameters, target).locations;
 
             // the very first instruction must save the flags.
             // we save them twice and overwrite the first copy with the trap instruction/return address.
@@ -314,12 +314,12 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.setFrameSize(frameSize);
 
             // save all the parameter registers
-            CiRegister[] parameterRegs = registerConfig.getCallingConventionRegisters(Java);
+            CiRegister[] parameterRegs = registerConfig.getCallingConventionRegisters(JavaCallee);
             asm.save(parameterRegs, rsa, 0);
 
             ClassMethodActor patchStaticTrampolineCallSite = ClassMethodActor.fromJava(Classes.getDeclaredMethod(C1XCompilerScheme.class, "patchStaticTrampolineCallSite", Pointer.class));
             CiKind[] trampolineParameters = {CiKind.Object};
-            CiValue[] locations = registerConfig.getCallingConvention(Java, trampolineParameters, true, target).locations;
+            CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target).locations;
 
             // load the static trampoline call site into the first parameter register
             asm.movq(locations[0].asRegister(), callSite);
@@ -362,11 +362,11 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.setFrameSize(frameSize);
 
             // save all the parameter registers
-            CiRegister[] parameterRegs = registerConfig.getCallingConventionRegisters(Java);
+            CiRegister[] parameterRegs = registerConfig.getCallingConventionRegisters(JavaCallee);
             asm.save(parameterRegs, rsa, 0);
 
             CiKind[] trampolineParameters = Util.signatureToKinds(DynamicTrampoline.trampolineReturnAddress.classMethodActor.signature(), CiKind.Object);
-            CiValue[] locations = registerConfig.getCallingConvention(Java, trampolineParameters, true, target).locations;
+            CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target).locations;
 
             // load the receiver into the second parameter register
             asm.movq(locations[1].asRegister(), locations[0].asRegister());

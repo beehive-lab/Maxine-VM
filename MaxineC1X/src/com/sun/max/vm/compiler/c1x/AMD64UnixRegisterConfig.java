@@ -184,8 +184,8 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         return scratch;
     }
 
-    public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, boolean outgoing, CiTarget target) {
-        return callingConvention(parameters, type == Type.Runtime ? true : outgoing, target);
+    public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target) {
+        return callingConvention(parameters, type, target);
     }
 
     public CiRegister[] getCallingConventionRegisters(Type type) {
@@ -219,7 +219,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         return registersByRole.get(Role.VALUES.get(id));
     }
 
-    private CiCallingConvention callingConvention(CiKind[] types, boolean outgoing, CiTarget target) {
+    private CiCallingConvention callingConvention(CiKind[] types, Type type, CiTarget target) {
         CiValue[] locations = new CiValue[types.length];
 
         int currentGeneral = 0;
@@ -257,7 +257,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
             }
 
             if (locations[i] == null) {
-                locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !outgoing);
+                locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
             }
         }

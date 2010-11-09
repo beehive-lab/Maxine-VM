@@ -43,12 +43,15 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
+import com.sun.max.vm.trampoline.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class implements a {@link TargetMethod target method} for
@@ -771,7 +774,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         switch (calleeKind) {
             case TRAMPOLINE:
                 // compute the register reference map from the call at this site
-                AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
+                prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame
@@ -820,6 +823,59 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
             slotPointer = slotPointer.plusWords(Bytes.WIDTH);
             byteIndex++;
+        }
+    }
+
+    private static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+        TargetMethod trampolineTargetMethod = callee.targetMethod();
+        ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
+        ClassMethodActor callerMethod;
+        TargetMethod targetMethod = current.targetMethod();
+        Pointer trampolineRegisters = callee.sp();
+
+        // figure out what method the caller is trying to call
+        if (trampolineMethodActor.isStaticTrampoline()) {
+            int stopIndex = targetMethod.findClosestStopIndex(current.ip().minus(1));
+            callerMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
+        } else {
+            // this is an virtual or interface call; figure out the receiver method based on the
+            // virtual or interface index
+            final Object receiver = trampolineRegisters.getReference().toJava(); // read receiver object on stack
+            final ClassActor classActor = ObjectAccess.readClassActor(receiver);
+            assert trampolineTargetMethod.referenceLiterals().length == 1;
+            final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
+            if (trampolineMethodActor.isVirtualTrampoline()) {
+                callerMethod = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex);
+            } else {
+                callerMethod = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex);
+            }
+        }
+
+        // use the caller method to fill out the reference map for the saved parameters in the trampoline frame
+        int parameterRegisterIndex = 0;
+        if (!callerMethod.isStatic()) {
+            // set a bit for the receiver object
+            preparer.setReferenceMapBits(current, trampolineRegisters, 1, 1);
+            parameterRegisterIndex = 1;
+        }
+
+        SignatureDescriptor descriptor = callerMethod.descriptor();
+        TargetABI abi = trampolineTargetMethod.abi();
+        for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
+            final TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
+            final Kind parameterKind = parameter.toKind();
+            if (parameterKind.isReference) {
+                // set a bit for this parameter
+                preparer.setReferenceMapBits(current, trampolineRegisters.plusWords(parameterRegisterIndex), 1, 1);
+            }
+            if (abi.putIntoIntegerRegister(parameterKind)) {
+                parameterRegisterIndex++;
+                if (parameterRegisterIndex >= abi.integerIncomingParameterRegisters.size()) {
+                    // done since all subsequent parameters are known to be passed on the stack
+                    // and covered by the reference map for the stack at this call point
+                    return;
+                }
+            }
         }
     }
 
