@@ -80,7 +80,7 @@ JNIEnv jniEnv() {
 JNIEnv *currentJniEnv() {
     TLA tla = tla_current();
     c_ASSERT(tla != 0);
-    JNIEnv *env = (JNIEnv *) getThreadLocalAddress(tla, JNI_ENV);
+    JNIEnv *env = (JNIEnv *) tla_addressOf(tla, JNI_ENV);
     c_ASSERT(env != NULL);
     return env;
 }

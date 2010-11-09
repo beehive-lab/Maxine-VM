@@ -89,7 +89,8 @@ static void deallocateThreadLocalBlock(Address tlBlock, Size tlBlockSize) {
  */
 Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
     Address tlBlock;
-    const int tlSize = tlaSize();
+    const int s = tlaSize();
+    const int tlaSize = s;
     const int pageSize = virtualMemory_getPageSize();
     const jboolean attaching = id < 0;
     const jboolean primordial = id == 0;
@@ -110,7 +111,7 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
     int stackWords = stackSize / sizeof(Address);
     Size refMapSize = primordial ? 0 : wordAlign(1 + (stackWords / 8));
     const int tlBlockSize = triggerPageSize +
-                            (3 * tlSize) +
+                            (3 * tlaSize) +
                             sizeof(NativeThreadLocalsStruct) +
                             (primordial ? 0 : refMapSize);
 
@@ -124,10 +125,10 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
     }
 
     TLA ttla = tlBlock + pageSize - sizeof(Address);
-    TLA etla  = ttla + tlSize;
-    TLA dtla = etla + tlSize;
+    TLA etla  = ttla + tlaSize;
+    TLA dtla = etla + tlaSize;
 
-    Address current = (Address) dtla + tlSize;
+    Address current = (Address) dtla + tlaSize;
     NativeThreadLocals ntl = (NativeThreadLocals) current;
     current += sizeof(NativeThreadLocalsStruct);
     Address refMap = current;
@@ -136,9 +137,9 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
     }
 
     /* Clear each of the thread local spaces: */
-    memset((void *) ttla, 0, tlSize);
-    memset((void *) etla, 0, tlSize);
-    memset((void *) dtla, 0, tlSize);
+    memset((void *) ttla, 0, tlaSize);
+    memset((void *) etla, 0, tlaSize);
+    memset((void *) dtla, 0, tlaSize);
 
     /* Clear the NativeThreadLocals: */
     memset((void *) ntl, 0, sizeof(NativeThreadLocalsStruct));
@@ -178,25 +179,25 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
         guardZonePages = STACK_YELLOW_ZONE_PAGES + STACK_RED_ZONE_PAGES;
     }
 
-    setThreadLocal(etla, ETLA, etla);
-    setThreadLocal(etla, DTLA, dtla);
-    setThreadLocal(etla, TTLA, ttla);
+    tla_store(etla, ETLA, etla);
+    tla_store(etla, DTLA, dtla);
+    tla_store(etla, TTLA, ttla);
 
-    setThreadLocal(dtla, ETLA, etla);
-    setThreadLocal(dtla, DTLA, dtla);
-    setThreadLocal(dtla, TTLA, ttla);
+    tla_store(dtla, ETLA, etla);
+    tla_store(dtla, DTLA, dtla);
+    tla_store(dtla, TTLA, ttla);
 
-    setThreadLocal(ttla, ETLA, etla);
-    setThreadLocal(ttla, DTLA, dtla);
-    setThreadLocal(ttla, TTLA, ttla);
+    tla_store(ttla, ETLA, etla);
+    tla_store(ttla, DTLA, dtla);
+    tla_store(ttla, TTLA, ttla);
 
-    setThreadLocal(etla, SAFEPOINT_LATCH, etla);
-    setThreadLocal(dtla, SAFEPOINT_LATCH, dtla);
+    tla_store(etla, SAFEPOINT_LATCH, etla);
+    tla_store(dtla, SAFEPOINT_LATCH, dtla);
 
-    setConstantThreadLocal(etla, NATIVE_THREAD_LOCALS, ntl);
-    setConstantThreadLocal(etla, ID, id);
-    setConstantThreadLocal(etla, STACK_REFERENCE_MAP, refMap);
-    setConstantThreadLocal(etla, STACK_REFERENCE_MAP_SIZE, refMapSize);
+    tla_store3(etla, NATIVE_THREAD_LOCALS, ntl);
+    tla_store3(etla, ID, id);
+    tla_store3(etla, STACK_REFERENCE_MAP, refMap);
+    tla_store3(etla, STACK_REFERENCE_MAP_SIZE, refMapSize);
 
     Address endGuardZone = startGuardZone + (guardZonePages * pageSize);
     Address sp = (Address) &ntl; // approximation of stack pointer
@@ -228,7 +229,7 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
     log_println("thread %3d: ttla         = %p", id, ttla);
     log_println("thread %3d: etla         = %p", id, etla);
     log_println("thread %3d: dtla         = %p", id, dtla);
-    log_println("thread %3d: anchor       = %p", id, getThreadLocal(Address, etla, LAST_JAVA_FRAME_ANCHOR));
+    log_println("thread %3d: anchor       = %p", id, tla_load(Address, etla, LAST_JAVA_FRAME_ANCHOR));
     log_println("thread %3d: ntl          = %p", id, ntl);
     log_println("thread %3d: refMap       = %p", id, refMap);
     log_println("thread %3d: refMapSize   = %d (%p)", id, refMapSize, refMapSize);
@@ -272,7 +273,7 @@ void threadLocalsBlock_destroy(Address tlBlock) {
     Address tla = TLA_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
-    int id = getThreadLocal(int, tla, ID);
+    int id = tla_load(int, tla, ID);
     if (id >= 0) {
         VmThreadDetachMethod method = image_offset_as_address(VmThreadDetachMethod, vmThreadDetachMethodOffset);
 #if log_THREADS
@@ -288,8 +289,8 @@ void threadLocalsBlock_destroy(Address tlBlock) {
 #endif
     }
 
-    c_ASSERT(getThreadLocal(Address, tla, FORWARD_LINK) == 0);
-    c_ASSERT(getThreadLocal(Address, tla, BACKWARD_LINK) == 0);
+    c_ASSERT(tla_load(Address, tla, FORWARD_LINK) == 0);
+    c_ASSERT(tla_load(Address, tla, BACKWARD_LINK) == 0);
 
     const jboolean attached = ntl->stackRedZone == ntl->stackBase;
     Address startGuardZone;
@@ -390,8 +391,8 @@ int tlaSize() {
 }
 
 void tla_println(TLA tla) {
-    NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tla, NATIVE_THREAD_LOCALS);
-    int id = getThreadLocal(int, tla, ID);
+    NativeThreadLocals ntl = tla_load(NativeThreadLocals, tla, NATIVE_THREAD_LOCALS);
+    int id = tla_load(int, tla, ID);
 #if defined(_LP64)
     log_println("TLA[%d: base=%p, end=%p, size=%lu, tlBlock=%p, tlBlockSize=%lu]",
 #else
@@ -404,6 +405,6 @@ void tla_println(TLA tla) {
 void tla_printList(TLA tla) {
     while (tla != 0) {
         tla_println(tla);
-        tla = getThreadLocal(TLA, tla, FORWARD_LINK);
+        tla = tla_load(TLA, tla, FORWARD_LINK);
     };
 }
