@@ -23,6 +23,7 @@ package com.sun.cri.ri;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 /**
@@ -47,13 +48,13 @@ public interface RiRegisterConfig {
     CiRegister getScratchRegister();
 
     /**
-     * Gets the calling convention describing a call to or from Java code.
+     * Gets the calling convention describing how arguments are passed.
      * 
+     * @param type the type of calling convention being requested 
      * @param parameters the types of the arguments of the call
-     * @param outgoing if {@code true}, this is a call to Java code otherwise it's a call from Java code
      * @param target the target platform
      */
-    CiCallingConvention getCallingConvention(CiCallingConvention.Type type, CiKind[] parameters, boolean outgoing, CiTarget target);
+    CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target);
     
     /**
      * Gets the complete set of registers that are can be used to pass parameters
@@ -62,7 +63,7 @@ public interface RiRegisterConfig {
      * @param type the type of calling convention
      * @return the set of registers that may be used to pass parameters in a call conforming to {@code type}
      */
-    CiRegister[] getCallingConventionRegisters(CiCallingConvention.Type type);
+    CiRegister[] getCallingConventionRegisters(Type type);
     
     /**
      * Gets the set of registers that can be used by the register allocator.

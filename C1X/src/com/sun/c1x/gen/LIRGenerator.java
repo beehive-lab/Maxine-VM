@@ -21,29 +21,35 @@
 package com.sun.c1x.gen;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
-import com.sun.c1x.alloc.OperandPool.*;
+import com.sun.c1x.alloc.OperandPool.VariableFlag;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.value.FrameState.*;
+import com.sun.c1x.value.FrameState.PhiProcedure;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
+import com.sun.cri.xir.CiXirAssembler.XirConstant;
+import com.sun.cri.xir.CiXirAssembler.XirInstruction;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.cri.xir.CiXirAssembler.XirParameter;
+import com.sun.cri.xir.CiXirAssembler.XirRegister;
+import com.sun.cri.xir.CiXirAssembler.XirTemp;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -480,7 +486,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         CiValue resultOperand = resultOperandFor(x.kind);
-        CiCallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true);
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.signature(), JavaCall);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments());
 
         if (C1XOptions.invokeinterfaceTemplatePos) {
@@ -510,7 +516,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue resultOperand = resultOperandFor(x.kind);
         CiValue callAddress = load(x.address());
         CiKind[] signature = Util.signatureToKinds(x.signature, null);
-        CiCallingConvention cc = compilation.frameMap().nativeCallingConvention(signature, true);
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(signature, RuntimeCall);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments);
         argList.add(callAddress);
         lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info, null);
@@ -1000,7 +1006,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert !currentBlock.checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler) || unwind : "should be no more handlers to dispatch to";
 
         // move exception oop into fixed register
-        CiCallingConvention callingConvention = compilation.frameMap().runtimeCallingConvention(new CiKind[]{CiKind.Object});
+        CiCallingConvention callingConvention = compilation.frameMap().getCallingConvention(new CiKind[]{CiKind.Object}, RuntimeCall);
         CiValue argumentOperand = callingConvention.locations[0];
         lir.move(exceptionOpr, argumentOperand);
 
@@ -1450,7 +1456,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         List<CiValue> argumentList;
         if (arguments.length > 0) {
             // move the arguments into the correct location
-            CiCallingConvention cc = compilation.frameMap().runtimeCallingConvention(arguments);
+            CiCallingConvention cc = compilation.frameMap().getCallingConvention(arguments, RuntimeCall);
             assert cc.locations.length == args.length : "argument count mismatch";
             for (int i = 0; i < args.length; i++) {
                 CiValue arg = args[i];
