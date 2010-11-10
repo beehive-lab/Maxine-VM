@@ -87,14 +87,14 @@ public abstract class ThreadAccess {
     }
 
     @SuppressWarnings("unchecked")
-    public boolean gatherThreads(Object teleProcessObject, Object threadSeq, long tlaList, long primordialTLA) {
+    public boolean gatherThreads(Object teleProcessObject, Object threadSeq, long tlaList, long primordialETLA) {
         final ByteBuffer tla = ByteBuffer.allocate(tlaSize).order(ByteOrder.LITTLE_ENDIAN);
         final ByteBuffer nativeThreadLocals = ByteBuffer.allocate(NATIVE_THREAD_LOCALS_STRUCT_SIZE).order(ByteOrder.LITTLE_ENDIAN);
 
         currentThreadList = new ArrayList<ThreadInfo>();
         gatherOSThreads(currentThreadList);
         for (ThreadInfo threadInfo : currentThreadList) {
-            final boolean found = findThreadLocals(tlaList, primordialTLA, threadInfo.getStackPointer(), tla, nativeThreadLocals);
+            final boolean found = findThreadLocals(tlaList, primordialETLA, threadInfo.getStackPointer(), tla, nativeThreadLocals);
             int id = threadInfo.getId();
             if (!found) {
                 /*
@@ -166,7 +166,7 @@ public abstract class ThreadAccess {
      * If such an entry is found, then its contents are copied from the VM to the structs pointed to by 'tlCopy' and 'ntlCopy'.
      *
      * @param tlaList the head of the thread locals list in the VM's address space
-     * @param primordialTLA the primordial thread locals in the VM's address space
+     * @param primordialETLA the primordial thread locals in the VM's address space
      * @param stackPointer the stack pointer to search with
      * @param tlCopy pointer to storage for a set of thread locals into which the found entry
      *        (if any) will be copied from the VM's address space
@@ -174,7 +174,7 @@ public abstract class ThreadAccess {
      *        (if any) will be copied from the VM's address space
      * @return {@code true} if the entry was found, {@code false} otherwise
      */
-    boolean findThreadLocals(long tlaList, long primordialTLA, long stackPointer, ByteBuffer tlCopy, ByteBuffer ntlCopy) {
+    boolean findThreadLocals(long tlaList, long primordialETLA, long stackPointer, ByteBuffer tlCopy, ByteBuffer ntlCopy) {
         zeroBuffer(tlCopy);
         zeroBuffer(ntlCopy);
         if (tlaList != 0) {
@@ -186,8 +186,8 @@ public abstract class ThreadAccess {
                 tl = getFromStruct(tlCopy, FORWARD_LINK.offset);
             }
         }
-        if (primordialTLA != 0) {
-            if (isThreadLocalsForStackPointer(stackPointer, primordialTLA, tlCopy, ntlCopy)) {
+        if (primordialETLA != 0) {
+            if (isThreadLocalsForStackPointer(stackPointer, primordialETLA, tlCopy, ntlCopy)) {
                 return true;
             }
         }

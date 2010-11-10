@@ -118,9 +118,9 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
 
     @Override
     protected void gatherThreads(List<TeleNativeThread> threads) {
-        final Word primordialTLA = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialTLAOffset));
+        final Word primordialETLA = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialETLAOffset));
         final Word tlaList = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.tlaListHeadOffset));
-        protocol.gatherThreads(this, threads, tlaList.asAddress().toLong(), primordialTLA.asAddress().toLong());
+        protocol.gatherThreads(this, threads, tlaList.asAddress().toLong(), primordialETLA.asAddress().toLong());
     }
 
     @Override

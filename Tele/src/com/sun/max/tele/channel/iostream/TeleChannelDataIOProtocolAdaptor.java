@@ -73,8 +73,8 @@ public abstract class TeleChannelDataIOProtocolAdaptor extends TeleChannelDataIO
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean gatherThreads(Object teleDomainObject, Object threadSequence, long tlaList, long primordialTLA) {
-        final int dataSize = gatherThreads(tlaList, primordialTLA);
+    public boolean gatherThreads(Object teleDomainObject, Object threadSequence, long tlaList, long primordialETLA) {
+        final int dataSize = gatherThreads(tlaList, primordialETLA);
         final byte[] data = new byte[dataSize];
         readThreads(dataSize, data);
         // deserialize the thread data
