@@ -23,6 +23,7 @@ package com.sun.cri.ci;
 import static java.lang.reflect.Modifier.*;
 
 import java.lang.reflect.*;
+import java.math.*;
 import java.util.*;
 
 import com.sun.cri.ci.CiDebugInfo.Frame;
@@ -440,7 +441,7 @@ public class CiUtil {
      * @return a string with one line per row and each column left-aligned
      */
     public static String tabulate(Object[] cells, int cols, int lpad, int rpad) {
-        int rows = (cells.length + (cols - 1)) % cols;
+        int rows = (cells.length + (cols - 1)) / cols;
         int[] colWidths = new int[cols];
         for (int col = 0; col < cols; col++) {
             for (int row = 0; row < rows; row++) {
@@ -557,44 +558,61 @@ public class CiUtil {
     }
     
     /**
-     * Appends a formatted bit map to a {@link StringBuilder}. For example:
+     * Converts a bit map encoded as a byte array to a {@link BitSet}
+     * 
+     * @param bitmap the bit map to convert
+     */
+    public static BitSet asBitSet(byte[] bitmap) {
+        BitSet bs = new BitSet();
+        int bit = 0;
+        for (int i = 0; i < bitmap.length; i++) {
+            int b = bitmap[i] & 0xff;
+            for (int j = 0; j < 8; j++) {
+                if ((b & 1) != 0) {
+                    bs.set(bit);
+                }
+                b = b >>> 1;
+                bit++;
+            }
+        }
+        return bs;
+    }
+
+    /**
+     * Converts a bit map encoded as a byte array to a {@link BigInteger}
+     * 
+     * @param bitmap the bit map to convert
+     */
+    public static BigInteger asBigInteger(byte[] bitmap) {
+        byte[] bigEndian = bitmap.clone();
+        int i = bitmap.length - 1;
+        for (byte b : bitmap) {
+            bigEndian[i--] = b;
+        }
+        return new BigInteger(bigEndian);
+    }
+    
+    /**
+     * Appends a formatted bit map to a {@link StringBuilder}.
      * 
      * @param sb the {@link StringBuilder} to append to
      * @param bitmap the bit map to format and append to {@code sb}
      * @return the value of {@code sb}
      */
     public static StringBuilder appendBitmap(StringBuilder sb, byte[] bitmap) {
-        boolean first = true;
-        for (int i = 0; i < bitmap.length; i++) {
-            int b = bitmap[i] & 0xff;
-            for (int j = 0; j < 8; j++) {
-                if ((b & 1) != 0) {
-                    if (first) {
-                        first = false;
-                    } else {
-                        sb.append(", ");
-                    }
-                    sb.append((i * 8) + j);
-                }
-                b = b >>> 1;
-            }
-        }
-        sb.append(" [0x");
-        for (int i = bitmap.length - 1; i >= 0; i--) {
-            sb.append(String.format("%02x", bitmap[i] & 0xff));
-        }
+        sb.append(asBitSet(bitmap)).append(" [0x").append(asBigInteger(bitmap)).append(']');
         return sb.append(']');
     }
 
     /**
-     * Appends a formatted debuginfo to a {@link StringBuilder}. For example:
+     * Appends a formatted debuginfo to a {@link StringBuilder}.
      * 
      * @param sb the {@link StringBuilder} to append to
      * @param info the debug info to format and append to {@code sb}
      * @return the value of {@code sb}
      */
     public static StringBuilder append(StringBuilder sb, CiDebugInfo info) {
-        String nl = String.format("%s");
+        String nl = String.format("%n");
         if (info.hasRegisterRefMap()) {
             appendBitmap(sb.append("reg-ref-map: "), info.registerRefMap).append(nl);
         }
