@@ -654,16 +654,22 @@ public class VmThreadLocal {
         etla.setWord(index, value);
     }
 
+    @FOLD
+    private static int tlaOffset(int n) {
+        return tlaSize().toInt() * n;
+    }
+
     /**
      * Stores the value of this variable in the TLAs denoted by a given TLA.
      *
-     * This operation is composed of 3 loads and 3 stores.
+     * This operation is composed of 1 load and 3 stores.
      */
     @INLINE
     public final void store3(Pointer tla, Word value) {
-        ETLA.load(tla).setWord(index, value);
-        DTLA.load(tla).setWord(index, value);
-        TTLA.load(tla).setWord(index, value);
+        Pointer ttla = TTLA.load(tla);
+        ttla.writeWord(offset, value);
+        ttla.writeWord(offset + tlaOffset(1), value);
+        ttla.writeWord(offset + tlaOffset(2), value);
     }
 
     /**
@@ -679,13 +685,14 @@ public class VmThreadLocal {
     /**
      * Stores the value of this variable in the TLAs denoted by a given TLA.
      *
-     * This operation is composed of 3 loads and 3 stores.
+     * This operation is composed of 1 load and 3 stores.
      */
     @INLINE
     public final void store3(Pointer tla, Reference value) {
-        ETLA.load(tla).setReference(index, value);
-        DTLA.load(tla).setReference(index, value);
-        TTLA.load(tla).setReference(index, value);
+        Pointer ttla = TTLA.load(tla);
+        ttla.writeReference(offset, value);
+        ttla.writeReference(offset + tlaOffset(1), value);
+        ttla.writeReference(offset + tlaOffset(2), value);
     }
 
     /**

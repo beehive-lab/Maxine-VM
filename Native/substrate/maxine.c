@@ -340,8 +340,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     Address tlBlock = threadLocalsBlock_createForExistingThread(0);
 
-    Address primordial_tla = TLA_FROM_TLBLOCK(tlBlock);
-    image_write_value(Address, primordialTLAOffset, primordial_tla);
+    Address primordial_tla = ETLA_FROM_TLBLOCK(tlBlock);
+    image_write_value(Address, primordialETLAOffset, primordial_tla);
 
 #if log_LOADER
     log_println("primordial TLA: %p", primordial_tla);
