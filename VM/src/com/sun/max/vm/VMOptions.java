@@ -53,6 +53,22 @@ import com.sun.max.vm.reference.*;
  */
 public final class VMOptions {
 
+    @HOSTED_ONLY
+    private static final Comparator<VMOption> OPTION_COMPARATOR = new Comparator<VMOption>() {
+        @Override
+        public int compare(VMOption o1, VMOption o2) {
+            int categoryOrder = o1.category().ordinal() - o2.category().ordinal();
+            if (categoryOrder != 0) {
+                return categoryOrder;
+            }
+            int nameOrder = o1.name.compareTo(o2.name);
+            if (nameOrder != 0) {
+                return nameOrder;
+            }
+            return o1.prefix.compareTo(o2.prefix);
+        }
+    };
+
     public static final class StringFieldOption extends VMStringOption {
 
         public final Field field;
@@ -332,6 +348,17 @@ public final class VMOptions {
     private VMOptions() {
     }
 
+    /**
+     * Gets all the registered VM options as a set sorted by {@linkplain VMOption#category() category} and then by {@linkplain VMOption#prefix prefix}.
+     */
+    @HOSTED_ONLY
+    public static SortedSet<VMOption> allOptions() {
+        TreeSet<VMOption> result = new TreeSet<VMOption>(OPTION_COMPARATOR);
+        result.addAll(Arrays.asList(pristinePhaseOptions));
+        result.addAll(Arrays.asList(startingPhaseOptions));
+        return result;
+    }
+
     @HOSTED_ONLY
     private static VMOption[] addOption(VMOption[] options, VMOption option, Set<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
@@ -341,6 +368,7 @@ public final class VMOptions {
         }
         for (VMOption existingOption : allOptions) {
             ProgramError.check(!existingOption.prefix.equals(option.prefix), "VM option prefix is not unique: " + option.prefix);
+            ProgramError.check(OPTION_COMPARATOR.compare(existingOption, option) != 0, "VM option has non-unique sort key: " + option + " [clashes with " + existingOption + "]");
         }
         return Utils.concat(options, option);
     }
@@ -674,25 +702,6 @@ public final class VMOptions {
             }
         }
         return null;
-    }
-
-    /**
-     * Gets all the registered VM options as a set sorted by {@linkplain VMOption#category() category} and then by {@linkplain VMOption#prefix prefix}.
-     */
-    public static SortedSet<VMOption> allOptions() {
-        TreeSet<VMOption> result = new TreeSet<VMOption>(new Comparator<VMOption>() {
-            @Override
-            public int compare(VMOption o1, VMOption o2) {
-                int categoryOrder = o1.category().ordinal() - o2.category().ordinal();
-                if (categoryOrder != 0) {
-                    return categoryOrder;
-                }
-                return o1.name.compareTo(o2.name);
-            }
-        });
-        result.addAll(Arrays.asList(pristinePhaseOptions));
-        result.addAll(Arrays.asList(startingPhaseOptions));
-        return result;
     }
 
     /**
