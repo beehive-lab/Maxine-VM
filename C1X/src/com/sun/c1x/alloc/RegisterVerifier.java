@@ -270,6 +270,7 @@ final class RegisterVerifier {
                 CiValue operand = op.operandAt(LIRInstruction.OperandMode.Temp, j);
                 if (allocator.isProcessed(operand)) {
                     Interval interval = intervalAt(operand);
+                    assert interval != null : "Could not find interval for operand " + operand;
                     if (op.id != -1) {
                         interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.Temp, allocator);
                     }

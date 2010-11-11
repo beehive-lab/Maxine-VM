@@ -73,11 +73,11 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     XirOperand xOp = i.x();
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
                         if (divModTemp == null) {
-                            divModTemp = createRegister("divModTemp", CiKind.Int, AMD64.rdx);
+                            divModTemp = createRegisterTemp("divModTemp", CiKind.Int, AMD64.rdx);
                         }
                         // Special treatment to make sure that the left input of % and / is in RAX
                         if (divModLeftInput == null) {
-                            divModLeftInput = createRegister("divModLeftInput", CiKind.Int, AMD64.rax);
+                            divModLeftInput = createRegisterTemp("divModLeftInput", CiKind.Int, AMD64.rax);
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, divModLeftInput, i.x()));
                         xOp = divModLeftInput;
@@ -91,7 +91,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     XirOperand yOp = i.y();
                     if (i.op == XirOp.Shl || i.op == XirOp.Shr) {
                         // Special treatment to make sure that the shift count is always in RCX
-                        XirOperand fixedLocation = createRegister("fixedShiftCount", i.y().kind, AMD64.rcx);
+                        XirOperand fixedLocation = createRegisterTemp("fixedShiftCount", i.y().kind, AMD64.rcx);
                         currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedLocation, i.y()));
                         yOp = fixedLocation;
                     } else if (i.op == XirOp.Mul && (i.y() instanceof XirConstantOperand)) {
@@ -110,6 +110,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
 
                 case NullCheck:
                 case PointerLoad:
+                case LoadEffectiveAddress:
                 case PointerStore:
                 case PointerLoadDisp:
                 case PointerStoreDisp:

@@ -487,21 +487,22 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         CiValue resultOperand = resultOperandFor(x.kind);
         CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.signature(), JavaCall);
-        List<CiValue> argList = visitInvokeArguments(cc, x.arguments());
+        List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
+        List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
         if (C1XOptions.invokeinterfaceTemplatePos) {
-            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
+            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false, pointerSlots);
         }
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
             // Direct call
             assert ((CiConstant) destinationAddress).isDefaultValue() : "destination address should be zero";
-            lir.callDirect(target, resultOperand, argList, info, snippet.marks);
+            lir.callDirect(target, resultOperand, argList, info, snippet.marks, pointerSlots);
         } else {
             // Indirect call
             argList.add(destinationAddress);
-            lir.callIndirect(target, resultOperand, argList, info, snippet.marks);
+            lir.callIndirect(target, resultOperand, argList, info, snippet.marks, pointerSlots);
         }
 
         if (resultOperand.isLegal()) {
@@ -517,9 +518,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue callAddress = load(x.address());
         CiKind[] signature = Util.signatureToKinds(x.signature, null);
         CiCallingConvention cc = compilation.frameMap().getCallingConvention(signature, RuntimeCall);
-        List<CiValue> argList = visitInvokeArguments(cc, x.arguments);
+        List<CiValue> pointerSlots = new ArrayList<CiValue>();
+        List<CiValue> argList = visitInvokeArguments(cc, x.arguments, pointerSlots);
+        assert pointerSlots.size() == 0;
         argList.add(callAddress);
-        lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info, null);
+        lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info, null, pointerSlots);
         if (resultOperand.isLegal()) {
             CiValue result = createResultVariable(x);
             lir.move(resultOperand, result);
@@ -777,6 +780,10 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected CiValue emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult) {
+        return emitXir(snippet, x, info, method, setInstructionResult, null);
+    }
+
+    protected CiValue emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult, List<CiValue> pointerSlots) {
         final CiValue[] operands = new CiValue[snippet.template.variableCount];
 
         compilation.frameMap().reserveOutgoing(snippet.template.outgoingStackSize);
@@ -839,8 +846,10 @@ public abstract class LIRGenerator extends ValueVisitor {
             CiValue op = allocateOperand(t);
             assert operands[t.index] == null;
             operands[t.index] = op;
-            tempOperands.add(op);
-            tempOperandsIndices.add(t.index);
+            if (t.reserve) {
+                tempOperands.add(op);
+                tempOperandsIndices.add(t.index);
+            }
         }
 
         CiValue[] operandArray = new CiValue[inputOperands.size() + inputTempOperands.size() + tempOperands.size()];
@@ -884,7 +893,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
                     operandArray, operandIndicesArray,
                     (operands[resultOperand.index] == IllegalValue) ? -1 : resultOperand.index,
-                    info, method);
+                    info, method, pointerSlots);
         }
 
         return operands[resultOperand.index];
@@ -1611,7 +1620,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             Phi phi = (Phi) suxVal;
             // curVal can be null without phi being null in conjunction with inlining
             if (phi.isLive() && curVal != null && curVal != phi) {
-                assert curVal.isLive();
+                assert curVal.isLive() : "value not live: " + curVal;
                 assert !phi.isIllegal() : "illegal phi cannot be marked as live";
                 if (curVal instanceof Phi) {
                     operandForPhi((Phi) curVal);
@@ -1812,7 +1821,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         return new LIRDebugInfo(state, x.bci(), x.exceptionHandlers());
     }
 
-    List<CiValue> visitInvokeArguments(CiCallingConvention cc, Value[] args) {
+    List<CiValue> visitInvokeArguments(CiCallingConvention cc, Value[] args, List<CiValue> pointerSlots) {
         // for each argument, load it into the correct location
         List<CiValue> argList = new ArrayList<CiValue>(args.length);
         int j = 0;
@@ -1823,12 +1832,19 @@ public abstract class LIRGenerator extends ValueVisitor {
                 if (operand.isRegister()) {
                     param.loadItemForce(operand);
                 } else {
-                    CiValue slot = operand;
+                    assert operand.isStackSlot();
+                    CiStackSlot slot = (CiStackSlot) operand;
+                    assert !slot.inCallerFrame();
                     param.loadForStore(slot.kind);
                     if (slot.kind == CiKind.Long || slot.kind == CiKind.Double) {
                         lir.unalignedMove(param.result(), slot);
                     } else {
                         lir.move(param.result(), slot);
+                    }
+
+                    if (arg.kind == CiKind.Object) {
+                        // This slot must be marked explicitedly in the pointer map.
+                        pointerSlots.add(slot);
                     }
                 }
                 argList.add(operand);

@@ -442,7 +442,10 @@ public abstract class LIRAssembler {
     }
 
     public void verifyOopMap(LIRDebugInfo info) {
-        // TODO: verify oops
+        if (C1XOptions.VerifyPointerMaps) {
+            // TODO: verify oops
+            Util.shouldNotReachHere();
+        }
     }
 
     protected abstract int initialFrameSizeInBytes();

@@ -139,6 +139,11 @@ public class LIRDebugInfo {
                 int stackMapIndex = offset / target.wordSize;
                 setBit(debugInfo.frameRefMap, stackMapIndex);
             }
+        } else if (location.isStackSlot()) {
+            CiStackSlot stackSlot = (CiStackSlot) location;
+            assert !stackSlot.inCallerFrame();
+            assert target.spillSlotSize == target.wordSize;
+            setBit(debugInfo.frameRefMap, stackSlot.index());
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterValue registerLocation = (CiRegisterValue) location;
@@ -181,7 +186,7 @@ public class LIRDebugInfo {
     private void setBit(byte[] array, int bit) {
         int index = bit >> 3;
         int offset = bit & 0x7;
-
+        assert (array[index] & (1 << offset)) == 0 : "Pointer map entry " + bit + " is already set.";
         array[index] = (byte) (array[index] | (1 << offset));
     }
 
