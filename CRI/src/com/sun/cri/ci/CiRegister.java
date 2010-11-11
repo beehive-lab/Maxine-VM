@@ -48,6 +48,11 @@ public final class CiRegister implements Comparable<CiRegister> {
     public static final CiRegister CallerFrame = new CiRegister(-3, -3, "caller-framereg", RegisterFlag.CPU);
 
     /**
+     * Literals pointer register.
+     */
+    public static final CiRegister Literals = new CiRegister(-4, -4, "literals", RegisterFlag.CPU);
+
+    /**
      * The identifier for this register that is unique across all the registers in a {@link CiArchitecture}.
      * A valid register has {@code number > 0}.
      */
@@ -213,6 +218,22 @@ public final class CiRegister implements Comparable<CiRegister> {
         return max;
     }
     
+    /**
+     * Gets the maximum register {@linkplain #encoding encoding} in a given set of registers.
+     * 
+     * @param registers the set of registers to process
+     * @return the maximum register encoding for any register in {@code registers}
+     */
+    public static int maxRegisterEncoding(CiRegister[] registers) {
+        int max = Integer.MIN_VALUE;
+        for (CiRegister r : registers) {
+            if (r.encoding > max) {
+                max = r.encoding;
+            }
+        }
+        return max;
+    }
+
     @Override
     public String toString() {
         return name;

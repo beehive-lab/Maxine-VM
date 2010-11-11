@@ -146,6 +146,13 @@ public abstract class JavaOperator extends CirOperator {
             return constantPool;
         }
 
+        public boolean isFieldOrMethod() {
+            if (actor != null) {
+                return actor instanceof MemberActor;
+            }
+            return constant() instanceof MemberRefConstant;
+        }
+
         /**
          * Gets the constant pool entry referenced by this operator.
          */

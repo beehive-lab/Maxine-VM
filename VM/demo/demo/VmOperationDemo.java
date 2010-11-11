@@ -67,7 +67,7 @@ public class VmOperationDemo extends VmOperation {
             System.out.println(thread + " [not yet executing Java]");
         } else {
             final List<StackFrame> frameList = new ArrayList<StackFrame>();
-            new VmStackFrameWalker(vmThread.vmThreadLocals()).frames(frameList, instructionPointer, stackPointer, framePointer);
+            new VmStackFrameWalker(vmThread.tla()).frames(frameList, instructionPointer, stackPointer, framePointer);
             StackTraceElement[] trace = JDK_java_lang_Throwable.asStackTrace(frameList, null, Integer.MAX_VALUE);
             System.out.println(thread + " [stack depth: " + trace.length + "]");
             for (StackTraceElement e : trace) {

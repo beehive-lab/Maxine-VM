@@ -215,7 +215,7 @@ public class Compilation implements Future<TargetMethod> {
                 classMethodActor.notifyAll();
             }
 
-            COMPILATION.set(null);
+            COMPILATION.set((Compilation) null);
 
             // notify any compilation observers
             observeAfterCompilation(observers, compiler, targetMethod);

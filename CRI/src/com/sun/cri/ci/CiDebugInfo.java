@@ -20,6 +20,9 @@
  */
 package com.sun.cri.ci;
 
+import com.sun.cri.ri.*;
+
+
 /**
  * Represents the debugging information for a particular place in the code,
  * which includes the code position, a reference map, and deoptimization information.
@@ -29,13 +32,9 @@ package com.sun.cri.ci;
 public class CiDebugInfo {
     /**
      * The code position (including all inlined methods) of this debug info.
+     * If this is a {@link Frame} instance, then it is also the deoptimization information for each inlined frame.
      */
     public final CiCodePos codePos;
-
-    /**
-     * The deoptimization information for each inlined frame, if any.
-     */
-    public final Frame frame;
 
     /**
      * The reference map for the registers at this point. The reference map is <i>packed</i> in that
@@ -51,24 +50,21 @@ public class CiDebugInfo {
 
     /**
      * Create a new {@code CiDebugInfo} from the given values.
-     * @param codePos the {@linkplain CiCodePos code position}
-     * @param frame the {@link Frame}, which may be {@code null}
+     * @param codePos the {@linkplain CiCodePos code position} or {@linkplain Frame frame} info
      * @param registerRefMap the register map, which may be {@code null}
      * @param frameRefMap the reference map for {@code frame}, which may be {@code null}
      */
-    public CiDebugInfo(CiCodePos codePos, Frame frame, byte[] registerRefMap, byte[] frameRefMap) {
+    public CiDebugInfo(CiCodePos codePos, byte[] registerRefMap, byte[] frameRefMap) {
         this.codePos = codePos;
-        this.frame = frame;
         this.registerRefMap = registerRefMap;
         this.frameRefMap = frameRefMap;
-        assert frame == null || frame.codePos.matches(codePos) : "code positions do not match: " + frame.codePos + "==" + codePos;
     }
 
     /**
      * @return {@code true} if this debug information has a debug frame
      */
     public boolean hasDebugFrame() {
-        return frame != null;
+        return codePos instanceof Frame;
     }
 
     /**
@@ -85,22 +81,30 @@ public class CiDebugInfo {
         return frameRefMap != null && frameRefMap.length > 0;
     }
 
+
+    /**
+     * Gets the deoptimization information for each inlined frame (if available).
+     * 
+     * @return {@code null} if no frame de-opt info is {@linkplain #hasDebugFrame available}
+     */
+    public Frame frame() {
+        if (hasDebugFrame()) {
+            return (Frame) codePos;
+        }
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return CiUtil.append(new StringBuilder(100), this).toString();
+    }
+    
     /**
      * Represents debug and deoptimization information for a frame,
      * including {@link CiValue locations} where to find the values of each local variable
      * and stack slot of the Java frame.
      */
-    public static class Frame {
-        /**
-         * The debug information for the frame of the method that called this method.
-         */
-        public final Frame caller;
-
-        /**
-         * The code position of this frame, which includes a link to the code position of the caller method.
-         */
-        public final CiCodePos codePos;
-
+    public static class Frame extends CiCodePos {
         /**
          * An array of values representing how to reconstruct the state of the Java frame.
          * Entries
@@ -127,9 +131,8 @@ public class CiDebugInfo {
          */
         public final int numStack;
 
-        public Frame(Frame caller, CiCodePos codePos, CiValue[] values, int numLocals, int numStack, int numLocks) {
-            this.caller = caller;
-            this.codePos = codePos;
+        public Frame(Frame caller, RiMethod method, int bci, CiValue[] values, int numLocals, int numStack, int numLocks) {
+            super(caller, method, bci);
             this.values = values;
             this.numLocks = numLocks;
             this.numLocals = numLocals;
@@ -163,5 +166,18 @@ public class CiDebugInfo {
             return values[i + numLocals + numStack];
         }
 
+        /**
+         * Gets the caller of this frame.
+         * 
+         * @return {@code null} if this frame has no caller
+         */
+        public Frame caller() {
+            return (Frame) caller;
+        }
+        
+        @Override
+        public String toString() {
+            return CiUtil.append(new StringBuilder(100), this).toString();
+        }
     }
 }

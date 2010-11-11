@@ -23,6 +23,8 @@ package com.sun.max.vm.cps.target;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -51,6 +53,42 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
     @Override
     public TargetJavaFrameDescriptor parent() {
         return (TargetJavaFrameDescriptor) super.parent();
+    }
+
+    /**
+     * Converts this descriptor object to a {@link Frame} object.
+     *
+     * @param dict a map used to canonicalize the {@link Frame} objects produced when translating more than one
+     *            {@link TargetJavaFrameDescriptor}. This can be {@code null} if no canonicalization is to be performed.
+     */
+    public Frame toFrame(Map<TargetJavaFrameDescriptor, Frame> dict) {
+        TargetJavaFrameDescriptor parent = this.parent();
+        if (dict != null) {
+            Frame frame = dict.get(this);
+            if (frame != null) {
+                return frame;
+            }
+        }
+
+        Frame caller = null;
+        if (parent != null) {
+            caller = parent.toFrame(dict);
+        }
+
+        CiValue[] values = new CiValue[locals.length + stackSlots.length];
+        for (int i = 0; i < locals.length; i++) {
+            TargetLocation loc = locals[i];
+            values[i] = loc.toCiValue();
+        }
+        for (int i = 0; i < stackSlots.length; i++) {
+            TargetLocation loc = stackSlots[i];
+            values[i + locals.length] = loc.toCiValue();
+        }
+        Frame frame = new Frame(caller, classMethodActor, bytecodePosition, values, locals.length, stackSlots.length, 0);
+        if (dict != null) {
+            dict.put(this, frame);
+        }
+        return frame;
     }
 
     /**

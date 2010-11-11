@@ -52,6 +52,11 @@ import com.sun.max.vm.type.*;
  */
 public class BytecodeTemplateSource {
 
+    @BYTECODE_TEMPLATE(LOAD_EXCEPTION)
+    public static void loadException() {
+        JitStackFrameOperation.pushObject(NoninlineTemplateRuntime.loadException());
+    }
+
     @BYTECODE_TEMPLATE(NOP$instrumented$MethodEntry)
     public static void nop(MethodProfile mpo) {
         // entrypoint counters count down to zero ("overflow")
@@ -203,13 +208,13 @@ public class BytecodeTemplateSource {
     public static void d2i() {
         double value = JitStackFrameOperation.peekDouble(0);
         JitStackFrameOperation.removeSlots(1);
-        JitStackFrameOperation.pokeInt(0, (int) value);
+        JitStackFrameOperation.pokeInt(0, NoninlineTemplateRuntime.d2i(value));
     }
 
     @BYTECODE_TEMPLATE(D2L)
     public static void d2l() {
         double value = JitStackFrameOperation.peekDouble(0);
-        JitStackFrameOperation.pokeLong(0, (long) value);
+        JitStackFrameOperation.pokeLong(0, NoninlineTemplateRuntime.d2l(value));
     }
 
     @BYTECODE_TEMPLATE(DADD)
@@ -380,14 +385,14 @@ public class BytecodeTemplateSource {
     @BYTECODE_TEMPLATE(F2I)
     public static void f2i() {
         float value = JitStackFrameOperation.peekFloat(0);
-        JitStackFrameOperation.pokeInt(0, (int) value);
+        JitStackFrameOperation.pokeInt(0, NoninlineTemplateRuntime.f2i(value));
     }
 
     @BYTECODE_TEMPLATE(F2L)
     public static void f2l() {
         float value = JitStackFrameOperation.peekFloat(0);
         JitStackFrameOperation.addSlots(1);
-        JitStackFrameOperation.pokeLong(0, (long) value);
+        JitStackFrameOperation.pokeLong(0, NoninlineTemplateRuntime.f2l(value));
     }
 
     @BYTECODE_TEMPLATE(FADD)

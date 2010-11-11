@@ -78,7 +78,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
             return false;
         }
         for (TeleNativeThread teleNativeThread : vm().teleProcess().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
-            TeleThreadLocalsArea teleThreadLocalsArea = teleNativeThread.localsBlock().threadLocalsAreaFor(Safepoint.State.ENABLED);
+            TeleThreadLocalsArea teleThreadLocalsArea = teleNativeThread.localsBlock().tlaFor(Safepoint.State.ENABLED);
             if (teleThreadLocalsArea != null) {
                 Word tlabDisabledWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME);
                 Word tlabMarkWord = teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME);

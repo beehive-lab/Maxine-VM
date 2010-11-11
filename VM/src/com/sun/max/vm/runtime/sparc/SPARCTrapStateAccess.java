@@ -21,9 +21,9 @@
 package com.sun.max.vm.runtime.sparc;
 
 import static com.sun.max.asm.sparc.GPR.*;
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -100,14 +100,10 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
         return ByteArrayBitMap.computeBitMapSize(INTEGER_NON_SYSTEM_RESERVED_GLOBAL_REGISTERS.length + OUT_REGISTERS.length);
     }
 
-    @HOSTED_ONLY
-    public SPARCTrapStateAccess(VMConfiguration vmConfiguration) {
-    }
-
     @Override
     public Pointer getInstructionPointer(Pointer trapState) {
         // We're in the trap stub. The latch register is set to the disabled vm thread locals.
-        return TRAP_INSTRUCTION_POINTER.pointer(Safepoint.getLatchRegister()).readWord(0).asPointer();
+        return TRAP_INSTRUCTION_POINTER.load(currentTLA());
     }
 
     /**
@@ -115,7 +111,7 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
      */
     @Override
     public void setInstructionPointer(Pointer trapState, Pointer value) {
-        TRAP_INSTRUCTION_POINTER.pointer(Safepoint.getLatchRegister()).writeWord(0, value);
+        TRAP_INSTRUCTION_POINTER.store3(value);
     }
 
     @Override

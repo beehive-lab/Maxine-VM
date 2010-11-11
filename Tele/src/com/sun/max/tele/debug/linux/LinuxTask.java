@@ -33,7 +33,9 @@ import com.sun.max.vm.runtime.*;
 /**
  * A native Linux task (process or thread; threads are implemented as processes on Linux) that is controlled and
  * accessed via the Linux {@code ptrace} facility. The methods that interact with the traced task always execute on a
- * {@linkplain SingleThread single dedicated thread} fulfilling a requirement of ptrace.
+ * {@linkplain SingleThread single dedicated thread} fulfilling a requirement of ptrace. Because all operations
+ * on the single dedicated thread are synchronized, there's no need to synchronize the methods in this class that
+ * delegate to it.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -153,7 +155,7 @@ public final class LinuxTask {
 
     private static native boolean nativeDetach(int tgid, int tid);
 
-    public synchronized void detach() throws IOException {
+    public void detach() throws IOException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
@@ -170,7 +172,7 @@ public final class LinuxTask {
 
     private static native boolean nativeSingleStep(int tgid, int tid);
 
-    public synchronized boolean singleStep() {
+    public boolean singleStep() {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
                 return nativeSingleStep(tgid, tid);
@@ -180,7 +182,7 @@ public final class LinuxTask {
 
     private static native boolean nativeResume(int tgid, int tid, boolean allTasks);
 
-    public synchronized void resume(final boolean allTasks) throws OSExecutionRequestException {
+    public void resume(final boolean allTasks) throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
@@ -214,7 +216,7 @@ public final class LinuxTask {
 
     private static native int nativeWait(int tgid, int tid, boolean allTasks);
 
-    public synchronized ProcessState waitUntilStopped(final boolean allTasks) {
+    public ProcessState waitUntilStopped(final boolean allTasks) {
         if (!allTasks) {
             FatalError.unimplemented();
         }
@@ -272,7 +274,7 @@ public final class LinuxTask {
      */
     private static native int nativeReadBytes(int tgid, int tid, long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
 
-    public synchronized int readBytes(final long src, final Object dst, final boolean isDirectByteBuffer, final int offset, final int length) {
+    public int readBytes(final long src, final Object dst, final boolean isDirectByteBuffer, final int offset, final int length) {
         if (!isLeader()) {
             return leader().readBytes(src, dst, isDirectByteBuffer, offset, length);
         }
@@ -313,7 +315,7 @@ public final class LinuxTask {
      */
     private static native int nativeWriteBytes(int tgid, int tid, long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
 
-    public synchronized int writeBytes(final long dst, final Object src, final boolean isDirectByteBuffer, final int offset, final int length) {
+    public int writeBytes(final long dst, final Object src, final boolean isDirectByteBuffer, final int offset, final int length) {
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
                 return nativeWriteBytes(tgid, tid, dst, src, isDirectByteBuffer, offset, length);
@@ -323,7 +325,7 @@ public final class LinuxTask {
 
     private static native boolean nativeSetInstructionPointer(int tid, long instructionPointer);
 
-    public synchronized boolean setInstructionPointer(final long instructionPointer) {
+    public boolean setInstructionPointer(final long instructionPointer) {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
                 return nativeSetInstructionPointer(tid, instructionPointer);
@@ -336,7 +338,7 @@ public final class LinuxTask {
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize);
 
-    public synchronized boolean readRegisters(
+    public boolean readRegisters(
                     final byte[] integerRegisters,
                     final byte[] floatingPointRegisters,
                     final byte[] stateRegisters) {

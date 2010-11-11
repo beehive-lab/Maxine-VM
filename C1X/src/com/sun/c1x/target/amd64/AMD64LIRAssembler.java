@@ -21,6 +21,7 @@
 package com.sun.c1x.target.amd64;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
@@ -30,14 +31,16 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.target.amd64.AMD64Assembler.*;
+import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.CiXirAssembler.XirInstruction;
+import com.sun.cri.xir.CiXirAssembler.XirLabel;
+import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
  * This class implements the x86-specific code generation for LIR.
@@ -1690,7 +1693,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         signature[i] = inst.arguments[i].kind;
                     }
 
-                    CiCallingConvention cc = frameMap.runtimeCallingConvention(signature);
+                    CiCallingConvention cc = frameMap.getCallingConvention(signature, RuntimeCall);
                     for (int i = 0; i < inst.arguments.length; i++) {
                         CiValue argumentLocation = cc.locations[i];
                         CiValue argumentSourceLocation = operands[inst.arguments[i].index];

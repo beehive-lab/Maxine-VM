@@ -22,6 +22,7 @@ package com.sun.max.vm.bytecode;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 
@@ -41,11 +42,19 @@ public class BytecodeLocation implements Iterable<BytecodeLocation> {
         this.bytecodePosition = bytecodePosition;
     }
 
+    /**
+     * This test includes the {@linkplain BytecodeLocation#parent() parent} chain of this and {@code obj}.
+     */
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof BytecodeLocation) {
-            final BytecodeLocation bytecodeLocation = (BytecodeLocation) other;
-            return classMethodActor.equals(bytecodeLocation.classMethodActor) && bytecodePosition == bytecodeLocation.bytecodePosition;
+    public boolean equals(Object obj) {
+        if (obj instanceof BytecodeLocation) {
+            final BytecodeLocation other = (BytecodeLocation) obj;
+            if (classMethodActor.equals(other.classMethodActor) && bytecodePosition == other.bytecodePosition) {
+                if (parent() == null) {
+                    return other.parent() == null;
+                }
+                return parent().equals(other.parent());
+            }
         }
         return false;
     }
@@ -67,6 +76,31 @@ public class BytecodeLocation implements Iterable<BytecodeLocation> {
      */
     public int sourceLineNumber() {
         return classMethodActor.sourceLineNumber(bytecodePosition);
+    }
+
+    /**
+     * Converts this location object to a {@link CiCodePos} object.
+     *
+     * @param dict a map used to canonicalize the {@link CiCodePos} objects produced when translating more than one
+     *            {@link BytecodeLocation}. This can be {@code null} if no canonicalization is to be performed.
+     */
+    public CiCodePos toCodePos(Map<BytecodeLocation, CiCodePos> dict) {
+        BytecodeLocation parent = parent();
+        if (dict != null) {
+            CiCodePos pos = dict.get(this);
+            if (pos != null) {
+                return pos;
+            }
+        }
+        CiCodePos caller = null;
+        if (parent != null) {
+            caller = parent.toCodePos(dict);
+        }
+        CiCodePos pos = new CiCodePos(caller, classMethodActor, bytecodePosition);
+        if (dict != null) {
+            dict.put(this, pos);
+        }
+        return pos;
     }
 
     /**

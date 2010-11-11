@@ -792,7 +792,7 @@ public final class DataPrototype extends Prototype {
         }
     }
 
-    private final int threadCount = Runtime.getRuntime().availableProcessors();
+    private final int threadCount;
     private static final int BATCH = 10000;
 
     /**
@@ -1129,9 +1129,10 @@ public final class DataPrototype extends Prototype {
      * @param graphPrototype the graph prototype for which to build the data prototype
      * @param mapFile a file to which to write map information; if {@code null}, no map information will be written
      */
-    public DataPrototype(GraphPrototype graphPrototype, File mapFile) {
+    public DataPrototype(GraphPrototype graphPrototype, File mapFile, int threadCount) {
         this.graphPrototype = graphPrototype;
         final Platform platform = platform();
+        this.threadCount = threadCount;
         pageSize = platform.pageSize;
         dataModel = platform.dataModel;
         alignment = Word.size();

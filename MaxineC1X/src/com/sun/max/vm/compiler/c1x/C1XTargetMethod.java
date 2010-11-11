@@ -26,7 +26,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
 import com.sun.cri.ci.CiTargetMethod.Site;
@@ -44,12 +43,15 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
+import com.sun.max.vm.trampoline.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class implements a {@link TargetMethod target method} for
@@ -638,6 +640,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         return exceptionClassActors == null ? 0 : exceptionClassActors.length;
     }
 
+    @HOSTED_ONLY
     private void gatherInlinedMethods(Site site, Set<MethodActor> inlinedMethods) {
         CiDebugInfo debugInfo = site.debugInfo();
         if (debugInfo != null) {
@@ -771,7 +774,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         switch (calleeKind) {
             case TRAMPOLINE:
                 // compute the register reference map from the call at this site
-                AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
+                prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame
@@ -823,6 +826,59 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
+    private static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+        TargetMethod trampolineTargetMethod = callee.targetMethod();
+        ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
+        ClassMethodActor callerMethod;
+        TargetMethod targetMethod = current.targetMethod();
+        Pointer trampolineRegisters = callee.sp();
+
+        // figure out what method the caller is trying to call
+        if (trampolineMethodActor.isStaticTrampoline()) {
+            int stopIndex = targetMethod.findClosestStopIndex(current.ip().minus(1));
+            callerMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
+        } else {
+            // this is an virtual or interface call; figure out the receiver method based on the
+            // virtual or interface index
+            final Object receiver = trampolineRegisters.getReference().toJava(); // read receiver object on stack
+            final ClassActor classActor = ObjectAccess.readClassActor(receiver);
+            assert trampolineTargetMethod.referenceLiterals().length == 1;
+            final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
+            if (trampolineMethodActor.isVirtualTrampoline()) {
+                callerMethod = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex);
+            } else {
+                callerMethod = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex);
+            }
+        }
+
+        // use the caller method to fill out the reference map for the saved parameters in the trampoline frame
+        int parameterRegisterIndex = 0;
+        if (!callerMethod.isStatic()) {
+            // set a bit for the receiver object
+            preparer.setReferenceMapBits(current, trampolineRegisters, 1, 1);
+            parameterRegisterIndex = 1;
+        }
+
+        SignatureDescriptor descriptor = callerMethod.descriptor();
+        TargetABI abi = trampolineTargetMethod.abi();
+        for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
+            final TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
+            final Kind parameterKind = parameter.toKind();
+            if (parameterKind.isReference) {
+                // set a bit for this parameter
+                preparer.setReferenceMapBits(current, trampolineRegisters.plusWords(parameterRegisterIndex), 1, 1);
+            }
+            if (abi.putIntoIntegerRegister(parameterKind)) {
+                parameterRegisterIndex++;
+                if (parameterRegisterIndex >= abi.integerIncomingParameterRegisters.size()) {
+                    // done since all subsequent parameters are known to be passed on the stack
+                    // and covered by the reference map for the stack at this call point
+                    return;
+                }
+            }
+        }
+    }
+
     /**
      * Attempt to catch an exception that has been thrown with this method on the call stack.
      * @param current the current stack frame
@@ -852,6 +908,19 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public void advance(Cursor current) {
         AMD64OptStackWalking.advance(current);
+    }
+
+    @Override
+    public CiDebugInfo getDebugInfo(Pointer ip, boolean implicitExceptionPoint) {
+        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
+            ip = ip.minus(1);
+        }
+
+        int stopIndex = findClosestStopIndex(ip);
+        if (stopIndex < 0) {
+            return null;
+        }
+        return decodeDebugInfo(classMethodActor, sourceInfo, sourceMethods, stopIndex);
     }
 
     @Override
@@ -900,5 +969,27 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             return null;
         }
 
+    }
+
+    public static CiDebugInfo decodeDebugInfo(ClassMethodActor classMethodActor, Object sourceInfoObject, ClassMethodActor[] sourceMethods, int index) {
+        if (sourceInfoObject instanceof int[]) {
+            int[] sourceInfo = (int[]) sourceInfoObject;
+            if (index < 0) {
+                return null;
+            }
+            int start = index * 3;
+            ClassMethodActor sourceMethod = sourceMethods[sourceInfo[start]];
+            int bci = sourceInfo[start + 1];
+            int parentIndex = sourceInfo[start + 2];
+            final CiDebugInfo caller = decodeDebugInfo(classMethodActor, sourceInfo, sourceMethods, parentIndex);
+            CiCodePos callerPos = caller == null ? null : caller.codePos;
+            return new CiDebugInfo(new CiCodePos(callerPos, sourceMethod, bci), null, null);
+        } else if (sourceInfoObject instanceof char[]) {
+            // no inlined methods; just recover the bytecode index
+            char[] array = (char[]) sourceInfoObject;
+            return new CiDebugInfo(new CiCodePos(null, classMethodActor, array[index]), null, null);
+        } else {
+            return null;
+        }
     }
 }

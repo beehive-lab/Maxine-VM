@@ -51,9 +51,9 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     /**
      * A table specialized to display thread local fields.
      */
-    public ThreadLocalsAreaTable(Inspection inspection, final MaxThreadLocalsArea threadLocalsArea, ThreadLocalsViewPreferences viewPreferences) {
+    public ThreadLocalsAreaTable(Inspection inspection, final MaxThreadLocalsArea tla, ThreadLocalsViewPreferences viewPreferences) {
         super(inspection);
-        this.tableModel = new ThreadLocalsAreaTableModel(inspection, threadLocalsArea);
+        this.tableModel = new ThreadLocalsAreaTableModel(inspection, tla);
         this.columnModel = new ThreadLocalsAreaTableColumnModel(viewPreferences);
         configureMemoryTable(tableModel, columnModel);
     }
@@ -145,11 +145,11 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
      */
     private final class ThreadLocalsAreaTableModel extends InspectorMemoryTableModel {
 
-        private final MaxThreadLocalsArea threadLocalsArea;
+        private final MaxThreadLocalsArea tla;
 
-        public ThreadLocalsAreaTableModel(Inspection inspection, MaxThreadLocalsArea threadLocalsArea) {
-            super(inspection, threadLocalsArea.memoryRegion().start());
-            this.threadLocalsArea = threadLocalsArea;
+        public ThreadLocalsAreaTableModel(Inspection inspection, MaxThreadLocalsArea tla) {
+            super(inspection, tla.memoryRegion().start());
+            this.tla = tla;
         }
 
         public int getColumnCount() {
@@ -157,11 +157,11 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return threadLocalsArea.variableCount();
+            return tla.variableCount();
         }
 
         public MaxThreadLocalVariable getValueAt(int row, int col) {
-            return threadLocalsArea.getThreadLocalVariable(row);
+            return tla.getThreadLocalVariable(row);
         }
 
         @Override
@@ -170,36 +170,36 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         }
 
         public MaxThread getThread() {
-            return threadLocalsArea.thread();
+            return tla.thread();
         }
 
         public MaxThreadLocalsArea getTeleThreadLocalValues() {
-            return threadLocalsArea;
+            return tla;
         }
 
         @Override
         public Address getAddress(int row) {
-            return threadLocalsArea.getThreadLocalVariable(row).memoryRegion().start();
+            return tla.getThreadLocalVariable(row).memoryRegion().start();
         }
 
         @Override
         public MaxMemoryRegion getMemoryRegion(int row) {
-            return threadLocalsArea.getThreadLocalVariable(row).memoryRegion();
+            return tla.getThreadLocalVariable(row).memoryRegion();
         }
 
         @Override
         public Offset getOffset(int row) {
-            return Offset.fromInt(threadLocalsArea.getThreadLocalVariable(row).offset());
+            return Offset.fromInt(tla.getThreadLocalVariable(row).offset());
         }
 
         @Override
         public int findRow(Address address) {
-            final MaxThreadLocalVariable threadLocalVariable = threadLocalsArea.findThreadLocalVariable(address);
+            final MaxThreadLocalVariable threadLocalVariable = tla.findThreadLocalVariable(address);
             return threadLocalVariable == null ? -1 : threadLocalVariable.index();
         }
 
         public Value rowToVariableValue(int row) {
-            return threadLocalsArea.getThreadLocalVariable(row).value();
+            return tla.getThreadLocalVariable(row).value();
         }
     }
 

@@ -40,11 +40,11 @@
  *                            | X X X          unmapped page          X X X |
  *                            | X X X                                 X X X |
  *           page aligned --> +---------------------------------------------+
- *                            |           thread locals (triggered)         |
- *                            +---------------------------------------------+ <-- threadLocals_current()
- *                            |           thread locals (enabled)           |
+ *                            |                 tla (triggered)             |
+ *                            +---------------------------------------------+ <-- tla_current()
+ *                            |                 tla (enabled)               |
  *                            +---------------------------------------------+
- *                            |           thread locals (disabled)          |
+ *                            |                 tla (disabled)              |
  *                            +---------------------------------------------+  <-- nativeThreadLocals_current()
  *                            |           NativeThreadLocalsStruct          |
  *                            +---------------------------------------------+
@@ -57,10 +57,10 @@
  *
  */
 
-#define THREAD_LOCALS_FROM_TLBLOCK(tlBlock)        ((ThreadLocals)       (tlBlock + virtualMemory_getPageSize() - sizeof(Address) +  threadLocalsAreaSize()))
-#define NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock) ((NativeThreadLocals) (tlBlock + virtualMemory_getPageSize() - sizeof(Address) + (threadLocalsAreaSize() * 3)))
+#define TLA_FROM_TLBLOCK(tlBlock)        ((TLA)       (tlBlock + virtualMemory_getPageSize() - sizeof(Address) +  tlaSize()))
+#define NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock) ((NativeThreadLocals) (tlBlock + virtualMemory_getPageSize() - sizeof(Address) + (tlaSize() * 3)))
 
-extern void threadLocals_initialize(int threadLocalsSize);
+extern void tla_initialize(int tlaSize);
 
 /**
  * Creates and/or initializes the thread locals block (see diagram above) for the current thread.
@@ -108,9 +108,9 @@ extern void threadLocalsBlock_destroy(Address tlBlock);
  */
 #define FOR_ALL_THREAD_LOCALS(macro) \
     macro(SAFEPOINT_LATCH, 0) \
-    macro(SAFEPOINTS_ENABLED_THREAD_LOCALS, 1) \
-    macro(SAFEPOINTS_DISABLED_THREAD_LOCALS, 2) \
-    macro(SAFEPOINTS_TRIGGERED_THREAD_LOCALS, 3) \
+    macro(ETLA, 1) \
+    macro(DTLA, 2) \
+    macro(TTLA, 3) \
     macro(NATIVE_THREAD_LOCALS, 4) \
     macro(FORWARD_LINK, 5) \
     macro(BACKWARD_LINK, 6) \
@@ -132,7 +132,7 @@ typedef enum ThreadLocal {
 /**
  * This typedef is only to clarify intent when using thread locals.
  */
-typedef Address ThreadLocals;
+typedef Address TLA;
 
 /**
  * Gets the block of memory allocated for the native and VM thread locals associated with the current thread.
@@ -151,52 +151,52 @@ extern void threadLocalsBlock_setCurrent(Address tlBlock);
 /**
  * Gets a pointer to the safepoints-enabled copy of thread locals associated with the current thread.
  */
-extern ThreadLocals threadLocals_current(void);
+extern TLA tla_current(void);
 
 /**
  * Gets the size of a thread locals area.
  */
-extern int threadLocalsAreaSize();
+extern int tlaSize();
 
 /**
  * Sets the value of a specified thread local.
  *
- * @param tl a ThreadLocals value
+ * @param tla a TLA value
  * @param name the name of the thread local to access (a ThreadLocal_t value)
  * @param value the value to which the named thread local should be set
  */
-#define setThreadLocal(tl, name, value) do { *((Address *) tl + name) = (Address) (value); } while (0)
+#define tla_store(tla, name, value) do { *((Address *) tla + name) = (Address) (value); } while (0)
 
 /**
  * Gets the value of a specified thread local.
  *
  * @param type the type to which the retrieved thread local value is cast
- * @param tl a ThreadLocals value
+ * @param tla a TLA value
  * @param name the name of the thread local to access (a ThreadLocal_t value)
  * @return the value of the named thread local, cast to 'type'
  */
-#define getThreadLocal(type, tl, name) ((type) *((Address *) tl + name))
+#define tla_load(type, tla, name) ((type) *((Address *) tla + name))
 
 /**
  * Gets the address of a specified thread local.
  *
- * @param tl a ThreadLocals value
+ * @param tla a TLA value
  * @param name the name of the thread local to address
  * @return the address of the named thread local, cast to Address
  */
-#define getThreadLocalAddress(tl, name) ((Address) tl + (name * sizeof(Address)))
+#define tla_addressOf(tla, name) ((Address) tla + (name * sizeof(Address)))
 
 /**
  * Sets the value of a specified thread local to all three thread local spaces.
  *
- * @param tl a ThreadLocals value
+ * @param tla a TLA value
  * @param name the name of the thread local to access (a ThreadLocal_t value)
  * @param value the value to which the named thread local should be set
  */
-#define setConstantThreadLocal(tl, name, value) do { \
-    *((Address *) getThreadLocal(ThreadLocals, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS) + name) = (Address) (value); \
-    *((Address *) getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS) + name) = (Address) (value); \
-    *((Address *) getThreadLocal(ThreadLocals, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS) + name) = (Address) (value); \
+#define tla_store3(tla, name, value) do { \
+    *((Address *) tla_load(TLA, tla, ETLA) + name) = (Address) (value); \
+    *((Address *) tla_load(TLA, tla, DTLA) + name) = (Address) (value); \
+    *((Address *) tla_load(TLA, tla, TTLA) + name) = (Address) (value); \
 } while (0)
 
 typedef struct {
@@ -228,17 +228,17 @@ typedef struct {
 extern NativeThreadLocals nativeThreadLocals_current(void);
 
 /**
- * Prints a selection of the fields in a given ThreadLocals object.
+ * Prints a selection of the fields in a given TLA object.
  *
- * @param tl the ThreadLocals to be printed
+ * @param tla the TLA to be printed
  */
-extern void threadLocals_println(ThreadLocals);
+extern void tla_println(TLA tla);
 
 /**
  * Prints the elements in a list of thread locals.
  *
- * @param tl the head of a list of thread locals
+ * @param tla the head of a list of thread locals
  */
-extern void threadLocals_printList(ThreadLocals tl);
+extern void tla_printList(TLA tla);
 
 #endif /*__threadLocals_h__*/

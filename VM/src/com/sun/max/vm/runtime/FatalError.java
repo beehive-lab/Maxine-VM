@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -158,7 +159,7 @@ public final class FatalError extends Error {
         }
 
         if (vmThread != null) {
-            dumpStackAndThreadLocals(VmThread.currentVmThreadLocals(), trappedInNative);
+            dumpStackAndThreadLocals(currentTLA(), trappedInNative);
 
             if (throwable != null) {
                 Log.print("------ Cause Exception ------");
@@ -168,7 +169,7 @@ public final class FatalError extends Error {
         }
 
         if (vmThread == null || trappedInNative || Throw.scanStackOnFatalError.getValue()) {
-            final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord();
+            final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.load(currentTLA());
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }
         Log.unlock(lockDisabledSafepoints);
@@ -233,30 +234,30 @@ public final class FatalError extends Error {
     /**
      * Dumps the stack and thread locals of a given thread to the log stream.
      *
-     * @param vmThreadLocals VM thread locals of a thread
+     * @param tla VM thread locals of a thread
      * @param trappedInNative specifies if this is for a thread that trapped in native code
      */
-    static void dumpStackAndThreadLocals(Pointer vmThreadLocals, boolean trappedInNative) {
-        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+    static void dumpStackAndThreadLocals(Pointer tla, boolean trappedInNative) {
+        final VmThread vmThread = VmThread.fromTLA(tla);
         Log.print("------ Stack dump for thread ");
         Log.printThread(vmThread, false);
         Log.println(" ------");
-        if (!trappedInNative && vmThreadLocals == VmThread.currentVmThreadLocals()) {
+        if (!trappedInNative && tla == currentTLA()) {
             Throw.stackDump(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
         } else {
-            Throw.stackDump(null, vmThreadLocals);
+            Throw.stackDump(null, tla);
         }
 
         Log.print("------ Thread locals for thread ");
         Log.printThread(vmThread, false);
         Log.println(" ------");
-        Log.printThreadLocals(vmThreadLocals, true);
+        Log.printThreadLocals(tla, true);
     }
 
     static final class DumpStackOfNonCurrentThread implements Pointer.Procedure {
-        public void run(Pointer vmThreadLocals) {
-            if (SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals) != SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord()) {
-                dumpStackAndThreadLocals(vmThreadLocals, false);
+        public void run(Pointer tla) {
+            if (ETLA.load(tla) != ETLA.load(currentTLA())) {
+                dumpStackAndThreadLocals(tla, false);
             }
         }
     }

@@ -20,9 +20,13 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
+import static com.sun.max.platform.Platform.*;
+
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -329,6 +333,10 @@ public abstract class TargetLocation {
     public abstract Tag tag();
 
     protected TargetLocation() {
+    }
+
+    public CiValue toCiValue() {
+        return CiValue.IllegalValue;
     }
 
     @Override
@@ -677,6 +685,11 @@ public abstract class TargetLocation {
         }
 
         @Override
+        public CiValue toCiValue() {
+            return value.asCiConstant();
+        }
+
+        @Override
         public void write(DataOutput stream) throws IOException {
             if (value.kind() != Kind.REFERENCE) {
                 final int intValue = value.toInt();
@@ -727,7 +740,7 @@ public abstract class TargetLocation {
 
     public abstract static class Index extends TargetLocation {
 
-        private final int index;
+        public final int index;
 
         public int index() {
             return index;
@@ -790,6 +803,11 @@ public abstract class TargetLocation {
         }
 
         @Override
+        public CiValue toCiValue() {
+            return new CiAddress(CiKind.Object, CiRegister.Literals.asValue(), index);
+        }
+
+        @Override
         public void acceptVisitor(TargetLocationVisitor visitor) {
             visitor.visit(this);
         }
@@ -811,6 +829,11 @@ public abstract class TargetLocation {
         }
 
         @Override
+        public CiValue toCiValue() {
+            return new CiAddress(CiKind.Object, CiRegister.Literals.asValue(), index * Word.size());
+        }
+
+        @Override
         public void acceptVisitor(TargetLocationVisitor visitor) {
             visitor.visit(this);
         }
@@ -824,6 +847,11 @@ public abstract class TargetLocation {
 
         public IntegerRegister(int register) {
             super(register);
+        }
+
+        @Override
+        public CiValue toCiValue() {
+            return target().arch.registerFor(index, CPU).asValue();
         }
 
         @Override
@@ -843,6 +871,11 @@ public abstract class TargetLocation {
         }
 
         @Override
+        public CiValue toCiValue() {
+            return target().arch.registerFor(index, FPU).asValue();
+        }
+
+        @Override
         public void acceptVisitor(TargetLocationVisitor visitor) {
             visitor.visit(this);
         }
@@ -859,6 +892,11 @@ public abstract class TargetLocation {
         }
 
         @Override
+        public CiValue toCiValue() {
+            return CiStackSlot.get(CiKind.Word, index, true);
+        }
+
+        @Override
         public void acceptVisitor(TargetLocationVisitor visitor) {
             visitor.visit(this);
         }
@@ -872,6 +910,11 @@ public abstract class TargetLocation {
 
         public LocalStackSlot(int index) {
             super(index);
+        }
+
+        @Override
+        public CiValue toCiValue() {
+            return CiStackSlot.get(CiKind.Word, index, false);
         }
 
         @Override
@@ -937,6 +980,11 @@ public abstract class TargetLocation {
 
         public Method(ClassMethodActor classMethodActor) {
             this.classMethodActor = classMethodActor;
+        }
+
+        @Override
+        public CiValue toCiValue() {
+            return CiConstant.forObject(classMethodActor);
         }
 
         @Override

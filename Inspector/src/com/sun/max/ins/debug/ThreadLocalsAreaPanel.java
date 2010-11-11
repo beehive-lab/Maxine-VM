@@ -42,56 +42,56 @@ import com.sun.max.vm.runtime.*;
  */
 public final class ThreadLocalsAreaPanel extends InspectorPanel {
 
-    private final MaxThreadLocalsArea threadLocalsArea;
-    private final ThreadLocalsAreaHeaderPanel threadLocalsAreaHeaderPanel;
-    private final ThreadLocalsAreaTable threadLocalsAreaTable;
+    private final MaxThreadLocalsArea tla;
+    private final ThreadLocalsAreaHeaderPanel tlaHeaderPanel;
+    private final ThreadLocalsAreaTable tlaTable;
 
-    ThreadLocalsAreaPanel(Inspection inspection, MaxThread thread, MaxThreadLocalsArea threadLocalsArea, ThreadLocalsViewPreferences preferences) {
+    ThreadLocalsAreaPanel(Inspection inspection, MaxThread thread, MaxThreadLocalsArea tla, ThreadLocalsViewPreferences preferences) {
         super(inspection);
-        this.threadLocalsArea = threadLocalsArea;
-        threadLocalsAreaHeaderPanel = new ThreadLocalsAreaHeaderPanel(inspection, threadLocalsArea);
-        threadLocalsAreaTable = new ThreadLocalsAreaTable(inspection, threadLocalsArea, preferences);
+        this.tla = tla;
+        tlaHeaderPanel = new ThreadLocalsAreaHeaderPanel(inspection, tla);
+        tlaTable = new ThreadLocalsAreaTable(inspection, tla, preferences);
 
         setLayout(new BorderLayout());
-        add(threadLocalsAreaHeaderPanel, BorderLayout.NORTH);
+        add(tlaHeaderPanel, BorderLayout.NORTH);
 
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), threadLocalsAreaTable);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), tlaTable);
         add(scrollPane, BorderLayout.CENTER);
     }
 
     @Override
     public void refresh(boolean force) {
         if (isShowing()) {
-            threadLocalsAreaHeaderPanel.refresh(force);
-            threadLocalsAreaTable.refresh(force);
+            tlaHeaderPanel.refresh(force);
+            tlaTable.refresh(force);
         }
     }
 
     @Override
     public void redisplay() {
-        threadLocalsAreaHeaderPanel.redisplay();
-        threadLocalsAreaTable.redisplay();
+        tlaHeaderPanel.redisplay();
+        tlaTable.redisplay();
     }
 
     /**
      * @return the state with which the values displayed in the panel are associated.
      */
     public Safepoint.State getSafepointState() {
-        return threadLocalsArea.safepointState();
+        return tla.safepointState();
     }
 
     public InspectorTable getTable() {
-        return threadLocalsAreaTable;
+        return tlaTable;
     }
 
     private final class ThreadLocalsAreaHeaderPanel extends InspectorPanel {
 
         private final List<InspectorLabel> labels = new ArrayList<InspectorLabel>();
 
-        public ThreadLocalsAreaHeaderPanel(Inspection inspection, MaxThreadLocalsArea threadLocalsArea) {
+        public ThreadLocalsAreaHeaderPanel(Inspection inspection, MaxThreadLocalsArea tla) {
             super(inspection);
             addInspectorLabel(new TextLabel(inspection, "start: "));
-            final MaxMemoryRegion memoryRegion = threadLocalsArea.memoryRegion();
+            final MaxMemoryRegion memoryRegion = tla.memoryRegion();
             addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, memoryRegion.start(), this));
             add(Box.createHorizontalGlue());
             addInspectorLabel(new TextLabel(inspection, "end: "));

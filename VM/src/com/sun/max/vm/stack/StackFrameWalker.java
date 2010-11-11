@@ -26,6 +26,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.platform.*;
@@ -829,6 +830,32 @@ public abstract class StackFrameWalker {
         }
     }
 
+    /**
+     * Extracts a list of {@link CiDebugInfo} objects from a list of real stack frames.
+     *
+     * @param stackFrames a list of stack frames {@linkplain StackFrameWalker#frames(List, Pointer, Pointer, Pointer)
+     *            gathered} during a walk of a thread's stack
+     * @return an array of {@link CiDebugInfo} objects derived from {@code stackFrames}
+     */
+    public static CiDebugInfo[] extractDebugInfoStack(List<StackFrame> stackFrames) {
+        List<CiDebugInfo> elements = new ArrayList<CiDebugInfo>();
+        for (StackFrame stackFrame : stackFrames) {
+            if (stackFrame instanceof AdapterStackFrame) {
+                continue;
+            }
+            final TargetMethod targetMethod = stackFrame.targetMethod();
+            if (targetMethod == null || targetMethod.classMethodActor() == null) {
+                // native frame or stub frame without a class method actor
+                continue;
+            }
+            CiDebugInfo info = targetMethod.getDebugInfo(stackFrame.ip, false);
+            if (info != null) {
+                elements.add(info);
+            }
+        }
+        return (CiDebugInfo[]) elements.toArray(new CiDebugInfo[elements.size()]);
+    }
+
     public abstract Word readWord(Address address, int offset);
     public abstract byte readByte(Address address, int offset);
     public abstract int readInt(Address address, int offset);
@@ -836,20 +863,10 @@ public abstract class StackFrameWalker {
     /**
      * Reads the value of a given VM thread local from the safepoint-enabled thread locals.
      *
-     * @param local the VM thread local to read
-     * @return the value (as a word) of {@code local} in the safepoint-enabled thread locals
-     */
-    public abstract Word readWord(VmThreadLocal local);
-
-    /**
-     * Reads the value of a given VM thread local from the safepoint-enabled thread locals.
-     *
-     * @param local the VM thread local to read
+     * @param tl the VM thread local to read
      * @return the value (as a pointer) of {@code local} in the safepoint-enabled thread locals
      */
-    public Pointer readPointer(VmThreadLocal local) {
-        return readWord(local).asPointer();
-    }
+    public abstract Pointer readPointer(VmThreadLocal tl);
 
     /**
      * Updates the stack walker's frame and stack pointers with those specified by the target ABI (use the ABI stack and frame pointers).

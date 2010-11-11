@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.jit;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.platform.*;
@@ -130,6 +131,15 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     @Override
     public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
         return new BytecodeLocation(classMethodActor(), bytecodePositionFor(stopPosition(stopIndex)));
+    }
+
+    @Override
+    public CiDebugInfo getDebugInfo(Pointer instructionPointer, boolean implicitExceptionPoint) {
+        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
+            instructionPointer = instructionPointer.minus(1);
+        }
+        int bci = bytecodePositionFor(instructionPointer.asPointer());
+        return new CiDebugInfo(new CiCodePos(null, classMethodActor, bci), null, null);
     }
 
     /**

@@ -45,7 +45,7 @@ public abstract class ThreadAccess {
     protected TeleChannelDataIOProtocol protocol;
     private static final int MAXINE_THREAD_ID = 40;
     private static final int NATIVE_THREAD_LOCALS_STRUCT_SIZE = 72;
-    protected int threadLocalsAreaSize;
+    protected int tlaSize;
     protected List<ThreadInfo> currentThreadList;
 
     /**
@@ -81,20 +81,20 @@ public abstract class ThreadAccess {
      */
     protected abstract void gatherOSThreads(List<ThreadInfo> threadList);
 
-    protected ThreadAccess(TeleChannelDataIOProtocol protocol, int threadLocalsAreaSize) {
+    protected ThreadAccess(TeleChannelDataIOProtocol protocol, int tlaSize) {
         this.protocol = protocol;
-        this.threadLocalsAreaSize = threadLocalsAreaSize;
+        this.tlaSize = tlaSize;
     }
 
     @SuppressWarnings("unchecked")
-    public boolean gatherThreads(Object teleProcessObject, Object threadSeq, long threadLocalsList, long primordialThreadLocals) {
-        final ByteBuffer threadLocals = ByteBuffer.allocate(threadLocalsAreaSize).order(ByteOrder.LITTLE_ENDIAN);
+    public boolean gatherThreads(Object teleProcessObject, Object threadSeq, long tlaList, long primordialTLA) {
+        final ByteBuffer tla = ByteBuffer.allocate(tlaSize).order(ByteOrder.LITTLE_ENDIAN);
         final ByteBuffer nativeThreadLocals = ByteBuffer.allocate(NATIVE_THREAD_LOCALS_STRUCT_SIZE).order(ByteOrder.LITTLE_ENDIAN);
 
         currentThreadList = new ArrayList<ThreadInfo>();
         gatherOSThreads(currentThreadList);
         for (ThreadInfo threadInfo : currentThreadList) {
-            final boolean found = findThreadLocals(threadLocalsList, primordialThreadLocals, threadInfo.getStackPointer(), threadLocals, nativeThreadLocals);
+            final boolean found = findThreadLocals(tlaList, primordialTLA, threadInfo.getStackPointer(), tla, nativeThreadLocals);
             int id = threadInfo.getId();
             if (!found) {
                 /*
@@ -103,13 +103,13 @@ public abstract class ThreadAccess {
                  * it is added to the active thread list.
                  */
                 id = id < 0 ? id : -id;
-                setInStruct(threadLocals, VmThreadLocal.ID.offset, id);
+                setInStruct(tla, VmThreadLocal.ID.offset, id);
             }
             try {
-                TeleChannelDataIOProtocol.GatherThreadData t = new TeleChannelDataIOProtocol.GatherThreadData((int) getFromStruct(threadLocals, ID.offset), threadInfo.getId(), getFromStruct(
+                TeleChannelDataIOProtocol.GatherThreadData t = new TeleChannelDataIOProtocol.GatherThreadData((int) getFromStruct(tla, ID.offset), threadInfo.getId(), getFromStruct(
                                 nativeThreadLocals, HANDLE.offset), threadInfo.getThreadState(), threadInfo.getInstructionPointer(), getFromStruct(nativeThreadLocals, STACKBASE.offset),
                                 getFromStruct(nativeThreadLocals, STACKSIZE.offset), getFromStruct(nativeThreadLocals, TLBLOCK.offset), getFromStruct(nativeThreadLocals, TLBLOCKSIZE.offset),
-                                threadLocalsAreaSize);
+                                tlaSize);
                 Trace.line(2, "calling jniGatherThread id=" + t.id + ", lh=" + t.localHandle + ", h=" + Long.toHexString(t.handle) + ", st=" + t.state + ", ip=" +
                                                 Long.toHexString(t.instructionPointer) + ", sb=" + Long.toHexString(t.stackBase) + ", ss=" + Long.toHexString(t.stackSize) + ", tlb=" +
                                                 Long.toHexString(t.tlb) + ", tlbs=" + t.tlbSize + ", tlas=" + t.tlaSize);
@@ -147,8 +147,8 @@ public abstract class ThreadAccess {
     }
 
     boolean isThreadLocalsForStackPointer(long stackPointer, long tl, ByteBuffer tlCopy, ByteBuffer ntlCopy) {
-        int n = protocol.readBytes(tl, tlCopy.array(), 0, threadLocalsAreaSize);
-        assert n == threadLocalsAreaSize;
+        int n = protocol.readBytes(tl, tlCopy.array(), 0, tlaSize);
+        assert n == tlaSize;
         final long ntl = getFromStruct(tlCopy, NATIVE_THREAD_LOCALS.offset);
         n = protocol.readBytes(ntl, ntlCopy.array(), 0, NATIVE_THREAD_LOCALS_STRUCT_SIZE);
         final long stackBase = ntlCopy.getLong(STACKBASE.offset);
@@ -165,8 +165,8 @@ public abstract class ThreadAccess {
      *
      * If such an entry is found, then its contents are copied from the VM to the structs pointed to by 'tlCopy' and 'ntlCopy'.
      *
-     * @param threadLocalsList the head of the thread locals list in the VM's address space
-     * @param primordialThreadLocals the primordial thread locals in the VM's address space
+     * @param tlaList the head of the thread locals list in the VM's address space
+     * @param primordialTLA the primordial thread locals in the VM's address space
      * @param stackPointer the stack pointer to search with
      * @param tlCopy pointer to storage for a set of thread locals into which the found entry
      *        (if any) will be copied from the VM's address space
@@ -174,11 +174,11 @@ public abstract class ThreadAccess {
      *        (if any) will be copied from the VM's address space
      * @return {@code true} if the entry was found, {@code false} otherwise
      */
-    boolean findThreadLocals(long threadLocalsList, long primordialThreadLocals, long stackPointer, ByteBuffer tlCopy, ByteBuffer ntlCopy) {
+    boolean findThreadLocals(long tlaList, long primordialTLA, long stackPointer, ByteBuffer tlCopy, ByteBuffer ntlCopy) {
         zeroBuffer(tlCopy);
         zeroBuffer(ntlCopy);
-        if (threadLocalsList != 0) {
-            long tl = threadLocalsList;
+        if (tlaList != 0) {
+            long tl = tlaList;
             while (tl != 0) {
                 if (isThreadLocalsForStackPointer(stackPointer, tl, tlCopy, ntlCopy)) {
                     return true;
@@ -186,8 +186,8 @@ public abstract class ThreadAccess {
                 tl = getFromStruct(tlCopy, FORWARD_LINK.offset);
             }
         }
-        if (primordialThreadLocals != 0) {
-            if (isThreadLocalsForStackPointer(stackPointer, primordialThreadLocals, tlCopy, ntlCopy)) {
+        if (primordialTLA != 0) {
+            if (isThreadLocalsForStackPointer(stackPointer, primordialTLA, tlCopy, ntlCopy)) {
                 return true;
             }
         }

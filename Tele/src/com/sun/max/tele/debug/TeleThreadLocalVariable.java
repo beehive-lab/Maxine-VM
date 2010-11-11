@@ -58,7 +58,7 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
 
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
             final MaxThreadLocalVariable threadLocalVariable = owner();
-            return threadLocalVariable.thread().localsBlock().threadLocalsAreaFor(threadLocalVariable.safepointState()).memoryRegion();
+            return threadLocalVariable.thread().localsBlock().tlaFor(threadLocalVariable.safepointState()).memoryRegion();
         }
 
         public List<MaxEntityMemoryRegion< ? extends MaxEntity>> children() {

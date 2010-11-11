@@ -119,13 +119,13 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 // Lets try to reset the bias to anon.
                 return ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, biasedLockword.asAnonBiased()));
             }
-            final Pointer vmThreadLocals = biasOwnerThread.vmThreadLocals();
-            if (vmThreadLocals.isZero()) {
+            final Pointer tla = biasOwnerThread.tla();
+            if (tla.isZero()) {
                 // The bias holding thread is still starting up, so how can it own biases??
                 FatalError.unexpected("Attempted to revoke bias for still initializing thread.");
             }
 
-            RevokeBiasOperation operation = new RevokeBiasOperation(VmThread.fromVmThreadLocals(vmThreadLocals), object);
+            RevokeBiasOperation operation = new RevokeBiasOperation(VmThread.fromTLA(tla), object);
             operation.submit();
             return operation.newLockword;
         }
