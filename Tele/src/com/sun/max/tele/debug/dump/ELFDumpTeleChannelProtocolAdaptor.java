@@ -263,7 +263,7 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
     }
 
     @Override
-    public int gatherThreads(long tlaList, long primordialTLA) {
+    public int gatherThreads(long tlaList, long primordialETLA) {
         inappropriate("gatherThreads");
         return 0;
     }

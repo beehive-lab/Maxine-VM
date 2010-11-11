@@ -270,7 +270,7 @@ void threadLocalsBlock_destroy(Address tlBlock) {
     log_println("threadLocalsBlock_destroy: BEGIN t=%p", nativeThread);
 #endif
 
-    Address tla = TLA_FROM_TLBLOCK(tlBlock);
+    Address tla = ETLA_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
     int id = tla_load(int, tla, ID);
@@ -374,7 +374,7 @@ TLA tla_current() {
     if (tlBlock == 0) {
         return 0;
     }
-    return TLA_FROM_TLBLOCK(tlBlock);
+    return ETLA_FROM_TLBLOCK(tlBlock);
 }
 
 NativeThreadLocals nativeThreadLocals_current() {

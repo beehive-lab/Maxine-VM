@@ -86,6 +86,9 @@ public class VmTestSetup extends TestSetup {
     @Override
     protected final void tearDown() {
         vmConfig().finalizeSchemes(Phase.RUNNING);
-        ClassfileReader.writeClassfilesToJar(new File(JavaProject.findVcsProjectDirectory(), "loaded-classes.jar"));
+        if (false) {
+            // Re-enable this when it proves useful. Otherwise, it just clutters the workspace with unwanted files.
+            ClassfileReader.writeClassfilesToJar(new File(JavaProject.findVcsProjectDirectory(), "loaded-classes.jar"));
+        }
     }
 }

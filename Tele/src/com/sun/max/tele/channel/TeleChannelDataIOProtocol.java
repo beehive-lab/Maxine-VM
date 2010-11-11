@@ -143,10 +143,10 @@ public interface TeleChannelDataIOProtocol {
      * A dumbed down version of {@link TeleChannelProtocol#gatherThreads} that can communicate using the
      * limitations of this interface. Operates in tandem with {@link #readThreads}.
      * @param tlaList forwarded from {@link TeleChannelProtocol#gatherThreads}
-     * @param primordialTLA forwarded from {@link TeleChannelProtocol#gatherThreads}
+     * @param primordialETLA forwarded from {@link TeleChannelProtocol#gatherThreads}
      * @return number of gathered threads (length of serialized array)
      */
-    int gatherThreads(long tlaList, long primordialTLA);
+    int gatherThreads(long tlaList, long primordialETLA);
 
     /**
      * Read the gathered threads data into byte array.
