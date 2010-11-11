@@ -22,6 +22,8 @@ package com.sun.max.vm.cps.target;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.io.*;
@@ -439,6 +441,14 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         if (stopPositions == null || compressedJavaFrameDescriptors == null) {
             return null;
         }
+        int stopIndex = findStopIndex(instructionPointer);
+        if (stopIndex < 0) {
+            return null;
+        }
+        return TargetJavaFrameDescriptor.get(this, stopIndex);
+    }
+
+    protected int findStopIndex(Pointer instructionPointer) {
         int stopIndex = -1;
         int minDistance = Integer.MAX_VALUE;
         final int position = instructionPointer.minus(codeStart).toInt();
@@ -452,10 +462,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
                 }
             }
         }
-        if (stopIndex < 0) {
-            return null;
-        }
-        return TargetJavaFrameDescriptor.get(this, stopIndex);
+        return stopIndex;
     }
 
     /**
@@ -471,7 +478,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @Override
     public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
         if (implicitExceptionPoint) {
-            // CPS target methods don't have Java frame descriptors at implicit throw points. dumb.
+            // CPS target methods don't have Java frame descriptors at implicit throw points.
             return null;
         }
         if (Platform.platform().isa.offsetToReturnPC == 0) {
@@ -491,6 +498,39 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      */
     public final byte[] compressedJavaFrameDescriptors() {
         return compressedJavaFrameDescriptors;
+    }
+
+    @Override
+    public CiDebugInfo getDebugInfo(Pointer instructionPointer, boolean implicitExceptionPoint) {
+        if (implicitExceptionPoint) {
+            // CPS target methods don't have Java frame descriptors at implicit throw points.
+            return null;
+        }
+        if (Platform.platform().isa.offsetToReturnPC == 0) {
+            instructionPointer = instructionPointer.minus(1);
+        }
+
+        if (stopPositions == null || compressedJavaFrameDescriptors == null) {
+            return null;
+        }
+        int stopIndex = findStopIndex(instructionPointer);
+        if (stopIndex < 0) {
+            return null;
+        }
+        TargetJavaFrameDescriptor jfd = TargetJavaFrameDescriptor.get(this, stopIndex);
+        Frame frame = jfd.toFrame(null);
+
+        byte[] registerRefMap = {};
+        byte[] frameRefMap = new byte[frameReferenceMapSize];
+        System.arraycopy(referenceMaps, stopIndex * frameReferenceMapSize, frameRefMap, 0, frameReferenceMapSize);
+        if (stopIndex >= numberOfDirectCalls() + numberOfIndirectCalls()) {
+            int regRefMapSize = registerReferenceMapSize();
+            registerRefMap = new byte[regRefMapSize];
+            int byteIndex = frameReferenceMapsSize() + (regRefMapSize * stopIndex);
+            System.arraycopy(referenceMaps, byteIndex, registerRefMap, 0, regRefMapSize);
+        }
+
+        return new CiDebugInfo(frame, registerRefMap, frameRefMap);
     }
 
     @HOSTED_ONLY

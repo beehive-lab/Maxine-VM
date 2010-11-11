@@ -20,6 +20,8 @@
  */
 package com.sun.cri.ci;
 
+import com.sun.cri.ri.*;
+
 
 /**
  * A calling convention describes the locations in which the arguments for a call are placed.
@@ -30,10 +32,41 @@ package com.sun.cri.ci;
  */
 public class CiCallingConvention {
     
+    /**
+     * Constants denoting the type of a call for which a calling convention is
+     * {@linkplain RiRegisterConfig#getCallingConvention(Type, CiKind[], CiTarget) requested}.
+     */
     public enum Type {
-        Java,
-        Runtime,
-        Native
+        /**
+         * A request for the outgoing argument locations at a call site to Java code. 
+         */
+        JavaCall(true),
+        
+        /**
+         * A request for the incoming argument locations.
+         */
+        JavaCallee(false),
+
+        /**
+         * A request for the outgoing argument locations at a call site to the runtime (which may be Java or native code). 
+         */
+        RuntimeCall(true),
+        
+        /**
+         * A request for the outgoing argument locations at a call site to
+         * external native code that complies with the platform ABI. 
+         */
+        NativeCall(true);
+        
+        /**
+         * Determines if this is a request for the outgoing argument locations at a call site. 
+         */
+        public final boolean out;
+        
+        
+        private Type(boolean out) {
+            this.out = out;
+        }
     }
 
     /**

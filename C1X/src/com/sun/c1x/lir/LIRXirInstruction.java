@@ -40,8 +40,17 @@ public class LIRXirInstruction extends LIRInstruction {
     public final int inputCount;
     public final List<CiValue> pointerSlots;
 
-    public LIRXirInstruction(XirSnippet snippet, CiValue[] originalOperands, CiValue outputOperand,
-                    int inputTempCount, int tempCount, CiValue[] operands, int[] operandIndices, int outputOperandIndex, LIRDebugInfo info, RiMethod method, List<CiValue> pointerSlots) {
+    public LIRXirInstruction(XirSnippet snippet,
+                             CiValue[] originalOperands,
+                             CiValue outputOperand,
+                             int inputTempCount,
+                             int tempCount,
+			     CiValue[] operands,
+			     int[] operandIndices,
+			     int outputOperandIndex,
+			     LIRDebugInfo info,
+			     RiMethod method,
+			     List<CiValue> pointerSlots) {
         super(LIROpcode.Xir, outputOperand, info, false, inputTempCount, tempCount, operands);
         this.pointerSlots = pointerSlots;
         assert this.pointerSlots == null || this.pointerSlots.size() >= 0;

@@ -228,7 +228,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     CirCall callWithResolutionAndClassInitialization(Resolvable resolvable, JavaResolvableOperator<? extends Actor> operator) {
 
-        final boolean isFieldOrMethod = operator.constant() instanceof MemberRefConstant;
+        final boolean isFieldOrMethod = operator.isFieldOrMethod();
 
         if (operator.isResolved()) {
             final CirConstant actor = CirConstant.fromObject(operator.actor());

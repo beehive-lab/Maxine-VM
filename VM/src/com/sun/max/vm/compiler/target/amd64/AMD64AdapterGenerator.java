@@ -98,7 +98,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
              *
              * This complex computation is only necessary for the Inspector as that is the only context
              * in which the current execution point in an adapter can be anywhere except for in
-             * the call back the callee being adapted. Hence the {@link HOSTED_ONLY} annotation.
+             * the call back to the callee being adapted. Hence the {@link HOSTED_ONLY} annotation.
              *
              * @param cursor a stack frame walker cursor denoting an execution point in this adapter
              * @return the amount by which {@code current.sp()} should be adjusted to obtain the slot holding the

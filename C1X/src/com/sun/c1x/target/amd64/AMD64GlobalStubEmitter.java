@@ -419,7 +419,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void forwardRuntimeCall(CiRuntimeCall call) {
         // Load arguments
-        CiCallingConvention cc = compiler.stubRegisterConfig.getCallingConvention(Runtime, call.arguments, true, target);
+        CiCallingConvention cc = compiler.stubRegisterConfig.getCallingConvention(RuntimeCall, call.arguments, target);
         for (int i = 0; i < cc.locations.length; ++i) {
             CiValue location = cc.locations[i];
             loadArgument(i, location.asRegister());

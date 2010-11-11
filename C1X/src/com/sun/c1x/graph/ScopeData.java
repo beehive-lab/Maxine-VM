@@ -233,7 +233,7 @@ public class ScopeData {
      * @return the size of the stack
      */
     public int callerStackSize() {
-        FrameState state = scope.callerState();
+        FrameState state = scope.callerState;
         return state == null ? 0 : state.stackSize();
     }
 

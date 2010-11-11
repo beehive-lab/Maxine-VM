@@ -882,11 +882,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * Action:  makes visible and highlights the {@link ThreadLocalsInspector}.
      */
-    final class ViewVmThreadLocalsAction extends InspectorAction {
+    final class ViewTLAAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "VM thread locals";
 
-        ViewVmThreadLocalsAction(String actionTitle) {
+        ViewTLAAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
         }
@@ -902,13 +902,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private InspectorAction viewVmThreadLocals = new ViewVmThreadLocalsAction(null);
+    private InspectorAction viewTLA = new ViewTLAAction(null);
 
     /**
      * @return an Action that will make visible the {@link ThreadsInspector}.
      */
     public final InspectorAction viewVmThreadLocals() {
-        return viewVmThreadLocals;
+        return viewTLA;
     }
 
     /**

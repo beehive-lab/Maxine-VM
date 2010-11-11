@@ -83,7 +83,7 @@ public final class JDK_java_lang_Throwable {
         }
         final ClassActor throwableActor = ClassActor.fromJava(throwable.getClass());
         // use the stack walker to collect the frames
-        final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().vmThreadLocals());
+        final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().tla());
         final Pointer instructionPointer = VMRegister.getInstructionPointer();
         final Pointer cpuStackPointer = VMRegister.getCpuStackPointer();
         final Pointer cpuFramePointer = VMRegister.getCpuFramePointer();

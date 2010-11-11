@@ -22,6 +22,7 @@ package com.sun.max.vm.jni;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
@@ -92,24 +93,24 @@ public final class JniFunctions {
     /**
      * This method implements part of the prologue for entering a JNI upcall from native code.
      *
-     * @param enabledVmThreadLocals
+     * @param etla
      * @return an anchor for the JNI function frame. The anchor previous to this anchor is either that of the JNI stub
      *         frame that called out to native code or the native anchor of a thread that attached to the VM.
      */
     @INLINE
-    public static Pointer reenterJavaFromNative(Pointer enabledVmThreadLocals) {
-        Word previousAnchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord();
+    public static Pointer reenterJavaFromNative(Pointer etla) {
+        Word previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
         Pointer anchor = JavaFrameAnchor.create(Word.zero(), Word.zero(), Word.zero(), previousAnchor);
         // a JNI upcall is similar to a native method returning; reuse the native call epilogue sequence
-        NativeCallEpilogue.nativeCallEpilogue0(enabledVmThreadLocals, anchor);
+        NativeCallEpilogue.nativeCallEpilogue0(etla, anchor);
         return anchor;
     }
 
     @INLINE
     public static Pointer prologue(Pointer env, String name) {
-        Safepoint.setLatchRegister(fromJniEnv(env));
-        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
-        Pointer anchor = reenterJavaFromNative(enabledVmThreadLocals);
+        Safepoint.setLatchRegister(env.minus(JNI_ENV.offset));
+        Pointer etla = ETLA.load(currentTLA());
+        Pointer anchor = reenterJavaFromNative(etla);
         traceEntry(name, anchor);
         return anchor;
     }
@@ -126,8 +127,8 @@ public final class JniFunctions {
         traceExit(name);
 
         // returning from a JNI upcall is similar to a entering a native method returning; reuse the native call prologue sequence
-        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
-        NativeCallPrologue.nativeCallPrologue0(enabledVmThreadLocals, JavaFrameAnchor.PREVIOUS.get(anchor));
+        Pointer etla = ETLA.load(currentTLA());
+        NativeCallPrologue.nativeCallPrologue0(etla, JavaFrameAnchor.PREVIOUS.get(anchor));
     }
 
     /**

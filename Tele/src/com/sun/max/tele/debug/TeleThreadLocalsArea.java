@@ -93,7 +93,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
     }
 
     private final String entityDescription;
-    private final ThreadLocalsAreaMemoryRegion threadLocalsAreaMemoryRegion;
+    private final ThreadLocalsAreaMemoryRegion tlaMemoryRegion;
     private final TeleNativeThread teleNativeThread;
     public final Safepoint.State safepointState;
     private final int threadLocalAreaVariableCount;
@@ -115,8 +115,8 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         this.teleNativeThread = teleNativeThread;
         this.safepointState = safepointState;
         final String entityName = teleNativeThread.entityName() + " locals(" + safepointState + ")";
-        this.threadLocalsAreaMemoryRegion =
-            new ThreadLocalsAreaMemoryRegion(teleVM, this, entityName, start.asAddress(), VmThreadLocal.threadLocalsAreaSize());
+        this.tlaMemoryRegion =
+            new ThreadLocalsAreaMemoryRegion(teleVM, this, entityName, start.asAddress(), VmThreadLocal.tlaSize());
         this.threadLocalAreaVariableCount = VmThreadLocal.values().size();
         this.threadLocalVariables = new TeleThreadLocalVariable[threadLocalAreaVariableCount];
         final Size wordSize = teleNativeThread.vm().wordSize();
@@ -141,7 +141,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
                     final Word word = dataAccess.readWord(memoryRegion().start(), offset);
                     threadLocalVariables[index].setValue(new WordValue(word));
                 } catch (DataIOError dataIOError) {
-                    ProgramWarning.message("Could not read value of " + vmThreadLocalVariable + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
+                    ProgramWarning.message("Could not read value of " + vmThreadLocalVariable + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals: " + dataIOError);
                     threadLocalVariables[index].setValue(VoidValue.VOID);
                 }
             }
@@ -150,7 +150,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
     }
 
     public String entityName() {
-        return threadLocalsAreaMemoryRegion.regionName();
+        return tlaMemoryRegion.regionName();
     }
 
     public String entityDescription() {
@@ -158,7 +158,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
     }
 
     public MaxEntityMemoryRegion<MaxThreadLocalsArea> memoryRegion() {
-        return threadLocalsAreaMemoryRegion;
+        return tlaMemoryRegion;
     }
 
     public TeleNativeThread thread() {
@@ -166,7 +166,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
     }
 
     public boolean contains(Address address) {
-        return threadLocalsAreaMemoryRegion.contains(address);
+        return tlaMemoryRegion.contains(address);
     }
 
     public Safepoint.State safepointState() {

@@ -60,22 +60,22 @@ public abstract class GCOperation extends VmOperation {
     @Override
     protected void doAtSafepointBeforeBlocking(Pointer trapState) {
         // note that this procedure always runs with safepoints disabled
-        final Pointer vmThreadLocals = Safepoint.getLatchRegister();
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        final Pointer tla = Safepoint.getLatchRegister();
+        final Pointer etla = ETLA.load(tla);
         Heap.disableAllocationForCurrentThread();
 
-        if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
+        if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.load(etla).isZero()) {
             FatalError.unexpected("Stack reference map preparer should be cleared before GC");
         }
 
-        VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
+        VmThreadLocal.prepareStackReferenceMapFromTrap(tla, trapState);
     }
 
     @Override
     public void doAtSafepointAfterBlocking(Pointer trapState) {
-        final Pointer vmThreadLocals = Safepoint.getLatchRegister();
-        final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
+        final Pointer tla = Safepoint.getLatchRegister();
+        final Pointer etla = ETLA.load(tla);
+        if (!LOWEST_ACTIVE_STACK_SLOT_ADDRESS.load(etla).isZero()) {
             FatalError.unexpected("Stack reference map preparer should be cleared after GC");
         }
 
@@ -85,27 +85,27 @@ public abstract class GCOperation extends VmOperation {
     @Override
     public void doAfterFrozen(VmThread vmThread) {
 
-        Pointer vmThreadLocals = vmThread.vmThreadLocals();
+        Pointer tla = vmThread.tla();
 
-        final boolean threadWasInNative = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).isZero();
+        final boolean threadWasInNative = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.load(tla).isZero();
         if (threadWasInNative) {
             if (VmOperationThread.TraceVmOperations) {
                 Log.print("Building full stack reference map for ");
-                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+                Log.printThread(VmThread.fromTLA(tla), true);
             }
             // Since this thread is in native code it did not get an opportunity to prepare any of its stack reference map,
             // so we will take care of that for it now:
-            stackReferenceMapPreparationTime += VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
+            stackReferenceMapPreparationTime += VmThreadLocal.prepareStackReferenceMap(tla);
         } else {
             // Threads that hit a safepoint in Java code have prepared *most* of their stack reference map themselves.
             // The part of the stack between the trap stub frame and the frame of the JNI stub that enters into the
             // native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. Do it now:
             if (VmOperationThread.TraceVmOperations) {
                 Log.print("Building partial stack reference map for ");
-                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+                Log.printThread(VmThread.fromTLA(tla), true);
             }
             final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
-            stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals);
+            stackReferenceMapPreparer.completeStackReferenceMap(tla);
             stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
         }
     }
@@ -113,7 +113,7 @@ public abstract class GCOperation extends VmOperation {
     @Override
     protected void doBeforeThawingThread(VmThread thread) {
         // Indicates that the stack reference map for the thread is once-again unprepared.
-        LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(thread.vmThreadLocals(), Address.zero());
+        LOWEST_ACTIVE_STACK_SLOT_ADDRESS.store3(thread.tla(), Address.zero());
     }
 
     long stackReferenceMapPreparationTime;

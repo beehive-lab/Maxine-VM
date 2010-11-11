@@ -82,9 +82,9 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
 
     /**
      * The register configuration for a method called directly from native/C code.
-     * This configuration preserves all callee saved registers.
+     * This configuration preserves all native ABI specified callee saved registers.
      */
-    public static final AMD64UnixRegisterConfig N2J = STANDARD.withCalleeSave(rbx, rbp, r12, r13, r15);
+    public static final AMD64UnixRegisterConfig N2J = STANDARD.withCalleeSave(rbx, rbp, r12, r13, r14, r15);
 
     /**
      * The register configuration for a direct call to native/C code.
@@ -184,8 +184,8 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         return scratch;
     }
 
-    public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, boolean outgoing, CiTarget target) {
-        return callingConvention(parameters, type == Type.Runtime ? true : outgoing, target);
+    public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target) {
+        return callingConvention(parameters, type, target);
     }
 
     public CiRegister[] getCallingConventionRegisters(Type type) {
@@ -219,7 +219,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         return registersByRole.get(Role.VALUES.get(id));
     }
 
-    private CiCallingConvention callingConvention(CiKind[] types, boolean outgoing, CiTarget target) {
+    private CiCallingConvention callingConvention(CiKind[] types, Type type, CiTarget target) {
         CiValue[] locations = new CiValue[types.length];
 
         int currentGeneral = 0;
@@ -257,7 +257,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
             }
 
             if (locations[i] == null) {
-                locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !outgoing);
+                locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
             }
         }
