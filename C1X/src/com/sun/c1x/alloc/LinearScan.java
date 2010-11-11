@@ -1123,8 +1123,12 @@ public class LinearScan {
                 }
 
                 Interval interval = intervalFor(move.result());
-                interval.setSpillSlot(slot);
-                interval.assignLocation(slot);
+                CiStackSlot copySlot = slot;
+                if (C1XOptions.CopyPointerStackArguments && slot.kind == CiKind.Object) {
+                    copySlot = allocateSpillSlot(slot.kind);
+                }
+                interval.setSpillSlot(copySlot);
+                interval.assignLocation(copySlot);
             }
         }
     }
@@ -2020,6 +2024,22 @@ public class LinearScan {
         assert op.info != null : "no oop map needed";
         assert !op.info.hasDebugInfo() : "oop map already computed for info";
         computeOopMap(iw, op, op.info, op.hasCall());
+        if (op instanceof LIRCall) {
+            List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
+            if (pointerSlots != null) {
+                for (CiValue v : pointerSlots) {
+                    op.info.setOop(v, compilation.target);
+                }
+            }
+        } else if (op instanceof LIRXirInstruction) {
+
+            List<CiValue> pointerSlots = ((LIRXirInstruction) op).pointerSlots;
+            if (pointerSlots != null) {
+                for (CiValue v : pointerSlots) {
+                    op.info.setOop(v, compilation.target);
+                }
+            }
+        }
     }
 
     int appendScopeValueForConstant(CiValue operand, List<CiValue> scopeValues) {

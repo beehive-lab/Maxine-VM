@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
@@ -139,6 +140,11 @@ public class LIRDebugInfo {
                 int stackMapIndex = offset / target.wordSize;
                 setBit(debugInfo.frameRefMap, stackMapIndex);
             }
+        } else if (location.isStackSlot()) {
+            CiStackSlot stackSlot = (CiStackSlot) location;
+            assert !stackSlot.inCallerFrame();
+            assert target.spillSlotSize == target.wordSize;
+            setBit(debugInfo.frameRefMap, stackSlot.index());
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterValue registerLocation = (CiRegisterValue) location;
@@ -181,7 +187,7 @@ public class LIRDebugInfo {
     private void setBit(byte[] array, int bit) {
         int index = bit >> 3;
         int offset = bit & 0x7;
-
+        assert (array[index] & (1 << offset)) == 0 : "Pointer map entry " + bit + " is already set.";
         array[index] = (byte) (array[index] | (1 << offset));
     }
 

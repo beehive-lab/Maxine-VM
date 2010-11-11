@@ -595,7 +595,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
-        XirOperand latch = asm.createRegister("latch", CiKind.Word, AMD64.r14);
+        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, AMD64.r14);
         asm.safepoint();
         asm.pload(CiKind.Word, latch, latch, false);
         return finishTemplate(asm, "safepoint");
@@ -1216,7 +1216,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private XirTemplate buildExceptionObject() {
         XirOperand result = asm.restart(CiKind.Object);
-        XirOperand latch = asm.createRegister("latch", CiKind.Word, AMD64.r14);
+        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, AMD64.r14);
         XirOperand temp = asm.createTemp("temp", CiKind.Word);
         // Load safepoints-enabled thread locals pointer
         asm.pload(CiKind.Word, temp, latch, asm.i(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.offset), false);
