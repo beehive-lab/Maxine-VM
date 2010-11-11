@@ -49,6 +49,9 @@ public final class StoreField extends AccessField {
         super(CiKind.Void, object, field, isStatic, stateBefore, isLoaded);
         this.value = value;
         setFlag(Flag.LiveStore);
+        if (value.kind != CiKind.Object) {
+            setFlag(Flag.NoWriteBarrier);
+        }
     }
 
     /**

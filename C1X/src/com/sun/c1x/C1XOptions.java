@@ -64,6 +64,7 @@ public class C1XOptions {
     public static boolean IntrinsifyUnsafe                   = true;
 
     // debugging and printing settings
+    public static boolean VerifyPointerMaps                  = ____;
     public static boolean IRChecking                         = true;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
@@ -80,6 +81,7 @@ public class C1XOptions {
     public static boolean InterpretInvokedMethods            = ____;
     public static boolean PrintStateInInterpreter            = ____;
     public static boolean PrintAssembly                      = ____;
+    public static boolean PrintCodeBytes                     = ____;
     public static int     PrintAssemblyBytesPerLine          = 16;
     public static int     TraceLinearScanLevel               = 0;
     public static boolean TraceRelocation                    = ____;
@@ -143,6 +145,7 @@ public class C1XOptions {
 
     // Linear scan settings
     public static boolean StressLinearScan              = ____;
+    public static boolean CopyPointerStackArguments     = true;
 
     // Code generator settings
     public static boolean GenLIR                        = true;

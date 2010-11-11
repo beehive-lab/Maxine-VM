@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
@@ -48,6 +49,9 @@ public final class StoreIndexed extends AccessIndexed {
         super(CiKind.Void, array, index, length, elementType, stateBefore);
         this.value = value;
         setFlag(Flag.LiveStore);
+        if (elementType != CiKind.Object) {
+            setFlag(Flag.NoWriteBarrier);
+        }
     }
 
     /**

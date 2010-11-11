@@ -217,16 +217,19 @@ public abstract class CiXirAssembler {
     }
 
     public static class XirTemp extends XirOperand {
-        XirTemp(CiXirAssembler asm, String name, CiKind kind) {
+        public final boolean reserve;
+        
+        XirTemp(CiXirAssembler asm, String name, CiKind kind, boolean reserve) {
             super(asm, name, kind);
+            this.reserve = reserve;
         }
     }
 
     public static class XirRegister extends XirTemp {
         public final CiValue register;
 
-        XirRegister(CiXirAssembler asm, String name, CiRegisterValue register) {
-            super(asm, name, register.kind);
+        XirRegister(CiXirAssembler asm, String name, CiRegisterValue register, boolean reserve) {
+            super(asm, name, register.kind, reserve);
             this.register = register;
         }
     }
@@ -246,7 +249,7 @@ public abstract class CiXirAssembler {
      */
     public XirOperand restart(CiKind kind) {
         reset();
-        resultOperand = new XirTemp(this, "result", kind);
+        resultOperand = new XirTemp(this, "result", kind, true);
         allocateResultOperand = true;
         return resultOperand;
     }
@@ -417,6 +420,10 @@ public abstract class CiXirAssembler {
          */
         Shl,
         /**
+         * Arithmetic shift  {@code y} right by {@code x} and put the result in {@code r}.
+         */
+        Sar,
+        /**
          * Shift  {@code y} right by {@code x} and put the result in {@code r}.
          */
         Shr,
@@ -449,6 +456,11 @@ public abstract class CiXirAssembler {
          * or an offset {@code y} and put the result in {@code r}.
          */
         PointerLoadDisp,
+        /**
+         * Load an effective address defined by base {@code x} and either a scaled index {@code y} plus displacement
+         * or an offset {@code y} and put the result in {@code r}.
+         */
+        LoadEffectiveAddress,
         /**
          * Store {@code z} at address defined by base {@code x} and index {@code y}.
          */
@@ -633,6 +645,10 @@ public abstract class CiXirAssembler {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, disp, scale), PointerLoadDisp, result, pointer, index));
     }
 
+    public void lea(XirOperand result, XirOperand pointer, XirOperand index, int disp, Scale scale) {
+        append(new XirInstruction(CiKind.Word, new AddressAccessInformation(false, disp, scale), LoadEffectiveAddress, result, pointer, index));
+    }
+
     public void pstore(CiKind kind, XirOperand pointer, XirOperand index, XirOperand value, int disp, Scale scale, boolean canTrap) {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, disp, scale), PointerStoreDisp, VOID, pointer, index, value));
     }
@@ -793,14 +809,22 @@ public abstract class CiXirAssembler {
 
     public XirOperand createTemp(String name, CiKind kind) {
         assert !finished;
-        XirTemp temp = new XirTemp(this, name, kind);
+        XirTemp temp = new XirTemp(this, name, kind, true);
         temps.add(temp);
         return temp;
     }
-
+    
     public XirOperand createRegister(String name, CiKind kind, CiRegister register) {
+        return createRegister(name, kind, register, false);
+    }
+    
+    public XirOperand createRegisterTemp(String name, CiKind kind, CiRegister register) {
+        return createRegister(name, kind, register, true);
+    }
+    
+    private XirOperand createRegister(String name, CiKind kind, CiRegister register, boolean reserve) {
         assert !finished;
-        XirRegister fixed = new XirRegister(this, name, register.asValue(kind));
+        XirRegister fixed = new XirRegister(this, name, register.asValue(kind), reserve);
         temps.add(fixed);
         return fixed;
     }
