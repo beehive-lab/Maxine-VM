@@ -351,11 +351,11 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     @Override
-    public int gatherThreads(long tlaList, long primordialTLA) {
+    public int gatherThreads(long tlaList, long primordialETLA) {
         try {
             out.writeUTF("gatherThreads");
             out.writeLong(tlaList);
-            out.writeLong(primordialTLA);
+            out.writeLong(primordialETLA);
             out.flush();
             return in.readInt();
         } catch (IOException ex) {

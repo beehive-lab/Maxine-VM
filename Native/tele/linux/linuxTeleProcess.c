@@ -84,7 +84,7 @@ ThreadState_t toThreadState(char taskState, pid_t tid) {
     return threadState;
 }
 
-static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong tlaList, long primordialTLA) {
+static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong tlaList, long primordialETLA) {
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
@@ -97,13 +97,13 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
         TLA threadLocals = (TLA) alloca(tlaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         ProcessHandleStruct ph = {tgid, tid};
-        tla = teleProcess_findTLA(&ph, tlaList, primordialTLA, stackPointer, threadLocals, &nativeThreadLocalsStruct);
+        tla = teleProcess_findTLA(&ph, tlaList, primordialETLA, stackPointer, threadLocals, &nativeThreadLocalsStruct);
     }
     teleProcess_jniGatherThread(env, linuxTeleProcess, threadList, tid, toThreadState(taskState, tid), (jlong) canonicalStateRegisters.rip, tla);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jlong pid, jobject linuxTeleProcess, jobject threads, long tlaList, long primordialTLA) {
+Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jlong pid, jobject linuxTeleProcess, jobject threads, long tlaList, long primordialETLA) {
 
     pid_t *tasks;
     const int nTasks = scan_process_tasks(pid, &tasks);
@@ -115,7 +115,7 @@ Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThr
     int n = 0;
     while (n < nTasks) {
         pid_t tid = tasks[n];
-        gatherThread(env, pid, tid, linuxTeleProcess, threads, tlaList, primordialTLA);
+        gatherThread(env, pid, tid, linuxTeleProcess, threads, tlaList, primordialETLA);
         n++;
     }
     free(tasks);

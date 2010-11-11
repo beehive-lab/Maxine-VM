@@ -57,7 +57,7 @@
  *
  */
 
-#define TLA_FROM_TLBLOCK(tlBlock)        ((TLA)       (tlBlock + virtualMemory_getPageSize() - sizeof(Address) +  tlaSize()))
+#define ETLA_FROM_TLBLOCK(tlBlock)        ((TLA)       (tlBlock + virtualMemory_getPageSize() - sizeof(Address) +  tlaSize()))
 #define NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock) ((NativeThreadLocals) (tlBlock + virtualMemory_getPageSize() - sizeof(Address) + (tlaSize() * 3)))
 
 extern void tla_initialize(int tlaSize);

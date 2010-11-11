@@ -166,14 +166,6 @@ public abstract class Safepoint {
         setLatchRegister(ETLA.load(currentTLA()));
     }
 
-    public static void initializePrimordial(Pointer tla) {
-        tla.setWord(ETLA.index, tla);
-        tla.setWord(DTLA.index, tla);
-        tla.setWord(TTLA.index, tla);
-        SAFEPOINT_LATCH.store(tla, tla);
-        Safepoint.setLatchRegister(tla);
-    }
-
     /**
      * Emits a safepoint at the call site.
      */
