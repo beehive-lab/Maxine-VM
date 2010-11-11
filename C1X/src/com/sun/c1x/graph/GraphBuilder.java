@@ -2461,7 +2461,7 @@ public final class GraphBuilder {
     private Value popOffsetOrIndexForPointerOp(boolean isInt) {
         if (isInt) {
             Value offsetOrIndex = ipop();
-            if (compilation.is64Bit() && offsetOrIndex instanceof Local) {
+            if (compilation.target.arch.is64bit() && offsetOrIndex instanceof Local) {
                 return append(new Convert(I2L, offsetOrIndex, CiKind.Word));
             }
             return offsetOrIndex;
