@@ -189,9 +189,13 @@ public final class GraphBuilder {
                 iterateAllBlocks();
             }
         } else {
+            Class<?> accessor = openAccessorScope(rootMethod);
+
             // 6B.1 do the normal parsing
             scopeData.addToWorkList(stdEntry);
             iterateAllBlocks();
+
+            closeAccessorScope(accessor);
         }
 
         if (syncHandler != null && syncHandler.stateBefore() != null) {
@@ -206,6 +210,24 @@ public final class GraphBuilder {
                 throw new CiBailout("cannot OSR with non-empty stack");
             }
         }
+    }
+
+    private void closeAccessorScope(Class< ? > accessor) {
+        if (accessor != null) {
+            boundAccessor.set(null);
+        }
+    }
+
+    private Class< ? > openAccessorScope(RiMethod rootMethod) {
+        Class<?> accessor = rootMethod.accessor();
+        if (accessor != null) {
+            assert boundAccessor.get() == null;
+            boundAccessor.set(compilation.runtime.getRiType(accessor));
+
+            // What looks like an object receiver in the bytecode may not be a word value
+            compilation.setNotTypesafe();
+        }
+        return accessor;
     }
 
     private void finishStartBlock(BlockBegin startBlock, BlockBegin stdEntry, BlockBegin osrEntry) {
@@ -320,8 +342,14 @@ public final class GraphBuilder {
         return curState.pop(kind);
     }
 
-    Value peek() {
-        return curState.stackAt(curState.stackSize() - 1);
+    CiKind peekKind() {
+        Value top = curState.stackAt(curState.stackSize() - 1);
+        if (top == null) {
+            top = curState.stackAt(curState.stackSize() - 2);
+            assert top != null;
+            assert top.kind.isDoubleWord();
+        }
+        return top.kind;
     }
 
     void loadLocal(int index, CiKind kind) {
@@ -2116,8 +2144,8 @@ public final class GraphBuilder {
                 case IF_ICMPGE      : genIfSame(CiKind.Int, Condition.GE); break;
                 case IF_ICMPGT      : genIfSame(CiKind.Int, Condition.GT); break;
                 case IF_ICMPLE      : genIfSame(CiKind.Int, Condition.LE); break;
-                case IF_ACMPEQ      : genIfSame(peek().kind, Condition.EQ); break;
-                case IF_ACMPNE      : genIfSame(peek().kind, Condition.NE); break;
+                case IF_ACMPEQ      : genIfSame(peekKind(), Condition.EQ); break;
+                case IF_ACMPNE      : genIfSame(peekKind(), Condition.NE); break;
                 case GOTO           : genGoto(s.currentBCI(), s.readBranchDest()); break;
                 case JSR            : genJsr(s.readBranchDest()); break;
                 case RET            : genRet(s.readLocalIndex()); break;
