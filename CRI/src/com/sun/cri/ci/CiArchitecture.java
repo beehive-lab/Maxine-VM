@@ -43,6 +43,12 @@ public abstract class CiArchitecture {
     }
 
     /**
+     * The number of bits required in a bit map covering all the registers that may store references.
+     * The bit position of a register in the map is the register's {@linkplain CiRegister#encoding encoding}.
+     */
+    public final int registerReferenceMapBitCount;
+
+    /**
      * Represents the natural size of words (typically registers and pointers) of this architecture, in bytes.
      */
     public final int wordSize;
@@ -106,13 +112,21 @@ public abstract class CiArchitecture {
         return reg;
     }
 
-    protected CiArchitecture(String name, int wordSize, String backend, ByteOrder byteOrder, CiRegister[] registers, int nativeCallDisplacementOffset, int returnAddressSize) {
+    protected CiArchitecture(String name,
+                    int wordSize,
+                    String backend,
+                    ByteOrder byteOrder,
+                    CiRegister[] registers,
+                    int nativeCallDisplacementOffset,
+                    int registerReferenceMapBitCount,
+                    int returnAddressSize) {
         this.name = name;
         this.registers = registers;
         this.wordSize = wordSize;
         this.platform = backend;
         this.byteOrder = byteOrder;
         this.machineCodeCallDisplacementOffset = nativeCallDisplacementOffset;
+        this.registerReferenceMapBitCount = registerReferenceMapBitCount;
         this.returnAddressSize = returnAddressSize;
 
         if (byteOrder == ByteOrder.LittleEndian) {

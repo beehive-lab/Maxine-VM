@@ -90,7 +90,7 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         FLAGS_OFFSET = offset;
         offset += 8;
 
-        RSA = new CiRegisterSaveArea(offset, registerOffsets, 8, rax, r15);
+        RSA = new CiRegisterSaveArea(offset, registerOffsets, 8);
 
         TRAP_STATE_SIZE_WITHOUT_RIP = RSA.size;
         TRAP_STATE_SIZE_WITH_RIP = TRAP_STATE_SIZE_WITHOUT_RIP + 8;

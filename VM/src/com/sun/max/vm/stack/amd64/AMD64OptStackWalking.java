@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.stack.amd64;
 
-import static com.sun.max.platform.Platform.*;
-
 import com.sun.c1x.target.amd64.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -38,7 +36,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.trampoline.*;
 import com.sun.max.vm.type.*;
@@ -194,7 +192,7 @@ public class AMD64OptStackWalking {
         if (Trap.isTrapStub(targetMethod.classMethodActor)) {
             // RBP is whatever was in the frame pointer register at the time of the trap
             Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
-            callerFP = stackFrameWalker.readWord(trapState, platform().target.registerSaveArea.offsetOf(AMD64.rbp)).asPointer();
+            callerFP = stackFrameWalker.readWord(trapState, AMD64TrapStateAccess.RSA.offsetOf(AMD64.rbp)).asPointer();
         } else {
             // Propagate RBP unchanged as OPT methods do not touch this register.
             callerFP = current.fp();

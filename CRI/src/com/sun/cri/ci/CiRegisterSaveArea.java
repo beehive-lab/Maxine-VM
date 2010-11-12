@@ -29,16 +29,6 @@ public class CiRegisterSaveArea {
     public final int slotSize;
     
     /**
-     * The index of the lowest slot in the RSA that maps to a register in which an object reference can be stored.  
-     */
-    public final int referenceSlotsStartIndex;
-
-    /**
-     * The number of slots in the RSA that map to registers in which an object reference can be stored.  
-     */
-    public final int referenceSlotsCount;
-
-    /**
      * Map from {@linkplain CiRegister#number register numbers} to slot indexes in the RSA.
      */
     private final int[] regNumToIndex;
@@ -63,7 +53,7 @@ public class CiRegisterSaveArea {
      * @param registerOffsets map from registers to offsets in the RSA for the registers
      * @param slotSize the size (in bytes) of an {@linkplain #registerAtIndex(int) indexable} slot in the RSA
      */
-    public CiRegisterSaveArea(int size, Map<CiRegister, Integer> registerOffsets, int slotSize, CiRegister firstReferenceReg, CiRegister lastReferenceReg) {
+    public CiRegisterSaveArea(int size, Map<CiRegister, Integer> registerOffsets, int slotSize) {
         assert CiUtil.isPowerOf2(slotSize);
         this.size = size;
         this.slotSize = slotSize;
@@ -98,8 +88,6 @@ public class CiRegisterSaveArea {
             regMap[reg.number] = reg;
             indexToReg[index] = reg;
         }
-        this.referenceSlotsStartIndex = indexOf(firstReferenceReg);
-        this.referenceSlotsCount = indexOf(lastReferenceReg) - referenceSlotsStartIndex + 1;
     }
     
     /**

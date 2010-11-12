@@ -37,42 +37,16 @@ public class IRScopeDebugInfo {
     public final IRScope scope;
     public final int bci;
     public final List<CiValue> locals;
-    public final List<CiValue> expressions;
-    public final List<CiValue> monitors;
+    public final List<CiValue> stack;
+    public final List<CiValue> locks;
     public final IRScopeDebugInfo caller;
 
-    public IRScopeDebugInfo(IRScope scope, int bci, List<CiValue> locals, List<CiValue> expressions, List<CiValue> monitors, IRScopeDebugInfo caller) {
+    public IRScopeDebugInfo(IRScope scope, int bci, List<CiValue> locals, List<CiValue> stack, List<CiValue> locks, IRScopeDebugInfo caller) {
         this.scope = scope;
         this.locals = locals;
         this.bci = bci;
-        this.expressions = expressions;
-        this.monitors = monitors;
+        this.stack = stack;
+        this.locks = locks;
         this.caller = caller;
-    }
-
-    public void print() {
-        System.out.println("IRScopeDebugInfo " + scope + " @" + bci);
-        if (locals != null) {
-            System.out.print(" locals: ");
-            for (CiValue v : locals) {
-                System.out.print(v + " ");
-            }
-            System.out.println();
-        }
-        if (expressions != null) {
-            System.out.print(" expressions: ");
-            for (CiValue v : expressions) {
-                System.out.print(v + " ");
-            }
-            System.out.println();
-        }
-        if (monitors != null) {
-            System.out.print(" monitors: ");
-            for (CiValue v : monitors) {
-                System.out.print(v + " ");
-            }
-            System.out.println();
-        }
-        System.out.println(" caller: " + caller);
     }
 }

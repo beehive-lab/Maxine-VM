@@ -87,22 +87,27 @@ public class LIROperand {
         }
     }
 
+    /**
+     * An address operand with at least one {@linkplain CiVariable variable} constituent.
+     */
     static class LIRAddressOperand extends LIROperand {
         int base;
+        int index;
 
-        LIRAddressOperand(int index, CiAddress address) {
+        LIRAddressOperand(int base, int index, CiAddress address) {
             super(address);
-            this.base = index;
+            assert base != -1 || index != -1 : "address should have at least one variable part";
+            this.base = base;
+            this.index = index;
         }
 
         @Override
         public CiValue value(LIRInstruction inst) {
-            if (base != -1) {
+            if (base != -1 || index != -1) {
                 CiAddress address = (CiAddress) value;
-                CiValue baseOperand = inst.allocatorOperands.get(base);
-                CiValue indexOperand = CiValue.IllegalValue;
+                CiValue baseOperand = base == -1 ? address.base : inst.allocatorOperands.get(base);
+                CiValue indexOperand = index == -1 ? address.index : inst.allocatorOperands.get(index);
                 if (address.index.isLegal()) {
-                    indexOperand = inst.allocatorOperands.get(base + 1);
                     assert indexOperand.isVariableOrRegister();
                     if (baseOperand.isVariable() || indexOperand.isVariable()) {
                         return address;
@@ -114,6 +119,7 @@ public class LIROperand {
                 }
                 value = new CiAddress(address.kind, baseOperand, indexOperand, address.scale, address.displacement);
                 base = -1;
+                index = -1;
             }
             return value;
         }

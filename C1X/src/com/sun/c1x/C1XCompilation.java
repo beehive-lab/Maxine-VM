@@ -50,6 +50,7 @@ public class C1XCompilation {
     public final RiRegisterConfig registerConfig;
     public final CiStatistics stats;
     public final int osrBCI;
+    public final boolean needsDebugInfo;
 
     private boolean hasExceptionHandlers;
 
@@ -102,6 +103,7 @@ public class C1XCompilation {
             cfgPrinter.printCompilation(method);
         }
         this.cfgPrinter = cfgPrinter;
+        this.needsDebugInfo = runtime.needsDebugInfo();
     }
 
     public IR hir() {
@@ -390,10 +392,6 @@ public class C1XCompilation {
 
     public CFGPrinter cfgPrinter() {
         return cfgPrinter;
-    }
-
-    public boolean needsDebugInformation() {
-        return false;
     }
 
     public int nextID() {

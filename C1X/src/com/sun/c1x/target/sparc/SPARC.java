@@ -76,7 +76,7 @@ public class SPARC extends CiArchitecture {
     };
 
     protected SPARC(String name, int wordSize, CiRegister[] registers) {
-        super(name, wordSize, "sparc", ByteOrder.BigEndian, registers, 0, 0);
+        super(name, wordSize, "sparc", ByteOrder.BigEndian, registers, 0, i7.encoding + 1, 0);
     }
 
     @Override

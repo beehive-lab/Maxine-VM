@@ -90,6 +90,8 @@ public interface RiRegisterConfig {
      */
     CiRegister[] getCalleeSaveRegisters();
 
+    CiRegisterSaveArea getRSA();
+    
     /**
      * Gets a map from register {@linkplain CiRegister#number numbers} to register
      * {@linkplain RiRegisterAttributes attributes} for this register configuration.

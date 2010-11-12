@@ -41,6 +41,10 @@ public abstract class FrameState {
      * The operand stack occupies the index range {@code [maxLocals .. values.length)}.
      * The top of the operand stack is at index {@code maxLocals + stackIndex}.
      * This does not include the operand stack or local variables of parent frames.
+     *
+     * {@linkplain CiKind#isDoubleWord() Double-word} local variables and
+     * operand stack values occupy 2 slots in this array with the second slot
+     * being {@code null}.
      */
     protected final Value[] values;
 
@@ -272,12 +276,11 @@ public abstract class FrameState {
      */
     public Value stackAt(int i) {
         assert i < stackIndex;
-        final Value x = values[i + maxLocals];
-        return x;
+        return values[i + maxLocals];
     }
 
     /**
-     * Gets the value in the local variables at the specified offset.
+     * Gets the value in the local variables at the specified index.
      *
      * @param i the index into the locals
      * @return the instruction that produced the value for the specified local
@@ -537,22 +540,15 @@ public abstract class FrameState {
 
     /**
      * Traverses all {@linkplain Value#isLive() live values} of this frame state and it's callers.
-     * The set of values traversed includes all the live stack values in this frame as well as
-     * all live locals in this frame and its callers.
      *
      * @param proc the call back called to process each live value traversed
      */
     public void forEachLiveStateValue(ValueProcedure proc) {
         FrameState state = this;
-        for (int i = 0; i != state.stackSize(); ++i) {
-            Value value = state.stackAt(i);
-            if (value != null && value.isLive()) {
-                proc.doValue(value);
-            }
-        }
         while (state != null) {
-            for (int i = 0; i != state.localsSize(); ++i) {
-                Value value = state.localAt(i);
+            final int max = state.valuesSize();
+            for (int i = 0; i < max; i++) {
+                Value value = state.values[i];
                 if (value != null && value.isLive()) {
                     proc.doValue(value);
                 }
@@ -563,14 +559,9 @@ public abstract class FrameState {
 
     public static String toString(FrameState fs) {
         StringBuilder sb = new StringBuilder();
+        String nl = String.format("%n");
         while (fs != null) {
-            StackTraceElement ste = fs.scope.method.toStackTraceElement(fs.bci);
-            if (ste.getFileName() != null && ste.getLineNumber() > 0) {
-                sb.append(ste);
-            } else {
-                sb.append(CiUtil.format("%H.%n(%p)", fs.scope.method, false));
-            }
-            sb.append(String.format(" [bci: %d, nr locals: %d, stack depth: %d]%n", fs.bci, fs.localsSize(), fs.stackSize()));
+            CiUtil.appendLocation(sb, fs.scope.method, fs.bci).append(nl);
             for (int i = 0; i < fs.localsSize(); ++i) {
                 Value value = fs.localAt(i);
                 sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));

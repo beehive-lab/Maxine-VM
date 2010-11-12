@@ -479,12 +479,42 @@ public class CiUtil {
         return sb.toString();
     }
     
+    /**
+     * Convenient shortcut for calling {@link #appendLocation(StringBuilder, RiMethod, int)}
+     * without having to supply a a {@link StringBuilder} instance and convert the result
+     * to a string. 
+     */
+    public static String toLocation(RiMethod method, int bci) {
+        return appendLocation(new StringBuilder(), method, bci).toString();
+    }
+    
+    
+    /**
+     * Appends a string representation of a location specified by a given method and bci to
+     * a given {@link StringBuilder}. If a stack trace element with a non-null file name
+     * and non-negative line number is {@linkplain RiMethod#toStackTraceElement(int) available}
+     * for the given method, then the string returned is the {@link StackTraceElement#toString()}
+     * value of the stack trace element, suffixed by the bci location. For example:
+     * <pre>
+     *     java.lang.String.valueOf(String.java:2930) [bci: 12]
+     * </pre>
+     * Otherwise, the string returned is the value of {@code CiUtil.format("%H.%n(%p)"}, suffixed
+     * by the bci location. For example:
+     * <pre>
+     *     java.lang.String.valueOf(int) [bci: 12]
+     * </pre>
+     * 
+     * @param sb
+     * @param method
+     * @param bci
+     * @return
+     */
     public static StringBuilder appendLocation(StringBuilder sb, RiMethod method, int bci) {
         StackTraceElement ste = method.toStackTraceElement(bci);
         if (ste.getFileName() != null && ste.getLineNumber() > 0) {
             sb.append(ste);
         } else {
-            sb.append(CiUtil.format("%h.%n(%p)", method, false));
+            sb.append(CiUtil.format("%H.%n(%p)", method, false));
         }
         sb.append(String.format(" [bci: %d]", bci));
         return sb;

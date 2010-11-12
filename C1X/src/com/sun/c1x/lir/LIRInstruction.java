@@ -28,7 +28,8 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.LIROperand.*;
+import com.sun.c1x.lir.LIROperand.LIRAddressOperand;
+import com.sun.c1x.lir.LIROperand.LIRVariableOperand;
 import com.sun.cri.ci.*;
 
 /**
@@ -161,24 +162,39 @@ public abstract class LIRInstruction {
         }
     }
 
+    /**
+     * Adds a {@linkplain CiValue#isLegal() legal} value that is part of an address to
+     * the list of {@linkplain #allocatorOperands register allocator operands}. If
+     * the value is {@linkplain CiVariable variable}, then its index into the list
+     * of register allocator operands is returned. Otherwise, {@code -1} is returned.
+     */
+    private int addAddressPart(CiValue part) {
+        if (part.isRegister()) {
+            allocatorInputCount++;
+            allocatorOperands.add(part);
+            return -1;
+        }
+        if (part.isVariable()) {
+            allocatorInputCount++;
+            allocatorOperands.add(part);
+            return allocatorOperands.size() - 1;
+        }
+        assert part.isIllegal();
+        return -1;
+    }
+
     private LIROperand addAddress(CiAddress address) {
         assert address.base.isVariableOrRegister();
 
-        int base = allocatorOperands.size();
-        allocatorInputCount++;
-        allocatorOperands.add(address.base);
+        int base = addAddressPart(address.base);
+        int index = addAddressPart(address.index);
 
-        if (address.index.isLegal()) {
-            allocatorInputCount++;
-            allocatorOperands.add(address.index);
+        if (base != -1 || index != -1) {
+            return new LIRAddressOperand(base, index, address);
         }
 
-        if (address.base.isRegister()) {
-            assert address.index.isIllegal();
-            return new LIROperand(address);
-        }
-
-        return new LIRAddressOperand(base, address);
+        assert address.base.isRegister() && (address.index.isIllegal() || address.index.isRegister());
+        return new LIROperand(address);
     }
 
     private LIROperand addOperand(CiValue operand, boolean isInput, boolean isTemp) {
@@ -439,9 +455,9 @@ public abstract class LIRInstruction {
     }
 
     protected static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map, boolean frameRefMap) {
-        CiRegisterSaveArea regSaveArea = null;
+        CiRegisterSaveArea rsa = null;
         if (!frameRefMap) {
-            regSaveArea = compilation().target.registerSaveArea;
+            rsa = compilation().registerConfig.getRSA();
         }
         for (int i = 0; i < map.length; i++) {
             int b = map[i] & 0xff;
@@ -455,7 +471,7 @@ public abstract class LIRInstruction {
                         if (frameRefMap) {
                             buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, index)));
                         } else {
-                            CiRegisterValue register = regSaveArea.registerAt(index).asValue(CiKind.Object);
+                            CiRegisterValue register = rsa.registerAt(index).asValue(CiKind.Object);
                             buf.append(operandFmt.format(register));
                         }
                     }
@@ -468,7 +484,7 @@ public abstract class LIRInstruction {
 
     protected void appendDebugInfo(StringBuilder buf, OperandFormatter operandFmt, LIRDebugInfo info) {
         if (info != null) {
-            buf.append(" [bci:").append(info.bci);
+            buf.append(" [bci:").append(info.state.bci);
             if (info.hasDebugInfo()) {
                 CiDebugInfo debugInfo = info.debugInfo();
                 StringBuilder refmap = new StringBuilder();

@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
@@ -41,7 +42,6 @@ public class LIRDebugInfo {
     }
 
     public final FrameState state;
-    public final int bci;
     public final List<ExceptionHandler> exceptionHandlers;
 
     public IRScopeDebugInfo scopeDebugInfo;
@@ -50,14 +50,13 @@ public class LIRDebugInfo {
     private CiDebugInfo.Frame debugFrame;
 
     public LIRDebugInfo(FrameState state, int bci, List<ExceptionHandler> exceptionHandlers) {
-        this.bci = bci;
+        assert state != null;
         this.scopeDebugInfo = null;
         this.state = state;
         this.exceptionHandlers = exceptionHandlers;
     }
 
     private LIRDebugInfo(LIRDebugInfo info) {
-        this.bci = info.bci;
         this.scopeDebugInfo = null;
         this.state = info.state;
 
@@ -76,10 +75,11 @@ public class LIRDebugInfo {
         return new LIRDebugInfo(this);
     }
 
-    public void allocateDebugInfo(int registerSlots, int frameSize, CiTarget target) {
+    public void allocateDebugInfo(int frameSize, CiTarget target) {
+        int registerSlots = target.arch.registerReferenceMapBitCount;
         byte[] registerRefMap = registerSlots > 0 ? newRefMap(registerSlots) : null;
         byte[] stackRefMap = frameSize > 0 ? newRefMap(frameSize / target.spillSlotSize) : null;
-        CiCodePos codePos = scopeDebugInfo == null ? state.scope().toCodeSite(bci) : makeFrame(scopeDebugInfo);
+        CiCodePos codePos = scopeDebugInfo == null ? state.scope().toCodeSite(state.bci) : makeFrame(scopeDebugInfo);
         debugInfo = new CiDebugInfo(codePos, registerRefMap, stackRefMap);
     }
 
@@ -101,16 +101,16 @@ public class LIRDebugInfo {
                 }
             }
         }
-        if (scope.expressions != null) {
-            for (CiValue v : scope.expressions) {
+        if (scope.stack != null) {
+            for (CiValue v : scope.stack) {
                 if (v != null) {
                     numStack++;
                     values.add(v);
                 }
             }
         }
-        if (scope.monitors != null) {
-            for (CiValue v : scope.monitors) {
+        if (scope.locks != null) {
+            for (CiValue v : scope.locks) {
                 if (v != null) {
                     numLocks++;
                     assert v instanceof CiAddress;
@@ -128,7 +128,8 @@ public class LIRDebugInfo {
         return new Frame(caller, scope.scope.method, scope.bci, values.toArray(new CiValue[values.size()]), numLocals, numStack, numLocks);
     }
 
-    public void setOop(CiValue location, CiTarget target) {
+    public void setOop(CiValue location, C1XCompilation compilation) {
+        CiTarget target = compilation.target;
         assert debugInfo != null : "debug info not allocated yet";
         if (location.isAddress()) {
             CiAddress stackLocation = (CiAddress) location;
@@ -142,14 +143,15 @@ public class LIRDebugInfo {
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterValue registerLocation = (CiRegisterValue) location;
-            int index = target.registerSaveArea.indexOf(registerLocation.reg);
-            assert index >= 0 : "object cannot be in non-object register " + registerLocation.reg;
-            setBit(debugInfo.registerRefMap, index);
+            int encoding = registerLocation.reg.encoding;
+            assert encoding >= 0 : "object cannot be in non-object register " + registerLocation.reg;
+            assert encoding < target.arch.registerReferenceMapBitCount;
+            setBit(debugInfo.registerRefMap, encoding);
         }
     }
 
     public void buildDebugFrame(ValueLocator locator) {
-        debugFrame = makeFrame(state, bci, locator);
+        debugFrame = makeFrame(state, state.bci, locator);
     }
 
     public byte[] registerRefMap() {

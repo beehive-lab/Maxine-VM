@@ -1782,7 +1782,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     masm.decrementq(AMD64.rsp, frameSize); // does not emit code for frameSize == 0
                     CiRegister[] calleeSave = compilation.registerConfig.getCalleeSaveRegisters();
                     if (calleeSave.length != 0) {
-                        CiRegisterSaveArea rsa = target.registerSaveArea;
+                        CiRegisterSaveArea rsa = compilation.registerConfig.getRSA();
                         int frameToRSA = frameSize - rsa.size;
                         assert frameToRSA >= 0;
                         masm.save(calleeSave, rsa, frameToRSA);
@@ -1797,7 +1797,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         registerRestoreEpilogueOffset = masm.codeBuffer.position();
 
                         // saved all registers, restore all registers
-                        CiRegisterSaveArea rsa = target.registerSaveArea;
+                        CiRegisterSaveArea rsa = compilation.registerConfig.getRSA();
                         int frameToRSA = frameSize - rsa.size;
                         masm.restore(calleeSave, rsa, frameToRSA);
                     }

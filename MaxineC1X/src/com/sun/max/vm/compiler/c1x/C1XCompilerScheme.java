@@ -327,6 +327,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.directCall(patchStaticTrampolineCallSite, null);
 
             // restore all parameter registers before returning
+            int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(parameterRegs, rsa, 0);
 
             // undo the frame
@@ -339,7 +340,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
             asm.ret(0);
 
-            return new C1XTargetMethod(staticTrampoline, asm.finishTargetMethod(staticTrampoline, runtime, -1));
+            return new C1XTargetMethod(staticTrampoline, asm.finishTargetMethod(staticTrampoline, runtime, registerRestoreEpilogueOffset));
         }
         throw FatalError.unimplemented();
     }
@@ -388,6 +389,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameSize - 8), returnReg);
 
             // Restore all parameter registers before returning
+            int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(parameterRegs, rsa, 0);
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
@@ -396,7 +398,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.ret(0);
 
             ClassMethodActor classMethodActor = isInterface ? iTableTrampoline : vTableTrampoline;
-            return new C1XTargetMethod(classMethodActor, asm.finishTargetMethod(classMethodActor, runtime, -1));
+            return new C1XTargetMethod(classMethodActor, asm.finishTargetMethod(classMethodActor, runtime, registerRestoreEpilogueOffset));
         }
         throw FatalError.unimplemented();
     }
