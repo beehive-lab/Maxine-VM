@@ -37,6 +37,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.Role;
+import com.sun.max.vm.runtime.amd64.*;
 
 /**
  * The set of register configurations used by Mainxe on Unix-AMD64. Where applicable,
@@ -206,6 +207,10 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
 
     public CiRegister[] getCalleeSaveRegisters() {
         return calleeSave;
+    }
+
+    public CiRegisterSaveArea getRSA() {
+        return AMD64TrapStateAccess.RSA;
     }
 
     public RiRegisterAttributes[] getAttributesMap() {

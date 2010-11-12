@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
@@ -106,11 +107,6 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private ClassMethodActor[] sourceMethods;
 
-    /**
-     * The number of registers that may be used to store a reference value.
-     */
-    private int referenceRegisterCount = -1;
-
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
@@ -181,11 +177,12 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     /**
-     * Gets the size (in bytes) of a reference map covering all the reference registers used by this target method.
+     * Gets the size (in bytes) of a bit map covering all the registers that may store references.
+     * The bit position of a register in the bit map is the register's {@linkplain CiRegister#encoding encoding}.
      */
-    private int registerReferenceMapSize() {
-        assert referenceRegisterCount != -1 : "register size not yet initialized";
-        return ByteArrayBitMap.computeBitMapSize(referenceRegisterCount);
+    @FOLD
+    private static int registerReferenceMapSize() {
+        return ByteArrayBitMap.computeBitMapSize(target().arch.registerReferenceMapBitCount);
     }
 
     /**
@@ -209,14 +206,6 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     private int totalReferenceMapSize() {
         return registerReferenceMapSize() + frameReferenceMapSize();
     }
-
-    private boolean isRegisterReferenceMapBitSet(int stopIndex, int registerIndex) {
-        assert registerIndex >= 0 && registerIndex < referenceRegisterCount;
-        int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize();
-        return ByteArrayBitMap.isSet(referenceMaps, byteIndex, registerReferenceMapSize(), registerIndex);
-    }
-
-
 
     private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
         // Create the arrays for the scalar and the object reference literals
@@ -339,7 +328,6 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     private void initFrameLayout(CiTargetMethod ciTargetMethod) {
-        this.referenceRegisterCount = ciTargetMethod.referenceRegisterCount();
         this.setFrameSize(ciTargetMethod.frameSize());
         this.setRegisterRestoreEpilogueOffset(ciTargetMethod.registerRestoreEpilogueOffset());
     }

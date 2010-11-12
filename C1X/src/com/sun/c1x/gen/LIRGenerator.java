@@ -516,7 +516,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue resultOperand = resultOperandFor(x.kind);
         CiValue callAddress = load(x.address());
         CiKind[] signature = Util.signatureToKinds(x.signature, null);
-        CiCallingConvention cc = compilation.frameMap().getCallingConvention(signature, RuntimeCall);
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(signature, NativeCall);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments);
         argList.add(callAddress);
         lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info, null);

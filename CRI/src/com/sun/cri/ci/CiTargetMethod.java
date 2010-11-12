@@ -229,8 +229,6 @@ public class CiTargetMethod implements Serializable {
     
     public final List<Mark> marks = new ArrayList<Mark>();
     
-
-    private final int referenceRegisterCount;
     private int frameSize = -1;
     private int registerRestoreEpilogueOffset = -1;
     private byte[] targetCode;
@@ -238,11 +236,8 @@ public class CiTargetMethod implements Serializable {
 
     /**
      * Constructs a new target method.
-     *
-     * @param referenceRegisterCount the number of registers in the register reference maps
      */
-    public CiTargetMethod(int referenceRegisterCount) {
-        this.referenceRegisterCount = referenceRegisterCount;
+    public CiTargetMethod() {
     }
 
     /**
@@ -322,7 +317,6 @@ public class CiTargetMethod implements Serializable {
      */
     public void recordSafepoint(int codePos, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
         safepoints.add(new Safepoint(codePos, debugInfo));
-        assert referenceRegisterCount <= registerMap.length * 8 : "compiler produced register maps of different sizes";
     }
 
     /**
@@ -356,15 +350,6 @@ public class CiTargetMethod implements Serializable {
     public int frameSize() {
         assert frameSize != -1 : "frame size not yet initialized!";
         return frameSize;
-    }
-
-    /**
-     * The size of the register reference map.
-     *
-     * @return the number of registers that can hold references
-     */
-    public int referenceRegisterCount() {
-        return referenceRegisterCount;
     }
 
     /**

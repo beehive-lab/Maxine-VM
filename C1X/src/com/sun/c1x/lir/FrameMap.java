@@ -185,7 +185,7 @@ public final class FrameMap {
         this.spillSlotCount = spillSlotCount;
         int frameSize = stackBlocksEnd();
         if (compilation.registerConfig.getCalleeSaveRegisters().length != 0) {
-            frameSize += compilation.target.registerSaveArea.size;
+            frameSize += compilation.registerConfig.getRSA().size;
         }
         this.frameSize = compilation.target.alignFrameSize(frameSize);
     }

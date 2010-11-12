@@ -1966,13 +1966,13 @@ public class LinearScan {
         // included in the oop map
         iw.walkBefore(op.id);
 
-        info.allocateDebugInfo(compilation.target.registerSaveArea.referenceSlotsCount, compilation.frameMap().frameSize(), compilation.target);
+        info.allocateDebugInfo(compilation.frameMap().frameSize(), compilation.target);
 
-        if (info.scopeDebugInfo != null && info.scopeDebugInfo.monitors != null) {
-            for (CiValue monitor : info.scopeDebugInfo.monitors) {
+        if (info.scopeDebugInfo != null && info.scopeDebugInfo.locks != null) {
+            for (CiValue monitor : info.scopeDebugInfo.locks) {
                 CiAddress adr = (CiAddress) monitor;
                 assert adr.index == CiValue.IllegalValue;
-                info.setOop(new CiAddress(adr.kind, adr.base, adr.displacement + compilation.runtime.basicObjectLockOffsetInBytes()), compilation.target);
+                info.setOop(new CiAddress(adr.kind, adr.base, adr.displacement + compilation.runtime.basicObjectLockOffsetInBytes()), compilation);
             }
         }
 
@@ -1997,7 +1997,7 @@ public class LinearScan {
                 if (location.isStackSlot()) {
                     location = frameMap.toStackAddress((CiStackSlot) location);
                 }
-                info.setOop(location, compilation.target);
+                info.setOop(location, compilation);
 
                 // Spill optimization: when the stack value is guaranteed to be always correct,
                 // then it must be added to the oop map even if the interval is currently in a register
@@ -2006,7 +2006,7 @@ public class LinearScan {
                     assert interval.spillSlot() != null : "no spill slot assigned";
                     assert !interval.operand.isRegister() : "interval is on stack :  so stack slot is registered twice";
 
-                    info.setOop(frameMap.toStackAddress(interval.spillSlot()), compilation.target);
+                    info.setOop(frameMap.toStackAddress(interval.spillSlot()), compilation);
                 }
             }
         }
@@ -2022,58 +2022,7 @@ public class LinearScan {
         computeOopMap(iw, op, op.info, op.hasCall());
     }
 
-    int appendScopeValueForConstant(CiValue operand, List<CiValue> scopeValues) {
-        assert operand.isConstant() : "should not be called otherwise";
-
-        CiConstant c = (CiConstant) operand;
-        switch (c.kind) {
-            case Object: // fall through
-            case Int: // fall through
-            case Float: {
-                scopeValues.add(c);
-                return 1;
-            }
-
-            case Long: // fall through
-            case Double: {
-                long longBits = Double.doubleToRawLongBits(c.asDouble());
-                if (compilation.target.arch.highWordOffset > compilation.target.arch.lowWordOffset) {
-                    scopeValues.add(CiConstant.forInt((int) (longBits >> 32)));
-                    scopeValues.add(CiConstant.forInt((int) longBits));
-                } else {
-                    scopeValues.add(CiConstant.forInt((int) longBits));
-                    scopeValues.add(CiConstant.forInt((int) (longBits >> 32)));
-                }
-                return 2;
-            }
-
-            case Jsr:
-                // TODO is this correct?
-                scopeValues.add(CiValue.IllegalValue);
-                return 1;
-
-            default:
-                System.out.println("unexpected kind: " + c.kind);
-                Util.shouldNotReachHere();
-                return -1;
-        }
-    }
-
-    int appendScopeValueForOperand(CiValue operand, List<CiValue> scopeValues) {
-        if (operand.kind.jvmSlots == 2) {
-            // The convention the interpreter uses is that the second local
-            // holds the first raw word of the native double representation.
-            // This is actually reasonable, since locals and stack arrays
-            // grow downwards in all implementations.
-            // (If, on some machine, the interpreter's Java locals or stack
-            // were to grow upwards, the embedded doubles would be word-swapped.)
-            scopeValues.add(null);
-        }
-        scopeValues.add(operand);
-        return operand.kind.jvmSlots;
-    }
-
-    int appendScopeValue(int opId, Value value, List<CiValue> scopeValues) {
+    void appendScopeValue(int opId, Value value, List<CiValue> scopeValues) {
         if (value != null && value.operand() != CiValue.IllegalValue) {
             CiValue operand = value.operand();
             Constant con = null;
@@ -2081,16 +2030,14 @@ public class LinearScan {
                 con = (Constant) value;
             }
 
-            assert con == null || operand.isVariable() || operand.isConstant() || operand.isIllegal() : "asumption: Constant instructions have only constant operands (or illegal if constant is optimized away)";
-            assert con != null || operand.isVariable() : "asumption: non-Constant instructions have only virtual operands: " + operand;
+            assert con == null || operand.isVariable() || operand.isConstant() || operand.isIllegal() : "Constant instructions have only constant operands (or illegal if constant is optimized away)";
 
             if (con != null && !con.isLive() && !operand.isConstant()) {
-                // Unpinned constants may have a virtual operand for a part of the lifetime
+                // Unpinned constants may have a variable operand for a part of the lifetime
                 // or may be illegal when it was optimized away,
                 // so always use a constant operand
                 operand = con.asConstant();
             }
-            assert operand.isVariable() || operand.isConstant() : "other cases not allowed here";
 
             if (operand.isVariable()) {
                 OperandMode mode = OperandMode.Input;
@@ -2114,105 +2061,78 @@ public class LinearScan {
                 // The operand must be live because debug information is considered when building the intervals
                 // if the interval is not live, colorLirOperand will cause an assert on failure
                 operand = colorLirOperand((CiVariable) operand, opId, mode);
-                assert !hasCall(opId) || operand.isStackSlot() || !isCallerSave(operand) : "can not have caller-save register operands at calls";
-
-                // Append to ScopeValue array
-                return appendScopeValueForOperand(operand, scopeValues);
-
+                assert !hasCall(opId) || operand.isStackSlot() || !isCallerSave(operand) : "cannot have caller-save register operands at calls";
+                scopeValues.add(operand);
+            } else if (operand.isRegister()) {
+                assert value instanceof LoadRegister;
+                scopeValues.add(operand);
             } else {
-                assert value instanceof Constant : "all other instructions have only virtual operands";
+                assert value instanceof Constant;
                 assert operand.isConstant() : "operand must be constant";
-
-                return appendScopeValueForConstant(operand, scopeValues);
+                scopeValues.add(operand);
             }
         } else {
             // append a dummy value because real value not needed
             scopeValues.add(CiValue.IllegalValue);
-            return 1;
         }
     }
 
-    IRScopeDebugInfo computeDebugInfoForScope(int opId, IRScope curScope, FrameState curState, FrameState innermostState, int curBci, int stackEnd, int locksEnd) {
-        if (false) {
-            return null;
-        }
+    IRScopeDebugInfo computeDebugInfoForState(int opId, FrameState state) {
         IRScopeDebugInfo callerDebugInfo = null;
-        int stackBegin;
-        int locksBegin;
 
-        FrameState callerState = curScope.callerState;
+        FrameState callerState = state.callerState();
         if (callerState != null) {
             // process recursively to compute outermost scope first
-            stackBegin = callerState.stackSize();
-            locksBegin = callerState.locksSize();
-            callerDebugInfo = computeDebugInfoForScope(opId, curScope.caller, callerState, innermostState, curScope.callerBCI(), stackBegin, locksBegin);
-        } else {
-            stackBegin = 0;
-            locksBegin = 0;
+            callerDebugInfo = computeDebugInfoForState(opId, callerState);
         }
 
         // initialize these to null.
         // If we don't need deopt info or there are no locals, expressions or monitors,
         // then these get recorded as no information and avoids the allocation of 0 length arrays.
         List<CiValue> locals = null;
-        List<CiValue> expressions = null;
+        List<CiValue> stack = null;
         List<CiValue> monitors = null;
 
         // describe local variable values
-        int nofLocals = curScope.method.maxLocals();
+        int nofLocals = state.localsSize();
         if (nofLocals > 0) {
             locals = new ArrayList<CiValue>(nofLocals);
 
             int pos = 0;
             while (pos < nofLocals) {
-                assert pos < curState.localsSize() : "why not?";
-
-                Value local = curState.localAt(pos);
-                pos += appendScopeValue(opId, local, locals);
-
-                assert locals.size() == pos : "must match";
-            }
-            assert locals.size() == curScope.method.maxLocals() : "wrong number of locals";
-            assert locals.size() == curState.localsSize() : "wrong number of locals";
-        }
-
-        // describe expression stack
-        //
-        // When we inline methods containing exception handlers, the
-        // "lockStacks" are changed to preserve expression stack values
-        // in caller scopes when exception handlers are present. This
-        // can cause callee stacks to be smaller than caller stacks.
-        if (stackEnd > innermostState.stackSize()) {
-            stackEnd = innermostState.stackSize();
-        }
-
-        int nofStack = stackEnd - stackBegin;
-        if (nofStack > 0) {
-            expressions = new ArrayList<CiValue>(nofStack);
-
-            int pos = stackBegin;
-            while (pos < stackEnd) {
-                Value expression = innermostState.stackAt(pos);
-                appendScopeValue(opId, expression, expressions);
-
+                assert pos < state.localsSize();
+                Value local = state.localAt(pos);
+                appendScopeValue(opId, local, locals);
                 pos++;
-                assert expressions.size() + stackBegin == pos : "must match: " + (expressions.size() + stackBegin) + " == " + pos;
             }
+            assert locals.size() == pos;
+            assert pos == nofLocals;
+        }
+
+        // describe operand stack
+        int nofStack = state.stackSize();
+        if (nofStack > 0) {
+            stack = new ArrayList<CiValue>(nofStack);
+            int pos = 0;
+            while (pos < nofStack) {
+                Value value = state.stackAt(pos);
+                appendScopeValue(opId, value, stack);
+                pos++;
+            }
+            assert stack.size() == nofStack;
+            assert pos == nofStack;
         }
 
         // describe monitors
-        assert locksBegin <= locksEnd : "error in scope iteration";
-        int nofLocks = locksEnd - locksBegin;
+        int nofLocks = state.locksSize();
         if (nofLocks > 0) {
             monitors = new ArrayList<CiValue>(nofLocks);
-            for (int i = locksBegin; i < locksEnd; i++) {
+            for (int i = 0; i < nofLocks; i++) {
                 monitors.add(frameMap.toMonitorBaseStackAddress(i));
             }
         }
-        IRScopeDebugInfo info = new IRScopeDebugInfo(curScope, curBci, locals, expressions, monitors, callerDebugInfo);
-        //info.print();
+        IRScopeDebugInfo info = new IRScopeDebugInfo(state.scope(), state.bci, locals, stack, monitors, callerDebugInfo);
         return info;
-        // TODO:
     }
 
     void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
@@ -2226,24 +2146,14 @@ public class LinearScan {
     }
 
     void computeDebugInfo(LIRDebugInfo info, int opId) {
-        if (!compilation.needsDebugInformation()) {
+        if (!compilation.needsDebugInfo) {
             return;
         }
         if (C1XOptions.TraceLinearScanLevel >= 3) {
             TTY.println("creating debug information at opId %d", opId);
         }
 
-        FrameState innermostState = info.state;
-        assert innermostState != null : "why is it missing?";
-
-        IRScope innermostScope = innermostState.scope();
-
-        assert innermostScope != null : "why is it missing?";
-
-        int stackEnd = innermostState.stackSize();
-        int locksEnd = innermostState.locksSize();
-
-        IRScopeDebugInfo debugInfo = computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci, stackEnd, locksEnd);
+        IRScopeDebugInfo debugInfo = computeDebugInfoForState(opId, info.state);
         if (info.scopeDebugInfo == null) {
             // compute debug information
             info.scopeDebugInfo = debugInfo;

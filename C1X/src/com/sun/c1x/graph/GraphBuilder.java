@@ -320,8 +320,13 @@ public final class GraphBuilder {
         return curState.pop(kind);
     }
 
-    Value peek() {
-        return curState.stackAt(curState.stackSize() - 1);
+    CiKind peekKind() {
+        Value top = curState.stackAt(curState.stackSize() - 1);
+        if (top == null) {
+            top = curState.stackAt(curState.stackSize() - 2);
+            assert top.kind.isDoubleWord();
+        }
+        return top.kind;
     }
 
     void loadLocal(int index, CiKind kind) {
@@ -1152,7 +1157,7 @@ public final class GraphBuilder {
                 if (object instanceof Instruction) {
                     Instruction obj = (Instruction) object;
                     if (!obj.isAppended()) {
-                        appendWithoutOptimization(obj, obj.bci());
+                        appendWithoutOptimization(obj, Instruction.SYNCHRONIZATION_ENTRY_BCI);
                     }
                 }
                 genMonitorExit(object, Instruction.SYNCHRONIZATION_ENTRY_BCI);
@@ -2116,8 +2121,8 @@ public final class GraphBuilder {
                 case IF_ICMPGE      : genIfSame(CiKind.Int, Condition.GE); break;
                 case IF_ICMPGT      : genIfSame(CiKind.Int, Condition.GT); break;
                 case IF_ICMPLE      : genIfSame(CiKind.Int, Condition.LE); break;
-                case IF_ACMPEQ      : genIfSame(peek().kind, Condition.EQ); break;
-                case IF_ACMPNE      : genIfSame(peek().kind, Condition.NE); break;
+                case IF_ACMPEQ      : genIfSame(peekKind(), Condition.EQ); break;
+                case IF_ACMPNE      : genIfSame(peekKind(), Condition.NE); break;
                 case GOTO           : genGoto(s.currentBCI(), s.readBranchDest()); break;
                 case JSR            : genJsr(s.readBranchDest()); break;
                 case RET            : genRet(s.readLocalIndex()); break;

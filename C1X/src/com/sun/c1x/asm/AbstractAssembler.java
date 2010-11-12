@@ -44,7 +44,7 @@ public abstract class AbstractAssembler {
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
-        this.targetMethod = new CiTargetMethod(target.registerSaveArea.referenceSlotsCount);
+        this.targetMethod = new CiTargetMethod();
         this.codeBuffer = new Buffer(target.arch.byteOrder);
         this.exceptionInfoList = new ArrayList<ExceptionInfo>();
     }
@@ -95,7 +95,7 @@ public abstract class AbstractAssembler {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Name: " + name);
             TTY.println("Frame size: " + targetMethod.frameSize());
-            TTY.println("Register size: " + targetMethod.referenceRegisterCount());
+            TTY.println("Register size: " + target.arch.registerReferenceMapBitCount);
 
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
             Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
@@ -135,7 +135,7 @@ public abstract class AbstractAssembler {
     public void recordExceptionHandlers(int pcOffset, LIRDebugInfo info) {
         if (info != null) {
             if (info.exceptionHandlers != null) {
-                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers, info.bci));
+                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers, info.state.bci));
             }
         }
     }

@@ -91,7 +91,7 @@ public class AMD64 extends CiArchitecture {
     public static final CiRegisterValue RSP = rsp.asValue(Word);
 
     public AMD64() {
-        super("AMD64", 8, "x86", ByteOrder.LittleEndian, allRegisters, 1, 8);
+        super("AMD64", 8, "x86", ByteOrder.LittleEndian, allRegisters, 1, r15.encoding + 1, 8);
     }
 
     @Override

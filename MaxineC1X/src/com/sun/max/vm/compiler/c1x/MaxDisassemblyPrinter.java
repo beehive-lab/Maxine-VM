@@ -123,7 +123,7 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
         ArrayList<Object> cells = new ArrayList<Object>();
         cells.add("");
         for (int i = 0; i < cols; i++) {
-            cells.add(String.valueOf(i));
+            cells.add(i);
         }
         cols++;
         if (frame.numLocals != 0) {
@@ -141,7 +141,13 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
             cells.addAll(Arrays.asList(frame.values).subList(frame.numLocals + frame.numStack, frame.values.length));
             cells.addAll(Collections.nCopies(cols - frame.numLocks - 1, ""));
         }
-        return CiUtil.tabulate(cells.toArray(), cols, 1, 1);
+        Object[] cellArray = cells.toArray();
+        for (int i = 0; i < cellArray.length; i++) {
+            if ((i % cols) != 0) {
+                cellArray[i] = "|" + cellArray[i];
+            }
+        }
+        return CiUtil.tabulate(cellArray, cols, 1, 1);
     }
 
     @Override

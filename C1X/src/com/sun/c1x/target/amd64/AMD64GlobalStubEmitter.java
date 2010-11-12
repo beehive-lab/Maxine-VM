@@ -375,7 +375,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void completeSavePrologue() {
-        CiRegisterSaveArea rsa = target.registerSaveArea;
+        CiRegisterSaveArea rsa = compiler.stubRegisterConfig.getRSA();
         this.saveSize = rsa.size;
         int entryCodeOffset = runtime.codeOffset();
         if (entryCodeOffset != 0) {
@@ -395,7 +395,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         registerRestoreEpilogueOffset = asm.codeBuffer.position();
 
         if (savedAllRegisters) {
-            CiRegisterSaveArea rsa = target.registerSaveArea;
+            CiRegisterSaveArea rsa = compiler.stubRegisterConfig.getRSA();
             int frameToRSA = frameSize() - rsa.size;
             CiRegister[] calleeSave = compiler.stubRegisterConfig.getCalleeSaveRegisters();
             asm.restore(calleeSave, rsa, frameToRSA);
