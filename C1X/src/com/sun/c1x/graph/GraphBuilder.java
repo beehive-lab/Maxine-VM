@@ -189,9 +189,13 @@ public final class GraphBuilder {
                 iterateAllBlocks();
             }
         } else {
+            Class<?> accessor = openAccessorScope(rootMethod);
+
             // 6B.1 do the normal parsing
             scopeData.addToWorkList(stdEntry);
             iterateAllBlocks();
+
+            closeAccessorScope(accessor);
         }
 
         if (syncHandler != null && syncHandler.stateBefore() != null) {
@@ -206,6 +210,24 @@ public final class GraphBuilder {
                 throw new CiBailout("cannot OSR with non-empty stack");
             }
         }
+    }
+
+    private void closeAccessorScope(Class< ? > accessor) {
+        if (accessor != null) {
+            boundAccessor.set(null);
+        }
+    }
+
+    private Class< ? > openAccessorScope(RiMethod rootMethod) {
+        Class<?> accessor = rootMethod.accessor();
+        if (accessor != null) {
+            assert boundAccessor.get() == null;
+            boundAccessor.set(compilation.runtime.getRiType(accessor));
+
+            // What looks like an object receiver in the bytecode may not be a word value
+            compilation.setNotTypesafe();
+        }
+        return accessor;
     }
 
     private void finishStartBlock(BlockBegin startBlock, BlockBegin stdEntry, BlockBegin osrEntry) {
@@ -324,6 +346,7 @@ public final class GraphBuilder {
         Value top = curState.stackAt(curState.stackSize() - 1);
         if (top == null) {
             top = curState.stackAt(curState.stackSize() - 2);
+            assert top != null;
             assert top.kind.isDoubleWord();
         }
         return top.kind;
@@ -2466,7 +2489,7 @@ public final class GraphBuilder {
     private Value popOffsetOrIndexForPointerOp(boolean isInt) {
         if (isInt) {
             Value offsetOrIndex = ipop();
-            if (compilation.is64Bit() && offsetOrIndex instanceof Local) {
+            if (compilation.target.arch.is64bit() && offsetOrIndex instanceof Local) {
                 return append(new Convert(I2L, offsetOrIndex, CiKind.Word));
             }
             return offsetOrIndex;

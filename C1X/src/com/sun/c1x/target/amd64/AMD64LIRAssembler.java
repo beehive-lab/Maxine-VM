@@ -1551,8 +1551,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     emitShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
                     break;
 
-                case Shr:
+                case Sar:
                     emitShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
+                    break;
+
+                case Shr:
+                    emitShiftOp(LIROpcode.Ushr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
                     break;
 
                 case And:
@@ -1601,10 +1605,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case PointerLoadDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
 
-                    if (addressInformation.canTrap) {
-                        //assert info != null;
-                    }
-
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
 
@@ -1628,12 +1628,25 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
 
-                case PointerStoreDisp: {
+                case LoadEffectiveAddress: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
 
-                    if (addressInformation.canTrap) {
-                        //assert info != null;
-                    }
+                    CiAddress.Scale scale = addressInformation.scale;
+                    int displacement = addressInformation.disp;
+
+                    CiValue result = operands[inst.result.index];
+                    CiValue pointer = operands[inst.x().index];
+                    CiValue index = operands[inst.y().index];
+
+                    pointer = assureInRegister(pointer);
+                    assert pointer.isVariableOrRegister();
+                    CiValue src = new CiAddress(CiKind.Illegal, pointer, index, scale, displacement);
+                    emitLea(src, result);
+                    break;
+                }
+
+                case PointerStoreDisp: {
+                    CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
 
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
@@ -1870,7 +1883,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
             return register;
         }
 
-        assert pointer.isRegister();
+        assert pointer.isRegister() : "should be register, but is: " + pointer;
         return (CiRegisterValue) pointer;
     }
 

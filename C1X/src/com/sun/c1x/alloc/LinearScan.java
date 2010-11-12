@@ -1123,8 +1123,12 @@ public class LinearScan {
                 }
 
                 Interval interval = intervalFor(move.result());
-                interval.setSpillSlot(slot);
-                interval.assignLocation(slot);
+                CiStackSlot copySlot = slot;
+                if (C1XOptions.CopyPointerStackArguments && slot.kind == CiKind.Object) {
+                    copySlot = allocateSpillSlot(slot.kind);
+                }
+                interval.setSpillSlot(copySlot);
+                interval.assignLocation(copySlot);
             }
         }
     }
@@ -2020,6 +2024,22 @@ public class LinearScan {
         assert op.info != null : "no oop map needed";
         assert !op.info.hasDebugInfo() : "oop map already computed for info";
         computeOopMap(iw, op, op.info, op.hasCall());
+        if (op instanceof LIRCall) {
+            List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
+            if (pointerSlots != null) {
+                for (CiValue v : pointerSlots) {
+                    op.info.setOop(v, compilation);
+                }
+            }
+        } else if (op instanceof LIRXirInstruction) {
+
+            List<CiValue> pointerSlots = ((LIRXirInstruction) op).pointerSlots;
+            if (pointerSlots != null) {
+                for (CiValue v : pointerSlots) {
+                    op.info.setOop(v, compilation);
+                }
+            }
+        }
     }
 
     void appendScopeValue(int opId, Value value, List<CiValue> scopeValues) {
@@ -2146,9 +2166,6 @@ public class LinearScan {
     }
 
     void computeDebugInfo(LIRDebugInfo info, int opId) {
-        if (!compilation.needsDebugInfo) {
-            return;
-        }
         if (C1XOptions.TraceLinearScanLevel >= 3) {
             TTY.println("creating debug information at opId %d", opId);
         }
@@ -2293,6 +2310,10 @@ public class LinearScan {
 
         eliminateSpillMoves();
         assignLocations();
+
+        if (C1XOptions.DetailedAsserts) {
+            verifyIntervals();
+        }
 
         if (C1XOptions.PrintTimers) {
             C1XTimers.DEBUG_INFO.stop();
@@ -2446,7 +2467,6 @@ public class LinearScan {
                 if (i2.from() == 1 && i2.to() == 2) {
                     continue;
                 }
-
                 CiValue l1 = i1.location();
                 CiValue l2 = i2.location();
                 if (i1.intersects(i2) && (l1.equals(l2))) {

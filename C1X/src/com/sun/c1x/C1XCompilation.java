@@ -50,7 +50,6 @@ public class C1XCompilation {
     public final RiRegisterConfig registerConfig;
     public final CiStatistics stats;
     public final int osrBCI;
-    public final boolean needsDebugInfo;
 
     private boolean hasExceptionHandlers;
 
@@ -103,7 +102,6 @@ public class C1XCompilation {
             cfgPrinter.printCompilation(method);
         }
         this.cfgPrinter = cfgPrinter;
-        this.needsDebugInfo = runtime.needsDebugInfo();
     }
 
     public IR hir() {
@@ -135,13 +133,6 @@ public class C1XCompilation {
     }
 
     /**
-     * Determines if this a compilation for a 64-bit platform.
-     */
-    public boolean is64Bit() {
-        return target.arch.is64bit();
-    }
-
-    /**
      * Translates a given kind to a canonical architecture kind.
      * This is an identity function for all but {@link CiKind#Word}
      * which is translated to {@link CiKind#Int} or {@link CiKind#Long}
@@ -150,7 +141,7 @@ public class C1XCompilation {
      */
     public CiKind archKind(CiKind kind) {
         if (kind.isWord()) {
-            return is64Bit() ? CiKind.Long : CiKind.Int;
+            return target.arch.is64bit() ? CiKind.Long : CiKind.Int;
         }
         return kind;
     }

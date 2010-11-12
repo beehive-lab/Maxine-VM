@@ -370,8 +370,4 @@ public class MaxRiRuntime implements RiRuntime {
         }
         throw FatalError.unimplemented();
     }
-
-    public boolean needsDebugInfo() {
-        return true;
-    }
 }

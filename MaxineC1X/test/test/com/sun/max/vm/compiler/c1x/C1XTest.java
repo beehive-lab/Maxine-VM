@@ -395,9 +395,6 @@ public class C1XTest {
                     }
                 }
             }
-            if (method.accessor() != null && !MaxRiRuntime.CAN_COMPILE_ACCESSOR_METHODS) {
-                return false;
-            }
             return method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic();
         }
 
