@@ -97,8 +97,10 @@ public abstract class AbstractAssembler {
             TTY.println("Frame size: " + targetMethod.frameSize());
             TTY.println("Register size: " + target.arch.registerReferenceMapBitCount);
 
-            Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
-            Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
+            if (C1XOptions.PrintCodeBytes) {
+                Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
+                Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
+            }
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
             TTY.println(runtime.disassemble(targetMethod));

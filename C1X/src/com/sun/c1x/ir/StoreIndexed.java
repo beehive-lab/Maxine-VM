@@ -48,6 +48,9 @@ public final class StoreIndexed extends AccessIndexed {
         super(CiKind.Void, array, index, length, elementType, stateBefore);
         this.value = value;
         setFlag(Flag.LiveStore);
+        if (elementType != CiKind.Object) {
+            setFlag(Flag.NoWriteBarrier);
+        }
     }
 
     /**
