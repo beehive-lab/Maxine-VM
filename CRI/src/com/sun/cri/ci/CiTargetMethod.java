@@ -86,19 +86,14 @@ public class CiTargetMethod implements Serializable {
         public final RiMethod method;
         public final String symbol;
         public final Object globalStubID;
-
         public final CiDebugInfo debugInfo;
-        public final byte[] stackMap;
-        public final byte[] registerMap;
-
-        Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, String symbol, Object globalStubID, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
+        
+        Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, String symbol, Object globalStubID, CiDebugInfo debugInfo) {
             super(pcOffset);
             this.runtimeCall = runtimeCall;
             this.method = method;
-            this.stackMap = stackMap;
             this.symbol = symbol;
             this.globalStubID = globalStubID;
-            this.registerMap = registerMap;
             this.debugInfo = debugInfo;
         }
 
@@ -278,17 +273,16 @@ public class CiTargetMethod implements Serializable {
      * @param codePos the position in the code array
      * @param target the {@linkplain RiMethod method}, {@linkplain CiRuntimeCall runtime call}, {@linkplain String native function} or stub being called
      * @param debugInfo the debug info for the call site
-     * @param stackMap the bitmap that indicates which stack locations
      * @param direct true if this is a direct call, false otherwise
      */
-    public void recordCall(int codePos, Object target, CiDebugInfo debugInfo, byte[] stackMap, boolean direct) {
+    public void recordCall(int codePos, Object target, CiDebugInfo debugInfo, boolean direct) {
         CiRuntimeCall rt = target instanceof CiRuntimeCall ? (CiRuntimeCall) target : null;
         RiMethod meth = target instanceof RiMethod ? (RiMethod) target : null;
         String symbol = target instanceof String ? (String) target : null;
         // make sure that only one is non-null
         Object globalStubID = (rt == null && meth == null && symbol == null) ? target : null;
         
-        final Call callSite = new Call(codePos, rt, meth, symbol, globalStubID, null, stackMap, debugInfo);
+        final Call callSite = new Call(codePos, rt, meth, symbol, globalStubID, debugInfo);
         if (direct) {
             directCalls.add(callSite);
         } else {
@@ -311,11 +305,9 @@ public class CiTargetMethod implements Serializable {
      * Records the reference maps at a safepoint location in the code array.
      *
      * @param codePos the position in the code array
-     * @param registerMap  the bitmap that indicates which registers are references
-     * @param stackMap     the bitmap that indicates which stack locations
      * @param debugInfo    the debug info for the safepoint site
      */
-    public void recordSafepoint(int codePos, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
+    public void recordSafepoint(int codePos, CiDebugInfo debugInfo) {
         safepoints.add(new Safepoint(codePos, debugInfo));
     }
 

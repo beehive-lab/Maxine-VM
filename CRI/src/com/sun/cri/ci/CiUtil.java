@@ -657,4 +657,20 @@ public class CiUtil {
         }
         return sb;
     }
+
+    public static final byte[] EMPTY_BIT_MAP = {};
+    /**
+     * Gets a reference map that covers a given number of bits.
+     */
+    public static byte[] makeBitMap(int bitCount) {
+        return bitCount == 0 ? EMPTY_BIT_MAP : new byte[(bitCount + 7) >> 3];
+    }
+
+    public static boolean setBit(byte[] bitMap, int bit) {
+        int index = bit >> 3;
+        int offset = bit & 0x7;
+        boolean wasSet = (bitMap[index] & (1 << offset)) != 0;
+        bitMap[index] = (byte) (bitMap[index] | (1 << offset));
+        return wasSet;
+    }
 }

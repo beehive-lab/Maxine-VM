@@ -228,7 +228,8 @@ public final class FrameMap {
     }
 
     /**
-     * Converts the monitor index into a stack address.
+     * Converts the monitor index into the stack address of the object reference in the on-stack monitor.
+     *
      * @param monitorIndex the monitor index
      * @return a representation of the stack address
      */
@@ -237,7 +238,8 @@ public final class FrameMap {
     }
 
     /**
-     * Converts the monitor index into a stack address.
+     * Converts the monitor index into the stack address of the on-stak monitor.
+     *
      * @param monitorIndex the monitor index
      * @return a representation of the stack address
      */
@@ -315,7 +317,8 @@ public final class FrameMap {
 
     private int spOffsetForMonitorBase(int index) {
         assert index >= 0 && index < monitorCount : "invalid monitor index";
-        int size = compilation.runtime.sizeofBasicObjectLock();
+        int size = compilation.runtime.sizeOfBasicObjectLock();
+        assert size != 0 : "monitors are not on the stack in this VM";
         int offset = monitorsStart() + index * size;
         assert offset <= (frameSize() - size) : "monitor outside of frame";
         return offset;
@@ -334,7 +337,7 @@ public final class FrameMap {
     }
 
     private int monitorsEnd() {
-        return monitorsStart() + (monitorCount * compilation.runtime.sizeofBasicObjectLock());
+        return monitorsStart() + (monitorCount * compilation.runtime.sizeOfBasicObjectLock());
     }
 
     private int stackBlocksStart() {

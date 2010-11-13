@@ -26,7 +26,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiDebugInfo.Frame;
 
 /**
  * This class represents debugging and deoptimization information attached to a LIR instruction.
@@ -43,21 +42,15 @@ public class LIRDebugInfo {
 
     public final FrameState state;
     public final List<ExceptionHandler> exceptionHandlers;
+    public CiDebugInfo debugInfo;
 
-    public IRScopeDebugInfo scopeDebugInfo;
-
-    private CiDebugInfo debugInfo;
-    private CiDebugInfo.Frame debugFrame;
-
-    public LIRDebugInfo(FrameState state, int bci, List<ExceptionHandler> exceptionHandlers) {
+    public LIRDebugInfo(FrameState state, List<ExceptionHandler> exceptionHandlers) {
         assert state != null;
-        this.scopeDebugInfo = null;
         this.state = state;
         this.exceptionHandlers = exceptionHandlers;
     }
 
     private LIRDebugInfo(LIRDebugInfo info) {
-        this.scopeDebugInfo = null;
         this.state = info.state;
 
         // deep copy of exception handlers
@@ -73,59 +66,6 @@ public class LIRDebugInfo {
 
     public LIRDebugInfo copy() {
         return new LIRDebugInfo(this);
-    }
-
-    public void allocateDebugInfo(int frameSize, CiTarget target) {
-        int registerSlots = target.arch.registerReferenceMapBitCount;
-        byte[] registerRefMap = registerSlots > 0 ? newRefMap(registerSlots) : null;
-        byte[] stackRefMap = frameSize > 0 ? newRefMap(frameSize / target.spillSlotSize) : null;
-        CiCodePos codePos = scopeDebugInfo == null ? state.scope().toCodeSite(state.bci) : makeFrame(scopeDebugInfo);
-        debugInfo = new CiDebugInfo(codePos, registerRefMap, stackRefMap);
-    }
-
-    private static Frame makeFrame(IRScopeDebugInfo scope) {
-        Frame caller = null;
-        if (scope.caller != null) {
-            caller = makeFrame(scope.caller);
-        }
-        int numLocals = 0;
-        int numStack = 0;
-        int numLocks = 0;
-        ArrayList<CiValue> values = new ArrayList<CiValue>();
-
-        if (scope.locals != null) {
-            for (CiValue v : scope.locals) {
-                if (v != null) {
-                    numLocals++;
-                    values.add(v);
-                }
-            }
-        }
-        if (scope.stack != null) {
-            for (CiValue v : scope.stack) {
-                if (v != null) {
-                    numStack++;
-                    values.add(v);
-                }
-            }
-        }
-        if (scope.locks != null) {
-            for (CiValue v : scope.locks) {
-                if (v != null) {
-                    numLocks++;
-                    assert v instanceof CiAddress;
-                    CiAddress adr = (CiAddress) v;
-                    assert adr.base.isRegister() && ((CiRegisterValue) adr.base).reg == CiRegister.Frame;
-                    assert adr.index == CiValue.IllegalValue;
-
-                    // TODO this is a hack ... and not portable, etc.
-                    CiValue value = CiStackSlot.get(CiKind.Object, adr.displacement / 8);
-
-                    values.add(value);
-                }
-            }
-        }
-        return new Frame(caller, scope.scope.method, scope.bci, values.toArray(new CiValue[values.size()]), numLocals, numStack, numLocks);
     }
 
     public void setOop(CiValue location, C1XCompilation compilation) {
@@ -155,18 +95,6 @@ public class LIRDebugInfo {
         }
     }
 
-    public void buildDebugFrame(ValueLocator locator) {
-        debugFrame = makeFrame(state, state.bci, locator);
-    }
-
-    public byte[] registerRefMap() {
-        return debugInfo.registerRefMap;
-    }
-
-    public byte[] stackRefMap() {
-        return debugInfo.frameRefMap;
-    }
-
     public CiDebugInfo debugInfo() {
         assert debugInfo != null : "debug info not allocated yet";
         return debugInfo;
@@ -176,66 +104,13 @@ public class LIRDebugInfo {
         return debugInfo != null;
     }
 
-    private CiDebugInfo.Frame makeFrame(FrameState state, int bci, ValueLocator locator) {
-        // XXX: cache the debug information for each frame state if equivalent to previous
-        return createFrame(state, bci, locator);
-    }
-
-    private byte[] newRefMap(int slots) {
-        return new byte[(slots + 7) >> 3];
-    }
-
     private void setBit(byte[] array, int bit) {
-        int index = bit >> 3;
-        int offset = bit & 0x7;
-        assert (array[index] & (1 << offset)) == 0 : "Pointer map entry " + bit + " is already set.";
-        array[index] = (byte) (array[index] | (1 << offset));
+        boolean wasSet = CiUtil.setBit(array, bit);
+        assert !wasSet : "Ref map entry " + bit + " is already set.";
     }
 
-    private CiDebugInfo.Frame createFrame(FrameState state, int bci, ValueLocator locator) {
-        int stackBegin = state.callerStackSize();
-        int numStack = 0;
-        int numLocals = 0;
-        int numLocks;
-        for (int i = 0; i < state.localsSize(); i++) {
-            if (state.localAt(i) != null) {
-                numLocals = 1 + i;
-            }
-        }
-        for (int i = 0; i < state.stackSize(); i++) {
-            if (state.stackAt(i) != null) {
-                numStack = 1 + i;
-            }
-        }
-        numLocks = state.locksSize();
-
-        CiValue[] values = new CiValue[numLocals + numStack + numLocks];
-        int pos = 0;
-        for (int i = 0; i < state.localsSize(); i++, pos++) {
-            Value v = state.localAt(i);
-            if (v != null) {
-                values[pos] = locator.getLocation(v);
-            }
-        }
-        for (int i = stackBegin; i < state.stackSize(); i++, pos++) {
-            Value v = state.stackAt(i);
-            if (v != null) {
-                values[pos] = locator.getLocation(v);
-            }
-        }
-        for (int i = 0; i < state.locksSize(); i++, pos++) {
-            Value v = state.lockAt(i);
-            assert v != null;
-            values[pos] = locator.getLocation(v);
-        }
-
-        FrameState caller = state.callerState();
-        CiDebugInfo.Frame parent = null;
-        IRScope scope = state.scope();
-        if (caller != null) {
-             parent = makeFrame(caller, scope.callerBCI(), locator);
-        }
-        return new CiDebugInfo.Frame(parent, scope.method, bci, values, numLocals, numStack, numLocks);
+    @Override
+    public String toString() {
+        return state.toString();
     }
-
 }

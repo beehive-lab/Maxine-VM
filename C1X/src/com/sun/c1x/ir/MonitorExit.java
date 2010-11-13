@@ -31,7 +31,9 @@ public final class MonitorExit extends AccessMonitor {
 
     /**
      * Creates a new MonitorExit instruction.
+     *
      * @param object the instruction produces the object value
+     * @param lockAddress the address of the on-stack lock object or {@code null} if the runtime does not place locks on the stack
      * @param lockNumber the number of the lock
      * @param stateBefore the state before executing this instruction
      */

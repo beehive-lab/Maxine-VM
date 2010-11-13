@@ -20,6 +20,8 @@
  */
 package com.sun.cri.ci;
 
+import java.util.*;
+
 import com.sun.cri.ri.*;
 
 
@@ -30,6 +32,7 @@ import com.sun.cri.ri.*;
  * @author Ben L. Titzer
  */
 public class CiDebugInfo {
+    
     /**
      * The code position (including all inlined methods) of this debug info.
      * If this is a {@link Frame} instance, then it is also the deoptimization information for each inlined frame.
@@ -50,7 +53,8 @@ public class CiDebugInfo {
     public final byte[] frameRefMap;
 
     /**
-     * Create a new {@code CiDebugInfo} from the given values.
+     * Creates a new {@code CiDebugInfo} from the given values.
+     * 
      * @param codePos the {@linkplain CiCodePos code position} or {@linkplain Frame frame} info
      * @param registerRefMap the register map, which may be {@code null}
      * @param frameRefMap the reference map for {@code frame}, which may be {@code null}
@@ -62,9 +66,9 @@ public class CiDebugInfo {
     }
 
     /**
-     * @return {@code true} if this debug information has a debug frame
+     * @return {@code true} if this debug information has a frame
      */
-    public boolean hasDebugFrame() {
+    public boolean hasFrame() {
         return codePos instanceof Frame;
     }
 
@@ -89,7 +93,7 @@ public class CiDebugInfo {
      * @return {@code null} if no frame de-opt info is {@linkplain #hasDebugFrame available}
      */
     public Frame frame() {
-        if (hasDebugFrame()) {
+        if (hasFrame()) {
             return (Frame) codePos;
         }
         return null;
@@ -174,6 +178,28 @@ public class CiDebugInfo {
          */
         public Frame caller() {
             return (Frame) caller;
+        }
+        
+        /**
+         * Deep equality test.
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof Frame) {
+                Frame other = (Frame) obj;
+                if (method.equals(other.method) &&
+                    other.bci == bci &&
+                    numLocals == other.numLocals &&
+                    numStack == other.numStack &&
+                    numLocks == other.numLocks &&
+                    Arrays.equals(values, other.values)) {
+                    if (caller == null) {
+                        return other.caller == null;
+                    }
+                    return caller.equals(other.caller);
+                }
+            }
+            return false;
         }
         
         @Override

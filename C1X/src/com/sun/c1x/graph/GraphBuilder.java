@@ -1214,8 +1214,11 @@ public final class GraphBuilder {
             FrameState stateBefore = curState.immutableCopy(bci());
             // unlock before exiting the method
             int lockNumber = locksSize() - 1;
-            MonitorAddress lockAddress = new MonitorAddress(lockNumber);
-            append(lockAddress);
+            MonitorAddress lockAddress = null;
+            if (compilation.runtime.sizeOfBasicObjectLock() != 0) {
+                lockAddress = new MonitorAddress(lockNumber);
+                append(lockAddress);
+            }
             append(new MonitorExit(rootMethodSynchronizedObject, lockAddress, lockNumber, stateBefore));
             curState.unlock();
         }
@@ -1232,8 +1235,11 @@ public final class GraphBuilder {
     void genMonitorEnter(Value x, int bci) {
         FrameState stateBefore = curState.immutableCopy(bci());
         int lockNumber = locksSize();
-        MonitorAddress lockAddress = new MonitorAddress(lockNumber);
-        append(lockAddress);
+        MonitorAddress lockAddress = null;
+        if (compilation.runtime.sizeOfBasicObjectLock() != 0) {
+            lockAddress = new MonitorAddress(lockNumber);
+            append(lockAddress);
+        }
         appendWithoutOptimization(new MonitorEnter(x, lockAddress, lockNumber, stateBefore), bci);
         curState.lock(scope(), x, lockNumber + 1);
         killMemoryMap(); // prevent any optimizations across synchronization
@@ -1245,8 +1251,11 @@ public final class GraphBuilder {
             throw new CiBailout("monitor stack underflow");
         }
         FrameState stateBefore = curState.immutableCopy(bci());
-        MonitorAddress lockAddress = new MonitorAddress(lockNumber);
-        append(lockAddress);
+        MonitorAddress lockAddress = null;
+        if (compilation.runtime.sizeOfBasicObjectLock() != 0) {
+            lockAddress = new MonitorAddress(lockNumber);
+            append(lockAddress);
+        }
         appendWithoutOptimization(new MonitorExit(x, lockAddress, lockNumber, stateBefore), bci);
         curState.unlock();
         killMemoryMap(); // prevent any optimizations across synchronization
@@ -1855,6 +1864,7 @@ public final class GraphBuilder {
                 curBlock = b;
                 curState = b.stateBefore().copy();
                 lastInstr = b;
+
                 iterateBytecodesForBlock(b.bci(), false);
             }
         }

@@ -71,15 +71,23 @@ public class CiCodePos {
         return CiUtil.append(new StringBuilder(100), this).toString();
     }
 
+    /**
+     * Deep equality test.
+     */
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof CiCodePos) {
             CiCodePos other = (CiCodePos) obj;
-            return other.method.equals(method) && other.bci == bci;
+            if (other.method.equals(method) && other.bci == bci) {
+                if (caller == null) {
+                    return other.caller == null;
+                }
+                return caller.equals(other.caller);
+            }
         }
-        return super.equals(obj);
+        return false;
     }
-
+    
     @Override
     public int hashCode() {
         return bci;
