@@ -996,7 +996,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         // check if the instruction has an xhandler in any of the nested scopes
         boolean unwind = false;
-        if (info.exceptionHandlers.size() == 0) {
+        if (x.exceptionHandlers().size() == 0) {
             // this throw is not inside an xhandler
             unwind = true;
         } else {
@@ -1818,7 +1818,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected LIRDebugInfo stateFor(Instruction x, FrameState state) {
-        return new LIRDebugInfo(state, x.bci(), x.exceptionHandlers());
+        return new LIRDebugInfo(state, x.exceptionHandlers());
     }
 
     List<CiValue> visitInvokeArguments(CiCallingConvention cc, Value[] args, List<CiValue> pointerSlots) {

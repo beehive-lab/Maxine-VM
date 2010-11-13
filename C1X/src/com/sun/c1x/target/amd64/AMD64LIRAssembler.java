@@ -1768,7 +1768,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case Safepoint: {
-                    asm.recordSafepoint(codePos(), info.registerRefMap(), info.stackRefMap(), info);
+                    asm.recordSafepoint(codePos(), info);
                     break;
                 }
                 case NullCheck: {

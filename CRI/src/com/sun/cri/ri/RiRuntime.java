@@ -76,18 +76,16 @@ public interface RiRuntime {
     boolean mustNotCompile(RiMethod method);
 
     /**
-     * Offset of the lock within the lock object.
+     * Offset of the lock within the lock object on the stack.
      *
      * @return the offset in bytes
      */
     int basicObjectLockOffsetInBytes();
 
     /**
-     * Size of a lock object.
-     *
-     * @return the size in bytes
+     * Get the size in bytes of a lock object on the stack.
      */
-    int sizeofBasicObjectLock();
+    int sizeOfBasicObjectLock();
 
     /**
      * The offset of the normal entry to the code. The compiler inserts NOP instructions to satisfy this constraint.

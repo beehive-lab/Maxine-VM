@@ -41,6 +41,7 @@ import com.sun.c1x.value.*;
 import com.sun.c1x.value.FrameState.PhiProcedure;
 import com.sun.c1x.value.FrameState.ValueProcedure;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ri.*;
 
 /**
@@ -1941,9 +1942,6 @@ public class LinearScan {
         return interval.location();
     }
 
-    void assertEqual(IRScopeDebugInfo d1, IRScopeDebugInfo d2) {
-    }
-
     IntervalWalker initComputeOopMaps() {
         // setup lists of potential oops for walking
         Interval oopIntervals;
@@ -1951,7 +1949,7 @@ public class LinearScan {
 
         oopIntervals = createUnhandledLists(IS_OOP_INTERVAL, null).first;
 
-        // intervals that have no oops inside need not to be processed
+        // intervals that have no oops inside need not to be processed.
         // to ensure a walking until the last instruction id, add a dummy interval
         // with a high operation id
         nonOopIntervals = new Interval(CiValue.IllegalValue, -1);
@@ -1966,19 +1964,9 @@ public class LinearScan {
         }
 
         // walk before the current operation . intervals that start at
-        // the operation (= output operands of the operation) are not
+        // the operation (i.e. output operands of the operation) are not
         // included in the oop map
         iw.walkBefore(op.id);
-
-        info.allocateDebugInfo(compilation.frameMap().frameSize(), compilation.target);
-
-        if (info.scopeDebugInfo != null && info.scopeDebugInfo.locks != null) {
-            for (CiValue monitor : info.scopeDebugInfo.locks) {
-                CiAddress adr = (CiAddress) monitor;
-                assert adr.index == CiValue.IllegalValue;
-                info.setOop(new CiAddress(adr.kind, adr.base, adr.displacement + compilation.runtime.basicObjectLockOffsetInBytes()), compilation);
-            }
-        }
 
         // Iterate through active intervals
         for (Interval interval = iw.activeLists.get(RegisterBinding.Fixed); interval != Interval.EndMarker; interval = interval.next) {
@@ -2022,7 +2010,6 @@ public class LinearScan {
 
     void computeOopMap(IntervalWalker iw, LIRInstruction op) {
         assert op.info != null : "no oop map needed";
-        assert !op.info.hasDebugInfo() : "oop map already computed for info";
         computeOopMap(iw, op, op.info, op.hasCall());
         if (op instanceof LIRCall) {
             List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
@@ -2032,7 +2019,6 @@ public class LinearScan {
                 }
             }
         } else if (op instanceof LIRXirInstruction) {
-
             List<CiValue> pointerSlots = ((LIRXirInstruction) op).pointerSlots;
             if (pointerSlots != null) {
                 for (CiValue v : pointerSlots) {
@@ -2042,7 +2028,7 @@ public class LinearScan {
         }
     }
 
-    void appendScopeValue(int opId, Value value, List<CiValue> scopeValues) {
+    CiValue toCiValue(int opId, Value value) {
         if (value != null && value.operand() != CiValue.IllegalValue) {
             CiValue operand = value.operand();
             Constant con = null;
@@ -2082,102 +2068,82 @@ public class LinearScan {
                 // if the interval is not live, colorLirOperand will cause an assert on failure
                 operand = colorLirOperand((CiVariable) operand, opId, mode);
                 assert !hasCall(opId) || operand.isStackSlot() || !isCallerSave(operand) : "cannot have caller-save register operands at calls";
-                scopeValues.add(operand);
+                return operand;
             } else if (operand.isRegister()) {
                 assert value instanceof LoadRegister;
-                scopeValues.add(operand);
+                return operand;
             } else {
                 assert value instanceof Constant;
                 assert operand.isConstant() : "operand must be constant";
-                scopeValues.add(operand);
+                return operand;
             }
         } else {
-            // append a dummy value because real value not needed
-            scopeValues.add(CiValue.IllegalValue);
+            // return a dummy value because real value not needed
+            return CiValue.IllegalValue;
         }
     }
 
-    IRScopeDebugInfo computeDebugInfoForState(int opId, FrameState state) {
-        IRScopeDebugInfo callerDebugInfo = null;
+    Frame computeFrameForState(int opId, FrameState state, byte[] frameRefMap) {
+        CiDebugInfo.Frame callerFrame = null;
 
         FrameState callerState = state.callerState();
         if (callerState != null) {
             // process recursively to compute outermost scope first
-            callerDebugInfo = computeDebugInfoForState(opId, callerState);
+            callerFrame = computeFrameForState(opId, callerState, frameRefMap);
         }
 
-        // initialize these to null.
-        // If we don't need deopt info or there are no locals, expressions or monitors,
-        // then these get recorded as no information and avoids the allocation of 0 length arrays.
-        List<CiValue> locals = null;
-        List<CiValue> stack = null;
-        List<CiValue> monitors = null;
+        CiValue[] values = new CiValue[state.valuesSize() + state.locksSize()];
+        int valueIndex = 0;
 
-        // describe local variable values
-        int nofLocals = state.localsSize();
-        if (nofLocals > 0) {
-            locals = new ArrayList<CiValue>(nofLocals);
-
-            int pos = 0;
-            while (pos < nofLocals) {
-                assert pos < state.localsSize();
-                Value local = state.localAt(pos);
-                appendScopeValue(opId, local, locals);
-                pos++;
-            }
-            assert locals.size() == pos;
-            assert pos == nofLocals;
+        for (int i = 0; i < state.valuesSize(); i++) {
+            values[valueIndex++] = toCiValue(opId, state.valueAt(i));
         }
 
-        // describe operand stack
-        int nofStack = state.stackSize();
-        if (nofStack > 0) {
-            stack = new ArrayList<CiValue>(nofStack);
-            int pos = 0;
-            while (pos < nofStack) {
-                Value value = state.stackAt(pos);
-                appendScopeValue(opId, value, stack);
-                pos++;
-            }
-            assert stack.size() == nofStack;
-            assert pos == nofStack;
-        }
-
-        // describe monitors
-        int nofLocks = state.locksSize();
-        if (nofLocks > 0) {
-            monitors = new ArrayList<CiValue>(nofLocks);
-            for (int i = 0; i < nofLocks; i++) {
-                monitors.add(frameMap.toMonitorBaseStackAddress(i));
+        for (int i = 0; i < state.locksSize(); i++) {
+            if (compilation.runtime.sizeOfBasicObjectLock() != 0) {
+                CiAddress adr = frameMap.toMonitorObjectStackAddress(i);
+                values[valueIndex++] = adr;
+                if (frameRefMap != null) {
+                    assert adr.index.isIllegal();
+                    int bit = adr.displacement / compilation.target.wordSize;
+                    boolean wasSet = CiUtil.setBit(frameRefMap, bit);
+                    assert !wasSet;
+                }
+            } else {
+                Value lock = state.lockAt(i);
+                if (lock.isConstant() && lock.asConstant().asObject() instanceof Class) {
+                    // lock on class for synchronized static method
+                   values[valueIndex++] = lock.asConstant();
+                } else {
+                    values[valueIndex++] = toCiValue(opId, lock);
+                }
             }
         }
-        IRScopeDebugInfo info = new IRScopeDebugInfo(state.scope(), state.bci, locals, stack, monitors, callerDebugInfo);
-        return info;
+
+        return new Frame(callerFrame, state.scope().method, state.bci, values, state.localsSize(), state.stackSize(), state.locksSize());
     }
 
     void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
         assert iw != null : "interval walker needed for debug information";
         LIRDebugInfo info = op.info;
         if (info != null) {
-            computeDebugInfo(info, op.id);
+            if (info.debugInfo == null) {
+                byte[] regRefMap = CiUtil.makeBitMap(compilation.target.arch.registerReferenceMapBitCount);
+                byte[] frameRefMap = CiUtil.makeBitMap(compilation.frameMap().frameSize());
+                Frame frame = computeFrame(info.state, op.id, frameRefMap);
+                info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);
+                computeOopMap(iw, op);
+            } else if (C1XOptions.DetailedAsserts) {
+                assert info.debugInfo.frame().equals(computeFrame(info.state, op.id, null));
+            }
         }
-
-        computeOopMap(iw, op);
     }
 
-    void computeDebugInfo(LIRDebugInfo info, int opId) {
+    Frame computeFrame(FrameState state, int opId, byte[] frameRefMap) {
         if (C1XOptions.TraceLinearScanLevel >= 3) {
             TTY.println("creating debug information at opId %d", opId);
         }
-
-        IRScopeDebugInfo debugInfo = computeDebugInfoForState(opId, info.state);
-        if (info.scopeDebugInfo == null) {
-            // compute debug information
-            info.scopeDebugInfo = debugInfo;
-        } else {
-            // debug information already set. Check that it is correct from the current point of view
-            assertEqual(info.scopeDebugInfo, debugInfo);
-        }
+        return computeFrameForState(opId, state, frameRefMap);
     }
 
     void assignLocations(List<LIRInstruction> instructions, IntervalWalker iw) {

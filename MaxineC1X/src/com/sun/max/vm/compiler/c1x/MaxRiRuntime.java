@@ -151,8 +151,8 @@ public class MaxRiRuntime implements RiRuntime {
         return Util.nonFatalUnimplemented(0);
     }
 
-    public int sizeofBasicObjectLock() {
-        // TODO Auto-generated method stub
+    public int sizeOfBasicObjectLock() {
+        // locks are not placed on the stack
         return 0;
     }
 
