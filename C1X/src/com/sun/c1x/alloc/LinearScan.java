@@ -2129,7 +2129,8 @@ public class LinearScan {
         if (info != null) {
             if (info.debugInfo == null) {
                 byte[] regRefMap = CiUtil.makeBitMap(compilation.target.arch.registerReferenceMapBitCount);
-                byte[] frameRefMap = CiUtil.makeBitMap(compilation.frameMap().frameSize());
+                int frameSize = compilation.frameMap().frameSize();
+                byte[] frameRefMap = CiUtil.makeBitMap(frameSize / compilation.target.spillSlotSize);
                 Frame frame = computeFrame(info.state, op.id, frameRefMap);
                 info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);
                 computeOopMap(iw, op);
