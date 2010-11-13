@@ -839,7 +839,7 @@ public final class GraphBuilder {
     void genGetStatic(int cpi, RiField field) {
         FrameState stateBefore = curState.immutableCopy(bci());
         RiType holder = field.holder();
-        boolean isInitialized = !C1XOptions.TestPatching && holder.isResolved() && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
         LoadField load = new LoadField(container, field, true, stateBefore, isInitialized);
         appendOptimizedLoadField(field.kind(), load);

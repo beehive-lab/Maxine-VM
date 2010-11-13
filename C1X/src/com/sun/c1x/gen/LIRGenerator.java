@@ -638,6 +638,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = null;
         if (needsPatching || x.needsNullCheck()) {
             info = stateFor(x, x.stateBefore());
+            assert info != null;
         }
 
         XirArgument receiver = toXirArgument(x.object());
