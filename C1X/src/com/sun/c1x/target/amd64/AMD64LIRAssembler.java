@@ -1768,6 +1768,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case Safepoint: {
+                    assert info != null : "Must have debug info in order to create a safepoint.";
                     asm.recordSafepoint(codePos(), info);
                     break;
                 }
