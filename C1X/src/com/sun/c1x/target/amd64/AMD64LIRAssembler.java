@@ -104,7 +104,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitMonitorAddress(int monitor, CiValue dst) {
-        masm.leaq(dst.asRegister(), frameMap.toMonitorBaseStackAddress(monitor));
+        CiStackSlot slot = frameMap.toMonitorBaseStackAddress(monitor);
+        masm.leaq(dst.asRegister(), new CiAddress(slot.kind, AMD64.rsp.asValue(), slot.index() * target.arch.wordSize));
     }
 
     @Override

@@ -245,8 +245,10 @@ public final class FrameMap {
      * @param monitorIndex the monitor index
      * @return a representation of the stack address
      */
-    public CiAddress toMonitorBaseStackAddress(int monitorIndex) {
-        return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorBase(monitorIndex));
+    public CiStackSlot toMonitorBaseStackAddress(int monitorIndex) {
+        int byteIndex = spOffsetForMonitorBase(monitorIndex);
+        assert byteIndex % compilation.target.wordSize == 0;
+        return CiStackSlot.get(CiKind.Object, byteIndex / compilation.target.wordSize);
     }
 
     /**

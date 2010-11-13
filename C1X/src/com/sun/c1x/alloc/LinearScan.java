@@ -2101,10 +2101,11 @@ public class LinearScan {
 
         for (int i = 0; i < state.locksSize(); i++) {
             if (compilation.runtime.sizeOfBasicObjectLock() != 0) {
-                CiStackSlot adr = frameMap.toMonitorObjectStackAddress(i);
-                values[valueIndex++] = adr;
+                CiStackSlot object_adr = frameMap.toMonitorObjectStackAddress(i);
+                CiStackSlot monitor_adr = frameMap.toMonitorBaseStackAddress(i);
+                values[valueIndex++] = monitor_adr;
                 if (frameRefMap != null) {
-                    boolean wasSet = CiUtil.setBit(frameRefMap, adr.index());
+                    boolean wasSet = CiUtil.setBit(frameRefMap, object_adr.index());
                     assert !wasSet;
                 }
             } else {
