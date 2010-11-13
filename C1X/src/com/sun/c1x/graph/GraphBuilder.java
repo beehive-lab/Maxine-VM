@@ -2246,12 +2246,12 @@ public final class GraphBuilder {
             // Checkstyle: resume
 
             prevBCI = bci;
-            s.next();
 
             if (lastInstr instanceof BlockEnd) {
                 end = (BlockEnd) lastInstr;
                 break;
             }
+            s.next();
             bci = s.currentBCI();
             blockStart = false;
         }

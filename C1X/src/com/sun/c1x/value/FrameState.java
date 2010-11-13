@@ -94,8 +94,6 @@ public abstract class FrameState {
         this.bci = bci;
         this.values = new Value[maxLocals + Math.max(maxStack, MINIMUM_STACK_SLOTS)];
         this.maxLocals = maxLocals;
-
-        toString();
     }
 
     /**
