@@ -42,7 +42,6 @@ import com.sun.cri.ci.*;
  */
 public abstract class Instruction extends Value {
 
-    public static final int BCI_NOT_APPENDED = -99;
     public static final int INVOCATION_ENTRY_BCI = -1;  // XXX: not currently used
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
@@ -53,9 +52,9 @@ public abstract class Instruction extends Value {
     private int bci;
 
     /**
-     * Link to next Instruction in a basic block.
+     * Links to next instruction in a basic block or to {@code} itself if not in a block.
      */
-    private Instruction next;
+    private Instruction next = this;
 
     /**
      * List of associated exception handlers.
@@ -68,7 +67,6 @@ public abstract class Instruction extends Value {
      */
     public Instruction(CiKind kind) {
         super(kind);
-        bci = BCI_NOT_APPENDED;
     }
 
     /**
@@ -93,7 +91,7 @@ public abstract class Instruction extends Value {
      * @return {@code true} if this instruction has been added to the basic block containing it
      */
     public final boolean isAppended() {
-        return bci != BCI_NOT_APPENDED;
+        return next != this;
     }
 
     /**
