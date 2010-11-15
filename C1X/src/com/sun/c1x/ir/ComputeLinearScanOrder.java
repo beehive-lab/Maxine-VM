@@ -41,9 +41,9 @@ public class ComputeLinearScanOrder {
 
     List<BlockBegin> linearScanOrder; // the resulting list of blocks in correct order
 
-    final BitMap visitedBlocks; // used for recursive processing of blocks
-    final BitMap activeBlocks; // used for recursive processing of blocks
-    final BitMap dominatorBlocks; // temporary BitMap used for computation of dominator
+    final CiBitMap visitedBlocks; // used for recursive processing of blocks
+    final CiBitMap activeBlocks; // used for recursive processing of blocks
+    final CiBitMap dominatorBlocks; // temporary BitMap used for computation of dominator
     final int[] forwardBranches; // number of incoming forward branches for each block
     final List<BlockBegin> loopEndBlocks; // list of all loop end blocks collected during countEdges
     BitMap2D loopMap; // two-dimensional bit set: a bit is set if a block is contained in a loop
@@ -112,9 +112,9 @@ public class ComputeLinearScanOrder {
     public ComputeLinearScanOrder(int maxBlockId, BlockBegin startBlock) {
 
         this.maxBlockId = maxBlockId;
-        visitedBlocks = new BitMap(maxBlockId);
-        activeBlocks = new BitMap(maxBlockId);
-        dominatorBlocks = new BitMap(maxBlockId);
+        visitedBlocks = new CiBitMap(maxBlockId);
+        activeBlocks = new CiBitMap(maxBlockId);
+        dominatorBlocks = new CiBitMap(maxBlockId);
         forwardBranches = new int[maxBlockId];
         loopEndBlocks = new ArrayList<BlockBegin>(8);
         workList = new ArrayList<BlockBegin>(8);

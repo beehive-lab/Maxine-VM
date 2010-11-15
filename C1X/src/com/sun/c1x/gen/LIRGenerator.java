@@ -1759,29 +1759,18 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         while (s != null) {
             IRScope scope = s.scope();
-            RiMethod method = scope.method;
-
-            BitMap liveness = (BitMap) method.liveness(bci);
             if (bci == Instruction.SYNCHRONIZATION_ENTRY_BCI) {
-                if (x instanceof ExceptionObject || x instanceof Throw) {
-                    // all locals are dead on exit from the synthetic unlocker
-                    if (liveness != null) {
-                        liveness.clearAll();
-                    }
-                } else {
-                    assert x instanceof MonitorEnter || x instanceof MonitorExit : "only other case is MonitorEnter";
-                }
+                assert x instanceof ExceptionObject ||
+                       x instanceof Throw ||
+                       x instanceof MonitorEnter ||
+                       x instanceof MonitorExit;
             }
-            assert liveness == null || liveness.size() == s.localsSize() : "error in use of liveness";
 
             for (int index = 0; index < s.localsSize(); index++) {
                 final Value value = s.localAt(index);
                 if (value != null) {
-                    if ((liveness == null || liveness.get(index)) && !value.isIllegal()) {
+                    if (!value.isIllegal()) {
                         walkStateValue(value);
-                    } else {
-                        // null out this local so that linear scan can assume that all non-null values are live.
-                        s.invalidateLocal(index);
                     }
                 }
             }

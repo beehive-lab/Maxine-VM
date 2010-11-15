@@ -55,7 +55,7 @@ import com.sun.max.vm.verifier.types.*;
  * <p>
  * The format of the stack map in the class file is given below.
  * <p>
- * 
+ *
  * <pre>
  *       stack_map {
  *           u2 attribute_name_index;
@@ -64,14 +64,14 @@ import com.sun.max.vm.verifier.types.*;
  *           stack_map_frame entries[number_of_entries];
  *       }
  * </pre>
- * 
+ *
  * <p>
  * Each stack_map_frame structure specifies the type state at a particular bytecode position. Each frame type specifies
  * (explicitly or implicitly) a {@link StackMapFrame#positionDelta() delta} that is used to calculate the actual
  * bytecode position at which it applies. The bytecode position at which the frame applies is given by adding
  * {@code 1 + delta} to the position of the previous frame, unless the previous frame is the initial frame of the
  * method, in which case the bytecode position is {@code delta}.
- * 
+ *
  * @author Doug Simon
  */
 public class StackMapTable {
@@ -91,7 +91,7 @@ public class StackMapTable {
      * <p>
      * This implementation parses the bytes of the attribute each time this method is called and so the result should be
      * cached if it is to be read more than once.
-     * 
+     *
      * @param registry
      *                used to create specific {@linkplain ReferenceType reference types}. Can be null in which case
      *                {@link VerificationType#REFERENCE} is used in the returned frames
@@ -114,7 +114,7 @@ public class StackMapTable {
     }
 
     /**
-     * 
+     *
      * @param classfileStream
      * @param registry
      *                used to create specific {@linkplain ReferenceType reference types}. If {@code null}, then
@@ -170,7 +170,7 @@ public class StackMapTable {
 
     /**
      * Writes this stack map table to a given stream as a StackMapTable class file attribute.
-     * 
+     *
      * @param stream
      *                a data output stream that has just written the 'attribute_name_index' and 'attribute_length'
      *                fields of a class file attribute

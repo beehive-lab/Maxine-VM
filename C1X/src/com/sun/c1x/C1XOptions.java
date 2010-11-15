@@ -174,6 +174,7 @@ public class C1XOptions {
     public static boolean UseSlowPath                   = ____;
     public static boolean UseFastNewObjectArray         = ____;
     public static boolean UseFastNewTypeArray           = ____;
+    public static boolean UseStackMapTableLiveness      = ____;
     public static int     StackShadowPages              = 3;
 
     // Assembler settings
@@ -304,6 +305,8 @@ public class C1XOptions {
         // turn on state merging optimizations
         PhiLoopStores                   = true;
 
+        UseStackMapTableLiveness        = true;
+
         // turn on speculative optimizations
         OptCHA                          = true;
         UseDeopt                        = true;
@@ -355,6 +358,9 @@ public class C1XOptions {
         map.put("GenSpecialDivChecks",
                 "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
                 "instead of detecting these cases via instruction decoding in a trap handler.");
+
+        map.put("UseStackMapTableLiveness",
+                "Use liveness information derived from StackMapTable class file attribute.");
 
         for (String name : map.keySet()) {
             try {

@@ -100,6 +100,9 @@ public abstract class Instruction extends Value {
      * @return the next instruction after this one in the basic block
      */
     public final Instruction next() {
+        if (next == this) {
+            return null;
+        }
         return next;
     }
 
@@ -115,6 +118,9 @@ public abstract class Instruction extends Value {
         if (next != null) {
             assert !(this instanceof BlockEnd);
             next.setBCI(bci);
+            if (next.next == next) {
+                next.next = null;
+            }
         }
         return next;
     }
