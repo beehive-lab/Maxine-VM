@@ -100,8 +100,8 @@ public class CiUnresolvedMethod implements RiMethod {
         throw unresolved("maxStackSize()");
     }
 
-    public Object liveness(int bci) {
-        throw unresolved("maxStackSize()");
+    public CiBitMap[] livenessMap() {
+        throw unresolved("livenessMap()");
     }
 
     public boolean canBeStaticallyBound() {

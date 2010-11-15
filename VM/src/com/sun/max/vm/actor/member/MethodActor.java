@@ -31,6 +31,7 @@ import java.util.*;
 import sun.reflect.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -578,7 +579,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return null;
     }
 
-    public final Object liveness(int bci) {
+    public CiBitMap[] livenessMap() {
         return null;
     }
 

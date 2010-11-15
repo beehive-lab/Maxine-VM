@@ -131,6 +131,7 @@ public final class GraphBuilder {
         // 3. setup internal state for appending instructions
         curBlock = startBlock;
         lastInstr = startBlock;
+        lastInstr.setNext(null, -1);
         curState = initialState;
 
         if (isSynchronized(rootMethod.accessFlags())) {
@@ -1716,6 +1717,7 @@ public final class GraphBuilder {
             // lock the receiver object if it is an instance method, the class object otherwise
             lock = synchronizedObject(curState, target);
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, ir.nextBlockNumber());
+            syncHandler.setNext(null, -1);
             inlineSyncEntry(lock, syncHandler);
         }
 
@@ -1864,6 +1866,7 @@ public final class GraphBuilder {
                 curBlock = b;
                 curState = b.stateBefore().copy();
                 lastInstr = b;
+                b.setNext(null, -1);
 
                 iterateBytecodesForBlock(b.bci(), false);
             }

@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -50,7 +49,7 @@ public class IRScope {
      */
     int maxLocks;
 
-    BitMap storesInLoops;
+    CiBitMap storesInLoops;
 
     public IRScope(IRScope caller, FrameState callerState, RiMethod method, int osrBCI) {
         this.caller = caller;
@@ -99,11 +98,11 @@ public class IRScope {
      * whether a phi instruction is required for each local variable.
      * @return the phi bitmap for this IR scope
      */
-    public final BitMap getStoresInLoops() {
+    public final CiBitMap getStoresInLoops() {
         return storesInLoops;
     }
 
-    public final void setStoresInLoops(BitMap storesInLoops) {
+    public final void setStoresInLoops(CiBitMap storesInLoops) {
         this.storesInLoops = storesInLoops;
     }
 

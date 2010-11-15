@@ -29,6 +29,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.BlockBegin.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -129,13 +130,13 @@ public class BlockMap {
      * does not need to construct an exception map.
      */
     private class ExceptionMap {
-        private final BitMap canTrap;
+        private final CiBitMap canTrap;
         private final boolean isObjectInit;
         private final RiExceptionHandler[] allHandlers;
         private final ArrayMap<HashSet<BlockBegin>> handlerMap;
 
         ExceptionMap(RiMethod method, byte[] code) {
-            canTrap = new BitMap(code.length);
+            canTrap = new CiBitMap(code.length);
             isObjectInit = C1XOptions.GenFinalizerRegistration && C1XIntrinsic.getIntrinsic(method) == C1XIntrinsic.java_lang_Object$init;
             allHandlers = method.exceptionHandlers();
             handlerMap = new ArrayMap<HashSet<BlockBegin>>(firstBlock, firstBlock + code.length / 5);
@@ -193,7 +194,7 @@ public class BlockMap {
     /**
      * TBD.
      */
-    private final BitMap storesInLoops;
+    private final CiBitMap storesInLoops;
     /**
      * Every bytecode instruction that has zero, one or more successor nodes (e.g. {@link Bytecodes#GOTO} has one) has
      * an entry in this array at the corresponding bytecode index. The value is another array of {@code BlockBegin} nodes,
@@ -220,7 +221,7 @@ public class BlockMap {
         blockNum = firstBlockNum;
         blockMap = new BlockBegin[code.length];
         successorMap = new BlockBegin[code.length][];
-        storesInLoops = new BitMap(method.maxLocals());
+        storesInLoops = new CiBitMap(method.maxLocals());
         if (method.exceptionHandlers().length != 0) {
             exceptionMap = new ExceptionMap(method, code);
         }
@@ -336,7 +337,7 @@ public class BlockMap {
      * Gets the bitmap that indicates which local variables are assigned in loops.
      * @return a bitmap which indicates the locals stored in loops
      */
-    public BitMap getStoresInLoops() {
+    public CiBitMap getStoresInLoops() {
         return storesInLoops;
     }
 
@@ -497,11 +498,11 @@ public class BlockMap {
         // compute the block number for all blocks
         int blockNum = this.blockNum;
         int numBlocks = blockNum - firstBlock;
-        numberBlock(get(0), new BitMap(numBlocks), new BitMap(numBlocks));
+        numberBlock(get(0), new CiBitMap(numBlocks), new CiBitMap(numBlocks));
         this.blockNum = blockNum; // _blockNum is used to compute the number of blocks later
     }
 
-    boolean numberBlock(BlockBegin block, BitMap visited, BitMap active) {
+    boolean numberBlock(BlockBegin block, CiBitMap visited, CiBitMap active) {
         // number a block with its reverse post-order traversal number
         int blockIndex = block.blockID - firstBlock;
 
