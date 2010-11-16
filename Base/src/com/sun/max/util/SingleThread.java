@@ -50,7 +50,7 @@ public class SingleThread extends Thread {
 
     private static final boolean disabled = false;
 
-    public static synchronized <V> V execute(Function<V> function) {
+    public static <V> V execute(Function<V> function) {
         if (disabled || Thread.currentThread() == worker) {
             try {
                 return function.call();
@@ -58,14 +58,16 @@ public class SingleThread extends Thread {
                 ProgramError.unexpected(exception);
             }
         }
-        final Future<V> future = executorService.submit(function);
-        while (true) {
-            try {
-                return future.get();
-            } catch (ExecutionException e) {
-                throw Utils.cast(RuntimeException.class, e.getCause());
-            } catch (InterruptedException exception) {
-                // continue
+        synchronized (executorService) {
+            final Future<V> future = executorService.submit(function);
+            while (true) {
+                try {
+                    return future.get();
+                } catch (ExecutionException e) {
+                    throw Utils.cast(RuntimeException.class, e.getCause());
+                } catch (InterruptedException exception) {
+                    // continue
+                }
             }
         }
     }

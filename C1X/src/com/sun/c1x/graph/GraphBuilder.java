@@ -2236,7 +2236,8 @@ public final class GraphBuilder {
                 case UCMP           : genUnsignedCompareOp(CiKind.Int, opcode, s.readCPI()); break;
                 case UWCMP          : genUnsignedCompareOp(CiKind.Word, opcode, s.readCPI()); break;
 
-                case ALLOCSTKVAR    : genLoadStackAddress(); break;
+                case ALLOCSTKVAR    : genLoadStackAddress(s.readCPI() == 0); break;
+                case BREAKPOINT_TRAP: genBreakpointTrap(); break;
                 case PAUSE          : genPause(); break;
                 case LSB            : // fall through
                 case MSB            : genSignificantBit(opcode);break;
@@ -2324,7 +2325,11 @@ public final class GraphBuilder {
         append(new Pause());
     }
 
-    private void genLoadStackAddress() {
+    private void genBreakpointTrap() {
+        append(new BreakpointTrap());
+    }
+
+    private void genLoadStackAddress(boolean isCategory1) {
         Value value = curState.xpop();
         wpush(append(new AllocateStackVariable(value)));
     }

@@ -293,7 +293,11 @@ public final class MaxineVM {
                 final boolean isTestPackage = maxPackage.name().startsWith("test.com.sun.max.");
                 HOSTED_CLASSES.put(javaClass, !isTestPackage);
                 return !isTestPackage;
+            } else if (maxPackage.getClass().getAnnotation(HOSTED_ONLY.class) != null) {
+                HOSTED_CLASSES.put(javaClass, true);
+                return true;
             }
+
         }
 
         try {

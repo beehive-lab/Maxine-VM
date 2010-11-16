@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,26 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.layout.hosted;
+package com.sun.c1x.ir;
 
-import com.sun.max.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.layout.*;
+import com.sun.cri.ci.*;
 
 /**
- * @see MaxPackage
+ * Instruction the emits a machine code instruction causing a breakpoint trap.
  *
- * @author Bernd Mathiske
+ * @author Doug Simon
  */
-@HOSTED_ONLY
-public class Package extends VMPackage {
-    public Package() {
-        registerScheme(LayoutScheme.class, HostedLayoutScheme.class);
+public final class BreakpointTrap extends Instruction {
+
+    /**
+     * Creates a {@link BreakpointTrap} instance.
+     */
+    public BreakpointTrap() {
+        super(CiKind.Void);
+        setFlag(Flag.LiveSideEffect);
     }
 
+    /**
+     * Implements this instruction's half of the visitor pattern.
+     * @param v the visitor to accept
+     */
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return false;
+    public void accept(ValueVisitor v) {
+        v.visitBreakpointTrap(this);
     }
 }

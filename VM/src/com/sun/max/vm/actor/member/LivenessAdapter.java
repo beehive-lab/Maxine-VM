@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.actor.member;
 
+import java.util.*;
+
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.vm.classfile.*;
@@ -36,6 +38,7 @@ import com.sun.max.vm.verifier.types.*;
 public final class LivenessAdapter implements FrameModel {
     private int activeLocals;
     private CiBitMap locals;
+    private boolean[] isSecondDoubleWord;
 
     public final CiBitMap[] livenessMap;
 
@@ -52,6 +55,7 @@ public final class LivenessAdapter implements FrameModel {
             if (stackMapTable != null) {
                 livenessMap = new CiBitMap[codeAttribute.code().length];
                 locals = new CiBitMap(codeAttribute.maxLocals);
+                isSecondDoubleWord = new boolean[codeAttribute.maxLocals];
                 SignatureDescriptor signature = method.descriptor();
                 if (!method.isStatic()) {
                     locals.set(0);
@@ -61,14 +65,19 @@ public final class LivenessAdapter implements FrameModel {
                     final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
                     final Kind parameterKind = parameter.toKind();
                     locals.set(activeLocals);
-                    activeLocals += parameterKind.stackSlots;
+                    if (parameterKind.isCategory1) {
+                        activeLocals++;
+                    } else {
+                        activeLocals += 2;
+                        isSecondDoubleWord[activeLocals - 1] = true;
+                    }
                 }
 
                 livenessMap[0] = locals.copy();
                 int previousPos = -1;
                 for (StackMapFrame frame : stackMapTable.getFrames(null)) {
-                    frame.applyTo(this);
                     int pos = frame.getPosition(previousPos);
+                    frame.applyTo(this);
                     livenessMap[pos] = locals.copy();
                     previousPos = pos;
                 }
@@ -80,8 +89,10 @@ public final class LivenessAdapter implements FrameModel {
 
     public void store(VerificationType type, int index) {
         locals.set(index);
+        isSecondDoubleWord[index] = false;
         if (type.isCategory2()) {
             locals.clear(index + 1);
+            isSecondDoubleWord[index + 1] = true;
             activeLocals = Math.max(activeLocals, index + 2);
         } else {
             activeLocals = Math.max(activeLocals, index + 1);
@@ -96,12 +107,20 @@ public final class LivenessAdapter implements FrameModel {
 
     public void clear() {
         locals.clearAll();
+        Arrays.fill(isSecondDoubleWord, false);
         activeLocals = 0;
     }
 
     public void chopLocals(int numberOfLocals) {
         for (int i = 0; i < numberOfLocals; i++) {
-            locals.clear(--activeLocals);
+            if (isSecondDoubleWord[activeLocals - 1]) {
+                isSecondDoubleWord[activeLocals - 1] = false;
+                activeLocals -= 2;
+                locals.clear(activeLocals);
+                locals.clear(activeLocals + 1);
+            } else {
+                locals.clear(--activeLocals);
+            }
         }
     }
 
