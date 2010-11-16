@@ -401,7 +401,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             final Address address = this.breakpoint.codeLocation().address();
             if (updateInstructionPointer(address)) {
                 teleRegisterSet.setInstructionPointer(address);
-                Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshingBreakpoint (epoc)h=" + teleProcess().epoch() + ") IP updated for " + this);
+                Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
                 ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + address + " was hit: " + this);
             }

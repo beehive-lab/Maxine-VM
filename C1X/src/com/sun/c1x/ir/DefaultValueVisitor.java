@@ -43,6 +43,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitArrayLength(ArrayLength i) { visit(i); }
     @Override public void visitBase(Base i) { visit(i); }
     @Override public void visitBlockBegin(BlockBegin i) { visit(i); }
+    @Override public void visitBreakpointTrap(BreakpointTrap i) {visit(i); }
     @Override public void visitCheckCast(CheckCast i) { visit(i); }
     @Override public void visitCompareOp(CompareOp i) { visit(i); }
     @Override public void visitCompareAndSwap(CompareAndSwap i) { visit(i); }

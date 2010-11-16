@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.verifier;
 
+import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -29,6 +31,7 @@ import test.com.sun.max.vm.bytecode.*;
 
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -124,8 +127,6 @@ public class VerifierTest extends VmTestCase {
 
     public void test() throws Exception {
 
-        //verify("org.eclipse.core.internal.registry.ExtensionRegistry", true);
-
         verify(SomeTest.class.getName(), true);
         verify(JdtBadStackMapTable.class.getName(), true);
 
@@ -199,6 +200,44 @@ public class VerifierTest extends VmTestCase {
         }
     }
 
+    /**
+     * Filter for certain methods that are known not to verify due to use of Word types or
+     * template JIT specific constructs.
+     */
+    public static boolean suppressVerificationOf(ClassMethodActor method) {
+        if (method.isTemplate() || method.isBuiltin() || method.isAbstract() || method.intrinsic() != 0) {
+            return true;
+        }
+        if (method.holder().kind.isWord) {
+            return true;
+        }
+        return false;
+    }
+
+    static class FilteringTypeCheckingVerifier extends TypeCheckingVerifier {
+        public FilteringTypeCheckingVerifier(ClassActor classActor) {
+            super(classActor);
+        }
+        @Override
+        protected void verifyMethod(ClassMethodActor classMethodActor) {
+            if (!suppressVerificationOf(classMethodActor)) {
+                super.verifyMethod(classMethodActor);
+            }
+        }
+    }
+
+    static class FilteringTypeInferencingVerifier extends TypeInferencingVerifier {
+        public FilteringTypeInferencingVerifier(ClassActor classActor) {
+            super(classActor);
+        }
+        @Override
+        protected void verifyMethod(ClassMethodActor classMethodActor) {
+            if (!suppressVerificationOf(classMethodActor)) {
+                super.verifyMethod(classMethodActor);
+            }
+        }
+    }
+
     private static final Set<String> verifiedClasses = new HashSet<String>();
 
     private void verify0(String name, boolean isPositive) {
@@ -215,13 +254,19 @@ public class VerifierTest extends VmTestCase {
                     if (classfileVersion.major < 50) {
                         return;
                     }
-                    classVerifier = new TypeCheckingVerifier(loadClassActor(name));
+                    classVerifier = new FilteringTypeCheckingVerifier(loadClassActor(name));
                     break;
                 case dfa:
-                    classVerifier = new TypeInferencingVerifier(loadClassActor(name));
+                    classVerifier = new FilteringTypeInferencingVerifier(loadClassActor(name));
                     break;
                 case standard:
-                    classVerifier = Verifier.verifierFor(loadClassActor(name));
+                    ClassActor classActor = loadClassActor(name);
+                    final int majorVersion = classActor.majorVersion;
+                    if (majorVersion >= 50) {
+                        classVerifier = new FilteringTypeCheckingVerifier(classActor);
+                    } else {
+                        classVerifier = new FilteringTypeInferencingVerifier(classActor);
+                    }
                     break;
                 default:
                     ProgramError.unexpected();
@@ -232,6 +277,9 @@ public class VerifierTest extends VmTestCase {
                 repeatVerificationToDiagnoseFailure(classVerifier, null);
                 fail(name + " did not fail verification as expected");
             }
+        } catch (HostOnlyClassError e) {
+        } catch (HostOnlyMethodError e) {
+        } catch (HostOnlyFieldError e) {
         } catch (NoClassDefFoundError noClassDefFoundError) {
             if (isPositive) {
                 throw noClassDefFoundError;
@@ -372,5 +420,25 @@ public class VerifierTest extends VmTestCase {
 
     public void test_Super() {
         verify(Super.class.getName(), true);
+    }
+
+    public void test_max() {
+        TypeCheckingVerifier.FailOverToOldVerifier = false;
+        new ClassSearch() {
+            @Override
+            protected boolean visitClass(String className) {
+                if ((className.startsWith("com.sun.max.vm") || className.startsWith("com.sun.c1x")) && !className.endsWith("package-info")) {
+                    try {
+                        Class< ? > c = Class.forName(className, false, HOSTED_BOOT_CLASS_LOADER);
+                        if (!MaxineVM.isHostedOnly(c)) {
+                            verify(className, true);
+                        }
+                    } catch (ClassNotFoundException e) {
+                    } catch (NoClassDefFoundError e) {
+                    }
+                }
+                return true;
+            }
+        }.run(Classpath.fromSystem());
     }
 }

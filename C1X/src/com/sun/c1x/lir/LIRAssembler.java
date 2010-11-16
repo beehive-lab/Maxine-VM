@@ -318,6 +318,9 @@ public abstract class LIRAssembler {
             case Pause:
                 emitPause();
                 break;
+            case Breakpoint:
+                emitBreakpoint();
+                break;
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -455,6 +458,8 @@ public abstract class LIRAssembler {
     protected abstract void emitSlowPath(SlowPath sp);
 
     protected abstract void emitAlignment();
+
+    protected abstract void emitBreakpoint();
 
     protected abstract void emitLea(CiValue src, CiValue dst);
 

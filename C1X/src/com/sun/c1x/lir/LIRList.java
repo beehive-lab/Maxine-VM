@@ -315,6 +315,10 @@ public class LIRList {
         append(new LIROp0(LIROpcode.Pause));
     }
 
+    public void breakpoint() {
+        append(new LIROp0(LIROpcode.Breakpoint));
+    }
+
     public void prefetch(CiAddress addr, boolean isStore) {
         append(new LIROp1(isStore ? LIROpcode.Prefetchw : LIROpcode.Prefetchr, addr));
     }

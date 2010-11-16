@@ -23,6 +23,7 @@ package com.sun.max.vm.runtime;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.program.ProgramError.*;
@@ -44,9 +45,11 @@ import com.sun.max.vm.thread.*;
  */
 public final class FatalError extends Error {
 
-    private static boolean CoreOnFatalError;
+    private static boolean CoreOnError;
+    private static boolean TrapOnError;
     static {
-        VMOptions.addFieldOption("-XX:", "CoreOnFatalError", FatalError.class, "Generate core dump on exit due to FatalError.", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "CoreOnError", FatalError.class, "Generate core dump on fatal error.", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "TrapOnError", FatalError.class, "Issue breakpoint trap on fatal error.", MaxineVM.Phase.PRISTINE);
     }
 
     static {
@@ -125,7 +128,6 @@ public final class FatalError extends Error {
         }
 
         Safepoint.disable();
-        breakpoint();
 
         if (recursionCount >= MAX_RECURSION_COUNT) {
             Log.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
@@ -178,12 +180,17 @@ public final class FatalError extends Error {
             ip = TrapStateAccess.instance().getInstructionPointer(trapState);
         }
         exit(trappedInNative, ip);
+
         throw null; // unreachable
     }
 
+    @NEVER_INLINE
     private static void exit(boolean doTrapExit, Address instructionPointer) {
-        if (CoreOnFatalError) {
+        if (CoreOnError) {
             MaxineVM.core_dump();
+        }
+        if (TrapOnError) {
+            Bytecodes.breakpointTrap();
         }
         if (doTrapExit) {
             MaxineVM.native_trap_exit(11, instructionPointer);

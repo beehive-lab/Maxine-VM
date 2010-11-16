@@ -1331,7 +1331,12 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 protectedMethodAccessCheck(initializedObject, methodConstant, index);
             } else {
                 final VerificationType object = frame.pop(getObjectType(methodConstant.holder(constantPool())));
-                verifyIsAssignable(object, thisObjectType, "Invalid use of INVOKESPECIAL");
+                if (object == WORD) {
+                    // Virtual dispatch on Word type may have been converted to direct dispatch
+                    // as virtual dispatch is not possible on Word types.
+                } else {
+                    verifyIsAssignable(object, thisObjectType, "Invalid use of INVOKESPECIAL");
+                }
                 pushMethodResult(methodSignature);
             }
         }
@@ -1838,14 +1843,13 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case UNSAFE_CAST: {
                     if (!frame.top().isCategory2()) {
                         frame.pop(CATEGORY1);
-                        frame.pop(CATEGORY1);
                     } else {
                         frame.pop(CATEGORY2);
                     }
 
-                    final ClassConstant classConstant = constantPool().classAt(operand);
-                    final TypeDescriptor toType = classConstant.typeDescriptor();
-                    frame.push(getVerificationType(toType));
+                    MethodRefConstant methodRef = constantPool().methodAt(operand);
+                    SignatureDescriptor sig = methodRef.signature(constantPool());
+                    frame.push(getVerificationType(sig.resultDescriptor()));
                     break;
                 }
                 case WLOAD: performLoad(WORD, operand); break;
@@ -1882,7 +1886,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case PREAD_LONG:             pointerRead(LONG, false); break;
                         case PREAD_DOUBLE:           pointerRead(DOUBLE, false); break;
                         case PREAD_WORD:             pointerRead(WORD, false); break;
-                        case PREAD_REFERENCE:        pointerRead(REFERENCE, false); break;
+                        case PREAD_REFERENCE:        pointerRead(VM_REFERENCE, false); break;
                         case PREAD_BYTE_I:           pointerRead(BYTE, true); break;
                         case PREAD_CHAR_I:           pointerRead(CHAR, true); break;
                         case PREAD_SHORT_I:          pointerRead(SHORT, true); break;
@@ -1891,7 +1895,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case PREAD_LONG_I:           pointerRead(LONG, true); break;
                         case PREAD_DOUBLE_I:         pointerRead(DOUBLE, true); break;
                         case PREAD_WORD_I:           pointerRead(WORD, true); break;
-                        case PREAD_REFERENCE_I:      pointerRead(REFERENCE, true); break;
+                        case PREAD_REFERENCE_I:      pointerRead(VM_REFERENCE, true); break;
                         case PWRITE_BYTE:            pointerWrite(BYTE, false); break;
                         case PWRITE_SHORT:           pointerWrite(SHORT, false); break;
                         case PWRITE_INT:             pointerWrite(INTEGER, false); break;
@@ -1899,7 +1903,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case PWRITE_LONG:            pointerWrite(LONG, false); break;
                         case PWRITE_DOUBLE:          pointerWrite(DOUBLE, false); break;
                         case PWRITE_WORD:            pointerWrite(WORD, false); break;
-                        case PWRITE_REFERENCE:       pointerWrite(REFERENCE, false); break;
+                        case PWRITE_REFERENCE:       pointerWrite(VM_REFERENCE, false); break;
                         case PWRITE_BYTE_I:          pointerWrite(BYTE, true); break;
                         case PWRITE_SHORT_I:         pointerWrite(SHORT, true); break;
                         case PWRITE_INT_I:           pointerWrite(INTEGER, true); break;
@@ -1907,7 +1911,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case PWRITE_LONG_I:          pointerWrite(LONG, true); break;
                         case PWRITE_DOUBLE_I:        pointerWrite(DOUBLE, true); break;
                         case PWRITE_WORD_I:          pointerWrite(WORD, true); break;
-                        case PWRITE_REFERENCE_I:     pointerRead(REFERENCE, true); break;
+                        case PWRITE_REFERENCE_I:     pointerWrite(VM_REFERENCE, true); break;
                         case PGET_BYTE:              pointerGet(BYTE); break;
                         case PGET_CHAR:              pointerGet(CHAR); break;
                         case PGET_SHORT:             pointerGet(SHORT); break;
@@ -1916,7 +1920,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case PGET_LONG:              pointerGet(LONG); break;
                         case PGET_DOUBLE:            pointerGet(DOUBLE); break;
                         case PGET_WORD:              pointerGet(WORD); break;
-                        case PGET_REFERENCE:         pointerGet(REFERENCE); break;
+                        case PGET_REFERENCE:         pointerGet(VM_REFERENCE); break;
                         case PSET_BYTE:              pointerSet(BYTE); break;
                         case PSET_SHORT:             pointerSet(BYTE); break;
                         case PSET_INT:               pointerSet(SHORT); break;
@@ -1927,10 +1931,10 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case PSET_REFERENCE:         pointerSet(WORD); break;
                         case PCMPSWP_INT:            pointerCompareAndSwap(INTEGER, false); break;
                         case PCMPSWP_WORD:           pointerCompareAndSwap(WORD, false); break;
-                        case PCMPSWP_REFERENCE:      pointerCompareAndSwap(REFERENCE, false); break;
+                        case PCMPSWP_REFERENCE:      pointerCompareAndSwap(VM_REFERENCE, false); break;
                         case PCMPSWP_INT_I:          pointerCompareAndSwap(INTEGER, true); break;
                         case PCMPSWP_WORD_I:         pointerCompareAndSwap(WORD, true); break;
-                        case PCMPSWP_REFERENCE_I:    pointerCompareAndSwap(REFERENCE, true); break;
+                        case PCMPSWP_REFERENCE_I:    pointerCompareAndSwap(VM_REFERENCE, true); break;
                         case MEMBAR_LOAD_LOAD:
                         case MEMBAR_LOAD_STORE:
                         case MEMBAR_STORE_LOAD:
@@ -1971,6 +1975,13 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     jnicall(operand);
                     break;
                 }
+                case CALL: {
+                    final MethodRefConstant methodConstant = constantPool().methodAt(operand);
+                    final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
+                    popMethodParameters(methodSignature);
+                    pushMethodResult(methodSignature);
+                    break;
+                }
                 case JNIOP: {
                     if (!classMethodActor().isNative()) {
                         verifyError("Cannot use " + Bytecodes.nameOf(JNIOP) + " instruction in non-native method " + classMethodActor());
@@ -1991,9 +2002,14 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case WRETURN            : performReturn(WORD); break;
                 case SAFEPOINT          : break;
                 case PAUSE              : break;
+                case BREAKPOINT_TRAP    : break;
+                case FLUSHW             : break;
                 case LSB                : performConversion(WORD, INTEGER); break;
                 case MSB                : performConversion(WORD, INTEGER); break;
+                case ALLOCA             : frame.pop(INTEGER); frame.push(WORD); break;
+                case ALLOCSTKVAR        : performAllocStkVar(); break;
 
+                case READ_PC            : frame.push(WORD); break;
                 case READREG            : frame.push(WORD); break;
                 case WRITEREG           : frame.pop(WORD); break;
 
@@ -2005,9 +2021,19 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             return true;
         }
 
+        private void performAllocStkVar() {
+            if (frame.top().isCategory2()) {
+                frame.pop(CATEGORY2);
+            } else {
+                frame.pop(CATEGORY1);
+            }
+            frame.push(WORD);
+        }
+
         private void performCompare(VerificationType type) {
             frame.pop(type);
             frame.pop(type);
+            frame.push(BOOLEAN);
         }
 
         void pointerRead(VerificationType type, boolean intOffset) {
@@ -2039,7 +2065,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             frame.pop(type); // expectedValue
             frame.pop(intOffset ? INTEGER : WORD); // offset
             frame.pop(WORD); // pointer
-            frame.push(WORD); // result
+            frame.push(type); // result
         }
     }
 }

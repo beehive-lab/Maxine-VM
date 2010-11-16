@@ -539,6 +539,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.pause();
     }
 
+    @Override
+    public void visitBreakpointTrap(BreakpointTrap i) {
+        lir.breakpoint();
+    }
+
     protected CiAddress getAddressForPointerOp(PointerOp x, CiKind kind, LIRItem pointer) {
         CiAddress addr;
         if (x.displacement() == null) {

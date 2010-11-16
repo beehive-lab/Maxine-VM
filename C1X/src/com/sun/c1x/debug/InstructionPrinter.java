@@ -803,6 +803,11 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
+    public void visitBreakpointTrap(BreakpointTrap i) {
+        out.print("breakpoint_trap");
+    }
+
+    @Override
     public void visitMonitorAddress(MonitorAddress i) {
         out.print("monitor_address (").print(i.monitor()).print(")");
     }
