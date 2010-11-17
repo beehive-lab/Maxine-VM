@@ -39,11 +39,4 @@ public interface VMScheme extends Scheme {
      */
     void initialize(MaxineVM.Phase phase);
 
-    /**
-     * Performs any scheme specific actions when leaving a given VM phase.
-     *
-     * @param phase the VM phase about to be completed
-     */
-    void finalize(MaxineVM.Phase phase);
-
 }

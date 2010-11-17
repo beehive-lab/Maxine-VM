@@ -543,7 +543,7 @@ public class VmThread {
 
             final Thread javaThread = thread.javaThread();
             // Uncaught exception should be passed by the VM to the uncaught exception handler defined for the thread.
-            // Exception thrown by this one should be ignore by the VM.
+            // Exception thrown by this one should be ignored by the VM.
             try {
                 javaThread.getUncaughtExceptionHandler().uncaughtException(javaThread, throwable);
             } catch (Throwable ignoreMe) {
@@ -554,8 +554,11 @@ public class VmThread {
         if (thread == mainThread) {
             VmThreadMap.ACTIVE.joinAllNonDaemons();
             invokeShutdownHooks();
-            VmThreadMap.ACTIVE.setMainThreadExited();
+            // This prevents further thread creation
+            VmThreadMap.ACTIVE.setVMTerminating();
             SignalDispatcher.terminate();
+            // scheme-specific termination
+            vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
             VmOperationThread.terminate();
         }
 
