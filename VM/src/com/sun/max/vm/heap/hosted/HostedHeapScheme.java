@@ -137,10 +137,6 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
         return Pointer.zero();
     }
 
-    @Override
-    public void finalize(MaxineVM.Phase phase) {
-    }
-
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
