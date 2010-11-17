@@ -59,7 +59,7 @@ public class RiRegisterAttributes {
             if (reg != null) {
                 RiRegisterAttributes attr = new RiRegisterAttributes(
                                 Arrays.asList(registerConfig.getCallerSaveRegisters()).contains(reg),
-                                Arrays.asList(registerConfig.getCalleeSaveRegisters()).contains(reg),
+                                Arrays.asList(registerConfig.getCalleeSaveArea().registers).contains(reg),
                                 Arrays.asList(registerConfig.getAllocatableRegisters()).contains(reg),
                                 false);
                 if (map.length <= reg.number) {

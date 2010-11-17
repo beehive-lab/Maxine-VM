@@ -31,6 +31,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.LIROperand.LIRAddressOperand;
 import com.sun.c1x.lir.LIROperand.LIRVariableOperand;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.*;
 
 /**
  * The {@code LIRInstruction} class definition.
@@ -455,10 +456,6 @@ public abstract class LIRInstruction {
     }
 
     protected static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map, boolean frameRefMap) {
-        CiRegisterSaveArea rsa = null;
-        if (!frameRefMap) {
-            rsa = compilation().registerConfig.getRSA();
-        }
         for (int i = 0; i < map.length; i++) {
             int b = map[i] & 0xff;
             if (b != 0) {
@@ -471,7 +468,7 @@ public abstract class LIRInstruction {
                         if (frameRefMap) {
                             buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, index)));
                         } else {
-                            CiRegisterValue register = rsa.registerAt(index).asValue(CiKind.Object);
+                            CiRegisterValue register = compilation().target.arch.registerFor(index, RegisterFlag.CPU).asValue(CiKind.Object);
                             buf.append(operandFmt.format(register));
                         }
                     }

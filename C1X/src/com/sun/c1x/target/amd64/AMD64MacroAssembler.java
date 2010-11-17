@@ -521,25 +521,23 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     /**
      * Emit code to save a given set of callee save registers to the
-     * {@linkplain CiRegisterSaveArea RSA} within the frame.
-     *
-     * @param registers the registers to be saved
-     * @param rsa the description of the RSA
-     * @param frameToRSA offset from the frame pointer to the RSA
+     * {@linkplain CiCalleeSaveArea CSA} within the frame.
+     * @param csa the description of the CSA
+     * @param frameToCSA offset from the frame pointer to the CSA
      */
-    public void save(CiRegister[] registers, CiRegisterSaveArea rsa, int frameToRSA) {
+    public void save(CiCalleeSaveArea csa, int frameToCSA) {
         CiRegisterValue frame = frameRegister.asValue();
-        for (CiRegister r : registers) {
-            int offset = rsa.offsetOf(r);
-            movq(new CiAddress(CiKind.Word, frame, frameToRSA + offset), r);
+        for (CiRegister r : csa.registers) {
+            int offset = csa.offsetOf(r);
+            movq(new CiAddress(CiKind.Word, frame, frameToCSA + offset), r);
         }
     }
 
-    public void restore(CiRegister[] registers, CiRegisterSaveArea rsa, int frameToRSA) {
+    public void restore(CiCalleeSaveArea csa, int frameToCSA) {
         CiRegisterValue frame = frameRegister.asValue();
-        for (CiRegister r : registers) {
-            int offset = rsa.offsetOf(r);
-            movq(r, new CiAddress(CiKind.Word, frame, frameToRSA + offset));
+        for (CiRegister r : csa.registers) {
+            int offset = csa.offsetOf(r);
+            movq(r, new CiAddress(CiKind.Word, frame, frameToCSA + offset));
         }
     }
 }

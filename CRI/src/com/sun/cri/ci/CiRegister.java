@@ -33,24 +33,24 @@ public final class CiRegister implements Comparable<CiRegister> {
     /**
      * Invalid register.
      */
-    public static final CiRegister None = new CiRegister(-1, -1, "noreg");
+    public static final CiRegister None = new CiRegister(-1, -1, 0, "noreg");
 
     /**
      * Frame pointer of the current method. All spill slots and outgoing stack-based arguments
      * are addressed relative to this register.
      */
-    public static final CiRegister Frame = new CiRegister(-2, -2, "framereg", RegisterFlag.CPU);
+    public static final CiRegister Frame = new CiRegister(-2, -2, 0, "framereg", RegisterFlag.CPU);
 
     /**
      * Frame pointer for the caller of the current method. All incoming stack-based arguments
      * are address relative to this register.
      */
-    public static final CiRegister CallerFrame = new CiRegister(-3, -3, "caller-framereg", RegisterFlag.CPU);
+    public static final CiRegister CallerFrame = new CiRegister(-3, -3, 0, "caller-framereg", RegisterFlag.CPU);
 
     /**
      * Literals pointer register.
      */
-    public static final CiRegister Literals = new CiRegister(-4, -4, "literals", RegisterFlag.CPU);
+    public static final CiRegister Literals = new CiRegister(-4, -4, 0, "literals", RegisterFlag.CPU);
 
     /**
      * The identifier for this register that is unique across all the registers in a {@link CiArchitecture}.
@@ -69,6 +69,11 @@ public final class CiRegister implements Comparable<CiRegister> {
      */
     public final int encoding;
 
+    /**
+     * The size of the stack slot used to spill the value of this register.
+     */
+    public final int spillSlotSize;
+    
     /**
      * The set of {@link RegisterFlag} values associated with this register.
      */
@@ -104,15 +109,18 @@ public final class CiRegister implements Comparable<CiRegister> {
     }
 
     /**
-     * Create a {@code CiRegister} instance.
+     * Creates a {@code CiRegister} instance.
+     * 
      * @param number unique identifier for the register
      * @param encoding the target machine encoding for the register
+     * @param spillSlotSize the size of the stack slot used to spill the value of the register
      * @param name the mnemonic name for the register
      * @param flags the set of {@link RegisterFlag} values for the register
      */
-    public CiRegister(int number, int encoding, String name, RegisterFlag... flags) {
+    public CiRegister(int number, int encoding, int spillSlotSize, String name, RegisterFlag... flags) {
         this.number = number;
         this.name = name;
+        this.spillSlotSize = spillSlotSize;
         this.flags = createMask(flags);
         this.encoding = encoding;
 

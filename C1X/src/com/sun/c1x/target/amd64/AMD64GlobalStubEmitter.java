@@ -375,8 +375,8 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void completeSavePrologue() {
-        CiRegisterSaveArea rsa = compiler.stubRegisterConfig.getRSA();
-        this.saveSize = rsa.size;
+        CiCalleeSaveArea csa = compiler.stubRegisterConfig.getCalleeSaveArea();
+        this.saveSize = csa.size;
         int entryCodeOffset = runtime.codeOffset();
         if (entryCodeOffset != 0) {
             // align to code size
@@ -384,9 +384,8 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         }
         asm.subq(AMD64.rsp, frameSize());
         asm.setFrameSize(frameSize());
-        int frameToRSA = frameSize() - saveSize;
-        CiRegister[] calleeSave = compiler.stubRegisterConfig.getCalleeSaveRegisters();
-        asm.save(calleeSave, rsa, frameToRSA);
+        int frameToCSA = frameSize() - saveSize;
+        asm.save(csa, frameToCSA);
         this.savedAllRegisters = true;
     }
 
@@ -395,10 +394,9 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         registerRestoreEpilogueOffset = asm.codeBuffer.position();
 
         if (savedAllRegisters) {
-            CiRegisterSaveArea rsa = compiler.stubRegisterConfig.getRSA();
-            int frameToRSA = frameSize() - rsa.size;
-            CiRegister[] calleeSave = compiler.stubRegisterConfig.getCalleeSaveRegisters();
-            asm.restore(calleeSave, rsa, frameToRSA);
+            CiCalleeSaveArea csa = compiler.stubRegisterConfig.getCalleeSaveArea();
+            int frameToCSA = frameSize() - csa.size;
+            asm.restore(csa, frameToCSA);
         } else {
             // saved only select registers
             for (int index = 0; index < registersSaved.length; index++) {

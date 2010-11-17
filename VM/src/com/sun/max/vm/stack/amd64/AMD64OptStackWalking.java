@@ -192,7 +192,7 @@ public class AMD64OptStackWalking {
         if (Trap.isTrapStub(targetMethod.classMethodActor)) {
             // RBP is whatever was in the frame pointer register at the time of the trap
             Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
-            callerFP = stackFrameWalker.readWord(trapState, AMD64TrapStateAccess.RSA.offsetOf(AMD64.rbp)).asPointer();
+            callerFP = stackFrameWalker.readWord(trapState, AMD64TrapStateAccess.CSA.offsetOf(AMD64.rbp)).asPointer();
         } else {
             // Propagate RBP unchanged as OPT methods do not touch this register.
             callerFP = current.fp();

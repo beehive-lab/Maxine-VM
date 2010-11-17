@@ -30,7 +30,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -64,10 +64,10 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
     public static final AMD64UnixRegisterConfig STANDARD = new AMD64UnixRegisterConfig(
         def("Allocatable", StandardAllocatable),
         def("CallerSave",  StandardAllocatable),
-        def("CalleeSave"   /* none */),
         def("Parameters",  rdi, rsi, rdx, rcx, r8, r9,
                            xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7),
-        def("Scratch",     r11)).
+        def("Scratch",     r11),
+        CiCalleeSaveArea.EMPTY).
 
         def(CPU_STACK_POINTER, rsp).
         def(CPU_FRAME_POINTER, rbp).
@@ -114,8 +114,9 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
     /**
      * The register configuration for compiling the {@linkplain Trap#isTrapStub(MethodActor) trap stub}.
      */
-    public static final AMD64UnixRegisterConfig TRAP_STUB = STANDARD.withCalleeSave(allRegisters);
+    public static final AMD64UnixRegisterConfig TRAP_STUB = STANDARD.withCalleeSave(AMD64TrapStateAccess.CSA);
 
+    private CiCalleeSaveArea calleeSaveArea;
     private final EnumMap<Role, CiRegister> registersByRole = new EnumMap<VMRegister.Role, CiRegister>(Role.class);
     private final CiRegister[] allocatable;
     private final EnumMap<RegisterFlag, CiRegister[]> categorized;
@@ -123,16 +124,15 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
     private final CiRegister[] cpuParameters;
     private final CiRegister[] fpuParameters;
     private final CiRegister[] callerSave;
-    private CiRegister[] calleeSave;
     private final CiRegister[] ret;
     private final RiRegisterAttributes[] attributesMap;
     private final CiRegister scratch;
 
     @HOSTED_ONLY
-    public AMD64UnixRegisterConfig(CiRegister[] allocatable, CiRegister[] callerSave, CiRegister[] calleeSave, CiRegister[] parameters, CiRegister scratch) {
+    public AMD64UnixRegisterConfig(CiRegister[] allocatable, CiRegister[] callerSave, CiRegister[] parameters, CiRegister scratch, CiCalleeSaveArea calleeSave) {
+        this.calleeSaveArea = calleeSave;
         this.allocatable = allocatable;
         this.callerSave = callerSave;
-        this.calleeSave = calleeSave;
         assert !Arrays.asList(allocatable).contains(scratch);
         this.scratch = scratch;
         this.parameters = parameters;
@@ -146,8 +146,13 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
 
     @HOSTED_ONLY
     public AMD64UnixRegisterConfig withCalleeSave(CiRegister... calleeSave) {
+        return withCalleeSave(new CiCalleeSaveArea(-1, calleeSave, 8));
+    }
+
+    @HOSTED_ONLY
+    public AMD64UnixRegisterConfig withCalleeSave(CiCalleeSaveArea calleeSaveArea) {
         AMD64UnixRegisterConfig copy = clone();
-        copy.calleeSave = calleeSave;
+        copy.calleeSaveArea = calleeSaveArea;
         return copy;
     }
 
@@ -165,7 +170,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         String res = String.format(
              "Allocatable: " + Arrays.toString(getAllocatableRegisters()) + "%n" +
              "CallerSave:  " + Arrays.toString(getCallerSaveRegisters()) + "%n" +
-             "CalleeSave:  " + Arrays.toString(getCalleeSaveRegisters()) + "%n" +
+             "CalleeSave:  " + getCalleeSaveArea() + "%n" +
              "CPU Params:  " + Arrays.toString(cpuParameters) + "%n" +
              "FPU Params:  " + Arrays.toString(fpuParameters) + "%n" +
              "VMRoles:     " + registersByRole + "%n" +
@@ -205,12 +210,8 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         return allocatable;
     }
 
-    public CiRegister[] getCalleeSaveRegisters() {
-        return calleeSave;
-    }
-
-    public CiRegisterSaveArea getRSA() {
-        return AMD64TrapStateAccess.RSA;
+    public CiCalleeSaveArea getCalleeSaveArea() {
+        return calleeSaveArea;
     }
 
     public RiRegisterAttributes[] getAttributesMap() {

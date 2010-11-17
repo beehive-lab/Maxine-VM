@@ -32,41 +32,41 @@ import com.sun.cri.ci.*;
 public class SPARC extends CiArchitecture {
 
     // General purpose CPU registers
-    public static final CiRegister g0 = new CiRegister(0,  0,  "g0", CPU);
-    public static final CiRegister g1 = new CiRegister(1,  1,  "g1", CPU);
-    public static final CiRegister g2 = new CiRegister(2,  2,  "g2", CPU);
-    public static final CiRegister g3 = new CiRegister(3,  3,  "g3", CPU);
-    public static final CiRegister g4 = new CiRegister(4,  4,  "g4", CPU);
-    public static final CiRegister g5 = new CiRegister(5,  5,  "g5", CPU);
-    public static final CiRegister g6 = new CiRegister(6,  6,  "g6", CPU);
-    public static final CiRegister g7 = new CiRegister(7,  7,  "g7", CPU);
+    public static final CiRegister g0 = new CiRegister(0,  0,  8, "g0", CPU);
+    public static final CiRegister g1 = new CiRegister(1,  1,  8, "g1", CPU);
+    public static final CiRegister g2 = new CiRegister(2,  2,  8, "g2", CPU);
+    public static final CiRegister g3 = new CiRegister(3,  3,  8, "g3", CPU);
+    public static final CiRegister g4 = new CiRegister(4,  4,  8, "g4", CPU);
+    public static final CiRegister g5 = new CiRegister(5,  5,  8, "g5", CPU);
+    public static final CiRegister g6 = new CiRegister(6,  6,  8, "g6", CPU);
+    public static final CiRegister g7 = new CiRegister(7,  7,  8, "g7", CPU);
 
-    public static final CiRegister o0 = new CiRegister(8,  8,  "o0", CPU);
-    public static final CiRegister o1 = new CiRegister(9,  9,  "o1", CPU);
-    public static final CiRegister o2 = new CiRegister(10, 10, "o2", CPU);
-    public static final CiRegister o3 = new CiRegister(11, 11, "o3", CPU);
-    public static final CiRegister o4 = new CiRegister(12, 12, "o4", CPU);
-    public static final CiRegister o5 = new CiRegister(13, 13, "o5", CPU);
-    public static final CiRegister o6 = new CiRegister(14, 14, "o6", CPU);
-    public static final CiRegister o7 = new CiRegister(15, 15, "o7", CPU);
+    public static final CiRegister o0 = new CiRegister(8,  8,  8, "o0", CPU);
+    public static final CiRegister o1 = new CiRegister(9,  9,  8, "o1", CPU);
+    public static final CiRegister o2 = new CiRegister(10, 10, 8, "o2", CPU);
+    public static final CiRegister o3 = new CiRegister(11, 11, 8, "o3", CPU);
+    public static final CiRegister o4 = new CiRegister(12, 12, 8, "o4", CPU);
+    public static final CiRegister o5 = new CiRegister(13, 13, 8, "o5", CPU);
+    public static final CiRegister o6 = new CiRegister(14, 14, 8, "o6", CPU);
+    public static final CiRegister o7 = new CiRegister(15, 15, 8, "o7", CPU);
 
-    public static final CiRegister l0 = new CiRegister(16, 16, "l0", CPU);
-    public static final CiRegister l1 = new CiRegister(17, 17, "l1", CPU);
-    public static final CiRegister l2 = new CiRegister(18, 18, "l2", CPU);
-    public static final CiRegister l3 = new CiRegister(19, 19, "l3", CPU);
-    public static final CiRegister l4 = new CiRegister(20, 20, "l4", CPU);
-    public static final CiRegister l5 = new CiRegister(21, 21, "l5", CPU);
-    public static final CiRegister l6 = new CiRegister(22, 22, "l6", CPU);
-    public static final CiRegister l7 = new CiRegister(23, 23, "l7", CPU);
+    public static final CiRegister l0 = new CiRegister(16, 16, 8, "l0", CPU);
+    public static final CiRegister l1 = new CiRegister(17, 17, 8, "l1", CPU);
+    public static final CiRegister l2 = new CiRegister(18, 18, 8, "l2", CPU);
+    public static final CiRegister l3 = new CiRegister(19, 19, 8, "l3", CPU);
+    public static final CiRegister l4 = new CiRegister(20, 20, 8, "l4", CPU);
+    public static final CiRegister l5 = new CiRegister(21, 21, 8, "l5", CPU);
+    public static final CiRegister l6 = new CiRegister(22, 22, 8, "l6", CPU);
+    public static final CiRegister l7 = new CiRegister(23, 23, 8, "l7", CPU);
 
-    public static final CiRegister i0 = new CiRegister(24, 24, "i0", CPU);
-    public static final CiRegister i1 = new CiRegister(25, 25, "i1", CPU);
-    public static final CiRegister i2 = new CiRegister(26, 26, "i2", CPU);
-    public static final CiRegister i3 = new CiRegister(27, 27, "i3", CPU);
-    public static final CiRegister i4 = new CiRegister(28, 28, "i4", CPU);
-    public static final CiRegister i5 = new CiRegister(29, 29, "i5", CPU);
-    public static final CiRegister i6 = new CiRegister(30, 30, "i6", CPU);
-    public static final CiRegister i7 = new CiRegister(31, 31, "i7", CPU);
+    public static final CiRegister i0 = new CiRegister(24, 24, 8, "i0", CPU);
+    public static final CiRegister i1 = new CiRegister(25, 25, 8, "i1", CPU);
+    public static final CiRegister i2 = new CiRegister(26, 26, 8, "i2", CPU);
+    public static final CiRegister i3 = new CiRegister(27, 27, 8, "i3", CPU);
+    public static final CiRegister i4 = new CiRegister(28, 28, 8, "i4", CPU);
+    public static final CiRegister i5 = new CiRegister(29, 29, 8, "i5", CPU);
+    public static final CiRegister i6 = new CiRegister(30, 30, 8, "i6", CPU);
+    public static final CiRegister i7 = new CiRegister(31, 31, 8, "i7", CPU);
 
     public static final CiRegister[] cpuRegisters = {
         g0, g1, g2, g3, g4, g5, g6, g7,

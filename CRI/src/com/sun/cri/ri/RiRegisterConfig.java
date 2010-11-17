@@ -81,16 +81,15 @@ public interface RiRegisterConfig {
     EnumMap<RegisterFlag, CiRegister[]> getCategorizedAllocatableRegisters();
 
     /**
-     * Denotes the registers whose values must be preserved by a method across any call it makes. 
+     * Gets the registers whose values must be preserved by a method across any call it makes. 
      */
     CiRegister[] getCallerSaveRegisters();
     
     /**
-     * Denotes the registers whose values must be preserved by a method for its caller. 
+     * Gets the object describing the callee save area of this register configuration.
+     * Note that this area may be {@linkplain CiCalleeSaveArea#EMPTY empty}. 
      */
-    CiRegister[] getCalleeSaveRegisters();
-
-    CiRegisterSaveArea getRSA();
+    CiCalleeSaveArea getCalleeSaveArea();
     
     /**
      * Gets a map from register {@linkplain CiRegister#number numbers} to register

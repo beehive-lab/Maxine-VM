@@ -1800,26 +1800,24 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
                     masm.decrementq(AMD64.rsp, frameSize); // does not emit code for frameSize == 0
-                    CiRegister[] calleeSave = compilation.registerConfig.getCalleeSaveRegisters();
-                    if (calleeSave.length != 0) {
-                        CiRegisterSaveArea rsa = compilation.registerConfig.getRSA();
-                        int frameToRSA = frameSize - rsa.size;
-                        assert frameToRSA >= 0;
-                        masm.save(calleeSave, rsa, frameToRSA);
+                    CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
+                    if (csa.size != 0) {
+                        int frameToCSA = frameSize - csa.size;
+                        assert frameToCSA >= 0;
+                        masm.save(csa, frameToCSA);
                     }
                     break;
                 }
                 case PopFrame: {
                     int frameSize = initialFrameSizeInBytes();
 
-                    CiRegister[] calleeSave = compilation.registerConfig.getCalleeSaveRegisters();
-                    if (calleeSave.length != 0) {
+                    CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
+                    if (csa.size != 0) {
                         registerRestoreEpilogueOffset = masm.codeBuffer.position();
 
                         // saved all registers, restore all registers
-                        CiRegisterSaveArea rsa = compilation.registerConfig.getRSA();
-                        int frameToRSA = frameSize - rsa.size;
-                        masm.restore(calleeSave, rsa, frameToRSA);
+                        int frameToCSA = frameSize - csa.size;
+                        masm.restore(csa, frameToCSA);
                     }
 
                     masm.incrementq(AMD64.rsp, frameSize);
