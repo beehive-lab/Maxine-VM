@@ -595,8 +595,8 @@ public class LinearScan {
         // iterate all blocks
         for (int i = 0; i < numBlocks; i++) {
             BlockBegin block = blockAt(i);
-            final BitMap liveGen = new BitMap(liveSize);
-            final BitMap liveKill = new BitMap(liveSize);
+            final CiBitMap liveGen = new CiBitMap(liveSize);
+            final CiBitMap liveKill = new CiBitMap(liveSize);
 
             if (block.isExceptionEntry()) {
                 // Phi functions at the begin of an exception handler are
@@ -709,8 +709,8 @@ public class LinearScan {
             LIRBlock lirBlock = block.lirBlock();
             lirBlock.liveGen = liveGen;
             lirBlock.liveKill = liveKill;
-            lirBlock.liveIn = new BitMap(liveSize);
-            lirBlock.liveOut = new BitMap(liveSize);
+            lirBlock.liveIn = new CiBitMap(liveSize);
+            lirBlock.liveOut = new CiBitMap(liveSize);
 
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println("liveGen  B%d %s", block.blockID, block.lirBlock.liveGen);
@@ -721,7 +721,7 @@ public class LinearScan {
         intervalInLoop = localIntervalInLoop;
     }
 
-    private void verifyTemp(BitMap liveKill, CiValue operand) {
+    private void verifyTemp(CiBitMap liveKill, CiValue operand) {
         // fixed intervals are never live at block boundaries, so
         // they need not be processed in live sets
         // process them only in debug mode so that this can be checked
@@ -732,7 +732,7 @@ public class LinearScan {
         }
     }
 
-    private void verifyInput(BlockBegin block, BitMap liveKill, CiValue operand) {
+    private void verifyInput(BlockBegin block, CiBitMap liveKill, CiValue operand) {
         // fixed intervals are never live at block boundaries, so
         // they need not be processed in live sets.
         // this is checked by these assertions to be sure about it.
@@ -754,7 +754,7 @@ public class LinearScan {
         boolean changeOccurred;
         boolean changeOccurredInBlock;
         int iterationCount = 0;
-        BitMap liveOut = new BitMap(liveSetSize()); // scratch set for calculations
+        CiBitMap liveOut = new CiBitMap(liveSetSize()); // scratch set for calculations
 
         // Perform a backward dataflow analysis to compute liveOut and liveIn for each block.
         // The loop is executed until a fixpoint is reached (no changes in an iteration)
@@ -789,7 +789,7 @@ public class LinearScan {
 
                     if (!lirBlock.liveOut.isSame(liveOut)) {
                         // A change occurred. Swap the old and new live out sets to avoid copying.
-                        BitMap temp = lirBlock.liveOut;
+                        CiBitMap temp = lirBlock.liveOut;
                         lirBlock.liveOut = liveOut;
                         liveOut = temp;
 
@@ -801,7 +801,7 @@ public class LinearScan {
                 if (iterationCount == 0 || changeOccurredInBlock) {
                     // liveIn(block) is the union of liveGen(block) with (liveOut(block) & !liveKill(block))
                     // note: liveIn has to be computed only in first iteration or if liveOut has changed!
-                    BitMap liveIn = lirBlock.liveIn;
+                    CiBitMap liveIn = lirBlock.liveIn;
                     liveIn.setFrom(lirBlock.liveOut);
                     liveIn.setDifference(lirBlock.liveKill);
                     liveIn.setUnion(lirBlock.liveGen);
@@ -823,7 +823,7 @@ public class LinearScan {
         }
 
         // check that the liveIn set of the first block is empty
-        BitMap liveInArgs = new BitMap(ir.startBlock.lirBlock.liveIn.size());
+        CiBitMap liveInArgs = new CiBitMap(ir.startBlock.lirBlock.liveIn.size());
         if (!ir.startBlock.lirBlock.liveIn.isSame(liveInArgs)) {
             if (C1XOptions.DetailedAsserts) {
                 reportFailure(numBlocks);
@@ -1196,7 +1196,7 @@ public class LinearScan {
             assert blockTo == instructions.get(instructions.size() - 1).id;
 
             // Update intervals for operands live at the end of this block;
-            BitMap live = block.lirBlock.liveOut;
+            CiBitMap live = block.lirBlock.liveOut;
             for (int operandNum = live.nextSetBit(0); operandNum >= 0; operandNum = live.nextSetBit(operandNum + 1)) {
                 assert live.get(operandNum) : "should not stop here otherwise";
                 CiValue operand = operands.operandFor(operandNum);
@@ -1548,7 +1548,7 @@ public class LinearScan {
         assert moveResolver.checkEmpty();
 
         int numOperands = operands.size();
-        BitMap liveAtEdge = toBlock.lirBlock.liveIn;
+        CiBitMap liveAtEdge = toBlock.lirBlock.liveIn;
 
         // visit all variables for which the liveAtEdge bit is set
         for (int operandNum = liveAtEdge.nextSetBit(0); operandNum >= 0; operandNum = liveAtEdge.nextSetBit(operandNum + 1)) {
@@ -1611,8 +1611,8 @@ public class LinearScan {
     void resolveDataFlow() {
         int numBlocks = blockCount();
         MoveResolver moveResolver = new MoveResolver(this);
-        BitMap blockCompleted = new BitMap(numBlocks);
-        BitMap alreadyResolved = new BitMap(numBlocks);
+        CiBitMap blockCompleted = new CiBitMap(numBlocks);
+        CiBitMap alreadyResolved = new CiBitMap(numBlocks);
 
         int i;
         for (i = 0; i < numBlocks; i++) {
@@ -2516,7 +2516,7 @@ public class LinearScan {
 
         for (int i = 0; i < numBlocks; i++) {
             BlockBegin block = blockAt(i);
-            BitMap liveAtEdge = block.lirBlock.liveIn;
+            CiBitMap liveAtEdge = block.lirBlock.liveIn;
 
             // visit all operands where the liveAtEdge bit is set
             for (int operandNum = liveAtEdge.nextSetBit(0); operandNum >= 0; operandNum = liveAtEdge.nextSetBit(operandNum + 1)) {

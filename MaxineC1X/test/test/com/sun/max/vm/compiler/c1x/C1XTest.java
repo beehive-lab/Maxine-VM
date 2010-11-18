@@ -206,7 +206,7 @@ public class C1XTest {
 
         String searchCp = searchCpOption.getValue();
         final Classpath classpath = searchCp == null || searchCp.length() == 0 ? Classpath.fromSystem() : new Classpath(searchCp);
-        final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, C1XTest.class.getClassLoader());
+        final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, C1XTest.class.getClassLoader(), null);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
         doWarmup(compilerScheme, methods);
@@ -382,9 +382,9 @@ public class C1XTest {
         }
 
         @Override
-        public List<MethodActor> find(String[] patterns, Classpath classpath, ClassLoader classLoader) {
+        public List<MethodActor> find(String[] patterns, Classpath classpath, ClassLoader classLoader, List<Throwable> nonFatalErrors) {
             this.patterns = new HashSet<PatternMatcher>();
-            return super.find(patterns, classpath, classLoader);
+            return super.find(patterns, classpath, classLoader, nonFatalErrors);
         }
 
         private static boolean isCompilable(MethodActor method) {

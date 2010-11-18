@@ -125,7 +125,7 @@ public class C1XOptions {
     public static boolean OptFlowSensitiveNCE;
     public static boolean OptDeadCodeElimination1;
     public static boolean OptDeadCodeElimination2;
-    public static boolean OptLoopPeeling;
+    //public static boolean OptLoopPeeling;
     public static boolean OptControlFlow;
     public static boolean OptMoveElimination;
 
@@ -174,6 +174,7 @@ public class C1XOptions {
     public static boolean UseSlowPath                   = ____;
     public static boolean UseFastNewObjectArray         = ____;
     public static boolean UseFastNewTypeArray           = ____;
+    public static boolean UseStackMapTableLiveness      = ____;
     public static int     StackShadowPages              = 3;
 
     // Assembler settings
@@ -222,7 +223,7 @@ public class C1XOptions {
         OptNullCheckElimination         = ____;
         OptDeadCodeElimination1         = ____;
         OptDeadCodeElimination2         = ____;
-        OptLoopPeeling                  = ____;
+        //OptLoopPeeling                  = ____;
     }
 
     private static void setOptimizationLevel1() {
@@ -254,7 +255,7 @@ public class C1XOptions {
         OptFlowSensitiveNCE             = ____;
         OptDeadCodeElimination1         = ____;
         OptDeadCodeElimination2         = ____;
-        OptLoopPeeling                  = ____;
+        //OptLoopPeeling                  = ____;
     }
 
     private static void setOptimizationLevel2() {
@@ -286,7 +287,7 @@ public class C1XOptions {
         OptFlowSensitiveNCE             = ____;
         OptDeadCodeElimination1         = ____;
         OptDeadCodeElimination2         = ____;
-        OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
+        //OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
     }
 
     private static void setOptimizationLevel3() {
@@ -303,6 +304,8 @@ public class C1XOptions {
 
         // turn on state merging optimizations
         PhiLoopStores                   = true;
+
+        UseStackMapTableLiveness        = true;
 
         // turn on speculative optimizations
         OptCHA                          = true;
@@ -323,7 +326,7 @@ public class C1XOptions {
         OptFlowSensitiveNCE             = true;
         OptDeadCodeElimination1         = true;
         OptDeadCodeElimination2         = true;
-        OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
+        //OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
     }
 
     /**
@@ -355,6 +358,9 @@ public class C1XOptions {
         map.put("GenSpecialDivChecks",
                 "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
                 "instead of detecting these cases via instruction decoding in a trap handler.");
+
+        map.put("UseStackMapTableLiveness",
+                "Use liveness information derived from StackMapTable class file attribute.");
 
         for (String name : map.keySet()) {
             try {

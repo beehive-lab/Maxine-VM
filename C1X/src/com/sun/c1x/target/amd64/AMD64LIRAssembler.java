@@ -114,6 +114,11 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
+    protected void emitBreakpoint() {
+        masm.emitByte(0xcc);
+    }
+
+    @Override
     protected void emitStackAllocate(StackBlock stackBlock, CiValue dst) {
         masm.leaq(dst.asRegister(), compilation.frameMap().toStackAddress(stackBlock));
     }

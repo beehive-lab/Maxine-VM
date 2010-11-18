@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
@@ -407,21 +406,17 @@ public final class BlockBegin extends Instruction {
             }
 
             // copy state because it is modified
-            /* TODO the state is copied and mutated here even though the methods called on it below all
-             * belong to immutable FrameState class and have been considered not actually mutating the
-             * frame state. One needs to rethink the details of this and whether to move them to
-             * MutableFrameState, which might require additional copying of frame states in other places
-             * where currently the immutable is used directly.
-             */
             newState = newState.copy();
 
-            // if a liveness map is available, use it to invalidate dead locals
-            // TODO: as of classfile version 50+ new attribute stackmap table
-            // is a snapshot of stackmap at every block entry point
-            // rename CiBitMap, move to com.sun.cri.ci
-            BitMap liveness = (BitMap) newState.scope().method.liveness(bci());
-            if (liveness != null) {
-                invalidateDeadLocals(newState, liveness);
+            if (C1XOptions.UseStackMapTableLiveness) {
+                // if a liveness map is available, use it to invalidate dead locals
+                CiBitMap[] livenessMap = newState.scope().method.livenessMap();
+                if (livenessMap != null && bci() >= 0) {
+                    CiBitMap liveness = livenessMap[bci()];
+                    if (liveness != null) {
+                        invalidateDeadLocals(newState, liveness);
+                    }
+                }
             }
 
             // if the block is a loop header, insert all necessary phis
@@ -455,14 +450,16 @@ public final class BlockBegin extends Instruction {
         }
     }
 
-    private void invalidateDeadLocals(FrameState newState, BitMap liveness) {
+    private void invalidateDeadLocals(FrameState newState, CiBitMap liveness) {
         int max = newState.localsSize();
-        assert liveness.size() == max;
+        assert max <= liveness.size();
         for (int i = 0; i < max; i++) {
             Value x = newState.localAt(i);
-            if (x != null && (x.isIllegal() || !liveness.get(i))) {
-                // invalidate the local if it is not live
-                newState.invalidateLocal(i);
+            if (x != null) {
+                if (!liveness.get(i)) {
+                    // invalidate the local if it is not live
+                    newState.invalidateLocal(i);
+                }
             }
         }
     }
@@ -474,7 +471,7 @@ public final class BlockBegin extends Instruction {
             newState.setupPhiForStack(this, i);
         }
         int localsSize = newState.localsSize();
-        BitMap requiresPhi = newState.scope().getStoresInLoops();
+        CiBitMap requiresPhi = newState.scope().getStoresInLoops();
         for (int i = 0; i < localsSize; i++) {
             Value x = newState.localAt(i);
             if (x != null) {

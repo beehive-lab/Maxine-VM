@@ -123,7 +123,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            if (Heap.traceGCTime()) {
+                collect.reportTotalGCTimes();
+            }
         }
+
     }
 
     @HOSTED_ONLY
@@ -552,13 +557,5 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         return false;
     }
 
-    @Override
-    public void finalize(MaxineVM.Phase phase) {
-        if (MaxineVM.Phase.RUNNING == phase) {
-            if (Heap.traceGCTime()) {
-                collect.reportTotalGCTimes();
-            }
-        }
-    }
 }
 

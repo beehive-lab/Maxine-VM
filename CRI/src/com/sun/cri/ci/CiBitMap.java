@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.cri.ci;
 
 import java.util.*;
 
@@ -28,7 +28,7 @@ import java.util.*;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public class BitMap {
+public final class CiBitMap {
 
     private static final int ADDRESS_BITS_PER_WORD = 6;
     private static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
@@ -47,15 +47,16 @@ public class BitMap {
     /**
      * Constructs a new bit map with the {@linkplain #DEFAULT_LENGTH default length}.
      */
-    public BitMap() {
+    public CiBitMap() {
         this(DEFAULT_LENGTH);
     }
 
     /**
-     * Construct a new bit map with the specified length.
+     * Constructs a new bit map with the specified length.
+     * 
      * @param length the length of the bitmap
      */
-    public BitMap(int length) {
+    public CiBitMap(int length) {
         assert length >= 0;
         this.length = length;
         if (length > BITS_PER_WORD) {
@@ -64,7 +65,8 @@ public class BitMap {
     }
 
     /**
-     * Set the bit at the specified index.
+     * Sets the bit at the specified index.
+     * 
      * @param i the index of the bit to set
      */
     public void set(int i) {
@@ -78,7 +80,8 @@ public class BitMap {
     }
 
     /**
-     * Grows this bitmap to a new length, appending necessary zero bits.
+     * Grows this bitmap to a new size, appending necessary zero bits.
+     * 
      * @param newLength the new length of the bitmap
      */
     public void grow(int newLength) {
@@ -104,10 +107,6 @@ public class BitMap {
             }
             length = newLength;
         }
-    }
-
-    public int length() {
-        return length;
     }
 
     private int bitInWord(int i) {
@@ -198,7 +197,7 @@ public class BitMap {
      *
      * @param other the other bitmap for the union operation
      */
-    public void setUnion(BitMap other) {
+    public void setUnion(CiBitMap other) {
         low |= other.low;
         if (extra != null && other.extra != null) {
             for (int i = 0; i < extra.length && i < other.extra.length; i++) {
@@ -214,7 +213,7 @@ public class BitMap {
      * @param other the other bitmap for this operation
      * @return {@code true} if any bits were cleared as a result of this operation
      */
-    public boolean setIntersect(BitMap other) {
+    public boolean setIntersect(CiBitMap other) {
         boolean same = true;
         long intx = low & other.low;
         if (low != intx) {
@@ -260,7 +259,7 @@ public class BitMap {
         return i;
     }
 
-    public void setFrom(BitMap other) {
+    public void setFrom(CiBitMap other) {
         assert this.length == other.length : "must have same size";
 
         low = other.low;
@@ -271,7 +270,7 @@ public class BitMap {
         }
     }
 
-    public void setDifference(BitMap other) {
+    public void setDifference(CiBitMap other) {
         assert this.length == other.length : "must have same size";
 
         low &= ~other.low;
@@ -282,7 +281,7 @@ public class BitMap {
         }
     }
 
-    public boolean isSame(BitMap other) {
+    public boolean isSame(CiBitMap other) {
         if (this.length != other.length || this.low != other.low) {
             return false;
         }
@@ -401,8 +400,8 @@ public class BitMap {
         return res.toString();
     }
 
-    public BitMap copy() {
-        BitMap n = new BitMap(BITS_PER_WORD);
+    public CiBitMap copy() {
+        CiBitMap n = new CiBitMap(BITS_PER_WORD);
         n.low = low;
         if (extra != null) {
             n.extra = Arrays.copyOf(extra, extra.length);

@@ -67,7 +67,7 @@ public class CommandLineVerifier extends MethodFinder {
 
         log.println("Finding specified methods...");
         CommandLineVerifier clv = new CommandLineVerifier();
-        List<MethodActor> methods = clv.find(patterns, Classpath.fromSystem(), CommandLineVerifier.class.getClassLoader());
+        List<MethodActor> methods = clv.find(patterns, Classpath.fromSystem(), CommandLineVerifier.class.getClassLoader(), null);
         log.println("Found " + methods.size() + " methods");
         if (verbose.getValue()) {
             Verifier.TraceVerification = "";

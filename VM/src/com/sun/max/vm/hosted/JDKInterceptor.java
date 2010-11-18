@@ -163,6 +163,8 @@ public final class JDKInterceptor {
         JDK.sun_reflect_Reflection,
             new ValueField("fieldFilterMap", ReferenceValue.from(new HashMap<Class, String[]>())),
             new ValueField("methodFilterMap", ReferenceValue.from(new HashMap<Class, String[]>())),
+        JDK.sun_util_calendar_ZoneInfo,
+            new ZeroField("aliasTable", true),
         JDK.java_util_Random,
             new FieldOffsetRecomputation("seedOffset", JDK.java_util_Random, "seed"),
         JDK.java_util_concurrent_ConcurrentSkipListSet,

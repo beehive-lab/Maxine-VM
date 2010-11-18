@@ -216,7 +216,7 @@ public abstract class FrameState {
 
     /**
      * Invalidates the local variable at the specified index. If the specified index refers to a doubleword local, then
-     * invalid the high word as well.
+     * invalidates the high word as well.
      *
      * @param i the index of the local to invalidate
      */

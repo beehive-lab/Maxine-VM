@@ -20,9 +20,11 @@
  */
 package com.sun.max.vm.monitor.hosted;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
 
+@HOSTED_ONLY
 public class Package extends VMPackage {
     public Package() {
         registerScheme(MonitorScheme.class, HostedMonitorScheme.class);

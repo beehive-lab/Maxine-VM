@@ -380,7 +380,21 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             if (systemBreakpoint != null) {
                 return systemBreakpoint;
             }
-            return transientBreakpoints.get(address.toLong());
+            TransientTargetBreakpoint transientTargetBreakpoint = transientBreakpoints.get(address.toLong());
+            if (transientTargetBreakpoint != null) {
+                return transientTargetBreakpoint;
+            }
+            try {
+                byte[] c = new byte[code.length];
+                vm().dataAccess().readFully(address, c);
+                if (Arrays.equals(c, code)) {
+                    CodeLocation codeLocation = CodeLocation.createMachineCodeLocation(vm(), address, "discovered bkpt");
+                    return new TransientTargetBreakpoint(vm(), this, codeLocation, null);
+                }
+            } catch (DataIOError e) {
+                e.printStackTrace();
+            }
+            return null;
         }
 
         public synchronized TeleTargetBreakpoint findClientBreakpoint(MachineCodeLocation compiledCodeLocation) {
