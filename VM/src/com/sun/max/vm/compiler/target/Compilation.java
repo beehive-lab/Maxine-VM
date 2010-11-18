@@ -166,25 +166,26 @@ public class Compilation implements Future<TargetMethod> {
         Throwable error = null;
         String methodString = "";
         try {
+            methodString = logBeforeCompilation(compiler);
             if (StackReferenceMapPreparer.VerifyRefMaps) {
                 StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
             }
             if (GC_ON_COMPILE_OPTION.getValue() && Heap.isInitialized()) {
                 System.gc();
+                StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
             }
             long startCompile = 0;
             if (TIME_COMPILATION.getValue()) {
                 startCompile = System.currentTimeMillis();
             }
 
-
+            // Check for recursive compilation
             if (COMPILATION.get() != null) {
                 FatalError.unexpected("Compilation of " + classMethodActor + " while compiling " + COMPILATION.get().classMethodActor);
             }
             COMPILATION.set(this);
 
             // attempt the compilation
-            methodString = logBeforeCompilation(compiler);
             targetMethod = compiler.compile(classMethodActor);
 
             if (targetMethod == null) {
