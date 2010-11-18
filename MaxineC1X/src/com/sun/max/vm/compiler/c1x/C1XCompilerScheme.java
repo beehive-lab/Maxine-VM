@@ -279,7 +279,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         throw FatalError.unimplemented();
     }
 
-    private static void patchStaticTrampolineCallSite(Pointer callSite) {
+    @PLATFORM(cpu = "amd64")
+    private static void patchStaticTrampolineCallSiteAMD64(Pointer callSite) {
         final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
 
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
@@ -287,6 +288,12 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         // Use the caller's abi to get the correct entry point.
         final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
         final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
+        Pointer callDisp = callSite.plus(1);
+        if (CODE_PATCHING_ALIGMMENT_IS_GUARANTEED && !callDisp.isWordAligned()) {
+            // Patching must not occur across a cache line boundary. The easiest way to check for
+            // this is to make sure the call instruction is word aligned.
+            FatalError.unexpected("Call displacement not word aligned: " + callDisp);
+        }
         callSite.writeInt(1, calleeOffset);
     }
 
@@ -314,7 +321,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             // save all the callee save registers
             asm.save(csa, 0);
 
-            ClassMethodActor patchStaticTrampolineCallSite = ClassMethodActor.fromJava(Classes.getDeclaredMethod(C1XCompilerScheme.class, "patchStaticTrampolineCallSite", Pointer.class));
+            ClassMethodActor patchStaticTrampolineCallSite = ClassMethodActor.fromJava(Classes.getDeclaredMethod(C1XCompilerScheme.class, "patchStaticTrampolineCallSiteAMD64", Pointer.class));
             CiKind[] trampolineParameters = {CiKind.Object};
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target).locations;
 
@@ -426,4 +433,11 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     private DynamicTrampolineExit dynamicTrampolineExit = DynamicTrampolineExit.create();
+
+    /**
+     * Temporary flag to disable alignment check when code patching. The alignment requirement
+     * is satisfied by C1X (see {@link C1XOptions#AlignCallsForPatching}) but not yet by
+     * CPS and the template JIT.
+     */
+    static final boolean CODE_PATCHING_ALIGMMENT_IS_GUARANTEED = System.getProperty("non-constant value to fool Eclipse") != null;
 }
