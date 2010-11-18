@@ -71,7 +71,7 @@ public class CiTargetMethod implements Serializable {
             StringBuilder sb = new StringBuilder();
             sb.append("Safepoint at ");
             sb.append(pcOffset);
-            appendRefMap(sb, "registerMap", debugInfo.registerRefMap);
+            appendRegRefMap(sb, "registerMap", debugInfo.registerRefMap);
             appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
             return sb.toString();
         }
@@ -125,7 +125,7 @@ public class CiTargetMethod implements Serializable {
 
             if (debugInfo != null) {
                 appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
-                appendRefMap(sb, "registerMap", debugInfo.registerRefMap);
+                appendRegRefMap(sb, "registerMap", debugInfo.registerRefMap);
             }
 
             return sb.toString();
@@ -366,18 +366,15 @@ public class CiTargetMethod implements Serializable {
         return targetCodeSize;
     }
 
+    static void appendRegRefMap(StringBuilder sb, String name, long map) {
+        if (map != CiDebugInfo.NO_REF_MAP) {
+            sb.append(' ').append(name).append('[').append(CiBitMap.fromLong(map).toBinaryString(-1)).append(']');
+        }
+    }
+
     static void appendRefMap(StringBuilder sb, String name, byte[] map) {
         if (map != null) {
-            sb.append(' ');
-            sb.append(name);
-            sb.append('[');
-            for (byte b : map) {
-                for (int j = 0; j < 8; j++) {
-                    int z = (b >> j) & 1;
-                    sb.append(z);
-                }
-            }
-            sb.append(']');
+            sb.append(' ').append(name).append('[').append(new CiBitMap(map).toBinaryString(-1)).append(']');
         }
     }
 }

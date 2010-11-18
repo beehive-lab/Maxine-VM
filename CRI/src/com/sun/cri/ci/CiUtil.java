@@ -23,7 +23,6 @@ package com.sun.cri.ci;
 import static java.lang.reflect.Modifier.*;
 
 import java.lang.reflect.*;
-import java.math.*;
 import java.util.*;
 
 import com.sun.cri.ci.CiDebugInfo.Frame;
@@ -36,6 +35,7 @@ import com.sun.cri.ri.*;
  */
 public class CiUtil {
     
+    public static final String NEW_LINE = String.format("%n");
     /**
      * Extends the functionality of {@link Class#getSimpleName()} to include a non-empty string for anonymous and local
      * classes.
@@ -432,6 +432,21 @@ public class CiUtil {
     }
     
     /**
+     * Prepends the String {@code indentation} to every line in String {@code lines},
+     * including a possibly non-empty line following the final newline.
+     */
+    public static String indent(String lines, String indentation) {
+        if (lines.length() == 0) {
+            return lines;
+        }
+        final String newLine = "\n";
+        if (lines.endsWith(newLine)) {
+            return indentation + (lines.substring(0, lines.length() - 1)).replace(newLine, newLine + indentation) + newLine;
+        }
+        return indentation + lines.replace(newLine, newLine + indentation);
+    }
+
+    /**
      * Formats a given table as a string. The value of each cell is produced by {@link String#valueOf(Object)}.
      * 
      * @param cells the cells of the table in row-major order
@@ -453,7 +468,7 @@ public class CiUtil {
             }
         }
         StringBuilder sb = new StringBuilder();
-        String nl = String.format("%n");
+        String nl = NEW_LINE;
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 int index = col + (row * cols);
@@ -516,8 +531,7 @@ public class CiUtil {
         } else {
             sb.append(CiUtil.format("%H.%n(%p)", method, false));
         }
-        sb.append(String.format(" [bci: %d]", bci));
-        return sb;
+        return sb.append(" [bci: ").append(bci).append(']');
     }
 
     /**
@@ -528,9 +542,9 @@ public class CiUtil {
      * @return the value of {@code sb}
      */
     public static StringBuilder append(StringBuilder sb, CiCodePos pos) {
-        appendLocation(sb, pos.method, pos.bci);
+        appendLocation(sb.append("at "), pos.method, pos.bci);
         if (pos.caller != null) {
-            sb.append(String.format("%n--> "));
+            sb.append(NEW_LINE);
             append(sb, pos.caller);
         }
         return sb;
@@ -574,66 +588,19 @@ public class CiUtil {
      * @return the value of {@code sb}
      */
     public static StringBuilder append(StringBuilder sb, Frame frame) {
-        appendLocation(sb, frame.method, frame.bci);
-        String sep = String.format("%n  ");
+        appendLocation(sb.append("at "), frame.method, frame.bci);
+        String sep = NEW_LINE + "  ";
         if (frame.values.length > 0) {
             sb.append(sep);
             appendValues(sb, frame, sep);
         }
         if (frame.caller != null) {
-            sb.append(String.format("%n--> "));
+            sb.append(NEW_LINE);
             append(sb, frame.caller);
         }
         return sb;
     }
     
-    /**
-     * Converts a bit map encoded as a byte array to a {@link BitSet}
-     * 
-     * @param bitmap the bit map to convert
-     */
-    public static BitSet asBitSet(byte[] bitmap) {
-        BitSet bs = new BitSet();
-        int bit = 0;
-        for (int i = 0; i < bitmap.length; i++) {
-            int b = bitmap[i] & 0xff;
-            for (int j = 0; j < 8; j++) {
-                if ((b & 1) != 0) {
-                    bs.set(bit);
-                }
-                b = b >>> 1;
-                bit++;
-            }
-        }
-        return bs;
-    }
-
-    /**
-     * Converts a bit map encoded as a byte array to a {@link BigInteger}
-     * 
-     * @param bitmap the bit map to convert
-     */
-    public static BigInteger asBigInteger(byte[] bitmap) {
-        byte[] bigEndian = bitmap.clone();
-        int i = bitmap.length - 1;
-        for (byte b : bitmap) {
-            bigEndian[i--] = b;
-        }
-        return new BigInteger(bigEndian);
-    }
-    
-    /**
-     * Appends a formatted bit map to a {@link StringBuilder}.
-     * 
-     * @param sb the {@link StringBuilder} to append to
-     * @param bitmap the bit map to format and append to {@code sb}
-     * @return the value of {@code sb}
-     */
-    public static StringBuilder appendBitmap(StringBuilder sb, byte[] bitmap) {
-        sb.append(asBitSet(bitmap)).append(" [0x").append(asBigInteger(bitmap)).append(']');
-        return sb.append(']');
-    }
-
     /**
      * Appends a formatted debuginfo to a {@link StringBuilder}.
      * 
@@ -642,12 +609,12 @@ public class CiUtil {
      * @return the value of {@code sb}
      */
     public static StringBuilder append(StringBuilder sb, CiDebugInfo info) {
-        String nl = String.format("%n");
+        String nl = NEW_LINE;
         if (info.hasRegisterRefMap()) {
-            appendBitmap(sb.append("reg-ref-map: "), info.registerRefMap).append(nl);
+            sb.append("reg-ref-map: ").append(CiBitMap.fromLong(info.registerRefMap)).append(nl);
         }
         if (info.hasStackRefMap()) {
-            appendBitmap(sb.append("frame-ref-map: "), info.frameRefMap).append(nl);
+            sb.append("frame-ref-map: ").append(new CiBitMap(info.frameRefMap)).append(nl);
         }
         Frame frame = info.frame();
         if (frame != null) {
@@ -659,6 +626,7 @@ public class CiUtil {
     }
 
     public static final byte[] EMPTY_BIT_MAP = {};
+    
     /**
      * Gets a reference map that covers a given number of bits.
      */

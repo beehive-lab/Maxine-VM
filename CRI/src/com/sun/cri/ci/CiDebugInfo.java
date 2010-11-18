@@ -34,6 +34,11 @@ import com.sun.cri.ri.*;
 public class CiDebugInfo {
     
     /**
+     * The {@code long} value denoting absence of a reference map.
+     */
+    public static final long NO_REF_MAP = Long.MIN_VALUE;
+    
+    /**
      * The code position (including all inlined methods) of this debug info.
      * If this is a {@link Frame} instance, then it is also the deoptimization information for each inlined frame.
      */
@@ -44,7 +49,7 @@ public class CiDebugInfo {
      * for bit {@code k} in byte {@code n}, it refers to the register whose
      * {@linkplain CiRegister#encoding encoding} is {@code (k + n * 8)}.
      */
-    public final byte[] registerRefMap;
+    public final long registerRefMap;
 
     /**
      * The reference map for the stack frame at this point. The reference map is <i>packed</i> in that
@@ -56,10 +61,10 @@ public class CiDebugInfo {
      * Creates a new {@code CiDebugInfo} from the given values.
      * 
      * @param codePos the {@linkplain CiCodePos code position} or {@linkplain Frame frame} info
-     * @param registerRefMap the register map, which may be {@code null}
+     * @param registerRefMap the register map
      * @param frameRefMap the reference map for {@code frame}, which may be {@code null}
      */
-    public CiDebugInfo(CiCodePos codePos, byte[] registerRefMap, byte[] frameRefMap) {
+    public CiDebugInfo(CiCodePos codePos, long registerRefMap, byte[] frameRefMap) {
         this.codePos = codePos;
         this.registerRefMap = registerRefMap;
         this.frameRefMap = frameRefMap;
@@ -76,7 +81,7 @@ public class CiDebugInfo {
      * @return {@code true} if this debug info has a reference map for the registers
      */
     public boolean hasRegisterRefMap() {
-        return registerRefMap != null && registerRefMap.length > 0;
+        return registerRefMap != NO_REF_MAP;
     }
 
     /**

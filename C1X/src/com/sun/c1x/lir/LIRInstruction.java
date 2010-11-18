@@ -455,7 +455,7 @@ public abstract class LIRInstruction {
         return toString(OperandFormatter.DEFAULT);
     }
 
-    protected static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map, boolean frameRefMap) {
+    protected static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map) {
         for (int i = 0; i < map.length; i++) {
             int b = map[i] & 0xff;
             if (b != 0) {
@@ -465,12 +465,7 @@ public abstract class LIRInstruction {
                         if (buf.length() != 0) {
                             buf.append(", ");
                         }
-                        if (frameRefMap) {
-                            buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, index)));
-                        } else {
-                            CiRegisterValue register = compilation().target.arch.registerFor(index, RegisterFlag.CPU).asValue(CiKind.Object);
-                            buf.append(operandFmt.format(register));
-                        }
+                        buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, index)));
                     }
                     b >>>= 1;
                     index++;
@@ -486,10 +481,19 @@ public abstract class LIRInstruction {
                 CiDebugInfo debugInfo = info.debugInfo();
                 StringBuilder refmap = new StringBuilder();
                 if (debugInfo.hasStackRefMap()) {
-                    appendRefMap(refmap, operandFmt, debugInfo.frameRefMap, true);
+                    appendRefMap(refmap, operandFmt, debugInfo.frameRefMap);
                 }
                 if (debugInfo.hasRegisterRefMap()) {
-                    appendRefMap(refmap, operandFmt, debugInfo.registerRefMap, false);
+                    long map = debugInfo.registerRefMap;
+                    int encoding = 0;
+                    while (map != 0) {
+                        if ((map & (1 << encoding)) != 0) {
+                            CiRegisterValue register = compilation().target.arch.registerFor(encoding, RegisterFlag.CPU).asValue(CiKind.Object);
+                            buf.append(operandFmt.format(register));
+                        }
+                        encoding++;
+                        map = map >>> 1;
+                    }
                 }
                 if (refmap.length() != 0) {
                     buf.append(", refmap(").append(refmap.toString().trim()).append(')');
