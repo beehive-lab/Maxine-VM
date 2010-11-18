@@ -52,10 +52,10 @@ public class CiDebugInfo {
     public final long registerRefMap;
 
     /**
-     * The reference map for the stack frame at this point. The reference map is <i>packed</i> in that
-     * for bit {@code k} in byte {@code n}, it refers to stack slot number {@code k + n * 8}.
+     * The reference map for the stack frame at this point. A set bit at {@code k} in the map
+     * represents stack slot number {@code k}.
      */
-    public final byte[] frameRefMap;
+    public final CiBitMap frameRefMap;
 
     /**
      * Creates a new {@code CiDebugInfo} from the given values.
@@ -64,7 +64,7 @@ public class CiDebugInfo {
      * @param registerRefMap the register map
      * @param frameRefMap the reference map for {@code frame}, which may be {@code null}
      */
-    public CiDebugInfo(CiCodePos codePos, long registerRefMap, byte[] frameRefMap) {
+    public CiDebugInfo(CiCodePos codePos, long registerRefMap, CiBitMap frameRefMap) {
         this.codePos = codePos;
         this.registerRefMap = registerRefMap;
         this.frameRefMap = frameRefMap;
@@ -88,7 +88,7 @@ public class CiDebugInfo {
      * @return {@code true} if this debug info has a reference map for the stack
      */
     public boolean hasStackRefMap() {
-        return frameRefMap != null && frameRefMap.length > 0;
+        return frameRefMap != null && frameRefMap.size() > 0;
     }
 
 

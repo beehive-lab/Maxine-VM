@@ -59,15 +59,24 @@ public final class CiBitMap {
      */
     public CiBitMap(byte[] bitmap) {
         this(bitmap.length * 8);
-        int bit = 0;
-        for (int i = 0; i < bitmap.length; i++) {
-            int b = bitmap[i] & 0xff;
-            for (int j = 0; j < 8; j++) {
-                if ((b & 1) != 0) {
-                    set(bit);
+        int byteIndex = 0; 
+        while (byteIndex < bitmap.length && byteIndex < 8) {
+            long bite = (long) bitmap[byteIndex] & 0xff;
+            low |= bite << (byteIndex * 8);
+            byteIndex++;
+        }
+        if (byteIndex < bitmap.length) {
+            assert byteIndex == 8;
+            int remBytes = bitmap.length - 8;
+            int remWords = (remBytes + 7) / 8;
+            for (int word = 0; word < remWords; word++) {
+                long w = 0L;
+                for (int i = 0; i < 8 && byteIndex < bitmap.length; i++) {
+                    long bite = (long) bitmap[byteIndex] & 0xff;
+                    w |= bite << (i * 8);
+                    byteIndex++;
                 }
-                b = b >>> 1;
-                bit++;
+                extra[word] = w;
             }
         }
     }
@@ -538,11 +547,56 @@ public final class CiBitMap {
         return n;
     }
 
-    public boolean[] toArray() {
-        final boolean[] result = new boolean[this.size];
-        for (int i = 0; i < size; i++) {
-            result[i] = get(i);
+    /**
+     * Copies this bit map into a given byte array.
+     * 
+     * @param arr the destination
+     * @param off the byte index in {@code arr} at which to start writing
+     * @param numberOfBytes the number of bytes worth of bits to copy from this bit map.
+     *        The number of bits copied is {@code numberOfBytes * 8}. If {@code numberOfBytes}
+     *        is -1, then {@code ((size() + 7) / 8)} is used instead.
+     * @return the number of bytes written to {@code arr}
+     */
+    public int copyTo(byte[] arr, int off, int numberOfBytes) {
+        if (numberOfBytes < 0) {
+            numberOfBytes = (size + 7) / 8;
         }
-        return result;
+        for (int i = 0; i < numberOfBytes; ++i) {
+            long word = low;
+            int byteInWord;
+            if (i >= 8) {
+                int wordIndex = (i - 8) / 8;
+                word = extra[wordIndex];
+                byteInWord = i & 0x3;
+            } else {
+                byteInWord = i;
+            }
+            assert byteInWord < 8;
+            byte b = (byte) (word >> (byteInWord * 8));
+            arr[off + i] = b;
+        }
+        return numberOfBytes;
+    }
+
+    /**
+     * Converts this bit map to a byte array. The length of the returned
+     * byte array is {@code ((size() + 7) / 8)}.
+     */
+    public byte[] toByteArray() {
+        byte[] arr = new byte[(size + 7)/ 8];
+        copyTo(arr, 0, arr.length);
+        return arr;
+    }
+    
+    /**
+     * Converts this bit map to a long.
+     * 
+     * @throws IllegalArgumentException if {@code (size() > 64)}
+     */
+    public long toLong() {
+        if (size > 64) {
+            throw new IllegalArgumentException("bit map of size " + size + " cannot be converted to long");
+        }
+        return low;
     }
 }

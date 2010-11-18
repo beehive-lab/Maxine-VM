@@ -182,9 +182,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         }
     }
 
-    @HOSTED_ONLY
     public C1XCompiler compiler() {
-        if (compiler == null) {
+        if (isHosted() && compiler == null) {
             initialize(Phase.BOOTSTRAPPING);
         }
         return compiler;
@@ -206,7 +205,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             return genDynamicTrampoline(0, false);
         }
 
-        CiTargetMethod compiledMethod = compiler.compileMethod(method, -1, xirGenerator).targetMethod();
+        CiTargetMethod compiledMethod = compiler().compileMethod(method, -1, xirGenerator).targetMethod();
         if (compiledMethod != null) {
             C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
             CompilationScheme.Inspect.notifyCompilationComplete(c1xTargetMethod);

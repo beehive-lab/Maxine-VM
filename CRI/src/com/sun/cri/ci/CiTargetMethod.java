@@ -372,9 +372,9 @@ public class CiTargetMethod implements Serializable {
         }
     }
 
-    static void appendRefMap(StringBuilder sb, String name, byte[] map) {
+    static void appendRefMap(StringBuilder sb, String name, CiBitMap map) {
         if (map != null) {
-            sb.append(' ').append(name).append('[').append(new CiBitMap(map).toBinaryString(-1)).append(']');
+            sb.append(' ').append(name).append('[').append(map.toBinaryString(-1)).append(']');
         }
     }
 }

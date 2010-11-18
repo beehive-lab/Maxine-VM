@@ -395,13 +395,12 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             // remember the code position
             stopInfo[index] = debugInfo;
             // copy the stack map
-            int stackMapLength;
-            byte[] stackMap = debugInfo.frameRefMap;
-            if (stackMap != null) {
-                stackMapLength = stackMap.length;
-                System.arraycopy(stackMap, 0, referenceMaps, refmapIndex, stackMapLength);
+            int frameRefMapBytes;
+            CiBitMap frameRefMap = debugInfo.frameRefMap;
+            if (frameRefMap != null) {
+                frameRefMapBytes = frameRefMap.copyTo(referenceMaps, refmapIndex, -1);
             } else {
-                stackMapLength = 0;
+                frameRefMapBytes = 0;
             }
             // copy the register map
             long regRefMap = debugInfo.registerRefMap;
@@ -409,7 +408,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
                 int regRefMapSize = registerReferenceMapSize();
                 for (int i = 0; i < regRefMapSize; i++) {
                     byte b = (byte) regRefMap;
-                    referenceMaps[refmapIndex + stackMapLength] = b;
+                    referenceMaps[refmapIndex + frameRefMapBytes] = b;
                     regRefMap = regRefMap >>> 8;
                 }
             }
