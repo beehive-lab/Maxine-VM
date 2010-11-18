@@ -119,10 +119,6 @@ public class IR {
             new PhiSimplifier(this);
             verifyAndPrint("After phi simplification");
         }
-        if (C1XOptions.OptLoopPeeling) {
-            LoopPeeler.peelLoops(this);
-            verifyAndPrint("After Loop peeling");
-        }
         if (C1XOptions.OptNullCheckElimination) {
             new NullCheckEliminator(this);
             verifyAndPrint("After null check elimination");

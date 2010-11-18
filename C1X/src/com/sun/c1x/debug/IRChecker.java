@@ -1076,6 +1076,10 @@ public class IRChecker extends ValueVisitor {
     }
 
     @Override
+    public void visitBreakpointTrap(BreakpointTrap i) {
+    }
+
+    @Override
     public void visitResolveClass(ResolveClass i) {
     }
 

@@ -166,9 +166,11 @@ public class MethodFinder {
      * @param patterns a list of patterns used to filter the methods found on the class path
      * @param classpath
      * @param classLoader
+     * @param nonFatalErrors list to which non-fatal errors are appended during the search. If {@code null}, then a
+     *            {@linkplain ProgramWarning warning} is logged
      * @return
      */
-    public List<MethodActor> find(String[] patterns, Classpath classpath, ClassLoader classLoader) {
+    public List<MethodActor> find(String[] patterns, Classpath classpath, ClassLoader classLoader, List<Throwable> nonFatalErrors) {
 
         final List<MethodActor> methods = new ArrayList<MethodActor>();
         final Set<String> exclusions = new HashSet<String>();
@@ -258,7 +260,11 @@ public class MethodFinder {
                         addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localInterfaceMethodActors(), exclusions);
                     }
                 } catch (ClassNotFoundException classNotFoundException) {
-                    ProgramWarning.message(classNotFoundException.toString() + (classNotFoundException.getCause() == null ? "" : " (cause: " + classNotFoundException.getCause() + ")"));
+                    if (nonFatalErrors != null) {
+                        nonFatalErrors.add(classNotFoundException);
+                    } else {
+                        ProgramWarning.message(classNotFoundException.toString() + (classNotFoundException.getCause() == null ? "" : " (cause: " + classNotFoundException.getCause() + ")"));
+                    }
                 }
             }
         }
@@ -337,7 +343,7 @@ public class MethodFinder {
         System.out.println("done");
 
         MethodFinder matcher = new MethodFinder();
-        List<MethodActor> methods = matcher.find(args, Classpath.fromSystem(), MethodFinder.class.getClassLoader());
+        List<MethodActor> methods = matcher.find(args, Classpath.fromSystem(), MethodFinder.class.getClassLoader(), null);
         System.out.println("Matched " + methods.size() + " methods:");
         for (MethodActor method : methods) {
             System.out.println(method.format("  %H.%n(%p)"));

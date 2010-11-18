@@ -282,7 +282,6 @@ public class Bytecodes {
      */
     public static final int JNIOP                = 204;
     
-    
     public static final int CALL                 = 205;
 
     public static final int WLOAD                = 206;
@@ -466,11 +465,12 @@ public class Bytecodes {
      * (via {@code address}) must be an object. If {@code value} is not an object, any subsequent value
      * written to the slot must not be an object.
      * 
-     * <b>The compiler is not required enforce this type safety.</b>
+     * <b>The compiler is not required to enforce this type safety.</b>
      * 
      * <pre>
      * Format: { u1 opcode;   // ALLOCSTKVAR
-     *           u2 unused;
+     *           u2 method;   // Constant pool index to method (CONSTANT_Methodref_info) whose signature
+     *                        // describes the type of the input value
      *         }
      *
      * Operand Stack:
@@ -480,6 +480,7 @@ public class Bytecodes {
     public static final int ALLOCSTKVAR          = 241;
     
     public static final int PAUSE                = 242;
+    public static final int BREAKPOINT_TRAP      = 248;
     public static final int ADD_SP               = 243;
     public static final int READ_PC              = 244;
     public static final int FLUSHW               = 245;
@@ -608,7 +609,7 @@ public class Bytecodes {
      *         }
      *
      * Operand Stack:
-     *     ... => ...
+     *     ... => address
      * </pre>
      */
     public static final int JNIOP_LINK         = JNIOP | LINK << 8;
@@ -624,7 +625,7 @@ public class Bytecodes {
      *         }
      *
      * Operand Stack:
-     *     ... => address
+     *     ... => ...
      * </pre>
      */
     public static final int JNIOP_J2N          = JNIOP | J2N << 8;
@@ -1141,6 +1142,7 @@ public class Bytecodes {
         def(MEMBAR              , "membar"          , "bii"  , EXTENSION);
         def(ALLOCSTKVAR         , "allocstkvar"     , "bii"  , EXTENSION);
         def(PAUSE               , "pause"           , "bii"  , EXTENSION);
+        def(BREAKPOINT_TRAP     , "breakpoint_trap" , "bii"  , EXTENSION);
         def(ADD_SP              , "add_sp"          , "bii"  , EXTENSION);
         def(READ_PC             , "read_pc"         , "bii"  , EXTENSION);
         def(FLUSHW              , "flushw"          , "bii"  , EXTENSION);
@@ -1484,6 +1486,12 @@ public class Bytecodes {
         return nameOf(op);
     }
 
+    /**
+     * Inserts machine code to generate a breakpoint trap.
+     */
+    @INTRINSIC(BREAKPOINT_TRAP)
+    public static native void breakpointTrap();
+    
     /**
      * Attempts to fold a binary operation on two constant integer inputs.
      *

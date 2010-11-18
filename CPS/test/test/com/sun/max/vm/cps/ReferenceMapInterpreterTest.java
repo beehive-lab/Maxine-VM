@@ -20,12 +20,18 @@
  */
 package test.com.sun.max.vm.cps;
 
+import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
+
 import java.io.*;
 import java.util.*;
+
+import test.com.sun.max.vm.*;
+import test.com.sun.max.vm.verifier.*;
 
 import junit.framework.*;
 
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
@@ -346,7 +352,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                     final boolean[] blockStarts) {
         final ReferenceMap[] verifiedMaps = new ReferenceMap[codeLength];
         if (classVerifier instanceof TypeCheckingVerifier) {
-            new TypeCheckingMethodVerifier(classVerifier, classMethodActor, codeAttribute) {
+            TypeCheckingMethodVerifier verifier = new TypeCheckingMethodVerifier(classVerifier, classMethodActor, codeAttribute) {
                 private final boolean receiverTypeIsWord = thisObjectType.typeDescriptor().toKind().isWord;
                 @Override
                 public void verify() {
@@ -360,7 +366,8 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                     final int currentOpcodePosition = currentOpcodePosition();
                     verifiedMaps[currentOpcodePosition] = new ReferenceMap(receiverTypeIsWord, codeAttribute().code(), constantPool(), frame, maxLocals, maxStack);
                 }
-            }.verify();
+            };
+            verifier.verify();
         } else {
             new TypeInferencingMethodVerifier(classVerifier, classMethodActor, codeAttribute) {
                 private final boolean receiverTypeIsWord = thisObjectType.typeDescriptor().toKind().isWord;
@@ -387,8 +394,8 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
 
     public void test_lusearch() {
         try {
-            Class testedClass = Class.forName("org.apache.lucene.queryParser.QueryParserTokenManager");
-            compileMethod(testedClass, "getNextToken");
+            Class testedClass = Class.forName("com.sun.c1x.ir.Condition");
+            compileMethod(testedClass, "foldCondition");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -396,6 +403,32 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
 
     public void test_one() {
         compileMethod(test.output.HelloWorld.class, "main");
+    }
+
+    public void test_max() {
+        MethodFinder finder = new MethodFinder();
+        String[] patterns = new String[] {"^com.sun.c1x", "^com.sun.max"};
+        ArrayList<Throwable> nonFatalErrors = new ArrayList<Throwable>();
+        List<MethodActor> methods = finder.find(patterns, Classpath.fromSystem(), HOSTED_BOOT_CLASS_LOADER, nonFatalErrors);
+        int n = 0;
+        for (MethodActor method : methods) {
+            if (method instanceof ClassMethodActor) {
+                ClassMethodActor cma = (ClassMethodActor) method;
+                if (!VerifierTest.suppressVerificationOf(cma)) {
+                    if ((n % 1000) == 0) {
+                        Trace.line(1, n + " of " + methods.size());
+                    }
+                    //Trace.line(1, "Testing " + cma);
+                    try {
+                        compileMethod(cma);
+                    } catch (HostOnlyClassError e) {
+                    } catch (HostOnlyFieldError e) {
+                    } catch (HostOnlyMethodError e) {
+                    }
+                }
+            }
+            n++;
+        }
     }
 
     private static final File JCK_CLASSES_LIST = new File("test/test/com/sun/max/vm/verifier/jck.classes.txt");

@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.util;
 
+import com.sun.cri.ci.*;
+
 /**
  * This class implements a two-dimensional bitmap.
  *
@@ -28,7 +30,7 @@ package com.sun.c1x.util;
  */
 public class BitMap2D {
 
-    private BitMap map;
+    private CiBitMap map;
     private final int bitsPerSlot;
 
     private int bitIndex(int slotIndex, int bitWithinSlotIndex)  {
@@ -40,7 +42,7 @@ public class BitMap2D {
     }
 
     public BitMap2D(int sizeInSlots, int bitsPerSlot) {
-        map = new BitMap(sizeInSlots * bitsPerSlot);
+        map = new CiBitMap(sizeInSlots * bitsPerSlot);
         this.bitsPerSlot = bitsPerSlot;
     }
 
@@ -79,7 +81,7 @@ public class BitMap2D {
            while (size <= slotIndex) {
                size *= 2;
            }
-           BitMap newBitMap = new BitMap(size * bitsPerSlot);
+           CiBitMap newBitMap = new CiBitMap(size * bitsPerSlot);
            newBitMap.setUnion(map);
            map = newBitMap;
        }

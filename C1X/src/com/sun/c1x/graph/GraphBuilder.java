@@ -131,6 +131,7 @@ public final class GraphBuilder {
         // 3. setup internal state for appending instructions
         curBlock = startBlock;
         lastInstr = startBlock;
+        lastInstr.setNext(null, -1);
         curState = initialState;
 
         if (isSynchronized(rootMethod.accessFlags())) {
@@ -1720,6 +1721,7 @@ public final class GraphBuilder {
             // lock the receiver object if it is an instance method, the class object otherwise
             lock = synchronizedObject(curState, target);
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, ir.nextBlockNumber());
+            syncHandler.setNext(null, -1);
             inlineSyncEntry(lock, syncHandler);
         }
 
@@ -1868,6 +1870,7 @@ public final class GraphBuilder {
                 curBlock = b;
                 curState = b.stateBefore().copy();
                 lastInstr = b;
+                b.setNext(null, -1);
 
                 iterateBytecodesForBlock(b.bci(), false);
             }
@@ -2237,7 +2240,8 @@ public final class GraphBuilder {
                 case UCMP           : genUnsignedCompareOp(CiKind.Int, opcode, s.readCPI()); break;
                 case UWCMP          : genUnsignedCompareOp(CiKind.Word, opcode, s.readCPI()); break;
 
-                case ALLOCSTKVAR    : genLoadStackAddress(); break;
+                case ALLOCSTKVAR    : genLoadStackAddress(s.readCPI() == 0); break;
+                case BREAKPOINT_TRAP: genBreakpointTrap(); break;
                 case PAUSE          : genPause(); break;
                 case LSB            : // fall through
                 case MSB            : genSignificantBit(opcode);break;
@@ -2324,7 +2328,11 @@ public final class GraphBuilder {
         append(new Pause());
     }
 
-    private void genLoadStackAddress() {
+    private void genBreakpointTrap() {
+        append(new BreakpointTrap());
+    }
+
+    private void genLoadStackAddress(boolean isCategory1) {
         Value value = curState.xpop();
         wpush(append(new AllocateStackVariable(value)));
     }

@@ -63,8 +63,4 @@ public abstract class AbstractVMScheme extends AbstractScheme {
         // default: do nothing.
     }
 
-    public void finalize(MaxineVM.Phase phase) {
-        // default: do nothing.
-    }
-
 }

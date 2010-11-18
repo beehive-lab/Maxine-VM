@@ -35,6 +35,7 @@ public enum LIROpcode {
         OsrEntry,
         ReadPC,
         Alloca,
+        Breakpoint,
         Pause,
         RuntimeCall,
         Membar,

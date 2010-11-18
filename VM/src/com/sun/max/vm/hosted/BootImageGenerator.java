@@ -213,7 +213,6 @@ public final class BootImageGenerator {
             JavaPrototype.initialize(true);
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
-            vmConfig().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
 
