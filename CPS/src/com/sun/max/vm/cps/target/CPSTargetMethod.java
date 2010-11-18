@@ -535,7 +535,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             }
         }
 
-        return new CiDebugInfo(frame, registerRefMap, frameRefMap);
+        return new CiDebugInfo(frame, registerRefMap, new CiBitMap(frameRefMap));
     }
 
     @HOSTED_ONLY

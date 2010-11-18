@@ -68,7 +68,7 @@ public class LIRDebugInfo {
         return new LIRDebugInfo(this);
     }
 
-    public long setOop(CiValue location, C1XCompilation compilation, long regRefMap, byte[] frameRefMap) {
+    public void setOop(CiValue location, C1XCompilation compilation, CiBitMap frameRefMap, CiBitMap regRefMap) {
         CiTarget target = compilation.target;
         if (location.isAddress()) {
             CiAddress stackLocation = (CiAddress) location;
@@ -87,13 +87,11 @@ public class LIRDebugInfo {
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterValue registerLocation = (CiRegisterValue) location;
-            int encoding = registerLocation.reg.encoding;
-            assert encoding >= 0 : "object cannot be in non-object register " + registerLocation.reg;
-            assert encoding < target.arch.registerReferenceMapBitCount;
-            assert (regRefMap & (1L << encoding)) == 0;
-            regRefMap |= (1L << encoding);
+            int reg = registerLocation.reg.encoding;
+            assert reg >= 0 : "object cannot be in non-object register " + registerLocation.reg;
+            assert reg < target.arch.registerReferenceMapBitCount;
+            setBit(regRefMap, reg);
         }
-        return regRefMap;
     }
 
     public CiDebugInfo debugInfo() {
@@ -105,9 +103,9 @@ public class LIRDebugInfo {
         return debugInfo != null;
     }
 
-    private void setBit(byte[] array, int bit) {
-        boolean wasSet = CiUtil.setBit(array, bit);
-        assert !wasSet : "Ref map entry " + bit + " is already set.";
+    public static void setBit(CiBitMap refMap, int bit) {
+        assert !refMap.get(bit) : "Ref map entry " + bit + " is already set.";
+        refMap.set(bit);
     }
 
     @Override

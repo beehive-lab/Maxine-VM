@@ -169,7 +169,7 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
                 }
                 if (info.hasStackRefMap()) {
                     stream.print(";; frame-ref-map:");
-                    CiBitMap bm = new CiBitMap(info.frameRefMap);
+                    CiBitMap bm = info.frameRefMap;
                     for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
                         stream.print(" +" + i * target.spillSlotSize);
                     }
