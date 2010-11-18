@@ -161,19 +161,19 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
             if (info != null) {
                 if (info.hasRegisterRefMap()) {
                     stream.print(";;   reg-ref-map:");
-                    BitSet bs = CiUtil.asBitSet(info.registerRefMap);
-                    for (int enc = bs.nextSetBit(0); enc >= 0; enc = bs.nextSetBit(enc + 1)) {
-                        stream.print(" " + arch.registerFor(enc, RegisterFlag.CPU));
+                    CiBitMap bm = CiBitMap.fromLong(info.registerRefMap);
+                    for (int reg = bm.nextSetBit(0); reg >= 0; reg = bm.nextSetBit(reg + 1)) {
+                        stream.print(" " + arch.registerFor(reg, RegisterFlag.CPU));
                     }
-                    stream.println(" " + bs);
+                    stream.println(" " + bm);
                 }
                 if (info.hasStackRefMap()) {
                     stream.print(";; frame-ref-map:");
-                    BitSet bs = CiUtil.asBitSet(info.frameRefMap);
-                    for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
+                    CiBitMap bm = new CiBitMap(info.frameRefMap);
+                    for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
                         stream.print(" +" + i * target.spillSlotSize);
                     }
-                    stream.println(" " + bs);
+                    stream.println(" " + bm);
                 }
 
                 CiCodePos pos = info.codePos;

@@ -27,6 +27,7 @@ import java.util.*;
  *
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
+ * @author Doug Simon
  */
 public final class CiBitMap {
 
@@ -40,7 +41,7 @@ public final class CiBitMap {
         return ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;
     }
 
-    private int length;
+    private int size;
     private long low;
     private long[] extra;
 
@@ -52,13 +53,42 @@ public final class CiBitMap {
     }
 
     /**
+     * Constructs a new bit map from a byte array encoded bit map.
+     * 
+     * @param bitmap the bit map to convert
+     */
+    public CiBitMap(byte[] bitmap) {
+        this(bitmap.length * 8);
+        int bit = 0;
+        for (int i = 0; i < bitmap.length; i++) {
+            int b = bitmap[i] & 0xff;
+            for (int j = 0; j < 8; j++) {
+                if ((b & 1) != 0) {
+                    set(bit);
+                }
+                b = b >>> 1;
+                bit++;
+            }
+        }
+    }
+
+    /**
+     * Converts a {@code long} to a {@link CiBitMap}.
+     */
+    public static CiBitMap fromLong(long bitmap) {
+        CiBitMap bm = new CiBitMap(64);
+        bm.low = bitmap;
+        return bm;
+    }
+
+    /**
      * Constructs a new bit map with the specified length.
      * 
      * @param length the length of the bitmap
      */
     public CiBitMap(int length) {
         assert length >= 0;
-        this.length = length;
+        this.size = length;
         if (length > BITS_PER_WORD) {
             extra = new long[length >> ADDRESS_BITS_PER_WORD];
         }
@@ -85,7 +115,7 @@ public final class CiBitMap {
      * @param newLength the new length of the bitmap
      */
     public void grow(int newLength) {
-        if (newLength > length) {
+        if (newLength > size) {
             // grow this bitmap to the new length
             int newSize = newLength >> ADDRESS_BITS_PER_WORD;
             if (newLength > 0) {
@@ -105,7 +135,7 @@ public final class CiBitMap {
                     }
                 }
             }
-            length = newLength;
+            size = newLength;
         }
     }
 
@@ -179,7 +209,7 @@ public final class CiBitMap {
      * @return {@code true} if the bit at the specified position is {@code 1}
      */
     public boolean getDefault(int i) {
-        if (i < 0 || i >= length) {
+        if (i < 0 || i >= size) {
             return false;
         }
         if (i < BITS_PER_WORD) {
@@ -244,23 +274,23 @@ public final class CiBitMap {
     }
 
     /**
-     * Gets the size of this bitmap in bits.
+     * Gets the number of addressable bits in this bitmap.
      *
      * @return the size of this bitmap
      */
     public int size() {
-        return length;
+        return size;
     }
 
     private int checkIndex(int i) {
-        if (i < 0 || i >= length) {
+        if (i < 0 || i >= size) {
             throw new IndexOutOfBoundsException();
         }
         return i;
     }
 
     public void setFrom(CiBitMap other) {
-        assert this.length == other.length : "must have same size";
+        assert this.size == other.size : "must have same size";
 
         low = other.low;
         if (extra != null) {
@@ -271,7 +301,7 @@ public final class CiBitMap {
     }
 
     public void setDifference(CiBitMap other) {
-        assert this.length == other.length : "must have same size";
+        assert this.size == other.size : "must have same size";
 
         low &= ~other.low;
         if (extra != null) {
@@ -282,7 +312,7 @@ public final class CiBitMap {
     }
 
     public boolean isSame(CiBitMap other) {
-        if (this.length != other.length || this.low != other.low) {
+        if (this.size != other.size || this.low != other.low) {
             return false;
         }
 
@@ -335,8 +365,8 @@ public final class CiBitMap {
      * @throws IndexOutOfBoundsException if the specified index is negative.
      */
     public int nextSetBit(int fromIndex, int toIndex) {
-        assert fromIndex <= size() : "BitMap index out of bounds";
-        assert toIndex <= size() : "BitMap index out of bounds";
+        assert fromIndex <= size() : "index out of bounds";
+        assert toIndex <= size() : "index out of bounds";
         assert fromIndex <= toIndex : "fromIndex > toIndex";
 
         if (fromIndex == toIndex) {
@@ -384,20 +414,118 @@ public final class CiBitMap {
         return extra[index];
     }
 
+    /**
+     * Returns a string representation of this bit map
+     * that is the same as the string returned by {@link BitSet#toString()}
+     * for a bit set with the same bits set as this bit map.
+     */
     @Override
     public String toString() {
-        StringBuilder res = new StringBuilder();
-        res.append("[");
-        for (int i = 0; i < this.length; i++) {
-            if (this.get(i)) {
-                if (res.length() != 1) {
-                    res.append(' ');
-                }
-                res.append(i);
+        StringBuilder sb = new StringBuilder(size * 2);
+        sb.append('{');
+
+        int bit = nextSetBit(0);
+        if (bit != -1) {
+            sb.append(bit);
+            for (bit = nextSetBit(bit + 1); bit >= 0; bit = nextSetBit(bit + 1)) {
+                sb.append(", ").append(bit);
             }
         }
-        res.append("]");
-        return res.toString();
+
+        sb.append('}');
+        return sb.toString();
+    }
+
+    public static int highestOneBitIndex(long value) {
+        int bit = Long.numberOfTrailingZeros(Long.highestOneBit(value));
+        if (bit == 64) {
+            return -1;
+        }
+        return bit;
+    }
+    
+    /**
+     * Returns the number of bits set to {@code true} in this bit map.
+     */
+    public int cardinality() {
+        int sum = Long.bitCount(low);
+        if (extra != null) {
+            for (long word : extra) {
+                sum += Long.bitCount(word);
+            }
+        }
+        return sum;
+    }
+
+    /**
+     * Returns the "logical size" of this bit map: the index of
+     * the highest set bit in the bit map plus one. Returns zero
+     * if the bit map contains no set bits.
+     *
+     * @return  the logical size of this bit map
+     */
+    public int length() {
+        if (extra != null) {
+            for (int i = extra.length - 1; i >= 0; i--) {
+                if (extra[i] != 0) {
+                    return (highestOneBitIndex(extra[i]) + ((i + 1) * 64)) + 1;
+                }
+            }
+        }
+        return highestOneBitIndex(low) + 1;
+    }
+
+    /**
+     * Returns a string representation of this bit map with every set bit represented as {@code '1'}
+     * and every unset bit represented as {@code '0'}. The first character in the returned string represents
+     * bit 0 in this bit map.
+     * 
+     * @param length the number of bits represented in the returned string. If {@code length < 0 || length > size()},
+     *            then the value of {@link #length()} is used.
+     */
+    public String toBinaryString(int length) {
+        if (length < 0 || length > size) {
+            length = length();
+        }
+        if (length == 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; ++i) {
+            sb.append(get(i) ? '1' : '0');
+        }
+        return sb.toString();
+    }
+
+    final static char[] hexDigits = {
+        '0' , '1' , '2' , '3' , '4' , '5' , '6' , '7' ,
+        '8' , '9' , 'a' , 'b' , 'c' , 'd' , 'e' , 'f'
+    };
+
+    /**
+     * Returns a string representation of this bit map in hex.
+     */
+    public String toHexString() {
+        if (size == 0) {
+            return "";
+        }
+        int size = CiUtil.align(this.size, 4);
+        StringBuilder sb = new StringBuilder(size / 4);
+        for (int i = 0; i < size; i += 4) {
+            int nibble = get(i) ? 1 : 0;
+            if (get(i + 1)) {
+                nibble |= 2;
+            }
+            if (get(i + 2)) {
+                nibble |= 4;
+            }
+            if (get(i + 3)) {
+                nibble |= 8;
+            }
+            
+            sb.append(hexDigits[nibble]);
+        }
+        return sb.toString();
     }
 
     public CiBitMap copy() {
@@ -406,13 +534,13 @@ public final class CiBitMap {
         if (extra != null) {
             n.extra = Arrays.copyOf(extra, extra.length);
         }
-        n.length = length;
+        n.size = size;
         return n;
     }
 
     public boolean[] toArray() {
-        final boolean[] result = new boolean[this.length];
-        for (int i = 0; i < length; i++) {
+        final boolean[] result = new boolean[this.size];
+        for (int i = 0; i < size; i++) {
             result[i] = get(i);
         }
         return result;

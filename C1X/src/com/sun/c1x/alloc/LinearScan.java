@@ -1958,7 +1958,8 @@ public class LinearScan {
         return new IntervalWalker(this, oopIntervals, nonOopIntervals);
     }
 
-    void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, boolean isCallSite) {
+    long computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, boolean isCallSite, byte[] frameRefMap) {
+        long regRefMap = 0L;
         if (C1XOptions.TraceLinearScanLevel >= 3) {
             TTY.println("creating oop map at opId %d", op.id);
         }
@@ -1989,7 +1990,7 @@ public class LinearScan {
                 if (location.isStackSlot()) {
                     location = frameMap.toStackAddress((CiStackSlot) location);
                 }
-                info.setOop(location, compilation);
+                regRefMap = info.setOop(location, compilation, regRefMap, frameRefMap);
 
                 // Spill optimization: when the stack value is guaranteed to be always correct,
                 // then it must be added to the oop map even if the interval is currently in a register
@@ -1998,34 +1999,36 @@ public class LinearScan {
                     assert interval.spillSlot() != null : "no spill slot assigned";
                     assert !interval.operand.isRegister() : "interval is on stack :  so stack slot is registered twice";
 
-                    info.setOop(frameMap.toStackAddress(interval.spillSlot()), compilation);
+                    regRefMap = info.setOop(frameMap.toStackAddress(interval.spillSlot()), compilation, regRefMap, frameRefMap);
                 }
             }
         }
+        return regRefMap;
     }
 
     private boolean isCallerSave(CiValue operand) {
         return attributes(operand.asRegister()).isCallerSave;
     }
 
-    void computeOopMap(IntervalWalker iw, LIRInstruction op) {
+    long computeOopMap(IntervalWalker iw, LIRInstruction op, byte[] frameRefMap) {
         assert op.info != null : "no oop map needed";
-        computeOopMap(iw, op, op.info, op.hasCall());
+        long regRefMap = computeOopMap(iw, op, op.info, op.hasCall(), frameRefMap);
         if (op instanceof LIRCall) {
             List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
             if (pointerSlots != null) {
                 for (CiValue v : pointerSlots) {
-                    op.info.setOop(v, compilation);
+                    regRefMap = op.info.setOop(v, compilation, regRefMap, frameRefMap);
                 }
             }
         } else if (op instanceof LIRXirInstruction) {
             List<CiValue> pointerSlots = ((LIRXirInstruction) op).pointerSlots;
             if (pointerSlots != null) {
                 for (CiValue v : pointerSlots) {
-                    op.info.setOop(v, compilation);
+                    regRefMap = op.info.setOop(v, compilation, regRefMap, frameRefMap);
                 }
             }
         }
+        return regRefMap;
     }
 
     CiValue toCiValue(int opId, Value value) {
@@ -2127,14 +2130,15 @@ public class LinearScan {
         LIRDebugInfo info = op.info;
         if (info != null) {
             if (info.debugInfo == null) {
-                byte[] regRefMap = CiUtil.makeBitMap(compilation.target.arch.registerReferenceMapBitCount);
                 int frameSize = compilation.frameMap().frameSize();
                 byte[] frameRefMap = CiUtil.makeBitMap(frameSize / compilation.target.spillSlotSize);
                 Frame frame = computeFrame(info.state, op.id, frameRefMap);
+                long regRefMap = computeOopMap(iw, op, frameRefMap);
                 info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);
-                computeOopMap(iw, op);
             } else if (C1XOptions.DetailedAsserts) {
-                assert info.debugInfo.frame().equals(computeFrame(info.state, op.id, null));
+                int frameSize = compilation.frameMap().frameSize();
+                byte[] frameRefMap = CiUtil.makeBitMap(frameSize / compilation.target.spillSlotSize);
+                assert info.debugInfo.frame().equals(computeFrame(info.state, op.id, frameRefMap));
             }
         }
     }

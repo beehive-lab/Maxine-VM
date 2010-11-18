@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.target;
 
+import static com.sun.cri.ci.CiDebugInfo.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -520,14 +522,17 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         TargetJavaFrameDescriptor jfd = TargetJavaFrameDescriptor.get(this, stopIndex);
         Frame frame = jfd.toFrame(null);
 
-        byte[] registerRefMap = {};
+        long registerRefMap = NO_REF_MAP;
         byte[] frameRefMap = new byte[frameReferenceMapSize];
         System.arraycopy(referenceMaps, stopIndex * frameReferenceMapSize, frameRefMap, 0, frameReferenceMapSize);
         if (stopIndex >= numberOfDirectCalls() + numberOfIndirectCalls()) {
             int regRefMapSize = registerReferenceMapSize();
-            registerRefMap = new byte[regRefMapSize];
+            registerRefMap = 0L;
             int byteIndex = frameReferenceMapsSize() + (regRefMapSize * stopIndex);
-            System.arraycopy(referenceMaps, byteIndex, registerRefMap, 0, regRefMapSize);
+            for (int i = 0; i < regRefMapSize; i++) {
+                long b = ((long) referenceMaps[byteIndex + i]) & 0xffL;
+                registerRefMap |= b << (i * 8);
+            }
         }
 
         return new CiDebugInfo(frame, registerRefMap, frameRefMap);

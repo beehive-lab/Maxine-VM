@@ -406,10 +406,10 @@ public class Util {
             String indentTwice = indent + indent;
             StringBuilder refMaps = new StringBuilder();
             if (info.hasRegisterRefMap()) {
-                CiUtil.appendBitmap(refMaps.append(", reg-ref-map:"), info.registerRefMap);
+                refMaps.append(", reg-ref-map:").append(CiBitMap.fromLong(info.registerRefMap));
             }
             if (info.hasStackRefMap()) {
-                CiUtil.appendBitmap(refMaps.append(", frame-ref-map: "), info.frameRefMap);
+                refMaps.append(", frame-ref-map: ").append(new CiBitMap(info.frameRefMap));
             }
             CiCodePos pos = info.codePos;
             while (pos != null) {

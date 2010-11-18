@@ -68,9 +68,8 @@ public class LIRDebugInfo {
         return new LIRDebugInfo(this);
     }
 
-    public void setOop(CiValue location, C1XCompilation compilation) {
+    public long setOop(CiValue location, C1XCompilation compilation, long regRefMap, byte[] frameRefMap) {
         CiTarget target = compilation.target;
-        assert debugInfo != null : "debug info not allocated yet";
         if (location.isAddress()) {
             CiAddress stackLocation = (CiAddress) location;
             assert stackLocation.index.isIllegal();
@@ -78,21 +77,23 @@ public class LIRDebugInfo {
                 int offset = stackLocation.displacement;
                 assert offset % target.wordSize == 0 : "must be aligned";
                 int stackMapIndex = offset / target.wordSize;
-                setBit(debugInfo.frameRefMap, stackMapIndex);
+                setBit(frameRefMap, stackMapIndex);
             }
         } else if (location.isStackSlot()) {
             CiStackSlot stackSlot = (CiStackSlot) location;
             assert !stackSlot.inCallerFrame();
             assert target.spillSlotSize == target.wordSize;
-            setBit(debugInfo.frameRefMap, stackSlot.index());
+            setBit(frameRefMap, stackSlot.index());
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterValue registerLocation = (CiRegisterValue) location;
             int encoding = registerLocation.reg.encoding;
             assert encoding >= 0 : "object cannot be in non-object register " + registerLocation.reg;
             assert encoding < target.arch.registerReferenceMapBitCount;
-            setBit(debugInfo.registerRefMap, encoding);
+            assert (regRefMap & (1L << encoding)) == 0;
+            regRefMap |= (1L << encoding);
         }
+        return regRefMap;
     }
 
     public CiDebugInfo debugInfo() {
