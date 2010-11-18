@@ -95,7 +95,7 @@ public abstract class LIRAssembler {
     }
 
     public void emitExceptionEntries() {
-        if (asm.exceptionInfoList.size() == 0) {
+        if (asm.exceptionInfoList == null) {
             return;
         }
         for (ExceptionInfo ilist : asm.exceptionInfoList) {
@@ -269,7 +269,7 @@ public abstract class LIRAssembler {
             case Branch:
                 break;
             case Neg:
-                emitNegate(op);
+                emitNegate((LIRNegate) op);
                 break;
             case Lea:
                 emitLea(op.operand(), op.result());
@@ -326,12 +326,6 @@ public abstract class LIRAssembler {
     protected void emitOp2(LIROp2 op) {
         switch (op.code) {
             case Cmp:
-                if (op.info != null) {
-                    assert op.operand1().isAddress() || op.operand2().isAddress() : "shouldn't be codeemitinfo for non-address operands";
-                    //NullPointerExceptionStub stub = new NullPointerExceptionStub(pcOffset, cinfo);
-                    //emitCodeStub(stub);
-                    asm.recordImplicitException(codePos(), op.info);
-                }
                 emitCompare(op.condition(), op.operand1(), op.operand2(), op);
                 break;
 
@@ -458,7 +452,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitLea(CiValue src, CiValue dst);
 
-    protected abstract void emitNegate(LIROp1 negate);
+    protected abstract void emitNegate(LIRNegate negate);
 
     protected abstract void emitReadPC(CiValue dst);
 

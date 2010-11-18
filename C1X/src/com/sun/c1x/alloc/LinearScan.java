@@ -880,9 +880,9 @@ public class LinearScan {
         TTY.println(block.lirBlock.liveOut.toString());
     }
 
-    void addUse(CiValue operand, int from, int to, RegisterPriority registerPriority, CiKind kind) {
+    Interval addUse(CiValue operand, int from, int to, RegisterPriority registerPriority, CiKind kind) {
         if (!isProcessed(operand)) {
-            return;
+            return null;
         }
         if (C1XOptions.TraceLinearScanLevel >= 2 && kind == null) {
             TTY.println(" use %s from %d to %d (%s)", operand, from, to, registerPriority.name());
@@ -907,6 +907,7 @@ public class LinearScan {
         }
 
         interval.addUsePos(to, registerPriority);
+        return interval;
     }
 
     void addTemp(CiValue operand, int tempPos, RegisterPriority registerPriority, CiKind kind) {
@@ -1262,7 +1263,15 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CiValue operand = op.operandAt(LIRInstruction.OperandMode.Input, k);
                     assert operand.isVariableOrRegister();
-                    addUse(operand, blockFrom, opId, registerPriorityOfInputOperand(op, operand), null);
+                    RegisterPriority p = registerPriorityOfInputOperand(op, operand);
+                    Interval interval = addUse(operand, blockFrom, opId, p, null);
+                    if (interval != null && op instanceof LIRXirInstruction) {
+                        Range range = interval.first();
+                        // (tw) Increase range by 1 in order to overlap the input with the temp and the output operand.
+                        if (range.to == opId) {
+                            range.to++;
+                        }
+                    }
                 }
 
                 // Add uses of live locals from interpreter's point of view for proper
@@ -2127,7 +2136,10 @@ public class LinearScan {
         LIRDebugInfo info = op.info;
         if (info != null) {
             if (info.debugInfo == null) {
-                byte[] regRefMap = CiUtil.makeBitMap(compilation.target.arch.registerReferenceMapBitCount);
+                byte[] regRefMap = null;
+                if (!op.hasCall()) {
+                    regRefMap = CiUtil.makeBitMap(compilation.target.arch.registerReferenceMapBitCount);
+                }
                 int frameSize = compilation.frameMap().frameSize();
                 byte[] frameRefMap = CiUtil.makeBitMap(frameSize / compilation.target.spillSlotSize);
                 Frame frame = computeFrame(info.state, op.id, frameRefMap);

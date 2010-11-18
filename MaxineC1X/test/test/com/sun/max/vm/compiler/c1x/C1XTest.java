@@ -29,6 +29,7 @@ import java.util.*;
 import test.com.sun.max.vm.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
 import com.sun.max.*;
@@ -512,87 +513,27 @@ public class C1XTest {
 
     private static void reportMetrics() {
         if (C1XOptions.PrintMetrics) {
-            printClassFields(C1XMetrics.class);
+            C1XMetrics.print();
         }
         List<String> metrics = metricsOption.getValue();
         if (metrics.size() > 0) {
             for (String s : metrics) {
-                out.print(s + "\t");
+                TTY.print(s + "\t");
             }
-            out.println();
+            TTY.println();
             for (String s : metrics) {
                 try {
-                    printField(C1XMetrics.class.getDeclaredField(s), true);
+                    C1XMetrics.printField(C1XMetrics.class.getDeclaredField(s), true);
                 } catch (NoSuchFieldException e) {
-                    out.println("-----");
+                    TTY.println("-----");
                 }
             }
-            out.println();
+            TTY.println();
         }
     }
 
     private static double averageTime() {
         return (cumulNs / (double) timingOption.getValue()) / ONE_BILLION;
-    }
-
-    private static String printMap(Map m) {
-        StringBuilder sb = new StringBuilder();
-
-        List<String> keys = new ArrayList<String>();
-        for (Object key : m.keySet()) {
-            keys.add((String) key);
-        }
-        Collections.sort(keys);
-
-        for (String key : keys) {
-            sb.append(key);
-            sb.append("\t");
-            sb.append(m.get(key));
-            sb.append("\n");
-        }
-
-        return sb.toString();
-    }
-
-    private static void printClassFields(Class<?> javaClass) {
-        final String className = javaClass.getSimpleName();
-        out.println(className + " {");
-        for (final Field field : javaClass.getFields()) {
-            printField(field, false);
-        }
-        out.println("}");
-    }
-
-    private static void printField(final Field field, boolean tabbed) {
-        final String fieldName = Strings.padLengthWithSpaces(field.getName(), 35);
-        try {
-            String prefix = tabbed ? "" : "    " + fieldName + " = ";
-            String postfix = tabbed ? "\t" : "\n";
-            if (field.getType() == int.class) {
-                out.print(prefix + field.getInt(null) + postfix);
-            } else if (field.getType() == boolean.class) {
-                out.print(prefix + field.getBoolean(null) + postfix);
-            } else if (field.getType() == float.class) {
-                out.print(prefix + field.getFloat(null) + postfix);
-            } else if (field.getType() == String.class) {
-                out.print(prefix + field.get(null) + postfix);
-            } else if (field.getType() == Map.class) {
-                Map m = (Map) field.get(null);
-                out.print(prefix + printMap(m) + postfix);
-            } else {
-                out.print(prefix + field.get(null) + postfix);
-            }
-        } catch (IllegalAccessException e) {
-            // do nothing.
-        }
-    }
-
-    private static void printField(String fieldName, long value) {
-        out.print("    " + fieldName + " = " + value + "\n");
-    }
-
-    private static void printField(String fieldName, double value) {
-        out.print("    " + fieldName + " = " + value + "\n");
     }
 
     private static class Timing {

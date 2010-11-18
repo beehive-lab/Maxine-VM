@@ -560,8 +560,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             code[offset + 3] = (byte) (displacement >> 16);
             code[offset + 4] = (byte) (displacement >> 24);
         } else {
-            if (false && callSite.isWordAligned()) {
-                // TODO: Patch location must not straddle a cache-line (32-byte) boundary.
+            if (!callSite.isWordAligned()) {
+                // Patch location must not straddle a cache-line (32-byte) boundary.
                 FatalError.unexpected("Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.", false, null, Pointer.zero());
             }
             // The read, modify, write below should be changed to simply a write once we have the method entry point alignment fixed.

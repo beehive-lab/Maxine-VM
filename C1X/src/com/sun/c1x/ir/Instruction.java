@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
@@ -69,6 +70,7 @@ public abstract class Instruction extends Value {
     public Instruction(CiKind kind) {
         super(kind);
         bci = BCI_NOT_APPENDED;
+        C1XMetrics.HIRInstructions++;
     }
 
     /**

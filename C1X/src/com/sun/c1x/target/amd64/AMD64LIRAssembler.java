@@ -258,9 +258,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
         } else if (dest.kind.isDouble()) {
             masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
         } else {
-            if (src.kind == CiKind.Object) {
-                masm.verifyOop(src.asRegister());
-            }
             moveRegs(src.asRegister(), dest.asRegister());
         }
     }
@@ -270,10 +267,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
         assert src.isRegister();
         assert dst.isStackSlot();
         CiAddress addr = frameMap.toStackAddress(((CiStackSlot) dst));
-
-        if (src.kind.isObject()) {
-            masm.verifyOop(src.asRegister());
-        }
 
         switch (src.kind) {
             case Boolean :
@@ -295,9 +288,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
     protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         CiAddress toAddr = (CiAddress) dest;
 
-        if (kind == CiKind.Object) {
-            masm.verifyOop(src.asRegister());
-        }
         if (info != null) {
             asm.recordImplicitException(codePos(), info);
         }
@@ -328,10 +318,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
     protected void stack2reg(CiValue src, CiValue dest, CiKind kind) {
         assert src.isStackSlot();
         assert dest.isRegister();
-
-        if (kind == CiKind.Object) {
-            masm.verifyOop(dest.asRegister());
-        }
 
         CiAddress addr = frameMap.toStackAddress(((CiStackSlot) src));
 
@@ -407,10 +393,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Short   : masm.movswl(dest.asRegister(), addr); break;
             default      : throw Util.shouldNotReachHere();
         }
-
-        if (kind == CiKind.Object) {
-            masm.verifyOop(dest.asRegister());
-        }
     }
 
     @Override
@@ -458,6 +440,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
         if (op.cond() == Condition.TRUE) {
             if (op.info != null) {
                 asm.recordImplicitException(codePos(), op.info);
+                System.out.println("Condition is TRUE");
             }
             masm.jmp(op.label());
         } else {
@@ -1181,41 +1164,11 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     }
                     default      : throw Util.shouldNotReachHere();
                 }
-            } else if (opr2.isAddress()) {
-                // register - address
-                if (op != null && op.info != null) {
-                    asm.recordImplicitException(codePos(), op.info);
-                }
-                switch (opr1.kind) {
-                    case Boolean :
-                    case Byte    :
-                    case Char    :
-                    case Short   :
-                    case Int     : masm.cmpl(reg1, asAddress(opr2)); break;
-                    default      : throw Util.shouldNotReachHere();
-                }
+            } else {
+                throw Util.shouldNotReachHere();
             }
         } else {
-            assert opr1.isAddress() && opr2.isConstant();
-            CiConstant c = ((CiConstant) opr2);
-
-            if (c.kind == CiKind.Object) {
-                assert condition == Condition.EQ || condition == Condition.NE : "need to reverse";
-                masm.movoop(rscratch1, CiConstant.forObject(c.asObject()));
-            }
-            if (op != null && op.info != null) {
-                asm.recordImplicitException(codePos(), op.info);
-            }
-            // special case: address - constant
-            CiAddress addr = (CiAddress) opr1;
-            if (c.kind == CiKind.Int) {
-                masm.cmpl(addr, c.asInt());
-            } else {
-                assert c.kind == CiKind.Object || c.kind == CiKind.Word;
-                // %%% Make this explode if addr isn't reachable until we figure out a
-                // better strategy by giving X86.noreg as the temp for asAddress
-                masm.cmpptr(rscratch1, addr);
-            }
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -1247,7 +1200,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
             masm.jmp(done);
             masm.bind(isEqual);
             masm.xorptr(dest, dest);
-
             masm.bind(done);
         }
     }
@@ -1395,7 +1347,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitNegate(LIROp1 op) {
+    protected void emitNegate(LIRNegate op) {
         CiValue left = op.operand();
         CiValue dest = op.result();
         assert left.isRegister();

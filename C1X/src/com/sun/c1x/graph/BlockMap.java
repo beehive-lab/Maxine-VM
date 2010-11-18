@@ -594,30 +594,30 @@ public class BlockMap {
             case DSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
             case WSTORE:
             case ASTORE:   storeOne(code[bci + 1] & 0xff); return 2;
-            case ISTORE_0: storeOne(0); return 1;
-            case ISTORE_1: storeOne(1); return 1;
-            case ISTORE_2: storeOne(2); return 1;
-            case ISTORE_3: storeOne(3); return 1;
-            case LSTORE_0: storeTwo(0); return 1;
-            case LSTORE_1: storeTwo(1); return 1;
-            case LSTORE_2: storeTwo(2); return 1;
-            case LSTORE_3: storeTwo(3); return 1;
-            case FSTORE_0: storeOne(0); return 1;
-            case FSTORE_1: storeOne(1); return 1;
-            case FSTORE_2: storeOne(2); return 1;
-            case FSTORE_3: storeOne(3); return 1;
-            case DSTORE_0: storeTwo(0); return 1;
-            case DSTORE_1: storeTwo(1); return 1;
-            case DSTORE_2: storeTwo(2); return 1;
-            case DSTORE_3: storeTwo(3); return 1;
-            case ASTORE_0: storeOne(0); return 1;
-            case ASTORE_1: storeOne(1); return 1;
-            case ASTORE_2: storeOne(2); return 1;
-            case ASTORE_3: storeOne(3); return 1;
-            case WSTORE_0: storeOne(0); return 1;
-            case WSTORE_1: storeOne(1); return 1;
-            case WSTORE_2: storeOne(2); return 1;
-            case WSTORE_3: storeOne(3); return 1;
+            case ISTORE_0: // fall through
+            case ISTORE_1: // fall through
+            case ISTORE_2: // fall through
+            case ISTORE_3: storeOne(opcode - ISTORE_0); return 1;
+            case LSTORE_0: // fall through
+            case LSTORE_1: // fall through
+            case LSTORE_2: // fall through
+            case LSTORE_3: storeTwo(opcode - LSTORE_0); return 1;
+            case FSTORE_0: // fall through
+            case FSTORE_1: // fall through
+            case FSTORE_2: // fall through
+            case FSTORE_3: storeOne(opcode - FSTORE_0); return 1;
+            case DSTORE_0: // fall through
+            case DSTORE_1: // fall through
+            case DSTORE_2: // fall through
+            case DSTORE_3: storeTwo(opcode - DSTORE_0); return 1;
+            case ASTORE_0: // fall through
+            case ASTORE_1: // fall through
+            case ASTORE_2: // fall through
+            case ASTORE_3: storeOne(opcode - ASTORE_0); return 1;
+            case WSTORE_0: // fall through
+            case WSTORE_1: // fall through
+            case WSTORE_2: // fall through
+            case WSTORE_3: storeOne(opcode - WSTORE_0); return 1;
         }
         throw Util.shouldNotReachHere();
     }

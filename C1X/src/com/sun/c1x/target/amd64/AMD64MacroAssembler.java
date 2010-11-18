@@ -498,10 +498,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    public void verifyOop(CiRegister r) {
-        Util.nonFatalUnimplemented();
-    }
-
     void xchgptr(CiRegister src1, CiRegister src2) {
         xchgq(src1, src2);
     }

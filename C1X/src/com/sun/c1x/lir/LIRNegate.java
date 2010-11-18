@@ -21,47 +21,25 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.globalstub.*;
-import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
- * The {@code LIRConvert} class definition.
+ * The {@code LIRNegate} class definition.
  *
- * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  *
  */
-public class LIRConvert extends LIROp1 {
+public class LIRNegate extends LIROp1 {
 
-    public final int bytecode;
     public GlobalStub globalStub;
 
     /**
-     * Constructs a new instruction LIRConvert for a given operand.
+     * Constructs a new instruction LIRNegate for a given operand.
      *
-     * @param bytecode the opcode of the bytecode for this conversion
      * @param operand the input operand for this instruction
      * @param result the result operand for this instruction
      */
-    public LIRConvert(int bytecode, CiValue operand, CiValue result) {
-        super(LIROpcode.Convert, operand, result);
-        this.bytecode = bytecode;
-    }
-
-    /**
-     * Emits target assembly code for this LIRConvert instruction.
-     *
-     * @param masm the LIRAssembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitConvert(this);
-    }
-
-    /**
-     * Prints this instruction to a LogStream.
-     */
-    @Override
-    public String operationString(OperandFormatter operandFmt) {
-        return "[" + Bytecodes.nameOf(bytecode) + "] " + super.operationString(operandFmt);
+    public LIRNegate(CiValue operand, CiValue result) {
+        super(LIROpcode.Neg, operand, result);
     }
 }

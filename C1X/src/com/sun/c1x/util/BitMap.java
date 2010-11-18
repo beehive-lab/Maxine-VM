@@ -410,12 +410,4 @@ public class BitMap {
         n.length = length;
         return n;
     }
-
-    public boolean[] toArray() {
-        final boolean[] result = new boolean[this.length];
-        for (int i = 0; i < length; i++) {
-            result[i] = get(i);
-        }
-        return result;
-    }
 }

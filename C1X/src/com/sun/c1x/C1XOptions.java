@@ -160,7 +160,7 @@ public class C1XOptions {
     public static boolean GenAssertionCode              = ____;
     public static boolean GenFinalizerRegistration      = true;
     public static boolean GenTableRanges                = ____;
-    public static boolean AlignCallsForPatching         = ____;
+    public static boolean AlignCallsForPatching         = true;
     public static boolean NullCheckUniquePc             = ____;
     public static boolean invokeinterfaceTemplatePos    = ____;
 

@@ -22,6 +22,7 @@ package com.sun.c1x.value;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
@@ -94,6 +95,8 @@ public abstract class FrameState {
         this.bci = bci;
         this.values = new Value[maxLocals + Math.max(maxStack, MINIMUM_STACK_SLOTS)];
         this.maxLocals = maxLocals;
+        C1XMetrics.FrameStatesCreated++;
+        C1XMetrics.FrameStateValuesCreated += this.values.length;
     }
 
     /**

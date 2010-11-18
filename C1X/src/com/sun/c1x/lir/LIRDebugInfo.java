@@ -55,7 +55,7 @@ public class LIRDebugInfo {
 
         // deep copy of exception handlers
         if (info.exceptionHandlers != null) {
-            this.exceptionHandlers = new ArrayList<ExceptionHandler>();
+            this.exceptionHandlers = new ArrayList<ExceptionHandler>(info.exceptionHandlers.size());
             for (ExceptionHandler h : info.exceptionHandlers) {
                 this.exceptionHandlers.add(new ExceptionHandler(h));
             }

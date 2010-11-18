@@ -110,7 +110,7 @@ public class LIRCall extends LIRInstruction {
         }
         buf.append('(');
         boolean first = true;
-        for (LIROperand operandSlot : inputAndTempOperands) {
+        for (LIROperand operandSlot : operands) {
             String operand = operandFmt.format(operandSlot.value(this));
             if (!operand.isEmpty() && !operand.equals(targetAddress)) {
                 if (!first) {

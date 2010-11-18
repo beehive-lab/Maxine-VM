@@ -1065,8 +1065,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirParameter interfaceID = asm.createConstantInputParameter("interfaceID", CiKind.Int);
             XirParameter checkedHub = asm.createConstantInputParameter("checkedHub", CiKind.Object);
             XirOperand hub = asm.createTemp("hub", CiKind.Object);
-            XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
-            XirOperand mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
+            XirOperand mtableTemp = asm.createTemp("mtableTemp", CiKind.Int);
             XirOperand a = asm.createTemp("a", CiKind.Int);
             XirLabel pass = asm.createInlineLabel("pass");
             XirLabel fail = asm.createOutOfLineLabel("fail");
@@ -1077,10 +1076,10 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             asm.pload(CiKind.Object, hub, object, asm.i(hubOffset()), !nonnull);
             asm.jeq(pass, hub, checkedHub);
-            asm.pload(CiKind.Int, mtableLength, hub, asm.i(offsetOfMTableLength()), false);
-            asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(offsetOfMTableStartIndex()), false);
-            asm.mod(a, interfaceID, mtableLength);
-            asm.add(a, a, mtableStartIndex);
+            asm.pload(CiKind.Int, mtableTemp, hub, asm.i(offsetOfMTableLength()), false);
+            asm.mod(a, interfaceID, mtableTemp);
+            asm.pload(CiKind.Int, mtableTemp, hub, asm.i(offsetOfMTableStartIndex()), false);
+            asm.add(a, a, mtableTemp);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.Times4, false);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
             asm.jneq(fail, a, interfaceID);
