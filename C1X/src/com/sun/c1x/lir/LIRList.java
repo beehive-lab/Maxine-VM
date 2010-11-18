@@ -55,10 +55,6 @@ public class LIRList {
     }
 
     private void append(LIRInstruction op) {
-        if (op.source == null) {
-            op.source = generator.currentInstruction();
-        }
-
         if (C1XOptions.PrintIRWithLIR) {
             generator.maybePrintCurrentInstruction();
             op.printOn(TTY.out());
@@ -122,7 +118,7 @@ public class LIRList {
     }
 
     public void negate(CiValue src, CiValue dst, GlobalStub globalStub) {
-        LIROp1 op = new LIROp1(LIROpcode.Neg, src, dst);
+        LIRNegate op = new LIRNegate(src, dst);
         op.globalStub = globalStub;
         append(op);
     }

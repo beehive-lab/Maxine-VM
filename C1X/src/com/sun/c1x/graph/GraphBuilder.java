@@ -521,13 +521,13 @@ public final class GraphBuilder {
     }
 
     void genLoadConstant(int cpi) {
-        FrameState stateBefore = curState.immutableCopy(bci());
         Object con = constantPool().lookupConstant(cpi);
 
         if (con instanceof RiType) {
             // this is a load of class constant which might be unresolved
             RiType riType = (RiType) con;
             if (!riType.isResolved() || C1XOptions.TestPatching) {
+                FrameState stateBefore = curState.immutableCopy(bci());
                 push(CiKind.Object, append(new ResolveClass(riType, RiType.Representation.JavaClass, stateBefore)));
             } else {
                 push(CiKind.Object, append(new Constant(riType.getEncoding(Representation.JavaClass))));
@@ -688,10 +688,9 @@ public final class GraphBuilder {
     }
 
     void genUnsignedCompareOp(CiKind kind, int opcode, int op) {
-        FrameState stateBefore = curState.immutableCopy(bci());
         Value y = pop(kind);
         Value x = pop(kind);
-        ipush(append(new UnsignedCompareOp(opcode, op, x, y, stateBefore)));
+        ipush(append(new UnsignedCompareOp(opcode, op, x, y)));
     }
 
     void genConvert(int opcode, CiKind from, CiKind to) {
@@ -838,12 +837,17 @@ public final class GraphBuilder {
     }
 
     void genGetStatic(int cpi, RiField field) {
-        FrameState stateBefore = curState.immutableCopy(bci());
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
-        Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
-        LoadField load = new LoadField(container, field, true, stateBefore, isInitialized);
-        appendOptimizedLoadField(field.kind(), load);
+        CiConstant constantValue = field.constantValue(null);
+        if (isInitialized && constantValue != null && C1XOptions.CanonicalizeConstantFields) {
+            push(constantValue.kind.stackKind(), appendConstant(constantValue));
+        } else {
+            FrameState stateBefore = curState.immutableCopy(bci());
+            Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
+            LoadField load = new LoadField(container, field, true, stateBefore, isInitialized);
+            appendOptimizedLoadField(field.kind(), load);
+        }
     }
 
     void genPutStatic(int cpi, RiField field) {
@@ -2051,26 +2055,26 @@ public final class GraphBuilder {
                 case FSTORE         : storeLocal(CiKind.Float, s.readLocalIndex()); break;
                 case DSTORE         : storeLocal(CiKind.Double, s.readLocalIndex()); break;
                 case ASTORE         : storeLocal(CiKind.Object, s.readLocalIndex()); break;
-                case ISTORE_0       : storeLocal(CiKind.Int, 0); break;
-                case ISTORE_1       : storeLocal(CiKind.Int, 1); break;
-                case ISTORE_2       : storeLocal(CiKind.Int, 2); break;
-                case ISTORE_3       : storeLocal(CiKind.Int, 3); break;
-                case LSTORE_0       : storeLocal(CiKind.Long, 0); break;
-                case LSTORE_1       : storeLocal(CiKind.Long, 1); break;
-                case LSTORE_2       : storeLocal(CiKind.Long, 2); break;
-                case LSTORE_3       : storeLocal(CiKind.Long, 3); break;
-                case FSTORE_0       : storeLocal(CiKind.Float, 0); break;
-                case FSTORE_1       : storeLocal(CiKind.Float, 1); break;
-                case FSTORE_2       : storeLocal(CiKind.Float, 2); break;
-                case FSTORE_3       : storeLocal(CiKind.Float, 3); break;
-                case DSTORE_0       : storeLocal(CiKind.Double, 0); break;
-                case DSTORE_1       : storeLocal(CiKind.Double, 1); break;
-                case DSTORE_2       : storeLocal(CiKind.Double, 2); break;
-                case DSTORE_3       : storeLocal(CiKind.Double, 3); break;
-                case ASTORE_0       : storeLocal(CiKind.Object, 0); break;
-                case ASTORE_1       : storeLocal(CiKind.Object, 1); break;
-                case ASTORE_2       : storeLocal(CiKind.Object, 2); break;
-                case ASTORE_3       : storeLocal(CiKind.Object, 3); break;
+                case ISTORE_0       : // fall through
+                case ISTORE_1       : // fall through
+                case ISTORE_2       : // fall through
+                case ISTORE_3       : storeLocal(CiKind.Int, opcode - ISTORE_0); break;
+                case LSTORE_0       : // fall through
+                case LSTORE_1       : // fall through
+                case LSTORE_2       : // fall through
+                case LSTORE_3       : storeLocal(CiKind.Long, opcode - LSTORE_0); break;
+                case FSTORE_0       : // fall through
+                case FSTORE_1       : // fall through
+                case FSTORE_2       : // fall through
+                case FSTORE_3       : storeLocal(CiKind.Float, opcode - FSTORE_0); break;
+                case DSTORE_0       : // fall through
+                case DSTORE_1       : // fall through
+                case DSTORE_2       : // fall through
+                case DSTORE_3       : storeLocal(CiKind.Double, opcode - DSTORE_0); break;
+                case ASTORE_0       : // fall through
+                case ASTORE_1       : // fall through
+                case ASTORE_2       : // fall through
+                case ASTORE_3       : storeLocal(CiKind.Object, opcode - ASTORE_0); break;
                 case IASTORE        : genStoreIndexed(CiKind.Int   ); break;
                 case LASTORE        : genStoreIndexed(CiKind.Long  ); break;
                 case FASTORE        : genStoreIndexed(CiKind.Float ); break;
@@ -2202,10 +2206,10 @@ public final class GraphBuilder {
                 case WLOAD_3        : loadLocal(3, CiKind.Word); break;
 
                 case WSTORE         : storeLocal(CiKind.Word, s.readLocalIndex()); break;
-                case WSTORE_0       : storeLocal(CiKind.Word, 0); break;
-                case WSTORE_1       : storeLocal(CiKind.Word, 1); break;
-                case WSTORE_2       : storeLocal(CiKind.Word, 2); break;
-                case WSTORE_3       : storeLocal(CiKind.Word, 3); break;
+                case WSTORE_0       : // fall through
+                case WSTORE_1       : // fall through
+                case WSTORE_2       : // fall through
+                case WSTORE_3       : storeLocal(CiKind.Word, opcode - WSTORE_0); break;
 
                 case WCONST_0       : wpush(appendConstant(CiConstant.ZERO)); break;
                 case WDIV           : // fall through
@@ -2274,7 +2278,6 @@ public final class GraphBuilder {
         // connect to begin and set state
         // NOTE that inlining may have changed the block we are parsing
         assert end != null : "end should exist after iterating over bytecodes";
-        // assert curBlock.end() == null : "block already has an end";
         end.setStateAfter(curState.immutableCopy(bci()));
         curBlock.setEnd(end);
         // propagate the state

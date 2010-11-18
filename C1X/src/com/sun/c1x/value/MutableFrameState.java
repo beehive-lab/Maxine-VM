@@ -326,7 +326,7 @@ public class MutableFrameState extends FrameState {
      */
     public void lock(IRScope scope, Value obj, int totalNumberOfLocks) {
         if (locks == null) {
-            locks = new ArrayList<Value>();
+            locks = new ArrayList<Value>(4);
         }
         locks.add(obj);
         scope.updateMaxLocks(totalNumberOfLocks);

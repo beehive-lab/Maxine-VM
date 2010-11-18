@@ -40,13 +40,12 @@ public abstract class AbstractAssembler {
     public final Buffer codeBuffer;
     public final CiTarget target;
     public final CiTargetMethod targetMethod;
-    public final List<ExceptionInfo> exceptionInfoList;
+    public List<ExceptionInfo> exceptionInfoList;
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
         this.targetMethod = new CiTargetMethod();
         this.codeBuffer = new Buffer(target.arch.byteOrder);
-        this.exceptionInfoList = new ArrayList<ExceptionInfo>();
     }
 
     public final void bind(Label l) {
@@ -148,6 +147,9 @@ public abstract class AbstractAssembler {
     public void recordExceptionHandlers(int pcOffset, LIRDebugInfo info) {
         if (info != null) {
             if (info.exceptionHandlers != null) {
+                if (exceptionInfoList == null) {
+                    exceptionInfoList = new ArrayList<ExceptionInfo>(4);
+                }
                 exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers, info.state.bci));
             }
         }

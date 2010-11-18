@@ -87,55 +87,40 @@ final class LinearScanWalker extends IntervalWalker {
         }
     }
 
-    void excludeFromUse(CiValue location) {
-        assert location.isRegister() : "interval must have a register assigned (stack slots not allowed)";
-        int i = location.asRegister().number;
-        if (i >= availableRegs[0].number && i <= availableRegs[availableRegs.length - 1].number) {
-            usePos[i] = 0;
-        }
-    }
-
     void excludeFromUse(Interval i) {
-        assert i.location() != null : "interval has no register assigned";
-        excludeFromUse(i.location());
-    }
-
-    void setUsePos(CiValue reg, Interval interval, int usePos, boolean onlyProcessUsePos) {
-        assert usePos != 0 : "must use excludeFromUse to set usePos to 0";
-        int i = reg.asRegister().number;
-        if (i >= availableRegs[0].number && i <= availableRegs[availableRegs.length - 1].number) {
-            if (this.usePos[i] > usePos) {
-                this.usePos[i] = usePos;
-            }
-            if (!onlyProcessUsePos) {
-                spillIntervals[i].add(interval);
-            }
+        CiValue location = i.location();
+        int i1 = location.asRegister().number;
+        if (i1 >= availableRegs[0].number && i1 <= availableRegs[availableRegs.length - 1].number) {
+            usePos[i1] = 0;
         }
     }
 
     void setUsePos(Interval interval, int usePos, boolean onlyProcessUsePos) {
-        assert interval.location() != null : "interval has no register assigned";
         if (usePos != -1) {
-            setUsePos(interval.location(), interval, usePos, onlyProcessUsePos);
-        }
-    }
-
-    void setBlockPos(CiValue location, Interval interval, int blockPos) {
-        int reg = location.asRegister().number;
-        if (reg >= availableRegs[0].number && reg <= availableRegs[availableRegs.length - 1].number) {
-            if (this.blockPos[reg] > blockPos) {
-                this.blockPos[reg] = blockPos;
-            }
-            if (usePos[reg] > blockPos) {
-                usePos[reg] = blockPos;
+            assert usePos != 0 : "must use excludeFromUse to set usePos to 0";
+            int i = interval.location().asRegister().number;
+            if (i >= availableRegs[0].number && i <= availableRegs[availableRegs.length - 1].number) {
+                if (this.usePos[i] > usePos) {
+                    this.usePos[i] = usePos;
+                }
+                if (!onlyProcessUsePos) {
+                    spillIntervals[i].add(interval);
+                }
             }
         }
     }
 
     void setBlockPos(Interval i, int blockPos) {
-        assert i.location() != null : "interval has no register assigned";
         if (blockPos != -1) {
-            setBlockPos(i.location(), i, blockPos);
+            int reg = i.location().asRegister().number;
+            if (reg >= availableRegs[0].number && reg <= availableRegs[availableRegs.length - 1].number) {
+                if (this.blockPos[reg] > blockPos) {
+                    this.blockPos[reg] = blockPos;
+                }
+                if (usePos[reg] > blockPos) {
+                    usePos[reg] = blockPos;
+                }
+            }
         }
     }
 
@@ -772,7 +757,7 @@ final class LinearScanWalker extends IntervalWalker {
             }
 
             if (firstUsage <= interval.from() + 1) {
-                assert false : "cannot spill interval that is used in first instruction (possible reason: no register found)";
+                assert false : "cannot spill interval that is used in first instruction (possible reason: no register found) firstUsage=" + firstUsage + ", interval.from()=" + interval.from();
                 // assign a reasonable register and do a bailout in product mode to avoid errors
                 allocator.assignSpillSlot(interval);
                 throw new CiBailout("LinearScan: no register found");

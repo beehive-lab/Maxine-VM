@@ -49,11 +49,10 @@ public final class UnsignedCompareOp extends Op2 {
      * @param y the second input
      * @param stateBefore the state before the comparison is performed
      */
-    public UnsignedCompareOp(int opcode, int op, Value x, Value y, FrameState stateBefore) {
+    public UnsignedCompareOp(int opcode, int op, Value x, Value y) {
         super(CiKind.Int, opcode, x, y);
         assert opcode == Bytecodes.UWCMP || opcode == Bytecodes.UCMP;
         this.op = op;
-        this.stateBefore = stateBefore;
     }
 
     /**

@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.LIROperand.LIRAddressOperand;
 import com.sun.c1x.lir.LIROperand.LIRVariableOperand;
@@ -45,6 +44,14 @@ public abstract class LIRInstruction {
 
     private static final CiValue[] NO_OPERANDS = {};
 
+    public static final OperandMode[] OPERAND_MODES = OperandMode.values();
+
+    public enum OperandMode {
+        Output,
+        Input,
+        Temp
+    }
+
     /**
      * The opcode of this instruction.
      */
@@ -58,7 +65,7 @@ public abstract class LIRInstruction {
     /**
      * The input and temporary operands of this instruction.
      */
-    protected final LIROperand[] inputAndTempOperands;
+    protected final LIROperand[] operands;
 
     /**
      * Used to emit debug information.
@@ -70,27 +77,12 @@ public abstract class LIRInstruction {
      */
     public int id;
 
-    /**
-     * Link to the HIR instruction for debugging purposes.
-     */
-    public Value source;
-
     public final boolean hasCall;
 
-    public GlobalStub globalStub;
-
-    public static final OperandMode[] OPERAND_MODES = OperandMode.values();
-
-    public enum OperandMode {
-        Output,
-        Input,
-        Temp
-    }
-
-    private int outputCount;
-    private int allocatorInputCount;
-    private int allocatorTempCount;
-    private int allocatorTempInputCount;
+    private byte outputCount;
+    private byte allocatorInputCount;
+    private byte allocatorTempCount;
+    private byte allocatorTempInputCount;
 
     /**
      * The set of operands that must be known to the register allocator either to bind a register
@@ -99,7 +91,7 @@ public abstract class LIRInstruction {
      * This set excludes all constant operands as well as operands that are bound to
      * a stack slot in the {@linkplain CiStackSlot#inCallerFrame() caller's frame}.
      */
-    final List<CiValue> allocatorOperands = new ArrayList<CiValue>(3);
+    final List<CiValue> allocatorOperands;
 
     /**
      * Constructs a new LIR instruction.
@@ -129,6 +121,7 @@ public abstract class LIRInstruction {
         this.hasCall = hasCall;
 
         assert opcode != LIROpcode.Move || result != CiValue.IllegalValue;
+        allocatorOperands = new ArrayList<CiValue>(operands.length + 3);
         this.result = initOutput(result);
 
         C1XMetrics.LIRInstructions++;
@@ -136,9 +129,8 @@ public abstract class LIRInstruction {
         if (opcode == LIROpcode.Move) {
             C1XMetrics.LIRMoveInstructions++;
         }
-
         id = -1;
-        this.inputAndTempOperands = new LIROperand[operands.length];
+        this.operands = new LIROperand[operands.length];
         initInputsAndTemps(tempInput, temp, operands);
 
         assert verifyOperands();
@@ -235,11 +227,11 @@ public abstract class LIRInstruction {
      * @return the {@code index}'th operand
      */
     public final CiValue operand(int index) {
-        if (index >= inputAndTempOperands.length) {
+        if (index >= operands.length) {
             return CiValue.IllegalValue;
         }
 
-        return inputAndTempOperands[index].value(this);
+        return operands[index].value(this);
     }
 
     private void initInputsAndTemps(int tempInputCount, int tempCount, CiValue[] operands) {
@@ -248,34 +240,38 @@ public abstract class LIRInstruction {
         for (int i = 0; i < operands.length; i++) {
             CiValue op = operands[i];
             if (op.isAddress()) {
-                this.inputAndTempOperands[i] = addAddress((CiAddress) op);
+                this.operands[i] = addAddress((CiAddress) op);
             }
         }
 
+        int z = 0;
         // Input-only operands
         for (int i = 0; i < operands.length - tempInputCount - tempCount; i++) {
-            if (this.inputAndTempOperands[i] == null) {
-                this.inputAndTempOperands[i] = addOperand(operands[i], true, false);
+            if (this.operands[z] == null) {
+                this.operands[z] = addOperand(operands[z], true, false);
             }
+            z++;
         }
 
         // Operands that are both inputs and temps
-        for (int i = operands.length - tempInputCount - tempCount; i < operands.length - tempCount; i++) {
-            if (this.inputAndTempOperands[i] == null) {
-                this.inputAndTempOperands[i] = addOperand(operands[i], true, true);
+        for (int i = 0; i < tempInputCount; i++) {
+            if (this.operands[z] == null) {
+                this.operands[z] = addOperand(operands[z], true, true);
             }
+            z++;
         }
 
         // Temp-only operands
-        for (int i = operands.length - tempCount; i < operands.length; i++) {
-            if (this.inputAndTempOperands[i] == null) {
-                this.inputAndTempOperands[i] = addOperand(operands[i], false, true);
+        for (int i = 0; i < tempCount; i++) {
+            if (this.operands[z] == null) {
+                this.operands[z] = addOperand(operands[z], false, true);
             }
+            z++;
         }
     }
 
     private boolean verifyOperands() {
-        for (LIROperand operandSlot : inputAndTempOperands) {
+        for (LIROperand operandSlot : operands) {
             assert operandSlot != null;
         }
 
@@ -339,11 +335,11 @@ public abstract class LIRInstruction {
         if (result != ILLEGAL_SLOT) {
             buf.append(operandFmt.format(result.value(this))).append(" = ");
         }
-        if (inputAndTempOperands.length > 1) {
+        if (operands.length > 1) {
             buf.append("(");
         }
         boolean first = true;
-        for (LIROperand operandSlot : inputAndTempOperands) {
+        for (LIROperand operandSlot : operands) {
             String operand = operandFmt.format(operandSlot.value(this));
             if (!operand.isEmpty()) {
                 if (!first) {
@@ -354,7 +350,7 @@ public abstract class LIRInstruction {
                 buf.append(operand);
             }
         }
-        if (inputAndTempOperands.length > 1) {
+        if (operands.length > 1) {
             buf.append(")");
         }
         return buf.toString();

@@ -43,12 +43,7 @@ import com.sun.c1x.value.FrameState.PhiProcedure;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
-import com.sun.cri.xir.CiXirAssembler.XirConstant;
-import com.sun.cri.xir.CiXirAssembler.XirInstruction;
-import com.sun.cri.xir.CiXirAssembler.XirOperand;
-import com.sun.cri.xir.CiXirAssembler.XirParameter;
-import com.sun.cri.xir.CiXirAssembler.XirRegister;
-import com.sun.cri.xir.CiXirAssembler.XirTemp;
+import com.sun.cri.xir.CiXirAssembler.*;
 import com.sun.cri.xir.*;
 
 /**
@@ -142,7 +137,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         // mark the liveness of all instructions if it hasn't already been done by the optimizer
         LivenessMarker livenessMarker = new LivenessMarker(ir);
-        C1XMetrics.HIRInstructions += livenessMarker.liveCount();
+        C1XMetrics.LiveHIRInstructions += livenessMarker.liveCount();
     }
 
     public void doBlock(BlockBegin block) {
@@ -327,13 +322,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // need to free up storage used for OSR entry point
             CiValue osrBuffer = currentBlock.next().operand();
             callRuntime(CiRuntimeCall.OSRMigrationEnd, null, osrBuffer);
-
-            FrameState state = (x.stateAfter() != null) ? x.stateAfter() : x.stateAfter();
-
-            // increment backedge counter if needed
-            incrementBackedgeCounter(stateFor(x, state));
-
-            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, state), null, false);
+            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, x.stateAfter()), null, false);
         }
 
         // emit phi-instruction moves after safepoint since this simplifies
@@ -765,13 +754,21 @@ public abstract class LIRGenerator extends ValueVisitor {
         return XirArgument.forInternalObject(new LIRItem(i, this));
     }
 
-    private CiValue allocateOperand(XirTemp temp) {
-        if (temp instanceof XirRegister) {
-            XirRegister reg = (XirRegister) temp;
+    private CiValue allocateOperand(XirSnippet snippet, XirOperand op) {
+        if (op instanceof XirParameter)  {
+            XirParameter param = (XirParameter) op;
+            return allocateOperand(snippet.arguments[param.parameterIndex], op);
+        } else if (op instanceof XirRegister) {
+            XirRegister reg = (XirRegister) op;
             return reg.register;
+        } else if (op instanceof XirTemp) {
+            return newVariable(op.kind);
+        } else {
+            System.out.println(op);
+            System.out.println(op.getClass());
+            Util.shouldNotReachHere();
+            return null;
         }
-
-        return newVariable(temp.kind);
     }
 
     private CiValue allocateOperand(XirArgument arg, XirOperand var) {
@@ -789,7 +786,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         return emitXir(snippet, x, info, method, setInstructionResult, null);
     }
 
-    protected CiValue emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult, List<CiValue> pointerSlots) {
+    protected CiValue emitXir(XirSnippet snippet, Instruction instruction, LIRDebugInfo info, RiMethod method, boolean setInstructionResult, List<CiValue> pointerSlots) {
+        if (C1XOptions.PrintXirTemplates) {
+            TTY.println("Emit XIR template " + snippet.template.name);
+        }
+
         final CiValue[] operands = new CiValue[snippet.template.variableCount];
 
         compilation.frameMap().reserveOutgoing(snippet.template.outgoingStackSize);
@@ -801,39 +802,13 @@ public abstract class LIRGenerator extends ValueVisitor {
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
-                outputOperand = createResultVariable(x);
+                outputOperand = createResultVariable(instruction);
                 assert operands[resultOperand.index] == null;
             }
             operands[resultOperand.index] = outputOperand;
-        }
-
-        final List<CiValue> inputOperands = new ArrayList<CiValue>();
-        final IntList inputOperandsIndices = new IntList(4);
-        final List<CiValue> inputTempOperands = new ArrayList<CiValue>();
-        final IntList inputTempOperandsIndices = new IntList(4);
-
-        for (XirParameter param : snippet.template.parameters) {
-            int paramIndex = param.parameterIndex;
-            XirArgument arg = snippet.arguments[paramIndex];
-            CiValue op = allocateOperand(arg, param);
-            assert operands[param.index] == null;
-            operands[param.index] = op;
-
-            if (op.isVariableOrRegister()) {
-                if (snippet.template.isParameterDestroyed(paramIndex)) {
-                    CiValue newOp = newVariable(op.kind);
-                    lir.move(op, newOp);
-                    inputTempOperands.add(newOp);
-                    inputTempOperandsIndices.add(param.index);
-                    operands[param.index] = newOp;
-                } else {
-                    inputOperands.add(op);
-                    inputOperandsIndices.add(param.index);
-                    inputTempOperands.add(op);
-                    inputTempOperandsIndices.add(param.index);
-                }
+            if (C1XOptions.PrintXirTemplates) {
+                TTY.println("Output operand: " + outputOperand);
             }
-
         }
 
         for (XirTemplate calleeTemplate : snippet.template.calleeTemplates) {
@@ -846,33 +821,45 @@ public abstract class LIRGenerator extends ValueVisitor {
             operands[c.index] = c.value;
         }
 
-        final List<CiValue> tempOperands = new ArrayList<CiValue>(snippet.template.temps.length);
-        final IntList tempOperandsIndices = new IntList(snippet.template.temps.length);
-        for (XirTemp t : snippet.template.temps) {
-            CiValue op = allocateOperand(t);
-            assert operands[t.index] == null;
-            operands[t.index] = op;
-            if (t.reserve) {
-                tempOperands.add(op);
-                tempOperandsIndices.add(t.index);
+        XirOperand[] inputOperands = snippet.template.inputOperands;
+        XirOperand[] inputTempOperands = snippet.template.inputTempOperands;
+        XirOperand[] tempOperands = snippet.template.tempOperands;
+
+        CiValue[] operandArray = new CiValue[inputOperands.length + inputTempOperands.length + tempOperands.length];
+        int[] operandIndicesArray = new int[inputOperands.length + inputTempOperands.length + tempOperands.length];
+        for (int i = 0; i < inputOperands.length; i++) {
+            XirOperand x = inputOperands[i];
+            CiValue op = allocateOperand(snippet, x);
+            operands[x.index] = op;
+            operandArray[i] = op;
+            operandIndicesArray[i] = x.index;
+            if (C1XOptions.PrintXirTemplates) {
+                TTY.println("Input operand: " + x);
             }
         }
 
-        CiValue[] operandArray = new CiValue[inputOperands.size() + inputTempOperands.size() + tempOperands.size()];
-        int[] operandIndicesArray = new int[inputOperands.size() + inputTempOperands.size() + tempOperands.size()];
-        for (int i = 0; i < inputOperands.size(); i++) {
-            operandArray[i] = inputOperands.get(i);
-            operandIndicesArray[i] = inputOperandsIndices.get(i);
+        for (int i = 0; i < inputTempOperands.length; i++) {
+            XirOperand x = inputTempOperands[i];
+            CiValue op = allocateOperand(snippet, x);
+            CiValue newOp = newVariable(op.kind);
+            lir.move(op, newOp);
+            operands[x.index] = newOp;
+            operandArray[i + inputOperands.length] = newOp;
+            operandIndicesArray[i + inputOperands.length] = x.index;
+            if (C1XOptions.PrintXirTemplates) {
+                TTY.println("InputTemp operand: " + x);
+            }
         }
 
-        for (int i = 0; i < inputTempOperands.size(); i++) {
-            operandArray[i + inputOperands.size()] = inputTempOperands.get(i);
-            operandIndicesArray[i + inputOperands.size()] = inputTempOperandsIndices.get(i);
-        }
-
-        for (int i = 0; i < tempOperands.size(); i++) {
-            operandArray[i + inputOperands.size() + inputTempOperands.size()] = tempOperands.get(i);
-            operandIndicesArray[i + inputOperands.size() + inputTempOperands.size()] = tempOperandsIndices.get(i);
+        for (int i = 0; i < tempOperands.length; i++) {
+            XirOperand x = tempOperands[i];
+            CiValue op = allocateOperand(snippet, x);
+            operands[x.index] = op;
+            operandArray[i + inputOperands.length + inputTempOperands.length] = op;
+            operandIndicesArray[i + inputOperands.length + inputTempOperands.length] = x.index;
+            if (C1XOptions.PrintXirTemplates) {
+                TTY.println("Temp operand: " + x);
+            }
         }
 
         for (CiValue operand : operands) {
@@ -885,10 +872,10 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         if (setInstructionResult && allocatedResultOperand.isLegal()) {
-            if (x.operand().isIllegal()) {
-                setResult(x, (CiVariable) allocatedResultOperand);
+            if (instruction.operand().isIllegal()) {
+                setResult(instruction, (CiVariable) allocatedResultOperand);
             } else {
-                assert x.operand() == allocatedResultOperand;
+                assert instruction.operand() == allocatedResultOperand;
             }
         }
 
@@ -896,7 +883,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirInstruction[] slowPath = snippet.template.slowPath;
         if (!operands[resultOperand.index].isConstant() || snippet.template.fastPath.length != 0 || (slowPath != null && slowPath.length > 0)) {
             // XIR instruction is only needed when the operand is not a constant!
-            lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
+            lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.length, tempOperands.length,
                     operandArray, operandIndicesArray,
                     (operands[resultOperand.index] == IllegalValue) ? -1 : resultOperand.index,
                     info, method, pointerSlots);
@@ -1587,9 +1574,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private boolean isUsedForValue(Instruction instr) {
         return instr.checkFlag(Value.Flag.LiveValue);
-    }
-
-    protected void incrementBackedgeCounter(LIRDebugInfo info) {
     }
 
     protected void logicOp(int code, CiValue resultOp, CiValue leftOp, CiValue rightOp) {

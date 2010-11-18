@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.alloc;
 
+import static com.sun.cri.ci.CiDebugInfo.*;
 import static com.sun.cri.ci.CiUtil.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -880,9 +881,9 @@ public class LinearScan {
         TTY.println(block.lirBlock.liveOut.toString());
     }
 
-    void addUse(CiValue operand, int from, int to, RegisterPriority registerPriority, CiKind kind) {
+    Interval addUse(CiValue operand, int from, int to, RegisterPriority registerPriority, CiKind kind) {
         if (!isProcessed(operand)) {
-            return;
+            return null;
         }
         if (C1XOptions.TraceLinearScanLevel >= 2 && kind == null) {
             TTY.println(" use %s from %d to %d (%s)", operand, from, to, registerPriority.name());
@@ -907,6 +908,7 @@ public class LinearScan {
         }
 
         interval.addUsePos(to, registerPriority);
+        return interval;
     }
 
     void addTemp(CiValue operand, int tempPos, RegisterPriority registerPriority, CiKind kind) {
@@ -1262,7 +1264,15 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CiValue operand = op.operandAt(LIRInstruction.OperandMode.Input, k);
                     assert operand.isVariableOrRegister();
-                    addUse(operand, blockFrom, opId, registerPriorityOfInputOperand(op, operand), null);
+                    RegisterPriority p = registerPriorityOfInputOperand(op, operand);
+                    Interval interval = addUse(operand, blockFrom, opId, p, null);
+                    if (interval != null && op instanceof LIRXirInstruction) {
+                        Range range = interval.first();
+                        // (tw) Increase range by 1 in order to overlap the input with the temp and the output operand.
+                        if (range.to == opId) {
+                            range.to++;
+                        }
+                    }
                 }
 
                 // Add uses of live locals from interpreter's point of view for proper
@@ -2128,10 +2138,10 @@ public class LinearScan {
                 int frameSize = compilation.frameMap().frameSize();
                 int frameWords = frameSize / compilation.target.spillSlotSize;
                 CiBitMap frameRefMap = new CiBitMap(frameWords);
-                CiBitMap regRefMap = new CiBitMap(64);
+                CiBitMap regRefMap = !op.hasCall() ? new CiBitMap(64) : null;
                 Frame frame = computeFrame(info.state, op.id, frameRefMap);
                 computeOopMap(iw, op, frameRefMap, regRefMap);
-                info.debugInfo = new CiDebugInfo(frame, regRefMap.toLong(), frameRefMap);
+                info.debugInfo = new CiDebugInfo(frame, regRefMap == null ? NO_REF_MAP : regRefMap.toLong(), frameRefMap);
             } else if (C1XOptions.DetailedAsserts) {
                 assert info.debugInfo.frame().equals(computeFrame(info.state, op.id, new CiBitMap(info.debugInfo.frameRefMap.size())));
             }

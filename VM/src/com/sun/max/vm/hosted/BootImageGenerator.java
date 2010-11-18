@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.hosted;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.io.*;
 
 import com.sun.max.*;

@@ -343,7 +343,7 @@ public final class BlockBegin extends Instruction {
     public void addExceptionHandler(BlockBegin handler) {
         assert handler != null && handler.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
         if (exceptionHandlerBlocks == null) {
-            exceptionHandlerBlocks = new ArrayList<BlockBegin>();
+            exceptionHandlerBlocks = new ArrayList<BlockBegin>(3);
             exceptionHandlerBlocks.add(handler);
         } else if (!exceptionHandlerBlocks.contains(handler)) {
             exceptionHandlerBlocks.add(handler);
@@ -361,7 +361,7 @@ public final class BlockBegin extends Instruction {
     public int addExceptionState(FrameState state) {
         assert checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry);
         if (exceptionHandlerStates == null) {
-            exceptionHandlerStates = new ArrayList<FrameState>();
+            exceptionHandlerStates = new ArrayList<FrameState>(4);
         }
         exceptionHandlerStates.add(state);
         return exceptionHandlerStates.size() - 1;
