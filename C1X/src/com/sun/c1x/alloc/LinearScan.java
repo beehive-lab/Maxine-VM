@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.alloc;
 
+import static com.sun.cri.ci.CiDebugInfo.*;
 import static com.sun.cri.ci.CiUtil.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -1967,7 +1968,7 @@ public class LinearScan {
         return new IntervalWalker(this, oopIntervals, nonOopIntervals);
     }
 
-    void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, boolean isCallSite) {
+    void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, boolean isCallSite, CiBitMap frameRefMap, CiBitMap regRefMap) {
         if (C1XOptions.TraceLinearScanLevel >= 3) {
             TTY.println("creating oop map at opId %d", op.id);
         }
@@ -1998,7 +1999,7 @@ public class LinearScan {
                 if (location.isStackSlot()) {
                     location = frameMap.toStackAddress((CiStackSlot) location);
                 }
-                info.setOop(location, compilation);
+                info.setOop(location, compilation, frameRefMap, regRefMap);
 
                 // Spill optimization: when the stack value is guaranteed to be always correct,
                 // then it must be added to the oop map even if the interval is currently in a register
@@ -2006,8 +2007,7 @@ public class LinearScan {
                     assert interval.spillDefinitionPos() > 0 : "position not set correctly";
                     assert interval.spillSlot() != null : "no spill slot assigned";
                     assert !interval.operand.isRegister() : "interval is on stack :  so stack slot is registered twice";
-
-                    info.setOop(frameMap.toStackAddress(interval.spillSlot()), compilation);
+                    info.setOop(frameMap.toStackAddress(interval.spillSlot()), compilation, frameRefMap, regRefMap);
                 }
             }
         }
@@ -2017,21 +2017,21 @@ public class LinearScan {
         return attributes(operand.asRegister()).isCallerSave;
     }
 
-    void computeOopMap(IntervalWalker iw, LIRInstruction op) {
+    void computeOopMap(IntervalWalker iw, LIRInstruction op, CiBitMap frameRefMap, CiBitMap regRefMap) {
         assert op.info != null : "no oop map needed";
-        computeOopMap(iw, op, op.info, op.hasCall());
+        computeOopMap(iw, op, op.info, op.hasCall(), frameRefMap, regRefMap);
         if (op instanceof LIRCall) {
             List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
             if (pointerSlots != null) {
                 for (CiValue v : pointerSlots) {
-                    op.info.setOop(v, compilation);
+                    op.info.setOop(v, compilation, frameRefMap, regRefMap);
                 }
             }
         } else if (op instanceof LIRXirInstruction) {
             List<CiValue> pointerSlots = ((LIRXirInstruction) op).pointerSlots;
             if (pointerSlots != null) {
                 for (CiValue v : pointerSlots) {
-                    op.info.setOop(v, compilation);
+                    op.info.setOop(v, compilation, frameRefMap, regRefMap);
                 }
             }
         }
@@ -2092,7 +2092,7 @@ public class LinearScan {
         }
     }
 
-    Frame computeFrameForState(int opId, FrameState state, byte[] frameRefMap) {
+    Frame computeFrameForState(int opId, FrameState state, CiBitMap frameRefMap) {
         CiDebugInfo.Frame callerFrame = null;
 
         FrameState callerState = state.callerState();
@@ -2114,8 +2114,7 @@ public class LinearScan {
                 values[valueIndex++] = monitorAddress;
                 if (frameRefMap != null) {
                     CiStackSlot objectAddress = frameMap.toMonitorObjectStackAddress(i);
-                    boolean wasSet = CiUtil.setBit(frameRefMap, objectAddress.index());
-                    assert !wasSet;
+                    LIRDebugInfo.setBit(frameRefMap, objectAddress.index());
                 }
             } else {
                 Value lock = state.lockAt(i);
@@ -2136,22 +2135,20 @@ public class LinearScan {
         LIRDebugInfo info = op.info;
         if (info != null) {
             if (info.debugInfo == null) {
-                byte[] regRefMap = null;
-                if (!op.hasCall()) {
-                    regRefMap = CiUtil.makeBitMap(compilation.target.arch.registerReferenceMapBitCount);
-                }
                 int frameSize = compilation.frameMap().frameSize();
-                byte[] frameRefMap = CiUtil.makeBitMap(frameSize / compilation.target.spillSlotSize);
+                int frameWords = frameSize / compilation.target.spillSlotSize;
+                CiBitMap frameRefMap = new CiBitMap(frameWords);
+                CiBitMap regRefMap = !op.hasCall() ? new CiBitMap(64) : null;
                 Frame frame = computeFrame(info.state, op.id, frameRefMap);
-                info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);
-                computeOopMap(iw, op);
+                computeOopMap(iw, op, frameRefMap, regRefMap);
+                info.debugInfo = new CiDebugInfo(frame, regRefMap == null ? NO_REF_MAP : regRefMap.toLong(), frameRefMap);
             } else if (C1XOptions.DetailedAsserts) {
-                assert info.debugInfo.frame().equals(computeFrame(info.state, op.id, null));
+                assert info.debugInfo.frame().equals(computeFrame(info.state, op.id, new CiBitMap(info.debugInfo.frameRefMap.size())));
             }
         }
     }
 
-    Frame computeFrame(FrameState state, int opId, byte[] frameRefMap) {
+    Frame computeFrame(FrameState state, int opId, CiBitMap frameRefMap) {
         if (C1XOptions.TraceLinearScanLevel >= 3) {
             TTY.println("creating debug information at opId %d", opId);
         }

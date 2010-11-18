@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.jit;
 
+import static com.sun.cri.ci.CiDebugInfo.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -139,7 +141,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             instructionPointer = instructionPointer.minus(1);
         }
         int bci = bytecodePositionFor(instructionPointer.asPointer());
-        return new CiDebugInfo(new CiCodePos(null, classMethodActor, bci), null, null);
+        return new CiDebugInfo(new CiCodePos(null, classMethodActor, bci), NO_REF_MAP, null);
     }
 
     /**

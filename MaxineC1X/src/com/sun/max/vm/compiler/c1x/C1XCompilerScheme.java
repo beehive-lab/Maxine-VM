@@ -182,9 +182,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         }
     }
 
-    @HOSTED_ONLY
     public C1XCompiler compiler() {
-        if (compiler == null) {
+        if (isHosted() && compiler == null) {
             initialize(Phase.BOOTSTRAPPING);
         }
         return compiler;
@@ -206,7 +205,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             return genDynamicTrampoline(0, false);
         }
 
-        CiTargetMethod compiledMethod = compiler.compileMethod(method, -1, xirGenerator).targetMethod();
+        CiTargetMethod compiledMethod = compiler().compileMethod(method, -1, xirGenerator).targetMethod();
         if (compiledMethod != null) {
             C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
             CompilationScheme.Inspect.notifyCompilationComplete(c1xTargetMethod);
@@ -225,11 +224,11 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         if (platform().isa == ISA.AMD64) {
             AMD64UnixRegisterConfig registerConfig = AMD64UnixRegisterConfig.TRAP_STUB;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(compiler, registerConfig);
-            CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;
+            CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
             CiRegister latch = AMD64Safepoint.LATCH_REGISTER;
             CiRegister scratch = registerConfig.getScratchRegister();
-            int frameSize = platform().target.alignFrameSize(rsa.size);
-            int frameToRSA = frameSize - rsa.size;
+            int frameSize = platform().target.alignFrameSize(csa.size);
+            int frameToCSA = frameSize - csa.size;
             CiKind[] trapStubParameters = Util.signatureToKinds(Trap.trapStub.classMethodActor.signature(), null);
             CiValue[] locations = registerConfig.getCallingConvention(JavaCallee, trapStubParameters, target).locations;
 
@@ -243,14 +242,13 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.subq(AMD64.rsp, frameSize - 8);
             asm.setFrameSize(frameSize);
 
-            // save all the general purpose registers
-            CiRegister[] calleeSave = registerConfig.getCalleeSaveRegisters();
-            asm.save(calleeSave, rsa, frameToRSA);
+            // save all the callee save registers
+            asm.save(csa, frameToCSA);
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap state
             asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_LATCH_REGISTER.offset));
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToRSA + rsa.offsetOf(latch)), scratch);
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + csa.offsetOf(latch)), scratch);
 
             // write the return address pointer to the end of the frame
             asm.movq(scratch, new CiAddress(CiKind.Word, latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
@@ -260,15 +258,15 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             // load the trap number from the thread locals into the first parameter register
             asm.movq(locations[0].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_NUMBER.offset));
             // also save the trap number into the trap state
-            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToRSA + AMD64TrapStateAccess.TRAP_NUMBER_OFFSET), locations[0].asRegister());
+            asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA + AMD64TrapStateAccess.TRAP_NUMBER_OFFSET), locations[0].asRegister());
             // load the trap state pointer into the second parameter register
-            asm.leaq(locations[1].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToRSA));
+            asm.leaq(locations[1].asRegister(), new CiAddress(CiKind.Word, AMD64.rsp.asValue(), frameToCSA));
             // load the fault address from the thread locals into the third parameter register
             asm.movq(locations[2].asRegister(), new CiAddress(CiKind.Word, latch.asValue(), TRAP_FAULT_ADDRESS.offset));
 
             asm.directCall(Trap.handleTrap.classMethodActor, null);
 
-            asm.restore(calleeSave, rsa, frameToRSA);
+            asm.restore(csa, frameToCSA);
 
             // now pop the flags register off the stack before returning
             int popfq = 0x9D;
@@ -281,7 +279,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         throw FatalError.unimplemented();
     }
 
-    private static void patchStaticTrampolineCallSite(Pointer callSite) {
+    @PLATFORM(cpu = "amd64")
+    private static void patchStaticTrampolineCallSiteAMD64(Pointer callSite) {
         final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
 
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
@@ -289,6 +288,12 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         // Use the caller's abi to get the correct entry point.
         final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
         final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
+        Pointer callDisp = callSite.plus(1);
+        if (CODE_PATCHING_ALIGMMENT_IS_GUARANTEED && !callDisp.isWordAligned()) {
+            // Patching must not occur across a cache line boundary. The easiest way to check for
+            // this is to make sure the call instruction is word aligned.
+            FatalError.unexpected("Call displacement not word aligned: " + callDisp);
+        }
         callSite.writeInt(1, calleeOffset);
     }
 
@@ -297,8 +302,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         if (platform().isa == ISA.AMD64) {
             AMD64UnixRegisterConfig registerConfig = AMD64UnixRegisterConfig.TRAMPOLINE;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(compiler, registerConfig);
-            CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;
-            int frameSize = platform().target.alignFrameSize(rsa.size);
+            CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
+            int frameSize = platform().target.alignFrameSize(csa.size);
 
             for (byte b : adapterPrologue) {
                 asm.emitByte(0xff & b);
@@ -313,11 +318,10 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.subq(AMD64.rsp, frameSize);
             asm.setFrameSize(frameSize);
 
-            // save all the parameter registers
-            CiRegister[] parameterRegs = registerConfig.getCallingConventionRegisters(JavaCallee);
-            asm.save(parameterRegs, rsa, 0);
+            // save all the callee save registers
+            asm.save(csa, 0);
 
-            ClassMethodActor patchStaticTrampolineCallSite = ClassMethodActor.fromJava(Classes.getDeclaredMethod(C1XCompilerScheme.class, "patchStaticTrampolineCallSite", Pointer.class));
+            ClassMethodActor patchStaticTrampolineCallSite = ClassMethodActor.fromJava(Classes.getDeclaredMethod(C1XCompilerScheme.class, "patchStaticTrampolineCallSiteAMD64", Pointer.class));
             CiKind[] trampolineParameters = {CiKind.Object};
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target).locations;
 
@@ -328,7 +332,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
             // restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-            asm.restore(parameterRegs, rsa, 0);
+            asm.restore(csa, 0);
 
             // undo the frame
             asm.addq(AMD64.rsp, frameSize);
@@ -349,8 +353,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         if (platform().isa == ISA.AMD64) {
             AMD64UnixRegisterConfig registerConfig = AMD64UnixRegisterConfig.TRAMPOLINE;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(compiler, registerConfig);
-            CiRegisterSaveArea rsa = AMD64TrapStateAccess.RSA;
-            int frameSize = platform().target.alignFrameSize(rsa.size);
+            CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
+            int frameSize = platform().target.alignFrameSize(csa.size);
             DynamicTrampoline trampoline = new DynamicTrampoline(index, null);
 
             byte[] prologue = isInterface ? iTableTrampolinePrologue : vTableTrampolinePrologue;
@@ -362,9 +366,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             asm.subq(AMD64.rsp, frameSize);
             asm.setFrameSize(frameSize);
 
-            // save all the parameter registers
-            CiRegister[] parameterRegs = registerConfig.getCallingConventionRegisters(JavaCallee);
-            asm.save(parameterRegs, rsa, 0);
+            // save all the callee save registers
+            asm.save(csa, 0);
 
             CiKind[] trampolineParameters = Util.signatureToKinds(DynamicTrampoline.trampolineReturnAddress.classMethodActor.signature(), CiKind.Object);
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target).locations;
@@ -390,7 +393,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-            asm.restore(parameterRegs, rsa, 0);
+            asm.restore(csa, 0);
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
@@ -430,4 +433,11 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     private DynamicTrampolineExit dynamicTrampolineExit = DynamicTrampolineExit.create();
+
+    /**
+     * Temporary flag to disable alignment check when code patching. The alignment requirement
+     * is satisfied by C1X (see {@link C1XOptions#AlignCallsForPatching}) but not yet by
+     * CPS and the template JIT.
+     */
+    static final boolean CODE_PATCHING_ALIGMMENT_IS_GUARANTEED = System.getProperty("non-constant value to fool Eclipse") != null;
 }

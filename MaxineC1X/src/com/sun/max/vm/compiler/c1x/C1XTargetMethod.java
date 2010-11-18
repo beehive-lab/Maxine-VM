@@ -20,8 +20,10 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import static com.sun.cri.ci.CiDebugInfo.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.compiler.c1x.C1XCompilerScheme.*;
 
 import java.io.*;
 import java.util.*;
@@ -394,18 +396,22 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             // remember the code position
             stopInfo[index] = debugInfo;
             // copy the stack map
-            int stackMapLength;
-            byte[] stackMap = debugInfo.frameRefMap;
-            if (stackMap != null) {
-                stackMapLength = stackMap.length;
-                System.arraycopy(stackMap, 0, referenceMaps, refmapIndex, stackMapLength);
+            int frameRefMapBytes;
+            CiBitMap frameRefMap = debugInfo.frameRefMap;
+            if (frameRefMap != null) {
+                frameRefMapBytes = frameRefMap.copyTo(referenceMaps, refmapIndex, -1);
             } else {
-                stackMapLength = 0;
+                frameRefMapBytes = 0;
             }
             // copy the register map
-            byte[] registerMap = debugInfo.registerRefMap;
-            if (registerMap != null) {
-                System.arraycopy(registerMap, 0, referenceMaps, refmapIndex + stackMapLength, registerMap.length);
+            long regRefMap = debugInfo.registerRefMap;
+            if (regRefMap != CiDebugInfo.NO_REF_MAP) {
+                int regRefMapSize = registerReferenceMapSize();
+                for (int i = 0; i < regRefMapSize; i++) {
+                    byte b = (byte) regRefMap;
+                    referenceMaps[refmapIndex + frameRefMapBytes] = b;
+                    regRefMap = regRefMap >>> 8;
+                }
             }
 
             return debugInfo.codePos != null && debugInfo.codePos.caller != null;
@@ -560,7 +566,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             code[offset + 3] = (byte) (displacement >> 16);
             code[offset + 4] = (byte) (displacement >> 24);
         } else {
-            if (!callSite.isWordAligned()) {
+            if (CODE_PATCHING_ALIGMMENT_IS_GUARANTEED && callSite.isWordAligned()) {
                 // Patch location must not straddle a cache-line (32-byte) boundary.
                 FatalError.unexpected("Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.", false, null, Pointer.zero());
             }
@@ -971,11 +977,11 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             int parentIndex = sourceInfo[start + 2];
             final CiDebugInfo caller = decodeDebugInfo(classMethodActor, sourceInfo, sourceMethods, parentIndex);
             CiCodePos callerPos = caller == null ? null : caller.codePos;
-            return new CiDebugInfo(new CiCodePos(callerPos, sourceMethod, bci), null, null);
+            return new CiDebugInfo(new CiCodePos(callerPos, sourceMethod, bci), NO_REF_MAP, null);
         } else if (sourceInfoObject instanceof char[]) {
             // no inlined methods; just recover the bytecode index
             char[] array = (char[]) sourceInfoObject;
-            return new CiDebugInfo(new CiCodePos(null, classMethodActor, array[index]), null, null);
+            return new CiDebugInfo(new CiCodePos(null, classMethodActor, array[index]), NO_REF_MAP, null);
         } else {
             return null;
         }

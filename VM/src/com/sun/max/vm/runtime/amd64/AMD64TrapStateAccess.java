@@ -23,8 +23,6 @@ package com.sun.max.vm.runtime.amd64;
 import static com.sun.c1x.target.amd64.AMD64.*;
 import static com.sun.max.vm.runtime.amd64.AMD64Safepoint.*;
 
-import java.util.*;
-
 import com.sun.cri.ci.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -70,29 +68,24 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
     public static final int TRAP_NUMBER_OFFSET;
     public static final int FLAGS_OFFSET;
 
-    public static final CiRegisterSaveArea RSA;
+    public static final CiCalleeSaveArea CSA;
     static {
-        int offset = 0;
         CiRegister[] rsaRegs = {
             rax,  rcx,  rdx,   rbx,   rsp,   rbp,   rsi,   rdi,
             r8,   r9,   r10,   r11,   r12,   r13,   r14,   r15,
             xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
             xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
         };
-        Map<CiRegister, Integer> registerOffsets = new HashMap<CiRegister, Integer>(rsaRegs.length);
-        for (CiRegister reg : rsaRegs) {
-            registerOffsets.put(reg, offset);
-            offset += reg.isFpu() ? 16 : 8;
-        }
 
-        TRAP_NUMBER_OFFSET = offset;
-        offset += 8;
-        FLAGS_OFFSET = offset;
-        offset += 8;
+        int size = (16 * 8) + (16 * 16);
+        TRAP_NUMBER_OFFSET = size;
+        size += 8;
+        FLAGS_OFFSET = size;
+        size += 8;
 
-        RSA = new CiRegisterSaveArea(offset, registerOffsets, 8);
+        CSA = new CiCalleeSaveArea(size, rsaRegs, 8);
 
-        TRAP_STATE_SIZE_WITHOUT_RIP = RSA.size;
+        TRAP_STATE_SIZE_WITHOUT_RIP = CSA.size;
         TRAP_STATE_SIZE_WITH_RIP = TRAP_STATE_SIZE_WITHOUT_RIP + 8;
     }
 
@@ -120,20 +113,20 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
     @Override
     public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
         // TODO: get the frame pointer register from the ABI
-        return trapState.readWord(RSA.offsetOf(rbp)).asPointer();
+        return trapState.readWord(CSA.offsetOf(rbp)).asPointer();
     }
 
     @Override
     public Pointer getSafepointLatch(Pointer trapState) {
         Pointer rsa = getRegisterState(trapState);
-        int offset = RSA.offsetOf(LATCH_REGISTER);
+        int offset = CSA.offsetOf(LATCH_REGISTER);
         return rsa.readWord(offset).asPointer();
     }
 
     @Override
     public void setSafepointLatch(Pointer trapState, Pointer value) {
         Pointer rsa = getRegisterState(trapState);
-        int offset = RSA.offsetOf(LATCH_REGISTER);
+        int offset = CSA.offsetOf(LATCH_REGISTER);
         rsa.writeWord(offset, value);
     }
 
@@ -157,9 +150,9 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         final Pointer rsa = getRegisterState(trapState);
         Log.println("Non-zero registers:");
 
-        for (CiRegister reg : RSA.registers) {
+        for (CiRegister reg : CSA.registers) {
             if (reg.isCpu()) {
-                int offset = RSA.offsetOf(reg);
+                int offset = CSA.offsetOf(reg);
                 final Word value = rsa.readWord(offset);
                 if (!value.isZero()) {
                     Log.print("  ");
@@ -179,9 +172,9 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         Log.println();
         if (false) {
             boolean seenNonZeroXMM = false;
-            for (CiRegister reg : RSA.registers) {
+            for (CiRegister reg : CSA.registers) {
                 if (reg.isFpu()) {
-                    int offset = RSA.offsetOf(reg);
+                    int offset = CSA.offsetOf(reg);
                     final double value = rsa.readDouble(offset);
                     if (value != 0) {
                         if (!seenNonZeroXMM) {

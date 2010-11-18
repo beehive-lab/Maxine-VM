@@ -394,7 +394,7 @@ public class Util {
      * <p>
      * Sample output:
      * <pre>
-     *     java.lang.ClassLoader.loadClass(ClassLoader.java:296) [bci: 28], frame-ref-map: 0, 1, 4 [0x13]
+     *     java.lang.ClassLoader.loadClass(ClassLoader.java:296) [bci: 28], frame-ref-map: {0, 1, 4}, reg-ref-map
      *         local[0] = stack:0:w
      *         local[1] = stack:1:w
      *         local[2] = stack:2:w
@@ -406,10 +406,10 @@ public class Util {
             String indentTwice = indent + indent;
             StringBuilder refMaps = new StringBuilder();
             if (info.hasRegisterRefMap()) {
-                CiUtil.appendBitmap(refMaps.append(", reg-ref-map:"), info.registerRefMap);
+                refMaps.append(", reg-ref-map:").append(CiBitMap.fromLong(info.registerRefMap));
             }
             if (info.hasStackRefMap()) {
-                CiUtil.appendBitmap(refMaps.append(", frame-ref-map: "), info.frameRefMap);
+                refMaps.append(", frame-ref-map: ").append(info.frameRefMap);
             }
             CiCodePos pos = info.codePos;
             while (pos != null) {

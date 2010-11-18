@@ -169,7 +169,7 @@ public abstract class BytecodeAssembler {
     }
 
     /**
-     * Adjusts the current stack height. Clients should call this to re-adjust the stack tdepth racking at
+     * Adjusts the current stack height. Clients should call this to re-adjust the stack depth tracking at
      * the beginning of basic blocks as this assembler only accurately tracks the stack depth within
      * a basic block.
      *
@@ -523,6 +523,15 @@ public abstract class BytecodeAssembler {
     public void if_acmpeq(Label label) {
         branch(IF_ACMPEQ, label);
         decStack2();
+    }
+
+    public void anewarray(int typeRefIndex) {
+        emitOpcode(ANEWARRAY);
+        emitCPIndex2(typeRefIndex);
+    }
+
+    public void anewarray(ClassConstant type) {
+        anewarray(constantPoolEditor.indexOf(type, true));
     }
 
     public void invokestatic(int methodRefIndex, int numArgSlots, int numReturnValueSlots) {

@@ -30,6 +30,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.LIROperand.LIRAddressOperand;
 import com.sun.c1x.lir.LIROperand.LIRVariableOperand;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.*;
 
 /**
  * The {@code LIRInstruction} class definition.
@@ -450,32 +451,28 @@ public abstract class LIRInstruction {
         return toString(OperandFormatter.DEFAULT);
     }
 
-    protected static void appendRefMap(StringBuilder buf, OperandFormatter operandFmt, byte[] map, boolean frameRefMap) {
-        CiRegisterSaveArea rsa = null;
-        if (!frameRefMap) {
-            rsa = compilation().registerConfig.getRSA();
-        }
-        for (int i = 0; i < map.length; i++) {
-            int b = map[i] & 0xff;
-            if (b != 0) {
-                int index = (i * 8);
-                while (b != 0) {
-                    if ((b & 1) != 0) {
-                        if (buf.length() != 0) {
-                            buf.append(", ");
-                        }
-                        if (frameRefMap) {
-                            buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, index)));
-                        } else {
-                            CiRegisterValue register = rsa.registerAt(index).asValue(CiKind.Object);
-                            buf.append(operandFmt.format(register));
-                        }
-                    }
-                    b >>>= 1;
-                    index++;
+    protected static String refMapToString(CiDebugInfo debugInfo, OperandFormatter operandFmt) {
+        StringBuilder buf = new StringBuilder();
+        if (debugInfo.hasStackRefMap()) {
+            CiBitMap bm = debugInfo.frameRefMap;
+            for (int slot = bm.nextSetBit(0); slot >= 0; slot = bm.nextSetBit(slot + 1)) {
+                if (buf.length() != 0) {
+                    buf.append(", ");
                 }
+                buf.append(operandFmt.format(CiStackSlot.get(CiKind.Object, slot)));
             }
         }
+        if (debugInfo.hasRegisterRefMap()) {
+            CiBitMap bm = CiBitMap.fromLong(debugInfo.registerRefMap);
+            for (int reg = bm.nextSetBit(0); reg >= 0; reg = bm.nextSetBit(reg + 1)) {
+                if (buf.length() != 0) {
+                    buf.append(", ");
+                }
+                CiRegisterValue register = compilation().target.arch.registerFor(reg, RegisterFlag.CPU).asValue(CiKind.Object);
+                buf.append(operandFmt.format(register));
+            }
+        }
+        return buf.toString();
     }
 
     protected void appendDebugInfo(StringBuilder buf, OperandFormatter operandFmt, LIRDebugInfo info) {
@@ -483,15 +480,9 @@ public abstract class LIRInstruction {
             buf.append(" [bci:").append(info.state.bci);
             if (info.hasDebugInfo()) {
                 CiDebugInfo debugInfo = info.debugInfo();
-                StringBuilder refmap = new StringBuilder();
-                if (debugInfo.hasStackRefMap()) {
-                    appendRefMap(refmap, operandFmt, debugInfo.frameRefMap, true);
-                }
-                if (debugInfo.hasRegisterRefMap()) {
-                    appendRefMap(refmap, operandFmt, debugInfo.registerRefMap, false);
-                }
+                String refmap = refMapToString(debugInfo, operandFmt);
                 if (refmap.length() != 0) {
-                    buf.append(", refmap(").append(refmap.toString().trim()).append(')');
+                    buf.append(", refmap(").append(refmap.trim()).append(')');
                 }
             }
             buf.append(']');
