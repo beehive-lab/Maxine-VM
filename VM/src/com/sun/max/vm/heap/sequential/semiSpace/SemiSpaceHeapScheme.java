@@ -234,7 +234,29 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 this.growPolicy = new DoubleGrowPolicy();
             }
             increaseGrowPolicy = new LinearGrowPolicy();
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            if (Heap.traceGCTime()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Timings (");
+                Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
+                Log.print(") for all GC: clear & initialize=");
+                Log.print(clearTimer.getElapsedTime());
+                Log.print(", root scan=");
+                Log.print(rootScanTimer.getElapsedTime());
+                Log.print(", boot heap scan=");
+                Log.print(bootHeapScanTimer.getElapsedTime());
+                Log.print(", code scan=");
+                Log.print(codeScanTimer.getElapsedTime());
+                Log.print(", copy=");
+                Log.print(copyTimer.getElapsedTime());
+                Log.print(", weak refs=");
+                Log.print(weakRefTimer.getElapsedTime());
+                Log.print(", total=");
+                Log.println(gcTimer.getElapsedTime());
+                Log.unlock(lockDisabledSafepoints);
+            }
         }
+
     }
 
     private void allocateHeap() {
@@ -1101,32 +1123,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
             growHeap.submit();
         }
         return growHeap.result;
-    }
-
-    @Override
-    public void finalize(MaxineVM.Phase phase) {
-        if (MaxineVM.Phase.RUNNING == phase) {
-            if (Heap.traceGCTime()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Timings (");
-                Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
-                Log.print(") for all GC: clear & initialize=");
-                Log.print(clearTimer.getElapsedTime());
-                Log.print(", root scan=");
-                Log.print(rootScanTimer.getElapsedTime());
-                Log.print(", boot heap scan=");
-                Log.print(bootHeapScanTimer.getElapsedTime());
-                Log.print(", code scan=");
-                Log.print(codeScanTimer.getElapsedTime());
-                Log.print(", copy=");
-                Log.print(copyTimer.getElapsedTime());
-                Log.print(", weak refs=");
-                Log.print(weakRefTimer.getElapsedTime());
-                Log.print(", total=");
-                Log.println(gcTimer.getElapsedTime());
-                Log.unlock(lockDisabledSafepoints);
-            }
-        }
     }
 
     @INLINE
