@@ -217,10 +217,10 @@ public final class VmThreadMap {
     /**
      * Once true, no more threads can be started.
      */
-    private volatile boolean mainThreadExited;
+    private volatile boolean vmTerminating;
 
-    void setMainThreadExited() {
-        mainThreadExited = true;
+    void setVMTerminating() {
+        vmTerminating = true;
     }
 
     @INLINE
@@ -278,10 +278,10 @@ public final class VmThreadMap {
      *
      * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on {@link #THREAD_LOCK}.</b>
      *
-     * @return {@code true} if the non-daemon thread can continue running; {@code false} if the main thread has already exited
+     * @return {@code true} if the non-daemon thread can continue running; {@code false} if the main thread is in the process of exiting
      */
     static boolean incrementNonDaemonThreads() {
-        if (ACTIVE.mainThreadExited) {
+        if (ACTIVE.vmTerminating) {
             return false;
         }
         if (VmThread.TraceThreads) {
