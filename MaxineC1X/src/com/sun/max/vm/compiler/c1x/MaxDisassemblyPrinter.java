@@ -160,7 +160,7 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
             if (info != null) {
                 if (info.hasRegisterRefMap()) {
                     stream.print(";;   reg-ref-map:");
-                    CiBitMap bm = CiBitMap.fromLong(info.registerRefMap);
+                    CiBitMap bm = info.registerRefMap;
                     for (int reg = bm.nextSetBit(0); reg >= 0; reg = bm.nextSetBit(reg + 1)) {
                         stream.print(" " + arch.registers[reg]);
                     }

@@ -58,21 +58,34 @@ public final class CiBitMap {
      * @param bitmap the bit map to convert
      */
     public CiBitMap(byte[] bitmap) {
-        this(bitmap.length * 8);
-        int byteIndex = 0; 
-        while (byteIndex < bitmap.length && byteIndex < 8) {
-            long bite = (long) bitmap[byteIndex] & 0xff;
-            low |= bite << (byteIndex * 8);
+        this(bitmap, 0, bitmap.length);
+    }
+    
+    /**
+     * Constructs a new bit map from a byte array encoded bit map.
+     * 
+     * @param arr the byte array containing the bit map to convert
+     * @param off the byte index in {@code arr} at which the bit map starts
+     * @param numberOfBytes the number of bytes worth of bits to copy from {@code arr}
+     */
+    public CiBitMap(byte[] arr, int off, int numberOfBytes) {
+        this(numberOfBytes * 8);
+        int byteIndex = off;
+        int end = off + numberOfBytes;
+        assert end <= arr.length;
+        while (byteIndex < end && (byteIndex - off) < 8) {
+            long bite = (long) arr[byteIndex] & 0xff;
+            low |= bite << ((byteIndex - off) * 8);
             byteIndex++;
         }
-        if (byteIndex < bitmap.length) {
-            assert byteIndex == 8;
-            int remBytes = bitmap.length - 8;
+        if (byteIndex < end) {
+            assert (byteIndex - off) == 8;
+            int remBytes = end - byteIndex;
             int remWords = (remBytes + 7) / 8;
             for (int word = 0; word < remWords; word++) {
                 long w = 0L;
-                for (int i = 0; i < 8 && byteIndex < bitmap.length; i++) {
-                    long bite = (long) bitmap[byteIndex] & 0xff;
+                for (int i = 0; i < 8 && byteIndex < end; i++) {
+                    long bite = (long) arr[byteIndex] & 0xff;
                     w |= bite << (i * 8);
                     byteIndex++;
                 }

@@ -462,7 +462,7 @@ public abstract class LIRInstruction {
             }
         }
         if (debugInfo.hasRegisterRefMap()) {
-            CiBitMap bm = CiBitMap.fromLong(debugInfo.registerRefMap);
+            CiBitMap bm = debugInfo.registerRefMap;
             for (int reg = bm.nextSetBit(0); reg >= 0; reg = bm.nextSetBit(reg + 1)) {
                 if (buf.length() != 0) {
                     buf.append(", ");

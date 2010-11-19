@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import static com.sun.cri.ci.CiDebugInfo.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.c1x.C1XCompilerScheme.*;
@@ -406,20 +405,16 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             debugInfos[index] = debugInfo;
             // copy the stack map
             int frameRefMapBytes;
-            CiBitMap frameRefMap = debugInfo.frameRefMap;
-            if (frameRefMap != null) {
-                frameRefMapBytes = frameRefMap.copyTo(referenceMaps, refmapIndex, -1);
+            if (debugInfo.hasStackRefMap()) {
+                frameRefMapBytes = debugInfo.frameRefMap.copyTo(referenceMaps, refmapIndex, -1);
             } else {
                 frameRefMapBytes = 0;
             }
             // copy the register map
-            long regRefMap = debugInfo.registerRefMap;
-            if (regRefMap != CiDebugInfo.NO_REF_MAP) {
-                refmapIndex += frameRefMapBytes;
+            if (debugInfo.hasRegisterRefMap()) {
                 int regRefMapSize = registerReferenceMapSize();
-                CiBitMap.fromLong(regRefMap).copyTo(referenceMaps, refmapIndex, regRefMapSize);
+                debugInfo.registerRefMap.copyTo(referenceMaps, refmapIndex + frameRefMapBytes, regRefMapSize);
             }
-
             return debugInfo.codePos != null && debugInfo.codePos.caller != null;
         }
         return false;
@@ -962,11 +957,11 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             int parentIndex = sourceInfo[start + 2];
             final CiDebugInfo caller = decodeDebugInfo(classMethodActor, sourceInfo, sourceMethods, parentIndex);
             CiCodePos callerPos = caller == null ? null : caller.codePos;
-            return new CiDebugInfo(new CiCodePos(callerPos, sourceMethod, bci), NO_REF_MAP, null);
+            return new CiDebugInfo(new CiCodePos(callerPos, sourceMethod, bci), null, null);
         } else if (sourceInfoObject instanceof char[]) {
             // no inlined methods; just recover the bytecode index
             char[] array = (char[]) sourceInfoObject;
-            return new CiDebugInfo(new CiCodePos(null, classMethodActor, array[index]), NO_REF_MAP, null);
+            return new CiDebugInfo(new CiCodePos(null, classMethodActor, array[index]), null, null);
         } else {
             return null;
         }

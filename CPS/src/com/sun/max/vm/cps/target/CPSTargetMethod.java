@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.cps.target;
 
-import static com.sun.cri.ci.CiDebugInfo.*;
-
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -42,7 +40,7 @@ import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
+import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
 
 /**
  * Target method that saves for each catch block the ranges in the code that can
@@ -522,20 +520,14 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         TargetJavaFrameDescriptor jfd = TargetJavaFrameDescriptor.get(this, stopIndex);
         Frame frame = jfd.toFrame(null);
 
-        long registerRefMap = NO_REF_MAP;
-        byte[] frameRefMap = new byte[frameReferenceMapSize];
-        System.arraycopy(referenceMaps, stopIndex * frameReferenceMapSize, frameRefMap, 0, frameReferenceMapSize);
+        CiBitMap regRefMap = null;
+        CiBitMap frameRefMap = new CiBitMap(referenceMaps, stopIndex * frameReferenceMapSize, frameReferenceMapSize);
         if (stopIndex >= numberOfDirectCalls() + numberOfIndirectCalls()) {
             int regRefMapSize = registerReferenceMapSize();
-            registerRefMap = 0L;
-            int byteIndex = frameReferenceMapsSize() + (regRefMapSize * stopIndex);
-            for (int i = 0; i < regRefMapSize; i++) {
-                long b = ((long) referenceMaps[byteIndex + i]) & 0xffL;
-                registerRefMap |= b << (i * 8);
-            }
+            regRefMap = new CiBitMap(referenceMaps, frameReferenceMapsSize() + (regRefMapSize * stopIndex), regRefMapSize);
         }
 
-        return new CiDebugInfo(frame, registerRefMap, new CiBitMap(frameRefMap));
+        return new CiDebugInfo(frame, regRefMap, frameRefMap);
     }
 
     @HOSTED_ONLY

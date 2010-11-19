@@ -611,7 +611,7 @@ public class CiUtil {
     public static StringBuilder append(StringBuilder sb, CiDebugInfo info) {
         String nl = NEW_LINE;
         if (info.hasRegisterRefMap()) {
-            sb.append("reg-ref-map: ").append(CiBitMap.fromLong(info.registerRefMap)).append(nl);
+            sb.append("reg-ref-map: ").append(info.registerRefMap).append(nl);
         }
         if (info.hasStackRefMap()) {
             sb.append("frame-ref-map: ").append(info.frameRefMap).append(nl);

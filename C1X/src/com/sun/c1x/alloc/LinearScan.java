@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.alloc;
 
-import static com.sun.cri.ci.CiDebugInfo.*;
 import static com.sun.cri.ci.CiUtil.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -2138,10 +2137,10 @@ public class LinearScan {
                 int frameSize = compilation.frameMap().frameSize();
                 int frameWords = frameSize / compilation.target.spillSlotSize;
                 CiBitMap frameRefMap = new CiBitMap(frameWords);
-                CiBitMap regRefMap = !op.hasCall() ? new CiBitMap(64) : null;
+                CiBitMap regRefMap = !op.hasCall() ? new CiBitMap(compilation.target.arch.registerReferenceMapBitCount) : null;
                 Frame frame = computeFrame(info.state, op.id, frameRefMap);
                 computeOopMap(iw, op, frameRefMap, regRefMap);
-                info.debugInfo = new CiDebugInfo(frame, regRefMap == null ? NO_REF_MAP : regRefMap.toLong(), frameRefMap);
+                info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);
             } else if (C1XOptions.DetailedAsserts) {
                 assert info.debugInfo.frame().equals(computeFrame(info.state, op.id, new CiBitMap(info.debugInfo.frameRefMap.size())));
             }
