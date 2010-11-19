@@ -292,7 +292,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         if (CODE_PATCHING_ALIGMMENT_IS_GUARANTEED && !callDisp.isWordAligned()) {
             // Patching must not occur across a cache line boundary. The easiest way to check for
             // this is to make sure the call instruction is word aligned.
-            FatalError.unexpected("Call displacement not word aligned: " + callDisp);
+            FatalError.unexpected("Call displacement not word aligned: " + callDisp.toHexString());
         }
         callSite.writeInt(1, calleeOffset);
     }
