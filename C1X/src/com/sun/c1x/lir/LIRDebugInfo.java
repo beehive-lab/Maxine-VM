@@ -87,7 +87,7 @@ public class LIRDebugInfo {
         } else {
             assert location.isRegister() : "objects can only be in a register";
             CiRegisterValue registerLocation = (CiRegisterValue) location;
-            int reg = registerLocation.reg.encoding;
+            int reg = registerLocation.reg.number;
             assert reg >= 0 : "object cannot be in non-object register " + registerLocation.reg;
             assert reg < target.arch.registerReferenceMapBitCount;
             setBit(regRefMap, reg);

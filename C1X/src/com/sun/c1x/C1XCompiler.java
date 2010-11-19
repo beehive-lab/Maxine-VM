@@ -59,13 +59,13 @@ public class C1XCompiler extends CiCompiler {
      */
     public final Backend backend;
 
-    public final RiRegisterConfig stubRegisterConfig;
+    public final RiRegisterConfig globalStubRegisterConfig;
 
-    public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig stubRegisterConfig) {
+    public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig globalStubRegisterConfig) {
         this.runtime = runtime;
         this.target = target;
         this.xir = xirGen;
-        this.stubRegisterConfig = stubRegisterConfig;
+        this.globalStubRegisterConfig = globalStubRegisterConfig;
 
         this.backend = Backend.create(target.arch, this);
         init();

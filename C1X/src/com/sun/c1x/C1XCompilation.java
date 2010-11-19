@@ -93,7 +93,7 @@ public class C1XCompilation {
         this.method = method;
         this.osrBCI = osrBCI;
         this.stats = new CiStatistics();
-        this.registerConfig = method == null ? compiler.stubRegisterConfig : runtime.getRegisterConfig(method);
+        this.registerConfig = method == null ? compiler.globalStubRegisterConfig : runtime.getRegisterConfig(method);
 
         CFGPrinter cfgPrinter = null;
         if (C1XOptions.PrintCFGToFile && method != null && TTY.Filter.matches(C1XOptions.PrintFilter, method)) {

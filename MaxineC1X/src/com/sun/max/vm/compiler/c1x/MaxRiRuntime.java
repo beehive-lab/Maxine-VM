@@ -340,34 +340,6 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public RiRegisterConfig getRegisterConfig(RiMethod method) {
-        ClassMethodActor compilee = (ClassMethodActor) method;
-        Platform platform = Platform.platform();
-        if (platform.isa == ISA.AMD64) {
-            switch (platform.os) {
-                case DARWIN:
-                case GUESTVM:
-                case LINUX:
-                case SOLARIS: {
-                    if (compilee.isTrapStub()) {
-                        return AMD64UnixRegisterConfig.TRAP_STUB;
-                    }
-                    if (compilee.isVmEntryPoint()) {
-                        return AMD64UnixRegisterConfig.N2J;
-                    }
-                    if (compilee.isCFunction()) {
-                        return AMD64UnixRegisterConfig.J2N;
-                    }
-                    assert !compilee.isTemplate();
-                    if (compilee.isTrampoline()) {
-                        return AMD64UnixRegisterConfig.TRAMPOLINE;
-                    }
-                    return AMD64UnixRegisterConfig.STANDARD;
-                }
-                default:
-                    throw FatalError.unimplemented();
-
-            }
-        }
-        throw FatalError.unimplemented();
+        return C1XCompilerScheme.getRegisterConfig((ClassMethodActor) method);
     }
 }

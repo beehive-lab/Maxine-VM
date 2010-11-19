@@ -30,7 +30,6 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.LIROperand.LIRAddressOperand;
 import com.sun.c1x.lir.LIROperand.LIRVariableOperand;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiRegister.*;
 
 /**
  * The {@code LIRInstruction} class definition.
@@ -468,7 +467,7 @@ public abstract class LIRInstruction {
                 if (buf.length() != 0) {
                     buf.append(", ");
                 }
-                CiRegisterValue register = compilation().target.arch.registerFor(reg, RegisterFlag.CPU).asValue(CiKind.Object);
+                CiRegisterValue register = compilation().target.arch.registers[reg].asValue(CiKind.Object);
                 buf.append(operandFmt.format(register));
             }
         }

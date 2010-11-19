@@ -92,8 +92,8 @@ public class CiCalleeSaveArea {
      * @return the offset (in bytes) of {@code reg} in the CSA
      * @throws IllegalArgumentException if {@code reg} does not have a slot in the CSA 
      */
-    public int offsetOf(CiRegister reg) {
-        return indexOf(reg)  * slotSize;
+    public int offsetOf(int reg) {
+        return indexOf(reg) * slotSize;
     }
 
     /**
@@ -102,21 +102,31 @@ public class CiCalleeSaveArea {
      * @return the index of {@code reg} in the CSA
      * @throws IllegalArgumentException if {@code reg} does not have a slot in the CSA 
      */
-    public int indexOf(CiRegister reg) {
+    public int indexOf(int reg) {
         if (!contains(reg)) {
             throw new IllegalArgumentException();
         }
-        return regNumToIndex[reg.number];
+        return regNumToIndex[reg];
     }
     
+    /**
+     * Gets the offset of a given register in the CSA.
+     * 
+     * @return the offset (in bytes) of {@code reg} in the CSA
+     * @throws IllegalArgumentException if {@code reg} does not have a slot in the CSA 
+     */
+    public int offsetOf(CiRegister reg) {
+        return offsetOf(reg.number);
+    }
+
     /**
      * Determines if the CSA includes a slot for a given register.
      *  
      * @param reg the register to test
      * @return true if the CSA contains a slot for {@code reg}
      */
-    public boolean contains(CiRegister reg) {
-        return reg.number >= 0 && reg.number < regNumToIndex.length && regNumToIndex[reg.number] != -1;
+    public boolean contains(int reg) {
+        return reg >= 0 && reg < regNumToIndex.length && regNumToIndex[reg] != -1;
     }
 
     /**

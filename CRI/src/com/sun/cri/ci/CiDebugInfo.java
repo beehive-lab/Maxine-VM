@@ -47,7 +47,7 @@ public class CiDebugInfo {
     /**
      * The reference map for the registers at this point. The reference map is <i>packed</i> in that
      * for bit {@code k} in byte {@code n}, it refers to the register whose
-     * {@linkplain CiRegister#encoding encoding} is {@code (k + n * 8)}.
+     * {@linkplain CiRegister#number number} is {@code (k + n * 8)}.
      */
     public final long registerRefMap;
 
