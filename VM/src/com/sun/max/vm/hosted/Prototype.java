@@ -74,8 +74,7 @@ public abstract class Prototype {
      */
     public static synchronized void loadLibrary(String name) {
         if (!isPathHacked) {
-            final File projectPath = JavaProject.findVcsProjectDirectory();
-            final File workspacePath = projectPath.getParentFile();
+            final File workspacePath =  JavaProject.findMaxineRootDirectory();
             final String[] usrPaths = (String[]) WithoutAccessCheck.getStaticField(ClassLoader.class, "usr_paths");
             final String libraryPath = new File(workspacePath, LIBRARY_BUILD_PATH).getPath() + File.pathSeparator + Utils.toString(usrPaths, File.pathSeparator);
             JDKInterceptor.setLibraryPath(libraryPath);
