@@ -24,6 +24,7 @@ import static com.sun.cri.ci.CiDebugInfo.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.c1x.C1XCompilerScheme.*;
+import static com.sun.max.vm.stack.amd64.AMD64OptStackWalking.*;
 
 import java.io.*;
 import java.util.*;
@@ -46,15 +47,12 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
-import com.sun.max.vm.trampoline.*;
-import com.sun.max.vm.type.*;
 
 /**
  * This class implements a {@link TargetMethod target method} for
@@ -171,6 +169,17 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         } catch (CloneNotSupportedException e) {
             throw FatalError.unexpected(null, e);
         }
+    }
+
+    /**
+     * Gets the register config used to compile this method.
+     */
+    public RiRegisterConfig getRegisterConfig() {
+        if (classMethodActor != null) {
+            return C1XCompilerScheme.getRegisterConfig(classMethodActor);
+        }
+        // This must be a global stub
+        return C1XCompilerScheme.getGlobalStubRegisterConfig();
     }
 
     @Override
@@ -346,11 +355,11 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         int[] stopPositions = new int[totalStopPositions];
         Object[] directCallees = new Object[ciTargetMethod.directCalls.size()];
 
-        CiDebugInfo[] stopInfo = new CiDebugInfo[totalStopPositions];
+        CiDebugInfo[] debugInfos = new CiDebugInfo[totalStopPositions];
         boolean hasInlinedMethods = false;
 
         for (CiTargetMethod.Call site : ciTargetMethod.directCalls) {
-            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, stopInfo);
+            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
 
             RiMethod riMethod = site.method;
             if (riMethod != null) {
@@ -370,7 +379,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
 
         for (CiTargetMethod.Call site : ciTargetMethod.indirectCalls) {
-            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, stopInfo);
+            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
             if (site.symbol != null) {
                 stopPositions[index] |= StopPositions.NATIVE_FUNCTION_CALL;
             }
@@ -378,23 +387,23 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
 
         for (CiTargetMethod.Safepoint site : ciTargetMethod.safepoints) {
-            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, stopInfo);
+            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
             index++;
         }
 
         setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
-        initSourceInfo(stopInfo, hasInlinedMethods);
+        initSourceInfo(debugInfos, hasInlinedMethods);
     }
 
     private ClassMethodActor getClassMethodActor(RiMethod riMethod) {
         return (ClassMethodActor) riMethod;
     }
 
-    private boolean initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, CiDebugInfo debugInfo, CiDebugInfo[] stopInfo) {
+    private boolean initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, CiDebugInfo debugInfo, CiDebugInfo[] debugInfos) {
         stopPositions[index] = codePos;
         if (debugInfo != null) {
             // remember the code position
-            stopInfo[index] = debugInfo;
+            debugInfos[index] = debugInfo;
             // copy the stack map
             int frameRefMapBytes;
             CiBitMap frameRefMap = debugInfo.frameRefMap;
@@ -406,12 +415,9 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             // copy the register map
             long regRefMap = debugInfo.registerRefMap;
             if (regRefMap != CiDebugInfo.NO_REF_MAP) {
+                refmapIndex += frameRefMapBytes;
                 int regRefMapSize = registerReferenceMapSize();
-                for (int i = 0; i < regRefMapSize; i++) {
-                    byte b = (byte) regRefMap;
-                    referenceMaps[refmapIndex + frameRefMapBytes] = b;
-                    regRefMap = regRefMap >>> 8;
-                }
+                CiBitMap.fromLong(regRefMap).copyTo(referenceMaps, refmapIndex, regRefMapSize);
             }
 
             return debugInfo.codePos != null && debugInfo.codePos.caller != null;
@@ -765,22 +771,37 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
         Pointer registerState = Pointer.zero();
+        CiCalleeSaveArea csa = null;
         switch (calleeKind) {
             case TRAMPOLINE:
-                // compute the register reference map from the call at this site
-                prepareTrampolineRefMap(current, callee, preparer);
+                if (callee.targetMethod() instanceof C1XTargetMethod) {
+                    // can simply use the register ref map at the call site
+                    C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
+                    csa = c1xCallee.getRegisterConfig().getCalleeSaveArea();
+                    registerState = callee.sp().plus(offsetOfCSAInFrame(c1xCallee.frameSize(), csa));
+                } else {
+                    // compute the register reference map from the call at this site
+                    prepareTrampolineRefMap(current, callee, preparer);
+                }
                 break;
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame
                 registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
                 if (Trap.Number.isStackOverflow(registerState)) {
-                    // annoying corner case: a method can never catch stack overflow for itself
+                    // a method can never catch stack overflow for itself
                     return;
                 }
                 break;
             case CALLEE_SAVED:
-                // get the register state from the callee's frame
-                registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                if (callee.targetMethod() instanceof C1XTargetMethod) {
+                    // can simply use the register ref map at the call site
+                    C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
+                    csa = c1xCallee.getRegisterConfig().getCalleeSaveArea();
+                    registerState = callee.sp().plus(offsetOfCSAInFrame(c1xCallee.frameSize(), csa));
+                } else {
+                    // get the register state from the callee's frame
+                    registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                }
                 break;
             case NATIVE:
                 // no register state.
@@ -802,10 +823,27 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             Pointer slotPointer = registerState;
             int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize;
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
-            for (int i = frameReferenceMapSize; i < registerReferenceMapSize() + frameReferenceMapSize; i++) {
-                preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
-                slotPointer = slotPointer.plusWords(Bytes.WIDTH);
-                byteIndex++;
+            if (csa != null) {
+                // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
+                for (int i = 0; i < registerReferenceMapSize(); i++) {
+                    int b = referenceMaps[byteIndex] & 0xff;
+                    int reg = i * 8;
+                    while (b != 0) {
+                        if ((b & 1) != 0) {
+                            int offset = csa.offsetOf(reg);
+                            preparer.setReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
+                        }
+                        b = b >>> 1;
+                    }
+                    byteIndex++;
+                }
+            } else {
+                // The reg ref map already specified the frame slots in the callee for the registers
+                for (int i = 0; i < registerReferenceMapSize(); i++) {
+                    preparer.setReferenceMapBits(callee, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
+                    slotPointer = slotPointer.plusWords(Bytes.WIDTH);
+                    byteIndex++;
+                }
             }
         }
 
@@ -817,59 +855,6 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
             slotPointer = slotPointer.plusWords(Bytes.WIDTH);
             byteIndex++;
-        }
-    }
-
-    private static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
-        TargetMethod trampolineTargetMethod = callee.targetMethod();
-        ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
-        ClassMethodActor callerMethod;
-        TargetMethod targetMethod = current.targetMethod();
-        Pointer trampolineRegisters = callee.sp();
-
-        // figure out what method the caller is trying to call
-        if (trampolineMethodActor.isStaticTrampoline()) {
-            int stopIndex = targetMethod.findClosestStopIndex(current.ip().minus(1));
-            callerMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
-        } else {
-            // this is an virtual or interface call; figure out the receiver method based on the
-            // virtual or interface index
-            final Object receiver = trampolineRegisters.getReference().toJava(); // read receiver object on stack
-            final ClassActor classActor = ObjectAccess.readClassActor(receiver);
-            assert trampolineTargetMethod.referenceLiterals().length == 1;
-            final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
-            if (trampolineMethodActor.isVirtualTrampoline()) {
-                callerMethod = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex);
-            } else {
-                callerMethod = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex);
-            }
-        }
-
-        // use the caller method to fill out the reference map for the saved parameters in the trampoline frame
-        int parameterRegisterIndex = 0;
-        if (!callerMethod.isStatic()) {
-            // set a bit for the receiver object
-            preparer.setReferenceMapBits(current, trampolineRegisters, 1, 1);
-            parameterRegisterIndex = 1;
-        }
-
-        SignatureDescriptor descriptor = callerMethod.descriptor();
-        TargetABI abi = trampolineTargetMethod.abi();
-        for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
-            final TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
-            final Kind parameterKind = parameter.toKind();
-            if (parameterKind.isReference) {
-                // set a bit for this parameter
-                preparer.setReferenceMapBits(current, trampolineRegisters.plusWords(parameterRegisterIndex), 1, 1);
-            }
-            if (abi.putIntoIntegerRegister(parameterKind)) {
-                parameterRegisterIndex++;
-                if (parameterRegisterIndex >= abi.integerIncomingParameterRegisters.size()) {
-                    // done since all subsequent parameters are known to be passed on the stack
-                    // and covered by the reference map for the stack at this call point
-                    return;
-                }
-            }
         }
     }
 
