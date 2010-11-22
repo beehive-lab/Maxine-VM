@@ -32,6 +32,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.cps.target.amd64.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -356,6 +357,12 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
                 final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
                 final Kind parameterKind = parameter.toKind();
                 if (parameterKind.isReference) {
+                    if (Heap.traceRootScanning()) {
+                        Log.print("    parameter ");
+                        Log.print(i);
+                        Log.print(", type: ");
+                        Log.println(parameter.string);
+                    }
                     preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
                 }
                 int parameterSlots = (!parameterKind.isCategory1) ? 2 : 1;
@@ -365,6 +372,10 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             // Finally deal with the receiver (if any)
             if (!isInvokestatic) {
                 // Mark the slot for the receiver as it is not covered by the method signature:
+                if (Heap.traceRootScanning()) {
+                    Log.print("    receiver, type: ");
+                    Log.println(methodConstant.holder(constantPool).string);
+                }
                 preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
             }
         }

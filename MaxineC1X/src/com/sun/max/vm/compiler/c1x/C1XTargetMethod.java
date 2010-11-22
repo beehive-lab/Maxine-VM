@@ -46,6 +46,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
@@ -179,6 +180,15 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
         // This must be a global stub
         return C1XCompilerScheme.getGlobalStubRegisterConfig();
+    }
+
+    @Override
+    public Pointer getCalleeSaveStart(Pointer sp) {
+        CiCalleeSaveArea csa = getRegisterConfig().getCalleeSaveArea();
+        if (csa.size == 0) {
+            return Pointer.zero();
+        }
+        return sp.plus(C1XCompilerScheme.offsetOfCSAInFrame(frameSize(), csa));
     }
 
     @Override
@@ -769,15 +779,15 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         CiCalleeSaveArea csa = null;
         switch (calleeKind) {
             case TRAMPOLINE:
-                if (callee.targetMethod() instanceof C1XTargetMethod) {
-                    // can simply use the register ref map at the call site
-                    C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
-                    csa = c1xCallee.getRegisterConfig().getCalleeSaveArea();
-                    registerState = callee.sp().plus(offsetOfCSAInFrame(c1xCallee.frameSize(), csa));
-                } else {
+//                if (callee.targetMethod() instanceof C1XTargetMethod) {
+//                    // can simply use the register ref map at the call site
+//                    C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
+//                    csa = c1xCallee.getRegisterConfig().getCalleeSaveArea();
+//                    registerState = callee.sp().plus(offsetOfCSAInFrame(c1xCallee.frameSize(), csa));
+//                } else {
                     // compute the register reference map from the call at this site
                     prepareTrampolineRefMap(current, callee, preparer);
-                }
+//                }
                 break;
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame
@@ -826,8 +836,13 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
                     while (b != 0) {
                         if ((b & 1) != 0) {
                             int offset = csa.offsetOf(reg);
+                            if (Heap.traceRootScanning()) {
+                                Log.print("    register: ");
+                                Log.println(csa.registers[reg].name);
+                            }
                             preparer.setReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
                         }
+                        reg++;
                         b = b >>> 1;
                     }
                     byteIndex++;

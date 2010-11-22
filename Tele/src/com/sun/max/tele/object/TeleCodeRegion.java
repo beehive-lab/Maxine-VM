@@ -91,7 +91,9 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
                 try {
                     Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, regionsReference, index).asReference();
                     TeleTargetMethod teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
-                    assert teleTargetMethod != null;
+                    if (teleTargetMethod == null) {
+                        throw new InvalidReferenceException(targetMethodReference);
+                    }
                     teleTargetMethods.add(teleTargetMethod);
                 } catch (InvalidReferenceException e) {
                     vm().invalidReferencesLogger().record(e.getReference(), TeleTargetMethod.class);

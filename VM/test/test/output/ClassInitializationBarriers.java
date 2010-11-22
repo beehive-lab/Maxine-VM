@@ -34,16 +34,20 @@ public class ClassInitializationBarriers {
 
     public static void main(String[] args) {
         INVOKESTATIC.a();
-        new NEW();
-        System.out.println(GETSTATIC.field + PUTSTATIC.field);
-        System.out.println("a = " + a);
-        System.out.println("b = " + b);
-        System.out.println("c = " + c);
-        System.out.println("d = " + d);
+        INVOKESTATIC.a();
+//        new NEW();
+//        System.out.println(GETSTATIC.field + PUTSTATIC.field);
+        System.out.println("az = " + INVOKESTATIC.az);
+        System.out.println("bz = " + INVOKESTATIC.bz);
+//        System.out.println("b = " + b);
+//        System.out.println("c = " + c);
+//        System.out.println("d = " + d);
     }
 
     /** Tests class initialization barrier for INVOKESTATIC. */
     static class INVOKESTATIC {
+        static int az;
+        static int bz;
         static void a() {
         }
         static {

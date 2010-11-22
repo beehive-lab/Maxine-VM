@@ -228,7 +228,7 @@ public class AMD64OptStackWalking {
         ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
         ClassMethodActor callerMethod;
         TargetMethod targetMethod = current.targetMethod();
-        Pointer trampolineRegisters = callee.sp();
+        Pointer calleeSaveStart = trampolineTargetMethod.getCalleeSaveStart(callee.sp());
 
         // figure out what method the caller is trying to call
         if (trampolineMethodActor.isStaticTrampoline()) {
@@ -237,7 +237,7 @@ public class AMD64OptStackWalking {
         } else {
             // this is an virtual or interface call; figure out the receiver method based on the
             // virtual or interface index
-            final Object receiver = trampolineRegisters.getReference().toJava(); // read receiver object on stack
+            final Object receiver = calleeSaveStart.getReference().toJava(); // read receiver object on stack
             final ClassActor classActor = ObjectAccess.readClassActor(receiver);
             assert trampolineTargetMethod.referenceLiterals().length == 1;
             final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
@@ -252,7 +252,7 @@ public class AMD64OptStackWalking {
         int parameterRegisterIndex = 0;
         if (!callerMethod.isStatic()) {
             // set a bit for the receiver object
-            preparer.setReferenceMapBits(current, trampolineRegisters, 1, 1);
+            preparer.setReferenceMapBits(current, calleeSaveStart, 1, 1);
             parameterRegisterIndex = 1;
         }
 
@@ -263,7 +263,7 @@ public class AMD64OptStackWalking {
             final Kind parameterKind = parameter.toKind();
             if (parameterKind.isReference) {
                 // set a bit for this parameter
-                preparer.setReferenceMapBits(current, trampolineRegisters.plusWords(parameterRegisterIndex), 1, 1);
+                preparer.setReferenceMapBits(current, calleeSaveStart.plusWords(parameterRegisterIndex), 1, 1);
             }
             if (abi.putIntoIntegerRegister(parameterKind)) {
                 parameterRegisterIndex++;

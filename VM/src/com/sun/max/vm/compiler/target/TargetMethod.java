@@ -42,11 +42,11 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.template.*;
 
 /**
@@ -375,6 +375,15 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
         return false;
+    }
+
+    /**
+     * Gets the address within a frame where the callee saved registers (if any) are saved.
+     *
+     * @param sp the frame pointer of {@code Pointer#zero()} if this method does not have a callee save area
+     */
+    public Pointer getCalleeSaveStart(Pointer sp) {
+        return Pointer.zero();
     }
 
     public boolean isCalleeSaved() {

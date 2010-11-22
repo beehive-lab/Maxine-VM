@@ -927,6 +927,15 @@ public final class GraphBuilder {
             return;
         }
         FrameState stateBefore = curState.immutableCopy(bci());
+        RiType holder = target.holder();
+        boolean isInitialized = !C1XOptions.TestPatching && target.isResolved() && holder.isInitialized();
+        if (!isInitialized) {
+            // Re-use the same resolution code as for accessing a static field. Even though
+            // the result of resolution is not used by the invocation (only the side effect
+            // of initialization is required), it can be commoned with static field accesses.
+            genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
+        }
+
         Value[] args = curState.popArguments(target.signature().argumentSlots(false));
         if (!tryRemoveCall(target, args, true)) {
             if (!tryInline(target, args, stateBefore)) {

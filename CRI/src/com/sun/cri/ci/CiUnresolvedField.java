@@ -72,25 +72,11 @@ public class CiUnresolvedField implements RiField {
         throw new CiUnresolvedException(operation + " not defined for unresolved field " + name + " in " + holder);
     }
 
-    /**
-     * Gets the hashcode for this compiler interface field. This is the
-     * identity hash code for the field actor if the field is resolved,
-     * otherwise the identity hash code for this object.
-     * @return the hashcode
-     */
     @Override
     public int hashCode() {
         return System.identityHashCode(this);
     }
 
-    /**
-     * Checks whether this compiler interface field is equal to another object.
-     * If the field is resolved, the objects are equivalent if the refer
-     * to the same field actor. Otherwise they are equivalent if they
-     * reference the same compiler interface field object.
-     * @param o the object to check
-     * @return {@code true} if this object is equal to the other
-     */
     @Override
     public boolean equals(Object o) {
         return o == this;
