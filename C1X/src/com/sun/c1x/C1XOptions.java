@@ -90,7 +90,7 @@ public class C1XOptions {
     public static boolean PrintLoopList                      = ____;
 
     /**
-     * See {@link Filter#matches(String, Object)}.
+     * See {@link Filter#Filter(String, Object)}.
      */
     public static String  PrintFilter                        = null;
 

@@ -96,7 +96,7 @@ public class C1XCompilation {
         this.registerConfig = method == null ? compiler.globalStubRegisterConfig : runtime.getRegisterConfig(method);
 
         CFGPrinter cfgPrinter = null;
-        if (C1XOptions.PrintCFGToFile && method != null && TTY.Filter.matches(C1XOptions.PrintFilter, method)) {
+        if (C1XOptions.PrintCFGToFile && method != null && !TTY.isSuppressed()) {
             cfgPrinterBuffer = new ByteArrayOutputStream();
             cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target);
             cfgPrinter.printCompilation(method);
@@ -282,7 +282,6 @@ public class C1XCompilation {
 
     public CiResult compile() {
         CiTargetMethod targetMethod;
-        TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
         try {
             setCurrent(this);
 
@@ -298,7 +297,6 @@ public class C1XCompilation {
         } catch (Throwable t) {
             return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
         } finally {
-            filter.remove();
             flushCfgPrinterToFile();
             setCurrent(null);
         }
