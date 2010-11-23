@@ -40,7 +40,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
@@ -549,25 +548,6 @@ public abstract class TargetMethod extends MemoryRegion {
         this.abi = abi;
     }
 
-    public void cleanup() {
-    }
-
-    public boolean contains(Builtin builtin, boolean defaultResult) {
-        return false;
-    }
-
-    public int count(Builtin builtin, int defaultResult) {
-        return 0;
-    }
-
-    public boolean isGenerated() {
-        return false;
-    }
-
-    public boolean isNative() {
-        return false;
-    }
-
     public String name() {
         return regionName();
     }
@@ -758,13 +738,6 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Determines if this method was compiled with the template JIT compiler.
-     */
-    public final boolean isJitCompiled() {
-        return abi.callEntryPoint == CallEntryPoint.JIT_ENTRY_POINT;
-    }
-
-    /**
      * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
      * @return an object that represents the layout of this stack frame
      */
@@ -826,4 +799,13 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param current the current stack frame cursor
      */
     public abstract void advance(Cursor current);
+
+    /**
+     * Determines if this method has been compiled under the invariant that the
+     * register state upon entry to a local exception handler for an implicit
+     * exception is the same as at the implicit exception point.
+     */
+    public boolean preserveRegistersForLocalExceptionHandler() {
+        return true;
+    }
 }

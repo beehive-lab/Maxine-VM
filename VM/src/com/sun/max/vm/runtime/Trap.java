@@ -438,7 +438,7 @@ public abstract class Trap {
             // Can't do frame preparing when methods aren't at a stop
             StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
         }
-        if (!targetMethod.isJitCompiled()) {
+        if (targetMethod.preserveRegistersForLocalExceptionHandler()) {
             final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, ip, throwable.getClass());
             if (!catchAddress.isZero()) {
                 final TrapStateAccess trapStateAccess = TrapStateAccess.instance();

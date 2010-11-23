@@ -283,4 +283,9 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             }
         }
     }
+
+    @Override
+    public boolean preserveRegistersForLocalExceptionHandler() {
+        return false;
+    }
 }

@@ -520,9 +520,6 @@ public final class StackReferenceMapPreparer {
             Log.print(" reference map for ");
             Log.print(label);
             Log.print(" of ");
-            if (targetMethod.isJitCompiled()) {
-                Log.print("JitTargetMethod ");
-            }
             Log.printMethod(targetMethod, false);
             Log.print(" +");
             Log.println(targetMethod.stopPosition(stopIndex));

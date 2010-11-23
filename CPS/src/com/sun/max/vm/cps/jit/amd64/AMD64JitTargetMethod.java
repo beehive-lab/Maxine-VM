@@ -33,10 +33,9 @@ import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.cps.target.amd64.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.type.*;
 
@@ -247,9 +246,9 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             // ExceptionDispatcher.
             // Compute the offset to the first stack slot of the Java Stack: frame size - (space for locals + saved RBP
             // + space of the first slot itself).
-            Pointer catcherStackPointer = localVariablesBase.minus(sizeOfNonParameterLocals() + JitStackFrameLayout.JIT_SLOT_SIZE);
+            Pointer catcherStackPointer = localVariablesBase.minus(sizeOfNonParameterLocals());
             // Push the null object on top of the stack first
-            catcherStackPointer.writeReference(0, Reference.zero());
+          //catcherStackPointer.writeReference(0, Reference.zero());
 
             // found an exception handler, and thus we are done with the stack walker
             stackFrameWalker.reset();
