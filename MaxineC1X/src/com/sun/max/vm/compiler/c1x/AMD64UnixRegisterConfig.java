@@ -107,9 +107,9 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
                        xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7);
 
     /**
-     * The register configuration for compiling a {@linkplain GlobalStub stub}.
+     * The register configuration for compiling a {@linkplain GlobalStub global stub}.
      */
-    public static final AMD64UnixRegisterConfig STUB = STANDARD.withCalleeSave(allRegisters);
+    public static final AMD64UnixRegisterConfig GLOBAL_STUB = STANDARD.withCalleeSave(allRegisters);
 
     /**
      * The register configuration for compiling the {@linkplain Trap#isTrapStub(MethodActor) trap stub}.

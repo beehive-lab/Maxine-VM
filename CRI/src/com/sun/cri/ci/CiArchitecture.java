@@ -44,7 +44,7 @@ public abstract class CiArchitecture {
 
     /**
      * The number of bits required in a bit map covering all the registers that may store references.
-     * The bit position of a register in the map is the register's {@linkplain CiRegister#encoding encoding}.
+     * The bit position of a register in the map is the register's {@linkplain CiRegister#number number}.
      */
     public final int registerReferenceMapBitCount;
 

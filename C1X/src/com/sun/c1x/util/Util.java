@@ -406,7 +406,7 @@ public class Util {
             String indentTwice = indent + indent;
             StringBuilder refMaps = new StringBuilder();
             if (info.hasRegisterRefMap()) {
-                refMaps.append(", reg-ref-map:").append(CiBitMap.fromLong(info.registerRefMap));
+                refMaps.append(", reg-ref-map:").append(info.registerRefMap);
             }
             if (info.hasStackRefMap()) {
                 refMaps.append(", frame-ref-map: ").append(info.frameRefMap);

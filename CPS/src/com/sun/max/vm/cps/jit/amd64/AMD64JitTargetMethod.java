@@ -336,7 +336,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     private void prepareTrampolineRefMap(Cursor caller, StackReferenceMapPreparer preparer) {
         // prepare the reference map for the parameters passed by the current (caller) frame.
         // the call was unresolved and hit a trampoline, so compute the refmap from the signature of
-        // the called method by looking at the bytecode of the caller method--how ugly...
+        // the called method by looking at the bytecode of the caller method
         final int bytecodePosition = bytecodePositionForCallSite(caller.ip());
         final CodeAttribute codeAttribute = classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool;

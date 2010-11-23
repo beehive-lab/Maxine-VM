@@ -452,20 +452,20 @@ public class CompiledPrototype extends Prototype {
         imageConstructorStubMethodActors.add(m);
     }
 
-    private boolean vmEntryPointsDone;
+    private boolean entryPointsDone;
 
-    private void addVMEntryPoints() {
-        final Relationship vmEntryPoint = null;
+    private void addEntrypoints0() {
+        final Relationship entryPoint = null;
 
         final RunScheme runScheme = vmConfig().runScheme();
-        add(ClassRegistry.MaxineVM_run, null, vmEntryPoint);
-        add(ClassRegistry.VmThread_run, null, vmEntryPoint);
-        add(ClassRegistry.VmThread_attach, null, vmEntryPoint);
-        add(ClassRegistry.VmThread_detach, null, vmEntryPoint);
-        add(ClassRegistry.findMethod("run", runScheme.getClass()), null, vmEntryPoint);
+        add(ClassRegistry.MaxineVM_run, null, entryPoint);
+        add(ClassRegistry.VmThread_run, null, entryPoint);
+        add(ClassRegistry.VmThread_attach, null, entryPoint);
+        add(ClassRegistry.VmThread_detach, null, entryPoint);
+        add(ClassRegistry.findMethod("run", runScheme.getClass()), null, entryPoint);
 
-        addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
-        addMethods(null, imageMethodActors, vmEntryPoint);
+        addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), entryPoint);
+        addMethods(null, imageMethodActors, entryPoint);
         // we would prefer not to invoke stub-generation/compilation for the shutdown hooks procedure, e.g., after an OutOfMemoryError
         try {
             registerImageInvocationStub(ClassActor.fromJava(Class.forName("java.lang.Shutdown")).findLocalStaticMethodActor("shutdown"));
@@ -481,20 +481,20 @@ public class CompiledPrototype extends Prototype {
                 addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedMethodStub(valuesMethod));
             }
             final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
-            addMethods(null, stubClassActor.localVirtualMethodActors(), vmEntryPoint);
+            addMethods(null, stubClassActor.localVirtualMethodActors(), entryPoint);
         }
         for (MethodActor methodActor : imageConstructorStubMethodActors) {
             addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedConstructorStub(methodActor));
         }
 
-        add(ClassActor.fromJava(DebugBreak.class).findLocalStaticMethodActor("here"), null, vmEntryPoint);
+        add(ClassActor.fromJava(DebugBreak.class).findLocalStaticMethodActor("here"), null, entryPoint);
         // pre-compile the dynamic linking methods, which reduces startup time
-        add(ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0"), null, vmEntryPoint);
-        add(ClassActor.fromJava(Runtime.class).findLocalStaticMethodActor("loadLibrary"), null, vmEntryPoint);
-        add(ClassActor.fromJava(System.class).findLocalStaticMethodActor("loadLibrary"), null, vmEntryPoint);
-        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary0"), null, vmEntryPoint);
-        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary"), null, vmEntryPoint);
-        add(ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).findLocalStaticMethodActor("<clinit>"), null, vmEntryPoint);
+        add(ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0"), null, entryPoint);
+        add(ClassActor.fromJava(Runtime.class).findLocalStaticMethodActor("loadLibrary"), null, entryPoint);
+        add(ClassActor.fromJava(System.class).findLocalStaticMethodActor("loadLibrary"), null, entryPoint);
+        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary0"), null, entryPoint);
+        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary"), null, entryPoint);
+        add(ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).findLocalStaticMethodActor("<clinit>"), null, entryPoint);
 
         // It's too late now to register any further methods to be compiled into the boot image
         imageMethodActors = null;
@@ -641,7 +641,7 @@ public class CompiledPrototype extends Prototype {
         region.setSize(Size.fromInt(Integer.MAX_VALUE / 4)); // enable virtually infinite allocations
         // 2. add only entrypoint methods and methods not to be compiled.
         addMethodsReferencedByExistingTargetCode();
-        addVMEntryPoints();
+        addEntrypoints0();
     }
 
     public boolean compile() {

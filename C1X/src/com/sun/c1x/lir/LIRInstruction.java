@@ -30,7 +30,6 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.LIROperand.LIRAddressOperand;
 import com.sun.c1x.lir.LIROperand.LIRVariableOperand;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiRegister.*;
 
 /**
  * The {@code LIRInstruction} class definition.
@@ -463,12 +462,12 @@ public abstract class LIRInstruction {
             }
         }
         if (debugInfo.hasRegisterRefMap()) {
-            CiBitMap bm = CiBitMap.fromLong(debugInfo.registerRefMap);
+            CiBitMap bm = debugInfo.registerRefMap;
             for (int reg = bm.nextSetBit(0); reg >= 0; reg = bm.nextSetBit(reg + 1)) {
                 if (buf.length() != 0) {
                     buf.append(", ");
                 }
-                CiRegisterValue register = compilation().target.arch.registerFor(reg, RegisterFlag.CPU).asValue(CiKind.Object);
+                CiRegisterValue register = compilation().target.arch.registers[reg].asValue(CiKind.Object);
                 buf.append(operandFmt.format(register));
             }
         }

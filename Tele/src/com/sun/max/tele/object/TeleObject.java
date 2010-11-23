@@ -282,13 +282,26 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     }
 
     /**
+     * The class actor for this class is returned when the real class actor
+     * of a {@link TeleObject} cannot be retrieved.
+     */
+    public static class InvalidObjectClass {}
+
+    /**
      * @return local {@link ClassActor}, equivalent to the one in the VM that describes the type of this object in the
      *         VM. Note that in the singular instance of {@link StaticTuple} this does not correspond to the actual type
      *         of the object, which is an exceptional Maxine object that has no ordinary Java type; it returns in this
      *         case the type of the class that the tuple helps implement.
      */
     public ClassActor classActorForObjectType() { // TODO: fix class actor lookup
-        return getTeleHub().getTeleClassActor().classActor();
+        try {
+            TeleHub hub = getTeleHub();
+            TeleClassActor teleClassActor = hub.getTeleClassActor();
+            return teleClassActor.classActor();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            return ClassActor.fromJava(InvalidObjectClass.class);
+        }
     }
 
     /**

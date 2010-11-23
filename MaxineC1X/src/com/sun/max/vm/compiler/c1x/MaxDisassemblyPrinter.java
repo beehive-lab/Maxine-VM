@@ -27,7 +27,6 @@ import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiDebugInfo.Frame;
-import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
@@ -161,9 +160,9 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
             if (info != null) {
                 if (info.hasRegisterRefMap()) {
                     stream.print(";;   reg-ref-map:");
-                    CiBitMap bm = CiBitMap.fromLong(info.registerRefMap);
+                    CiBitMap bm = info.registerRefMap;
                     for (int reg = bm.nextSetBit(0); reg >= 0; reg = bm.nextSetBit(reg + 1)) {
-                        stream.print(" " + arch.registerFor(reg, RegisterFlag.CPU));
+                        stream.print(" " + arch.registers[reg]);
                     }
                     stream.println(" " + bm);
                 }

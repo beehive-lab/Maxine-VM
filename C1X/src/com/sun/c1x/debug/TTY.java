@@ -41,7 +41,9 @@ public class TTY {
         private final Thread thread = Thread.currentThread();
 
         /**
-         * Determines if a given filter matches the {@linkplain Object#toString() string} value of a given object.
+         * Creates an object that will suppress {@link TTY} for the current thread if the given filter does not
+         * {@linkplain #matches(String, Object) match} the given object. To revert the suppression state to how it was
+         * before this call, the {@link #remove()} method must be called on the suppression object.
          *
          * @param filter the pattern for matching. If {@code null}, then the match is successful. If it starts with "~",
          *            then a regular expression {@linkplain Pattern#matches(String, CharSequence) match} is performed
@@ -49,27 +51,6 @@ public class TTY {
          *            simple {@linkplain String#contains(CharSequence) substring} match is performed where {@code
          *            filter} is the substring used.
          * @param object an object whose {@linkplain Object#toString() string} value is matched against {@code filter}
-         * @return the result of the match
-         */
-        public static boolean matches(String filter, Object object) {
-            if (filter == null) {
-                return true;
-            }
-            String input = object.toString();
-            if (filter.startsWith("~")) {
-                return Pattern.matches(filter.substring(1), input);
-            } else {
-                return input.contains(filter);
-            }
-        }
-
-        /**
-         * Creates an object that will suppress {@link TTY} for the current thread if the given filter does not
-         * {@linkplain #matches(String, Object) match} the given object. To revert the suppression state to how it was
-         * before this call, the {@link #remove()} method must be called on the suppression object.
-         *
-         * @param filter the pattern used in the {@linkplain #matches(String, Object) match}
-         * @param object the object used in the {@linkplain #matches(String, Object) match}
          */
         public Filter(String filter, Object object) {
             boolean suppressed = false;
@@ -105,6 +86,10 @@ public class TTY {
             return log;
         };
     };
+
+    public static boolean isSuppressed() {
+        return out.get() == LogStream.SINK;
+    }
 
     /**
      * Gets the thread-local log stream to which the static methods of this class send their output.
