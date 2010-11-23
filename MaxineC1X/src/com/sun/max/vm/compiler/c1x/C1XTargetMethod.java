@@ -50,7 +50,6 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
 
@@ -718,52 +717,6 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             }
             writer.outdent();
         }
-    }
-
-    /**
-     * Gets a string representation of the reference map for each {@linkplain #stopPositions() stop} in this target method.
-     */
-    @Override
-    public String referenceMapsToString() {
-        if (numberOfStopPositions() == 0) {
-            return "";
-        }
-        final StringBuilder buf = new StringBuilder();
-        final CompiledStackFrameLayout layout = new C1XStackFrameLayout(frameSize());
-        final Slots slots = layout.slots();
-        final int firstSafepointStopIndex = numberOfDirectCalls() + numberOfIndirectCalls();
-        for (int stopIndex = 0; stopIndex < numberOfStopPositions(); ++stopIndex) {
-            final int stopPosition = stopPosition(stopIndex);
-            buf.append(String.format("stop: index=%d, position=%d, type=%s%n", stopIndex, stopPosition,
-                            stopIndex < numberOfDirectCalls() ? "direct call" :
-                           (stopIndex < firstSafepointStopIndex ? "indirect call" : "safepoint")));
-            int byteIndex = stopIndex * totalReferenceMapSize();
-            final ByteArrayBitMap referenceMap = new ByteArrayBitMap(referenceMaps, byteIndex, frameReferenceMapSize());
-            buf.append(slots.toString(referenceMap));
-            if (registerReferenceMapSize() != 0) {
-                byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize();
-                String referenceRegisters = "";
-                buf.append("  register map:");
-                for (int i = 0; i < registerReferenceMapSize(); i++) {
-                    final byte refMapByte = referenceMaps[byteIndex];
-                    buf.append(String.format(" 0x%x", refMapByte & 0xff));
-                    if (refMapByte != 0) {
-                        for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
-                            if (((refMapByte >>> bitIndex) & 1) != 0) {
-                                referenceRegisters += "reg" + (bitIndex + (i * Bytes.WIDTH)) + " ";
-                            }
-                        }
-                    }
-                    byteIndex++;
-                }
-                if (!referenceRegisters.isEmpty()) {
-                    buf.append(" { ").append(referenceRegisters).append("}");
-                }
-                buf.append(String.format("%n"));
-            }
-        }
-
-        return buf.toString();
     }
 
     /**

@@ -323,7 +323,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      * @return the bit map denoting which frame slots contain object references at the specified stop in this target method
      * @throws IllegalArgumentException if {@code n < 0 || n>= numberOfStopPositions(stopType)}
      */
-    @Override
     public final ByteArrayBitMap frameReferenceMapFor(StopType stopType, int n) throws IllegalArgumentException {
         return frameReferenceMapFor(stopType.stopPositionIndex(this, n));
     }
@@ -337,7 +336,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      * @param safepointIndex a value between {@code [0 .. numberOfSafepoints())} denoting a safepoint
      * @return the bit map specifying which registers contain object references at the given safepoint position
      */
-    @Override
     public final ByteArrayBitMap registerReferenceMapFor(int safepointIndex) {
         final int registerReferenceMapSize = registerReferenceMapSize();
         // The register reference maps come after all the frame reference maps in _referenceMaps.
@@ -353,7 +351,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return frameReferenceMapSize * numberOfStopPositions();
     }
 
-    @Override
+    /**
+     * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
+     * @return an object that represents the layout of this stack frame
+     */
+    public abstract CompiledStackFrameLayout stackFrameLayout();
+
     public String referenceMapsToString() {
         if (numberOfStopPositions() == 0) {
             return "";
@@ -642,5 +645,24 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             }
             writer.outdent();
         }
+    }
+
+    /**
+     * Traces the {@linkplain #referenceMaps() reference maps} for the stops in the compiled code represented by this object.
+     *
+     * @param writer where the trace is written
+     */
+    public void traceReferenceMaps(IndentWriter writer) {
+        final String refmaps = referenceMapsToString();
+        if (!refmaps.isEmpty()) {
+            writer.println("Reference Maps:");
+            writer.println(Strings.indent(refmaps, writer.indentation()));
+        }
+    }
+
+    @Override
+    public void traceBundle(IndentWriter writer) {
+        super.traceBundle(writer);
+        traceReferenceMaps(writer);
     }
 }

@@ -38,7 +38,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
@@ -609,7 +608,7 @@ public abstract class TargetMethod extends MemoryRegion {
      *
      * @param writer where the trace is written
      */
-    public final void traceBundle(IndentWriter writer) {
+    public void traceBundle(IndentWriter writer) {
         final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
         writer.println("Layout:");
         writer.println(Strings.indent(targetBundleLayout.toString(), writer.indentation()));
@@ -618,7 +617,6 @@ public abstract class TargetMethod extends MemoryRegion {
         traceScalarBytes(writer, targetBundleLayout);
         traceReferenceLiterals(writer, targetBundleLayout);
         traceDebugInfo(writer);
-        traceReferenceMaps(writer);
         writer.println("Code cell: " + targetBundleLayout.cell(start(), ArrayField.code).toString());
     }
 
@@ -673,19 +671,6 @@ public abstract class TargetMethod extends MemoryRegion {
         }
     }
 
-    /**
-     * Traces the {@linkplain #referenceMaps() reference maps} for the stops in the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public void traceReferenceMaps(IndentWriter writer) {
-        final String refmaps = referenceMapsToString();
-        if (!refmaps.isEmpty()) {
-            writer.println("Reference Maps:");
-            writer.println(Strings.indent(refmaps, writer.indentation()));
-        }
-    }
-
     public boolean isTrapStub() {
         return classMethodActor != null && classMethodActor.isTrapStub();
     }
@@ -722,28 +707,6 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param writer where the trace is written
      */
     public abstract void traceExceptionHandlers(IndentWriter writer);
-
-    /**
-     * Gets a string representation of the reference map for each stop in this target method.
-     * @return a string representation of the reference map
-     */
-    public abstract String referenceMapsToString();
-
-    public ByteArrayBitMap registerReferenceMapFor(int index) {
-        throw FatalError.unimplemented();
-    }
-
-    public ByteArrayBitMap frameReferenceMapFor(StopType type, int index) {
-        throw FatalError.unimplemented();
-    }
-
-    /**
-     * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
-     * @return an object that represents the layout of this stack frame
-     */
-    public CompiledStackFrameLayout stackFrameLayout() {
-        throw FatalError.unimplemented();
-    }
 
     /**
      * Gets the bytecode position for a machine code call site address.
