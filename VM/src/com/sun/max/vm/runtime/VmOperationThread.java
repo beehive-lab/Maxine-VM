@@ -64,6 +64,7 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
     private boolean terminated;
 
     static boolean TraceVmOperations;
+    static boolean TraceRequestLock;
 
     public static VmOperationThread instance() {
         return (VmOperationThread) VmThread.vmOperationThread.javaThread();
@@ -71,6 +72,7 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
 
     static {
         VMOptions.addFieldOption("-XX:", "TraceVmOperations", VmOperationThread.class, "Trace VM operations.");
+        VMOptions.addFieldOption("-XX:", "TraceRequestLock", VmOperationThread.class, "Trace VM_OPERATION_REQUEST_LOCK.");
     }
 
     @HOSTED_ONLY
@@ -164,19 +166,21 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
                     Heap.enableAllocationForCurrentThread();
                 }
 
-                currentOperation.callingThread().decrementPendingOperations();
-
-                synchronized (REQUEST_LOCK) {
-                    if (TraceVmOperations) {
-                        boolean lockDisabledSafepoints = Log.lock();
-                        Log.print("VM operation thread finished operation ");
-                        Log.print(currentOperation.name);
-                        Log.println(" and is notifying submitters");
-                        Log.unlock(lockDisabledSafepoints);
+                if (currentOperation.mode.isBlocking()) {
+                    synchronized (REQUEST_LOCK) {
+                        currentOperation.callingThread().decrementPendingOperations();
+                        if (TraceVmOperations || TraceRequestLock) {
+                            boolean lockDisabledSafepoints = Log.lock();
+                            Log.print("VM operation thread finished operation ");
+                            Log.print(currentOperation.name);
+                            Log.print("submitted by ");
+                            Log.printThread(currentOperation.callingThread(), false);
+                            Log.println(" and is notifying REQUEST_LOCK waiters");
+                            Log.unlock(lockDisabledSafepoints);
+                        }
+                        REQUEST_LOCK.notifyAll();
                     }
-                    REQUEST_LOCK.notifyAll();
                 }
-
                 currentOperation = null;
             }
         }
@@ -223,6 +227,8 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
                 operation.setCallingThread(vmThread);
 
                 if (operation.mode.isBlocking()) {
+                    // Increment before putting the operations on the queue, otherwise,
+                    // a race may occurs with the VmOperationThread.
                     vmThread.incrementPendingOperations();
                 }
 
@@ -244,12 +250,30 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
                 if (operation.mode.isBlocking()) {
                     // Wait until operation completes
                     synchronized (REQUEST_LOCK) {
+                        int count = 0;
                         while (vmThread.pendingOperations() > 0) {
+                            if (TraceRequestLock) {
+                                boolean lockDisabledSafepoints = Log.lock();
+                                count++;
+                                Log.printThread(vmThread, false);
+                                Log.print(" waiting #");
+                                Log.print(count);
+                                Log.print(" on REQUEST_LOCK for completion of VM operation ");
+                                Log.println(operation.name);
+                                Log.unlock(lockDisabledSafepoints);
+                            }
                             try {
                                 REQUEST_LOCK.wait();
                             } catch (InterruptedException e) {
                                 Log.println("Caught InterruptedException while waiting for VM operation to complete");
                             }
+                        }
+                        if (TraceRequestLock) {
+                            Log.printThread(vmThread, false);
+                            Log.print(" resuming after #");
+                            Log.print(count);
+                            Log.print(" wait on REQUEST_LOCK,  completed VM operation  ");
+                            Log.println(operation.name);
                         }
                     }
                 }
@@ -267,8 +291,6 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
                 }
 
             }
-
-
         } else {
             // Invoked by VM operation thread
             VmOperation enclosingOperation = vmOperationThread.currentOperation;
