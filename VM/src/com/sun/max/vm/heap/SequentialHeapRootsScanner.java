@@ -50,19 +50,19 @@ public class SequentialHeapRootsScanner {
 
     final class VmThreadLocalsScanner implements Pointer.Procedure {
 
-        public void run(Pointer vmThreadLocals) {
+        public void run(Pointer tla) {
             if (Heap.traceGCPhases()) {
                 Log.print("Scanning thread local and stack roots for thread ");
-                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+                Log.printThread(VmThread.fromTLA(tla), true);
             }
-            VmThreadLocal.scanReferences(vmThreadLocals, pointerIndexVisitor);
+            VmThreadLocal.scanReferences(tla, pointerIndexVisitor);
         }
     }
 
-    private final VmThreadLocalsScanner vmThreadLocalsScanner = new VmThreadLocalsScanner();
+    private final VmThreadLocalsScanner tlaScanner = new VmThreadLocalsScanner();
 
     public void run() {
-        VmThreadMap.ACTIVE.forAllThreadLocals(null, vmThreadLocalsScanner);
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, tlaScanner);
         vmConfig().monitorScheme().scanReferences(pointerIndexVisitor);
     }
 

@@ -140,16 +140,13 @@ public class Intrinsics extends IntrinsifierClient {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
                 int intrinsic = method.intrinsic();
-                if (intrinsic == UNSAFE_CAST) {
-                    bi.intrinsify(UNSAFE_CAST, cpi);
-                } else if (intrinsic == CALL) {
+                if (intrinsic == UNSAFE_CAST || intrinsic == CALL || intrinsic == ALLOCSTKVAR) {
                     bi.intrinsify(intrinsic, cpi);
                 } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
                     if (!unsafe) {
                         unsafe = isUnsafe(opcode);
                     }
-                    assert !isStandard(opcode);
                     int operand = (intrinsic >> 8) & 0xffff;
                     bi.intrinsify(opcode, operand);
                 } else {

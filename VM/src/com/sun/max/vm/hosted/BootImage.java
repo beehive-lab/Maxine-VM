@@ -235,25 +235,25 @@ public class BootImage {
         /**
          * @see VmThreadMap#ACTIVE
          */
-        public final int threadLocalsListHeadOffset;
+        public final int tlaListHeadOffset;
 
         /**
-         * @see MaxineVM#primordialVmThreadLocals()
+         * @see MaxineVM#primordialETLA
          */
-        public final int primordialThreadLocalsOffset;
+        public final int primordialETLAOffset;
 
         /**
-         * The storage size of one set of VM thread locals.
+         * The size of a TLA.
          */
-        public final int threadLocalsAreaSize;
+        public final int tlaSize;
 
         /**
          * The indexes of the VM thread locals accessed directly by C code.
          */
         public final int SAFEPOINT_LATCH;
-        public final int SAFEPOINTS_ENABLED_THREAD_LOCALS;
-        public final int SAFEPOINTS_DISABLED_THREAD_LOCALS;
-        public final int SAFEPOINTS_TRIGGERED_THREAD_LOCALS;
+        public final int ETLA;
+        public final int DTLA;
+        public final int TTLA;
         public final int NATIVE_THREAD_LOCALS;
         public final int FORWARD_LINK;
         public final int BACKWARD_LINK;
@@ -302,15 +302,15 @@ public class BootImage {
             reservedVirtualSpaceSize = endian.readInt(dataInputStream);
             reservedVirtualSpaceFieldOffset = endian.readInt(dataInputStream);
             bootRegionMappingConstraint = endian.readInt(dataInputStream);
-            threadLocalsListHeadOffset = endian.readInt(dataInputStream);
-            primordialThreadLocalsOffset = endian.readInt(dataInputStream);
+            tlaListHeadOffset = endian.readInt(dataInputStream);
+            primordialETLAOffset = endian.readInt(dataInputStream);
 
-            threadLocalsAreaSize = endian.readInt(dataInputStream);
+            tlaSize = endian.readInt(dataInputStream);
 
             SAFEPOINT_LATCH = endian.readInt(dataInputStream);
-            SAFEPOINTS_ENABLED_THREAD_LOCALS = endian.readInt(dataInputStream);
-            SAFEPOINTS_DISABLED_THREAD_LOCALS = endian.readInt(dataInputStream);
-            SAFEPOINTS_TRIGGERED_THREAD_LOCALS = endian.readInt(dataInputStream);
+            ETLA = endian.readInt(dataInputStream);
+            DTLA = endian.readInt(dataInputStream);
+            TTLA = endian.readInt(dataInputStream);
             NATIVE_THREAD_LOCALS = endian.readInt(dataInputStream);
             FORWARD_LINK = endian.readInt(dataInputStream);
             BACKWARD_LINK = endian.readInt(dataInputStream);
@@ -357,15 +357,15 @@ public class BootImage {
             reservedVirtualSpaceSize = vmConfiguration.heapScheme().reservedVirtualSpaceSize();
             reservedVirtualSpaceFieldOffset = staticFieldPointerOffset(dataPrototype, Heap.class, "reservedVirtualSpace");
             bootRegionMappingConstraint = vmConfiguration.heapScheme().bootRegionMappingConstraint().ordinal();
-            threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
-            primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
+            tlaListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("tlaListHead").offset();
+            primordialETLAOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialETLA");
 
-            threadLocalsAreaSize = VmThreadLocal.threadLocalsAreaSize().toInt();
+            tlaSize = VmThreadLocal.tlaSize().toInt();
 
             SAFEPOINT_LATCH = VmThreadLocal.SAFEPOINT_LATCH.index;
-            SAFEPOINTS_ENABLED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index;
-            SAFEPOINTS_DISABLED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index;
-            SAFEPOINTS_TRIGGERED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index;
+            ETLA = VmThreadLocal.ETLA.index;
+            DTLA = VmThreadLocal.DTLA.index;
+            TTLA = VmThreadLocal.TTLA.index;
             NATIVE_THREAD_LOCALS = VmThreadLocal.NATIVE_THREAD_LOCALS.index;
             FORWARD_LINK = VmThreadLocal.FORWARD_LINK.index;
             BACKWARD_LINK = VmThreadLocal.BACKWARD_LINK.index;

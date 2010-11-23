@@ -106,7 +106,7 @@ public final class CiConstant extends CiValue {
      * @param kind the type of this constant
      * @param primitive the value of this constant
      */
-    private CiConstant(CiKind kind, long primitive) {
+    public CiConstant(CiKind kind, long primitive) {
         super(kind);
         this.object = null;
         this.primitive = primitive;

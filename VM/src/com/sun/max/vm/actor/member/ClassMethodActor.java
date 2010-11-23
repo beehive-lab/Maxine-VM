@@ -21,6 +21,7 @@
 package com.sun.max.vm.actor.member;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.actor.member.LivenessAdapter.*;
 
 import java.lang.reflect.*;
 
@@ -157,6 +158,21 @@ public abstract class ClassMethodActor extends MethodActor {
         return null;
     }
 
+    private CiBitMap[] livenessMap;
+
+    @Override
+    public final CiBitMap[] livenessMap() {
+        if (livenessMap != null) {
+            return livenessMap == NO_LIVENESS_MAP ? null : livenessMap;
+        }
+        livenessMap = new LivenessAdapter(this).livenessMap;
+        if (livenessMap.length == 0) {
+            assert livenessMap == NO_LIVENESS_MAP;
+            return null;
+        }
+        return livenessMap;
+    }
+
     @Override
     public RiExceptionHandler[] exceptionHandlers() {
         if (exceptionHandlers != null) {
@@ -253,9 +269,6 @@ public abstract class ClassMethodActor extends MethodActor {
                     final boolean isConstructor = isInitializer();
                     final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
                     if (substitute != null) {
-                        if (isConstructor) {
-                            System.console();
-                        }
                         compilee = substitute.compilee();
                         codeAttribute = compilee.codeAttribute;
                         originalCodeAttribute = compilee.originalCodeAttribute;

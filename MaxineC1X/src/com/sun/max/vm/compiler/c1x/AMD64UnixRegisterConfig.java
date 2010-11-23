@@ -30,13 +30,14 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.Role;
+import com.sun.max.vm.runtime.amd64.*;
 
 /**
  * The set of register configurations used by Mainxe on Unix-AMD64. Where applicable,
@@ -63,10 +64,10 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
     public static final AMD64UnixRegisterConfig STANDARD = new AMD64UnixRegisterConfig(
         def("Allocatable", StandardAllocatable),
         def("CallerSave",  StandardAllocatable),
-        def("CalleeSave"   /* none */),
         def("Parameters",  rdi, rsi, rdx, rcx, r8, r9,
                            xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7),
-        def("Scratch",     r11)).
+        def("Scratch",     r11),
+        CiCalleeSaveArea.EMPTY).
 
         def(CPU_STACK_POINTER, rsp).
         def(CPU_FRAME_POINTER, rbp).
@@ -82,9 +83,9 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
 
     /**
      * The register configuration for a method called directly from native/C code.
-     * This configuration preserves all callee saved registers.
+     * This configuration preserves all native ABI specified callee saved registers.
      */
-    public static final AMD64UnixRegisterConfig N2J = STANDARD.withCalleeSave(rbx, rbp, r12, r13, r15);
+    public static final AMD64UnixRegisterConfig N2J = STANDARD.withCalleeSave(rbx, rbp, r12, r13, r14, r15);
 
     /**
      * The register configuration for a direct call to native/C code.
@@ -106,15 +107,16 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
                        xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7);
 
     /**
-     * The register configuration for compiling a {@linkplain GlobalStub stub}.
+     * The register configuration for compiling a {@linkplain GlobalStub global stub}.
      */
-    public static final AMD64UnixRegisterConfig STUB = STANDARD.withCalleeSave(allRegisters);
+    public static final AMD64UnixRegisterConfig GLOBAL_STUB = STANDARD.withCalleeSave(allRegisters);
 
     /**
      * The register configuration for compiling the {@linkplain Trap#isTrapStub(MethodActor) trap stub}.
      */
-    public static final AMD64UnixRegisterConfig TRAP_STUB = STANDARD.withCalleeSave(allRegisters);
+    public static final AMD64UnixRegisterConfig TRAP_STUB = STANDARD.withCalleeSave(AMD64TrapStateAccess.CSA);
 
+    private CiCalleeSaveArea calleeSaveArea;
     private final EnumMap<Role, CiRegister> registersByRole = new EnumMap<VMRegister.Role, CiRegister>(Role.class);
     private final CiRegister[] allocatable;
     private final EnumMap<RegisterFlag, CiRegister[]> categorized;
@@ -122,16 +124,15 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
     private final CiRegister[] cpuParameters;
     private final CiRegister[] fpuParameters;
     private final CiRegister[] callerSave;
-    private CiRegister[] calleeSave;
     private final CiRegister[] ret;
     private final RiRegisterAttributes[] attributesMap;
     private final CiRegister scratch;
 
     @HOSTED_ONLY
-    public AMD64UnixRegisterConfig(CiRegister[] allocatable, CiRegister[] callerSave, CiRegister[] calleeSave, CiRegister[] parameters, CiRegister scratch) {
+    public AMD64UnixRegisterConfig(CiRegister[] allocatable, CiRegister[] callerSave, CiRegister[] parameters, CiRegister scratch, CiCalleeSaveArea calleeSave) {
+        this.calleeSaveArea = calleeSave;
         this.allocatable = allocatable;
         this.callerSave = callerSave;
-        this.calleeSave = calleeSave;
         assert !Arrays.asList(allocatable).contains(scratch);
         this.scratch = scratch;
         this.parameters = parameters;
@@ -145,8 +146,13 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
 
     @HOSTED_ONLY
     public AMD64UnixRegisterConfig withCalleeSave(CiRegister... calleeSave) {
+        return withCalleeSave(new CiCalleeSaveArea(-1, calleeSave, 8));
+    }
+
+    @HOSTED_ONLY
+    public AMD64UnixRegisterConfig withCalleeSave(CiCalleeSaveArea calleeSaveArea) {
         AMD64UnixRegisterConfig copy = clone();
-        copy.calleeSave = calleeSave;
+        copy.calleeSaveArea = calleeSaveArea;
         return copy;
     }
 
@@ -164,7 +170,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         String res = String.format(
              "Allocatable: " + Arrays.toString(getAllocatableRegisters()) + "%n" +
              "CallerSave:  " + Arrays.toString(getCallerSaveRegisters()) + "%n" +
-             "CalleeSave:  " + Arrays.toString(getCalleeSaveRegisters()) + "%n" +
+             "CalleeSave:  " + getCalleeSaveArea() + "%n" +
              "CPU Params:  " + Arrays.toString(cpuParameters) + "%n" +
              "FPU Params:  " + Arrays.toString(fpuParameters) + "%n" +
              "VMRoles:     " + registersByRole + "%n" +
@@ -184,8 +190,8 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         return scratch;
     }
 
-    public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, boolean outgoing, CiTarget target) {
-        return callingConvention(parameters, type == Type.Runtime ? true : outgoing, target);
+    public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target) {
+        return callingConvention(parameters, type, target);
     }
 
     public CiRegister[] getCallingConventionRegisters(Type type) {
@@ -204,8 +210,8 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         return allocatable;
     }
 
-    public CiRegister[] getCalleeSaveRegisters() {
-        return calleeSave;
+    public CiCalleeSaveArea getCalleeSaveArea() {
+        return calleeSaveArea;
     }
 
     public RiRegisterAttributes[] getAttributesMap() {
@@ -219,7 +225,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
         return registersByRole.get(Role.VALUES.get(id));
     }
 
-    private CiCallingConvention callingConvention(CiKind[] types, boolean outgoing, CiTarget target) {
+    private CiCallingConvention callingConvention(CiKind[] types, Type type, CiTarget target) {
         CiValue[] locations = new CiValue[types.length];
 
         int currentGeneral = 0;
@@ -257,7 +263,7 @@ public class AMD64UnixRegisterConfig implements RiRegisterConfig, Cloneable {
             }
 
             if (locations[i] == null) {
-                locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !outgoing);
+                locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
             }
         }

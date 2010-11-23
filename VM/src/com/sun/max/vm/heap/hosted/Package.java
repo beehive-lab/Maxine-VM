@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap.hosted;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 
@@ -29,6 +30,7 @@ import com.sun.max.vm.heap.*;
  *
  * @author Bernd Mathiske
  */
+@HOSTED_ONLY
 public class Package extends VMPackage {
     public Package() {
         registerScheme(HeapScheme.class, HostedHeapScheme.class);

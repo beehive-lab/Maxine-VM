@@ -34,7 +34,7 @@ import com.sun.max.tele.debug.*;
 public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
+    public boolean initialize(int tlaSize, boolean bigEndian) {
         return true;
     }
 
@@ -88,7 +88,7 @@ public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
     }
 
     @Override
-    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+    public int gatherThreads(long tlaList, long primordialETLA) {
         unexpected();
         return 0;
     }
@@ -190,7 +190,7 @@ public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
     }
 
     @Override
-    public boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
+    public boolean gatherThreads(Object teleDomain, Object threadSequence, long tlaList, long primordialETLA) {
         unexpected();
         return false;
     }

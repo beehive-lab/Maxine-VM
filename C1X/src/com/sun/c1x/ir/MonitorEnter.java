@@ -31,7 +31,9 @@ public final class MonitorEnter extends AccessMonitor {
 
     /**
      * Creates a new MonitorEnter instruction.
+     *
      * @param object the instruction producing the object
+     * @param lockAddress the address of the on-stack lock object or {@code null} if the runtime does not place locks on the stack
      * @param lockNumber the number of the lock
      * @param stateBefore the state before
      */

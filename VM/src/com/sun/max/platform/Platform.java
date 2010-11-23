@@ -35,7 +35,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.sparc.*;
 
 /**
@@ -136,12 +135,10 @@ public final class Platform {
     public final CiTarget target;
 
     private CiTarget createTarget() {
-        CiRegisterSaveArea registerSaveArea = null;
         CiArchitecture arch = null;
         int stackAlignment = -1;
         if (isa == ISA.AMD64) {
             arch = new AMD64();
-            registerSaveArea = AMD64TrapStateAccess.RSA;
             if (os == OS.DARWIN) {
                 // Darwin requires 16-byte stack frame alignment.
                 stackAlignment = 16;
@@ -171,7 +168,6 @@ public final class Platform {
         boolean inlineObjects = false;
         int referenceSize = wordSize;
         return new CiTarget(arch,
-                        registerSaveArea,
                         isMP,
                         spillSlotSize,
                         wordSize,
@@ -181,7 +177,8 @@ public final class Platform {
                         cacheAlignment,
                         heapAlignment,
                         codeAlignment,
-                        inlineObjects);
+                        inlineObjects,
+                        false);
     }
 
     private static final Pattern NON_REGEX_TEST_PATTERN = Pattern.compile("\\w+");

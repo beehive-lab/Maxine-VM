@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.cri.ci.*;
 
 /**
- * Instruction that is used to refer to the address of a on-stack.
+ * Instruction that is used to refer to the address of an on-stack monitor.
  *
  * @author Lukas Stadler
  */

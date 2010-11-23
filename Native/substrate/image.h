@@ -54,13 +54,13 @@
     f(reservedVirtualSpaceSize) /* Amount of contiguous virtual space to reserve at boot image load-time  */ \
     f(reservedVirtualSpaceFieldOffset) /* offset where to store the address of the reserved contiguous virtual space, if any*/ \
     f(bootRegionMappingConstraint) \
-    f(threadLocalsListHeadOffset) /* See the comment for the 'threadLocalsListHead' field in the VmThreadMap class.  */ \
-    f(primordialThreadLocalsOffset) \
-    f(threadLocalsAreaSize) /* The size of a thread locals area.  */ \
+    f(tlaListHeadOffset) /* See the comment for the 'tlaListHead' field in the VmThreadMap class.  */ \
+    f(primordialETLAOffset) \
+    f(tlaSize) /* The size of a TLA.  */ \
     f(SAFEPOINT_LATCH) \
-    f(SAFEPOINTS_ENABLED_THREAD_LOCALS) \
-    f(SAFEPOINTS_DISABLED_THREAD_LOCALS) \
-    f(SAFEPOINTS_TRIGGERED_THREAD_LOCALS) \
+    f(ETLA) \
+    f(DTLA) \
+    f(TTLA) \
     f(NATIVE_THREAD_LOCALS) \
     f(FORWARD_LINK) \
     f(BACKWARD_LINK) \

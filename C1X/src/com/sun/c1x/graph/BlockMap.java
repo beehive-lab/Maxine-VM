@@ -29,6 +29,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.BlockBegin.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -129,13 +130,13 @@ public class BlockMap {
      * does not need to construct an exception map.
      */
     private class ExceptionMap {
-        private final BitMap canTrap;
+        private final CiBitMap canTrap;
         private final boolean isObjectInit;
         private final RiExceptionHandler[] allHandlers;
         private final ArrayMap<HashSet<BlockBegin>> handlerMap;
 
         ExceptionMap(RiMethod method, byte[] code) {
-            canTrap = new BitMap(code.length);
+            canTrap = new CiBitMap(code.length);
             isObjectInit = C1XOptions.GenFinalizerRegistration && C1XIntrinsic.getIntrinsic(method) == C1XIntrinsic.java_lang_Object$init;
             allHandlers = method.exceptionHandlers();
             handlerMap = new ArrayMap<HashSet<BlockBegin>>(firstBlock, firstBlock + code.length / 5);
@@ -193,7 +194,7 @@ public class BlockMap {
     /**
      * TBD.
      */
-    private final BitMap storesInLoops;
+    private final CiBitMap storesInLoops;
     /**
      * Every bytecode instruction that has zero, one or more successor nodes (e.g. {@link Bytecodes#GOTO} has one) has
      * an entry in this array at the corresponding bytecode index. The value is another array of {@code BlockBegin} nodes,
@@ -220,7 +221,7 @@ public class BlockMap {
         blockNum = firstBlockNum;
         blockMap = new BlockBegin[code.length];
         successorMap = new BlockBegin[code.length][];
-        storesInLoops = new BitMap(method.maxLocals());
+        storesInLoops = new CiBitMap(method.maxLocals());
         if (method.exceptionHandlers().length != 0) {
             exceptionMap = new ExceptionMap(method, code);
         }
@@ -336,7 +337,7 @@ public class BlockMap {
      * Gets the bitmap that indicates which local variables are assigned in loops.
      * @return a bitmap which indicates the locals stored in loops
      */
-    public BitMap getStoresInLoops() {
+    public CiBitMap getStoresInLoops() {
         return storesInLoops;
     }
 
@@ -497,11 +498,11 @@ public class BlockMap {
         // compute the block number for all blocks
         int blockNum = this.blockNum;
         int numBlocks = blockNum - firstBlock;
-        numberBlock(get(0), new BitMap(numBlocks), new BitMap(numBlocks));
+        numberBlock(get(0), new CiBitMap(numBlocks), new CiBitMap(numBlocks));
         this.blockNum = blockNum; // _blockNum is used to compute the number of blocks later
     }
 
-    boolean numberBlock(BlockBegin block, BitMap visited, BitMap active) {
+    boolean numberBlock(BlockBegin block, CiBitMap visited, CiBitMap active) {
         // number a block with its reverse post-order traversal number
         int blockIndex = block.blockID - firstBlock;
 
@@ -594,30 +595,30 @@ public class BlockMap {
             case DSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
             case WSTORE:
             case ASTORE:   storeOne(code[bci + 1] & 0xff); return 2;
-            case ISTORE_0: storeOne(0); return 1;
-            case ISTORE_1: storeOne(1); return 1;
-            case ISTORE_2: storeOne(2); return 1;
-            case ISTORE_3: storeOne(3); return 1;
-            case LSTORE_0: storeTwo(0); return 1;
-            case LSTORE_1: storeTwo(1); return 1;
-            case LSTORE_2: storeTwo(2); return 1;
-            case LSTORE_3: storeTwo(3); return 1;
-            case FSTORE_0: storeOne(0); return 1;
-            case FSTORE_1: storeOne(1); return 1;
-            case FSTORE_2: storeOne(2); return 1;
-            case FSTORE_3: storeOne(3); return 1;
-            case DSTORE_0: storeTwo(0); return 1;
-            case DSTORE_1: storeTwo(1); return 1;
-            case DSTORE_2: storeTwo(2); return 1;
-            case DSTORE_3: storeTwo(3); return 1;
-            case ASTORE_0: storeOne(0); return 1;
-            case ASTORE_1: storeOne(1); return 1;
-            case ASTORE_2: storeOne(2); return 1;
-            case ASTORE_3: storeOne(3); return 1;
-            case WSTORE_0: storeOne(0); return 1;
-            case WSTORE_1: storeOne(1); return 1;
-            case WSTORE_2: storeOne(2); return 1;
-            case WSTORE_3: storeOne(3); return 1;
+            case ISTORE_0: // fall through
+            case ISTORE_1: // fall through
+            case ISTORE_2: // fall through
+            case ISTORE_3: storeOne(opcode - ISTORE_0); return 1;
+            case LSTORE_0: // fall through
+            case LSTORE_1: // fall through
+            case LSTORE_2: // fall through
+            case LSTORE_3: storeTwo(opcode - LSTORE_0); return 1;
+            case FSTORE_0: // fall through
+            case FSTORE_1: // fall through
+            case FSTORE_2: // fall through
+            case FSTORE_3: storeOne(opcode - FSTORE_0); return 1;
+            case DSTORE_0: // fall through
+            case DSTORE_1: // fall through
+            case DSTORE_2: // fall through
+            case DSTORE_3: storeTwo(opcode - DSTORE_0); return 1;
+            case ASTORE_0: // fall through
+            case ASTORE_1: // fall through
+            case ASTORE_2: // fall through
+            case ASTORE_3: storeOne(opcode - ASTORE_0); return 1;
+            case WSTORE_0: // fall through
+            case WSTORE_1: // fall through
+            case WSTORE_2: // fall through
+            case WSTORE_3: storeOne(opcode - WSTORE_0); return 1;
         }
         throw Util.shouldNotReachHere();
     }

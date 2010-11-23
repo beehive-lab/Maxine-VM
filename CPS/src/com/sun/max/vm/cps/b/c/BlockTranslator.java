@@ -22,8 +22,14 @@ package com.sun.max.vm.cps.b.c;
 
 import java.util.*;
 
+import com.sun.max.lang.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.cps.bir.*;
+import com.sun.max.vm.cps.cir.*;
+import com.sun.max.vm.cps.cir.operator.*;
+import com.sun.max.vm.cps.ir.IrBlock.Role;
 import com.sun.max.vm.type.*;
 
 /**
@@ -39,10 +45,15 @@ final class BlockTranslator {
         this.translation = translation;
     }
 
+    private static final StaticMethodActor safepointAndLoadExceptionObject = (StaticMethodActor) ClassMethodActor.fromJava(Classes.getDeclaredMethod(ExceptionDispatcher.class, "safepointAndLoadExceptionObject"));
+
     private void scanBlock(BlockState blockState) {
         final BytecodeTranslation visitor = new BytecodeTranslation(blockState, translation);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(visitor);
         try {
+            if (blockState.birBlock().role() == Role.EXCEPTION_DISPATCHER) {
+                visitor.completeInvocation(new InvokeStatic(safepointAndLoadExceptionObject), Kind.REFERENCE, CirCall.newArguments(2));
+            }
             bytecodeScanner.scan(blockState.birBlock().bytecodeBlock());
         } catch (Throwable e) {
             String dis = "\n\n" + BytecodePrinter.toString(translation.classMethodActor().codeAttribute().constantPool, blockState.birBlock().bytecodeBlock());
@@ -88,10 +99,7 @@ final class BlockTranslator {
             } else {
                 assert blockState.stack() == null;
                 final JavaStack stack = translation.createStack();
-                // there must be exactly one object on the stack here: the throwable
-                stack.push(Kind.REFERENCE);
                 blockState.setStack(stack);
-
                 scanReachableBlocks(blockState);
             }
         }

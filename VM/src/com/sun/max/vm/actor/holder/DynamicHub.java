@@ -30,6 +30,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
@@ -98,12 +99,25 @@ public final class DynamicHub extends Hub {
             Address vTableEntry;
 
             if (compilerCreatesTargetMethods) {
-                vTableEntry = vmConfig().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
+                vTableEntry = checkCompiled(virtualMethodActor);
+                if (vTableEntry.isZero()) {
+                    vTableEntry = vmConfig().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
+                }
             } else {
                 vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
             }
             setWord(vTableIndex, vTableEntry);
         }
+    }
+
+    private Address checkCompiled(VirtualMethodActor virtualMethodActor) {
+        if (!MaxineVM.isHosted()) {
+            final TargetMethod current = virtualMethodActor.currentTargetMethod();
+            if (current != null) {
+                return current.getEntryPoint(CallEntryPoint.VTABLE_ENTRY_POINT).asAddress();
+            }
+        }
+        return Address.zero();
     }
 
     /**
@@ -132,7 +146,10 @@ public final class DynamicHub extends Hub {
                     assert getWord(iTableIndex).isZero();
                     Address iTableEntry;
                     if (compilerCreatesTargetMethods) {
-                        iTableEntry = vmConfig().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
+                        iTableEntry = checkCompiled(virtualMethodActor);
+                        if (iTableEntry.isZero()) {
+                            iTableEntry = vmConfig().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
+                        }
                     } else {
                         iTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
                     }

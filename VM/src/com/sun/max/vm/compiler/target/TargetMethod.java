@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.target;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
@@ -138,6 +139,10 @@ public abstract class TargetMethod extends MemoryRegion {
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
     public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
+        return null;
+    }
+
+    public CiDebugInfo getDebugInfo(Pointer instructionPointer, boolean implicitExceptionPoint) {
         return null;
     }
 

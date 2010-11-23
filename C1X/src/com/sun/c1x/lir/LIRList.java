@@ -55,10 +55,6 @@ public class LIRList {
     }
 
     private void append(LIRInstruction op) {
-        if (op.source == null) {
-            op.source = generator.currentInstruction();
-        }
-
         if (C1XOptions.PrintIRWithLIR) {
             generator.maybePrintCurrentInstruction();
             op.printOn(TTY.out());
@@ -81,16 +77,16 @@ public class LIRList {
         return operations.get(i);
     }
 
-    public void callDirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks) {
-        append(new LIRCall(LIROpcode.DirectCall, method, result, arguments, info, marks, false));
+    public void callDirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
+        append(new LIRCall(LIROpcode.DirectCall, method, result, arguments, info, marks, false, pointerSlots));
     }
 
-    public void callIndirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks) {
-        append(new LIRCall(LIROpcode.IndirectCall, method, result, arguments, info, marks, false));
+    public void callIndirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
+        append(new LIRCall(LIROpcode.IndirectCall, method, result, arguments, info, marks, false, pointerSlots));
     }
 
-    public void callNative(CiValue address, String symbol, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks) {
-        append(new LIRCall(LIROpcode.NativeCall, symbol, result, arguments, info, marks, true));
+    public void callNative(CiValue address, String symbol, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
+        append(new LIRCall(LIROpcode.NativeCall, symbol, result, arguments, info, marks, true, null));
     }
 
     public void membar(LIROpcode opcode) {
@@ -122,7 +118,7 @@ public class LIRList {
     }
 
     public void negate(CiValue src, CiValue dst, GlobalStub globalStub) {
-        LIROp1 op = new LIROp1(LIROpcode.Neg, src, dst);
+        LIRNegate op = new LIRNegate(src, dst);
         op.globalStub = globalStub;
         append(op);
     }
@@ -308,11 +304,15 @@ public class LIRList {
     }
 
     public void callRuntime(CiRuntimeCall rtCall, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
-        append(new LIRCall(LIROpcode.DirectCall, rtCall, result, arguments, info, null, false));
+        append(new LIRCall(LIROpcode.DirectCall, rtCall, result, arguments, info, null, false, null));
     }
 
     public void pause() {
         append(new LIROp0(LIROpcode.Pause));
+    }
+
+    public void breakpoint() {
+        append(new LIROp0(LIROpcode.Breakpoint));
     }
 
     public void prefetch(CiAddress addr, boolean isStore) {
@@ -520,7 +520,7 @@ public class LIRList {
     }
 
     public void xir(XirSnippet snippet, CiValue[] operands, CiValue outputOperand, int tempInputCount, int tempCount, CiValue[] inputOperands, int[] operandIndices, int outputOperandIndex,
-                    LIRDebugInfo info, RiMethod method) {
-        append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands, operandIndices, outputOperandIndex, info, method));
+                    LIRDebugInfo info, RiMethod method, List<CiValue> pointerSlots) {
+        append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands, operandIndices, outputOperandIndex, info, method, pointerSlots));
     }
 }

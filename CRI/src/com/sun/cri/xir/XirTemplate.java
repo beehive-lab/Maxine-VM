@@ -21,8 +21,8 @@
 package com.sun.cri.xir;
 
 import java.io.*;
+import java.util.*;
 
-import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
@@ -114,6 +114,10 @@ public class XirTemplate {
     
     public final int outgoingStackSize;
     
+    public final XirOperand[] inputOperands;
+    public final XirOperand[] inputTempOperands;
+    public final XirOperand[] tempOperands;
+    
     
     /**
      * The {@link GlobalFlags} associated with the template.
@@ -140,6 +144,10 @@ public class XirTemplate {
         assert labels != null;
         assert parameters != null;
 
+        List<XirOperand> inputOperands = new ArrayList<XirOperand>(4);
+        List<XirOperand> inputTempOperands = new ArrayList<XirOperand>(4);
+        List<XirOperand> tempOperands = new ArrayList<XirOperand>(4);
+        
         parameterDestroyed = new boolean[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             for (XirInstruction ins : fastPath) {
@@ -156,7 +164,23 @@ public class XirTemplate {
                     }
                 }
             }
+            
+            if (parameterDestroyed[i]) {
+                inputTempOperands.add(parameters[i]);
+            } else {
+                inputOperands.add(parameters[i]);
+            }
         }
+        
+        for (XirTemp temp : temps) {
+            if (temp.reserve) {
+                tempOperands.add(temp);
+            }
+        }
+        
+        this.inputOperands = inputOperands.toArray(new XirOperand[inputOperands.size()]);
+        this.inputTempOperands = inputTempOperands.toArray(new XirOperand[inputTempOperands.size()]);
+        this.tempOperands = tempOperands.toArray(new XirOperand[tempOperands.size()]);
     }
 
     /**

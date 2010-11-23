@@ -21,14 +21,16 @@
 package com.sun.max.vm.layout.hosted;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
+@HOSTED_ONLY
 public class Package extends VMPackage {
     public Package() {
         registerScheme(LayoutScheme.class, HostedLayoutScheme.class);

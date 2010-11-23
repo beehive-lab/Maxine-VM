@@ -41,7 +41,7 @@ public final class ArithmeticOp extends Op2 {
      * @param x the first input instruction
      * @param y the second input instruction
      * @param isStrictFP indicates this operation has strict rounding semantics
-     * @param stateBefore the value stack for instructions that may trap
+     * @param stateBefore the state for instructions that may trap
      */
     public ArithmeticOp(int opcode, CiKind kind, Value x, Value y, boolean isStrictFP, FrameState stateBefore) {
         super(kind, opcode, x, y);

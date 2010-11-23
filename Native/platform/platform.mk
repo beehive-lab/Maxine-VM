@@ -311,6 +311,7 @@ ifeq ($(OS),guestvm)
         HOSTOS_LC = solaris
     endif
     JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(HOSTOS_LC)
+    JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)
     # if we are building TELE need access to Xen debugger header
     ifeq ($(TARGET),TELE) 
         ifndef XEN_ROOT

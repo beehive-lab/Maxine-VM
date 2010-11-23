@@ -306,30 +306,25 @@ public class IRChecker extends ValueVisitor {
         assertNull(i.displacement(), "displacement should be null");
         assertKind(i.newValue(), i.kind);
         assertKind(i.expectedValue(), i.kind);
+        checkPointerOpOffsetOrIndex(i.offset());
         switch (i.opcode) {
             case Bytecodes.PCMPSWP_INT:
                 assertKind(i, CiKind.Int);
-                assertKind(i.offset(), CiKind.Word);
                 break;
             case Bytecodes.PCMPSWP_INT_I:
                 assertKind(i, CiKind.Int);
-                assertKind(i.offset(), CiKind.Int);
                 break;
             case Bytecodes.PCMPSWP_REFERENCE:
                 assertKind(i, CiKind.Object);
-                assertKind(i.offset(), CiKind.Word);
                 break;
             case Bytecodes.PCMPSWP_REFERENCE_I:
                 assertKind(i, CiKind.Object);
-                assertKind(i.offset(), CiKind.Int);
                 break;
             case Bytecodes.PCMPSWP_WORD:
                 assertKind(i, CiKind.Word);
-                assertKind(i.offset(), CiKind.Word);
                 break;
             case Bytecodes.PCMPSWP_WORD_I:
                 assertKind(i, CiKind.Word);
-                assertKind(i.offset(), CiKind.Int);
                 break;
             default:
                 fail("Illegal CompareAndSwap opcode: " + Bytecodes.nameOf(i.opcode));
@@ -1035,15 +1030,19 @@ public class IRChecker extends ValueVisitor {
     public void visitLoadPC(LoadPC i) {
     }
 
+    private void checkPointerOpOffsetOrIndex(Value value) {
+        if (!value.kind.isInt() && !Util.archKindsEqual(value.kind, CiKind.Word)) {
+            fail("Type mismatch: " + value.kind + " should be of type " + CiKind.Int + " or " + CiKind.Word);
+        }
+    }
+
     @Override
     public void visitLoadPointer(LoadPointer i) {
         assertKind(i.pointer(), CiKind.Word);
         if (i.displacement() == null) {
-            if (!Util.archKindsEqual(i.offset().kind, CiKind.Word)) {
-                assertKind(i.offset(), CiKind.Int);
-            }
+            checkPointerOpOffsetOrIndex(i.offset());
         } else {
-            assertKind(i.index(), CiKind.Int);
+            checkPointerOpOffsetOrIndex(i.index());
             assertKind(i.displacement(), CiKind.Int);
         }
     }
@@ -1077,6 +1076,10 @@ public class IRChecker extends ValueVisitor {
     }
 
     @Override
+    public void visitBreakpointTrap(BreakpointTrap i) {
+    }
+
+    @Override
     public void visitResolveClass(ResolveClass i) {
     }
 
@@ -1096,11 +1099,9 @@ public class IRChecker extends ValueVisitor {
     public void visitStorePointer(StorePointer i) {
         assertKind(i.pointer(), CiKind.Word);
         if (i.displacement() == null) {
-            if (!Util.archKindsEqual(i.offset().kind, CiKind.Word)) {
-                assertKind(i.offset(), CiKind.Int);
-            }
+            checkPointerOpOffsetOrIndex(i.offset());
         } else {
-            assertKind(i.index(), CiKind.Int);
+            checkPointerOpOffsetOrIndex(i.index());
             assertKind(i.displacement(), CiKind.Int);
         }
     }

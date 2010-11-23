@@ -273,8 +273,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             if (error) {
                 MaxineVM.setExitCode(-1);
             }
-
-            vmConfig().finalizeSchemes(MaxineVM.Phase.RUNNING);
         }
     }
 

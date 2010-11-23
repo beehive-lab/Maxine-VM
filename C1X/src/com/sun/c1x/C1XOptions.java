@@ -64,6 +64,7 @@ public class C1XOptions {
     public static boolean IntrinsifyUnsafe                   = true;
 
     // debugging and printing settings
+    public static boolean VerifyPointerMaps                  = ____;
     public static boolean IRChecking                         = true;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
@@ -80,6 +81,7 @@ public class C1XOptions {
     public static boolean InterpretInvokedMethods            = ____;
     public static boolean PrintStateInInterpreter            = ____;
     public static boolean PrintAssembly                      = ____;
+    public static boolean PrintCodeBytes                     = ____;
     public static int     PrintAssemblyBytesPerLine          = 16;
     public static int     TraceLinearScanLevel               = 0;
     public static boolean TraceRelocation                    = ____;
@@ -123,7 +125,7 @@ public class C1XOptions {
     public static boolean OptFlowSensitiveNCE;
     public static boolean OptDeadCodeElimination1;
     public static boolean OptDeadCodeElimination2;
-    public static boolean OptLoopPeeling;
+    //public static boolean OptLoopPeeling;
     public static boolean OptControlFlow;
     public static boolean OptMoveElimination;
 
@@ -143,6 +145,7 @@ public class C1XOptions {
 
     // Linear scan settings
     public static boolean StressLinearScan              = ____;
+    public static boolean CopyPointerStackArguments     = true;
 
     // Code generator settings
     public static boolean GenLIR                        = true;
@@ -157,7 +160,7 @@ public class C1XOptions {
     public static boolean GenAssertionCode              = ____;
     public static boolean GenFinalizerRegistration      = true;
     public static boolean GenTableRanges                = ____;
-    public static boolean AlignCallsForPatching         = ____;
+    public static boolean AlignCallsForPatching         = true;
     public static boolean NullCheckUniquePc             = ____;
     public static boolean invokeinterfaceTemplatePos    = ____;
 
@@ -171,6 +174,7 @@ public class C1XOptions {
     public static boolean UseSlowPath                   = ____;
     public static boolean UseFastNewObjectArray         = ____;
     public static boolean UseFastNewTypeArray           = ____;
+    public static boolean UseStackMapTableLiveness      = ____;
     public static int     StackShadowPages              = 3;
 
     // Assembler settings
@@ -219,7 +223,7 @@ public class C1XOptions {
         OptNullCheckElimination         = ____;
         OptDeadCodeElimination1         = ____;
         OptDeadCodeElimination2         = ____;
-        OptLoopPeeling                  = ____;
+        //OptLoopPeeling                  = ____;
     }
 
     private static void setOptimizationLevel1() {
@@ -251,7 +255,7 @@ public class C1XOptions {
         OptFlowSensitiveNCE             = ____;
         OptDeadCodeElimination1         = ____;
         OptDeadCodeElimination2         = ____;
-        OptLoopPeeling                  = ____;
+        //OptLoopPeeling                  = ____;
     }
 
     private static void setOptimizationLevel2() {
@@ -283,7 +287,7 @@ public class C1XOptions {
         OptFlowSensitiveNCE             = ____;
         OptDeadCodeElimination1         = ____;
         OptDeadCodeElimination2         = ____;
-        OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
+        //OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
     }
 
     private static void setOptimizationLevel3() {
@@ -300,6 +304,8 @@ public class C1XOptions {
 
         // turn on state merging optimizations
         PhiLoopStores                   = true;
+
+        UseStackMapTableLiveness        = true;
 
         // turn on speculative optimizations
         OptCHA                          = true;
@@ -320,7 +326,7 @@ public class C1XOptions {
         OptFlowSensitiveNCE             = true;
         OptDeadCodeElimination1         = true;
         OptDeadCodeElimination2         = true;
-        OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
+        //OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
     }
 
     /**
@@ -352,6 +358,9 @@ public class C1XOptions {
         map.put("GenSpecialDivChecks",
                 "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
                 "instead of detecting these cases via instruction decoding in a trap handler.");
+
+        map.put("UseStackMapTableLiveness",
+                "Use liveness information derived from StackMapTable class file attribute.");
 
         for (String name : map.keySet()) {
             try {

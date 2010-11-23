@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.util;
+package com.sun.cri.ci;
 
 import java.util.*;
 
@@ -27,8 +27,9 @@ import java.util.*;
  *
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
+ * @author Doug Simon
  */
-public class BitMap {
+public final class CiBitMap {
 
     private static final int ADDRESS_BITS_PER_WORD = 6;
     private static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
@@ -40,31 +41,84 @@ public class BitMap {
         return ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;
     }
 
-    private int length;
+    private int size;
     private long low;
     private long[] extra;
 
     /**
      * Constructs a new bit map with the {@linkplain #DEFAULT_LENGTH default length}.
      */
-    public BitMap() {
+    public CiBitMap() {
         this(DEFAULT_LENGTH);
     }
 
     /**
-     * Construct a new bit map with the specified length.
+     * Constructs a new bit map from a byte array encoded bit map.
+     * 
+     * @param bitmap the bit map to convert
+     */
+    public CiBitMap(byte[] bitmap) {
+        this(bitmap, 0, bitmap.length);
+    }
+    
+    /**
+     * Constructs a new bit map from a byte array encoded bit map.
+     * 
+     * @param arr the byte array containing the bit map to convert
+     * @param off the byte index in {@code arr} at which the bit map starts
+     * @param numberOfBytes the number of bytes worth of bits to copy from {@code arr}
+     */
+    public CiBitMap(byte[] arr, int off, int numberOfBytes) {
+        this(numberOfBytes * 8);
+        int byteIndex = off;
+        int end = off + numberOfBytes;
+        assert end <= arr.length;
+        while (byteIndex < end && (byteIndex - off) < 8) {
+            long bite = (long) arr[byteIndex] & 0xff;
+            low |= bite << ((byteIndex - off) * 8);
+            byteIndex++;
+        }
+        if (byteIndex < end) {
+            assert (byteIndex - off) == 8;
+            int remBytes = end - byteIndex;
+            int remWords = (remBytes + 7) / 8;
+            for (int word = 0; word < remWords; word++) {
+                long w = 0L;
+                for (int i = 0; i < 8 && byteIndex < end; i++) {
+                    long bite = (long) arr[byteIndex] & 0xff;
+                    w |= bite << (i * 8);
+                    byteIndex++;
+                }
+                extra[word] = w;
+            }
+        }
+    }
+
+    /**
+     * Converts a {@code long} to a {@link CiBitMap}.
+     */
+    public static CiBitMap fromLong(long bitmap) {
+        CiBitMap bm = new CiBitMap(64);
+        bm.low = bitmap;
+        return bm;
+    }
+
+    /**
+     * Constructs a new bit map with the specified length.
+     * 
      * @param length the length of the bitmap
      */
-    public BitMap(int length) {
+    public CiBitMap(int length) {
         assert length >= 0;
-        this.length = length;
+        this.size = length;
         if (length > BITS_PER_WORD) {
             extra = new long[length >> ADDRESS_BITS_PER_WORD];
         }
     }
 
     /**
-     * Set the bit at the specified index.
+     * Sets the bit at the specified index.
+     * 
      * @param i the index of the bit to set
      */
     public void set(int i) {
@@ -78,11 +132,12 @@ public class BitMap {
     }
 
     /**
-     * Grows this bitmap to a new length, appending necessary zero bits.
+     * Grows this bitmap to a new size, appending necessary zero bits.
+     * 
      * @param newLength the new length of the bitmap
      */
     public void grow(int newLength) {
-        if (newLength > length) {
+        if (newLength > size) {
             // grow this bitmap to the new length
             int newSize = newLength >> ADDRESS_BITS_PER_WORD;
             if (newLength > 0) {
@@ -102,12 +157,8 @@ public class BitMap {
                     }
                 }
             }
-            length = newLength;
+            size = newLength;
         }
-    }
-
-    public int length() {
-        return length;
     }
 
     private int bitInWord(int i) {
@@ -180,7 +231,7 @@ public class BitMap {
      * @return {@code true} if the bit at the specified position is {@code 1}
      */
     public boolean getDefault(int i) {
-        if (i < 0 || i >= length) {
+        if (i < 0 || i >= size) {
             return false;
         }
         if (i < BITS_PER_WORD) {
@@ -198,7 +249,7 @@ public class BitMap {
      *
      * @param other the other bitmap for the union operation
      */
-    public void setUnion(BitMap other) {
+    public void setUnion(CiBitMap other) {
         low |= other.low;
         if (extra != null && other.extra != null) {
             for (int i = 0; i < extra.length && i < other.extra.length; i++) {
@@ -214,7 +265,7 @@ public class BitMap {
      * @param other the other bitmap for this operation
      * @return {@code true} if any bits were cleared as a result of this operation
      */
-    public boolean setIntersect(BitMap other) {
+    public boolean setIntersect(CiBitMap other) {
         boolean same = true;
         long intx = low & other.low;
         if (low != intx) {
@@ -245,23 +296,23 @@ public class BitMap {
     }
 
     /**
-     * Gets the size of this bitmap in bits.
+     * Gets the number of addressable bits in this bitmap.
      *
      * @return the size of this bitmap
      */
     public int size() {
-        return length;
+        return size;
     }
 
     private int checkIndex(int i) {
-        if (i < 0 || i >= length) {
+        if (i < 0 || i >= size) {
             throw new IndexOutOfBoundsException();
         }
         return i;
     }
 
-    public void setFrom(BitMap other) {
-        assert this.length == other.length : "must have same size";
+    public void setFrom(CiBitMap other) {
+        assert this.size == other.size : "must have same size";
 
         low = other.low;
         if (extra != null) {
@@ -271,8 +322,8 @@ public class BitMap {
         }
     }
 
-    public void setDifference(BitMap other) {
-        assert this.length == other.length : "must have same size";
+    public void setDifference(CiBitMap other) {
+        assert this.size == other.size : "must have same size";
 
         low &= ~other.low;
         if (extra != null) {
@@ -282,8 +333,8 @@ public class BitMap {
         }
     }
 
-    public boolean isSame(BitMap other) {
-        if (this.length != other.length || this.low != other.low) {
+    public boolean isSame(CiBitMap other) {
+        if (this.size != other.size || this.low != other.low) {
             return false;
         }
 
@@ -336,8 +387,8 @@ public class BitMap {
      * @throws IndexOutOfBoundsException if the specified index is negative.
      */
     public int nextSetBit(int fromIndex, int toIndex) {
-        assert fromIndex <= size() : "BitMap index out of bounds";
-        assert toIndex <= size() : "BitMap index out of bounds";
+        assert fromIndex <= size() : "index out of bounds";
+        assert toIndex <= size() : "index out of bounds";
         assert fromIndex <= toIndex : "fromIndex > toIndex";
 
         if (fromIndex == toIndex) {
@@ -385,37 +436,180 @@ public class BitMap {
         return extra[index];
     }
 
+    /**
+     * Returns a string representation of this bit map
+     * that is the same as the string returned by {@link BitSet#toString()}
+     * for a bit set with the same bits set as this bit map.
+     */
     @Override
     public String toString() {
-        StringBuilder res = new StringBuilder();
-        res.append("[");
-        for (int i = 0; i < this.length; i++) {
-            if (this.get(i)) {
-                if (res.length() != 1) {
-                    res.append(' ');
-                }
-                res.append(i);
+        StringBuilder sb = new StringBuilder(size * 2);
+        sb.append('{');
+
+        int bit = nextSetBit(0);
+        if (bit != -1) {
+            sb.append(bit);
+            for (bit = nextSetBit(bit + 1); bit >= 0; bit = nextSetBit(bit + 1)) {
+                sb.append(", ").append(bit);
             }
         }
-        res.append("]");
-        return res.toString();
+
+        sb.append('}');
+        return sb.toString();
     }
 
-    public BitMap copy() {
-        BitMap n = new BitMap(BITS_PER_WORD);
+    public static int highestOneBitIndex(long value) {
+        int bit = Long.numberOfTrailingZeros(Long.highestOneBit(value));
+        if (bit == 64) {
+            return -1;
+        }
+        return bit;
+    }
+    
+    /**
+     * Returns the number of bits set to {@code true} in this bit map.
+     */
+    public int cardinality() {
+        int sum = Long.bitCount(low);
+        if (extra != null) {
+            for (long word : extra) {
+                sum += Long.bitCount(word);
+            }
+        }
+        return sum;
+    }
+
+    /**
+     * Returns the "logical size" of this bit map: the index of
+     * the highest set bit in the bit map plus one. Returns zero
+     * if the bit map contains no set bits.
+     *
+     * @return  the logical size of this bit map
+     */
+    public int length() {
+        if (extra != null) {
+            for (int i = extra.length - 1; i >= 0; i--) {
+                if (extra[i] != 0) {
+                    return (highestOneBitIndex(extra[i]) + ((i + 1) * 64)) + 1;
+                }
+            }
+        }
+        return highestOneBitIndex(low) + 1;
+    }
+
+    /**
+     * Returns a string representation of this bit map with every set bit represented as {@code '1'}
+     * and every unset bit represented as {@code '0'}. The first character in the returned string represents
+     * bit 0 in this bit map.
+     * 
+     * @param length the number of bits represented in the returned string. If {@code length < 0 || length > size()},
+     *            then the value of {@link #length()} is used.
+     */
+    public String toBinaryString(int length) {
+        if (length < 0 || length > size) {
+            length = length();
+        }
+        if (length == 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; ++i) {
+            sb.append(get(i) ? '1' : '0');
+        }
+        return sb.toString();
+    }
+
+    final static char[] hexDigits = {
+        '0' , '1' , '2' , '3' , '4' , '5' , '6' , '7' ,
+        '8' , '9' , 'a' , 'b' , 'c' , 'd' , 'e' , 'f'
+    };
+
+    /**
+     * Returns a string representation of this bit map in hex.
+     */
+    public String toHexString() {
+        if (size == 0) {
+            return "";
+        }
+        int size = CiUtil.align(this.size, 4);
+        StringBuilder sb = new StringBuilder(size / 4);
+        for (int i = 0; i < size; i += 4) {
+            int nibble = get(i) ? 1 : 0;
+            if (get(i + 1)) {
+                nibble |= 2;
+            }
+            if (get(i + 2)) {
+                nibble |= 4;
+            }
+            if (get(i + 3)) {
+                nibble |= 8;
+            }
+            
+            sb.append(hexDigits[nibble]);
+        }
+        return sb.toString();
+    }
+
+    public CiBitMap copy() {
+        CiBitMap n = new CiBitMap(BITS_PER_WORD);
         n.low = low;
         if (extra != null) {
             n.extra = Arrays.copyOf(extra, extra.length);
         }
-        n.length = length;
+        n.size = size;
         return n;
     }
 
-    public boolean[] toArray() {
-        final boolean[] result = new boolean[this.length];
-        for (int i = 0; i < length; i++) {
-            result[i] = get(i);
+    /**
+     * Copies this bit map into a given byte array.
+     * 
+     * @param arr the destination
+     * @param off the byte index in {@code arr} at which to start writing
+     * @param numberOfBytes the number of bytes worth of bits to copy from this bit map.
+     *        The number of bits copied is {@code numberOfBytes * 8}. If {@code numberOfBytes}
+     *        is -1, then {@code ((size() + 7) / 8)} is used instead.
+     * @return the number of bytes written to {@code arr}
+     */
+    public int copyTo(byte[] arr, int off, int numberOfBytes) {
+        if (numberOfBytes < 0) {
+            numberOfBytes = (size + 7) / 8;
         }
-        return result;
+        for (int i = 0; i < numberOfBytes; ++i) {
+            long word = low;
+            int byteInWord;
+            if (i >= 8) {
+                int wordIndex = (i - 8) / 8;
+                word = extra[wordIndex];
+                byteInWord = i & 0x3;
+            } else {
+                byteInWord = i;
+            }
+            assert byteInWord < 8;
+            byte b = (byte) (word >> (byteInWord * 8));
+            arr[off + i] = b;
+        }
+        return numberOfBytes;
+    }
+
+    /**
+     * Converts this bit map to a byte array. The length of the returned
+     * byte array is {@code ((size() + 7) / 8)}.
+     */
+    public byte[] toByteArray() {
+        byte[] arr = new byte[(size + 7)/ 8];
+        copyTo(arr, 0, arr.length);
+        return arr;
+    }
+    
+    /**
+     * Converts this bit map to a long.
+     * 
+     * @throws IllegalArgumentException if {@code (size() > 64)}
+     */
+    public long toLong() {
+        if (size > 64) {
+            throw new IllegalArgumentException("bit map of size " + size + " cannot be converted to long");
+        }
+        return low;
     }
 }

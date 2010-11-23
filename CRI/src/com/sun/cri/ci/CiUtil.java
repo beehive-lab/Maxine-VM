@@ -25,6 +25,7 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ri.*;
 
 /**
@@ -34,6 +35,7 @@ import com.sun.cri.ri.*;
  */
 public class CiUtil {
     
+    public static final String NEW_LINE = String.format("%n");
     /**
      * Extends the functionality of {@link Class#getSimpleName()} to include a non-empty string for anonymous and local
      * classes.
@@ -374,6 +376,14 @@ public class CiUtil {
         }
         return sb.toString();
     }
+    
+    /**
+     * Gets a stack trace element for a given method and bytecode index.
+     */
+    public static StackTraceElement toStackTraceElement(RiMethod method, int bci) {
+        return new StackTraceElement(CiUtil.toJavaName(method.holder()), method.name(), null, -1);
+    }
+    
     /**
      * Converts a Java source-language class name into the internal form.
      *
@@ -422,6 +432,21 @@ public class CiUtil {
     }
     
     /**
+     * Prepends the String {@code indentation} to every line in String {@code lines},
+     * including a possibly non-empty line following the final newline.
+     */
+    public static String indent(String lines, String indentation) {
+        if (lines.length() == 0) {
+            return lines;
+        }
+        final String newLine = "\n";
+        if (lines.endsWith(newLine)) {
+            return indentation + (lines.substring(0, lines.length() - 1)).replace(newLine, newLine + indentation) + newLine;
+        }
+        return indentation + lines.replace(newLine, newLine + indentation);
+    }
+
+    /**
      * Formats a given table as a string. The value of each cell is produced by {@link String#valueOf(Object)}.
      * 
      * @param cells the cells of the table in row-major order
@@ -431,7 +456,7 @@ public class CiUtil {
      * @return a string with one line per row and each column left-aligned
      */
     public static String tabulate(Object[] cells, int cols, int lpad, int rpad) {
-        int rows = (cells.length + (cols - 1)) % cols;
+        int rows = (cells.length + (cols - 1)) / cols;
         int[] colWidths = new int[cols];
         for (int col = 0; col < cols; col++) {
             for (int row = 0; row < rows; row++) {
@@ -443,7 +468,7 @@ public class CiUtil {
             }
         }
         StringBuilder sb = new StringBuilder();
-        String nl = String.format("%n");
+        String nl = NEW_LINE;
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 int index = col + (row * cols);
@@ -467,5 +492,136 @@ public class CiUtil {
             sb.append(nl);
         }
         return sb.toString();
+    }
+    
+    /**
+     * Convenient shortcut for calling {@link #appendLocation(StringBuilder, RiMethod, int)}
+     * without having to supply a a {@link StringBuilder} instance and convert the result
+     * to a string. 
+     */
+    public static String toLocation(RiMethod method, int bci) {
+        return appendLocation(new StringBuilder(), method, bci).toString();
+    }
+    
+    
+    /**
+     * Appends a string representation of a location specified by a given method and bci to
+     * a given {@link StringBuilder}. If a stack trace element with a non-null file name
+     * and non-negative line number is {@linkplain RiMethod#toStackTraceElement(int) available}
+     * for the given method, then the string returned is the {@link StackTraceElement#toString()}
+     * value of the stack trace element, suffixed by the bci location. For example:
+     * <pre>
+     *     java.lang.String.valueOf(String.java:2930) [bci: 12]
+     * </pre>
+     * Otherwise, the string returned is the value of {@code CiUtil.format("%H.%n(%p)"}, suffixed
+     * by the bci location. For example:
+     * <pre>
+     *     java.lang.String.valueOf(int) [bci: 12]
+     * </pre>
+     * 
+     * @param sb
+     * @param method
+     * @param bci
+     * @return
+     */
+    public static StringBuilder appendLocation(StringBuilder sb, RiMethod method, int bci) {
+        StackTraceElement ste = method.toStackTraceElement(bci);
+        if (ste.getFileName() != null && ste.getLineNumber() > 0) {
+            sb.append(ste);
+        } else {
+            sb.append(CiUtil.format("%H.%n(%p)", method, false));
+        }
+        return sb.append(" [bci: ").append(bci).append(']');
+    }
+
+    /**
+     * Appends a formatted code position to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param pos the code position to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder append(StringBuilder sb, CiCodePos pos) {
+        appendLocation(sb.append("at "), pos.method, pos.bci);
+        if (pos.caller != null) {
+            sb.append(NEW_LINE);
+            append(sb, pos.caller);
+        }
+        return sb;
+    }
+
+    /**
+     * Appends the formatted values of a given frame to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param separator the string to be inserted between each slot-value string.
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder appendValues(StringBuilder sb, Frame frame, String separator) {
+        String sep = "";
+        if (frame.numLocals != 0) {
+            for (int i = 0; i < frame.numLocals; i++) {
+                sb.append(sep).append("local[").append(i).append("] = ").append(frame.getLocalValue(i));
+                sep = separator;
+            }
+        }
+        if (frame.numStack != 0) {
+            for (int i = 0; i < frame.numStack; i++) {
+                sb.append(sep).append("stack[").append(i).append("] = ").append(frame.getStackValue(i));
+                sep = separator;
+            }
+        }
+        if (frame.numLocks != 0) {
+            for (int i = 0; i < frame.numLocks; i++) {
+                sb.append(sep).append("lock[").append(i).append("] = ").append(frame.getLockValue(i));
+                sep = separator;
+            }
+        }
+        return sb;
+    }
+
+    /**
+     * Appends a formatted frame to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param frame the frame to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder append(StringBuilder sb, Frame frame) {
+        appendLocation(sb.append("at "), frame.method, frame.bci);
+        String sep = NEW_LINE + "  ";
+        if (frame.values.length > 0) {
+            sb.append(sep);
+            appendValues(sb, frame, sep);
+        }
+        if (frame.caller != null) {
+            sb.append(NEW_LINE);
+            append(sb, frame.caller);
+        }
+        return sb;
+    }
+    
+    /**
+     * Appends a formatted debuginfo to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param info the debug info to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder append(StringBuilder sb, CiDebugInfo info) {
+        String nl = NEW_LINE;
+        if (info.hasRegisterRefMap()) {
+            sb.append("reg-ref-map: ").append(info.registerRefMap).append(nl);
+        }
+        if (info.hasStackRefMap()) {
+            sb.append("frame-ref-map: ").append(info.frameRefMap).append(nl);
+        }
+        Frame frame = info.frame();
+        if (frame != null) {
+            append(sb, frame);
+        } else {
+            append(sb, info.codePos);
+        }
+        return sb;
     }
 }

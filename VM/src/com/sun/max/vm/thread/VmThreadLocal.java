@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.thread;
 
+import static com.sun.max.vm.thread.VmThread.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -27,7 +29,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.Log.*;
+import com.sun.max.vm.Log.LogPrintStream;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
@@ -39,21 +41,21 @@ import com.sun.max.vm.stack.*;
  * are defined as static field of this class itself. However, thread locals can also be defined
  * in other {@linkplain VMScheme scheme}-specific classes.
  *
- * All thread local variables occupy one word and
- * the {@linkplain #SAFEPOINT_LATCH safepoint latch} must be first.
+ * All thread local variables occupy one word and have a constant {@linkplain Nature nature}.
+ *
  * <p>
  * All thread locals are in a contiguous block of memory called a thread locals area (TLA) and there
  * are three TLAs per thread, one for each of the {@linkplain Safepoint safepoint} states:
  * <dl>
  * <dt>Enabled</dt>
  * <dd>Safepoints for the thread are {@linkplain Safepoint#enable() enabled}. The base address of this TLA is
- * obtained by reading the {@link #SAFEPOINTS_ENABLED_THREAD_LOCALS} variable from any TLA.</dd>
+ * obtained by reading the {@link #ETLA} variable from any TLA.</dd>
  * <dt>Disabled</dt>
  * <dd>Safepoints for the thread are {@linkplain Safepoint#disable() disabled}. The base address of this TLA is
- * obtained by reading the {@link #SAFEPOINTS_DISABLED_THREAD_LOCALS} variable from any TLA.</dd>
+ * obtained by reading the {@link #DTLA} variable from any TLA.</dd>
  * <dt>Triggered</dt>
  * <dd>Safepoints for the thread are {@linkplain Safepoint#trigger(Pointer) triggered}. The base address of
- * this TLA is obtained by reading the {@link #SAFEPOINTS_TRIGGERED_THREAD_LOCALS} variable from any TLA.</dd>
+ * this TLA is obtained by reading the {@link #TTLA} variable from any TLA.</dd>
  * </dl>
  *
  * The memory for each TLA is within a thread locals block allocated by the native code that starts a thread
@@ -68,11 +70,11 @@ import com.sun.max.vm.stack.*;
  *                    | X X X          unmapped page          X X X |
  *                    | X X X                                 X X X |
  *   page aligned --> +---------------------------------------------+
- *                    |        thread locals area (triggered)       |
+ *                    |               TLA (triggered)               |
  *                    +---------------------------------------------+
- *                    |        thread locals area (enabled)         |
+ *                    |               TLA (enabled)                 |
  *                    +---------------------------------------------+
- *                    |        thread locals area (disabled)        |
+ *                    |               TLA (disabled)                |
  *                    +---------------------------------------------+
  *                    |           NativeThreadLocalsStruct          |
  *                    +---------------------------------------------+
@@ -94,33 +96,57 @@ import com.sun.max.vm.stack.*;
  */
 public class VmThreadLocal {
 
+    /**
+     * Constants describing the read and write protocol for a thread local.
+     *
+     * @author Doug Simon
+     */
+    public enum Nature {
+        /**
+         * Denotes a thread local that has it's value maintained only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA.
+         * This should be used for thread locals that need to be written atomically (e.g. {@link VmThreadLocal#MUTATOR_STATE}) and/or in a fast path
+         * (e.g. {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} which is written in JNI stubs).
+         *
+         * Note that the TLA variable used to access this variable must be the ETLA value. This
+         * invariant is tested in a {@linkplain MaxineVM#isDebug() debug} VM.
+         */
+        Single,
+
+        /**
+         * Denotes a thread local that has it's value maintained in all three TLAs for a thread.
+         * This is used for thread locals that are initialized only once or whose update is not performance critical.
+         * These local variables must be updated using one of the {@code store3(...)} methods in {@link VmThreadLocal}.
+         */
+        Triple;
+    }
+
     private static final List<VmThreadLocal> VALUES = new ArrayList<VmThreadLocal>();
 
     /**
-     * Must be first as needed by {@link Safepoint#initializePrimordial(Pointer)}.
+     * Must be first.
      */
-    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", false, "memory location loaded by safepoint instruction");
+    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", false, "memory location loaded by safepoint instruction", Nature.Single);
 
     /**
-     * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
+     * The {@linkplain VmThread#currentTLA() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#enable() enabled}.
      */
-    public static final VmThreadLocal SAFEPOINTS_ENABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", false, "points to TLS used when safepoints enabled");
+    public static final VmThreadLocal ETLA
+        = new VmThreadLocal("ETLA", false, "points to TLA used when safepoints enabled");
 
     /**
-     * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
+     * The {@linkplain VmThread#currentTLA() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#disable() disabled}.
      */
-    public static final VmThreadLocal SAFEPOINTS_DISABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", false, "points to TLS used when safepoints disabled");
+    public static final VmThreadLocal DTLA
+        = new VmThreadLocal("DTLA", false, "points to TLA used when safepoints disabled");
 
     /**
-     * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
+     * The {@linkplain VmThread#currentTLA() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#trigger(Pointer) triggered}.
      */
-    public static final VmThreadLocal SAFEPOINTS_TRIGGERED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", false, "points to TLS used when safepoints triggered");
+    public static final VmThreadLocal TTLA
+        = new VmThreadLocal("TTLA", false, "points to TLA used when safepoints triggered");
 
     public static final VmThreadLocal NATIVE_THREAD_LOCALS = new VmThreadLocal("NATIVE_THREAD_LOCALS", false, "pointer to a NativeThreadLocalsStruct");
 
@@ -138,7 +164,7 @@ public class VmThreadLocal {
      * The {@link VmOperation} whose {@link VmOperation#doAtSafepoint(Pointer)} is invoked on a thread when it traps at a {@linkplain Safepoint safepoint}.
      */
     public static final VmThreadLocal VM_OPERATION
-        = new VmThreadLocal("VM_OPERATION", true, "Procedure to run when a safepoint is triggered");
+        = new VmThreadLocal("VM_OPERATION", true, "Procedure to run when a safepoint is triggered", Nature.Single);
 
     /**
      * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
@@ -162,9 +188,9 @@ public class VmThreadLocal {
      */
     public static final VmThreadLocal VM_THREAD = new VmThreadLocal("VM_THREAD", true, "VM thread holding these locals") {
         @Override
-        public void log(LogPrintStream out, Pointer vmThreadLocals, boolean prefixName) {
-            super.log(out, vmThreadLocals, prefixName);
-            final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+        public void log(LogPrintStream out, Pointer tla, boolean prefixName) {
+            super.log(out, tla, prefixName);
+            final VmThread vmThread = VmThread.fromTLA(tla);
             if (vmThread != null) {
                 out.print(' ');
                 out.printThread(vmThread, false);
@@ -180,20 +206,20 @@ public class VmThreadLocal {
     /**
      * The address of the current {@linkplain JavaFrameAnchor anchor list} for a thread.
      */
-    public static final VmThreadLocal LAST_JAVA_FRAME_ANCHOR = new VmThreadLocal("LAST_JAVA_FRAME_ANCHOR", false, "");
+    public static final VmThreadLocal LAST_JAVA_FRAME_ANCHOR = new VmThreadLocal("LAST_JAVA_FRAME_ANCHOR", false, "", Nature.Single);
 
     /**
      * The state of this thread with respect to {@linkplain VmOperation freezing}.
      * This will be one of the {@code THREAD_IN_...} constants defined in {@link Safepoint}.
      */
-    public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt freezing");
+    public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt freezing", Nature.Single);
 
     /**
      * A boolean denoting whether this thread has been {@linkplain VmOperation frozen}.
      * A non-zero value means true, a zero value means false.
      * This variable is only used when {@link VmOperation#UseCASBasedThreadFreezing} is {@code false}.
      */
-    public static final VmThreadLocal FROZEN = new VmThreadLocal("FROZEN", false, "Non-zero if frozen");
+    public static final VmThreadLocal FROZEN = new VmThreadLocal("FROZEN", false, "Non-zero if frozen", Nature.Single);
 
     /**
      * The number of the trap (i.e. signal) that occurred.
@@ -259,7 +285,7 @@ public class VmThreadLocal {
         = new VmThreadLocal("STACK_REFERENCE_SIZE", false, "size of stack reference map");
 
     public static final VmThreadLocal IMMORTAL_ALLOCATION_ENABLED
-        = new VmThreadLocal("IMMORTAL_ALLOCATION_ENABLED", false, "Non-zero if thread is allocating on the immortal heap");
+        = new VmThreadLocal("IMMORTAL_ALLOCATION_ENABLED", false, "Non-zero if thread is allocating on the immortal heap", Nature.Single);
 
     private static VmThreadLocal[] valuesNeedingInitialization;
 
@@ -279,9 +305,14 @@ public class VmThreadLocal {
     public final int index;
 
     /**
-     * The offset of this variable from the base of a thread locals.
+     * The offset of this variable in a TLA.
      */
     public final int offset;
+
+    /**
+     * The nature of this variable.
+     */
+    public final Nature nature;
 
     /**
      * A very short string describing the variable, useful for debugging.
@@ -364,17 +395,12 @@ public class VmThreadLocal {
      * Gets the size of a {@linkplain VmThreadLocal thread locals area}.
      * This value is guaranteed to be word-aligned
      */
-    public static Size threadLocalsAreaSize() {
+    public static Size tlaSize() {
         return Size.fromInt(VALUES.size() * Word.size());
     }
 
-    @INLINE
-    public static Pointer fromJniEnv(Pointer jniEnv) {
-        return jniEnv.minusWords(JNI_ENV.index);
-    }
-
-    public static boolean inJava(Pointer vmThreadLocals) {
-        return JavaFrameAnchor.inJava(JavaFrameAnchor.from(vmThreadLocals));
+    public static boolean inJava(Pointer tla) {
+        return JavaFrameAnchor.inJava(JavaFrameAnchor.from(tla));
     }
 
     // GC support:
@@ -382,24 +408,24 @@ public class VmThreadLocal {
     /**
      * Prepares a reference map for the stack of a VM thread executing or blocked in native code.
      *
-     * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
+     * @param tla a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
      * @return the amount of time taken to prepare the reference map
      */
-    public static long prepareStackReferenceMap(Pointer vmThreadLocals) {
-        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+    public static long prepareStackReferenceMap(Pointer tla) {
+        final VmThread vmThread = VmThread.fromTLA(tla);
         final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
-        stackReferenceMapPreparer.prepareStackReferenceMap(vmThreadLocals);
+        stackReferenceMapPreparer.prepareStackReferenceMap(tla);
         return stackReferenceMapPreparer.preparationTime();
     }
 
     /**
      * Prepares a reference map for the entire stack of a VM thread starting from a trap.
      *
-     * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
+     * @param tla a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
      * @param trapState a pointer to the trap state
      */
-    public static void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer trapState) {
-        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
+    public static void prepareStackReferenceMapFromTrap(Pointer tla, Pointer trapState) {
+        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMapFromTrap(tla, trapState);
     }
 
     /**
@@ -412,7 +438,7 @@ public class VmThreadLocal {
      */
     @NEVER_INLINE
     public static long prepareCurrentStackReferenceMap() {
-        return VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(),
+        return VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentTLA(),
                                                                                 VMRegister.getInstructionPointer(),
                                                                                 VMRegister.getAbiStackPointer(),
                                                                                 VMRegister.getAbiFramePointer(), true);
@@ -421,13 +447,13 @@ public class VmThreadLocal {
     /**
      * Scan all references in the VM thread locals.
      *
-     * @param threadLocals
+     * @param tla
      * @param wordPointerIndexVisitor
      */
-    private static void scanThreadLocals(Pointer threadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
-        Pointer enabledThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer();
-        Pointer disabledThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer();
-        Pointer triggeredThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer();
+    private static void scanThreadLocals(Pointer tla, PointerIndexVisitor wordPointerIndexVisitor) {
+        Pointer etla = ETLA.load(tla);
+        Pointer dtla = DTLA.load(tla);
+        Pointer ttla = TTLA.load(tla);
 
         if (Heap.traceRootScanning()) {
             Log.println("  Thread locals:");
@@ -436,13 +462,13 @@ public class VmThreadLocal {
         long map = REFERENCE_MAP;
         while (map != 0) {
             if ((map & 1) != 0) {
-                wordPointerIndexVisitor.visit(enabledThreadLocals, index);
-                wordPointerIndexVisitor.visit(disabledThreadLocals, index);
-                wordPointerIndexVisitor.visit(triggeredThreadLocals, index);
+                wordPointerIndexVisitor.visit(etla, index);
+                wordPointerIndexVisitor.visit(dtla, index);
+                wordPointerIndexVisitor.visit(ttla, index);
                 if (Heap.traceRootScanning()) {
-                    traceReferenceThreadLocal(enabledThreadLocals, index, " (enabled)");
-                    traceReferenceThreadLocal(disabledThreadLocals, index, " (disabled)");
-                    traceReferenceThreadLocal(triggeredThreadLocals, index, " (triggered)");
+                    traceReferenceThreadLocal(etla, index, " (enabled)");
+                    traceReferenceThreadLocal(dtla, index, " (disabled)");
+                    traceReferenceThreadLocal(ttla, index, " (triggered)");
                 }
             }
             index++;
@@ -450,11 +476,11 @@ public class VmThreadLocal {
         }
     }
 
-    private static void traceReferenceThreadLocal(Pointer vmThreadLocals, int index, String categorySuffix) {
+    private static void traceReferenceThreadLocal(Pointer tla, int index, String categorySuffix) {
         Log.print("    index=");
         Log.print(index);
         Log.print(", address=");
-        Pointer address = vmThreadLocals.plus(index * Word.size());
+        Pointer address = tla.plus(index * Word.size());
         Log.print(address);
         Log.print(", value=");
         Log.print(address.readWord(0));
@@ -469,8 +495,8 @@ public class VmThreadLocal {
      * This assumes that prepareStackReferenceMap() has been run for the same stack and that no mutator execution
      * affecting this stack has occurred in between.
      */
-    public static void scanReferences(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
-        final VmThread thread = VmThread.fromVmThreadLocals(vmThreadLocals);
+    public static void scanReferences(Pointer tla, PointerIndexVisitor wordPointerIndexVisitor) {
+        final VmThread thread = VmThread.fromTLA(tla);
         boolean isVmOperationThread = thread.isVmOperationThread();
 
         // Note: as a side effect, this lock serializes stack reference map scanning
@@ -484,14 +510,14 @@ public class VmThreadLocal {
 
         // After this call, the thread object may have been forwarded which means
         // that vtable dispatch will no longer work for the object
-        scanThreadLocals(vmThreadLocals, wordPointerIndexVisitor);
+        scanThreadLocals(tla, wordPointerIndexVisitor);
 
-        Pointer anchor = JavaFrameAnchor.from(vmThreadLocals);
+        Pointer anchor = JavaFrameAnchor.from(tla);
         if (!anchor.isZero()) {
             final Pointer lastJavaCallerStackPointer = JavaFrameAnchor.SP.get(anchor);
-            final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
-            final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
-            final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+            final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.load(tla);
+            final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.load(tla);
+            final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.load(tla);
 
             if (!isVmOperationThread && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
                 Log.print("The stack has slots between ");
@@ -510,7 +536,7 @@ public class VmThreadLocal {
                 Log.print("  Lowest slot: ");
                 Log.println(lowestSlot);
             }
-            StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestActiveSlot, highestSlot, wordPointerIndexVisitor);
+            StackReferenceMapPreparer.scanReferenceMapRange(tla, lowestActiveSlot, highestSlot, wordPointerIndexVisitor);
         } else {
             if (Heap.traceRootScanning()) {
                 Log.println("No Java stack frames");
@@ -522,6 +548,11 @@ public class VmThreadLocal {
         }
     }
 
+    @HOSTED_ONLY
+    public VmThreadLocal(String name, boolean isReference, String description) {
+        this(name, isReference, description, Nature.Triple);
+    }
+
     /**
      * Creates a new thread local variable and adds a slot for it to the map.
      *
@@ -530,9 +561,10 @@ public class VmThreadLocal {
      * @param description a very short textual description, useful for debugging
      */
     @HOSTED_ONLY
-    public VmThreadLocal(String name, boolean isReference, String description) {
+    public VmThreadLocal(String name, boolean isReference, String description, Nature nature) {
         this.isReference = isReference;
         this.name = name;
+        this.nature = nature;
         this.index = VALUES.size();
         this.offset = index * Word.size();
         VALUES.add(this);
@@ -543,29 +575,29 @@ public class VmThreadLocal {
     /**
      * Gets the address of this thread local variable in a given version of thread local variables.
      *
-     * @param vmThreadLocals the base address of the thread local variables
+     * @param tla the base address of the thread local variables
      */
     @INLINE
-    public final Pointer pointer(Pointer vmThreadLocals) {
-        return vmThreadLocals.plusWords(index);
+    public final Pointer addressIn(Pointer tla) {
+        return tla.plus(offset);
     }
 
     /**
      * Prints the value of this thread local to a given log stream.
      *
      * @param out the log stream to which the value will be printed
-     * @param vmThreadLocals the TLA from which to read the value of this thread local
+     * @param tla the TLA from which to read the value of this thread local
      * @param prefixName if true, then the name of this thread local plus ": " will be printed before the value
      */
-    public void log(LogPrintStream out, Pointer vmThreadLocals, boolean prefixName) {
+    public void log(LogPrintStream out, Pointer tla, boolean prefixName) {
         if (prefixName) {
             out.print(name);
             out.print(": ");
         }
-        if (this == SAFEPOINT_LATCH && SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).equals(vmThreadLocals)) {
+        if (this == SAFEPOINT_LATCH && TTLA.load(tla).equals(tla)) {
             out.print("<trigger latch>");
         } else {
-            out.print(vmThreadLocals.getWord(index));
+            out.print(tla.getWord(index));
         }
     }
 
@@ -583,214 +615,136 @@ public class VmThreadLocal {
     }
 
     /**
-     * Verifies that all three ({@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled},
-     * {@linkplain #SAFEPOINTS_TRIGGERED_THREAD_LOCALS triggered} and {@linkplain #SAFEPOINTS_DISABLED_THREAD_LOCALS disabled}) thread local
-     * variable storage areas have are assigned to the same value.
+     * Stores the value of this {@linkplain Nature#Single single} variable.
      *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of all the
-     *            thread local variable storage areas can be obtained
-     * @param value the value this variable should have
+     * This operation is a single store.
+     *
+     * @param etla this must be the value of the {@link #ETLA} thread local
+     * @param value the value to store
      */
-    public final void checkConstantWord(Pointer vmThreadLocals, Word value) {
+    @INLINE
+    public final void store(Pointer etla, Reference value) {
         if (MaxineVM.isDebug()) {
-            final boolean result =
-                vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().getWord(index).equals(value) &&
-                vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index).asPointer().getWord(index).equals(value) &&
-                vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index).asPointer().getWord(index).equals(value);
-            FatalError.check(result, "unexpected value for thread locals");
+            if (nature != Nature.Single || !etla.readWord(ETLA.offset).equals(etla)) {
+                Log.print("Triple thread local being stored to as a single: ");
+                Log.println(name);
+                FatalError.unexpected("Triple thread local updated as a single");
+            }
+        }
+        etla.setReference(index, value);
+    }
+
+    /**
+     * Stores the value of this {@linkplain Nature#Single single} variable.
+     *
+     * This operation is a single store.
+     *
+     * @param etla this must be the value of the {@link #ETLA} thread local
+     * @param value the value to store
+     */
+    @INLINE
+    public final void store(Pointer etla, Word value) {
+        if (MaxineVM.isDebug()) {
+            if (nature != Nature.Single || !etla.readWord(ETLA.offset).equals(etla)) {
+                Log.print("Triple thread local being stored to as a single: ");
+                Log.println(name);
+                FatalError.unexpected("Triple thread local updated as a single");
+            }
+        }
+        etla.setWord(index, value);
+    }
+
+    @FOLD
+    private static int tlaOffset(int n) {
+        return tlaSize().toInt() * n;
+    }
+
+    /**
+     * Stores the value of this variable in the TLAs denoted by a given TLA.
+     *
+     * This operation is composed of 1 load and 3 stores.
+     */
+    @INLINE
+    public final void store3(Pointer tla, Word value) {
+        Pointer ttla = TTLA.load(tla);
+        ttla.writeWord(offset, value);
+        ttla.writeWord(offset + tlaOffset(1), value);
+        ttla.writeWord(offset + tlaOffset(2), value);
+    }
+
+    /**
+     * Stores the value of this variable in the TLAs denoted by the {@linkplain VmThread#currentTLA() current TLA}.
+     *
+     * This operation is composed of 3 loads and 3 stores.
+     */
+    @INLINE
+    public final void store3(Word value) {
+        store3(currentTLA(), value);
+    }
+
+    /**
+     * Stores the value of this variable in the TLAs denoted by a given TLA.
+     *
+     * This operation is composed of 1 load and 3 stores.
+     */
+    @INLINE
+    public final void store3(Pointer tla, Reference value) {
+        Pointer ttla = TTLA.load(tla);
+        ttla.writeReference(offset, value);
+        ttla.writeReference(offset + tlaOffset(1), value);
+        ttla.writeReference(offset + tlaOffset(2), value);
+    }
+
+    /**
+     * Stores the value of this variable in the TLAs denoted by the {@linkplain VmThread#currentTLA() current TLA}.
+     *
+     * This operation is composed of 3 loads and 3 stores.
+     */
+    @INLINE
+    public final void store3(Reference value) {
+        store3(currentTLA(), value);
+    }
+
+    private void checkLoad(Pointer tla) {
+        if (nature == Nature.Single) {
+            if (!tla.readWord(ETLA.offset).equals(tla)) {
+                Log.print("Single thread local must be loaded from ETLA: ");
+                Log.println(name);
+                FatalError.unexpected("Single thread local must be loaded from ETLA", false, null, Pointer.zero());
+            }
         }
     }
 
     /**
-     * Updates the value of this variable in all three ({@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled},
-     * {@linkplain #SAFEPOINTS_TRIGGERED_THREAD_LOCALS triggered} and {@linkplain #SAFEPOINTS_DISABLED_THREAD_LOCALS disabled}) thread local
-     * variable storage areas.
+     * Loads the value of this variable from a given TLA.
      *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of all the
-     *            thread local variable storage areas can be obtained
-     * @param value the new value for this variable
+     * This operation is a single load.
+     *
+     * @param tla this must be the value of the {@link #ETLA} thread local if this is a {@linkplain Nature#Single single} thread local
+     * @return the value of this variable in {@code tla} as a pointer
      */
     @INLINE
-    public final void setConstantWord(Pointer vmThreadLocals, Word value) {
-        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setWord(index, value);
-        vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index).asPointer().setWord(index, value);
-        vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index).asPointer().setWord(index, value);
+    public final Pointer load(Pointer tla) {
+        if (MaxineVM.isDebug()) {
+            checkLoad(tla);
+        }
+        return tla.readWord(offset).asPointer();
     }
 
     /**
-     * Updates the value of this variable in all three ({@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled},
-     * {@linkplain #SAFEPOINTS_TRIGGERED_THREAD_LOCALS triggered} and {@linkplain #SAFEPOINTS_DISABLED_THREAD_LOCALS disabled}) thread local
-     * variable storage areas.
+     * Loads the value of this variable from a given TLA.
      *
-     * @param value the new value for this variable
+     * This operation is a single load.
+     *
+     * @param tla this must be the value of the {@link #ETLA} thread local if this is a {@linkplain Nature#Single single} thread local
+     * @return the value of this variable in {@code tla} as a reference
      */
     @INLINE
-    public final void setConstantWord(Word value) {
-        setConstantWord(VmThread.currentVmThreadLocals(), value);
-    }
-
-    /**
-     * Gets the value of this variable from a specified copy of thread locals.
-     *
-     * @param vmThreadLocals a pointer to one of the thread locals from which the value of this
-     *            variable should be retrieved
-     * @return value the value of this variable in the thread locals denoted by {@code
-     *         vmThreadLocals}
-     */
-    @INLINE
-    public final Word getConstantWord(Pointer vmThreadLocals) {
-        return vmThreadLocals.getWord(this);
-    }
-
-    /**
-     * Gets the value of this variable from the thread locals denoted by the
-     * safepoint {@linkplain Safepoint#latchRegister() latch} register.
-     *
-     * @return value the value of this variable in the current thread locals
-     */
-    @INLINE
-    public final Word getConstantWord() {
-        return getConstantWord(VmThread.currentVmThreadLocals());
-    }
-
-    /**
-     * Updates the value of this variable in all three ({@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled},
-     * {@linkplain #SAFEPOINTS_TRIGGERED_THREAD_LOCALS triggered} and {@linkplain #SAFEPOINTS_DISABLED_THREAD_LOCALS disabled}) thread local
-     * variable storage areas.
-     *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of all the
-     *            thread localss can be obtained
-     * @param value the new value for this variable
-     */
-    @INLINE
-    public final void setConstantReference(Pointer vmThreadLocals, Reference value) {
-        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setReference(index, value);
-        vmThreadLocals.getWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index).asPointer().setReference(index, value);
-        vmThreadLocals.getWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index).asPointer().setReference(index, value);
-    }
-
-    /**
-     * Gets the value of this variable from a specified copy of thread locals.
-     *
-     * @param vmThreadLocals a pointer to one of the thread locals from which the value of this
-     *            variable should be retrieved
-     * @return value the value of this variable in the thread locals denoted by {@code
-     *         vmThreadLocals}
-     */
-    @INLINE
-    public final Reference getConstantReference(Pointer vmThreadLocals) {
-        return vmThreadLocals.getReference(index);
-    }
-
-    /**
-     * Updates the value of this variable in all three ({@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled},
-     * {@linkplain #SAFEPOINTS_TRIGGERED_THREAD_LOCALS triggered} and {@linkplain #SAFEPOINTS_DISABLED_THREAD_LOCALS disabled}) thread local
-     * variable storage areas.
-     *
-     * @param value the new value for this variable
-     */
-    @INLINE
-    public final void setConstantReference(Reference value) {
-        setConstantReference(VmThread.currentVmThreadLocals(), value);
-    }
-
-    /**
-     * Gets the value of this variable from the thread locals denoted by the
-     * safepoint {@linkplain Safepoint#latchRegister() latch} register.
-     *
-     * @return value the value of this variable in the current thread locals
-     */
-    @INLINE
-    public final Reference getConstantReference() {
-        return getConstantReference(VmThread.currentVmThreadLocals());
-    }
-
-    /**
-     * Updates the value of this variable in the {@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled} thread locals.
-     *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the
-     *            safepoints-enabled thread locals can be obtained
-     * @param value the new value for this variable
-     */
-    @INLINE
-    public final void setVariableWord(Pointer vmThreadLocals, Word value) {
-        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setWord(index, value);
-    }
-
-    /**
-     * Updates the value of this variable in the {@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled} thread locals.
-     *
-     * @param value the new value for this variable
-     */
-    @INLINE
-    public final void setVariableWord(Word value) {
-        setVariableWord(VmThread.currentVmThreadLocals(), value);
-    }
-
-    /**
-     * Gets the value of this variable from the {@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled} thread locals.
-     *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the
-     *            safepoints-enabled thread locals can be obtained
-     * @return value the value of this variable in the safepoints-enabled thread locals
-     */
-    @INLINE
-    public final Word getVariableWord(Pointer vmThreadLocals) {
-        return vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().getWord(index);
-    }
-
-    /**
-     * Gets the value of this variable from the {@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled} thread locals.
-     *
-     * @return value the value of this variable in the safepoints-enabled thread locals
-     */
-    @INLINE
-    public final Word getVariableWord() {
-        return getVariableWord(VmThread.currentVmThreadLocals());
-    }
-
-    /**
-     * Updates the value of this variable in the {@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled} thread locals.
-     *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the
-     *            safepoints-enabled thread locals can be obtained
-     * @param value the new value for this variable
-     */
-    @INLINE
-    public final void setVariableReference(Pointer vmThreadLocals, Reference value) {
-        vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().setReference(index, value);
-    }
-
-    /**
-     * Gets the value of this variable from the {@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled} thread locals.
-     *
-     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the
-     *            safepoints-enabled thread locals can be obtained
-     * @return value the value of this variable in the safepoints-enabled thread locals
-     */
-    @INLINE
-    public final Reference getVariableReference(Pointer vmThreadLocals) {
-        return vmThreadLocals.getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer().getReference(index);
-    }
-
-    /**
-     * Updates the value of this variable in the {@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled} thread locals.
-     *
-     * @param value the new value for this variable
-     */
-    @INLINE
-    public final void setVariableReference(Reference value) {
-        setVariableReference(VmThread.currentVmThreadLocals(), value);
-    }
-
-    /**
-     * Gets the value of this variable from the {@linkplain #SAFEPOINTS_ENABLED_THREAD_LOCALS safepoints-enabled} thread locals.
-     *
-     * @return value the value of this variable in the safepoints-enabled thread locals
-     */
-    @INLINE
-    public final Reference getVariableReference() {
-        return getVariableReference(VmThread.currentVmThreadLocals());
+    public final Reference loadRef(Pointer tla) {
+        if (MaxineVM.isDebug()) {
+            checkLoad(tla);
+        }
+        return tla.readReference(offset);
     }
 
     @Override

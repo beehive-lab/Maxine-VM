@@ -105,7 +105,7 @@
  * {@link com.sun.c1x.alloc.LinearScan} class must implement the {@link ValueLocator} interface and pass it to the
  * {@link com.sun.c1x.lir.LIRDebugInfo#createFrame} method after register allocation. The
  * resulting debug info will be fed back to the runtime system by the existing logic that calls
- * {@link com.sun.cri.ci.CiTargetMethod#recordCall(int, Object, CiDebugInfo, byte[], boolean)} and other methods. Obviously the runtime
+ * {@link com.sun.cri.ci.CiTargetMethod#recordCall(int, Object, CiDebugInfo, boolean)} and other methods. Obviously the runtime
  * system will need to encode this metadata in a dense format, because it is huge.</li>
  *
  *

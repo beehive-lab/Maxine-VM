@@ -670,7 +670,7 @@ public final class Interval {
         }
         this.kind = CiKind.Illegal;
         this.first = Range.EndMarker;
-        this.usePosList = new UsePosList(6);
+        this.usePosList = new UsePosList(4);
         this.current = Range.EndMarker;
         this.next = EndMarker;
         this.cachedTo = -1;
@@ -1110,11 +1110,7 @@ public final class Interval {
         String to = "?";
         if (first != null && first != Range.EndMarker) {
             from = String.valueOf(from());
-            if (cachedTo == -1) {
-                to = String.valueOf(calcTo());
-            } else {
-                to = String.valueOf(to());
-            }
+            to = String.valueOf(to());
         }
         String location = this.location == null ? "" : "@" + this.location.name();
         return operandNumber + ":" + operand + (operand.isRegister() ? "" : location) + "[" + from + "," + to + "]";

@@ -102,12 +102,13 @@ public final class MaxineVM {
     private static MaxineVM vm;
 
     /**
-     * The primordial thread locals.
+     * The {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA of the primordial thread.
      *
-     * The address of this field is exposed to native code via {@link Header#primordialThreadLocalsOffset}
-     * so that it can be initialized by the C substrate. It also enables a debugger attached to the VM to find it.
+     * The address of this field is exposed to native code via {@link Header#primordialETLAOffset}
+     * so that it can be initialized by the C substrate. It also enables a debugger attached to
+     * the VM to find it (as it's not part of the thread list).
      */
-    private static Pointer primordialThreadLocals;
+    private static Pointer primordialETLA;
 
     private static int exitCode = 0;
 
@@ -153,6 +154,12 @@ public final class MaxineVM {
          * Executing application code.
          */
         RUNNING,
+
+        /**
+         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VMOperation} thread still live.
+         * Last chance to interpose, but be careful what you do. In particular, thread creation is not permitted.
+         */
+        TERMINATING
     }
 
     /**
@@ -292,7 +299,11 @@ public final class MaxineVM {
                 final boolean isTestPackage = maxPackage.name().startsWith("test.com.sun.max.");
                 HOSTED_CLASSES.put(javaClass, !isTestPackage);
                 return !isTestPackage;
+            } else if (maxPackage.getClass().getAnnotation(HOSTED_ONLY.class) != null) {
+                HOSTED_CLASSES.put(javaClass, true);
+                return true;
             }
+
         }
 
         try {
@@ -358,15 +369,10 @@ public final class MaxineVM {
         exitCode = code;
     }
 
-    public static Pointer primordialVmThreadLocals() {
-        return primordialThreadLocals;
-    }
-
     /**
      * Entry point called by the substrate.
      *
      * ATTENTION: this signature must match 'VMRunMethod' in "Native/substrate/maxine.c"
-     * ATTENTION: If you change this signature, you must also change the result returned by @linkplain{runMethodParameterTypes}
      *
      * VM startup, initialization and exit code reporting routine running in the primordial native thread.
      *
@@ -384,9 +390,9 @@ public final class MaxineVM {
         // Fix it manually:
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
-        Pointer vmThreadLocals = primordialThreadLocals;
+        Pointer tla = primordialETLA;
 
-        Safepoint.initializePrimordial(vmThreadLocals);
+        Safepoint.setLatchRegister(tla);
 
         // The primordial thread should never allocate from the heap
         Heap.disableAllocationForCurrentThread();

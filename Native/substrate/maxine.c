@@ -332,7 +332,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     fd = loadImage();
 
-    threadLocals_initialize(image_header()->threadLocalsAreaSize);
+    tla_initialize(image_header()->tlaSize);
 
     debugger_initialize();
 
@@ -340,11 +340,11 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     Address tlBlock = threadLocalsBlock_createForExistingThread(0);
 
-    Address primordial_tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
-    image_write_value(Address, primordialThreadLocalsOffset, primordial_tl);
+    Address primordial_tla = ETLA_FROM_TLBLOCK(tlBlock);
+    image_write_value(Address, primordialETLAOffset, primordial_tla);
 
 #if log_LOADER
-    log_println("primordial thread locals: %p", primordial_tl);
+    log_println("primordial TLA: %p", primordial_tla);
 #endif
 
 

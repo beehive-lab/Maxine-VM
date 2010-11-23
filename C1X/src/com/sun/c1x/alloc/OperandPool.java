@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -71,17 +70,17 @@ public class OperandPool {
     /**
      * Records which variable operands have the {@link VariableFlag#MustBeByteRegister} flag set.
      */
-    private BitMap mustBeByteRegister;
+    private CiBitMap mustBeByteRegister;
 
     /**
      * Records which variable operands have the {@link VariableFlag#MustStartInMemory} flag set.
      */
-    private BitMap mustStartInMemory;
+    private CiBitMap mustStartInMemory;
 
     /**
      * Records which variable operands have the {@link VariableFlag#MustStayInMemory} flag set.
      */
-    private BitMap mustStayInMemory;
+    private CiBitMap mustStayInMemory;
 
     /**
      * Flags that can be set for {@linkplain CiValue#isVariable() variable} operands.
@@ -107,19 +106,19 @@ public class OperandPool {
         public static final VariableFlag[] VALUES = values();
     }
 
-    private static BitMap set(BitMap map, CiVariable variable) {
+    private static CiBitMap set(CiBitMap map, CiVariable variable) {
         if (map == null) {
-            int length = BitMap.roundUpLength(variable.index + 1);
-            map = new BitMap(length);
+            int length = CiBitMap.roundUpLength(variable.index + 1);
+            map = new CiBitMap(length);
         } else if (map.size() <= variable.index) {
-            int length = BitMap.roundUpLength(variable.index + 1);
+            int length = CiBitMap.roundUpLength(variable.index + 1);
             map.grow(length);
         }
         map.set(variable.index);
         return map;
     }
 
-    private static boolean get(BitMap map, CiVariable variable) {
+    private static boolean get(CiBitMap map, CiVariable variable) {
         if (map == null || map.size() <= variable.index) {
             return false;
         }
