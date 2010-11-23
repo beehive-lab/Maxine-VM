@@ -20,14 +20,20 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.util.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VMRegister.*;
+import com.sun.max.vm.runtime.VMRegister.Role;
 import com.sun.max.vm.type.*;
 
 /**
@@ -99,6 +105,8 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         return registerRoleAssignment.floatingPointRegisterActingAs(VMRegister.Role.ABI_RETURN);
     }
 
+    public final RiRegisterConfig registerConfig;
+
     /**
      * A target ABI specifies a number of register roles assignment used by the compiler that produces the target code, as well as
      * the entry point {@linkplain CallEntryPoint call entry point} associated with its compiler. The latter can be used
@@ -121,6 +129,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         this.callPushesReturnAddress = callPushesReturnAddress;
         this.stackFrameAlignment = stackFrameAlignment;
         this.stackBias = stackBias;
+        this.registerConfig = new RegisterConfig(this);
     }
 
     public TargetABI(TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> original,
@@ -135,6 +144,8 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         this.callPushesReturnAddress = original.callPushesReturnAddress;
         this.stackFrameAlignment = original.stackFrameAlignment;
         this.stackBias = original.stackBias;
+        this.registerConfig = new RegisterConfig(this);
+
     }
 
     /**
@@ -181,5 +192,88 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
             }
         }
         return result;
+    }
+
+    /**
+     * A partial implementation of {@link RiRegisterConfig} to satisfy uses of {@link TargetMethod#getRegisterConfig()}
+     * on CPS target methods. This will no longer be necessary once CPS goes away.
+     */
+    public static class RegisterConfig implements RiRegisterConfig {
+        TargetABI abi;
+        final CiRegister[] inParameters;
+        final CiRegister[] outParameters;
+
+        private static CiRegister[] toArray(List cpuRegs, List fpuRegs) {
+            CiRegister[] res = new CiRegister[cpuRegs.size() + fpuRegs.size()];
+            int i = 0;
+            for (Object reg : cpuRegs) {
+                res[i++] = cpuReg((Symbol) reg);
+            }
+            for (Object reg : fpuRegs) {
+                res[i++] = fpuReg((Symbol) reg);
+            }
+            return res;
+        }
+
+        public RegisterConfig(TargetABI abi) {
+            this.abi = abi;
+            inParameters = toArray(abi.integerIncomingParameterRegisters, abi.floatingPointParameterRegisters);
+            outParameters = toArray(abi.integerOutgoingParameterRegisters, abi.floatingPointParameterRegisters);
+        }
+
+        private static CiRegister cpuReg(Symbol reg) {
+            return target().arch.registerFor(reg.value(), RegisterFlag.CPU);
+        }
+
+        private static CiRegister fpuReg(Symbol reg) {
+            return target().arch.registerFor(reg.value(), RegisterFlag.FPU);
+        }
+        public CiRegister getReturnRegister(CiKind kind) {
+            if (kind.isDouble() || kind.isWord()) {
+                return fpuReg(abi.floatingPointReturn());
+            }
+            assert !kind.isVoid();
+            return cpuReg(abi.integerReturn());
+        }
+        public CiRegister getFrameRegister() {
+            return cpuReg(abi.framePointer());
+        }
+        public CiRegister getScratchRegister() {
+            return cpuReg(abi.scratchRegister());
+        }
+        public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target) {
+            throw FatalError.unimplemented();
+        }
+        public CiRegister[] getCallingConventionRegisters(Type type) {
+            switch (type) {
+                case JavaCall:
+                    return outParameters;
+                case JavaCallee:
+                    return inParameters;
+                case NativeCall:
+                    break;
+                case RuntimeCall:
+                    break;
+            }
+            throw FatalError.unimplemented();
+        }
+        public CiRegister[] getAllocatableRegisters() {
+            throw FatalError.unimplemented();
+        }
+        public EnumMap<RegisterFlag, CiRegister[]> getCategorizedAllocatableRegisters() {
+            throw FatalError.unimplemented();
+        }
+        public CiRegister[] getCallerSaveRegisters() {
+            throw FatalError.unimplemented();
+        }
+        public CiCalleeSaveArea getCalleeSaveArea() {
+            return null;
+        }
+        public RiRegisterAttributes[] getAttributesMap() {
+            throw FatalError.unimplemented();
+        }
+        public CiRegister getRegister(int id) {
+            throw FatalError.unimplemented();
+        }
     }
 }

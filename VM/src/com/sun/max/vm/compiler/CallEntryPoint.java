@@ -34,9 +34,9 @@ import com.sun.max.vm.jni.*;
  * {@linkplain #offset() offset} relative to a target method's
  * {@linkplain TargetMethod#codeStart() first instruction}.
  * <p>
- * Each {@linkplain TargetMethod target method} is associated with a {@linkplain TargetABI target ABI} which specifies a
- * {@linkplain TargetABI#callEntryPoint() call entry point}. Stack walkers and linkers can use this call entry point to
- * determine if an activation frame for a target method is an adapter frame, and to determine what entry point to
+ * Each {@linkplain TargetMethod target method} has associated a fixed call entry point.
+ * Stack walkers and linkers can use this call entry point to determine if an activation
+ * frame for a target method is an adapter frame, and to determine what entry point to
  * use for statically linked calls.
  *
  * @author Laurent Daynes

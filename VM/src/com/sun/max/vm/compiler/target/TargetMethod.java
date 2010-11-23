@@ -24,6 +24,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
@@ -97,18 +98,15 @@ public abstract class TargetMethod extends MemoryRegion {
 
     private int registerRestoreEpilogueOffset = -1;
 
-    @INSPECTED
-    private TargetABI abi;
-
-    public TargetMethod(String description, TargetABI abi) {
+    public TargetMethod(String description, CallEntryPoint callEntryPoint) {
         this.classMethodActor = null;
-        this.abi = abi;
+        this.callEntryPoint = callEntryPoint;
         setRegionName(description);
     }
 
-    public TargetMethod(ClassMethodActor classMethodActor, TargetABI abi) {
+    public TargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
         this.classMethodActor = classMethodActor;
-        this.abi = abi;
+        this.callEntryPoint = callEntryPoint;
         setRegionName(classMethodActor.name.toString());
     }
 
@@ -173,7 +171,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param directCallIndex an index into the {@linkplain #directCallees() direct callees} of this target method
      */
     protected CallEntryPoint callEntryPointForDirectCall(int directCallIndex) {
-        return abi().callEntryPoint;
+        return callEntryPoint;
     }
 
     public final int numberOfIndirectCalls() {
@@ -242,9 +240,7 @@ public abstract class TargetMethod extends MemoryRegion {
         return frameSize;
     }
 
-    public final TargetABI abi() {
-        return abi;
-    }
+    public final CallEntryPoint callEntryPoint;
 
     /**
      * Assigns the arrays co-located in a {@linkplain CodeRegion code region} containing the machine code and related data.
@@ -543,10 +539,6 @@ public abstract class TargetMethod extends MemoryRegion {
         return (classMethodActor == null) ? regionName() : classMethodActor.format("%H.%n(%p)");
     }
 
-    protected final void setABI(TargetABI abi) {
-        this.abi = abi;
-    }
-
     public String name() {
         return regionName();
     }
@@ -762,5 +754,12 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public boolean preserveRegistersForLocalExceptionHandler() {
         return true;
+    }
+
+    /**
+     * Gets the register config used to compile this method.
+     */
+    public RiRegisterConfig getRegisterConfig() {
+        return null;
     }
 }

@@ -589,19 +589,19 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
         private Value getValueImpl(int slot) {
             TargetLocation l = null;
 
-            if (!(bytecodeLocation instanceof TargetJavaFrameDescriptor)) {
-                final TargetLocation[] targetLocations = stackFrame.targetMethod().abi().getParameterTargetLocations(stackFrame.targetMethod().classMethodActor().getParameterKinds());
-                if (slot >= targetLocations.length) {
-                    return IntValue.from(0xbadbabe);
-                }
-                l = targetLocations[slot];
-            } else {
-                TargetJavaFrameDescriptor descriptor = (TargetJavaFrameDescriptor) bytecodeLocation;
-                if (slot >= descriptor.locals.length) {
-                    return IntValue.from(0xbadbabe);
-                }
-                l = descriptor.locals[slot];
-            }
+//            if (!(bytecodeLocation instanceof TargetJavaFrameDescriptor)) {
+//                final TargetLocation[] targetLocations = stackFrame.targetMethod().abi().getParameterTargetLocations(stackFrame.targetMethod().classMethodActor().getParameterKinds());
+//                if (slot >= targetLocations.length) {
+//                    return IntValue.from(0xbadbabe);
+//                }
+//                l = targetLocations[slot];
+//            } else {
+//                TargetJavaFrameDescriptor descriptor = (TargetJavaFrameDescriptor) bytecodeLocation;
+//                if (slot >= descriptor.locals.length) {
+//                    return IntValue.from(0xbadbabe);
+//                }
+//                l = descriptor.locals[slot];
+//            }
 
             // System.out.println("STACKFRAME ACCESS at " + slot + ", target=" + l);
 

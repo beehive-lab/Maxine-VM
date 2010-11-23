@@ -57,11 +57,13 @@ public interface RiRegisterConfig {
     CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target);
     
     /**
-     * Gets the complete set of registers that are can be used to pass parameters
-     * according to a given calling convention.
-
+     * Gets the complete set of registers that are can be used to pass parameters according to a given calling
+     * convention.
+     * 
      * @param type the type of calling convention
-     * @return the set of registers that may be used to pass parameters in a call conforming to {@code type}
+     * @return the ordered set of registers that may be used to pass parameters in a call conforming to {@code type}.
+     *         {@linkplain CiRegister#isCpu() Integral} registers appear in this array before
+     *         {@linkplain CiRegister#isFpu() floating point} registers.
      */
     CiRegister[] getCallingConventionRegisters(Type type);
     

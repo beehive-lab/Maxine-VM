@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiDebugInfo.Frame;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.io.*;
@@ -34,6 +35,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
@@ -83,8 +85,15 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @INSPECTED
     protected int frameReferenceMapSize;
 
-    public CPSTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor, null);
+    @INSPECTED
+    private TargetABI abi;
+
+    public final TargetABI abi() {
+        return abi;
+    }
+
+    public CPSTargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
+        super(classMethodActor, callEntryPoint);
     }
 
     public void cleanup() {
@@ -197,7 +206,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         this.encodedInlineDataDescriptors = encodedInlineDataDescriptors;
         this.referenceMaps = referenceMaps;
         this.frameReferenceMapSize = frameReferenceMapSize;
-        super.setABI(abi);
+        this.abi = abi;
         super.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         super.setFrameSize(frameSize);
         super.setData(scalarLiterals, referenceLiterals, codeOrCodeBuffer);
@@ -227,7 +236,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             code(),
             encodedInlineDataDescriptors,
             frameSize(),
-            frameReferenceMapSize(), super.abi()
+            frameReferenceMapSize(), abi
         );
         return duplicate;
     }
@@ -501,6 +510,11 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      */
     public final byte[] compressedJavaFrameDescriptors() {
         return compressedJavaFrameDescriptors;
+    }
+
+    @Override
+    public RiRegisterConfig getRegisterConfig() {
+        return abi().registerConfig;
     }
 
     @Override

@@ -67,9 +67,12 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
 
                     final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
-                    // Use the caller's abi to get the correct entry point.
-                    final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
-                    patchRipCallSite(callSite, calleeEntryPoint);
+                    CallEntryPoint callEntryPoint = caller.callEntryPoint;
+                    if (caller.classMethodActor != null && caller.classMethodActor.isVmEntryPoint()) {
+                        callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+                    }
+                    final Address calleeAddress = CompilationScheme.Static.compile(callee, callEntryPoint);
+                    patchRipCallSite(callSite, calleeAddress);
 
                     // Make the trampoline's caller re-executes the now modified CALL instruction after we return from the trampoline:
                     Pointer trampolineCallerRipPointer = current.sp().minus(Word.size());
@@ -107,8 +110,8 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     @INLINE
-    static void patchRipCallSite(Pointer callSite, Address calleeEntryPoint) {
-        final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
+    static void patchRipCallSite(Pointer callSite, Address calleeAddress) {
+        final int calleeOffset = calleeAddress.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
         callSite.writeInt(1, calleeOffset);
     }
 

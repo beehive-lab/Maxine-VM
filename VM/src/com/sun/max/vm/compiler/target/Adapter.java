@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.util.*;
@@ -109,7 +108,7 @@ public abstract class Adapter extends TargetMethod {
      * @param callPosition TODO
      */
     public Adapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
-        super(description, vmConfig().targetABIsScheme().optimizedJavaABI);
+        super(description, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         this.setFrameSize(frameSize);
         this.generator = generator;
 

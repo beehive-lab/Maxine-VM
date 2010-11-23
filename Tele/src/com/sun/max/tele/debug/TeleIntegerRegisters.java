@@ -94,7 +94,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * @return the current stack pointer
      */
     Pointer stackPointer() {
-        return get(Role.CPU_STACK_POINTER, null);
+        return get(Role.CPU_STACK_POINTER);
     }
 
     /**
@@ -103,19 +103,17 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * @return the current frame pointer
      */
     Pointer framePointer() {
-        return get(Role.CPU_FRAME_POINTER, null);
+        return get(Role.CPU_FRAME_POINTER);
     }
 
     /**
      * Gets the value of the register denoted by a given role in a given target ABI.
      *
      * @param role the role denoting the register of interest
-     * @param targetABI the ABI used to convert {@code role} to a platform dependent register. If this value is null,
-     *            then the {@linkplain TargetABIsScheme#nativeABI() native ABI} is used.
      * @return the value of the register denoted by {@code role} and {@code targetABI}
      */
-    Pointer get(VMRegister.Role role, TargetABI targetABI) {
-        final TargetABI abi = targetABI == null ? vmConfig().targetABIsScheme().nativeABI : targetABI;
+    Pointer get(VMRegister.Role role) {
+        final TargetABI abi = vmConfig().targetABIsScheme().nativeABI;
         final Symbol register = abi.registerRoleAssignment.integerRegisterActingAs(role);
         return getValue(register).asPointer();
     }

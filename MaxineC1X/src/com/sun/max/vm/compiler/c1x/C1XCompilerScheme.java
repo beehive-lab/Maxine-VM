@@ -297,7 +297,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
         // Use the caller's abi to get the correct entry point.
-        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
+        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.callEntryPoint);
         final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
         Pointer callDisp = callSite.plus(1);
         if (CODE_PATCHING_ALIGMMENT_IS_GUARANTEED && !callDisp.isWordAligned()) {

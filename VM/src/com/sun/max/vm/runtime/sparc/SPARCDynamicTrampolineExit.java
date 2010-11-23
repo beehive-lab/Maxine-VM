@@ -57,7 +57,10 @@ public class SPARCDynamicTrampolineExit extends DynamicTrampolineExit {
         SpecialBuiltin.flushRegisterWindows();
         final Pointer trampolineCallerPC = SPARCStackFrameLayout.getRegisterInSavedWindow(stackPointer, GPR.I7).asPointer();
         final TargetMethod caller = Code.codePointerToTargetMethod(trampolineCallerPC);
-        final CallEntryPoint calleeEntryPoint = caller.abi().callEntryPoint;
-        return vtableEntryPoint.plus(calleeEntryPoint.offset() - VTABLE_ENTRY_POINT.offset());
+        CallEntryPoint callEntryPoint = caller.callEntryPoint;
+        if (caller.classMethodActor != null && caller.classMethodActor.isVmEntryPoint()) {
+            callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+        }
+        return vtableEntryPoint.plus(callEntryPoint.offset() - VTABLE_ENTRY_POINT.offset());
     }
 }

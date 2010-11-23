@@ -79,7 +79,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
     protected JitTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
+        super(classMethodActor, CallEntryPoint.JIT_ENTRY_POINT);
     }
 
     public int[] bytecodeToTargetCodePositionMap() {
