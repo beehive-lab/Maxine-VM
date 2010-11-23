@@ -70,6 +70,7 @@ public class C1XOptions {
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
     public static boolean PrintHIR                           = ____;
+    public static boolean PrintInliningFailures              = ____;
     public static boolean PrintLIR                           = ____;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;

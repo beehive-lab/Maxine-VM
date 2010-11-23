@@ -202,16 +202,6 @@ public class C1XCompilation {
     }
 
     /**
-     * Records an inlining decision not to inline an inlinable method.
-     *
-     * @param target the method that was not inlined
-     * @param reason a description of the reason why the method was not inlined
-     */
-    public void recordInliningFailure(RiMethod target, String reason) {
-        // TODO: record inlining failure
-    }
-
-    /**
      * Converts this compilation to a string.
      *
      * @return a string representation of this compilation
