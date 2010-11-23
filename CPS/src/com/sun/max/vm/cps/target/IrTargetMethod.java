@@ -26,7 +26,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
  * This class exists solely as a work around when running the IR tests where compilation stops at some IR level

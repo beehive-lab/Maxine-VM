@@ -87,17 +87,17 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         super(classMethodActor, null);
     }
 
-    @Override
+    public void cleanup() {
+    }
+
     public boolean contains(Builtin builtin, boolean defaultResult) {
         return defaultResult;
     }
 
-    @Override
     public boolean isNative() {
         return classMethodActor().isNative();
     }
 
-    @Override
     public int count(Builtin builtin, int defaultResult) {
         return defaultResult;
     }
