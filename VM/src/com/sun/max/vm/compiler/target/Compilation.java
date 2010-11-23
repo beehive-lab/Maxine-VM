@@ -171,7 +171,7 @@ public class Compilation implements Future<TargetMethod> {
         String methodString = "";
         try {
             methodString = logBeforeCompilation(compiler);
-            if (StackReferenceMapPreparer.VerifyRefMaps) {
+            if (!MaxineVM.isHosted() && StackReferenceMapPreparer.VerifyRefMaps) {
                 StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
             }
 
