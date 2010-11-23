@@ -895,7 +895,7 @@ public abstract class BytecodeAssembler {
 
     public void aastore() {
         emitOpcode(AASTORE);
-        adjustStack(3);
+        adjustStack(-3);
     }
 
     public void iadd() {
