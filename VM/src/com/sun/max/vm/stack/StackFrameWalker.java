@@ -169,10 +169,10 @@ public abstract class StackFrameWalker {
             if (targetMethod == null) {
                 return CalleeKind.NATIVE;
             }
-            if (targetMethod.isTrapStub()) {
+            if (Trap.trapStub.targetMethod() == targetMethod) {
                 return CalleeKind.TRAP_STUB;
             }
-            if (targetMethod.isTrampoline()) {
+            if (targetMethod.classMethodActor != null && targetMethod.classMethodActor.isTrampoline()) {
                 return CalleeKind.TRAMPOLINE;
             }
             if (targetMethod.isCalleeSaved()) {
