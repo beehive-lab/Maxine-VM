@@ -96,7 +96,7 @@ public class C1XCompilation {
         this.registerConfig = method == null ? compiler.globalStubRegisterConfig : runtime.getRegisterConfig(method);
 
         CFGPrinter cfgPrinter = null;
-        if (C1XOptions.PrintCFGToFile && method != null && TTY.Filter.matches(C1XOptions.PrintFilter, method)) {
+        if (C1XOptions.PrintCFGToFile && method != null && !TTY.isSuppressed()) {
             cfgPrinterBuffer = new ByteArrayOutputStream();
             cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target);
             cfgPrinter.printCompilation(method);
@@ -202,16 +202,6 @@ public class C1XCompilation {
     }
 
     /**
-     * Records an inlining decision not to inline an inlinable method.
-     *
-     * @param target the method that was not inlined
-     * @param reason a description of the reason why the method was not inlined
-     */
-    public void recordInliningFailure(RiMethod target, String reason) {
-        // TODO: record inlining failure
-    }
-
-    /**
      * Converts this compilation to a string.
      *
      * @return a string representation of this compilation
@@ -282,7 +272,6 @@ public class C1XCompilation {
 
     public CiResult compile() {
         CiTargetMethod targetMethod;
-        TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
         try {
             setCurrent(this);
 
@@ -298,7 +287,6 @@ public class C1XCompilation {
         } catch (Throwable t) {
             return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
         } finally {
-            filter.remove();
             flushCfgPrinterToFile();
             setCurrent(null);
         }
