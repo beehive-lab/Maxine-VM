@@ -137,11 +137,6 @@ public abstract class Adapter extends TargetMethod {
     }
 
     @Override
-    public String referenceMapsToString() {
-        return "";
-    }
-
-    @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         if (isTopFrame) {
             throw FatalError.unexpected("Exception occurred in frame adapter");

@@ -25,6 +25,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.cps.target.*;
 
 /**
  * A stop denotes a target code position for which the location of object references are precisely known.
@@ -97,7 +98,7 @@ public abstract class Stop {
         /**
          * The template containing this derived stop.
          */
-        final TargetMethod template;
+        final CPSTargetMethod template;
 
         /**
          * The stop-type specific index of this stop.
@@ -106,7 +107,7 @@ public abstract class Stop {
 
         public TemplateStop(int position, int bytecodePosition, TargetMethod template, int index) {
             super(position, bytecodePosition);
-            this.template = template;
+            this.template = (CPSTargetMethod) template;
             this.index = index;
         }
 
