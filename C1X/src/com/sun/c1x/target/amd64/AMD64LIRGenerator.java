@@ -657,9 +657,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
         // add safepoint before generating condition code so it can be recomputed
         if (x.isSafepoint()) {
-            // increment backedge counter if needed
-            incrementBackedgeCounter(stateFor(x, x.stateAfter()));
-
             emitXir(xir.genSafepoint(site(x)), x, stateFor(x, x.stateAfter()), null, false);
         }
         setNoResult(x);

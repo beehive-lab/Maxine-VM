@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.util;
 
+import com.sun.cri.ci.*;
+
 /**
  * This class implements a two-dimensional bitmap.
  *
@@ -28,19 +30,19 @@ package com.sun.c1x.util;
  */
 public class BitMap2D {
 
-    private BitMap map;
+    private CiBitMap map;
     private final int bitsPerSlot;
 
     private int bitIndex(int slotIndex, int bitWithinSlotIndex)  {
       return slotIndex * bitsPerSlot + bitWithinSlotIndex;
     }
 
-    private void verifyBitWithinSlotIndex(int index)  {
-      assert index < bitsPerSlot :  "bitWithinSlot index out of bounds";
+    private boolean verifyBitWithinSlotIndex(int index)  {
+      return index < bitsPerSlot;
     }
 
     public BitMap2D(int sizeInSlots, int bitsPerSlot) {
-        map = new BitMap(sizeInSlots * bitsPerSlot);
+        map = new CiBitMap(sizeInSlots * bitsPerSlot);
         this.bitsPerSlot = bitsPerSlot;
     }
 
@@ -54,22 +56,22 @@ public class BitMap2D {
     }
 
     public boolean isValidIndex(int slotIndex, int bitWithinSlotIndex) {
-      verifyBitWithinSlotIndex(bitWithinSlotIndex);
+      assert verifyBitWithinSlotIndex(bitWithinSlotIndex);
       return (bitIndex(slotIndex, bitWithinSlotIndex) < sizeInBits());
     }
 
     public boolean at(int slotIndex, int bitWithinSlotIndex)  {
-      verifyBitWithinSlotIndex(bitWithinSlotIndex);
+      assert verifyBitWithinSlotIndex(bitWithinSlotIndex);
       return map.get(bitIndex(slotIndex, bitWithinSlotIndex));
     }
 
     public void setBit(int slotIndex, int bitWithinSlotIndex) {
-      verifyBitWithinSlotIndex(bitWithinSlotIndex);
+      assert verifyBitWithinSlotIndex(bitWithinSlotIndex);
       map.set(bitIndex(slotIndex, bitWithinSlotIndex));
     }
 
     public void clearBit(int slotIndex, int bitWithinSlotIndex) {
-      verifyBitWithinSlotIndex(bitWithinSlotIndex);
+      assert verifyBitWithinSlotIndex(bitWithinSlotIndex);
       map.clear(bitIndex(slotIndex, bitWithinSlotIndex));
     }
 
@@ -79,7 +81,7 @@ public class BitMap2D {
            while (size <= slotIndex) {
                size *= 2;
            }
-           BitMap newBitMap = new BitMap(size * bitsPerSlot);
+           CiBitMap newBitMap = new CiBitMap(size * bitsPerSlot);
            newBitMap.setUnion(map);
            map = newBitMap;
        }

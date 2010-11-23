@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.hosted;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.io.*;
 
 import com.sun.max.*;
@@ -123,7 +121,7 @@ public final class BootImageGenerator {
      * and related files are located.
      */
     public static File getDefaultVMDirectory() {
-        return new File(JavaProject.findVcsProjectDirectory().getParentFile().getAbsoluteFile(), DEFAULT_VM_DIRECTORY);
+        return new File(JavaProject.findMaxineRootDirectory(), DEFAULT_VM_DIRECTORY);
     }
 
     /**
@@ -213,7 +211,6 @@ public final class BootImageGenerator {
             JavaPrototype.initialize(true);
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
-            vmConfig().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
 

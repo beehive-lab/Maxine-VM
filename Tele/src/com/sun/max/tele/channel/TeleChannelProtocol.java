@@ -59,11 +59,11 @@ public interface TeleChannelProtocol extends TeleChannelDataIOProtocol {
      * of the communication channel.
      * @param teleDomain a {@link GuestVMTeleDomain} object
      * @param threads an {@link AppendableSequence<TeleNativeThread>}
-     * @param threadLocalsList address of the thread locals list in the target VM
-     * @param primordialThreadLocals address of the primordial thread locals in the target VM
+     * @param tlaList address of the thread locals list in the target VM
+     * @param primordialETLA address of the primordial thread locals in the target VM
      * @return {@code true} if the gather was successful, {@code false} otherwise.
      */
-    boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals);
+    boolean gatherThreads(Object teleDomain, Object threadSequence, long tlaList, long primordialETLA);
 
     /**
      * Wait until the target VM is stopped.

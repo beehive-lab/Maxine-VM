@@ -292,12 +292,6 @@ public final class VMConfiguration {
         }
     }
 
-    public void finalizeSchemes(MaxineVM.Phase phase) {
-        for (int i = 0; i < vmSchemes.size(); i++) {
-            vmSchemes.get(i).finalize(phase);
-        }
-    }
-
     /**
      * Convenience method for accessing the configuration associated with the
      * current {@linkplain MaxineVM#vm() VM} context.

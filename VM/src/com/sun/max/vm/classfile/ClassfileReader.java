@@ -69,7 +69,7 @@ public final class ClassfileReader {
     public static final char JAVA_MIN_SUPPORTED_VERSION = 45;
     public static final char JAVA_1_5_VERSION = 49;
     public static final char JAVA_6_VERSION = 50;
-    public static final char JAVA_MAX_SUPPORTED_VERSION = 50;
+    public static final char JAVA_MAX_SUPPORTED_VERSION = 51;
     public static final char JAVA_MAX_SUPPORTED_MINOR_VERSION = 0;
 
     protected final ClassfileStream classfileStream;

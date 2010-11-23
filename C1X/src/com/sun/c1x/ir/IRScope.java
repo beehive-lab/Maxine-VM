@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -36,10 +35,13 @@ public class IRScope {
     public final IRScope caller;
     public final RiMethod method;
     public final int level;
-    final int callerBCI;
     CiCodePos callerCodeSite;
 
-    FrameState callerState;
+    /**
+     * The frame state at the call site of this scope's caller or {@code null}
+     * if this is not a nested scope.
+     */
+    public final FrameState callerState;
 
     /**
      * The maximum number of locks held in this scope at any one time
@@ -47,11 +49,11 @@ public class IRScope {
      */
     int maxLocks;
 
-    BitMap storesInLoops;
+    CiBitMap storesInLoops;
 
-    public IRScope(IRScope caller, int callerBCI, RiMethod method, int osrBCI) {
+    public IRScope(IRScope caller, FrameState callerState, RiMethod method, int osrBCI) {
         this.caller = caller;
-        this.callerBCI = callerBCI;
+        this.callerState = callerState;
         this.method = method;
         this.level = caller == null ? 0 : 1 + caller.level;
     }
@@ -76,19 +78,11 @@ public class IRScope {
     }
 
     /**
-     * Gets the bytecode index of the callsite that called this method.
+     * Gets the bytecode index of the call site that called this method.
      * @return the call site's bytecode index
      */
     public final int callerBCI() {
-        return callerBCI;
-    }
-
-    /**
-     * Gets the value stack at the caller of this scope.
-     * @return the value stack at the point of this call
-     */
-    public final FrameState callerState() {
-        return callerState;
+        return callerState == null ? -1 : callerState.bci;
     }
 
     /**
@@ -104,19 +98,11 @@ public class IRScope {
      * whether a phi instruction is required for each local variable.
      * @return the phi bitmap for this IR scope
      */
-    public final BitMap getStoresInLoops() {
+    public final CiBitMap getStoresInLoops() {
         return storesInLoops;
     }
 
-    /**
-     * Sets the caller state for this IRScope.
-     * @param callerState the new caller state
-     */
-    public final void setCallerState(FrameState callerState) {
-        this.callerState = callerState;
-    }
-
-    public final void setStoresInLoops(BitMap storesInLoops) {
+    public final void setStoresInLoops(CiBitMap storesInLoops) {
         this.storesInLoops = storesInLoops;
     }
 
@@ -125,13 +111,13 @@ public class IRScope {
         if (caller == null) {
             return "root-scope: " + method;
         } else {
-            return "inlined-scope: " + method + " [caller bci: " + callerBCI + "]";
+            return "inlined-scope: " + method + " [caller bci: " + callerState.bci + "]";
         }
     }
 
     public CiCodePos callerCodeSite() {
         if (caller != null && callerCodeSite == null) {
-            callerCodeSite = caller.toCodeSite(callerBCI);
+            callerCodeSite = caller.toCodeSite(callerBCI());
         }
         return callerCodeSite;
     }

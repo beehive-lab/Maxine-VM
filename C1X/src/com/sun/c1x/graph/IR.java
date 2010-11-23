@@ -96,12 +96,16 @@ public class IR {
     }
 
     private void buildGraph() {
-        topScope = new IRScope(null, -1, compilation.method, compilation.osrBCI);
+        topScope = new IRScope(null, null, compilation.method, compilation.osrBCI);
 
         // Graph builder must set the startBlock and the osrEntryBlock
         new GraphBuilder(compilation, this).build(topScope);
         assert startBlock != null;
         verifyAndPrint("After graph building");
+
+        if (C1XOptions.PrintCompilation) {
+            TTY.print(String.format("%3d blocks | ", this.numberOfBlocks()));
+        }
     }
 
     private void optimize1() {
@@ -114,10 +118,6 @@ public class IR {
         if (C1XOptions.PhiSimplify) {
             new PhiSimplifier(this);
             verifyAndPrint("After phi simplification");
-        }
-        if (C1XOptions.OptLoopPeeling) {
-            LoopPeeler.peelLoops(this);
-            verifyAndPrint("After Loop peeling");
         }
         if (C1XOptions.OptNullCheckElimination) {
             new NullCheckEliminator(this);

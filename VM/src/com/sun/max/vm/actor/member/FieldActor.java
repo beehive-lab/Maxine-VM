@@ -554,12 +554,16 @@ public class FieldActor extends MemberActor implements RiField {
     public void setWord(Object obj, Word value) {
         Reference ref = access(obj, Kind.WORD);
         if (isHosted()) {
-            set(obj, value);
+            setWordHosted(obj, value);
         } else {
             ref.writeWord(offset, value);
         }
     }
 
+    @HOSTED_ONLY
+    private void setWordHosted(Object obj, Word value) {
+        set(obj, value);
+    }
 
     /**
      * Analogous to {@link Field#set(Object, Object)} but without the access checks that may raise {@link IllegalAccessException}.

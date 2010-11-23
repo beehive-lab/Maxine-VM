@@ -21,29 +21,30 @@
 package com.sun.c1x.gen;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 
 import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
-import com.sun.c1x.alloc.OperandPool.*;
+import com.sun.c1x.alloc.OperandPool.VariableFlag;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.value.FrameState.*;
+import com.sun.c1x.value.FrameState.PhiProcedure;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
-import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.*;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -136,7 +137,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         // mark the liveness of all instructions if it hasn't already been done by the optimizer
         LivenessMarker livenessMarker = new LivenessMarker(ir);
-        C1XMetrics.HIRInstructions += livenessMarker.liveCount();
+        C1XMetrics.LiveHIRInstructions += livenessMarker.liveCount();
     }
 
     public void doBlock(BlockBegin block) {
@@ -321,13 +322,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // need to free up storage used for OSR entry point
             CiValue osrBuffer = currentBlock.next().operand();
             callRuntime(CiRuntimeCall.OSRMigrationEnd, null, osrBuffer);
-
-            FrameState state = (x.stateAfter() != null) ? x.stateAfter() : x.stateAfter();
-
-            // increment backedge counter if needed
-            incrementBackedgeCounter(stateFor(x, state));
-
-            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, state), null, false);
+            emitXir(xir.genSafepoint(site(x)), x, stateFor(x, x.stateAfter()), null, false);
         }
 
         // emit phi-instruction moves after safepoint since this simplifies
@@ -480,22 +475,23 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         CiValue resultOperand = resultOperandFor(x.kind);
-        CiCallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true);
-        List<CiValue> argList = visitInvokeArguments(cc, x.arguments());
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.signature(), JavaCall);
+        List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
+        List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
         if (C1XOptions.invokeinterfaceTemplatePos) {
-            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
+            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false, pointerSlots);
         }
 
         // emit direct or indirect call to the destination address
         if (destinationAddress instanceof CiConstant) {
             // Direct call
             assert ((CiConstant) destinationAddress).isDefaultValue() : "destination address should be zero";
-            lir.callDirect(target, resultOperand, argList, info, snippet.marks);
+            lir.callDirect(target, resultOperand, argList, info, snippet.marks, pointerSlots);
         } else {
             // Indirect call
             argList.add(destinationAddress);
-            lir.callIndirect(target, resultOperand, argList, info, snippet.marks);
+            lir.callIndirect(target, resultOperand, argList, info, snippet.marks, pointerSlots);
         }
 
         if (resultOperand.isLegal()) {
@@ -510,10 +506,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue resultOperand = resultOperandFor(x.kind);
         CiValue callAddress = load(x.address());
         CiKind[] signature = Util.signatureToKinds(x.signature, null);
-        CiCallingConvention cc = compilation.frameMap().nativeCallingConvention(signature, true);
-        List<CiValue> argList = visitInvokeArguments(cc, x.arguments);
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(signature, NativeCall);
+        List<CiValue> pointerSlots = new ArrayList<CiValue>();
+        List<CiValue> argList = visitInvokeArguments(cc, x.arguments, pointerSlots);
+        assert pointerSlots.size() == 0;
         argList.add(callAddress);
-        lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info, null);
+        lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info, null, pointerSlots);
         if (resultOperand.isLegal()) {
             CiValue result = createResultVariable(x);
             lir.move(resultOperand, result);
@@ -528,6 +526,11 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitPause(Pause i) {
         lir.pause();
+    }
+
+    @Override
+    public void visitBreakpointTrap(BreakpointTrap i) {
+        lir.breakpoint();
     }
 
     protected CiAddress getAddressForPointerOp(PointerOp x, CiKind kind, LIRItem pointer) {
@@ -629,6 +632,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = null;
         if (needsPatching || x.needsNullCheck()) {
             info = stateFor(x, x.stateBefore());
+            assert info != null;
         }
 
         XirArgument receiver = toXirArgument(x.object());
@@ -750,13 +754,21 @@ public abstract class LIRGenerator extends ValueVisitor {
         return XirArgument.forInternalObject(new LIRItem(i, this));
     }
 
-    private CiValue allocateOperand(XirTemp temp) {
-        if (temp instanceof XirRegister) {
-            XirRegister reg = (XirRegister) temp;
+    private CiValue allocateOperand(XirSnippet snippet, XirOperand op) {
+        if (op instanceof XirParameter)  {
+            XirParameter param = (XirParameter) op;
+            return allocateOperand(snippet.arguments[param.parameterIndex], op);
+        } else if (op instanceof XirRegister) {
+            XirRegister reg = (XirRegister) op;
             return reg.register;
+        } else if (op instanceof XirTemp) {
+            return newVariable(op.kind);
+        } else {
+            System.out.println(op);
+            System.out.println(op.getClass());
+            Util.shouldNotReachHere();
+            return null;
         }
-
-        return newVariable(temp.kind);
     }
 
     private CiValue allocateOperand(XirArgument arg, XirOperand var) {
@@ -771,6 +783,14 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected CiValue emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult) {
+        return emitXir(snippet, x, info, method, setInstructionResult, null);
+    }
+
+    protected CiValue emitXir(XirSnippet snippet, Instruction instruction, LIRDebugInfo info, RiMethod method, boolean setInstructionResult, List<CiValue> pointerSlots) {
+        if (C1XOptions.PrintXirTemplates) {
+            TTY.println("Emit XIR template " + snippet.template.name);
+        }
+
         final CiValue[] operands = new CiValue[snippet.template.variableCount];
 
         compilation.frameMap().reserveOutgoing(snippet.template.outgoingStackSize);
@@ -782,39 +802,13 @@ public abstract class LIRGenerator extends ValueVisitor {
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
-                outputOperand = createResultVariable(x);
+                outputOperand = createResultVariable(instruction);
                 assert operands[resultOperand.index] == null;
             }
             operands[resultOperand.index] = outputOperand;
-        }
-
-        final List<CiValue> inputOperands = new ArrayList<CiValue>();
-        final IntList inputOperandsIndices = new IntList(4);
-        final List<CiValue> inputTempOperands = new ArrayList<CiValue>();
-        final IntList inputTempOperandsIndices = new IntList(4);
-
-        for (XirParameter param : snippet.template.parameters) {
-            int paramIndex = param.parameterIndex;
-            XirArgument arg = snippet.arguments[paramIndex];
-            CiValue op = allocateOperand(arg, param);
-            assert operands[param.index] == null;
-            operands[param.index] = op;
-
-            if (op.isVariableOrRegister()) {
-                if (snippet.template.isParameterDestroyed(paramIndex)) {
-                    CiValue newOp = newVariable(op.kind);
-                    lir.move(op, newOp);
-                    inputTempOperands.add(newOp);
-                    inputTempOperandsIndices.add(param.index);
-                    operands[param.index] = newOp;
-                } else {
-                    inputOperands.add(op);
-                    inputOperandsIndices.add(param.index);
-                    inputTempOperands.add(op);
-                    inputTempOperandsIndices.add(param.index);
-                }
+            if (C1XOptions.PrintXirTemplates) {
+                TTY.println("Output operand: " + outputOperand);
             }
-
         }
 
         for (XirTemplate calleeTemplate : snippet.template.calleeTemplates) {
@@ -827,31 +821,45 @@ public abstract class LIRGenerator extends ValueVisitor {
             operands[c.index] = c.value;
         }
 
-        final List<CiValue> tempOperands = new ArrayList<CiValue>(snippet.template.temps.length);
-        final IntList tempOperandsIndices = new IntList(snippet.template.temps.length);
-        for (XirTemp t : snippet.template.temps) {
-            CiValue op = allocateOperand(t);
-            assert operands[t.index] == null;
-            operands[t.index] = op;
-            tempOperands.add(op);
-            tempOperandsIndices.add(t.index);
+        XirOperand[] inputOperands = snippet.template.inputOperands;
+        XirOperand[] inputTempOperands = snippet.template.inputTempOperands;
+        XirOperand[] tempOperands = snippet.template.tempOperands;
+
+        CiValue[] operandArray = new CiValue[inputOperands.length + inputTempOperands.length + tempOperands.length];
+        int[] operandIndicesArray = new int[inputOperands.length + inputTempOperands.length + tempOperands.length];
+        for (int i = 0; i < inputOperands.length; i++) {
+            XirOperand x = inputOperands[i];
+            CiValue op = allocateOperand(snippet, x);
+            operands[x.index] = op;
+            operandArray[i] = op;
+            operandIndicesArray[i] = x.index;
+            if (C1XOptions.PrintXirTemplates) {
+                TTY.println("Input operand: " + x);
+            }
         }
 
-        CiValue[] operandArray = new CiValue[inputOperands.size() + inputTempOperands.size() + tempOperands.size()];
-        int[] operandIndicesArray = new int[inputOperands.size() + inputTempOperands.size() + tempOperands.size()];
-        for (int i = 0; i < inputOperands.size(); i++) {
-            operandArray[i] = inputOperands.get(i);
-            operandIndicesArray[i] = inputOperandsIndices.get(i);
+        for (int i = 0; i < inputTempOperands.length; i++) {
+            XirOperand x = inputTempOperands[i];
+            CiValue op = allocateOperand(snippet, x);
+            CiValue newOp = newVariable(op.kind);
+            lir.move(op, newOp);
+            operands[x.index] = newOp;
+            operandArray[i + inputOperands.length] = newOp;
+            operandIndicesArray[i + inputOperands.length] = x.index;
+            if (C1XOptions.PrintXirTemplates) {
+                TTY.println("InputTemp operand: " + x);
+            }
         }
 
-        for (int i = 0; i < inputTempOperands.size(); i++) {
-            operandArray[i + inputOperands.size()] = inputTempOperands.get(i);
-            operandIndicesArray[i + inputOperands.size()] = inputTempOperandsIndices.get(i);
-        }
-
-        for (int i = 0; i < tempOperands.size(); i++) {
-            operandArray[i + inputOperands.size() + inputTempOperands.size()] = tempOperands.get(i);
-            operandIndicesArray[i + inputOperands.size() + inputTempOperands.size()] = tempOperandsIndices.get(i);
+        for (int i = 0; i < tempOperands.length; i++) {
+            XirOperand x = tempOperands[i];
+            CiValue op = allocateOperand(snippet, x);
+            operands[x.index] = op;
+            operandArray[i + inputOperands.length + inputTempOperands.length] = op;
+            operandIndicesArray[i + inputOperands.length + inputTempOperands.length] = x.index;
+            if (C1XOptions.PrintXirTemplates) {
+                TTY.println("Temp operand: " + x);
+            }
         }
 
         for (CiValue operand : operands) {
@@ -864,10 +872,10 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         if (setInstructionResult && allocatedResultOperand.isLegal()) {
-            if (x.operand().isIllegal()) {
-                setResult(x, (CiVariable) allocatedResultOperand);
+            if (instruction.operand().isIllegal()) {
+                setResult(instruction, (CiVariable) allocatedResultOperand);
             } else {
-                assert x.operand() == allocatedResultOperand;
+                assert instruction.operand() == allocatedResultOperand;
             }
         }
 
@@ -875,10 +883,10 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirInstruction[] slowPath = snippet.template.slowPath;
         if (!operands[resultOperand.index].isConstant() || snippet.template.fastPath.length != 0 || (slowPath != null && slowPath.length > 0)) {
             // XIR instruction is only needed when the operand is not a constant!
-            lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
+            lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.length, tempOperands.length,
                     operandArray, operandIndicesArray,
                     (operands[resultOperand.index] == IllegalValue) ? -1 : resultOperand.index,
-                    info, method);
+                    info, method, pointerSlots);
         }
 
         return operands[resultOperand.index];
@@ -981,7 +989,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         // check if the instruction has an xhandler in any of the nested scopes
         boolean unwind = false;
-        if (info.exceptionHandlers.size() == 0) {
+        if (x.exceptionHandlers().size() == 0) {
             // this throw is not inside an xhandler
             unwind = true;
         } else {
@@ -1000,7 +1008,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert !currentBlock.checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler) || unwind : "should be no more handlers to dispatch to";
 
         // move exception oop into fixed register
-        CiCallingConvention callingConvention = compilation.frameMap().runtimeCallingConvention(new CiKind[]{CiKind.Object});
+        CiCallingConvention callingConvention = compilation.frameMap().getCallingConvention(new CiKind[]{CiKind.Object}, RuntimeCall);
         CiValue argumentOperand = callingConvention.locations[0];
         lir.move(exceptionOpr, argumentOperand);
 
@@ -1450,7 +1458,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         List<CiValue> argumentList;
         if (arguments.length > 0) {
             // move the arguments into the correct location
-            CiCallingConvention cc = compilation.frameMap().runtimeCallingConvention(arguments);
+            CiCallingConvention cc = compilation.frameMap().getCallingConvention(arguments, RuntimeCall);
             assert cc.locations.length == args.length : "argument count mismatch";
             for (int i = 0; i < args.length; i++) {
                 CiValue arg = args[i];
@@ -1568,9 +1576,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         return instr.checkFlag(Value.Flag.LiveValue);
     }
 
-    protected void incrementBackedgeCounter(LIRDebugInfo info) {
-    }
-
     protected void logicOp(int code, CiValue resultOp, CiValue leftOp, CiValue rightOp) {
         if (isTwoOperand && leftOp != resultOp) {
             assert rightOp != resultOp : "malformed";
@@ -1605,7 +1610,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             Phi phi = (Phi) suxVal;
             // curVal can be null without phi being null in conjunction with inlining
             if (phi.isLive() && curVal != null && curVal != phi) {
-                assert curVal.isLive();
+                assert curVal.isLive() : "value not live: " + curVal;
                 assert !phi.isIllegal() : "illegal phi cannot be marked as live";
                 if (curVal instanceof Phi) {
                     operandForPhi((Phi) curVal);
@@ -1639,7 +1644,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
                 // walk up the inlined scopes until locals match
                 while (curState.scope() != suxState.scope()) {
-                    curState = curState.scope().callerState();
+                    curState = curState.callerState();
                     assert curState != null : "scopes don't match up";
                 }
 
@@ -1647,7 +1652,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                     moveToPhi(resolver, curState.localAt(index), suxState.localAt(index));
                 }
 
-                assert curState.scope().callerState() == suxState.scope().callerState() : "caller states must be equal";
+                assert curState.scope().callerState == suxState.scope().callerState : "caller states must be equal";
                 resolver.dispose();
             }
         }
@@ -1743,34 +1748,23 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         while (s != null) {
             IRScope scope = s.scope();
-            RiMethod method = scope.method;
-
-            BitMap liveness = (BitMap) method.liveness(bci);
             if (bci == Instruction.SYNCHRONIZATION_ENTRY_BCI) {
-                if (x instanceof ExceptionObject || x instanceof Throw) {
-                    // all locals are dead on exit from the synthetic unlocker
-                    if (liveness != null) {
-                        liveness.clearAll();
-                    }
-                } else {
-                    assert x instanceof MonitorEnter || x instanceof MonitorExit : "only other case is MonitorEnter";
-                }
+                assert x instanceof ExceptionObject ||
+                       x instanceof Throw ||
+                       x instanceof MonitorEnter ||
+                       x instanceof MonitorExit;
             }
-            assert liveness == null || liveness.size() == s.localsSize() : "error in use of liveness";
 
             for (int index = 0; index < s.localsSize(); index++) {
                 final Value value = s.localAt(index);
                 if (value != null) {
-                    if ((liveness == null || liveness.get(index)) && !value.isIllegal()) {
+                    if (!value.isIllegal()) {
                         walkStateValue(value);
-                    } else {
-                        // null out this local so that linear scan can assume that all non-null values are live.
-                        s.invalidateLocal(index);
                     }
                 }
             }
             bci = scope.callerBCI();
-            s = s.scope().callerState();
+            s = s.callerState();
         }
     }
 
@@ -1803,14 +1797,10 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected LIRDebugInfo stateFor(Instruction x, FrameState state) {
-        return stateFor(x, state, false);
+        return new LIRDebugInfo(state, x.exceptionHandlers());
     }
 
-    protected LIRDebugInfo stateFor(Instruction x, FrameState state, boolean ignoreXhandler) {
-        return new LIRDebugInfo(state, x.bci(), ignoreXhandler ? null : x.exceptionHandlers());
-    }
-
-    List<CiValue> visitInvokeArguments(CiCallingConvention cc, Value[] args) {
+    List<CiValue> visitInvokeArguments(CiCallingConvention cc, Value[] args, List<CiValue> pointerSlots) {
         // for each argument, load it into the correct location
         List<CiValue> argList = new ArrayList<CiValue>(args.length);
         int j = 0;
@@ -1821,12 +1811,19 @@ public abstract class LIRGenerator extends ValueVisitor {
                 if (operand.isRegister()) {
                     param.loadItemForce(operand);
                 } else {
-                    CiValue slot = operand;
+                    assert operand.isStackSlot();
+                    CiStackSlot slot = (CiStackSlot) operand;
+                    assert !slot.inCallerFrame();
                     param.loadForStore(slot.kind);
                     if (slot.kind == CiKind.Long || slot.kind == CiKind.Double) {
                         lir.unalignedMove(param.result(), slot);
                     } else {
                         lir.move(param.result(), slot);
+                    }
+
+                    if (arg.kind == CiKind.Object) {
+                        // This slot must be marked explicitedly in the pointer map.
+                        pointerSlots.add(slot);
                     }
                 }
                 argList.add(operand);

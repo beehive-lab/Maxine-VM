@@ -30,8 +30,6 @@ package com.sun.cri.ci;
 public class CiTarget {
     public final CiArchitecture arch;
 
-    public final CiRegisterSaveArea registerSaveArea;
-    
     public final int pageSize;
     public final boolean isMP;
     private final int[] spillSlotsPerKindMap;
@@ -53,8 +51,19 @@ public class CiTarget {
     public final int codeAlignment;
     public final int heapAlignment;
 
+    /**
+     * Specifies how {@code long} and {@code double} constants are to be stored
+     * in {@linkplain CiDebugInfo.Frame frames}. This is useful for VMs such as HotSpot
+     * where convention the interpreter uses is that the second local
+     * holds the first raw word of the native long or double representation.
+     * This is actually reasonable, since locals and stack arrays
+     * grow downwards in all implementations.
+     * If, on some machine, the interpreter's Java locals or stack
+     * were to grow upwards, the embedded doubles would be word-swapped.)
+     */
+    public final boolean debugInfoDoubleWordsInSecondSlot;
+    
     public CiTarget(CiArchitecture arch,
-             CiRegisterSaveArea registerSaveArea,
              boolean isMP,
              int spillSlotSize,
              int wordSize,
@@ -64,9 +73,8 @@ public class CiTarget {
              int cacheAlignment,
              int heapAlignment,
              int codeAlignment,
-             boolean inlineObjects) {
+             boolean inlineObjects, boolean debugInfoDoubleWordsInSecondSlot) {
         this.arch = arch;
-        this.registerSaveArea = registerSaveArea;
         this.pageSize = pageSize;
         this.isMP = isMP;
         this.spillSlotSize = spillSlotSize;
@@ -78,6 +86,7 @@ public class CiTarget {
         this.heapAlignment = heapAlignment;
         this.inlineObjects = inlineObjects;
         this.spillSlotsPerKindMap = new int[CiKind.values().length];
+        this.debugInfoDoubleWordsInSecondSlot = debugInfoDoubleWordsInSecondSlot;
 
         for (CiKind k : CiKind.values()) {
             // initialize the number of spill slots required for each kind

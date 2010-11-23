@@ -59,10 +59,10 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
+    public boolean initialize(int tlaSize, boolean bigEndian) {
         try {
             out.writeUTF("initialize");
-            out.writeInt(threadLocalsAreaSize);
+            out.writeInt(tlaSize);
             out.writeBoolean(bigEndian);
             out.flush();
             return in.readBoolean();
@@ -351,11 +351,11 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     @Override
-    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+    public int gatherThreads(long tlaList, long primordialETLA) {
         try {
             out.writeUTF("gatherThreads");
-            out.writeLong(threadLocalsList);
-            out.writeLong(primordialThreadLocals);
+            out.writeLong(tlaList);
+            out.writeLong(primordialETLA);
             out.flush();
             return in.readInt();
         } catch (IOException ex) {

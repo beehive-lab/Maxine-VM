@@ -231,8 +231,8 @@ typedef struct {
     jobject process;
     jlong task;
     jobject result;
-    jlong threadLocalsList;
-    jlong primordialThreadLocals;
+    jlong tlaList;
+    jlong primordialETLA;
 } GatherThreadArgs;
 
 static boolean gatherThread(thread_t thread, void* args) {
@@ -245,16 +245,16 @@ static boolean gatherThread(thread_t thread, void* args) {
     kern_return_t kr = thread_get_state(thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count);
     RETURN_ON_MACH_ERROR("thread_get_state", kr, true);
 
-    ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
+    TLA threadLocals = (TLA) alloca(tlaSize());
     NativeThreadLocalsStruct nativeThreadLocalsStruct;
-    ThreadLocals tl = teleProcess_findThreadLocals(a->task, a->threadLocalsList, a->primordialThreadLocals, threadState.__rsp, threadLocals, &nativeThreadLocalsStruct);
-    teleProcess_jniGatherThread(a->env, a->process, a->result, thread, state, threadState.__rip, tl);
+    TLA tla = teleProcess_findTLA(a->task, a->tlaList, a->primordialETLA, threadState.__rsp, threadLocals, &nativeThreadLocalsStruct);
+    teleProcess_jniGatherThread(a->env, a->process, a->result, thread, state, threadState.__rip, tla);
     return true;
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject this, jlong task, jobject teleProcess, jobject result, jlong threadLocalsList, jlong primordialThreadLocals) {
-    GatherThreadArgs args = {env, teleProcess, task, result, threadLocalsList, primordialThreadLocals};
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject this, jlong task, jobject teleProcess, jobject result, jlong tlaList, jlong primordialETLA) {
+    GatherThreadArgs args = {env, teleProcess, task, result, tlaList, primordialETLA};
     forall_threads(task, gatherThread, (void *) &args);
 }
 

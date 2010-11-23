@@ -21,6 +21,7 @@
 package com.sun.max.vm.reference.hosted;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
 
@@ -29,6 +30,7 @@ import com.sun.max.vm.reference.*;
  *
  * @author Bernd Mathiske
  */
+@HOSTED_ONLY
 public class Package extends VMPackage {
     public Package() {
         registerScheme(ReferenceScheme.class, HostedReferenceScheme.class);

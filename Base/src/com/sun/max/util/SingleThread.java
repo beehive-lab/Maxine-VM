@@ -43,13 +43,14 @@ public class SingleThread extends Thread {
         public Thread newThread(Runnable runnable) {
             ProgramError.check(worker == null, "Single worker thread died unexpectedly");
             worker = new Thread(runnable);
+            worker.setName("SingleThread");
             return worker;
         }
     });
 
     private static final boolean disabled = false;
 
-    public static synchronized <V> V execute(Function<V> function) {
+    public static <V> V execute(Function<V> function) {
         if (disabled || Thread.currentThread() == worker) {
             try {
                 return function.call();
@@ -57,14 +58,16 @@ public class SingleThread extends Thread {
                 ProgramError.unexpected(exception);
             }
         }
-        final Future<V> future = executorService.submit(function);
-        while (true) {
-            try {
-                return future.get();
-            } catch (ExecutionException e) {
-                throw Utils.cast(RuntimeException.class, e.getCause());
-            } catch (InterruptedException exception) {
-                // continue
+        synchronized (executorService) {
+            final Future<V> future = executorService.submit(function);
+            while (true) {
+                try {
+                    return future.get();
+                } catch (ExecutionException e) {
+                    throw Utils.cast(RuntimeException.class, e.getCause());
+                } catch (InterruptedException exception) {
+                    // continue
+                }
             }
         }
     }

@@ -318,7 +318,7 @@ static boolean handleDivideOverflow(UContext *ucontext) {
 }
 #endif
 
-static void logTrap(int signal, Address ip, Address fault, ThreadLocals disabled_tl) {
+static void logTrap(int signal, Address ip, Address fault, TLA dtla) {
     char *sigName = vmSignalName(signal);
     if (sigName == NULL) {
         sigName = "<unknown>";
@@ -329,9 +329,9 @@ static void logTrap(int signal, Address ip, Address fault, ThreadLocals disabled
     log_println("  Fault address       = %p", fault);
     log_println("  Trap number         = %d", getTrapNumber(signal));
     log_println("  Thread handle       = %p", thread_self());
-    if (disabled_tl != 0) {
-        log_println("  Thread ID           = %d", getThreadLocal(int, disabled_tl, ID));
-        log_println("  Safepoint latch     = %p", getThreadLocal(Address, disabled_tl, TRAP_LATCH_REGISTER));
+    if (dtla != 0) {
+        log_println("  Thread ID           = %d", tla_load(int, dtla, ID));
+        log_println("  Safepoint latch     = %p", tla_load(Address, dtla, TRAP_LATCH_REGISTER));
     }
     log_unlock();
 }
@@ -361,31 +361,31 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
     }
 #endif
 
-    ThreadLocals tl = threadLocals_current();
+    TLA tla = tla_current();
     NativeThreadLocals ntl = nativeThreadLocals_current();
     if (ntl == 0) {
         logTrap(signal, ip, faultAddress, 0);
         log_exit(-22, "could not find native thread locals in trap handler");
     }
-    ThreadLocals disabled_tl = getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS);
+    TLA dtla = tla_load(TLA, tla, DTLA);
 
     boolean trapLogged = false;
     if (traceTraps || log_TRAP) {
-        logTrap(signal, ip, faultAddress, disabled_tl);
+        logTrap(signal, ip, faultAddress, dtla);
         trapLogged = true;
     }
 
-    if (getThreadLocal(int, tl, ID) == 0) {
+    if (tla_load(int, tla, ID) == 0) {
         log_println("Trap taken on primordial thread (this is usually bad)!");
         if (!trapLogged) {
-	        logTrap(signal, ip, faultAddress, disabled_tl);
+	        logTrap(signal, ip, faultAddress, dtla);
 	        trapLogged = true;
 	    }
         primordial = 1;
     }
 
-    if (disabled_tl == 0) {
-        log_exit(-21, "could not find disabled VM thread locals in trap handler");
+    if (dtla == 0) {
+        log_exit(-21, "could not find DTLA in trap handler");
     }
 
     if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize && !primordial) {
@@ -400,7 +400,7 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
                 // to call the Java trap stub (which calls other compiled methods that will
                 // bang the stack); just exit now without a stack trace
                 if (!trapLogged) {
-                    logTrap(signal, ip, faultAddress, disabled_tl);
+                    logTrap(signal, ip, faultAddress, dtla);
                     trapLogged = true;
                 }
                 log_exit(1, "fatal stack fault in red zone");
@@ -415,25 +415,25 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
         }
     }
 
-    /* save the trap information in the disabled VM thread locals */
-    setThreadLocal(disabled_tl, TRAP_NUMBER, trapNumber);
-    setThreadLocal(disabled_tl, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
-    setThreadLocal(disabled_tl, TRAP_FAULT_ADDRESS, faultAddress);
+    /* save the trap information in the thread locals */
+    tla_store3(dtla, TRAP_NUMBER, trapNumber);
+    tla_store3(dtla, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
+    tla_store3(dtla, TRAP_FAULT_ADDRESS, faultAddress);
 
 #if os_SOLARIS && isa_SPARC
 	/* save the value of the safepoint latch at the trapped instruction */
-    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_G2]);
+    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_G2]);
     /* set the safepoint latch register of the trapped frame to the disabled state */
-    ucontext->uc_mcontext.gregs[REG_G2] = (Address) disabled_tl;
+    ucontext->uc_mcontext.gregs[REG_G2] = (Address) dtla;
 #elif isa_AMD64 && (os_SOLARIS || os_LINUX)
-    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_R14]);
-    ucontext->uc_mcontext.gregs[REG_R14] = (Address) disabled_tl;
+    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_R14]);
+    ucontext->uc_mcontext.gregs[REG_R14] = (Address) dtla;
 #elif isa_AMD64 && os_DARWIN
-    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext->__ss.__r14);
-    ucontext->uc_mcontext->__ss.__r14 = (Address) disabled_tl;
+    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext->__ss.__r14);
+    ucontext->uc_mcontext->__ss.__r14 = (Address) dtla;
 #elif isa_AMD64 && os_GUESTVMXEN
-    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->r14);
-    ucontext->r14 = (Address) disabled_tl;
+    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->r14);
+    ucontext->r14 = (Address) dtla;
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -457,7 +457,7 @@ SignalHandlerFunction userSignalHandler = (SignalHandlerFunction) userSignalHand
  */
 void nativeTrapInitialize(Address javaTrapStub) {
     /* This function must be called on the primordial thread. */
-    c_ASSERT(getThreadLocal(int, threadLocals_current(), ID) == 0);
+    c_ASSERT(tla_load(int, tla_current(), ID) == 0);
 
     theJavaTrapStub = javaTrapStub;
     setSignalHandler(SIGSEGV, (SignalHandlerFunction) vmSignalHandler);

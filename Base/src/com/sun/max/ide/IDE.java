@@ -104,7 +104,7 @@ public enum IDE {
         public File findIdeProjectDirectoryFromClasspathEntry(File classesDirectory) {
             // In this case we have the AspectJ modified classes directory passed in, and we need
             // another property to tell us where the real project directory is located (for native code etc).
-            final String projectDirectory = System.getProperty("max.project.directory");
+            final String projectDirectory = System.getProperty(MAX_PROJECT_DIRECTORY_PROPERTY);
             if (projectDirectory == null) {
                 ProgramError.unexpected("the property max.project.directory must be set");
             }
@@ -112,6 +112,8 @@ public enum IDE {
         }
 
     };
+
+    public static final String MAX_PROJECT_DIRECTORY_PROPERTY = "max.project.directory";
 
     private IDE() {
     }

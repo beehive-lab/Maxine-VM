@@ -29,9 +29,6 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.Call;
-import com.sun.cri.ci.CiTargetMethod.DataPatch;
-import com.sun.cri.ci.CiTargetMethod.Safepoint;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -154,8 +151,8 @@ public class MaxRiRuntime implements RiRuntime {
         return Util.nonFatalUnimplemented(0);
     }
 
-    public int sizeofBasicObjectLock() {
-        // TODO Auto-generated method stub
+    public int sizeOfBasicObjectLock() {
+        // locks are not placed on the stack
         return 0;
     }
 
@@ -193,53 +190,7 @@ public class MaxRiRuntime implements RiRuntime {
             final Platform platform = Platform.platform();
             final InlineDataDecoder inlineDataDecoder = null;
             final Pointer startAddress = Pointer.fromInt(0);
-            final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
-                private String toString(Call call) {
-                    if (call.runtimeCall != null) {
-                        return "{" + call.runtimeCall.name() + "}";
-                    } else if (call.symbol != null) {
-                        return "{" + call.symbol + "}";
-                    } else if (call.globalStubID != null) {
-                        return "{" + call.globalStubID + "}";
-                    } else {
-                        return "{" + call.method + "}";
-                    }
-                }
-                private String siteInfo(int pcOffset) {
-                    for (Call call : targetMethod.directCalls) {
-                        if (call.pcOffset == pcOffset) {
-                            return toString(call);
-                        }
-                    }
-                    for (Call call : targetMethod.indirectCalls) {
-                        if (call.pcOffset == pcOffset) {
-                            return toString(call);
-                        }
-                    }
-                    for (Safepoint site : targetMethod.safepoints) {
-                        if (site.pcOffset == pcOffset) {
-                            return "{safepoint}";
-                        }
-                    }
-                    for (DataPatch site : targetMethod.dataReferences) {
-                        if (site.pcOffset == pcOffset) {
-                            return "{" + site.constant + "}";
-                        }
-                    }
-                    return null;
-                }
-
-                @Override
-                protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
-                    final String string = super.disassembledObjectString(disassembler, disassembledObject);
-
-                    String site = siteInfo(disassembledObject.startPosition());
-                    if (site != null) {
-                        return string + " " + site;
-                    }
-                    return string;
-                }
-            };
+            final DisassemblyPrinter disassemblyPrinter = new MaxDisassemblyPrinter(targetMethod);
             byte[] code = Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize());
             Disassembler.disassemble(byteArrayOutputStream, code, platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
@@ -389,34 +340,6 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public RiRegisterConfig getRegisterConfig(RiMethod method) {
-        ClassMethodActor compilee = (ClassMethodActor) method;
-        Platform platform = Platform.platform();
-        if (platform.isa == ISA.AMD64) {
-            switch (platform.os) {
-                case DARWIN:
-                case GUESTVM:
-                case LINUX:
-                case SOLARIS: {
-                    if (compilee.isTrapStub()) {
-                        return AMD64UnixRegisterConfig.TRAP_STUB;
-                    }
-                    if (compilee.isVmEntryPoint()) {
-                        return AMD64UnixRegisterConfig.N2J;
-                    }
-                    if (compilee.isCFunction()) {
-                        return AMD64UnixRegisterConfig.J2N;
-                    }
-                    assert !compilee.isTemplate();
-                    if (compilee.isTrampoline()) {
-                        return AMD64UnixRegisterConfig.TRAMPOLINE;
-                    }
-                    return AMD64UnixRegisterConfig.STANDARD;
-                }
-                default:
-                    throw FatalError.unimplemented();
-
-            }
-        }
-        throw FatalError.unimplemented();
+        return C1XCompilerScheme.getRegisterConfig((ClassMethodActor) method);
     }
 }

@@ -69,7 +69,7 @@ public class Frame implements FrameModel {
         // this reference
         if (classMethodActor.isStatic()) {
             if (classMethodActor.isInstanceInitializer()) {
-                throw verifyError("Can't have a static <init> method");
+                verifyError("Can't have a static <init> method");
             }
         } else {
             if (!classMethodActor.isInstanceInitializer()) {
@@ -111,8 +111,12 @@ public class Frame implements FrameModel {
         return new Frame(this);
     }
 
-    public VerifyError verifyError(String errorMessage) {
-        throw methodVerifier.verifyError(errorMessage);
+    public void verifyError(String errorMessage) {
+        methodVerifier.verifyError(errorMessage);
+    }
+
+    public VerifyError fatalVerifyError(String errorMessage) {
+        return methodVerifier.fatalVerifyError(errorMessage);
     }
 
     public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
@@ -141,7 +145,7 @@ public class Frame implements FrameModel {
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
             // index < 0
         }
-        throw verifyError("Load from invalid local variable index " + index);
+        throw fatalVerifyError("Load from invalid local variable index " + index);
     }
 
     /**
@@ -162,7 +166,7 @@ public class Frame implements FrameModel {
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
             // index < 0 || index >= _locals.length
-            throw verifyError("Store to invalid local variable index " + index);
+            verifyError("Store to invalid local variable index " + index);
         }
     }
 
@@ -182,7 +186,7 @@ public class Frame implements FrameModel {
                 locals[--activeLocals] = VerificationType.TOP;
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            throw verifyError("Chopping more locals than currently active");
+            verifyError("Chopping more locals than currently active");
         }
     }
 
@@ -208,7 +212,7 @@ public class Frame implements FrameModel {
                 stack[stackSize++] = type.secondWordType();
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            throw verifyError("Stack overflow");
+            verifyError("Stack overflow");
         }
     }
 
@@ -233,7 +237,7 @@ public class Frame implements FrameModel {
             verifyIsAssignable(type, expectedType, "Invalid pop of a value from the stack");
             return type;
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            throw verifyError("Stack underflow");
+            throw fatalVerifyError("Stack underflow");
         }
     }
 
@@ -251,7 +255,7 @@ public class Frame implements FrameModel {
             assert stack[stackSize - 2].secondWordType() == top;
             return stack[stackSize - 2];
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            throw verifyError("Stack underflow");
+            throw fatalVerifyError("Stack underflow");
         }
 
     }
@@ -328,14 +332,14 @@ public class Frame implements FrameModel {
      */
     public final void verifyStackIsAssignableFrom(Frame fromFrame, int thisPosition) {
         if (stackSize != fromFrame.stackSize) {
-            throw verifyError("Inconsistent stackmap frame for bytecode position " + thisPosition + " (stack sizes differ)" +
+            verifyError("Inconsistent stackmap frame for bytecode position " + thisPosition + " (stack sizes differ)" +
                 inconsistentFramesMessageSuffix(fromFrame, this));
         }
 
         for (int i = 0; i < stackSize; i++) {
             if (!stack[i].isAssignableFrom(fromFrame.stack[i])) {
                 if (!VerificationType.isTypeIncompatibilityBetweenPointerAndAccessor(fromFrame.stack[i], stack[i])) {
-                    throw verifyError("Stack slot " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
+                    verifyError("Stack slot " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
                         inconsistentFramesMessageSuffix(this, fromFrame));
                 }
             }
@@ -351,14 +355,14 @@ public class Frame implements FrameModel {
      */
     public final void verifyLocalsAreAssignableFrom(Frame fromFrame, int thisPosition) {
         if (fromFrame.activeLocals < activeLocals) {
-            throw verifyError("Inconsistent stackmap frame for bytecode position " + thisPosition + " (less live locals than implied by stackmap frame)" +
+            verifyError("Inconsistent stackmap frame for bytecode position " + thisPosition + " (less live locals than implied by stackmap frame)" +
                 inconsistentFramesMessageSuffix(fromFrame, this));
         }
 
         for (int i = 0; i < fromFrame.activeLocals; i++) {
             if (!locals[i].isAssignableFrom(fromFrame.locals[i])) {
                 if (!VerificationType.isTypeIncompatibilityBetweenPointerAndAccessor(fromFrame.locals[i], locals[i])) {
-                    throw verifyError("Local variable " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
+                    verifyError("Local variable " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
                         inconsistentFramesMessageSuffix(this, fromFrame));
                 }
             }

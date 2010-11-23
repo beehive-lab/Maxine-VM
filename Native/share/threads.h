@@ -62,13 +62,13 @@ typedef int (*VmThreadAttachMethod)(
                 jboolean daemon,
                 Address stackBase,
                 Address stackEnd,
-                Address threadLocals);
+                Address tla);
 
 /**
  * The signature of the Java method used to detach native threads.
  * This must match the signature of 'com.sun.max.vm.thread.VmThread.detach()'.
  */
-typedef void (*VmThreadDetachMethod)(Address threadLocals);
+typedef void (*VmThreadDetachMethod)(Address tla);
 
 /**
  * Sleeps the current thread for a given number of milliseconds.

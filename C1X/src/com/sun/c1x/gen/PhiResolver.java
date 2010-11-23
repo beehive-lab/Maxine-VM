@@ -83,7 +83,7 @@ public class PhiResolver {
 
         Node(CiValue operand) {
             this.operand = operand;
-            destinations = new ArrayList<Node>();
+            destinations = new ArrayList<Node>(4);
         }
 
         @Override

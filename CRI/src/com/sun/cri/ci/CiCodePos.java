@@ -68,35 +68,28 @@ public class CiCodePos {
      */
     @Override
     public String toString() {
-        return append(new StringBuilder(100)).toString();
+        return CiUtil.append(new StringBuilder(100), this).toString();
     }
 
-    public boolean matches(CiCodePos q) {
-        CiCodePos p = this;
-        while (p != q) {
-            if (p == null || q == null) {
-                return false;
+    /**
+     * Deep equality test.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof CiCodePos) {
+            CiCodePos other = (CiCodePos) obj;
+            if (other.method.equals(method) && other.bci == bci) {
+                if (caller == null) {
+                    return other.caller == null;
+                }
+                return caller.equals(other.caller);
             }
-            if (p.method != q.method) {
-                return false;
-            }
-            if (p.bci != q.bci) {
-                return false;
-            }
-            p = p.caller;
-            q = q.caller;
         }
-        return true;
+        return false;
     }
-
-    private StringBuilder append(StringBuilder buf) {
-        if (caller != null) {
-            caller.append(buf);
-            buf.append(" -> ");
-        }
-        buf.append(method);
-        buf.append("@");
-        buf.append(bci);
-        return buf;
+    
+    @Override
+    public int hashCode() {
+        return bci;
     }
 }

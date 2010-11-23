@@ -35,6 +35,9 @@ public abstract class AccessMonitor extends StateSplit {
      */
     Value object;
 
+    /**
+     * The address of the on-stack lock object or {@code null} if the runtime does not place locks on the stack.
+     */
     private Value lockAddress;
 
     /**
@@ -45,8 +48,9 @@ public abstract class AccessMonitor extends StateSplit {
 
     /**
      * Creates a new AccessMonitor instruction.
+     *
      * @param object the instruction producing the object
-     * @param lockAddress the address of the on-stack lock object
+     * @param lockAddress the address of the on-stack lock object or {@code null} if the runtime does not place locks on the stack
      * @param stateBefore the state before executing the monitor operation
      * @param lockNumber the number of the lock being acquired
      */
@@ -78,7 +82,9 @@ public abstract class AccessMonitor extends StateSplit {
     @Override
     public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);
-        lockAddress = closure.apply(lockAddress);
+        if (lockAddress != null) {
+            lockAddress = closure.apply(lockAddress);
+        }
     }
 
     @Override

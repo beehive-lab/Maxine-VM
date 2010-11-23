@@ -103,7 +103,6 @@ public class Info {
         this.pos = pos;
         this.id = id;
         this.state = javaFrameState;
-        assert javaFrameState == null || pos.matches(javaFrameState.scope().callerCodeSite()) : "position mismatch";
     }
 
     public FrameState frameState() {

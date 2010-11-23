@@ -354,13 +354,12 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genMonitorEnter(XirSite site, XirArgument receiver, XirArgument lockAddress) {
-        assert lockAddress != null;
-        return new XirSnippet(monitorEnterTemplate, receiver, lockAddress);
+        return new XirSnippet(monitorEnterTemplate, receiver);
     }
 
     @Override
     public XirSnippet genMonitorExit(XirSite site, XirArgument receiver, XirArgument lockAddress) {
-        return new XirSnippet(monitorExitTemplate, receiver, lockAddress);
+        return new XirSnippet(monitorExitTemplate, receiver);
     }
 
     @Override
@@ -595,7 +594,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
-        XirOperand latch = asm.createRegister("latch", CiKind.Word, AMD64.r14);
+        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, AMD64.r14);
         asm.safepoint();
         asm.pload(CiKind.Word, latch, latch, false);
         return finishTemplate(asm, "safepoint");
@@ -1009,22 +1008,18 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
-    @SuppressWarnings("unused")
     @HOSTED_ONLY
     private XirTemplate buildMonitorExit() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
-        XirParameter lock = asm.createInputParameter("lock", CiKind.Word);
         callRuntimeThroughStub(asm, "monitorExit", null, object);
         return finishTemplate(asm, "monitorexit");
     }
 
-    @SuppressWarnings("unused")
     @HOSTED_ONLY
     private XirTemplate buildMonitorEnter() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
-        XirParameter lock = asm.createInputParameter("lock", CiKind.Word);
         callRuntimeThroughStub(asm, "monitorEnter", null, object);
         return finishTemplate(asm, "monitorenter");
     }
@@ -1070,8 +1065,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirParameter interfaceID = asm.createConstantInputParameter("interfaceID", CiKind.Int);
             XirParameter checkedHub = asm.createConstantInputParameter("checkedHub", CiKind.Object);
             XirOperand hub = asm.createTemp("hub", CiKind.Object);
-            XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
-            XirOperand mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
+            XirOperand mtableTemp = asm.createTemp("mtableTemp", CiKind.Int);
             XirOperand a = asm.createTemp("a", CiKind.Int);
             XirLabel pass = asm.createInlineLabel("pass");
             XirLabel fail = asm.createOutOfLineLabel("fail");
@@ -1082,10 +1076,10 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             asm.pload(CiKind.Object, hub, object, asm.i(hubOffset()), !nonnull);
             asm.jeq(pass, hub, checkedHub);
-            asm.pload(CiKind.Int, mtableLength, hub, asm.i(offsetOfMTableLength()), false);
-            asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(offsetOfMTableStartIndex()), false);
-            asm.mod(a, interfaceID, mtableLength);
-            asm.add(a, a, mtableStartIndex);
+            asm.pload(CiKind.Int, mtableTemp, hub, asm.i(offsetOfMTableLength()), false);
+            asm.mod(a, interfaceID, mtableTemp);
+            asm.pload(CiKind.Int, mtableTemp, hub, asm.i(offsetOfMTableStartIndex()), false);
+            asm.add(a, a, mtableTemp);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.Times4, false);
             asm.pload(CiKind.Int, a, hub, a, offsetOfFirstArrayElement(), Scale.fromInt(Word.size()), false);
             asm.jneq(fail, a, interfaceID);
@@ -1216,10 +1210,13 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private XirTemplate buildExceptionObject() {
         XirOperand result = asm.restart(CiKind.Object);
-        XirOperand latch = asm.createRegister("latch", CiKind.Word, AMD64.r14);
+        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, AMD64.r14);
         XirOperand temp = asm.createTemp("temp", CiKind.Word);
+        // Emit a safepoint
+        asm.safepoint();
+        asm.pload(CiKind.Word, latch, latch, true);
         // Load safepoints-enabled thread locals pointer
-        asm.pload(CiKind.Word, temp, latch, asm.i(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.offset), false);
+        asm.pload(CiKind.Word, temp, latch, asm.i(VmThreadLocal.ETLA.offset), false);
         // Load exception object from thread locals
         asm.pload(CiKind.Object, result, temp, asm.i(VmThreadLocal.EXCEPTION_OBJECT.offset), false);
         // Clear the exception object out of thread locals

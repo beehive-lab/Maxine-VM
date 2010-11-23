@@ -34,11 +34,11 @@ import java.io.Serializable;
 
 public interface TeleChannelDataIOProtocol {
     /** Initialize the tele layer, informing it of the size of the thread locals area and the endianness of the target.
-    * @param threadLocalsAreaSize size of thread locals area from boot image header
+    * @param tlaSize size of thread locals area from boot image header
     * @param bigEndian {@code true} if the target VM is big-endian, {@code false} otherwise.
     * @return {@code true} is the set succeeded, {@code false} otherwise.
     */
-    boolean initialize(int threadLocalsAreaSize, boolean bigEndian);
+    boolean initialize(int tlaSize, boolean bigEndian);
     /**
      * Create a new target VM.
      * @param pathName file system pathname of target VM image
@@ -142,11 +142,11 @@ public interface TeleChannelDataIOProtocol {
     /**
      * A dumbed down version of {@link TeleChannelProtocol#gatherThreads} that can communicate using the
      * limitations of this interface. Operates in tandem with {@link #readThreads}.
-     * @param threadLocalsList forwarded from {@link TeleChannelProtocol#gatherThreads}
-     * @param primordialThreadLocals forwarded from {@link TeleChannelProtocol#gatherThreads}
+     * @param tlaList forwarded from {@link TeleChannelProtocol#gatherThreads}
+     * @param primordialETLA forwarded from {@link TeleChannelProtocol#gatherThreads}
      * @return number of gathered threads (length of serialized array)
      */
-    int gatherThreads(long threadLocalsList, long primordialThreadLocals);
+    int gatherThreads(long tlaList, long primordialETLA);
 
     /**
      * Read the gathered threads data into byte array.

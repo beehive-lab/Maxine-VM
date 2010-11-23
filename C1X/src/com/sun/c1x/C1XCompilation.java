@@ -93,7 +93,7 @@ public class C1XCompilation {
         this.method = method;
         this.osrBCI = osrBCI;
         this.stats = new CiStatistics();
-        this.registerConfig = method == null ? compiler.stubRegisterConfig : runtime.getRegisterConfig(method);
+        this.registerConfig = method == null ? compiler.globalStubRegisterConfig : runtime.getRegisterConfig(method);
 
         CFGPrinter cfgPrinter = null;
         if (C1XOptions.PrintCFGToFile && method != null && TTY.Filter.matches(C1XOptions.PrintFilter, method)) {
@@ -133,13 +133,6 @@ public class C1XCompilation {
     }
 
     /**
-     * Determines if this a compilation for a 64-bit platform.
-     */
-    public boolean is64Bit() {
-        return target.arch.is64bit();
-    }
-
-    /**
      * Translates a given kind to a canonical architecture kind.
      * This is an identity function for all but {@link CiKind#Word}
      * which is translated to {@link CiKind#Int} or {@link CiKind#Long}
@@ -148,7 +141,7 @@ public class C1XCompilation {
      */
     public CiKind archKind(CiKind kind) {
         if (kind.isWord()) {
-            return is64Bit() ? CiKind.Long : CiKind.Int;
+            return target.arch.is64bit() ? CiKind.Long : CiKind.Int;
         }
         return kind;
     }
@@ -331,10 +324,6 @@ public class C1XCompilation {
 
     public IR emitHIR() {
 
-        if (C1XOptions.PrintCompilation) {
-            TTY.println();
-            TTY.println("Compiling method: " + method.toString());
-        }
         hir = new IR(this);
         hir.build();
         return hir;
@@ -394,10 +383,6 @@ public class C1XCompilation {
 
     public CFGPrinter cfgPrinter() {
         return cfgPrinter;
-    }
-
-    public boolean needsDebugInformation() {
-        return false;
     }
 
     public int nextID() {

@@ -156,7 +156,7 @@ static ThreadState_t toThreadState(int state) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jlong threadLocalsList, jlong primordialThreadLocals) {
+Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jlong tlaList, jlong primordialETLA) {
     struct db_thread *threads;
     int num_threads;
 
@@ -164,10 +164,10 @@ Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeGat
     int i;
     for (i=0; i<num_threads; i++) {
         tele_log_println("nativeGatherThreads processing thread %d,", threads[i].id);
-        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
+        TLA threadLocals = (TLA) alloca(tlaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         struct db_regs *db_regs = checked_get_regs("nativeGatherThreads", threads[i].id);
-        threadLocals = teleProcess_findThreadLocals(&db_memory_handler, threadLocalsList, primordialThreadLocals, db_regs->rsp, threadLocals, &nativeThreadLocalsStruct);
+        threadLocals = teleProcess_findTLA(&db_memory_handler, tlaList, primordialETLA, db_regs->rsp, threadLocals, &nativeThreadLocalsStruct);
         teleProcess_jniGatherThread(env, teleDomain, threadSeq, (jlong) threads[i].id, toThreadState(threads[i].flags), db_regs->rip, threadLocals);
     }
     free(threads);

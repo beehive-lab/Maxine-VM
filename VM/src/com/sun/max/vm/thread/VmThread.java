@@ -240,7 +240,7 @@ public class VmThread {
     /**
      * The thread locals associated with this thread.
      */
-    private Pointer vmThreadLocals = Pointer.zero();
+    private Pointer tla = Pointer.zero();
 
     /**
      * The name of this thread which is kept in sync with the name of the associated {@link #javaThread()}.
@@ -337,11 +337,12 @@ public class VmThread {
     }
 
     /**
-     * Gets the address of the {@linkplain VmThreadLocal thread local variable} storage area pointed to by the
-     * safepoint {@linkplain Safepoint#latchRegister() latch} register.
+     * Gets the current {@linkplain VmThreadLocal TLA}.
+     *
+     * @return the value of the safepoint {@linkplain Safepoint#latchRegister() latch} register.
      */
     @INLINE
-    public static Pointer currentVmThreadLocals() {
+    public static Pointer currentTLA() {
         return Safepoint.getLatchRegister();
     }
 
@@ -350,11 +351,11 @@ public class VmThread {
      *
      * @return a value of C type JNIEnv*
      */
-    public static Pointer currentJniEnvironmentPointer() {
+    public static Pointer jniEnv() {
         if (MaxineVM.isHosted()) {
             return Pointer.zero();
         }
-        return JNI_ENV.pointer(currentVmThreadLocals());
+        return JNI_ENV.addressIn(currentTLA());
     }
 
     @INLINE
@@ -362,7 +363,7 @@ public class VmThread {
         if (MaxineVM.isHosted()) {
             return mainThread;
         }
-        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
+        return UnsafeCast.asVmThread(VM_THREAD.loadRef(currentTLA()).toJava());
     }
 
     /**
@@ -421,7 +422,7 @@ public class VmThread {
      *            handle) of a thread that is being attached to the VM.
      * @param daemon indicates if the thread being added is a daemon thread. This value is ignored if {@code id > 0}.
      * @param nativeThread a handle to the native thread data structure (e.g. a pthread_t value)
-     * @param threadLocals the address of a thread locals area
+     * @param etla the address of the safepoints-enabled TLA
      * @param stackBase the lowest address (inclusive) of the stack (i.e. the stack memory range is {@code [stackBase ..
      *            stackEnd)})
      * @param stackEnd the highest address (exclusive) of the stack (i.e. the stack memory range is {@code [stackBase ..
@@ -435,15 +436,15 @@ public class VmThread {
     private static int add(int id,
                     boolean daemon,
                     Address nativeThread,
-                    Pointer threadLocals,
+                    Pointer etla,
                     Pointer stackBase,
                     Pointer stackEnd,
                     Pointer stackYellowZone) {
 
         // Disable safepoints:
-        Safepoint.setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer());
+        Safepoint.setLatchRegister(DTLA.load(etla));
 
-        JNI_ENV.setConstantWord(threadLocals, NativeInterfaces.jniEnv());
+        JNI_ENV.store3(etla, NativeInterfaces.jniEnv());
 
         // Add the VM thread locals to the active map
         VmThread thread;
@@ -460,7 +461,7 @@ public class VmThread {
             if (!daemon && !VmThreadMap.incrementNonDaemonThreads()) {
                 return -2;
             }
-            ID.setConstantWord(threadLocals, Address.fromLong(thread.id));
+            ID.store3(etla, Address.fromLong(thread.id));
         } else {
             thread = VmThreadMap.ACTIVE.getVmThreadForID(id);
             daemon = thread.javaThread().isDaemon();
@@ -471,17 +472,17 @@ public class VmThread {
             threadLocal.initialize();
         }
 
-        HIGHEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackEnd);
-        LOWEST_STACK_SLOT_ADDRESS.setConstantWord(threadLocals, stackYellowZone.plus(platform().pageSize));
+        HIGHEST_STACK_SLOT_ADDRESS.store3(etla, stackEnd);
+        LOWEST_STACK_SLOT_ADDRESS.store3(etla, stackYellowZone.plus(platform().pageSize));
 
         thread.nativeThread = nativeThread;
-        thread.vmThreadLocals = threadLocals;
-        thread.stackFrameWalker.setVmThreadLocals(threadLocals);
-        thread.stackDumpStackFrameWalker.setVmThreadLocals(threadLocals);
+        thread.tla = etla;
+        thread.stackFrameWalker.setTLA(etla);
+        thread.stackDumpStackFrameWalker.setTLA(etla);
         thread.stackYellowZone = stackYellowZone;
 
-        VM_THREAD.setConstantReference(threadLocals, Reference.fromJava(thread));
-        VmThreadMap.addThreadLocals(thread, threadLocals, daemon);
+        VM_THREAD.store3(etla, Reference.fromJava(thread));
+        VmThreadMap.addThreadLocals(thread, etla, daemon);
 
         return thread.isVmOperationThread() ? 1 : 0;
     }
@@ -493,24 +494,18 @@ public class VmThread {
      *
      * ATTENTION: this signature must match 'VmThreadRunMethod' in "Native/substrate/threads.h".
      *
-     * @param id the unique identifier assigned to this thread when it was {@linkplain #start0() started}. This
-     *            identifier is only bound to this thread until it is {@linkplain #beTerminated() terminated}. That is,
-     *            only active threads have unique identifiers.
-     * @param nativeThread a handle to the native thread data structure (e.g. a pthread_t value)
+     * @param etla the address of the safepoints-enabled TLA
      * @param stackBase the lowest address (inclusive) of the stack (i.e. the stack memory range is {@code [stackBase .. stackEnd)})
      * @param stackEnd the highest address (exclusive) of the stack (i.e. the stack memory range is {@code [stackBase .. stackEnd)})
-     * @param threadLocals the address of a thread locals area
-     * @param refMap the native memory to be used for the stack reference map
-     * @param stackYellowZone the stack page(s) that have been protected to detect stack overflow
      */
     @VM_ENTRY_POINT
     @INSPECTED
-    private static void run(Pointer threadLocals,
+    private static void run(Pointer etla,
                     Pointer stackBase,
                     Pointer stackEnd) {
 
         // Enable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.pointer(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer()), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla), null);
 
         final VmThread thread = VmThread.current();
 
@@ -548,7 +543,7 @@ public class VmThread {
 
             final Thread javaThread = thread.javaThread();
             // Uncaught exception should be passed by the VM to the uncaught exception handler defined for the thread.
-            // Exception thrown by this one should be ignore by the VM.
+            // Exception thrown by this one should be ignored by the VM.
             try {
                 javaThread.getUncaughtExceptionHandler().uncaughtException(javaThread, throwable);
             } catch (Throwable ignoreMe) {
@@ -559,8 +554,11 @@ public class VmThread {
         if (thread == mainThread) {
             VmThreadMap.ACTIVE.joinAllNonDaemons();
             invokeShutdownHooks();
-            VmThreadMap.ACTIVE.setMainThreadExited();
+            // This prevents further thread creation
+            VmThreadMap.ACTIVE.setVMTerminating();
             SignalDispatcher.terminate();
+            // scheme-specific termination
+            vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
             VmOperationThread.terminate();
         }
 
@@ -576,7 +574,7 @@ public class VmThread {
      * @param nativeThread a handle to the native thread data structure (e.g. a pthread_t value)
      * @param stackBase the lowest address (inclusive) of the stack (i.e. the stack memory range is {@code [stackBase .. stackEnd)})
      * @param stackEnd the highest address (exclusive) of the stack (i.e. the stack memory range is {@code [stackBase .. stackEnd)})
-     * @param threadLocals the address of a thread locals area
+     * @param tla the address of a thread locals area
      * @param refMap the native memory to be used for the stack reference map
      * @param stackYellowZone the stack page(s) that have been protected to detect stack overflow
      */
@@ -587,10 +585,10 @@ public class VmThread {
                     boolean daemon,
                     Pointer stackBase,
                     Pointer stackEnd,
-                    Pointer threadLocals) {
+                    Pointer tla) {
 
         // Enable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.pointer(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer()), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(ETLA.load(tla)), null);
 
         VmThread thread = VmThread.current();
 
@@ -649,9 +647,9 @@ public class VmThread {
      * ATTENTION: this signature must match 'VmThreadDetachMethod' in "Native/substrate/threads.h".
      */
     @VM_ENTRY_POINT
-    private static void detach(Pointer threadLocals) {
+    private static void detach(Pointer tla) {
         // Disable safepoints:
-        Pointer anchor = JniFunctions.prologue(JNI_ENV.pointer(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer()), null);
+        Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(DTLA.load(tla)), null);
 
         VmThread thread = VmThread.current();
 
@@ -685,7 +683,7 @@ public class VmThread {
         }
         // Monitor acquisition after point this MUST NOT HAPPEN as it may reset state to RUNNABLE
         thread.nativeThread = Address.zero();
-        thread.vmThreadLocals = Pointer.zero();
+        thread.tla = Pointer.zero();
         thread.id = -1;
         thread.waitingCondition = null;
 
@@ -715,16 +713,16 @@ public class VmThread {
     private static native boolean nativeJoin(Word nativeThread);
 
     public static VmThread fromJniEnv(Pointer jniEnv) {
-        final Pointer vmThreadLocals = jniEnv.minus(JNI_ENV.offset);
-        return fromVmThreadLocals(vmThreadLocals);
+        final Pointer tla = jniEnv.minus(JNI_ENV.offset);
+        return fromTLA(tla);
     }
 
     @INLINE
-    public static VmThread fromVmThreadLocals(Pointer vmThreadLocals) {
+    public static VmThread fromTLA(Pointer tla) {
         if (MaxineVM.isHosted()) {
             return mainThread;
         }
-        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
+        return UnsafeCast.asVmThread(VM_THREAD.loadRef(tla).toJava());
     }
 
     public static void yield() {
@@ -993,25 +991,25 @@ public class VmThread {
             lastRegionStart = traceRegion("Stack red zone", stackBase, stackRedZone(), stackYellowZone, lastRegionStart, stackSize);
 
             lastRegionStart = Address.zero();
-            Address ntl = NATIVE_THREAD_LOCALS.getConstantWord().asAddress();
-            Pointer triggeredTL = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord().asPointer();
-            Pointer enabledTL = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
-            Pointer disabledTL = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer();
-            Pointer tlb = triggeredTL.roundedDownBy(platform().pageSize);
-            Address refMap = STACK_REFERENCE_MAP.getConstantWord().asAddress();
-            Address tlbEnd = refMap.plus(STACK_REFERENCE_MAP_SIZE.getConstantWord().asAddress());
+            Address ntl = NATIVE_THREAD_LOCALS.load(currentTLA());
+            Pointer ttla = TTLA.load(currentTLA());
+            Pointer etla = ETLA.load(currentTLA());
+            Pointer dtla = DTLA.load(currentTLA());
+            Pointer tlb = ttla.roundedDownBy(platform().pageSize);
+            Address refMap = STACK_REFERENCE_MAP.load(currentTLA());
+            Address tlbEnd = refMap.plus(STACK_REFERENCE_MAP_SIZE.load(currentTLA()).asAddress());
             int tlbSize = tlbEnd.minus(tlb).toInt();
             Log.println();
             Log.println("Thread locals block layout:");
             lastRegionStart = traceRegion("reference map", tlb, refMap, tlbEnd, lastRegionStart, tlbSize);
             lastRegionStart = traceRegion("native thread locals", tlb, ntl, refMap, lastRegionStart, tlbSize);
-            lastRegionStart = traceRegion("safepoints-disabled thread locals area", tlb, disabledTL, ntl, lastRegionStart, tlbSize);
-            lastRegionStart = traceRegion("safepoints-enabled thread locals area", tlb, enabledTL, disabledTL, lastRegionStart, tlbSize);
-            lastRegionStart = traceRegion("safepoints-triggered thread locals area", tlb, triggeredTL, enabledTL, lastRegionStart, tlbSize);
-            lastRegionStart = traceRegion("unmapped page", tlb, tlb, triggeredTL, lastRegionStart, tlbSize);
+            lastRegionStart = traceRegion("safepoints-disabled TLA", tlb, dtla, ntl, lastRegionStart, tlbSize);
+            lastRegionStart = traceRegion("safepoints-enabled TLA", tlb, etla, dtla, lastRegionStart, tlbSize);
+            lastRegionStart = traceRegion("safepoints-triggered TLA", tlb, ttla, etla, lastRegionStart, tlbSize);
+            lastRegionStart = traceRegion("unmapped page", tlb, tlb, ttla, lastRegionStart, tlbSize);
 
             Log.println();
-            Log.printThreadLocals(vmThreadLocals, true);
+            Log.printThreadLocals(tla, true);
             Log.unlock(lockDisabledSafepoints);
         }
     }
@@ -1047,13 +1045,13 @@ public class VmThread {
 
     // Only used by the EIR interpreter(s)
     @HOSTED_ONLY
-    public void setVmThreadLocals(Address address) {
-        vmThreadLocals = address.asPointer();
+    public void setTLA(Address address) {
+        tla = address.asPointer();
     }
 
     @INLINE
-    public final Pointer vmThreadLocals() {
-        return vmThreadLocals;
+    public final Pointer tla() {
+        return tla;
     }
 
     public final JniHandle createLocalHandle(Object object) {

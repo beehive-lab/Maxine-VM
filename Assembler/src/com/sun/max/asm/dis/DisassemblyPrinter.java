@@ -56,22 +56,26 @@ public class DisassemblyPrinter {
             printHeading(disassembler, stream, nOffsetChars, nLabelChars);
         }
         for (DisassembledObject disassembledObject : disassembledObjects) {
-            stream.print(addressString(disassembler, disassembledObject));
-            stream.print(SPACE);
-            stream.printf("%0" + nOffsetChars + "d", disassembledObject.startPosition());
-            stream.print(SPACE);
-            final DisassembledLabel label = disassembler.addressMapper().labelAt(disassembledObject.startAddress());
-            if (label != null) {
-                stream.print(Strings.padLengthWithSpaces(label.name(), nLabelChars) + ":");
-            } else {
-                stream.print(Strings.spaces(nLabelChars) + " ");
-            }
-            stream.print(SPACE);
-            stream.print(Strings.padLengthWithSpaces(disassembledObjectString(disassembler, disassembledObject), NUMBER_OF_INSTRUCTION_CHARS));
-            stream.print(SPACE);
-            stream.print(DisassembledInstruction.toHexString(disassembledObject.bytes()));
-            stream.println();
+            printDisassembledObject(disassembler, stream, nOffsetChars, nLabelChars, disassembledObject);
         }
+    }
+
+    protected void printDisassembledObject(Disassembler disassembler, final PrintStream stream, final int nOffsetChars, final int nLabelChars, DisassembledObject disassembledObject) {
+        stream.print(addressString(disassembler, disassembledObject));
+        stream.print(SPACE);
+        stream.printf("%0" + nOffsetChars + "d", disassembledObject.startPosition());
+        stream.print(SPACE);
+        final DisassembledLabel label = disassembler.addressMapper().labelAt(disassembledObject.startAddress());
+        if (label != null) {
+            stream.print(Strings.padLengthWithSpaces(label.name(), nLabelChars) + ":");
+        } else {
+            stream.print(Strings.spaces(nLabelChars) + " ");
+        }
+        stream.print(SPACE);
+        stream.print(Strings.padLengthWithSpaces(disassembledObjectString(disassembler, disassembledObject), NUMBER_OF_INSTRUCTION_CHARS));
+        stream.print(SPACE);
+        stream.print(DisassembledInstruction.toHexString(disassembledObject.bytes()));
+        stream.println();
     }
 
     protected void printHeading(Disassembler disassembler, PrintStream stream, int nOffsetChars, int nLabelChars)  {

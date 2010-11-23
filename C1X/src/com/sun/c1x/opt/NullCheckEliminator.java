@@ -70,12 +70,12 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         // used in first pass
         final BlockBegin block;
         boolean marked;
-        BitMap localOut;
-        BitMap localExcept;
+        CiBitMap localOut;
+        CiBitMap localExcept;
         List<Value> localUses;
         // used in iteration and flow sensitivity
         IfEdge ifEdge;
-        BitMap localIn;
+        CiBitMap localIn;
 
         BlockInfo(BlockBegin b) {
             this.block = b;
@@ -103,7 +103,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
     boolean requiresIteration;
     int maximumIndex;
 
-    BitMap currentBitMap;
+    CiBitMap currentBitMap;
     List<Value> currentUses;
 
     /**
@@ -194,7 +194,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
                 // all the predecessors have been visited, compute the intersection of their {localOut} sets
                 for (BlockBegin pred : block.predecessors()) {
                     BlockInfo predInfo = getBlockInfo(pred);
-                    BitMap predMap = getPredecessorMap(predInfo, block.isExceptionEntry());
+                    CiBitMap predMap = getPredecessorMap(predInfo, block.isExceptionEntry());
                     currentBitMap = intersectLocalOut(predInfo, currentBitMap, predMap, block);
                 }
             }
@@ -207,7 +207,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         info.localOut = currentBitMap;
     }
 
-    private BitMap intersectLocalOut(BlockInfo pred, BitMap current, BitMap predMap, BlockBegin succ) {
+    private CiBitMap intersectLocalOut(BlockInfo pred, CiBitMap current, CiBitMap predMap, BlockBegin succ) {
         predMap = intersectFlowSensitive(pred, predMap, succ);
         if (current == null) {
             current = predMap.copy();
@@ -217,7 +217,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         return current;
     }
 
-    private BitMap intersectFlowSensitive(BlockInfo pred, BitMap n, BlockBegin succ) {
+    private CiBitMap intersectFlowSensitive(BlockInfo pred, CiBitMap n, BlockBegin succ) {
         if (C1XOptions.OptFlowSensitiveNCE) {
             // check to see if there is an if edge between these two blocks
             if (pred.ifEdge != null && pred.ifEdge.succ == succ) {
@@ -252,12 +252,12 @@ public class NullCheckEliminator extends DefaultValueVisitor {
     }
 
     private void iterateBlock(BlockInfo info) {
-        BitMap prevMap = info.localIn;
+        CiBitMap prevMap = info.localIn;
         assert prevMap != null : "how did the block get on the worklist without an initial in map?";
-        BitMap localOut = info.localOut;
-        BitMap out;
+        CiBitMap localOut = info.localOut;
+        CiBitMap out;
         // copy larger and do union with smaller
-        if (localOut.length() > prevMap.length()) {
+        if (localOut.size() > prevMap.size()) {
             out = localOut.copy();
             out.setUnion(prevMap);
         } else {
@@ -268,13 +268,13 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         propagateSuccessors(info, prevMap, info.block.exceptionHandlerBlocks()); // propagate {in} to exception handlers
     }
 
-    private void propagateSuccessors(BlockInfo block, BitMap out, List<BlockBegin> successorList) {
+    private void propagateSuccessors(BlockInfo block, CiBitMap out, List<BlockBegin> successorList) {
         for (BlockBegin succ : successorList) {
             propagate(block, out, succ);
         }
     }
 
-    private void propagate(BlockInfo pred, BitMap bitMap, BlockBegin succ) {
+    private void propagate(BlockInfo pred, CiBitMap bitMap, BlockBegin succ) {
         boolean changed;
         propagateFlowSensitive(pred, bitMap, succ);
         BlockInfo succInfo = getBlockInfo(succ);
@@ -292,7 +292,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         }
     }
 
-    private void propagateFlowSensitive(BlockInfo pred, BitMap bitMap, BlockBegin succ) {
+    private void propagateFlowSensitive(BlockInfo pred, CiBitMap bitMap, BlockBegin succ) {
         if (C1XOptions.OptFlowSensitiveNCE) {
             if (pred.ifEdge != null && pred.ifEdge.succ == succ) {
                 // there is a special if edge between these blocks, add the checked instruction
@@ -301,7 +301,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         }
     }
 
-    private void reprocessUses(BitMap in, List<Value> uses) {
+    private void reprocessUses(CiBitMap in, List<Value> uses) {
         // iterate over each of the use instructions again, using the input bitmap
         // and the hash sets
         assert in != null;
@@ -520,13 +520,13 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         return ninfo;
     }
 
-    private void setValue(Value value, BitMap bitmap) {
+    private void setValue(Value value, CiBitMap bitmap) {
         int index = getValueInfo(value).globalIndex;
         bitmap.grow(index + 1);
         bitmap.set(index);
     }
 
-    private boolean checkValue(Value value, BitMap bitmap) {
+    private boolean checkValue(Value value, CiBitMap bitmap) {
         Object info = value.optInfo;
         return info instanceof ValueInfo && bitmap.getDefault(((ValueInfo) info).globalIndex);
     }
@@ -562,16 +562,16 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         }
     }
 
-    private BitMap newBitMap() {
-        return new BitMap(maximumIndex > 32 ? maximumIndex : 32);
+    private CiBitMap newBitMap() {
+        return new CiBitMap(maximumIndex > 32 ? maximumIndex : 32);
     }
 
-    private BitMap getPredecessorMap(BlockBegin pred, boolean exceptionBlock) {
+    private CiBitMap getPredecessorMap(BlockBegin pred, boolean exceptionBlock) {
         BlockInfo predInfo = getBlockInfo(pred);
         return exceptionBlock ? predInfo.localExcept : predInfo.localOut;
     }
 
-    private BitMap getPredecessorMap(BlockInfo predInfo, boolean exceptionBlock) {
+    private CiBitMap getPredecessorMap(BlockInfo predInfo, boolean exceptionBlock) {
         return exceptionBlock ? predInfo.localExcept : predInfo.localOut;
     }
 }

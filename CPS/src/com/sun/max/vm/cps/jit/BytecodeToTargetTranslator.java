@@ -113,7 +113,8 @@ public abstract class BytecodeToTargetTranslator {
      */
     protected final int[] bytecodeToTargetCodePositionMap;
 
-    protected boolean[] blockStarts;
+    protected final boolean[] blockStarts;
+    protected boolean[] exceptionHandlers;
     protected int numberOfBlocks;
     private int previousBytecode = -1;
 
@@ -164,6 +165,15 @@ public abstract class BytecodeToTargetTranslator {
             this.branchTargets = null;
         }
         adapterGenerator = AdapterGenerator.forCallee(classMethodActor, CallEntryPoint.JIT_ENTRY_POINT);
+
+        ExceptionHandlerEntry[] exceptionHandlers = codeAttribute.exceptionHandlerTable();
+        if (exceptionHandlers.length != 0) {
+            this.exceptionHandlers = new boolean[code.length];
+            for (ExceptionHandlerEntry e : exceptionHandlers) {
+                this.exceptionHandlers[e.handlerPosition()] = true;
+            }
+        }
+
     }
 
     public abstract TargetABI targetABI();
@@ -180,6 +190,9 @@ public abstract class BytecodeToTargetTranslator {
 
         if (Bytecodes.isBlockEnd(previousBytecode)) {
             startBlock(opcodePosition);
+            if (exceptionHandlers != null && exceptionHandlers[opcodePosition]) {
+                emitHandlerEntry();
+            }
         }
         previousBytecode = representativeOpcode;
     }
@@ -1068,6 +1081,11 @@ public abstract class BytecodeToTargetTranslator {
             assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
             emitAndRecordStops(template);
         }
+    }
+
+    public void emitHandlerEntry() {
+        final TargetMethod template = getCode(LOAD_EXCEPTION);
+        emitAndRecordStops(template);
     }
 
     /**

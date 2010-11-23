@@ -59,9 +59,13 @@ public abstract class ClassVerifier extends Verifier {
         for (MethodActor methodActor : methodActors) {
             if (methodActor instanceof ClassMethodActor) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                classMethodActor.verify(this);
+                verifyMethod(classMethodActor);
             }
         }
+    }
+
+    protected void verifyMethod(final ClassMethodActor classMethodActor) {
+        classMethodActor.verify(this);
     }
 
     /**

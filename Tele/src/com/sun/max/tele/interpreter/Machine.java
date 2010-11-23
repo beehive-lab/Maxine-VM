@@ -197,7 +197,6 @@ public final class Machine extends AbstractTeleVMHolder{
      */
     public boolean handleException(ReferenceValue throwableReference) {
         if (currentThread.handleException(throwableReference.getClassActor())) {
-            ExceptionDispatcher.INTERPRETER_EXCEPTION.set((Throwable) throwableReference.asObject());
             push(throwableReference);
             return true;
         }

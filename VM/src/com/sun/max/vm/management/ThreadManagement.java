@@ -153,8 +153,8 @@ public class ThreadManagement {
         FindProcedure(long id) {
             this.id = id;
         }
-        public void run(Pointer vmThreadLocals) {
-            final Thread t = VmThread.fromVmThreadLocals(vmThreadLocals).javaThread();
+        public void run(Pointer tla) {
+            final Thread t = VmThread.fromTLA(tla).javaThread();
             if (t.getId() == id) {
                 result = t;
             }
@@ -218,7 +218,7 @@ public class ThreadManagement {
                 traces[threads.indexOf(thread)] = new StackTraceElement[0];
             } else {
                 final List<StackFrame> frameList = new ArrayList<StackFrame>();
-                new VmStackFrameWalker(vmThread.vmThreadLocals()).frames(frameList, instructionPointer, stackPointer, framePointer);
+                new VmStackFrameWalker(vmThread.tla()).frames(frameList, instructionPointer, stackPointer, framePointer);
                 traces[threads.indexOf(thread)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
             }
         }

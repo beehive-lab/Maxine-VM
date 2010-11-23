@@ -29,6 +29,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
 
 /**
@@ -124,47 +125,22 @@ public final class FrameMap {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
             CiKind receiver = !isStatic(method.accessFlags()) ? method.holder().kind() : null;
-            incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signature(), receiver), false);
+            incomingArguments = getCallingConvention(Util.signatureToKinds(method.signature(), receiver), JavaCallee);
         }
     }
 
     /**
-     * Gets the calling convention for calling runtime methods with the specified signature.
-     * @param signature the signature of the arguments
-     * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
-     */
-    public CiCallingConvention runtimeCallingConvention(CiKind[] signature) {
-        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(Runtime, signature, true, compilation.target);
-        assert cc.stackSize == 0 : "runtime call should not have stack arguments";
-        return cc;
-    }
-
-    /**
-     * Gets the calling convention for calling Java methods with the specified signature.
+     * Gets the calling convention for a call with the specified signature.
      *
+     * @param type the type of calling convention being requested
      * @param signature the signature of the arguments
-     * @param outgoing if {@code true}, the reserved space on the stack for outgoing stack parameters is adjusted if necessary
      * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
-    public CiCallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing) {
-        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(Java, signature, outgoing, compilation.target);
-        if (outgoing) {
-            assert frameSize == -1 : "frame size must not yet be fixed!";
-            reserveOutgoing(cc.stackSize);
-        }
-        return cc;
-    }
-
-    /**
-     * Gets the calling convention for calling native code with the specified signature.
-     *
-     * @param signature the signature of the arguments
-     * @param outgoing if {@code true}, the reserved space on the stack for outgoing stack parameters is adjusted if necessary
-     * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
-     */
-    public CiCallingConvention nativeCallingConvention(CiKind[] signature, boolean outgoing) {
-        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(Native, signature, outgoing, compilation.target);
-        if (outgoing) {
+    public CiCallingConvention getCallingConvention(CiKind[] signature, Type type) {
+        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(type, signature, compilation.target);
+        if (type == RuntimeCall) {
+            assert cc.stackSize == 0 : "runtime call should not have stack arguments";
+        } else if (type.out) {
             assert frameSize == -1 : "frame size must not yet be fixed!";
             reserveOutgoing(cc.stackSize);
         }
@@ -208,9 +184,7 @@ public final class FrameMap {
 
         this.spillSlotCount = spillSlotCount;
         int frameSize = stackBlocksEnd();
-        if (compilation.registerConfig.getCalleeSaveRegisters().length != 0) {
-            frameSize += compilation.target.registerSaveArea.size;
-        }
+        frameSize += compilation.registerConfig.getCalleeSaveArea().size;
         this.frameSize = compilation.target.alignFrameSize(frameSize);
     }
 
@@ -252,21 +226,27 @@ public final class FrameMap {
     }
 
     /**
-     * Converts the monitor index into a stack address.
+     * Converts the monitor index into the stack address of the object reference in the on-stack monitor.
+     *
      * @param monitorIndex the monitor index
      * @return a representation of the stack address
      */
-    public CiAddress toMonitorObjectStackAddress(int monitorIndex) {
-        return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorObject(monitorIndex));
+    public CiStackSlot toMonitorObjectStackAddress(int monitorIndex) {
+        int byteIndex = spOffsetForMonitorObject(monitorIndex);
+        assert byteIndex % compilation.target.wordSize == 0;
+        return CiStackSlot.get(CiKind.Object, byteIndex / compilation.target.wordSize);
     }
 
     /**
-     * Converts the monitor index into a stack address.
+     * Converts the monitor index into the stack address of the on-stak monitor.
+     *
      * @param monitorIndex the monitor index
      * @return a representation of the stack address
      */
-    public CiAddress toMonitorBaseStackAddress(int monitorIndex) {
-        return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorBase(monitorIndex));
+    public CiStackSlot toMonitorBaseStackAddress(int monitorIndex) {
+        int byteIndex = spOffsetForMonitorBase(monitorIndex);
+        assert byteIndex % compilation.target.wordSize == 0;
+        return CiStackSlot.get(CiKind.Object, byteIndex / compilation.target.wordSize);
     }
 
     /**
@@ -339,7 +319,8 @@ public final class FrameMap {
 
     private int spOffsetForMonitorBase(int index) {
         assert index >= 0 && index < monitorCount : "invalid monitor index";
-        int size = compilation.runtime.sizeofBasicObjectLock();
+        int size = compilation.runtime.sizeOfBasicObjectLock();
+        assert size != 0 : "monitors are not on the stack in this VM";
         int offset = monitorsStart() + index * size;
         assert offset <= (frameSize() - size) : "monitor outside of frame";
         return offset;
@@ -358,7 +339,7 @@ public final class FrameMap {
     }
 
     private int monitorsEnd() {
-        return monitorsStart() + (monitorCount * compilation.runtime.sizeofBasicObjectLock());
+        return monitorsStart() + (monitorCount * compilation.runtime.sizeOfBasicObjectLock());
     }
 
     private int stackBlocksStart() {

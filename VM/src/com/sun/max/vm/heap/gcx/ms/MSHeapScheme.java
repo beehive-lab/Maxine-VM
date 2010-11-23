@@ -123,7 +123,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            if (Heap.traceGCTime()) {
+                collect.reportTotalGCTimes();
+            }
         }
+
     }
 
     @HOSTED_ONLY
@@ -272,7 +277,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     static class TLABFiller extends ResetTLAB {
         @Override
-        protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
+        protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabTop) {
             if (tlabMark.greaterThan(tlabTop)) {
                 // Already filled-up (mark is at the limit).
                 return;
@@ -285,8 +290,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     @Override
-    protected void tlabReset(Pointer vmThreadLocals) {
-        collect.tlabFiller.run(vmThreadLocals);
+    protected void tlabReset(Pointer tla) {
+        collect.tlabFiller.run(tla);
     }
 
 
@@ -425,9 +430,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     @INLINE
-    private Size setNextTLABChunk(Pointer enabledVmThreadLocals, Pointer nextChunk) {
+    private Size setNextTLABChunk(Pointer etla, Pointer nextChunk) {
         Size nextChunkEffectiveSize = setNextTLABChunk(nextChunk);
-        fastRefillTLAB(enabledVmThreadLocals, nextChunk, nextChunkEffectiveSize);
+        fastRefillTLAB(etla, nextChunk, nextChunkEffectiveSize);
         return nextChunkEffectiveSize;
     }
 
@@ -435,14 +440,14 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      * Check if changing TLAB chunks may satisfy the allocation request. If not, allocated directly from the underlying free space manager,
      * otherwise, refills the TLAB with the next TLAB chunk and allocated from it.
      *
-     * @param enabledVmThreadLocals Pointer to enabled VMThreadLocals
+     * @param etla Pointer to enabled VMThreadLocals
      * @param tlabMark current mark of the TLAB
      * @param tlabHardLimit hard limit of the current TLAB
      * @param chunk next chunk of this TLAB
      * @param size requested amount of memory
      * @return a pointer to the allocated memory
      */
-    private Pointer changeTLABChunkOrAllocate(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabHardLimit, Pointer chunk, Size size) {
+    private Pointer changeTLABChunkOrAllocate(Pointer etla, Pointer tlabMark, Pointer tlabHardLimit, Pointer chunk, Size size) {
         Size chunkSize =  HeapFreeChunk.getFreechunkSize(chunk);
         Size effectiveSize = chunkSize.minus(TLAB_HEADROOM);
         if (size.greaterThan(effectiveSize))  {
@@ -454,16 +459,16 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         // Zap chunk data to leave allocation area clean.
         Memory.clearWords(chunk, effectiveSize.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
         chunk.plus(effectiveSize).setWord(nextChunk);
-        fastRefillTLAB(enabledVmThreadLocals, chunk, effectiveSize);
+        fastRefillTLAB(etla, chunk, effectiveSize);
         return tlabAllocate(size);
     }
 
     /**
      * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
-     * @param enabledVmThreadLocals the thread whose TLAB will be refilled
+     * @param etla the thread whose TLAB will be refilled
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
-    private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
+    private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = objectSpace.allocateTLAB(tlabSize);
         Size effectiveSize = setNextTLABChunk(tlab);
 
@@ -482,26 +487,26 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
-        refillTLAB(enabledVmThreadLocals, tlab, effectiveSize);
+        refillTLAB(etla, tlab, effectiveSize);
     }
 
     @Override
-    protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {      // Should we refill the TLAB ?
-        final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
+    protected Pointer handleTLABOverflow(Size size, Pointer etla, Pointer tlabMark, Pointer tlabEnd) {      // Should we refill the TLAB ?
+        final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(etla);
         if (refillPolicy == null) {
             // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
             ProgramError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
             if (!usesTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
-                TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
+                TLABRefillPolicy.setForCurrentThread(etla, NEVER_REFILL_TLAB);
                 return objectSpace.allocate(size);
             }
             // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
             final Size tlabSize = initialTlabSize();
-            allocateAndRefillTLAB(enabledVmThreadLocals, tlabSize);
+            allocateAndRefillTLAB(etla, tlabSize);
             // Let's do a bit of dirty meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
             // So the tlab allocation is going to succeed here
-            TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, new SimpleTLABRefillPolicy(tlabSize));
+            TLABRefillPolicy.setForCurrentThread(etla, new SimpleTLABRefillPolicy(tlabSize));
             // Now, address the initial request. Note that we may recurse down to handleTLABOverflow again here if the
             // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the tlab.
             return tlabAllocate(size);
@@ -525,15 +530,15 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
                 Memory.clearWords(tlabEnd, TLAB_HEADROOM.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
                 if (nextChunk.isZero()) {
                     // Zero-out TLAB top and mark.
-                    fastRefillTLAB(enabledVmThreadLocals, Pointer.zero(), Size.zero());
+                    fastRefillTLAB(etla, Pointer.zero(), Size.zero());
                 } else {
                     // TLAB has another chunk of free space. Set it.
-                    setNextTLABChunk(enabledVmThreadLocals, nextChunk);
+                    setNextTLABChunk(etla, nextChunk);
                 }
                 return cell;
             } else if (!(cell.equals(hardLimit) || nextChunk.isZero())) {
                 // We have another chunk, and we're not to limit yet. So we may change of TLAB chunk to satisfy the request.
-                return changeTLABChunkOrAllocate(enabledVmThreadLocals, tlabMark, hardLimit, nextChunk, size);
+                return changeTLABChunkOrAllocate(etla, tlabMark, hardLimit, nextChunk, size);
             }
 
             if (!refillPolicy.shouldRefill(size, tlabMark)) {
@@ -542,7 +547,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             }
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
-        allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
+        allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
     }
 
@@ -552,13 +557,5 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         return false;
     }
 
-    @Override
-    public void finalize(MaxineVM.Phase phase) {
-        if (MaxineVM.Phase.RUNNING == phase) {
-            if (Heap.traceGCTime()) {
-                collect.reportTotalGCTimes();
-            }
-        }
-    }
 }
 

@@ -67,13 +67,8 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.COMPILING) {
             compileSnippets();
         }
-    }
 
-    @Override
-    public void finalize(Phase phase) {
-        super.finalize(phase);
-
-        if (phase == Phase.RUNNING) {
+        if (phase == Phase.TERMINATING) {
             for (IrGenerator generator : irGenerators()) {
                 generator.notifyAfterFinish();
             }

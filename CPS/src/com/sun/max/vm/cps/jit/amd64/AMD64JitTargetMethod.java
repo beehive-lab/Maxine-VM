@@ -32,6 +32,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.cps.target.amd64.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
@@ -247,7 +248,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             // + space of the first slot itself).
             Pointer catcherStackPointer = localVariablesBase.minus(sizeOfNonParameterLocals() + JitStackFrameLayout.JIT_SLOT_SIZE);
             // Push the null object on top of the stack first
-            catcherStackPointer.writeReference(0, null);
+            catcherStackPointer.writeReference(0, Reference.zero());
 
             // found an exception handler, and thus we are done with the stack walker
             stackFrameWalker.reset();
@@ -335,7 +336,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     private void prepareTrampolineRefMap(Cursor caller, StackReferenceMapPreparer preparer) {
         // prepare the reference map for the parameters passed by the current (caller) frame.
         // the call was unresolved and hit a trampoline, so compute the refmap from the signature of
-        // the called method by looking at the bytecode of the caller method--how ugly...
+        // the called method by looking at the bytecode of the caller method
         final int bytecodePosition = bytecodePositionForCallSite(caller.ip());
         final CodeAttribute codeAttribute = classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool;

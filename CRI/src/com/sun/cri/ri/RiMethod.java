@@ -22,6 +22,8 @@ package com.sun.cri.ri;
 
 import java.lang.reflect.*;
 
+import com.sun.cri.ci.*;
+
 
 /**
  * Represents resolved and unresolved methods. Methods, like fields and types, are resolved through
@@ -137,13 +139,13 @@ public interface RiMethod {
     boolean isOverridden();
 
     /**
-     * TODO: Currently this must always return null! Fix me!
-     * Gets the liveness map for local variables at the specified bytecode index, if it exists.
+     * Gets a map from bytecode indexes to bit maps denoting the live locals at that position.
+     * If a non-null array is return, its length is guaranteed to be equal to {@code code().length}. 
+     * 
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @param bci the bytecode index
-     * @return the liveness map at the specified index, if it is available; {@code null} otherwise
+     * @return the liveness map if it is available; {@code null} otherwise
      */
-    Object liveness(int bci);
+    CiBitMap[] livenessMap();
 
     /**
      * Checks whether this method can be statically bound (that is, it is final or private or static).
@@ -158,6 +160,11 @@ public interface RiMethod {
      * @return the list of exception handlers
      */
     RiExceptionHandler[] exceptionHandlers();
+
+    /**
+     * Gets a stack trace element for this method and a given bytecode index.
+     */
+    StackTraceElement toStackTraceElement(int bci);
     
     /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.

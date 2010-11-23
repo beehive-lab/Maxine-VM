@@ -211,7 +211,7 @@ public class CFGPrinter {
             if (stackSize > 0) {
                 begin("stack");
                 out.print("size ").println(stackSize);
-                out.print("method \"").print(CiUtil.format("%f %h.%n(%p):%r", state.scope().method, false)).println('"');
+                out.print("method \"").print(CiUtil.toLocation(state.scope().method, state.bci)).println('"');
 
                 int i = 0;
                 while (i < stackSize) {
@@ -233,7 +233,7 @@ public class CFGPrinter {
             if (state.locksSize() > 0) {
                 begin("locks");
                 out.print("size ").println(state.locksSize());
-                out.print("method \"").print(CiUtil.format("%f %h.%n(%p):%r", state.scope().method, false)).println('"');
+                out.print("method \"").print(CiUtil.toLocation(state.scope().method, state.bci)).println('"');
 
                 for (int i = 0; i < state.locksSize(); ++i) {
                     Value value = state.lockAt(i);
@@ -248,7 +248,7 @@ public class CFGPrinter {
 
             begin("locals");
             out.print("size ").println(state.localsSize());
-            out.print("method \"").print(CiUtil.format("%f %h.%n(%p):%r", state.scope().method, false)).println('"');
+            out.print("method \"").print(CiUtil.toLocation(state.scope().method, state.bci)).println('"');
             int i = 0;
             while (i < state.localsSize()) {
                 Value value = state.localAt(i);
@@ -264,7 +264,7 @@ public class CFGPrinter {
                     i++;
                 }
             }
-            state = state.scope().callerState();
+            state = state.callerState();
             end("locals");
         } while (state != null);
 
@@ -281,17 +281,9 @@ public class CFGPrinter {
 
         StringBuilder buf = new StringBuilder();
 
-        boolean multipleScopes = state.scope().callerState() != null;
-        int bci = -1;
         do {
-            // Only qualify state with method name if there are multiple scopes (due to inlining)
-            if (multipleScopes) {
-                buf.append(CiUtil.format("%H.%n(%p)", state.scope().method, false));
-                if (bci >= 0) {
-                    buf.append(" @ ").append(bci);
-                }
-                buf.append('\n');
-            }
+            buf.append(CiUtil.toLocation(state.scope().method, state.bci));
+            buf.append('\n');
             if (state.stackSize() > 0) {
                 int i = 0;
                 buf.append("stack: ");
@@ -329,8 +321,7 @@ public class CFGPrinter {
                 i++;
             }
             buf.append("\n");
-            bci = state.scope().callerBCI();
-            state = state.scope().callerState();
+            state = state.callerState();
         } while (state != null);
         return buf.toString();
     }
@@ -528,9 +519,6 @@ public class CFGPrinter {
         out.printf("%d %s ", interval.operandNumber, (interval.operand.isRegister() ? "fixed" : interval.kind().name()));
         if (interval.operand.isRegister()) {
             out.printf("\"[%s|%c]\"", interval.operand.name(), interval.operand.kind.typeChar);
-            if (!true) {
-                out.print(' ');
-            }
         } else {
             if (interval.location() != null) {
                 out.printf("\"[%s|%c]\"", interval.location().name(), interval.location().kind.typeChar);

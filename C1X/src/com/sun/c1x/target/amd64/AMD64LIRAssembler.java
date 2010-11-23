@@ -21,6 +21,7 @@
 package com.sun.c1x.target.amd64;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
@@ -30,14 +31,16 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.target.amd64.AMD64Assembler.*;
+import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.CiXirAssembler.XirInstruction;
+import com.sun.cri.xir.CiXirAssembler.XirLabel;
+import com.sun.cri.xir.CiXirAssembler.XirMark;
 
 /**
  * This class implements the x86-specific code generation for LIR.
@@ -101,12 +104,18 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitMonitorAddress(int monitor, CiValue dst) {
-        masm.leaq(dst.asRegister(), frameMap.toMonitorBaseStackAddress(monitor));
+        CiStackSlot slot = frameMap.toMonitorBaseStackAddress(monitor);
+        masm.leaq(dst.asRegister(), new CiAddress(slot.kind, AMD64.rsp.asValue(), slot.index() * target.arch.wordSize));
     }
 
     @Override
     protected void emitPause() {
         masm.pause();
+    }
+
+    @Override
+    protected void emitBreakpoint() {
+        masm.emitByte(0xcc);
     }
 
     @Override
@@ -254,9 +263,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
         } else if (dest.kind.isDouble()) {
             masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
         } else {
-            if (src.kind == CiKind.Object) {
-                masm.verifyOop(src.asRegister());
-            }
             moveRegs(src.asRegister(), dest.asRegister());
         }
     }
@@ -266,10 +272,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
         assert src.isRegister();
         assert dst.isStackSlot();
         CiAddress addr = frameMap.toStackAddress(((CiStackSlot) dst));
-
-        if (src.kind.isObject()) {
-            masm.verifyOop(src.asRegister());
-        }
 
         switch (src.kind) {
             case Boolean :
@@ -291,9 +293,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
     protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         CiAddress toAddr = (CiAddress) dest;
 
-        if (kind == CiKind.Object) {
-            masm.verifyOop(src.asRegister());
-        }
         if (info != null) {
             asm.recordImplicitException(codePos(), info);
         }
@@ -324,10 +323,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
     protected void stack2reg(CiValue src, CiValue dest, CiKind kind) {
         assert src.isStackSlot();
         assert dest.isRegister();
-
-        if (kind == CiKind.Object) {
-            masm.verifyOop(dest.asRegister());
-        }
 
         CiAddress addr = frameMap.toStackAddress(((CiStackSlot) src));
 
@@ -403,10 +398,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Short   : masm.movswl(dest.asRegister(), addr); break;
             default      : throw Util.shouldNotReachHere();
         }
-
-        if (kind == CiKind.Object) {
-            masm.verifyOop(dest.asRegister());
-        }
     }
 
     @Override
@@ -454,6 +445,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
         if (op.cond() == Condition.TRUE) {
             if (op.info != null) {
                 asm.recordImplicitException(codePos(), op.info);
+                System.out.println("Condition is TRUE");
             }
             masm.jmp(op.label());
         } else {
@@ -1177,41 +1169,11 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     }
                     default      : throw Util.shouldNotReachHere();
                 }
-            } else if (opr2.isAddress()) {
-                // register - address
-                if (op != null && op.info != null) {
-                    asm.recordImplicitException(codePos(), op.info);
-                }
-                switch (opr1.kind) {
-                    case Boolean :
-                    case Byte    :
-                    case Char    :
-                    case Short   :
-                    case Int     : masm.cmpl(reg1, asAddress(opr2)); break;
-                    default      : throw Util.shouldNotReachHere();
-                }
+            } else {
+                throw Util.shouldNotReachHere();
             }
         } else {
-            assert opr1.isAddress() && opr2.isConstant();
-            CiConstant c = ((CiConstant) opr2);
-
-            if (c.kind == CiKind.Object) {
-                assert condition == Condition.EQ || condition == Condition.NE : "need to reverse";
-                masm.movoop(rscratch1, CiConstant.forObject(c.asObject()));
-            }
-            if (op != null && op.info != null) {
-                asm.recordImplicitException(codePos(), op.info);
-            }
-            // special case: address - constant
-            CiAddress addr = (CiAddress) opr1;
-            if (c.kind == CiKind.Int) {
-                masm.cmpl(addr, c.asInt());
-            } else {
-                assert c.kind == CiKind.Object || c.kind == CiKind.Word;
-                // %%% Make this explode if addr isn't reachable until we figure out a
-                // better strategy by giving X86.noreg as the temp for asAddress
-                masm.cmpptr(rscratch1, addr);
-            }
+            throw Util.shouldNotReachHere();
         }
     }
 
@@ -1243,7 +1205,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
             masm.jmp(done);
             masm.bind(isEqual);
             masm.xorptr(dest, dest);
-
             masm.bind(done);
         }
     }
@@ -1391,7 +1352,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitNegate(LIROp1 op) {
+    protected void emitNegate(LIRNegate op) {
         CiValue left = op.operand();
         CiValue dest = op.result();
         assert left.isRegister();
@@ -1548,8 +1509,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     emitShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
                     break;
 
-                case Shr:
+                case Sar:
                     emitShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
+                    break;
+
+                case Shr:
+                    emitShiftOp(LIROpcode.Ushr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
                     break;
 
                 case And:
@@ -1598,10 +1563,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case PointerLoadDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
 
-                    if (addressInformation.canTrap) {
-                        //assert info != null;
-                    }
-
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
 
@@ -1625,12 +1586,25 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
 
-                case PointerStoreDisp: {
+                case LoadEffectiveAddress: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
 
-                    if (addressInformation.canTrap) {
-                        //assert info != null;
-                    }
+                    CiAddress.Scale scale = addressInformation.scale;
+                    int displacement = addressInformation.disp;
+
+                    CiValue result = operands[inst.result.index];
+                    CiValue pointer = operands[inst.x().index];
+                    CiValue index = operands[inst.y().index];
+
+                    pointer = assureInRegister(pointer);
+                    assert pointer.isVariableOrRegister();
+                    CiValue src = new CiAddress(CiKind.Illegal, pointer, index, scale, displacement);
+                    emitLea(src, result);
+                    break;
+                }
+
+                case PointerStoreDisp: {
+                    CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
 
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
@@ -1677,7 +1651,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         signature[i] = inst.arguments[i].kind;
                     }
 
-                    CiCallingConvention cc = frameMap.runtimeCallingConvention(signature);
+                    CiCallingConvention cc = frameMap.getCallingConvention(signature, RuntimeCall);
                     for (int i = 0; i < inst.arguments.length; i++) {
                         CiValue argumentLocation = cc.locations[i];
                         CiValue argumentSourceLocation = operands[inst.arguments[i].index];
@@ -1752,7 +1726,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case Safepoint: {
-                    asm.recordSafepoint(codePos(), info.registerRefMap(), info.stackRefMap(), info);
+                    assert info != null : "Must have debug info in order to create a safepoint.";
+                    asm.recordSafepoint(codePos(), info);
                     break;
                 }
                 case NullCheck: {
@@ -1777,26 +1752,24 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
                     masm.decrementq(AMD64.rsp, frameSize); // does not emit code for frameSize == 0
-                    CiRegister[] calleeSave = compilation.registerConfig.getCalleeSaveRegisters();
-                    if (calleeSave.length != 0) {
-                        CiRegisterSaveArea rsa = target.registerSaveArea;
-                        int frameToRSA = frameSize - rsa.size;
-                        assert frameToRSA >= 0;
-                        masm.save(calleeSave, rsa, frameToRSA);
+                    CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
+                    if (csa.size != 0) {
+                        int frameToCSA = frameSize - csa.size;
+                        assert frameToCSA >= 0;
+                        masm.save(csa, frameToCSA);
                     }
                     break;
                 }
                 case PopFrame: {
                     int frameSize = initialFrameSizeInBytes();
 
-                    CiRegister[] calleeSave = compilation.registerConfig.getCalleeSaveRegisters();
-                    if (calleeSave.length != 0) {
+                    CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
+                    if (csa.size != 0) {
                         registerRestoreEpilogueOffset = masm.codeBuffer.position();
 
                         // saved all registers, restore all registers
-                        CiRegisterSaveArea rsa = target.registerSaveArea;
-                        int frameToRSA = frameSize - rsa.size;
-                        masm.restore(calleeSave, rsa, frameToRSA);
+                        int frameToCSA = frameSize - csa.size;
+                        masm.restore(csa, frameToCSA);
                     }
 
                     masm.incrementq(AMD64.rsp, frameSize);
@@ -1867,7 +1840,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
             return register;
         }
 
-        assert pointer.isRegister();
+        assert pointer.isRegister() : "should be register, but is: " + pointer;
         return (CiRegisterValue) pointer;
     }
 

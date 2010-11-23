@@ -37,7 +37,7 @@ package com.sun.max.tele.channel.natives;
  */
 public class TeleChannelNatives {
     // from TeleProcess
-    public native void teleInitialize(int threadLocalsAreaSize);
+    public native void teleInitialize(int tlaSize);
     public native long createChild(long argv, int vmAgentPort);
     private native boolean attach(long processHandle);
     private native boolean detach(long processHandle);
@@ -45,7 +45,7 @@ public class TeleChannelNatives {
     public native boolean suspend(long processHandle);
     public native boolean resume(long processHandle);
     public native int waitUntilStopped(long processHandle);
-    public native void gatherThreads(long processHandle, Object teleProcess, Object threadList, long threadLocalsList, long primordialVmThreadLocals);
+    public native void gatherThreads(long processHandle, Object teleProcess, Object threadList, long tlaList, long primordialETLA);
     public native int readBytes(long processHandle, long src, Object dst, boolean isDirectByteBuffer, int offset, int length);
     public native int writeBytes(long processHandle, long dst, Object src, boolean isDirectByteBuffer, int offset, int length);
     public native boolean activateWatchpoint(long processHandle, long start, long size, boolean after, boolean read, boolean write, boolean exec);

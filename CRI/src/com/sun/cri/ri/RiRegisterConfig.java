@@ -23,6 +23,7 @@ package com.sun.cri.ri;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 /**
@@ -47,13 +48,13 @@ public interface RiRegisterConfig {
     CiRegister getScratchRegister();
 
     /**
-     * Gets the calling convention describing a call to or from Java code.
+     * Gets the calling convention describing how arguments are passed.
      * 
+     * @param type the type of calling convention being requested 
      * @param parameters the types of the arguments of the call
-     * @param outgoing if {@code true}, this is a call to Java code otherwise it's a call from Java code
      * @param target the target platform
      */
-    CiCallingConvention getCallingConvention(CiCallingConvention.Type type, CiKind[] parameters, boolean outgoing, CiTarget target);
+    CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target);
     
     /**
      * Gets the complete set of registers that are can be used to pass parameters
@@ -62,7 +63,7 @@ public interface RiRegisterConfig {
      * @param type the type of calling convention
      * @return the set of registers that may be used to pass parameters in a call conforming to {@code type}
      */
-    CiRegister[] getCallingConventionRegisters(CiCallingConvention.Type type);
+    CiRegister[] getCallingConventionRegisters(Type type);
     
     /**
      * Gets the set of registers that can be used by the register allocator.
@@ -80,15 +81,16 @@ public interface RiRegisterConfig {
     EnumMap<RegisterFlag, CiRegister[]> getCategorizedAllocatableRegisters();
 
     /**
-     * Denotes the registers whose values must be preserved by a method across any call it makes. 
+     * Gets the registers whose values must be preserved by a method across any call it makes. 
      */
     CiRegister[] getCallerSaveRegisters();
     
     /**
-     * Denotes the registers whose values must be preserved by a method for its caller. 
+     * Gets the object describing the callee save area of this register configuration.
+     * Note that this area may be {@linkplain CiCalleeSaveArea#EMPTY empty}. 
      */
-    CiRegister[] getCalleeSaveRegisters();
-
+    CiCalleeSaveArea getCalleeSaveArea();
+    
     /**
      * Gets a map from register {@linkplain CiRegister#number numbers} to register
      * {@linkplain RiRegisterAttributes attributes} for this register configuration.

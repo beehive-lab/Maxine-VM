@@ -33,6 +33,7 @@ public abstract class ValueVisitor {
     public abstract void visitArrayLength(ArrayLength i);
     public abstract void visitBase(Base i);
     public abstract void visitBlockBegin(BlockBegin i);
+    public abstract void visitBreakpointTrap(BreakpointTrap i);
     public abstract void visitCheckCast(CheckCast i);
     public abstract void visitCompareOp(CompareOp i);
     public abstract void visitCompareAndSwap(CompareAndSwap i);

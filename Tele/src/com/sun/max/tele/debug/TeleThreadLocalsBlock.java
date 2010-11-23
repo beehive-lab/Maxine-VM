@@ -103,7 +103,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
      * The thread locals areas for each state; null if no actual thread locals allocated.
      */
     private final Map<Safepoint.State, TeleThreadLocalsArea> areas;
-    private final int offsetToTriggeredThreadLocals;
+    private final int offsetToTTLA;
     private long lastRefreshedEpoch = -1L;
 
     /**
@@ -134,7 +134,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
         this.entityName = regionName;
         this.threadLocalsBlockMemoryRegion = new ThreadLocalsBlockMemoryRegion(teleNativeThread.vm(), this, regionName, start, size);
         this.areas = new EnumMap<Safepoint.State, TeleThreadLocalsArea>(Safepoint.State.class);
-        this.offsetToTriggeredThreadLocals = Platform.platform().pageSize - Word.size();
+        this.offsetToTTLA = Platform.platform().pageSize - Word.size();
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " in the " + teleNativeThread.vm().entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
@@ -159,7 +159,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
         this.entityName = name;
         this.threadLocalsBlockMemoryRegion = null;
         this.areas = null;
-        this.offsetToTriggeredThreadLocals = Platform.platform().pageSize - Word.size();
+        this.offsetToTTLA = Platform.platform().pageSize - Word.size();
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " in the " + teleNativeThread.vm().entityName();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
@@ -217,7 +217,7 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
         return teleNativeThread;
     }
 
-    public TeleThreadLocalsArea threadLocalsAreaFor(State state) {
+    public TeleThreadLocalsArea tlaFor(State state) {
         if (threadLocalsBlockMemoryRegion != null) {
             updateCache();
             return areas.get(state);
@@ -225,12 +225,12 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
         return null;
     }
 
-    public MaxThreadLocalsArea findThreadLocalsArea(Address address) {
+    public MaxThreadLocalsArea findTLA(Address address) {
         if (threadLocalsBlockMemoryRegion != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-                final TeleThreadLocalsArea threadLocalsArea = threadLocalsAreaFor(state);
-                if (threadLocalsArea.memoryRegion().contains(address)) {
-                    return threadLocalsArea;
+                final TeleThreadLocalsArea tla = tlaFor(state);
+                if (tla.memoryRegion().contains(address)) {
+                    return tla;
                 }
             }
         }
@@ -253,10 +253,10 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
      * @param threadLocalsRegion the memory region containing the thread locals block
      * @param tlaSize the size in bytes of each Thread Locals Area in the region.
      */
-    void updateAfterGather(TeleFixedMemoryRegion threadLocalsRegion, int threadLocalsAreaSize) {
+    void updateAfterGather(TeleFixedMemoryRegion threadLocalsRegion, int tlaSize) {
         if (threadLocalsRegion != null) {
             for (Safepoint.State safepointState : Safepoint.State.CONSTANTS) {
-                final Pointer tlaStartPointer = getThreadLocalsAreaStart(threadLocalsRegion, threadLocalsAreaSize, safepointState);
+                final Pointer tlaStartPointer = getThreadLocalsAreaStart(threadLocalsRegion, tlaSize, safepointState);
                 // Only create a new TeleThreadLocalsArea if the start address has changed which
                 // should only happen once going from 0 to a non-zero value.
                 final TeleThreadLocalsArea area = areas.get(safepointState);
@@ -283,14 +283,14 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
      * Gets the address of one of the three thread locals areas inside a given thread locals region.
      *
      * @param threadLocalsRegion the VM memory region containing the thread locals block
-     * @param threadLocalsAreaSize the size of a thread locals area within the region
+     * @param tlaSize the size of a thread locals area within the region
      * @param safepointState denotes which of the three thread locals areas is being requested
      * @return the address of the thread locals areas in {@code threadLocalsRegion} corresponding to {@code state}
      * @see VmThreadLocal
      */
-    private Pointer getThreadLocalsAreaStart(TeleFixedMemoryRegion threadLocalsRegion, int threadLocalsAreaSize, Safepoint.State safepointState) {
+    private Pointer getThreadLocalsAreaStart(TeleFixedMemoryRegion threadLocalsRegion, int tlaSize, Safepoint.State safepointState) {
         if (threadLocalsRegion != null) {
-            return threadLocalsRegion.start().plus(offsetToTriggeredThreadLocals).plus(threadLocalsAreaSize * safepointState.ordinal()).asPointer();
+            return threadLocalsRegion.start().plus(offsetToTTLA).plus(tlaSize * safepointState.ordinal()).asPointer();
         }
         return null;
     }
