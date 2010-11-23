@@ -487,7 +487,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitIntrinsic(Intrinsic intrinsic) {
-        out.print(intrinsic.intrinsic().simpleClassName()).print('.').print(intrinsic.intrinsic().name()).print('(');
+        out.print(intrinsic.intrinsic().className()).print('.').print(intrinsic.intrinsic().name()).print('(');
         for (int i = 0; i < intrinsic.arguments().length; i++) {
           if (i > 0) {
               out.print(", ");
