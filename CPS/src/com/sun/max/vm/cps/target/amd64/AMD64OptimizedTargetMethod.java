@@ -85,7 +85,7 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
         switch (calleeKind) {
             case TRAMPOLINE:
                 // compute the register reference map from the call at this site
-                AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
+                AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer, callee.targetMethod().getRegisterConfig());
                 break;
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame

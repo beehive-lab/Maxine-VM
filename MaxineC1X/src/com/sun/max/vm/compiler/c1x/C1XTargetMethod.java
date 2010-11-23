@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.c1x.C1XCompilerScheme.*;
 import static com.sun.max.vm.stack.amd64.AMD64OptStackWalking.*;
 
@@ -110,7 +109,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     private CiTargetMethod bootstrappingCiTargetMethod;
 
     public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
-        super(classMethodActor, vmConfig().targetABIsScheme().optimizedJavaABI);
+        super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         init(ciTargetMethod);
 
         if (printTargetMethods.getValue() != null) {
@@ -121,7 +120,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     public C1XTargetMethod(String stubName, CiTargetMethod ciTargetMethod) {
-        super(stubName, vmConfig().targetABIsScheme().optimizedJavaABI);
+        super(stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         init(ciTargetMethod);
 
         if (printTargetMethods.getValue() != null) {
@@ -173,6 +172,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     /**
      * Gets the register config used to compile this method.
      */
+    @Override
     public RiRegisterConfig getRegisterConfig() {
         if (classMethodActor != null) {
             return C1XCompilerScheme.getRegisterConfig(classMethodActor);
@@ -555,7 +555,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     @UNSAFE
     public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
         assert oldTargetMethod != newTargetMethod;
-        assert oldTargetMethod.abi().callEntryPoint != CallEntryPoint.C_ENTRY_POINT;
+        assert oldTargetMethod.callEntryPoint != CallEntryPoint.C_ENTRY_POINT;
 
         long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
         long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
@@ -719,6 +719,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
+    private static final boolean C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES = System.getProperty("C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES") != null;
+
     /**
      * Prepares the reference map for this frame.
      * @param current the current frame
@@ -732,15 +734,20 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         CiCalleeSaveArea csa = null;
         switch (calleeKind) {
             case TRAMPOLINE:
-//                if (callee.targetMethod() instanceof C1XTargetMethod) {
-//                    // can simply use the register ref map at the call site
-//                    C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
-//                    csa = c1xCallee.getRegisterConfig().getCalleeSaveArea();
-//                    registerState = callee.sp().plus(offsetOfCSAInFrame(c1xCallee.frameSize(), csa));
-//                } else {
+                RiRegisterConfig registerConfig = callee.targetMethod().getRegisterConfig();
+                if (callee.targetMethod() instanceof C1XTargetMethod) {
+                    C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
+                    if (C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES) {
+                        // can simply use the register ref map at the call site
+                        csa = registerConfig.getCalleeSaveArea();
+                        registerState = callee.sp().plus(offsetOfCSAInFrame(c1xCallee.frameSize(), csa));
+                    } else {
+                        prepareTrampolineRefMap(current, callee, preparer, registerConfig);
+                    }
+                } else {
                     // compute the register reference map from the call at this site
-                    prepareTrampolineRefMap(current, callee, preparer);
-//                }
+                    prepareTrampolineRefMap(current, callee, preparer, registerConfig);
+                }
                 break;
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame

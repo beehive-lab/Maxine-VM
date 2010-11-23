@@ -867,12 +867,4 @@ public abstract class StackFrameWalker {
      * @return the value (as a pointer) of {@code local} in the safepoint-enabled thread locals
      */
     public abstract Pointer readPointer(VmThreadLocal tl);
-
-    /**
-     * Updates the stack walker's frame and stack pointers with those specified by the target ABI (use the ABI stack and frame pointers).
-     * This may be necessary when initiating stack walking: by default the stack frame walker uses the stack and frame pointers defined by the CPU.
-     * This is incorrect when the ABI pointers differs from the CPU pointers (like it is the case with some JIT implementation, currently).
-     * @param targetABI
-     */
-    public abstract void useABI(TargetABI targetABI);
 }

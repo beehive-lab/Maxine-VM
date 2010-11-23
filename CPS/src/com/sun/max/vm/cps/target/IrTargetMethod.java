@@ -49,7 +49,7 @@ public class IrTargetMethod extends CPSTargetMethod {
     final IrMethod irMethod;
 
     IrTargetMethod(IrMethod irMethod) {
-        super(irMethod.classMethodActor());
+        super(irMethod.classMethodActor(), null);
         this.irMethod = irMethod;
     }
 

@@ -85,10 +85,6 @@ public final class VmStackFrameWalker extends StackFrameWalker {
         dumpingFatalStackTrace = flag;
     }
 
-    @Override
-    public void useABI(TargetABI targetABI) {
-    }
-
     @INLINE
     public static ClassMethodActor getCallerClassMethodActor() {
         // TODO: a full stack walk is not necessary here.

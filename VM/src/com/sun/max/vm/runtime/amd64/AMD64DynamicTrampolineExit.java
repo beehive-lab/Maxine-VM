@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm.runtime.amd64;
 
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.AMD64AdapterGenerator.Jit2Opt.Jit2OptAdapterFrameLayout;
 import com.sun.max.vm.runtime.*;
@@ -57,11 +57,11 @@ public class AMD64DynamicTrampolineExit extends DynamicTrampolineExit {
         final Pointer ripLocation = stackPointer.plus(trampolineFrameSize);
         final Pointer ripPointer = ripLocation.readWord(0).asPointer();
         final TargetMethod caller = Code.codePointerToTargetMethod(ripPointer);
-        TargetABI abi = caller.abi();
+        CallEntryPoint callEntryPoint = caller.callEntryPoint;
         if (caller.classMethodActor != null && caller.classMethodActor.isVmEntryPoint()) {
-            abi = vmConfig().targetABIsScheme().optimizedJavaABI;
+            callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
         }
-        return vtableEntryPoint.plus(abi.callEntryPoint.offset() - VTABLE_ENTRY_POINT.offset());
+        return vtableEntryPoint.plus(callEntryPoint.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
 }

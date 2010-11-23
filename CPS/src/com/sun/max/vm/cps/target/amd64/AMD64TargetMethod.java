@@ -65,7 +65,7 @@ public abstract class AMD64TargetMethod {
 
     public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
         assert oldTargetMethod != newTargetMethod;
-        assert oldTargetMethod.abi().callEntryPoint != CallEntryPoint.C_ENTRY_POINT;
+        assert oldTargetMethod.callEntryPoint != CallEntryPoint.C_ENTRY_POINT;
 
         final long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
         final long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
