@@ -90,7 +90,7 @@ public abstract class AbstractAssembler {
             C1XMetrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
         }
 
-        if (C1XOptions.PrintAssembly) {
+        if (C1XOptions.PrintAssembly && !TTY.isSuppressed()) {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Name: " + name);
             TTY.println("Frame size: " + targetMethod.frameSize());

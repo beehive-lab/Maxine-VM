@@ -1677,7 +1677,9 @@ public final class GraphBuilder {
     }
 
     boolean cannotInline(RiMethod target, String reason) {
-        compilation.recordInliningFailure(target, reason);
+        if (C1XOptions.PrintInliningFailures) {
+            TTY.println("Cannot inline " + target.toString() + " into " + compilation.method.toString() + " because of " + reason);
+        }
         return false;
     }
 
