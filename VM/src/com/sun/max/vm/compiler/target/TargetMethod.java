@@ -671,14 +671,6 @@ public abstract class TargetMethod extends MemoryRegion {
         }
     }
 
-    public boolean isTrapStub() {
-        return classMethodActor != null && classMethodActor.isTrapStub();
-    }
-
-    public final boolean isTrampoline() {
-        return classMethodActor != null && classMethodActor.isTrampoline();
-    }
-
     /**
      * Analyzes the target method that this compiler produced to build a call graph. This method gathers the
      * methods called directly or indirectly by this target method as well as the methods it inlined.
