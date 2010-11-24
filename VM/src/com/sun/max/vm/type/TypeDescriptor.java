@@ -267,10 +267,6 @@ public abstract class TypeDescriptor extends Descriptor {
                 return false;
             }
 
-            if (ClassActor.isInProhibitedPackage(toJavaString())) {
-                return false;
-            }
-
             if (HostedBootClassLoader.isOmittedType(typeDescriptor)) {
                 return false;
             }
