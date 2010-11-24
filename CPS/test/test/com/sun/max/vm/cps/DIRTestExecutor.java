@@ -54,7 +54,6 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) vmConfig().bootCompilerScheme();
         dirGeneratorScheme.compileSnippets();
         generator = dirGeneratorScheme.dirGenerator();
-        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {
