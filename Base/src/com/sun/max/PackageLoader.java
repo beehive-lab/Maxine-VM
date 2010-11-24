@@ -73,7 +73,7 @@ public class PackageLoader {
         for (String className : classNames) {
             final Class javaClass = loadClass(className);
             if (javaClass != null) {
-                Classes.link(javaClass);
+                Classes.initialize(javaClass);
                 classes.add(javaClass);
             }
         }
