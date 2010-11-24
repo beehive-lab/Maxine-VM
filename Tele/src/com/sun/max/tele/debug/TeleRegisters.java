@@ -25,13 +25,13 @@ import static com.sun.max.platform.Platform.*;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 
 /**
  * Abstract base class for caching the values of a set of ISA defined registers for a given thread.
@@ -46,25 +46,24 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
     private static final int TRACE_VALUE = 2;
 
     private final TimedTrace updateTracer;
+    public final CiRegister[] registers;
 
     private final TeleRegisterSet teleRegisterSet;
     final Endianness endianness;
-    private final Symbolizer<? extends Symbol> symbolizer;
 
     private final Address[] registerValues;
     private final byte[] registerData;
     private final ByteArrayInputStream registerDataInputStream;
 
-    protected TeleRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet, Symbolizer<? extends Symbol> symbolizer) {
+    protected TeleRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet, CiRegister[] registers) {
         super(teleVM);
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + teleRegisterSet.thread().entityName() + " creating");
         tracer.begin();
-
+        this.registers = registers;
         this.teleRegisterSet = teleRegisterSet;
-        this.symbolizer = symbolizer;
         this.endianness = platform().endianness();
-        this.registerValues = new Address[symbolizer.numberOfValues()];
-        this.registerData = new byte[symbolizer.numberOfValues() * Address.size()];
+        this.registerValues = new Address[registers.length];
+        this.registerData = new byte[registers.length * Address.size()];
         this.registerDataInputStream = new ByteArrayInputStream(registerData);
         Arrays.fill(this.registerValues, Address.zero());
 
@@ -94,8 +93,8 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
      * @param register the register whose value is to be returned
      * @return the value of {@code register}
      */
-    final Address getValue(Symbol register) {
-        return registerValues[register.value()];
+    final Address getValue(CiRegister register) {
+        return registerValues[register.encoding];
     }
 
     /**
@@ -104,7 +103,7 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
      * @param register
      * @return whether the register is the instruction pointer
      */
-    boolean isInstructionPointerRegister(Symbol register) {
+    boolean isInstructionPointerRegister(CiRegister register) {
         return false;
     }
 
@@ -114,7 +113,7 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
      * @param register
      * @return whether the register is a flags register
      */
-    boolean isFlagsRegister(Symbol register) {
+    boolean isFlagsRegister(CiRegister register) {
         return false;
     }
 
@@ -123,10 +122,6 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
      */
     final byte[] registerData() {
         return registerData;
-    }
-
-    final Symbolizer<? extends Symbol> symbolizer() {
-        return symbolizer;
     }
 
     Address getValueAt(int index) {
@@ -142,17 +137,17 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
      * @param register the register whose value is to be updated
      * @param value the new value of {@code register}
      */
-    protected final void setValue(Symbol register, Address value) {
-        registerValues[register.value()] = value;
+    protected final void setValue(CiRegister register, Address value) {
+        registerValues[register.encoding] = value;
     }
 
     Registers getRegisters(String name) {
-        final String[] registerNames = new String[symbolizer().numberOfValues()];
+        final String[] registerNames = new String[registers.length];
         final long[] values = new long[registerNames.length];
         int z = 0;
-        for (Symbol s : symbolizer()) {
-            registerNames[z] = s.name();
-            values[z] = getValue(s).toLong();
+        for (CiRegister reg : registers) {
+            registerNames[z] = reg.name;
+            values[z] = getValue(reg).toLong();
             z++;
         }
 

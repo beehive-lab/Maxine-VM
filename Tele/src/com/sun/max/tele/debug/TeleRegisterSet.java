@@ -22,11 +22,11 @@ package com.sun.max.tele.debug;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 
 /**
  * Access to register state for a thread in the VM.
@@ -68,14 +68,14 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
         this.teleStateRegisters = new TeleStateRegisters(teleVM, this);
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + teleNativeThread.entityName() + " updating");
 
-        final int integerRegisterCount = teleIntegerRegisters.symbolizer().numberOfValues();
-        final int floatingPointRegisterCount = teleFloatingPointRegisters.symbolizer().numberOfValues();
-        final int stateRegisterCount = teleStateRegisters.symbolizer().numberOfValues();
+        final int integerRegisterCount = teleIntegerRegisters.registers.length;
+        final int floatingPointRegisterCount = teleFloatingPointRegisters.registers.length;
+        final int stateRegisterCount = teleStateRegisters.registers.length;
 
         final List<MaxRegister> all = new ArrayList<MaxRegister>(integerRegisterCount + floatingPointRegisterCount + stateRegisterCount);
 
         final List<MaxRegister> iRegisters = new ArrayList<MaxRegister>(integerRegisterCount);
-        for (Symbol register : teleIntegerRegisters.symbolizer()) {
+        for (CiRegister register : teleIntegerRegisters.registers) {
             final TeleRegister teleRegister = new TeleRegister(teleIntegerRegisters, register, teleNativeThread);
             iRegisters.add(teleRegister);
             all.add(teleRegister);
@@ -83,7 +83,7 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
         this.integerRegisters = Collections.unmodifiableList(iRegisters);
 
         final List<MaxRegister> fRegisters = new ArrayList<MaxRegister>(floatingPointRegisterCount);
-        for (Symbol register : teleFloatingPointRegisters.symbolizer()) {
+        for (CiRegister register : teleFloatingPointRegisters.registers) {
             final TeleRegister teleRegister = new TeleRegister(teleFloatingPointRegisters, register, teleNativeThread);
             fRegisters.add(teleRegister);
             all.add(teleRegister);
@@ -91,7 +91,7 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
         this.floatingPointRegisters = Collections.unmodifiableList(fRegisters);
 
         final List<MaxRegister> sRegisters = new ArrayList<MaxRegister>(stateRegisterCount);
-        for (Symbol register : teleStateRegisters.symbolizer()) {
+        for (CiRegister register : teleStateRegisters.registers) {
             final TeleRegister teleRegister = new TeleRegister(teleStateRegisters, register, teleNativeThread);
             sRegisters.add(teleRegister);
             all.add(teleRegister);
@@ -164,12 +164,12 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
         // Gets called a lot, usually empty result;  allocate as little a possible
         List<MaxRegister> registers = null;
         if (live && memoryRegion != null) {
-            for (Symbol symbol : teleIntegerRegisters.symbolizer()) {
-                if (memoryRegion.contains(teleIntegerRegisters.getValue(symbol))) {
+            for (CiRegister reg : teleIntegerRegisters.registers) {
+                if (memoryRegion.contains(teleIntegerRegisters.getValue(reg))) {
                     if (registers == null) {
                         registers = new ArrayList<MaxRegister>(4);
                     }
-                    registers.add(new TeleRegister(teleIntegerRegisters, symbol, teleNativeThread));
+                    registers.add(new TeleRegister(teleIntegerRegisters, reg, teleNativeThread));
                 }
             }
         }

@@ -22,9 +22,10 @@ package com.sun.max.tele.debug;
 
 import static com.sun.max.platform.Platform.*;
 
+import com.sun.cri.ci.*;
+import com.sun.max.asm.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -36,61 +37,12 @@ import com.sun.max.vm.runtime.*;
  */
 public final class TeleStateRegisters extends TeleRegisters {
 
-    private final Symbol instructionPointerRegister;
-    private final Symbol flagsRegister;
+    private final CiRegister instructionPointerRegister;
+    private final CiRegister flagsRegister;
 
-    public TeleStateRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
-        super(teleVM, teleRegisterSet, createSymbolizer());
-        switch (platform().isa) {
-            case AMD64: {
-                instructionPointerRegister = Amd64StateRegister.RIP;
-                flagsRegister = Amd64StateRegister.FLAGS;
-                break;
-            }
-            case SPARC: {
-                instructionPointerRegister = SparcStateRegister.PC;
-                flagsRegister = SparcStateRegister.CCR;
-                break;
-            }
-            default: {
-                throw FatalError.unimplemented();
-            }
-        }
-    }
-
-    /**
-     * Gets the value of the instruction pointer.
-     *
-     * @return the value of the instruction pointer
-     */
-    Pointer instructionPointer() {
-        return getValue(instructionPointerRegister).asPointer();
-    }
-
-    /**
-     * Updates the value of the instruction point register in this cache. The update to the actual instruction pointer
-     * in the remote process must be done by the caller of this method.
-     *
-     * @param value the new value of the instruction pointer
-     */
-    void setInstructionPointer(Address value) {
-        setValue(instructionPointerRegister, value);
-    }
-
-    private enum Amd64StateRegister implements Enumerable<Amd64StateRegister> {
-
-        RIP, FLAGS;
-
-        public int value() {
-            return ordinal();
-        }
-
-        static final Enumerator<Amd64StateRegister> ENUMERATOR = new Enumerator<Amd64StateRegister>(Amd64StateRegister.class);
-
-        public Enumerator<Amd64StateRegister> enumerator() {
-            return ENUMERATOR;
-        }
-
+    static class AMD64 {
+        static CiRegister RIP   = new CiRegister(0, 0, -1, "rip");
+        static CiRegister FLAGS = new CiRegister(1, 1, -1, "flags");
         private static char[] flagNames = {
             'C', '1', 'P', '3', 'A', '5', 'Z', 'S',
             'T', 'I', 'D', 'O', 'I', 'L', 'N', 'F',
@@ -116,56 +68,56 @@ public final class TeleStateRegisters extends TeleRegisters {
         }
     }
 
-    private enum SparcStateRegister implements Enumerable<SparcStateRegister> {
-        CCR, PC,  NPC;
-        public int value() {
-            return ordinal();
+    static CiRegister[] createStateRegisters() {
+        if (platform().isa == ISA.AMD64) {
+            return new CiRegister[] {AMD64.RIP, AMD64.FLAGS};
         }
-        static final Enumerator<SparcStateRegister>  ENUMERATOR = new Enumerator<SparcStateRegister>(SparcStateRegister.class);
-        public Enumerator<SparcStateRegister> enumerator() {
-            return ENUMERATOR;
-        }
-        // TODO
-        public static String flagsToString(long flags) {
-            return "";
+        throw FatalError.unimplemented();
+    }
+
+    public TeleStateRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
+        super(teleVM, teleRegisterSet, createStateRegisters());
+        if (platform().isa == ISA.AMD64) {
+            instructionPointerRegister = AMD64.RIP;
+            flagsRegister = AMD64.FLAGS;
+        } else {
+            throw FatalError.unimplemented();
         }
     }
 
     /**
-     * Gets the symbols representing all the state registers of the instruction set denoted by a given VM configuration.
+     * Gets the value of the instruction pointer.
+     *
+     * @return the value of the instruction pointer
      */
-    private static Symbolizer<? extends Symbol> createSymbolizer() {
-        switch (platform().isa) {
-            case AMD64:
-                return Amd64StateRegister.ENUMERATOR;
-            case SPARC:
-                return SparcStateRegister.ENUMERATOR;
-            default:
-                throw FatalError.unimplemented();
-        }
+    Pointer instructionPointer() {
+        return getValue(instructionPointerRegister).asPointer();
+    }
+
+    /**
+     * Updates the value of the instruction point register in this cache. The update to the actual instruction pointer
+     * in the remote process must be done by the caller of this method.
+     *
+     * @param value the new value of the instruction pointer
+     */
+    void setInstructionPointer(Address value) {
+        setValue(instructionPointerRegister, value);
     }
 
     @Override
-    boolean isInstructionPointerRegister(Symbol register) {
+    boolean isInstructionPointerRegister(CiRegister register) {
         return register == instructionPointerRegister;
     }
 
     @Override
-    boolean isFlagsRegister(Symbol register) {
+    boolean isFlagsRegister(CiRegister register) {
         return register == flagsRegister;
     }
 
     public static String flagsToString(TeleVM teleVM, long flags) {
-        switch (platform().isa) {
-            case AMD64: {
-                return Amd64StateRegister.flagsToString(flags);
-            }
-            case SPARC: {
-                return SparcStateRegister.flagsToString(flags);
-            }
-            default: {
-                throw FatalError.unimplemented();
-            }
+        if (platform().isa == ISA.AMD64) {
+            return AMD64.flagsToString(flags);
         }
+        throw FatalError.unimplemented();
     }
 }

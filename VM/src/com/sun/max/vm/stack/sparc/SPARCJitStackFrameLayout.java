@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.stack.sparc;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -152,7 +154,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
 
     public int offsetToTopOfFrameFromFramePointer() {
         final int unalignedSize = sizeOfTemplateSlots() + CALL_SAVE_AREA_SIZE;
-        return JIT_ABI.alignFrameSize(unalignedSize);
+        return target().alignFrameSize(unalignedSize);
     }
 
     @Override

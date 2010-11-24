@@ -158,7 +158,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceIntFieldAccess SortedMemoryRegionList_size = new TeleInstanceIntFieldAccess(SortedMemoryRegionList.class, "size");
     public final TeleInstanceReferenceFieldAccess StringConstant_value = new TeleInstanceReferenceFieldAccess(StringConstant.class, "value", String.class);
     public final TeleInstanceReferenceFieldAccess TargetABI_callEntryPoint = new TeleInstanceReferenceFieldAccess(TargetABI.class, "callEntryPoint", CallEntryPoint.class);
-    public final TeleInstanceReferenceFieldAccess TargetMethod_abi = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "abi", TargetABI.class);
+    public final TeleInstanceReferenceFieldAccess TargetMethod_callEntryPoint = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "callEntryPoint", CallEntryPoint.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_classMethodActor = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "classMethodActor", ClassMethodActor.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_code = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "code", byte[].class);
     public final TeleInstanceWordFieldAccess TargetMethod_codeStart = new TeleInstanceWordFieldAccess(TargetMethod.class, "codeStart");
