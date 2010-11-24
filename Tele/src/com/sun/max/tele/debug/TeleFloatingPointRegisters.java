@@ -22,9 +22,10 @@ package com.sun.max.tele.debug;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.asm.amd64.*;
+import com.sun.c1x.target.amd64.*;
+import com.sun.cri.ci.*;
+import com.sun.max.asm.*;
 import com.sun.max.tele.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -36,53 +37,14 @@ import com.sun.max.vm.runtime.*;
  */
 public final class TeleFloatingPointRegisters extends TeleRegisters {
 
+    public static CiRegister[] getFloatingPointRegisters() {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64.xmmRegisters;
+        }
+        throw FatalError.unimplemented();
+    }
+
     public TeleFloatingPointRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
-        super(teleVM, teleRegisterSet, createSymbolizer());
-    }
-
-    /**
-     * The Inspector's register panel only supports displaying a set of registers with values that are monotonically
-     * increasing and/or that can have a width different from the word width. This doesn't work well with SPARC floating
-     * pointer registers where single and double register partially overlap, and single precision floating point
-     * register have a width smaller than the word width. For now, we simplify by having this class representing the
-     * double-precision floating point registers with "value" that are monotonically increasing..
-     *
-     * @author Laurent Daynes
-     */
-    private enum SparcFloatingPointRegister implements Enumerable<SparcFloatingPointRegister> {
-        F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16;
-
-        public int value() {
-            return ordinal();
-        }
-
-        @Override
-        public String toString() {
-            final int o = ordinal();
-            final int regNum = o > 32 ? 32 + ((o - 32) << 1) : o;
-            return "F" + regNum;
-        }
-
-        static final Enumerator<SparcFloatingPointRegister>  ENUMERATOR = new Enumerator<SparcFloatingPointRegister>(SparcFloatingPointRegister.class);
-        public Enumerator<SparcFloatingPointRegister> enumerator() {
-            return ENUMERATOR;
-        }
-
-    }
-
-    /**
-     * Gets the symbols representing all the floating point registers of the instruction set denoted by a given VM
-     * configuration.
-     */
-    public static Symbolizer<? extends Symbol> createSymbolizer() {
-        switch (platform().isa) {
-            case AMD64:
-                return AMD64XMMRegister.ENUMERATOR;
-            case SPARC:
-                return SparcFloatingPointRegister.ENUMERATOR;
-            default:
-                FatalError.unimplemented();
-                return null;
-        }
+        super(teleVM, teleRegisterSet, getFloatingPointRegisters());
     }
 }

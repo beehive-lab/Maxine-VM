@@ -240,6 +240,7 @@ public abstract class TargetMethod extends MemoryRegion {
         return frameSize;
     }
 
+    @INSPECTED
     public final CallEntryPoint callEntryPoint;
 
     /**

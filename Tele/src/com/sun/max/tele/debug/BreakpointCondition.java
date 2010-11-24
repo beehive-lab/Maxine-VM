@@ -25,9 +25,9 @@ import static java.io.StreamTokenizer.*;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 
 /**
  * Simple conditional breakpoints.
@@ -39,14 +39,18 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
     private String condition;
     private StreamTokenizer streamTokenizer;
     private TeleIntegerRegisters integerRegisters;
-    private static Map<String, ? extends Symbol> integerRegisterSymbols;
+    private static Map<String, CiRegister> integerRegisterSymbols;
     private Expression expression;
 
     public BreakpointCondition(TeleVM teleVM, String condition) throws ExpressionException {
         super(teleVM);
         this.condition = condition;
         if (integerRegisterSymbols == null) {
-            integerRegisterSymbols = Symbolizer.Static.toSymbolMap(TeleIntegerRegisters.createSymbolizer());
+            integerRegisterSymbols = new HashMap<String, CiRegister>();
+            for (CiRegister reg : TeleIntegerRegisters.getIntegerRegisters()) {
+                integerRegisterSymbols.put(reg.name.toUpperCase(), reg);
+                integerRegisterSymbols.put(reg.name.toLowerCase(), reg);
+            }
         }
         this.expression = parse();
     }
@@ -63,7 +67,6 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
         if (integerRegisters == null) {
             return false;
         }
-        integerRegisters.symbolizer();
         try {
             final Expression result = expression.evaluate();
             if (result instanceof BooleanExpression) {
@@ -131,7 +134,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
 
     private RegisterExpression isRegister() {
         if (streamTokenizer.ttype == TT_WORD) {
-            final Symbol register = integerRegisterSymbols.get(streamTokenizer.sval);
+            final CiRegister register = integerRegisterSymbols.get(streamTokenizer.sval);
             if (register != null) {
                 return new RegisterExpression(register);
             }
@@ -374,13 +377,13 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
     }
 
     class RegisterExpression extends Expression {
-        Symbol register;
+        CiRegister register;
 
-        RegisterExpression(Symbol register) {
+        RegisterExpression(CiRegister register) {
             this.register = register;
         }
 
-        Symbol register() {
+        CiRegister register() {
             return register;
         }
 

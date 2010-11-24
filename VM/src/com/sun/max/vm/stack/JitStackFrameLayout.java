@@ -27,7 +27,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -59,8 +58,6 @@ public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
     public static final int JIT_SLOT_SIZE = getJitSlotSize();
 
     public static final int JIT_STACK_BIAS = getJitStackBias();
-
-    public static final TargetABI JIT_ABI = vmConfig().targetABIsScheme().jitABI;
 
     private static final Endianness ENDIANNESS =  platform().endianness();
 

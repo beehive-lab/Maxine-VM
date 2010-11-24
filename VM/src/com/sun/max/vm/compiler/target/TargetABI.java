@@ -105,7 +105,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         return registerRoleAssignment.floatingPointRegisterActingAs(VMRegister.Role.ABI_RETURN);
     }
 
-    public final RiRegisterConfig registerConfig;
+    public final RegisterConfig registerConfig;
 
     /**
      * A target ABI specifies a number of register roles assignment used by the compiler that produces the target code, as well as
@@ -199,9 +199,12 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
      * on CPS target methods. This will no longer be necessary once CPS goes away.
      */
     public static class RegisterConfig implements RiRegisterConfig {
-        TargetABI abi;
         final CiRegister[] inParameters;
         final CiRegister[] outParameters;
+        final CiRegister cpuReturn;
+        final CiRegister fpuReturn;
+        final CiRegister frameReg;
+        final CiRegister scratchReg;
 
         private static CiRegister[] toArray(List cpuRegs, List fpuRegs) {
             CiRegister[] res = new CiRegister[cpuRegs.size() + fpuRegs.size()];
@@ -216,30 +219,39 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         }
 
         public RegisterConfig(TargetABI abi) {
-            this.abi = abi;
             inParameters = toArray(abi.integerIncomingParameterRegisters, abi.floatingPointParameterRegisters);
             outParameters = toArray(abi.integerOutgoingParameterRegisters, abi.floatingPointParameterRegisters);
+            cpuReturn = cpuReg(abi.integerReturn());
+            fpuReturn = fpuReg(abi.floatingPointReturn());
+            frameReg = cpuReg(abi.framePointer());
+            scratchReg = cpuReg(abi.scratchRegister());
         }
 
         private static CiRegister cpuReg(Symbol reg) {
+            if (reg == null) {
+                return null;
+            }
             return target().arch.registerFor(reg.value(), RegisterFlag.CPU);
         }
 
         private static CiRegister fpuReg(Symbol reg) {
+            if (reg == null) {
+                return null;
+            }
             return target().arch.registerFor(reg.value(), RegisterFlag.FPU);
         }
         public CiRegister getReturnRegister(CiKind kind) {
             if (kind.isDouble() || kind.isWord()) {
-                return fpuReg(abi.floatingPointReturn());
+                return fpuReturn;
             }
             assert !kind.isVoid();
-            return cpuReg(abi.integerReturn());
+            return cpuReturn;
         }
         public CiRegister getFrameRegister() {
-            return cpuReg(abi.framePointer());
+            return frameReg;
         }
         public CiRegister getScratchRegister() {
-            return cpuReg(abi.scratchRegister());
+            return scratchReg;
         }
         public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target) {
             throw FatalError.unimplemented();

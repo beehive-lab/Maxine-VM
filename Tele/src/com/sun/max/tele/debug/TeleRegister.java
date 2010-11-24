@@ -20,9 +20,9 @@
  */
 package com.sun.max.tele.debug;
 
+import com.sun.cri.ci.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 
 
 /**
@@ -35,15 +35,15 @@ public final class TeleRegister implements MaxRegister {
 
     private final TeleVM teleVM;
     private final TeleRegisters teleRegisters;
-    private final Symbol register;
+    private final CiRegister register;
     private final String entityName;
     private final String entityDescription;
 
-    protected TeleRegister(TeleRegisters teleRegisters, Symbol register, TeleNativeThread teleNativeThread) {
+    protected TeleRegister(TeleRegisters teleRegisters, CiRegister register, TeleNativeThread teleNativeThread) {
         this.teleVM = teleNativeThread.vm();
         this.teleRegisters = teleRegisters;
         this.register = register;
-        this.entityName = "Thread-" + teleNativeThread.localHandle() + " register " + register.name();
+        this.entityName = "Thread-" + teleNativeThread.localHandle() + " register " + register.name;
         this.entityDescription = "A machine register, together with current value in the " + vm().entityName() + " for " + teleNativeThread.entityName();
     }
 
@@ -69,7 +69,7 @@ public final class TeleRegister implements MaxRegister {
     }
 
     public String name() {
-        return register.name();
+        return register.name;
     }
 
     public Address value() {

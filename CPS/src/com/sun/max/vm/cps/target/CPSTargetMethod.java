@@ -38,6 +38,7 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.TargetABI.RegisterConfig;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.runtime.*;
@@ -85,12 +86,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @INSPECTED
     protected int frameReferenceMapSize;
 
-    @INSPECTED
-    private TargetABI abi;
-
-    public final TargetABI abi() {
-        return abi;
-    }
+    private RegisterConfig registerConfig;
 
     public CPSTargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
         super(classMethodActor, callEntryPoint);
@@ -198,7 +194,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     public final void setGenerated(int[] catchRangePositions, int[] catchBlockPositions, int[] stopPositions, byte[] compressedJavaFrameDescriptors, Object[] directCallees, int numberOfIndirectCalls,
                     int numberOfSafepoints, byte[] referenceMaps, byte[] scalarLiterals, Object[] referenceLiterals, Object codeOrCodeBuffer, byte[] encodedInlineDataDescriptors, int frameSize,
-                    int frameReferenceMapSize, TargetABI abi) {
+                    int frameReferenceMapSize, RegisterConfig registerConfig) {
         assert fatalIfNotSorted(catchRangePositions);
         this.catchRangePositions = catchRangePositions;
         this.catchBlockPositions = catchBlockPositions;
@@ -206,7 +202,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         this.encodedInlineDataDescriptors = encodedInlineDataDescriptors;
         this.referenceMaps = referenceMaps;
         this.frameReferenceMapSize = frameReferenceMapSize;
-        this.abi = abi;
+        this.registerConfig = registerConfig;
         super.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         super.setFrameSize(frameSize);
         super.setData(scalarLiterals, referenceLiterals, codeOrCodeBuffer);
@@ -236,7 +232,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             code(),
             encodedInlineDataDescriptors,
             frameSize(),
-            frameReferenceMapSize(), abi
+            frameReferenceMapSize(), registerConfig
         );
         return duplicate;
     }
@@ -514,7 +510,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     @Override
     public RiRegisterConfig getRegisterConfig() {
-        return abi().registerConfig;
+        return registerConfig;
     }
 
     @Override
