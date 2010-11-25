@@ -156,7 +156,7 @@ public final class GraphBuilder {
         }
 
         // 5.
-        C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(rootMethod);
+        C1XIntrinsic intrinsic = C1XOptions.OptIntrinsify ? C1XIntrinsic.getIntrinsic(rootMethod) : null;
         if (intrinsic != null) {
             // 6A.1 the root method is an intrinsic; load the parameters onto the stack and try to inline it
             lastInstr = curBlock;
@@ -929,7 +929,7 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy(bci());
         RiType holder = target.holder();
         boolean isInitialized = !C1XOptions.TestPatching && target.isResolved() && holder.isInitialized();
-        if (!isInitialized) {
+        if (!isInitialized && C1XOptions.GenerateClassResolveForStaticInvoke) {
             // Re-use the same resolution code as for accessing a static field. Even though
             // the result of resolution is not used by the invocation (only the side effect
             // of initialization is required), it can be commoned with static field accesses.
@@ -1178,9 +1178,11 @@ public final class GraphBuilder {
 
     void genMethodReturn(Value x) {
         if (C1XOptions.GenFinalizerRegistration) {
-            C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(method());
-            if (intrinsic == C1XIntrinsic.java_lang_Object$init) {
-                callRegisterFinalizer();
+            if (C1XOptions.OptIntrinsify) {
+                C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(method());
+                if (intrinsic == C1XIntrinsic.java_lang_Object$init) {
+                    callRegisterFinalizer();
+                }
             }
         }
 

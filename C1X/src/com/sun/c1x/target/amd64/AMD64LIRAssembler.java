@@ -30,6 +30,7 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
@@ -1469,8 +1470,16 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitSlowPath(SlowPath sp) {
+        int start = -1;
+        if (C1XOptions.TraceAssembler) {
+            TTY.println("Emitting slow path for XIR instruction " + sp.instruction.snippet.template.name);
+            start = masm.codeBuffer.position();
+        }
         emitXirInstructions(sp.instruction, sp.instruction.snippet.template.slowPath, sp.labels, sp.instruction.getOperands(), sp.marks);
         masm.nop();
+        if (C1XOptions.TraceAssembler) {
+            TTY.println("From " + start + " to " + masm.codeBuffer.position());
+        }
     }
 
     public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, CiValue[] operands, Map<XirMark, Mark> marks) {
@@ -1720,6 +1729,9 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 }
 
                 case Bind: {
+                    if (C1XOptions.PrintAssembly) {
+                        TTY.println("Binding label to " + asm.codeBuffer.position());
+                    }
                     XirLabel l = (XirLabel) inst.extra;
                     Label label = labels[l.index];
                     asm.bind(label);
