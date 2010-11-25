@@ -87,6 +87,7 @@ public class C1XOptions {
     public static int     TraceLinearScanLevel               = 0;
     public static boolean TraceRelocation                    = ____;
     public static boolean TraceLIRVisit                      = ____;
+    public static boolean TraceAssembler                     = ____;
     public static int     TraceBytecodeParserLevel           = 0;
     public static boolean PrintLoopList                      = ____;
 
@@ -164,6 +165,7 @@ public class C1XOptions {
     public static boolean AlignCallsForPatching         = true;
     public static boolean NullCheckUniquePc             = ____;
     public static boolean invokeinterfaceTemplatePos    = ____;
+    public static boolean GenerateClassResolveForStaticInvoke = ____;
 
     public static int     InitialCodeBufferSize         = 232;
     public static boolean DetailedAsserts               = true;

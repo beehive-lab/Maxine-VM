@@ -135,6 +135,11 @@ public abstract class AbstractAssembler {
                 TTY.println(x.toString());
             }
 
+            Util.printSection("Marks", Util.SUB_SECTION_CHARACTER);
+            for (CiTargetMethod.Mark x : targetMethod.marks) {
+                TTY.println(x.toString());
+            }
+
             Util.printSection("Exception Handlers", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.ExceptionHandler x : targetMethod.exceptionHandlers) {
                 TTY.println(x.toString());

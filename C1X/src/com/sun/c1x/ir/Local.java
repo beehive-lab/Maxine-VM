@@ -39,6 +39,11 @@ public final class Local extends Value {
         this.javaIndex = javaIndex;
     }
 
+    @Override
+    public BlockBegin block() {
+        return null;
+    }
+
     /**
      * Gets the index of this local.
      * @return the index
