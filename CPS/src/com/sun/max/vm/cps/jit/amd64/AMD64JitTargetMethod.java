@@ -94,7 +94,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
 
     @Override
     public final void patchCallSite(int callOffset, Address callEntryPoint) {
-        AMD64TargetMethodUtil.mtSafePatchCallSite(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
     @Override

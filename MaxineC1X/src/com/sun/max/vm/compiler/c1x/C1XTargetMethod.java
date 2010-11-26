@@ -554,7 +554,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     @UNSAFE
     @Override
     public final void patchCallSite(int callOffset, Address callEntryPoint) {
-        AMD64TargetMethodUtil.mtSafePatchCallSite(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
     @Override

@@ -33,6 +33,7 @@ import com.sun.max.asm.InlineDataDescriptor.LookupTable32;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.bytecode.*;
@@ -40,6 +41,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.jit.Stop.BackwardBranchBytecodeSafepoint;
 import com.sun.max.vm.jit.*;
@@ -115,12 +117,55 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         codeBuffer.emitCodeFrom(asm);
     }
 
-    @Override
-    protected void alignTemplateWithPatchableSite() {
-        final int alignment = WordWidth.BITS_64.numberOfBytes - 1;
-        final byte nop = (byte) 0x90;
+    //////////////////////////// CLEAN THIS UP WHEN EXPERIMENTS DONE /////////////////////////////////////////////
+    // Remove the following as well as all references to it once we're done with these statistics.
 
-        int numBytesNeeded = WordWidth.BITS_64.numberOfBytes - codeBuffer.currentPosition() & alignment;
+    private static boolean TrimNops;
+    private static boolean PrintNopsStats;
+    static {
+        VMOptions.addFieldOption("-XX:", "TrimNops", BytecodeToAMD64TargetTranslator.class, "Trim as many nops as possible", MaxineVM.Phase.STARTING);
+        VMOptions.addFieldOption("-XX:", "PrintNopsStats", BytecodeToAMD64TargetTranslator.class, "Print nops", MaxineVM.Phase.STARTING);
+    }
+
+    private int extraNopsCount = 0;
+    private int alignmentAvoidedCount = 0;
+    public void printExtraNopsStatistics() {
+        if (PrintNopsStats) {
+            final int originalSize = codeBuffer.currentPosition() - extraNopsCount;
+            final int inflation = (10000 * extraNopsCount) / originalSize;
+            final int a = inflation / 100;
+            final int b = inflation % 100;
+            Log.println(extraNopsCount + " (+ " + a + "." + b + " %, total = " + originalSize + " ) extra nops for " + classMethodActor.qualifiedName() +
+                            " avoided = " + alignmentAvoidedCount);
+        }
+    }
+    //////////////////////////// END OF CLEAN UP SECTION ////////////////////////////////////
+
+    @Override
+    protected void alignTemplateWithPatchableSite(TargetMethod template) {
+        final int alignment = WordWidth.BITS_64.numberOfBytes - 1;
+        final int numDirecCalls = template.numberOfDirectCalls();
+        FatalError.check(numDirecCalls > 0, "Template must have at least one patchable site");
+        int numBytesNeeded = 0;
+        if (TrimNops && numDirecCalls == 1) {
+            // Don't need to align to 8-byte boundaries. It is enough to ensure that the single call
+            // fits within a cache line (currently conservatively assumed to be 8 bytes).
+            final int callSitePosition = codeBuffer.currentPosition() + template.stopPosition(0);
+            final int endOfCallSite = callSitePosition + (AMD64EirInstruction.CALL.DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
+            final int roundDownMask = ~alignment;
+            if ((callSitePosition & roundDownMask) == (endOfCallSite & roundDownMask)) {
+                alignmentAvoidedCount++;
+                // No need for any alignment.
+                return;
+            }
+            numBytesNeeded = WordWidth.BITS_64.numberOfBytes - (callSitePosition & alignment);
+        } else {
+            // Otherwise, force the whole template to be 8-byte aligned.
+            numBytesNeeded = WordWidth.BITS_64.numberOfBytes - (codeBuffer.currentPosition() & alignment);
+        }
+        final byte nop = (byte) 0x90;
+        extraNopsCount += numBytesNeeded;
+
         // Emit nop instructions to align up to next Word boundary.
         while (numBytesNeeded > 0) {
             codeBuffer.emit(nop);

@@ -299,7 +299,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
         // Use the caller's abi to get the correct entry point.
         final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.callEntryPoint);
-        AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeEntryPoint);
+        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeEntryPoint);
        // final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
        // AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeOffset);
     }

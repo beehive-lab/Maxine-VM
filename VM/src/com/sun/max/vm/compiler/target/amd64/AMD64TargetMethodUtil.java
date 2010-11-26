@@ -43,9 +43,12 @@ public final class AMD64TargetMethodUtil {
     }
 
     public static boolean isPatchableCallSite(Address callSite) {
-        final Address dispAddress = callSite.plus(1);
-        return dispAddress.isAligned(WordWidth.BITS_32.numberOfBytes) &&
-        callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(dispAddress.roundedDownBy(WordWidth.BITS_64.numberOfBytes));
+        // last byte of call site:
+        final Address endOfCallSite = callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
+        return callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(endOfCallSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes));
+//        final Address dispAddress = callSite.plus(1);
+//        return dispAddress.isAligned(WordWidth.BITS_32.numberOfBytes) &&
+//        callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(dispAddress.roundedDownBy(WordWidth.BITS_64.numberOfBytes));
     }
 
     /**
@@ -76,11 +79,11 @@ public final class AMD64TargetMethodUtil {
         fixupCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offset(), newJitEntry, RJMP);
     }
 
-    private static final long RIP_CALL_INSTRUCTION_SIZE = 5L;
+    private static final long DIRECT_METHOD_CALL_INSTRUCTION_LENGTH = 5L;
 
     private static void fixupCode(TargetMethod targetMethod, int offset, Address target, int controlTransferOpcode) {
         final Pointer callSite = targetMethod.codeStart().plus(offset);
-        long displacement = target.minus(callSite.plus(RIP_CALL_INSTRUCTION_SIZE)).toLong();
+        long displacement = target.minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
         FatalError.check((int) displacement == displacement, "Code displacement out of 32-bit range");
         displacement = displacement & 0xFFFFFFFFL;
         if (MaxineVM.isHosted()) {
@@ -101,15 +104,14 @@ public final class AMD64TargetMethodUtil {
     }
 
     // MT-safe replacement of the displacement of a direct call.
-    public static void mtSafePatchCallSite(TargetMethod targetMethod, Pointer callSite, Address target) {
+    public static void mtSafePatchCallDisplacement(TargetMethod targetMethod, Pointer callSite, Address target) {
+        // FIXME: should probably acquire a patching lock on the target method.
         if (!isPatchableCallSite(callSite)) {
-            // TODO: for now we only support mt-safe patching of call / jmp instruction whose relative offset is 4-byte aligned and 4-bytes long.
             FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
-        long displacement = target.minus(callSite.plus(RIP_CALL_INSTRUCTION_SIZE)).toLong();
+        long displacement = target.minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
         FatalError.check((int) displacement == displacement, "Code displacement out of 32-bit range");
         displacement = displacement & 0xFFFFFFFFL;
-
         callSite.writeInt(1,  (int) displacement);
         // FIXME: Needs to invalid ICache to be correct (requires new CPS builtin)
     }
