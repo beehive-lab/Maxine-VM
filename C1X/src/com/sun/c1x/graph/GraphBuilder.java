@@ -1646,7 +1646,7 @@ public final class GraphBuilder {
         if (target.code().length > scopeData.maxInlineSize()) {
             return cannotInline(target, "inlinee too large for this level");
         }
-        if (scopeData.scope.level > C1XOptions.MaximumInlineLevel) {
+        if (scopeData.scope.level + 1 > C1XOptions.MaximumInlineLevel) {
             return cannotInline(target, "inlining too deep");
         }
         if (stats.nodeCount > C1XOptions.MaximumDesiredSize) {
