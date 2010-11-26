@@ -119,12 +119,13 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
     //////////////////////////// CLEAN THIS UP WHEN EXPERIMENTS DONE /////////////////////////////////////////////
     // Remove the following as well as all references to it once we're done with these statistics.
+    // Numbers already show that TrimNops == true is the best option.
 
-    private static boolean TrimNops;
-    private static boolean PrintNopsStats;
+    private static boolean TrimNops = true;
+    private static boolean PrintNopsStats = false;
     static {
-        VMOptions.addFieldOption("-XX:", "TrimNops", BytecodeToAMD64TargetTranslator.class, "Trim as many nops as possible", MaxineVM.Phase.STARTING);
-        VMOptions.addFieldOption("-XX:", "PrintNopsStats", BytecodeToAMD64TargetTranslator.class, "Print nops", MaxineVM.Phase.STARTING);
+        VMOptions.addFieldOption("-XX:", "TrimNops", BytecodeToAMD64TargetTranslator.class, "Trim as many nops as possible");
+        VMOptions.addFieldOption("-XX:", "PrintNopsStats", BytecodeToAMD64TargetTranslator.class, "Print nops");
     }
 
     private int extraNopsCount = 0;
