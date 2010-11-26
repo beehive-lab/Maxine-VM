@@ -421,7 +421,12 @@ public interface AMD64EirInstruction {
     }
 
     public static class CALL extends EirCall<EirInstructionVisitor, AMD64EirTargetEmitter> implements AMD64EirInstruction {
+        public static final int DIRECT_METHOD_CALL_INSTRUCTION_LENGTH = 5;
 
+        public static boolean isPatchableCallSite(Address callSite) {
+            return callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH).roundedDownBy(WordWidth.BITS_64.numberOfBytes));
+
+        }
         public CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                     EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                     boolean isNativeFunctionCall, EirMethodGeneration methodGeneration) {
@@ -442,7 +447,6 @@ public interface AMD64EirInstruction {
             }
         }
 
-
         // Direct calls currently are always 5 bytes long: 1 byte for the call opcode,
         // and 4 bytes for a displacement to the method address.
         // We must arrange for direct call instructions to be laid out such that:
@@ -460,10 +464,11 @@ public interface AMD64EirInstruction {
             final EirLocation location = function().location();
             switch (location.category()) {
                 case METHOD: {
-                    emitter.assembler().directives().align(WordWidth.BITS_64.numberOfBytes);
-                    emitter.assembler().nop();
-                    emitter.assembler().nop();
-                    emitter.assembler().nop();
+                    boolean ok = emitter.assembler().directives().align(WordWidth.BITS_64.numberOfBytes, DIRECT_METHOD_CALL_INSTRUCTION_LENGTH);
+                    assert ok;
+//                    emitter.assembler().nop();
+//                    emitter.assembler().nop();
+//                    emitter.assembler().nop();
                     emitter.addDirectCall(this);
                     final int placeHolderBeforeLinking = -1;
                     emitter.assembler().call(placeHolderBeforeLinking);

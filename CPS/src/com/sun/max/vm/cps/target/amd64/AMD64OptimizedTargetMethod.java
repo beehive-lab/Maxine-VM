@@ -74,7 +74,7 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
 
     @Override
     public final void patchCallSite(int callOffset, Address callEntryPoint) {
-        AMD64TargetMethodUtil.mtSafePatchCallSite(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
+        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
     @Override

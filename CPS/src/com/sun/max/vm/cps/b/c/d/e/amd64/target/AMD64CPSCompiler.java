@@ -72,7 +72,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
                         callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
                     }
                     final Address calleeAddress = CompilationScheme.Static.compile(callee, callEntryPoint);
-                    AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeAddress);
+                    AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeAddress);
                     // FIXME: this is what we ought to be doing. Need to change its signature though.
                     // caller.patchCallSite(callOffset, callEntryPoint)
                     // Make the trampoline's caller re-executes the now modified CALL instruction after we return from the trampoline:
