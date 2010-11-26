@@ -130,12 +130,4 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     public Pointer readPointer(VmThreadLocal local) {
         return teleEnabledVmThreadLocalValues == null ? Pointer.zero() : teleEnabledVmThreadLocalValues.getWord(local).asPointer();
     }
-
-    @Override
-    public void useABI(TargetABI targetABI) {
-        final TeleIntegerRegisters teleIntegerRegisters = teleNativeThread.registers().teleIntegerRegisters();
-        final Pointer abiStackPointer = teleIntegerRegisters.get(VMRegister.Role.ABI_STACK_POINTER, targetABI);
-        final Pointer abiFramePointer = teleIntegerRegisters.get(VMRegister.Role.ABI_FRAME_POINTER, targetABI);
-        advance(cpuInstructionPointer, abiStackPointer, abiFramePointer);
-    }
 }

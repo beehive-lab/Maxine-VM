@@ -664,7 +664,7 @@ public class CompiledPrototype extends Prototype {
                 Adapter adapter = null;
                 ClassMethodActor classMethodActor = targetMethod.classMethodActor;
                 if (classMethodActor != null) {
-                    AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.abi().callEntryPoint);
+                    AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.callEntryPoint);
                     adapter = gen != null ? gen.make(classMethodActor) : null;
                 }
                 if (!targetMethod.linkDirectCalls(adapter)) {

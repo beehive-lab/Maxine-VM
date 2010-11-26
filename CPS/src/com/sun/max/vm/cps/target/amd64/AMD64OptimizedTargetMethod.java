@@ -30,7 +30,7 @@ import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
 
 /**
@@ -78,6 +78,17 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
     }
 
     @Override
+    public Pointer getCalleeSaveStart(Pointer sp) {
+        if (classMethodActor.isTrapStub()) {
+            return sp.plus(frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+        }
+        if (classMethodActor.isTrampoline()) {
+            return sp;
+        }
+        return Pointer.zero();
+    }
+
+    @Override
     public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
         Pointer registerState = Pointer.zero();
@@ -85,11 +96,11 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
         switch (calleeKind) {
             case TRAMPOLINE:
                 // compute the register reference map from the call at this site
-                AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
+                AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer, callee.targetMethod().getRegisterConfig());
                 break;
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame
-                registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                registerState = callee.targetMethod().getCalleeSaveStart(callee.sp());
                 int trapNum = TrapStateAccess.instance().getTrapNumber(registerState);
                 Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNum);
                 if (throwableClass != null) {

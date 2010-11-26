@@ -81,14 +81,16 @@ public class C1XCompiler extends CiCompiler {
         }
 
         CiResult result = null;
+        TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
         try {
             C1XCompilation compilation = new C1XCompilation(this, method, osrBCI);
             result = compilation.compile();
         } finally {
-            if (C1XOptions.PrintCompilation) {
+            if (C1XOptions.PrintCompilation && !TTY.isSuppressed()) {
                 long time = (System.nanoTime() - startTime) / 1000000;
                 TTY.println((time) + "ms");
             }
+            filter.remove();
         }
 
         return result;

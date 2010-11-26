@@ -66,18 +66,14 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             TeleFields teleFields = vm().teleFields();
             omit(teleFields.TargetMethod_scalarLiterals.fieldActor());
             omit(teleFields.TargetMethod_referenceLiterals.fieldActor());
-            abi = teleFields.TargetMethod_abi.fieldActor();
             generator = teleFields.Adapter_generator.fieldActor();
         }
-        private final FieldActor abi;
         private final FieldActor generator;
 
         @Override
         protected Object makeDeepCopy(FieldActor fieldActor, TeleObject teleObject) {
             if (fieldActor.equals(generator)) {
                 return null;
-            } else if (fieldActor.equals(abi)) {
-                return getAbi();
             } else {
                 return super.makeDeepCopy(fieldActor, teleObject);
             }
@@ -134,8 +130,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      */
     private TargetMethod targetMethod;
 
-    private TargetABI abi;
-
     protected TeleTargetMethod(TeleVM vm, Reference targetMethodReference) {
         super(vm, targetMethodReference);
         // Exception to the general policy of not performing VM i/o during object
@@ -176,7 +170,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     }
 
     /**
-     * Gets the call entry memory location for this method as specified by the ABI in use when this target method was compiled.
+     * Gets the call entry memory location for this method.
      *
      * @return {@link Address#zero()} if this target method has not yet been compiled
      */
@@ -188,8 +182,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             TeleObject teleCallEntryPoint = null;
             if (vm().tryLock()) {
                 try {
-                    final Reference callEntryPointReference =
-                        TeleInstanceReferenceFieldAccess.readPath(reference(), vm().teleFields().TargetMethod_abi, vm().teleFields().TargetABI_callEntryPoint);
+                    final Reference callEntryPointReference = vm().teleFields().TargetMethod_callEntryPoint.readReference(reference());
                     teleCallEntryPoint = heap().makeTeleObject(callEntryPointReference);
                 } finally {
                     vm().unlock();
@@ -357,25 +350,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      */
     protected final BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
         return targetMethod().getBytecodeLocationFor(instructionPointer, implicitExceptionPoint);
-    }
-
-    public final TargetABI getAbi() {
-        if (abi == null && vm().tryLock()) {
-            try {
-                final Reference abiReference = vm().teleFields().TargetMethod_abi.readReference(reference());
-                final TeleObject teleTargetABI = heap().makeTeleObject(abiReference);
-                if (teleTargetABI != null) {
-                    abi = abiCache.get(teleTargetABI);
-                    if (abi == null) {
-                        abi = (TargetABI) teleTargetABI.deepCopy();
-                        abiCache.put(teleTargetABI, abi);
-                    }
-                }
-            } finally {
-                vm().unlock();
-            }
-        }
-        return abi;
     }
 
     /**

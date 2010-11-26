@@ -39,4 +39,18 @@ public class UnresolvedMethod extends CiUnresolvedMethod {
         this.constantPool = constantPool;
         this.cpi = cpi;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof UnresolvedMethod) {
+            UnresolvedMethod other = (UnresolvedMethod) o;
+            return constantPool == other.constantPool && cpi == other.cpi;
+        }
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
 }

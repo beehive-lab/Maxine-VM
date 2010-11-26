@@ -125,8 +125,7 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
     @Override
     public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
         final Pointer registerWindow = getStackPointer(trapState, targetMethod);
-        final GPR framePointerRegister = (GPR) targetMethod.abi().framePointer();
-        return SPARCStackFrameLayout.getRegisterInSavedWindow(registerWindow, framePointerRegister).asPointer();
+        return SPARCStackFrameLayout.getRegisterInSavedWindow(registerWindow, GPR.I6).asPointer();
     }
 
     @Override

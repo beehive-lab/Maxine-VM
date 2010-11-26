@@ -298,7 +298,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
         // Use the caller's abi to get the correct entry point.
-        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
+        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.callEntryPoint);
         AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeEntryPoint);
        // final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
        // AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeOffset);
@@ -444,39 +444,27 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     static RiRegisterConfig getRegisterConfig(ClassMethodActor method) throws FatalError {
         Platform platform = Platform.platform();
         if (platform.isa == ISA.AMD64) {
-            switch (platform.os) {
-                case DARWIN:
-                case GUESTVM:
-                case LINUX:
-                case SOLARIS: {
-                    if (method.isTrapStub()) {
-                        return AMD64UnixRegisterConfig.TRAP_STUB;
-                    }
-                    if (method.isVmEntryPoint()) {
-                        return AMD64UnixRegisterConfig.N2J;
-                    }
-                    if (method.isCFunction()) {
-                        return AMD64UnixRegisterConfig.J2N;
-                    }
-                    assert !method.isTemplate();
-                    if (method.isTrampoline()) {
-                        return AMD64UnixRegisterConfig.TRAMPOLINE;
-                    }
-                    return AMD64UnixRegisterConfig.STANDARD;
+            if (platform.os.unix) {
+                if (method.isTrapStub()) {
+                    return AMD64UnixRegisterConfig.TRAP_STUB;
                 }
-                default:
-                    throw FatalError.unimplemented();
+                if (method.isVmEntryPoint()) {
+                    return AMD64UnixRegisterConfig.N2J;
+                }
+                if (method.isCFunction()) {
+                    return AMD64UnixRegisterConfig.J2N;
+                }
+                assert !method.isTemplate();
+                if (method.isTrampoline()) {
+                    return AMD64UnixRegisterConfig.TRAMPOLINE;
+                }
+                return AMD64UnixRegisterConfig.STANDARD;
             }
+            throw FatalError.unimplemented();
         }
         throw FatalError.unimplemented();
     }
 
     private DynamicTrampolineExit dynamicTrampolineExit = DynamicTrampolineExit.create();
 
-    /**
-     * Temporary flag to disable alignment check when code patching. The alignment requirement
-     * is satisfied by C1X (see {@link C1XOptions#AlignCallsForPatching}) but not yet by
-     * CPS and the template JIT.
-     */
-    static final boolean CODE_PATCHING_ALIGMMENT_IS_GUARANTEED = true; // System.getProperty("non-constant value to fool Eclipse") != null;
 }

@@ -287,23 +287,6 @@ public final class JavaPrototype extends Prototype {
         return mainPackageClasses;
     }
 
-    /**
-     * Ensures that all the Maxine classes currently in the {@linkplain ClassRegistry#vmClassRegistry() VM class
-     * registry} are {@linkplain Classes#initialize(Class) initialized}. Any class in a subpackage of {@code
-     * com.sun.max} is deemed to be a Maxine class. These initializers are never re-run in the target VM
-     * and so they are omitted from the boot image (as if they had the {@link HOSTED_ONLY} annotation
-     * applied to them).
-     */
-    private static void initializeMaxClasses() {
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses()) {
-            if (MaxineVM.isMaxineClass(classActor)) {
-                try {
-                    Classes.initialize(classActor.toJava());
-                } catch (HostOnlyClassError error) {
-                }
-            }
-        }
-    }
 
     /**
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
@@ -404,8 +387,6 @@ public final class JavaPrototype extends Prototype {
 
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
 
-        initializeMaxClasses();
-
         config.bootCompilerScheme().createBuiltins(packageLoader);
         Builtin.register(config.bootCompilerScheme());
         config.bootCompilerScheme().createSnippets(packageLoader);
@@ -424,15 +405,7 @@ public final class JavaPrototype extends Prototype {
             loadPackages(getPackages(VMPackage.class, new com.sun.max.vm.Package()));
             loadPackages(getPackages(AsmPackage.class, new com.sun.max.asm.Package()));
 
-            initializeMaxClasses();
-
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
-
-            // VM implementation classes ending up in the bootstrap image
-            // are supposed to be limited to those loaded up to here.
-            //
-            // This enables detection of violations of said requirement:
-            ClassActor.prohibitPackagePrefix(new com.sun.max.Package());
 
             VmThreadLocal.completeInitialization();
 

@@ -24,6 +24,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
@@ -38,15 +39,13 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.template.*;
 
 /**
@@ -99,18 +98,15 @@ public abstract class TargetMethod extends MemoryRegion {
 
     private int registerRestoreEpilogueOffset = -1;
 
-    @INSPECTED
-    private TargetABI abi;
-
-    public TargetMethod(String description, TargetABI abi) {
+    public TargetMethod(String description, CallEntryPoint callEntryPoint) {
         this.classMethodActor = null;
-        this.abi = abi;
+        this.callEntryPoint = callEntryPoint;
         setRegionName(description);
     }
 
-    public TargetMethod(ClassMethodActor classMethodActor, TargetABI abi) {
+    public TargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
         this.classMethodActor = classMethodActor;
-        this.abi = abi;
+        this.callEntryPoint = callEntryPoint;
         setRegionName(classMethodActor.name.toString());
     }
 
@@ -175,7 +171,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param directCallIndex an index into the {@linkplain #directCallees() direct callees} of this target method
      */
     protected CallEntryPoint callEntryPointForDirectCall(int directCallIndex) {
-        return abi().callEntryPoint;
+        return callEntryPoint;
     }
 
     public final int numberOfIndirectCalls() {
@@ -244,9 +240,8 @@ public abstract class TargetMethod extends MemoryRegion {
         return frameSize;
     }
 
-    public final TargetABI abi() {
-        return abi;
-    }
+    @INSPECTED
+    public final CallEntryPoint callEntryPoint;
 
     /**
      * Assigns the arrays co-located in a {@linkplain CodeRegion code region} containing the machine code and related data.
@@ -375,6 +370,15 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
         return false;
+    }
+
+    /**
+     * Gets the address within a frame where the callee saved registers (if any) are saved.
+     *
+     * @param sp the frame pointer of {@code Pointer#zero()} if this method does not have a callee save area
+     */
+    public Pointer getCalleeSaveStart(Pointer sp) {
+        return Pointer.zero();
     }
 
     public boolean isCalleeSaved() {
@@ -536,29 +540,6 @@ public abstract class TargetMethod extends MemoryRegion {
         return (classMethodActor == null) ? regionName() : classMethodActor.format("%H.%n(%p)");
     }
 
-    protected final void setABI(TargetABI abi) {
-        this.abi = abi;
-    }
-
-    public void cleanup() {
-    }
-
-    public boolean contains(Builtin builtin, boolean defaultResult) {
-        return false;
-    }
-
-    public int count(Builtin builtin, int defaultResult) {
-        return 0;
-    }
-
-    public boolean isGenerated() {
-        return false;
-    }
-
-    public boolean isNative() {
-        return false;
-    }
-
     public String name() {
         return regionName();
     }
@@ -620,7 +601,7 @@ public abstract class TargetMethod extends MemoryRegion {
      *
      * @param writer where the trace is written
      */
-    public final void traceBundle(IndentWriter writer) {
+    public void traceBundle(IndentWriter writer) {
         final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
         writer.println("Layout:");
         writer.println(Strings.indent(targetBundleLayout.toString(), writer.indentation()));
@@ -629,7 +610,6 @@ public abstract class TargetMethod extends MemoryRegion {
         traceScalarBytes(writer, targetBundleLayout);
         traceReferenceLiterals(writer, targetBundleLayout);
         traceDebugInfo(writer);
-        traceReferenceMaps(writer);
         writer.println("Code cell: " + targetBundleLayout.cell(start(), ArrayField.code).toString());
     }
 
@@ -682,27 +662,6 @@ public abstract class TargetMethod extends MemoryRegion {
             }
             writer.outdent();
         }
-    }
-
-    /**
-     * Traces the {@linkplain #referenceMaps() reference maps} for the stops in the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public void traceReferenceMaps(IndentWriter writer) {
-        final String refmaps = referenceMapsToString();
-        if (!refmaps.isEmpty()) {
-            writer.println("Reference Maps:");
-            writer.println(Strings.indent(refmaps, writer.indentation()));
-        }
-    }
-
-    public boolean isTrapStub() {
-        return classMethodActor != null && classMethodActor.isTrapStub();
-    }
-
-    public final boolean isTrampoline() {
-        return classMethodActor != null && classMethodActor.isTrampoline();
     }
 
     /**
@@ -759,35 +718,6 @@ public abstract class TargetMethod extends MemoryRegion {
     public abstract void traceExceptionHandlers(IndentWriter writer);
 
     /**
-     * Gets a string representation of the reference map for each stop in this target method.
-     * @return a string representation of the reference map
-     */
-    public abstract String referenceMapsToString();
-
-    public ByteArrayBitMap registerReferenceMapFor(int index) {
-        throw FatalError.unimplemented();
-    }
-
-    public ByteArrayBitMap frameReferenceMapFor(StopType type, int index) {
-        throw FatalError.unimplemented();
-    }
-
-    /**
-     * Determines if this method was compiled with the template JIT compiler.
-     */
-    public final boolean isJitCompiled() {
-        return abi.callEntryPoint == CallEntryPoint.JIT_ENTRY_POINT;
-    }
-
-    /**
-     * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
-     * @return an object that represents the layout of this stack frame
-     */
-    public CompiledStackFrameLayout stackFrameLayout() {
-        throw FatalError.unimplemented();
-    }
-
-    /**
      * Gets the bytecode position for a machine code call site address.
      *
      * @param returnInstructionPointer an instruction pointer that denotes a call site in this target method. The pointer
@@ -841,4 +771,20 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param current the current stack frame cursor
      */
     public abstract void advance(Cursor current);
+
+    /**
+     * Determines if this method has been compiled under the invariant that the
+     * register state upon entry to a local exception handler for an implicit
+     * exception is the same as at the implicit exception point.
+     */
+    public boolean preserveRegistersForLocalExceptionHandler() {
+        return true;
+    }
+
+    /**
+     * Gets the register config used to compile this method.
+     */
+    public RiRegisterConfig getRegisterConfig() {
+        return null;
+    }
 }

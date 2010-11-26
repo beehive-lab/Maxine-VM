@@ -419,7 +419,7 @@ public final class ClassRegistry {
 
         ClassLoader parent = classLoader.getParent();
         if (parent == null) {
-            if (classLoader != BootClassLoader.BOOT_CLASS_LOADER) {
+            if (!MaxineVM.isHosted() && classLoader != BootClassLoader.BOOT_CLASS_LOADER) {
                 // Every class loader should ultimately delegate to the boot class loader
                 parent = BootClassLoader.BOOT_CLASS_LOADER;
             } else {

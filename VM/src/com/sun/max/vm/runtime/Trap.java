@@ -434,8 +434,11 @@ public abstract class Trap {
      * @param ip the instruction pointer which caused the trap
      */
     private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
-        StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
-        if (!targetMethod.isJitCompiled()) {
+        if (!(throwable instanceof StackOverflowError)) {
+            // Can't do frame preparing when methods aren't at a stop
+            StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
+        }
+        if (targetMethod.preserveRegistersForLocalExceptionHandler()) {
             final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, ip, throwable.getClass());
             if (!catchAddress.isZero()) {
                 final TrapStateAccess trapStateAccess = TrapStateAccess.instance();

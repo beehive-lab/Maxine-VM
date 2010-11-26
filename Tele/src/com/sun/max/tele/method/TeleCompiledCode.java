@@ -230,21 +230,18 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     }
 
     public String targetLocationToString(TargetLocation targetLocation) {
-        final String framePointerRegisterName =
-            TeleIntegerRegisters.createSymbolizer().fromValue(teleTargetMethod.getAbi().framePointer().value()).toString();
-
         switch (targetLocation.tag()) {
             case INTEGER_REGISTER: {
                 final TargetLocation.IntegerRegister integerRegister = (TargetLocation.IntegerRegister) targetLocation;
-                return TeleIntegerRegisters.createSymbolizer().fromValue(integerRegister.index()).toString();
+                return TeleIntegerRegisters.getIntegerRegisters()[integerRegister.index()].toString();
             }
             case FLOATING_POINT_REGISTER: {
                 final TargetLocation.FloatingPointRegister floatingPointRegister = (TargetLocation.FloatingPointRegister) targetLocation;
-                return TeleFloatingPointRegisters.createSymbolizer().fromValue(floatingPointRegister.index()).toString();
+                return TeleFloatingPointRegisters.getFloatingPointRegisters()[floatingPointRegister.index()].toString();
             }
             case LOCAL_STACK_SLOT: {
                 final TargetLocation.LocalStackSlot localStackSlot = (TargetLocation.LocalStackSlot) targetLocation;
-                return framePointerRegisterName + "[" + (localStackSlot.index() * vm().wordSize().toInt()) + "]";
+                return  "fp[" + (localStackSlot.index() * vm().wordSize().toInt()) + "]";
             }
             default: {
                 return targetLocation.toString();

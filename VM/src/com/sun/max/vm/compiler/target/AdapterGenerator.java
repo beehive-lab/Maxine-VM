@@ -169,14 +169,14 @@ public abstract class AdapterGenerator {
             // Some kind of stub
             return null;
         }
-        return forCallee(callee.classMethodActor, callee.abi().callEntryPoint);
+        return forCallee(callee.classMethodActor, callee.callEntryPoint);
     }
 
     public static int prologueSizeForCallee(TargetMethod callee) {
         if (callee instanceof Adapter || callee.classMethodActor == null) {
             return 0;
         }
-        AdapterGenerator generator = forCallee(callee.classMethodActor, callee.abi().callEntryPoint);
+        AdapterGenerator generator = forCallee(callee.classMethodActor, callee.callEntryPoint);
         if (generator == null) {
             return 0;
         }

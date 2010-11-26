@@ -49,7 +49,6 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
@@ -174,7 +173,6 @@ public abstract class ClassActor extends Actor implements RiType {
         super(name, flags);
         assert kind == typeDescriptor.toKind();
         if (MaxineVM.isHosted()) {
-            checkProhibited(name);
             if (MaxineVM.isMaxineClass(typeDescriptor)) {
                 initializationState = INITIALIZED;
             } else {
@@ -1111,29 +1109,6 @@ public abstract class ClassActor extends Actor implements RiType {
         }
 
         return result;
-    }
-
-    @HOSTED_ONLY
-    private static String prohibitedPackagePrefix = null;
-
-    @HOSTED_ONLY
-    public static void prohibitPackagePrefix(MaxPackage prefix) {
-        prohibitedPackagePrefix = (prefix == null) ? null : prefix.name();
-    }
-
-    @HOSTED_ONLY
-    private void checkProhibited(Utf8Constant typeName) {
-        if (prohibitedPackagePrefix != null &&
-            !isArrayClass() &&
-            !InvocationStubGenerator.isInvocationStubClassName(typeName.string) &&
-            typeName.string.startsWith(prohibitedPackagePrefix)) {
-            throw new ProhibitedPackageError(typeName.string);
-        }
-    }
-
-    @HOSTED_ONLY
-    public static boolean isInProhibitedPackage(String className) {
-        return prohibitedPackagePrefix != null && className.startsWith(prohibitedPackagePrefix);
     }
 
     /**

@@ -65,13 +65,14 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
                 Pointer target = ip.plus(callSite.readInt(1));
                 if (StaticTrampoline.isEntryPoint(target)) {
                     final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
-
                     final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
-                    // Use the caller's abi to get the correct entry point.
-                    final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
-
-                    AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeEntryPoint);
+                    CallEntryPoint callEntryPoint = caller.callEntryPoint;
+                    if (caller.classMethodActor != null && caller.classMethodActor.isVmEntryPoint()) {
+                        callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+                    }
+                    final Address calleeAddress = CompilationScheme.Static.compile(callee, callEntryPoint);
+                    AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeAddress);
                     // FIXME: this is what we ought to be doing. Need to change its signature though.
                     // caller.patchCallSite(callOffset, callEntryPoint)
                     // Make the trampoline's caller re-executes the now modified CALL instruction after we return from the trampoline:

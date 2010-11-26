@@ -46,7 +46,6 @@ public class HIRTestExecutor implements Executor {
     private static void initialize(boolean loadingPackages) {
         C1XOptions.setOptimizationLevel(Integer.parseInt(JavaTester.options.getStringValue("c1x-optlevel")));
         JavaPrototype.initialize(loadingPackages);
-        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
         C1XCompilerScheme compilerScheme = new C1XCompilerScheme();
 
         runtime = compilerScheme.runtime;

@@ -79,7 +79,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
     protected JitTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
+        super(classMethodActor, CallEntryPoint.JIT_ENTRY_POINT);
     }
 
     public int[] bytecodeToTargetCodePositionMap() {
@@ -238,7 +238,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
                 codeOrCodeBuffer,
                 encodedInlineDataDescriptors,
                 jitStackFrameLayout.frameSize(),
-                jitStackFrameLayout.frameReferenceMapSize(), abi
+                jitStackFrameLayout.frameReferenceMapSize(), abi.registerConfig
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
@@ -282,5 +282,10 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
                 this.referenceMapEditor.set(null);
             }
         }
+    }
+
+    @Override
+    public boolean preserveRegistersForLocalExceptionHandler() {
+        return false;
     }
 }
