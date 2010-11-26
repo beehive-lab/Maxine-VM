@@ -59,6 +59,11 @@ public class IrTargetMethod extends CPSTargetMethod {
     }
 
     @Override
+    public boolean isPatchableCallSite(Address callSite) {
+        throw ProgramError.unexpected();
+    }
+
+    @Override
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
         return irMethod.getEntryPoint(callEntryPoint);
     }
@@ -69,7 +74,12 @@ public class IrTargetMethod extends CPSTargetMethod {
     }
 
     @Override
-    public void patchCallSite(int callOffset, Word callTarget) {
+    public void fixupCallSite(int callOffset, Address callTarget) {
+        throw ProgramError.unexpected();
+    }
+
+    @Override
+    public void patchCallSite(int callOffset, Address callTarget) {
         throw ProgramError.unexpected();
     }
 

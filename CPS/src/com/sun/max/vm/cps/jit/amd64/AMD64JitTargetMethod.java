@@ -29,13 +29,13 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.cps.target.amd64.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.type.*;
 
@@ -79,17 +79,27 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
 
     @Override
     public final int registerReferenceMapSize() {
-        return AMD64TargetMethod.registerReferenceMapSize();
+        return AMD64TargetMethodUtil.registerReferenceMapSize();
     }
 
     @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        AMD64TargetMethod.patchCall32Site(this, callOffset, callEntryPoint);
+    public boolean isPatchableCallSite(Address callSite) {
+        return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+    }
+
+    @Override
+    public final void fixupCallSite(int callOffset, Address callEntryPoint) {
+        AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+    }
+
+    @Override
+    public final void patchCallSite(int callOffset, Address callEntryPoint) {
+        AMD64TargetMethodUtil.mtSafePatchCallSite(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethod.forwardTo(this, newTargetMethod);
+        AMD64TargetMethodUtil.forwardTo(this, newTargetMethod);
     }
 
     /**
