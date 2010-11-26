@@ -34,6 +34,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.cps.b.c.d.e.amd64.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.target.*;
@@ -64,7 +65,6 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
                 Pointer target = ip.plus(callSite.readInt(1));
                 if (StaticTrampoline.isEntryPoint(target)) {
                     final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
-
                     final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
                     CallEntryPoint callEntryPoint = caller.callEntryPoint;
@@ -72,8 +72,9 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
                         callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
                     }
                     final Address calleeAddress = CompilationScheme.Static.compile(callee, callEntryPoint);
-                    patchRipCallSite(callSite, calleeAddress);
-
+                    AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeAddress);
+                    // FIXME: this is what we ought to be doing. Need to change its signature though.
+                    // caller.patchCallSite(callOffset, callEntryPoint)
                     // Make the trampoline's caller re-executes the now modified CALL instruction after we return from the trampoline:
                     Pointer trampolineCallerRipPointer = current.sp().minus(Word.size());
                     trampolineCallerRipPointer.setWord(callSite); // patch return address
@@ -109,14 +110,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
         return result;
     }
 
-    @INLINE
-    static void patchRipCallSite(Pointer callSite, Address calleeAddress) {
-        final int calleeOffset = calleeAddress.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
-        callSite.writeInt(1, calleeOffset);
-    }
-
     public static final byte CALL = (byte) 0xE8;
-
 
     /**
      * @see StaticTrampoline

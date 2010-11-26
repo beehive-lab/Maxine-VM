@@ -339,9 +339,9 @@ public abstract class TargetMethod extends MemoryRegion {
                 final TargetMethod callee = getTargetMethod(currentDirectCallee);
                 if (callee == null) {
                     linkedAll = false;
-                    patchCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
+                    fixupCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
                 } else {
-                    patchCallSite(stopPosition(i), callee.codeStart().plus(offset));
+                    fixupCallSite(stopPosition(i), callee.codeStart().plus(offset));
                 }
             }
         }
@@ -678,7 +678,31 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
 
-    public abstract void patchCallSite(int callOffset, Word callEntryPoint);
+    /**
+     * Modifies the call site at the specified offset to use the new specified entry point.
+     * The modification must tolerate the execution of the target method by concurrently running threads.
+     *
+     * @param callSite offset to a call site relative to the start of the code of this target method.
+     * @param callEntryPoint entry point the call site should call after patching.
+     */
+    public abstract void patchCallSite(int callOffset, Address callEntryPoint);
+
+    /**
+     * Fixup of call site in the method. This differs from the above in that the call site is updated before
+     * any thread can see it. Thus there isn't any concurrency between modifying the call site and threads
+     * trying to run it.
+     *
+     * @param callOffset offset to a call site relative to the start of the code of this target method.
+     * @param callEntryPoint entry point the call site should call after fixup.
+     */
+    public abstract void fixupCallSite(int callOffset, Address callEntryPoint);
+
+    /**
+     * Indicates whether a call site can be patched safely when multiple threads may execute this target method concurrently.
+     * @param callSite offset to a call site relative to the start of the code of this target method.
+     * @return true if mt-safe patching is possible on the specified call site.
+     */
+    public abstract boolean isPatchableCallSite(Address callSite);
 
     public abstract void forwardTo(TargetMethod newTargetMethod);
 

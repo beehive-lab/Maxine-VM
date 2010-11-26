@@ -25,6 +25,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import com.sun.max.asm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.target.*;
@@ -38,7 +39,7 @@ import com.sun.max.vm.cps.target.amd64.*;
 public final class AMD64EirToTargetTranslator extends EirToTargetTranslator {
 
     public AMD64EirToTargetTranslator(TargetGeneratorScheme targetGeneratorScheme) {
-        super(targetGeneratorScheme, ISA.AMD64, AMD64TargetMethod.registerReferenceMapSize());
+        super(targetGeneratorScheme, ISA.AMD64, AMD64TargetMethodUtil.registerReferenceMapSize());
     }
 
     @Override

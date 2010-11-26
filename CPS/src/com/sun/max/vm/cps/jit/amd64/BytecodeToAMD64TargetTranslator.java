@@ -39,8 +39,8 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.cps.target.amd64.*;
 import com.sun.max.vm.jit.Stop.BackwardBranchBytecodeSafepoint;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.layout.*;
@@ -74,7 +74,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected int registerReferenceMapSize() {
-        return AMD64TargetMethod.registerReferenceMapSize();
+        return AMD64TargetMethodUtil.registerReferenceMapSize();
     }
 
     @Override
@@ -113,6 +113,19 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         asm.mov(TARGET_ABI.scratchRegister(), SpecialBuiltin.doubleToLong(argument));
         asm.movdq(TARGET_ABI.floatingPointParameterRegisters.get(parameterIndex), TARGET_ABI.scratchRegister());
         codeBuffer.emitCodeFrom(asm);
+    }
+
+    @Override
+    protected void alignTemplateWithPatchableSite() {
+        final int alignment = WordWidth.BITS_64.numberOfBytes - 1;
+        final byte nop = (byte) 0x90;
+
+        int numBytesNeeded = WordWidth.BITS_64.numberOfBytes - codeBuffer.currentPosition() & alignment;
+        // Emit nop instructions to align up to next Word boundary.
+        while (numBytesNeeded > 0) {
+            codeBuffer.emit(nop);
+            --numBytesNeeded;
+        }
     }
 
     @Override

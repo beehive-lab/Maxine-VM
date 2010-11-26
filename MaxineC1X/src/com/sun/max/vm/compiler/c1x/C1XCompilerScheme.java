@@ -51,6 +51,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.amd64.*;
@@ -298,14 +299,9 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
         // Use the caller's abi to get the correct entry point.
         final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.callEntryPoint);
-        final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
-        Pointer callDisp = callSite.plus(1);
-        if (CODE_PATCHING_ALIGMMENT_IS_GUARANTEED && !callDisp.isWordAligned()) {
-            // Patching must not occur across a cache line boundary. The easiest way to check for
-            // this is to make sure the call instruction is word aligned.
-            FatalError.unexpected("Call displacement not word aligned: " + callDisp.toHexString());
-        }
-        callSite.writeInt(1, calleeOffset);
+        AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeEntryPoint);
+       // final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
+       // AMD64TargetMethodUtil.mtSafePatchCallSite(caller, callSite, calleeOffset);
     }
 
     @HOSTED_ONLY
@@ -471,10 +467,4 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     private DynamicTrampolineExit dynamicTrampolineExit = DynamicTrampolineExit.create();
 
-    /**
-     * Temporary flag to disable alignment check when code patching. The alignment requirement
-     * is satisfied by C1X (see {@link C1XOptions#AlignCallsForPatching}) but not yet by
-     * CPS and the template JIT.
-     */
-    static final boolean CODE_PATCHING_ALIGMMENT_IS_GUARANTEED = System.getProperty("non-constant value to fool Eclipse") != null;
 }
