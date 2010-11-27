@@ -191,6 +191,10 @@ public abstract class FrameState {
         return locks == null ? 0 : locks.size();
     }
 
+    public int totalLocksSize() {
+        return locksSize() + ((callerState() == null) ? 0 : callerState().totalLocksSize());
+    }
+
     /**
      * Gets the current size (height) of the stack.
      */

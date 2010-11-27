@@ -1229,7 +1229,7 @@ public final class GraphBuilder {
         if (Modifier.isSynchronized(method().accessFlags())) {
             FrameState stateBefore = curState.immutableCopy(bci());
             // unlock before exiting the method
-            int lockNumber = locksSize() - 1;
+            int lockNumber = curState.totalLocksSize() - 1;
             MonitorAddress lockAddress = null;
             if (compilation.runtime.sizeOfBasicObjectLock() != 0) {
                 lockAddress = new MonitorAddress(lockNumber);
@@ -1250,7 +1250,8 @@ public final class GraphBuilder {
 
     void genMonitorEnter(Value x, int bci) {
         FrameState stateBefore = curState.immutableCopy(bci());
-        int lockNumber = locksSize();
+        assert curState.locksSize() == curState.totalLocksSize();
+        int lockNumber = curState.locksSize();
         MonitorAddress lockAddress = null;
         if (compilation.runtime.sizeOfBasicObjectLock() != 0) {
             lockAddress = new MonitorAddress(lockNumber);
@@ -1262,7 +1263,7 @@ public final class GraphBuilder {
     }
 
     void genMonitorExit(Value x, int bci) {
-        int lockNumber = locksSize() - 1;
+        int lockNumber = curState.totalLocksSize() - 1;
         if (lockNumber < 0) {
             throw new CiBailout("monitor stack underflow");
         }
