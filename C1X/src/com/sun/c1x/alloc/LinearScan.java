@@ -2111,10 +2111,9 @@ public class LinearScan {
             if (compilation.runtime.sizeOfBasicObjectLock() != 0) {
                 CiStackSlot monitorAddress = frameMap.toMonitorBaseStackAddress(i);
                 values[valueIndex++] = monitorAddress;
-                if (frameRefMap != null) {
-                    CiStackSlot objectAddress = frameMap.toMonitorObjectStackAddress(i);
-                    LIRDebugInfo.setBit(frameRefMap, objectAddress.index());
-                }
+                assert frameRefMap != null;
+                CiStackSlot objectAddress = frameMap.toMonitorObjectStackAddress(i);
+                LIRDebugInfo.setBit(frameRefMap, objectAddress.index());
             } else {
                 Value lock = state.lockAt(i);
                 if (lock.isConstant() && lock.asConstant().asObject() instanceof Class) {
