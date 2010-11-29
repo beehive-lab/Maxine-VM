@@ -32,7 +32,6 @@ import java.util.concurrent.*;
 import com.sun.c1x.debug.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
