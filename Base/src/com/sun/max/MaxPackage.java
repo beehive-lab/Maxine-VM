@@ -210,77 +210,128 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         return name().startsWith(superPackage.name());
     }
 
+    private static class RootPackageInfo {
+        MaxPackage root;
+        Class<?> matcherClass;
+        Set<String> packageNames = new TreeSet<String>();
+        List<MaxPackage> packages;
+        RootPackageInfo(MaxPackage root, Class<?> matcherClass) {
+            this.root = root;
+            this.matcherClass = matcherClass;
+        }
+    }
+
     /**
-     * Finds all sub-packages in the classpath that are an instance of the superclass of the class of this instance.
-     * Neither this class nor its immediate subclasses are typically instantiable, so a concrete subclass
-     * must be passed in, but the match check should be against the superclass.
+     * Finds all sub-packages in the classpath that are an instance of the superclass of the classes specified in
+     * {@code rootPackages}. The actual classes should be {@link Package} instances from the package defining the search
+     * start point. One pass is made over the file system and the resulting list is all matching packages. However, the
+     * packages for each root are kept separate until the end when they are sorted and then merged in the order
+     * in {@code rootPackages}. The ordering is important for packages that use {@link MaxPackage#excludes}.
+     * The sorting is merely cosmetic.
+     *
      * @param classpath
      * @return list of subclasses of {@link MaxPackage}
      */
-    public List<MaxPackage> getTransitiveSubPackages(Classpath classpath) {
-        final Set<String> packageNames = new TreeSet<String>();
+    public static List<MaxPackage> getTransitiveSubPackages(Classpath classpath, final MaxPackage[] rootPackages) {
+        final RootPackageInfo[] rootPackagesInfo = new RootPackageInfo[rootPackages.length];
+        // Standard use has one root with a common prefix. Arbitrary paths would be more complicated.
+        MaxPackage baseRoot = null;
+        int index = 0;
+        for (MaxPackage root : rootPackages) {
+            if (isPrefixOf(root, rootPackages)) {
+                baseRoot = root;
+            }
+            rootPackagesInfo[index++] = new RootPackageInfo(root, root.getClass().getSuperclass());
+
+        }
+        if (baseRoot == null) {
+            ProgramError.unexpected("MaxPackage.getTransitiveSubPackages: roots have no common prefix");
+        }
+
+        // search from baseRoot
         new ClassSearch() {
 
             @Override
             protected boolean visitClass(String className) {
                 final String pkgName = Classes.getPackageName(className);
-                if (pkgName.startsWith(name())) {
-                    packageNames.add(pkgName);
+                for (int i = 0; i < rootPackages.length; i++) {
+                    MaxPackage root = rootPackages[i];
+                    if (pkgName.startsWith(root.name())) {
+                        rootPackagesInfo[i].packageNames.add(pkgName);
+                    }
                 }
                 return true;
             }
-        }.run(classpath, name().replace('.', '/'));
+        }.run(classpath, baseRoot.name().replace('.', '/'));
 
-        final Class<?> matcherClass = this.getClass().getSuperclass();
-        final List<MaxPackage> packages = new ArrayList<MaxPackage>(packageNames.size());
-        for (String pkgName : packageNames) {
-            MaxPackage maxPackage = MaxPackage.fromName(pkgName);
-            MaxPackage recursiveParent = null;
-            if (maxPackage == null) {
-                // check for a parent with recursive == true
-                // there is an assumption that parent packages are processed before sub-packages
-                for (MaxPackage parent : packages) {
-                    if (pkgName.startsWith(parent.name()) && parent.recursive) {
-                        // need to create a clone of parent class with sub-package name
-                        maxPackage = createRecursivePackageInstance(parent, pkgName);
-                        recursiveParent = parent;
-                        break;
+        // Now find Package classes that match the roots
+        int totalSize = 0;
+        for (RootPackageInfo rootPackageInfo : rootPackagesInfo) {
+            rootPackageInfo.packages = new ArrayList<MaxPackage>(rootPackageInfo.packageNames.size());
+            for (String pkgName : rootPackageInfo.packageNames) {
+                MaxPackage maxPackage = MaxPackage.fromName(pkgName);
+                MaxPackage recursiveParent = null;
+                if (maxPackage == null) {
+                    // check for a parent with recursive == true
+                    // there is an assumption that parent packages are processed before sub-packages
+                    for (MaxPackage parent : rootPackageInfo.packages) {
+                        if (pkgName.startsWith(parent.name()) && parent.recursive) {
+                            // need to create a clone of parent class with sub-package name
+                            maxPackage = createRecursivePackageInstance(parent, pkgName);
+                            recursiveParent = parent;
+                            break;
+                        }
+                    }
+                    if (maxPackage == null) {
+                        System.err.println("WARNING: missing Package class in package: " + pkgName);
+                        continue;
                     }
                 }
-                if (maxPackage == null) {
-                    System.err.println("WARNING: missing Package class in package: " + pkgName);
-                    continue;
+                if ((recursiveParent == null && rootPackageInfo.matcherClass.isInstance(maxPackage)) || (recursiveParent != null && rootPackageInfo.matcherClass.isInstance(recursiveParent))) {
+                    rootPackageInfo.packages.add(maxPackage);
+                    if (maxPackage.reDIrect) {
+                        // the above recursive traversal only operates in sub-packages of "this"
+                        // so we have to process redirected packages explicitly
+                        rootPackageInfo.packages.addAll(checkReDirectedSubpackages(classpath, maxPackage));
+                    }
                 }
             }
-            if ((recursiveParent == null && matcherClass.isInstance(maxPackage)) ||
-                (recursiveParent != null && matcherClass.isInstance(recursiveParent))) {
-                packages.add(maxPackage);
-                if (maxPackage.reDIrect) {
-                    // the above recursive traversal only operates in sub-packages of "this"
-                    // so we have to process redirected packages explicitly
-                    packages.addAll(checkReDirectedSubpackages(classpath, maxPackage));
-                }
+            totalSize += rootPackageInfo.packages.size();
+        }
+        final MaxPackage[] result = new MaxPackage[totalSize];
+        index = 0;
+        for (RootPackageInfo rootPackageInfo : rootPackagesInfo) {
+            final MaxPackage[] temp = rootPackageInfo.packages.toArray(new MaxPackage[rootPackageInfo.packages.size()]);
+            Arrays.sort(temp);
+            System.arraycopy(temp, 0, result, index, temp.length);
+            index += temp.length;
+        }
+        return Arrays.asList(result);
+    }
+
+    public List<MaxPackage> getTransitiveSubPackages(Classpath classpath) {
+        return getTransitiveSubPackages(classpath, new MaxPackage[] {this});
+    }
+
+    private static boolean isPrefixOf(MaxPackage p, MaxPackage[] set) {
+        for (MaxPackage s : set) {
+            if (!s.name().startsWith(p.name())) {
+                return false;
             }
         }
-        return packages;
+        return true;
     }
 
     /**
      * Create a {@code MaxPackage} instance that denotes a sub-package of a recursively included package.
      * Note that we don't try to create the correct subclass corresponding to the parent (which would require the deprecated clone
-     * technology), we just create an instance directly.
+     * technology), we just create an instance of our nested class.
      * @param parent
      * @param pkgName
      * @return
      */
     private static MaxPackage createRecursivePackageInstance(MaxPackage parent, String pkgName) {
-//        try {
         return new Package(parent, pkgName, true);
-            //return parent.getClass().getConstructor(String.class, boolean.class).newInstance(pkgName, true);
-//        } catch (Exception ex) {
-//            ProgramError.unexpected("failed to create recursive Package object in " + pkgName + ": " + ex);
-//            return null;
-//        }
     }
 
     private static List<MaxPackage> checkReDirectedSubpackages(Classpath classpath, final MaxPackage redirectedPackage) {
