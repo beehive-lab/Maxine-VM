@@ -20,9 +20,6 @@
  */
 package com.sun.max.vm;
 
-import com.sun.max.*;
-import com.sun.max.annotate.*;
-
 /**
  * Denotes a package of classes that are (potentially) in the VM.
  *
@@ -33,6 +30,4 @@ import com.sun.max.annotate.*;
 public abstract class VMPackage extends VMConfigPackage {
     public VMPackage() {
     }
-
-
 }
