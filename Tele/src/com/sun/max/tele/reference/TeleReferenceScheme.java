@@ -230,8 +230,13 @@ public abstract class TeleReferenceScheme extends AbstractVMScheme implements Re
         return teleRoots.getRawReference(mutableTeleReference.index());
     }
 
-    synchronized void finalizeMutableTeleReference(int index) {
-        rawReferenceToRemoteTeleReference.remove(teleRoots.getRawReference(index).toLong());
+    void finalizeMutableTeleReference(int index) {
+        synchronized (this) {
+            rawReferenceToRemoteTeleReference.remove(teleRoots.getRawReference(index).toLong());
+        }
+        // Synchronizing the following statement on 'this' often causes deadlock on
+        // Linux when the SingleThread used by ptrace is trying to update the cache
+        // via makeTeleReference() in the process of gathering threads.
         teleRoots.unregister(index);
     }
 
