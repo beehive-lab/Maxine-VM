@@ -30,7 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
- * The trap state area is a sub-section of the frame for a call to {@link Trap#trapStub}.
+ * The trap state area is the frame of a call to {@link Stubs#trapStub}.
  * It contains the {@linkplain Trap.Number trap number} and the values of the
  * processor's registers when a trap occurs.
  *
@@ -52,7 +52,7 @@ public abstract class TrapStateAccess {
     }
 
     @HOSTED_ONLY
-    public static TrapStateAccess create(VMConfiguration vmConfiguration) {
+    public static TrapStateAccess create() {
         try {
             final String isa = platform().isa.name();
             final Class<?> trapStateAccessClass = Class.forName(MaxPackage.fromClass(TrapStateAccess.class).subPackage(isa.toLowerCase()).name()
@@ -64,23 +64,35 @@ public abstract class TrapStateAccess {
     }
 
     /**
-     * Reads the value of the instruction pointer saved in a given trap state area.
+     * Gets the program counter denoting instruction causing the trap.
+     * This is also the address to which the trap handler will return
+     * unless the handler unwinds to an exception handler in a method
+     * other than the one that trapped.
      *
      * @param trapState the block of memory holding the trap state
-     * @return the value of the instruction pointer saved in {@code trapState}
      */
-    public abstract Pointer getInstructionPointer(Pointer trapState);
+    public abstract Pointer getPC(Pointer trapState);
 
     /**
-     * Sets the value that will be restored to the instruction pointer when the trap returns.
+     * Updates the address to which the trap handler will return.
      *
      * @param trapState the block of memory holding the trap state
-     * @param value the value to which the instruction pointer in {@code trapState} should be set
      */
-    public abstract void setInstructionPointer(Pointer trapState, Pointer value);
+    public abstract void setPC(Pointer trapState, Pointer value);
 
-    public abstract Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod);
-    public abstract Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod);
+    /**
+     * Gets the value of the stack pointer at the point of the trap.
+     *
+     * @param trapState the block of memory holding the trap state
+     */
+    public abstract Pointer getSP(Pointer trapState);
+
+    /**
+     * Gets the value of the frame pointer at the point of the trap.
+     *
+     * @param trapState the block of memory holding the trap state
+     */
+    public abstract Pointer getFP(Pointer trapState);
 
     /**
      * Gets the value of the safepoint last saved in a given trap state area.

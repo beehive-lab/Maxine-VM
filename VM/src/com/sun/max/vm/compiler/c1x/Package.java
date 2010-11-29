@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,8 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.vm.compiler.c1x;
+
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
+
 /**
- * Full-recompilation based dynamic trampolines.
- * @author Laurent Daynes
+ * The package class that describes the C1X packages to the Maxine configurator.
+ * @see com.sun.max.MaxPackage
+ *
+ * @author Ben L. Titzer
  */
-package com.sun.max.vm.trampoline.compile;
+public class Package extends VMPackage {
+    public Package() {
+        registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
+    }
+}

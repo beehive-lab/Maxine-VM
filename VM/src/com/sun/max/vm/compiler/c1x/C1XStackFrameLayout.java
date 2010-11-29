@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,8 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * Template-based dynamic trampoline.
- * @author Laurent Daynes
- */
-package com.sun.max.vm.trampoline.template;
+package com.sun.max.vm.compiler.c1x;
+
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.vm.collect.*;
+import com.sun.max.vm.stack.*;
+
+public class C1XStackFrameLayout extends CompiledStackFrameLayout {
+
+    public final int frameSize;
+
+    public C1XStackFrameLayout(int frameSize) {
+        this.frameSize = frameSize;
+    }
+
+    @Override
+    public int frameReferenceMapOffset() {
+        return 0;
+    }
+
+    @Override
+    public int frameReferenceMapSize() {
+        return ByteArrayBitMap.computeBitMapSize(Unsigned.idiv(frameSize(), STACK_SLOT_SIZE));
+    }
+
+    @Override
+    public int frameSize() {
+        return frameSize;
+    }
+
+    @Override
+    public boolean isReturnAddressPushedByCall() {
+        return Platform.platform().isa.callsPushReturnAddressOnStack();
+    }
+}

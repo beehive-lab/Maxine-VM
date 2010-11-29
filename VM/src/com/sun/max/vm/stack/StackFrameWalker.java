@@ -21,6 +21,7 @@
 package com.sun.max.vm.stack;
 
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -35,7 +36,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologueForC;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
@@ -169,10 +171,10 @@ public abstract class StackFrameWalker {
             if (targetMethod == null) {
                 return CalleeKind.NATIVE;
             }
-            if (Trap.trapStub.targetMethod() == targetMethod) {
+            if (targetMethod.is(TrapStub)) {
                 return CalleeKind.TRAP_STUB;
             }
-            if (targetMethod.classMethodActor != null && targetMethod.classMethodActor.isTrampoline()) {
+            if (targetMethod.isTrampoline()) {
                 return CalleeKind.TRAMPOLINE;
             }
             if (targetMethod.isCalleeSaved()) {
@@ -235,7 +237,6 @@ public abstract class StackFrameWalker {
     private Purpose purpose = null;
     private Pointer currentAnchor;
     private StackFrame calleeStackFrame;
-    private Pointer trapState;
 
     /**
      * Walks a thread's stack.
@@ -262,7 +263,6 @@ public abstract class StackFrameWalker {
         current.fp = fp;
         current.isTopFrame = true;
 
-        this.trapState = Pointer.zero();
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
@@ -297,11 +297,6 @@ public abstract class StackFrameWalker {
                 if (!walkFrame(current, callee, targetMethod, purpose, context)) {
                     break;
                 }
-
-                // clear the trap state if we didn't just walk over the trap stub
-                if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
-                    trapState = Pointer.zero();
-                }
             } else {
                 // did not find target method => in native code
                 if (purpose == INSPECTING) {
@@ -330,22 +325,22 @@ public abstract class StackFrameWalker {
                     }
 
                     ClassMethodActor lastJavaCalleeMethodActor = calleeMethod.classMethodActor();
-                    if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
-                        if (lastJavaCalleeMethodActor.isTrapStub()) {
-                            Pointer anchor = nextNativeStubAnchor();
-                            if (!anchor.isZero()) {
-                                // This can only occur in the inspector and implies that execution is in
-                                // Trap.trapStub() as a result a trap or signal while execution was in
-                                // native code.
-                                advanceFrameInNative(anchor, purpose);
-                            } else {
-                                // This can only occur in the inspector and implies that execution is in the platform specific
-                                // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
-                                // particular, the return instruction pointer slot has not been updated with the instruction
-                                // pointer at which the fault occurred.
-                                break;
-                            }
-                        } else if (!advanceVmEntryPointFrame(calleeMethod)) {
+                    if (calleeMethod.is(TrapStub)) {
+                        Pointer anchor = nextNativeStubAnchor();
+                        if (!anchor.isZero()) {
+                            // This can only occur in the Inspector and implies that execution is in
+                            // the trap stub as a result a trap or signal while execution was in
+                            // native code.
+                            advanceFrameInNative(anchor, purpose);
+                        } else {
+                            // This can only occur in the inspector and implies that execution is in the platform specific
+                            // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
+                            // particular, the return instruction pointer slot has not been updated with the instruction
+                            // pointer at which the fault occurred.
+                            break;
+                        }
+                    } else if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
+                        if (!advanceVmEntryPointFrame(calleeMethod)) {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor == null) {
@@ -431,7 +426,7 @@ public abstract class StackFrameWalker {
     private void checkVmEntrypointCaller(TargetMethod lastJavaCallee, final TargetMethod targetMethod) {
         if (lastJavaCallee != null && lastJavaCallee.classMethodActor() != null) {
             final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
-            if (classMethodActor.isVmEntryPoint() && !classMethodActor.isTrapStub()) {
+            if (classMethodActor.isVmEntryPoint()) {
                 Log.print("Caller of VM entry point (@VM_ENTRY_POINT annotated method) \"");
                 Log.print(lastJavaCallee.regionName());
                 Log.print("\" is not native code: ");
@@ -667,7 +662,6 @@ public abstract class StackFrameWalker {
 
         current.reset();
         callee.reset();
-        trapState = Pointer.zero();
         purpose = null;
         defaultStackUnwindingContext.stackPointer = Pointer.zero();
         defaultStackUnwindingContext.throwable = null;
@@ -697,26 +691,6 @@ public abstract class StackFrameWalker {
             callee.copyFrom(current);
         }
         current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer());
-    }
-
-    /**
-     * Records the trap state when walking a trap frame. This information can be subsequently {@linkplain #trapState()
-     * accessed} when walking the frame in which the trap occurred.
-     *
-     * @param trapState the state pertinent to a trap
-     */
-    public void setTrapState(Pointer trapState) {
-        this.trapState = trapState;
-    }
-
-    /**
-     * Gets the state stored in the trap frame just below the frame currently being walked (i.e. the frame in which the
-     * trap occurred).
-     *
-     * @return {@link Pointer#zero()} if the current frame is not a frame in which a trap occurred
-     */
-    public Pointer trapState() {
-        return trapState;
     }
 
     /**

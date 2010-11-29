@@ -57,7 +57,11 @@ public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
      * @see VM_ENTRY_POINT
      */
     public UnixAMD64EirCFunctionABI(boolean isVmEntryPoint) {
-        calleeSavedRegisters = Arrays.asList(new AMD64EirRegister[] {RBX, RBP, R12, R13, R14, R15});
+        if (isVmEntryPoint) {
+            calleeSavedRegisters = Arrays.asList(new AMD64EirRegister[] {RBX, RBP, R12, R13, R14, R15});
+        } else {
+            calleeSavedRegisters = Collections.emptyList();
+        }
         // Native target ABI uses different entry point.
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = targetABI();
         final CallEntryPoint callEntryPoint = isVmEntryPoint ? CallEntryPoint.C_ENTRY_POINT : CallEntryPoint.OPTIMIZED_ENTRY_POINT;

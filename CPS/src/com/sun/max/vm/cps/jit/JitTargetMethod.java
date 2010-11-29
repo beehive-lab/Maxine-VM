@@ -238,7 +238,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
                 codeOrCodeBuffer,
                 encodedInlineDataDescriptors,
                 jitStackFrameLayout.frameSize(),
-                jitStackFrameLayout.frameReferenceMapSize(), abi.registerConfig
+                jitStackFrameLayout.frameReferenceMapSize()
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;

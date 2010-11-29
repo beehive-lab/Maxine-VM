@@ -256,7 +256,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target) {
             throw FatalError.unimplemented();
         }
-        public CiRegister[] getCallingConventionRegisters(Type type) {
+        public CiRegister[] getCallingConventionRegisters(Type type, RegisterFlag flag) {
             switch (type) {
                 case JavaCall:
                     return outParameters;
@@ -284,7 +284,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         public RiRegisterAttributes[] getAttributesMap() {
             throw FatalError.unimplemented();
         }
-        public CiRegister getRegister(int id) {
+        public CiRegister getRegisterForRole(int id) {
             throw FatalError.unimplemented();
         }
     }

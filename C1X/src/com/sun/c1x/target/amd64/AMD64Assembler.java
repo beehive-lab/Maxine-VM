@@ -1090,8 +1090,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void movq(CiRegister dst, CiAddress src) {
         if (dst.isFpu()) {
-            assert dst.isFpu();
-                emitByte(0xF3);
+            emitByte(0xF3);
             prefixq(src, dst);
             emitByte(0x0F);
             emitByte(0x7E);
@@ -1111,8 +1110,6 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void movq(CiAddress dst, CiRegister src) {
         if (src.isFpu()) {
-            assert src.isFpu();
-
             emitByte(0x66);
             prefixq(dst, src);
             emitByte(0x0F);

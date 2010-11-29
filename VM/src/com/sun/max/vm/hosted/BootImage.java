@@ -424,7 +424,6 @@ public class BootImage {
         public final String compilerPackageName;
         public final String compilationPackageName;
         public final String jitPackageName;
-        public final String trampolinePackageName;
         public final String targetABIsPackageName;
         public final String runPackageName;
 
@@ -475,10 +474,6 @@ public class BootImage {
             return (VMPackage) MaxPackage.fromName(jitPackageName);
         }
 
-        public VMPackage trampolinePackage() {
-            return (VMPackage) MaxPackage.fromName(trampolinePackageName);
-        }
-
         public VMPackage targetABIsPackage() {
             return (VMPackage) MaxPackage.fromName(targetABIsPackageName);
         }
@@ -501,7 +496,6 @@ public class BootImage {
             compilerPackageName = Utf8.readString(inputStream);
             compilationPackageName = Utf8.readString(inputStream);
             jitPackageName =  Utf8.readString(inputStream);
-            trampolinePackageName = Utf8.readString(inputStream);
             targetABIsPackageName = Utf8.readString(inputStream);
             runPackageName = Utf8.readString(inputStream);
         }
@@ -526,7 +520,6 @@ public class BootImage {
                 jitPackageName = vmConfiguration.jitCompilerPackage.name();
             }
 
-            trampolinePackageName = vmConfiguration.trampolinePackage.name();
             targetABIsPackageName = vmConfiguration.targetABIsPackage.name();
             runPackageName = vmConfiguration.runPackage.name();
         }
@@ -547,7 +540,6 @@ public class BootImage {
             checkPackage(monitorPackageName);
             checkPackage(compilerPackageName);
             checkPackage(jitPackageName);
-            checkPackage(trampolinePackageName);
             checkPackage(targetABIsPackageName);
             checkPackage(runPackageName);
         }
@@ -681,7 +673,6 @@ public class BootImage {
                                                       stringInfo.jitPackage(),
                                                       null,
                                                       stringInfo.compilationPackage(),
-                                                      stringInfo.trampolinePackage(),
                                                       stringInfo.targetABIsPackage(), stringInfo.runPackage());
 
                 fileInputStream.skip(header.heapSize + header.codeSize);

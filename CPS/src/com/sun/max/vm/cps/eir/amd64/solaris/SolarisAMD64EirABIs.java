@@ -35,7 +35,6 @@ public class SolarisAMD64EirABIs extends AMD64EirABIsScheme {
               new UnixAMD64EirNativeABI(),
               new UnixAMD64EirCFunctionABI(false /*called from Java only*/),
               new UnixAMD64EirCFunctionABI(true /*called from native code only*/),
-              new UnixAMD64EirTrampolineABI(),
               new UnixAMD64EirTemplateABI(),
               new UnixAMD64EirTreeABI());
     }

@@ -173,7 +173,7 @@ public final class JavaPrototype extends Prototype {
             }
             excludedMaxPackages.put(excludedPackage, maxPackage);
         }
-        packageLoader.load(maxPackage, false);
+        packageLoader.load(maxPackage, false, true);
         loadedMaxPackages.add(maxPackage);
     }
 
@@ -186,7 +186,7 @@ public final class JavaPrototype extends Prototype {
      * @return a sequence of all the classes loaded from the specified package (and potentially its subpackages).
      */
     public List<Class> loadPackage(String name, boolean recursive) {
-        return packageLoader.load(name, recursive);
+        return packageLoader.load(name, recursive, true);
     }
 
     /**

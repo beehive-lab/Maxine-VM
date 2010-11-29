@@ -29,7 +29,6 @@ import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -68,7 +67,7 @@ public final class SPARCSafepoint extends Safepoint {
     private final boolean is32Bit;
 
     @HOSTED_ONLY
-    public SPARCSafepoint(VMConfiguration vmConfiguration) {
+    public SPARCSafepoint() {
         is32Bit = platform().wordWidth() == WordWidth.BITS_32;
     }
 

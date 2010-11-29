@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -40,9 +43,9 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
@@ -60,6 +63,69 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public static final VMStringOption printTargetMethods = VMOptions.register(new VMStringOption("-XX:PrintTargetMethods=", false, null,
         "Print compiled target methods whose fully qualified name contains <value>."), MaxineVM.Phase.STARTING);
+
+    /**
+     * Categorization of target methods.
+     */
+    public enum Flavor {
+
+        /**
+         * A compiled method.
+         */
+        Standard,
+
+        /**
+         * A compiled {@link BytecodeTemplate}.
+         */
+        JitTemplate,
+
+        /**
+         * Trampoline for unlinked virtual method dispatch.
+         */
+        VirtualTrampoline,
+
+        /**
+         * Trampoline for unlinked interface method dispatch.
+         */
+        InterfaceTrampoline,
+
+        /**
+         * Trampoline for unlinked static method call.
+         */
+        StaticTrampoline,
+
+        /**
+         * A {@linkplain com.sun.c1x.globalstub.GlobalStub global stub}.
+         */
+        GlobalStub,
+
+        /**
+         * An {@linkplain Adapter adapter}.
+         */
+        Adapter,
+
+        /**
+         * The trap stub.
+         */
+        TrapStub;
+    }
+
+    @INSPECTED
+    public final Flavor flavor;
+
+    /**
+     * Determines if this method is of a given flavor.
+     */
+    public final boolean is(Flavor flavor) {
+        return this.flavor == flavor;
+    }
+
+    /**
+     * Determines if this method is trampoline.
+     */
+    public final boolean isTrampoline() {
+        return this.flavor == VirtualTrampoline || this.flavor == InterfaceTrampoline || flavor == StaticTrampoline;
+    }
 
     @INSPECTED
     public final ClassMethodActor classMethodActor;
@@ -98,9 +164,10 @@ public abstract class TargetMethod extends MemoryRegion {
 
     private int registerRestoreEpilogueOffset = -1;
 
-    public TargetMethod(String description, CallEntryPoint callEntryPoint) {
+    public TargetMethod(Flavor flavor, String description, CallEntryPoint callEntryPoint) {
         this.classMethodActor = null;
         this.callEntryPoint = callEntryPoint;
+        this.flavor = flavor;
         setRegionName(description);
     }
 
@@ -108,6 +175,12 @@ public abstract class TargetMethod extends MemoryRegion {
         this.classMethodActor = classMethodActor;
         this.callEntryPoint = callEntryPoint;
         setRegionName(classMethodActor.name.toString());
+
+        if (classMethodActor.isTemplate()) {
+            flavor = JitTemplate;
+        } else {
+            flavor = Standard;
+        }
     }
 
     public int registerRestoreEpilogueOffset() {
@@ -240,6 +313,12 @@ public abstract class TargetMethod extends MemoryRegion {
         return frameSize;
     }
 
+    /**
+     * The entry point used for <i>standard</i> calls in this target method to JVM compiled/interpreted code.
+     * Non-standard calls are those to external native code and calls to the runtime inserted by the
+     * compiler. The former type of calls directly use the native address supplied by the {@linkplain DynamicLinker linker}
+     * and the latter always uses {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}.
+     */
     @INSPECTED
     public final CallEntryPoint callEntryPoint;
 
@@ -339,7 +418,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 final TargetMethod callee = getTargetMethod(currentDirectCallee);
                 if (callee == null) {
                     linkedAll = false;
-                    patchCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
+                    patchCallSite(stopPosition(i), vm().stubs.staticTrampoline().codeStart().plus(offset));
                 } else {
                     patchCallSite(stopPosition(i), callee.codeStart().plus(offset));
                 }
@@ -370,15 +449,6 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
         return false;
-    }
-
-    /**
-     * Gets the address within a frame where the callee saved registers (if any) are saved.
-     *
-     * @param sp the frame pointer of {@code Pointer#zero()} if this method does not have a callee save area
-     */
-    public Pointer getCalleeSaveStart(Pointer sp) {
-        return Pointer.zero();
     }
 
     public boolean isCalleeSaved() {
@@ -758,9 +828,28 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets the register config used to compile this method.
+     * Gets the register configuration used to compile this method.
      */
-    public RiRegisterConfig getRegisterConfig() {
-        return null;
+    public final RiRegisterConfig getRegisterConfig() {
+        RegisterConfigs configs = vm().registerConfigs;
+        switch (flavor) {
+            case Adapter:
+                return null;
+            case GlobalStub:
+                return configs.globalStub;
+            case VirtualTrampoline:
+            case StaticTrampoline:
+            case InterfaceTrampoline:
+                return configs.trampoline;
+            case JitTemplate:
+                return configs.jitTemplate;
+            case Standard:
+                assert classMethodActor != null : "cannot determine register configuration for " + this;
+                return configs.getRegisterConfig(classMethodActor);
+            case TrapStub:
+                return configs.trapStub;
+            default:
+                throw FatalError.unexpected(flavor.toString());
+        }
     }
 }

@@ -177,7 +177,7 @@ public final class FatalError extends Error {
         Log.unlock(lockDisabledSafepoints);
         Address ip = Address.zero();
         if (trappedInNative && !trapState.isZero())  {
-            ip = TrapStateAccess.instance().getInstructionPointer(trapState);
+            ip = TrapStateAccess.instance().getPC(trapState);
         }
         exit(trappedInNative, ip);
 

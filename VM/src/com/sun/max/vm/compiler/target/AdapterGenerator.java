@@ -207,7 +207,7 @@ public abstract class AdapterGenerator {
             return null;
         }
 
-        if (callee.isTemplate() || callee.isTrapStub() || callee.isVmEntryPoint()) {
+        if (callee.isTemplate() || callee.isVmEntryPoint()) {
             // Templates do not have adapters as they are not complete methods that are called
             return null;
         }
@@ -231,11 +231,6 @@ public abstract class AdapterGenerator {
                 return null;
             }
             // JIT2OPT parameterless calls still require an adapter to save and restore the frame pointer
-        }
-
-        if (Actor.isTrampoline(flags)) {
-            // Trampolines save and restore all registers
-            return null;
         }
 
         // Access to table of adapters must be synchronized

@@ -34,7 +34,6 @@ import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.trampoline.*;
 
 /**
  * This class is used to create and install a {@linkplain MaxineVM VM} whose configuration
@@ -66,8 +65,6 @@ public final class VMConfigurator {
             "Specifies the JIT scheme for the target.", VMConfigurator.defaultJitCompilerScheme());
     public final Option<MaxPackage> compScheme = schemeOption("comp", new com.sun.max.vm.compiler.Package(), CompilationScheme.class,
             "Specifies the compilation scheme for the target.", VMConfigurator.defaultCompilationScheme());
-    public final Option<MaxPackage> trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
-            "Specifies the dynamic trampoline scheme for the target.", VMConfigurator.defaultTrampolineScheme());
     public final Option<MaxPackage> targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), TargetABIsScheme.class,
             "Specifies the ABIs scheme for the target", VMConfigurator.defaultTargetABIsScheme());
     public final Option<MaxPackage> runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), RunScheme.class,
@@ -106,7 +103,6 @@ public final class VMConfigurator {
                                     vm(jitScheme),
                                     vm(optScheme),
                                     vm(compScheme),
-                                    vm(trampolineScheme),
                                     vm(targetABIsScheme), vm(runScheme));
         MaxineVM vm = new MaxineVM(config);
         if (install) {
@@ -201,13 +197,6 @@ public final class VMConfigurator {
      */
     public static VMPackage defaultMonitorScheme() {
         return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
-    }
-
-    /**
-     * Gets the package providing the default {@link DynamicTrampolineScheme}.
-     */
-    public static VMPackage defaultTrampolineScheme() {
-        return new com.sun.max.vm.trampoline.template.Package();
     }
 
     public static void installStandardJit(BuildLevel buildLevel) {

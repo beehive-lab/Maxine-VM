@@ -28,7 +28,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.refmaps.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
@@ -485,10 +484,9 @@ public final class StackReferenceMapPreparer {
      */
     public void prepareStackReferenceMapFromTrap(Pointer tla, Pointer trapState) {
         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-        final Pointer instructionPointer = trapStateAccess.getInstructionPointer(trapState);
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        final Pointer stackPointer = trapStateAccess.getStackPointer(trapState, targetMethod);
-        final Pointer framePointer = trapStateAccess.getFramePointer(trapState, targetMethod);
+        final Pointer instructionPointer = trapStateAccess.getPC(trapState);
+        final Pointer stackPointer = trapStateAccess.getSP(trapState);
+        final Pointer framePointer = trapStateAccess.getFP(trapState);
         prepareStackReferenceMap(tla, instructionPointer, stackPointer, framePointer, false);
     }
 

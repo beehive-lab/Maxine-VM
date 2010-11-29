@@ -43,8 +43,8 @@ public class AMD64 extends CiArchitecture {
     public static final CiRegister rsi = new CiRegister(6, 6, 8, "rsi", CPU, RegisterFlag.Byte);
     public static final CiRegister rdi = new CiRegister(7, 7, 8, "rdi", CPU, RegisterFlag.Byte);
 
-    public static final CiRegister r8 = new CiRegister(8, 8, 8, "r8", CPU, RegisterFlag.Byte);
-    public static final CiRegister r9 = new CiRegister(9, 9, 8, "r9", CPU, RegisterFlag.Byte);
+    public static final CiRegister r8  = new CiRegister(8,  8,  8, "r8", CPU, RegisterFlag.Byte);
+    public static final CiRegister r9  = new CiRegister(9,  9,  8, "r9", CPU, RegisterFlag.Byte);
     public static final CiRegister r10 = new CiRegister(10, 10, 8, "r10", CPU, RegisterFlag.Byte);
     public static final CiRegister r11 = new CiRegister(11, 11, 8, "r11", CPU, RegisterFlag.Byte);
     public static final CiRegister r12 = new CiRegister(12, 12, 8, "r12", CPU, RegisterFlag.Byte);
@@ -58,23 +58,23 @@ public class AMD64 extends CiArchitecture {
     };
 
     // XMM registers
-    public static final CiRegister xmm0 = new CiRegister(16, 0, 16, "xmm0", FPU);
-    public static final CiRegister xmm1 = new CiRegister(17, 1, 16, "xmm1", FPU);
-    public static final CiRegister xmm2 = new CiRegister(18, 2, 16, "xmm2", FPU);
-    public static final CiRegister xmm3 = new CiRegister(19, 3, 16, "xmm3", FPU);
-    public static final CiRegister xmm4 = new CiRegister(20, 4, 16, "xmm4", FPU);
-    public static final CiRegister xmm5 = new CiRegister(21, 5, 16, "xmm5", FPU);
-    public static final CiRegister xmm6 = new CiRegister(22, 6, 16, "xmm6", FPU);
-    public static final CiRegister xmm7 = new CiRegister(23, 7, 16, "xmm7", FPU);
+    public static final CiRegister xmm0 = new CiRegister(16, 0, 8, "xmm0", FPU);
+    public static final CiRegister xmm1 = new CiRegister(17, 1, 8, "xmm1", FPU);
+    public static final CiRegister xmm2 = new CiRegister(18, 2, 8, "xmm2", FPU);
+    public static final CiRegister xmm3 = new CiRegister(19, 3, 8, "xmm3", FPU);
+    public static final CiRegister xmm4 = new CiRegister(20, 4, 8, "xmm4", FPU);
+    public static final CiRegister xmm5 = new CiRegister(21, 5, 8, "xmm5", FPU);
+    public static final CiRegister xmm6 = new CiRegister(22, 6, 8, "xmm6", FPU);
+    public static final CiRegister xmm7 = new CiRegister(23, 7, 8, "xmm7", FPU);
 
-    public static final CiRegister xmm8 =  new CiRegister(24,  8, 16, "xmm8",  FPU);
-    public static final CiRegister xmm9 =  new CiRegister(25,  9, 16, "xmm9",  FPU);
-    public static final CiRegister xmm10 = new CiRegister(26, 10, 16, "xmm10", FPU);
-    public static final CiRegister xmm11 = new CiRegister(27, 11, 16, "xmm11", FPU);
-    public static final CiRegister xmm12 = new CiRegister(28, 12, 16, "xmm12", FPU);
-    public static final CiRegister xmm13 = new CiRegister(29, 13, 16, "xmm13", FPU);
-    public static final CiRegister xmm14 = new CiRegister(30, 14, 16, "xmm14", FPU);
-    public static final CiRegister xmm15 = new CiRegister(31, 15, 16, "xmm15", FPU);
+    public static final CiRegister xmm8 =  new CiRegister(24,  8, 8, "xmm8",  FPU);
+    public static final CiRegister xmm9 =  new CiRegister(25,  9, 8, "xmm9",  FPU);
+    public static final CiRegister xmm10 = new CiRegister(26, 10, 8, "xmm10", FPU);
+    public static final CiRegister xmm11 = new CiRegister(27, 11, 8, "xmm11", FPU);
+    public static final CiRegister xmm12 = new CiRegister(28, 12, 8, "xmm12", FPU);
+    public static final CiRegister xmm13 = new CiRegister(29, 13, 8, "xmm13", FPU);
+    public static final CiRegister xmm14 = new CiRegister(30, 14, 8, "xmm14", FPU);
+    public static final CiRegister xmm15 = new CiRegister(31, 15, 8, "xmm15", FPU);
 
     public static final CiRegister[] xmmRegisters = {
         xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
