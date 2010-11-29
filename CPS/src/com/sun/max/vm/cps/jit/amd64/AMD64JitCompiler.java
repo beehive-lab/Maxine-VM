@@ -93,6 +93,19 @@ public class AMD64JitCompiler extends JitCompiler {
         if (MaxineVM.isHosted()) {
             unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
         }
+
+        if (phase == MaxineVM.Phase.STARTING) {
+            for (TargetMethod code : targetGenerator.templateTable().templates) {
+                if (code != null && code.numberOfDirectCalls() > 0) {
+                    Object [] directCallees = code.directCallees();
+                    for (int i = 0; i < code.numberOfDirectCalls(); i++) {
+                        if (code.getTargetMethod(directCallees[i]) == null) {
+                            Log.println("Template " + code.name() + " has pachable direct call site");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private static ClassMethodActor unwindMethod;

@@ -197,9 +197,13 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             return;
         }
         for (int i = 0; i < directCallees.length; i++) {
-            final Address callSite = codeStart().plus(stopPosition(i));
-            if (!isPatchableCallSite(callSite)) {
-                FatalError.unexpected(classMethodActor.qualifiedName() +  "Patchable call site should be word-aligned: " + callSite.toHexString());
+            final TargetMethod callee = getTargetMethod(directCallees[i]);
+            if (callee == null) {
+                // Only these needs to be patched.
+                final Pointer callSite = codeStart().plus(stopPosition(i));
+                if (!isPatchableCallSite(callSite)) {
+                    FatalError.unexpected(classMethodActor.qualifiedName() +  " Patchable call site should be word-aligned: " + callSite.toHexString());
+                }
             }
         }
     }

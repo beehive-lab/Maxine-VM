@@ -457,7 +457,7 @@ public interface AMD64EirInstruction {
         //  8-bytes aligned chunk of memory: the latter provides guarantees that the whole instruction sits in a 32-bytes cache line.
         // This is tricky in CPS because of "mutable" assembly objects that may be written before the call instructions
         // (see com.sun.max.asm.Assembler.Directives). So the simplest is just to add one of this directive for an
-        // 8 byte alignment, and fills in nops in from of the call opcode.
+        // 8 byte alignment.
 
         @Override
         public void emit(AMD64EirTargetEmitter emitter) {
@@ -466,9 +466,6 @@ public interface AMD64EirInstruction {
                 case METHOD: {
                     boolean ok = emitter.assembler().directives().align(WordWidth.BITS_64.numberOfBytes, DIRECT_METHOD_CALL_INSTRUCTION_LENGTH);
                     assert ok;
-//                    emitter.assembler().nop();
-//                    emitter.assembler().nop();
-//                    emitter.assembler().nop();
                     emitter.addDirectCall(this);
                     final int placeHolderBeforeLinking = -1;
                     emitter.assembler().call(placeHolderBeforeLinking);

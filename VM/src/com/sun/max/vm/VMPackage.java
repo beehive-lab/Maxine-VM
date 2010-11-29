@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm;
 
-import com.sun.max.*;
-import com.sun.max.annotate.*;
 
 /**
  * Denotes a package of classes that are (potentially) in the VM.
