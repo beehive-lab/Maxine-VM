@@ -295,6 +295,9 @@ public abstract class BytecodeToTargetTranslator {
      * @param template the compiled code to emit
      */
     protected void emitAndRecordStops(TargetMethod template) {
+        if (template.numberOfDirectCalls() > 0) {
+            alignTemplateWithPatchableSite(template);
+        }
         stops.add(template, codeBuffer.currentPosition(), opcodeBci);
         codeBuffer.emit(template);
     }
@@ -314,6 +317,7 @@ public abstract class BytecodeToTargetTranslator {
         assert template.numberOfSafepoints() == 0;
         assert template.numberOfStopPositions() == 1;
         assert template.referenceMaps() == null || Bytes.areClear(template.referenceMaps());
+        alignTemplateWithPatchableSite(template);
         int stopPosition = codeBuffer.currentPosition() + template.stopPosition(0);
         stops.add(new BytecodeDirectCall(stopPosition, opcodeBci, callee));
     }
@@ -428,6 +432,8 @@ public abstract class BytecodeToTargetTranslator {
     protected abstract void fixTableSwitch(TableSwitch tableSwitch);
 
     protected abstract void fixLookupSwitch(LookupSwitch lookupSwitch);
+
+    protected abstract void alignTemplateWithPatchableSite(TargetMethod template);
 
     public void setGenerated(
             TargetMethod targetMethod,
@@ -666,14 +672,6 @@ public abstract class BytecodeToTargetTranslator {
     }
 
     public void generate() {
-//        try {
-        generate0();
-//        } catch (Throwable e) {
-//            throw (InternalError) new InternalError("Error translating " + classMethodActor.compilee().toStackTraceElement(bci) + errorSuffix()).initCause(e);
-//        }
-    }
-
-    public void generate0() {
         bci = 0;
         while (bci < code.length) {
             opcodeBci = bci;

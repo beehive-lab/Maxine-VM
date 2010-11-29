@@ -123,7 +123,7 @@ public abstract class Adapter extends TargetMethod {
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        FatalError.unimplemented();
+        FatalError.unexpected("Adapter should never be forwarded");
     }
 
     @Override
@@ -131,8 +131,19 @@ public abstract class Adapter extends TargetMethod {
     }
 
     @Override
-    public void patchCallSite(int callOffset, Word callEntryPoint) {
-        FatalError.unimplemented();
+    public boolean isPatchableCallSite(Address callSite) {
+        FatalError.unexpected("Adapter should never be patched");
+        return false;
+    }
+
+    @Override
+    public void fixupCallSite(int callOffset, Address callEntryPoint) {
+        FatalError.unexpected("Adapter should never be patched");
+    }
+
+    @Override
+    public void patchCallSite(int callOffset, Address callEntryPoint) {
+        FatalError.unexpected("Adapter should never be patched");
     }
 
     @Override

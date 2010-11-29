@@ -192,6 +192,18 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return true;
     }
 
+    private void verifyPatchableCallSites() {
+        if (directCallees == null) {
+            return;
+        }
+        for (int i = 0; i < directCallees.length; i++) {
+            final Address callSite = codeStart().plus(stopPosition(i));
+            if (!isPatchableCallSite(callSite)) {
+                FatalError.unexpected(classMethodActor.qualifiedName() +  "Patchable call site should be word-aligned: " + callSite.toHexString());
+            }
+        }
+    }
+
     public final void setGenerated(int[] catchRangePositions, int[] catchBlockPositions, int[] stopPositions, byte[] compressedJavaFrameDescriptors, Object[] directCallees, int numberOfIndirectCalls,
                     int numberOfSafepoints, byte[] referenceMaps, byte[] scalarLiterals, Object[] referenceLiterals, Object codeOrCodeBuffer, byte[] encodedInlineDataDescriptors, int frameSize,
                     int frameReferenceMapSize, RegisterConfig registerConfig) {
@@ -206,6 +218,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         super.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         super.setFrameSize(frameSize);
         super.setData(scalarLiterals, referenceLiterals, codeOrCodeBuffer);
+        verifyPatchableCallSites();
     }
 
     /**

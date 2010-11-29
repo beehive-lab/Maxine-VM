@@ -27,19 +27,27 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
- * Describes a package in the com.sun.max project,
- * providing programmatic package information manipulation,
- * which is lacking in java.lang.Package.
+ * Describes a package in the Maxine VM, providing programmatic package information manipulation, which is
+ * lacking in {@link java.lang.Package}.
  * <p>
- * You must create a class called 'Package extends MaxPackage'
- * in each and every package in this project.
+ * Various concrete subclasses of this package exist for parts of Maxine, namely:
+ * <ul>
+ * <li>{@link BasePackage} for base (utility) packages in {@code com.sun.max}.
+ * <li>{@link AsmPackage} for packages in the Maxine assembler.
+ * <li>{@link VMPackage} for packages in the VM proper.
+ * <li>{@link ExtPackage} for the extension packages.
+ * </ul>
+ * Generally, for the classes in a package to be included in Maxine, each subpackage must contain
+ * a class named {@code Package} that is a subclass of one of the above.
+ * However, it is possible to indicate recursive inclusion at the root by using the appropriate constructor,
+ * in which case the {@code Package} class must also declare a public constructor {@code Package(String, boolean}}
+ * to enable the appropriate {@code Package} instances to be created for the recursive packages.
  * <p>
- * For example you can call:
- *
- *     new com.sun.max.program.Package().superPackage()
- *
- * Also make sure that you have a file called 'package-info.java' in every package.
- * This is where you can put package-related JavaDoc comments.
+ * It is also possible to redirect the search to another package for extensions that must lie outside the
+ * {@code com.sun.max} package name space. These always support recursion.
+ * <p>
+ * It is recommended to include a file called 'package-info.java' in every package, which is where you can put
+ * package-related JavaDoc comments.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -47,11 +55,74 @@ import com.sun.max.program.*;
 public abstract class MaxPackage implements Comparable<MaxPackage> {
 
     private final String packageName;
+    private final boolean reDIrect;
+    private final boolean recursive;
     private static final Class[] NO_CLASSES = new Class[0];
 
+    /**
+     * Used to represent the missing {@code Package} classes in recursively included packages.
+     * Using the simple name {@code Package} meets the naming assertion check in {@link MaxPackage#MaxPackage(String, boolean, boolean)}.
+     */
+    static class Package extends MaxPackage {
+        private MaxPackage root;
+        Package(MaxPackage root, String packageName, boolean recursive) {
+            super(packageName, root.reDIrect, recursive);
+            this.root = root;
+        }
+
+        @Override
+        public boolean isPartOfMaxine() {
+            return root.isPartOfMaxine();
+        }
+    }
+
+    /**
+     * No recursion, no redirection.
+     */
     protected MaxPackage() {
-        packageName = toJava().getName();
+        this(null, false, false);
+    }
+
+    /**
+     * No redirection, optional recursion.
+     * @param recursive
+     */
+    protected MaxPackage(boolean recursive) {
+        this(null, false, recursive);
+    }
+
+    /**
+     * Used only for recursion support.
+     * @param packageName name of recursively included sub-package
+     * @param recursive exists solely to distinguish constructor, value ignored
+     */
+    protected MaxPackage(String packageName, boolean recursive) {
+        this(packageName, false, true);
+    }
+
+    /**
+     * Redirection and recursion.
+     * @param packageName
+     */
+    protected MaxPackage(String packageName) {
+        this(packageName, true, true);
+    }
+
+    private MaxPackage(String packageName, boolean reDirect, boolean recursive) {
+        this.packageName = packageName == null ? getClass().getPackage().getName() : packageName;
+        this.reDIrect = reDirect;
+        this.recursive = recursive;
         assert getClass().getSimpleName().equals(Package.class.getSimpleName());
+    }
+
+    /**
+     * Is the package denoted by this instance part of the VM?
+     * Default assumption is that all packages are included in the VM.
+     * Particular subclasses may override and/or specialise (i.e. ignore) this method.
+     * @return
+     */
+    public boolean isPartOfMaxine() {
+        return false;
     }
 
     /**
@@ -78,16 +149,10 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         return null;
     }
 
-    private MaxPackage(String packageName) {
-        this.packageName = packageName;
-    }
-
+    // @Deprecated - only used in a CPS test
     public static MaxPackage fromJava(String name) {
-        return new MaxPackage(name) {
-            @Override
-            public java.lang.Package toJava() {
-                return java.lang.Package.getPackage(name());
-            }
+        return new MaxPackage(name, false) {
+
         };
     }
 
@@ -100,6 +165,9 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
     }
 
     public java.lang.Package toJava() {
+        if (reDIrect) {
+            java.lang.Package.getPackage(name());
+        }
         return getClass().getPackage();
     }
 
@@ -142,29 +210,151 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         return name().startsWith(superPackage.name());
     }
 
+    private static class RootPackageInfo {
+        MaxPackage root;
+        Class<?> matcherClass;
+        Set<String> packageNames = new TreeSet<String>();
+        List<MaxPackage> packages;
+        RootPackageInfo(MaxPackage root, Class<?> matcherClass) {
+            this.root = root;
+            this.matcherClass = matcherClass;
+        }
+    }
+
+    /**
+     * Finds all sub-packages in the classpath that are an instance of the superclass of the classes specified in
+     * {@code rootPackages}. The actual classes should be {@link Package} instances from the package defining the search
+     * start point. One pass is made over the file system and the resulting list is all matching packages. However, the
+     * packages for each root are kept separate until the end when they are sorted and then merged in the order
+     * in {@code rootPackages}. The ordering is important for packages that use {@link MaxPackage#excludes}.
+     * The sorting is merely cosmetic.
+     *
+     * @param classpath
+     * @return list of subclasses of {@link MaxPackage}
+     */
+    public static List<MaxPackage> getTransitiveSubPackages(Classpath classpath, final MaxPackage[] rootPackages) {
+        final RootPackageInfo[] rootPackagesInfo = new RootPackageInfo[rootPackages.length];
+        // Standard use has one root with a common prefix. Arbitrary paths would be more complicated.
+        MaxPackage baseRoot = null;
+        int index = 0;
+        for (MaxPackage root : rootPackages) {
+            if (isPrefixOf(root, rootPackages)) {
+                baseRoot = root;
+            }
+            rootPackagesInfo[index++] = new RootPackageInfo(root, root.getClass().getSuperclass());
+
+        }
+        if (baseRoot == null) {
+            ProgramError.unexpected("MaxPackage.getTransitiveSubPackages: roots have no common prefix");
+        }
+
+        // search from baseRoot
+        new ClassSearch() {
+
+            @Override
+            protected boolean visitClass(String className) {
+                final String pkgName = Classes.getPackageName(className);
+                for (int i = 0; i < rootPackages.length; i++) {
+                    MaxPackage root = rootPackages[i];
+                    if (pkgName.startsWith(root.name())) {
+                        rootPackagesInfo[i].packageNames.add(pkgName);
+                    }
+                }
+                return true;
+            }
+        }.run(classpath, baseRoot.name().replace('.', '/'));
+
+        // Now find Package classes that match the roots
+        int totalSize = 0;
+        for (RootPackageInfo rootPackageInfo : rootPackagesInfo) {
+            rootPackageInfo.packages = new ArrayList<MaxPackage>(rootPackageInfo.packageNames.size());
+            for (String pkgName : rootPackageInfo.packageNames) {
+                MaxPackage maxPackage = MaxPackage.fromName(pkgName);
+                MaxPackage recursiveParent = null;
+                if (maxPackage == null) {
+                    // check for a parent with recursive == true
+                    // there is an assumption that parent packages are processed before sub-packages
+                    for (MaxPackage parent : rootPackageInfo.packages) {
+                        if (pkgName.startsWith(parent.name()) && parent.recursive) {
+                            // need to create a clone of parent class with sub-package name
+                            maxPackage = createRecursivePackageInstance(parent, pkgName);
+                            recursiveParent = parent;
+                            break;
+                        }
+                    }
+                    if (maxPackage == null) {
+                        System.err.println("WARNING: missing Package class in package: " + pkgName);
+                        continue;
+                    }
+                }
+                if ((recursiveParent == null && rootPackageInfo.matcherClass.isInstance(maxPackage)) || (recursiveParent != null && rootPackageInfo.matcherClass.isInstance(recursiveParent))) {
+                    rootPackageInfo.packages.add(maxPackage);
+                    if (maxPackage.reDIrect) {
+                        // the above recursive traversal only operates in sub-packages of "this"
+                        // so we have to process redirected packages explicitly
+                        rootPackageInfo.packages.addAll(checkReDirectedSubpackages(classpath, maxPackage));
+                    }
+                }
+            }
+            totalSize += rootPackageInfo.packages.size();
+        }
+        final MaxPackage[] result = new MaxPackage[totalSize];
+        index = 0;
+        for (RootPackageInfo rootPackageInfo : rootPackagesInfo) {
+            final MaxPackage[] temp = rootPackageInfo.packages.toArray(new MaxPackage[rootPackageInfo.packages.size()]);
+            Arrays.sort(temp);
+            System.arraycopy(temp, 0, result, index, temp.length);
+            index += temp.length;
+        }
+        return Arrays.asList(result);
+    }
+
     public List<MaxPackage> getTransitiveSubPackages(Classpath classpath) {
+        return getTransitiveSubPackages(classpath, new MaxPackage[] {this});
+    }
+
+    private static boolean isPrefixOf(MaxPackage p, MaxPackage[] set) {
+        for (MaxPackage s : set) {
+            if (!s.name().startsWith(p.name())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Create a {@code MaxPackage} instance that denotes a sub-package of a recursively included package.
+     * Note that we don't try to create the correct subclass corresponding to the parent (which would require the deprecated clone
+     * technology), we just create an instance of our nested class.
+     * @param parent
+     * @param pkgName
+     * @return
+     */
+    private static MaxPackage createRecursivePackageInstance(MaxPackage parent, String pkgName) {
+        return new Package(parent, pkgName, true);
+    }
+
+    private static List<MaxPackage> checkReDirectedSubpackages(Classpath classpath, final MaxPackage redirectedPackage) {
+        final ArrayList<MaxPackage> result = new ArrayList<MaxPackage>();
         final Set<String> packageNames = new TreeSet<String>();
+        // find all the packages that start with the redirected package name
         new ClassSearch() {
             @Override
             protected boolean visitClass(String className) {
                 final String pkgName = Classes.getPackageName(className);
-                if (pkgName.startsWith(name())) {
+                if (pkgName.startsWith(redirectedPackage.name())) {
                     packageNames.add(pkgName);
                 }
                 return true;
             }
-        }.run(classpath, name().replace('.', '/'));
-
-        final List<MaxPackage> packages = new ArrayList<MaxPackage>(packageNames.size());
+        }.run(classpath, redirectedPackage.name().replace('.', '/'));
         for (String pkgName : packageNames) {
-            final MaxPackage maxPackage = MaxPackage.fromName(pkgName);
-            if (maxPackage == null) {
-                System.err.println("WARNING: missing Package class in package: " + pkgName);
-            } else {
-                packages.add(maxPackage);
-            }
+            // A redirected package is not expected to contain any Package classes, and the
+            // expectation is that we load the entire tree.
+            result.add(createRecursivePackageInstance(redirectedPackage, pkgName));
         }
-        return packages;
+        return result;
+
     }
 
     private Map<Class<? extends Scheme>, Class<? extends Scheme>> schemeTypeToImplementation;

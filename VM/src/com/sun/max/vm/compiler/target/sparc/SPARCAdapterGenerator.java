@@ -234,7 +234,7 @@ public abstract class SPARCAdapterGenerator extends AdapterGenerator {
 
         @Override
         public void linkAdapterCallInPrologue(TargetMethod targetMethod, Adapter adapter) {
-            targetMethod.patchCallSite(0, adapter.codeStart());
+            targetMethod.fixupCallSite(0, adapter.codeStart());
         }
 
         /**
@@ -367,7 +367,7 @@ public abstract class SPARCAdapterGenerator extends AdapterGenerator {
 
         @Override
         public void linkAdapterCallInPrologue(TargetMethod targetMethod, Adapter adapter) {
-            targetMethod.patchCallSite(8, adapter.codeStart());
+            targetMethod.fixupCallSite(8, adapter.codeStart());
         }
 
         /**
