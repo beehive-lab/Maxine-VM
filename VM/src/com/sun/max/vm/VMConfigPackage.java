@@ -24,15 +24,53 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 
 /**
- * Denotes a package of classes that are (potentially) in the VM.
+ * Maxine packages that are subject to configuration with a {@link VMConfiguration} instance.
  *
- * @author Bernd Mathiske
- * @author Doug Simon
  * @author Mick Jordan
  */
-public abstract class VMPackage extends VMConfigPackage {
-    public VMPackage() {
+
+public abstract class VMConfigPackage extends MaxPackage {
+
+    /**
+     * Determines if this package is part of the VM under the given configuration.
+     * @param vmConfiguration
+     * @return
+     */
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return true;
     }
 
+    @Override
+    public boolean isPartOfMaxine() {
+        return isPartOfMaxineVM(VMConfiguration.vmConfig());
+    }
+
+    /**
+     * Determines if this package contains any classes annotated with {@link METHOD_SUBSTITUTIONS}.
+     * @return
+     */
+    public boolean containsMethodSubstitutions() {
+        return false;
+    }
+
+    protected VMConfigPackage() {
+
+    }
+
+    /**
+     * Use this when all sub-packages should considered included.
+     * @param recursive
+     */
+    protected VMConfigPackage(boolean recursive) {
+        super(true);
+    }
+
+    /**
+     * Constructor for redirected extension classes.
+     * @param packageName
+     */
+    protected VMConfigPackage(String packageName) {
+        super(packageName);
+    }
 
 }
