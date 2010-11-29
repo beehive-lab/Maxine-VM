@@ -191,10 +191,10 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Byte    :
             case Char    :
             case Short   :
+            case Jsr     :
             case Int     : const2reg(dest.asRegister(), c.asInt()); break;
             case Word    :
             case Long    : const2reg(dest.asRegister(), c.asLong()); break;
-            case Jsr     : const2reg(dest.asRegister(), c.asJsr()); break;
             case Object  : const2reg(dest.asRegister(), c.asObject()); break;
             case Float   : const2reg(asXmmFloatReg(dest), c.asFloat()); break;
             case Double  : const2reg(asXmmDoubleReg(dest), c.asDouble()); break;
@@ -214,12 +214,13 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Byte    :
             case Char    :
             case Short   :
+            case Jsr     :
             case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
             case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
             case Object  : masm.movoop(frameMap.toStackAddress(slot), CiConstant.forObject(c.asObject())); break;
             case Long    : masm.movptr(frameMap.toStackAddress(slot), c.asLong()); break;
             case Double  : masm.movptr(frameMap.toStackAddress(slot), doubleToRawLongBits(c.asDouble())); break;
-            default      : throw Util.shouldNotReachHere();
+            default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
         }
     }
 
@@ -236,6 +237,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Byte    : masm.movb(addr, constant.asInt() & 0xFF); break;
             case Char    :
             case Short   : masm.movw(addr, constant.asInt() & 0xFFFF); break;
+            case Jsr     :
             case Int     : masm.movl(addr, constant.asInt()); break;
             case Float   : masm.movl(addr, floatToRawIntBits(constant.asFloat())); break;
             case Object  : masm.movoop(addr, CiConstant.forObject(constant.asObject())); break;
@@ -301,6 +303,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
         switch (kind) {
             case Float   : masm.movflt(toAddr, asXmmFloatReg(src)); break;
             case Double  : masm.movsd(toAddr, asXmmDoubleReg(src)); break;
+            case Jsr     :
             case Int     : masm.movl(toAddr, src.asRegister()); break;
             case Long    :
             case Word    :
