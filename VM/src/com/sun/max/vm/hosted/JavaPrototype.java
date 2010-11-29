@@ -380,6 +380,8 @@ public final class JavaPrototype extends Prototype {
 
         final List<MaxPackage> packages = getPackages(new MaxPackage[] {new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package()});
 
+        MaxineVM.registerMaxinePackages(packages);
+
         loadMethodSubstitutions(config, packages);
 
         if (complete) {

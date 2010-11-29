@@ -288,11 +288,14 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
                     }
                 }
                 if ((recursiveParent == null && rootPackageInfo.matcherClass.isInstance(maxPackage)) || (recursiveParent != null && rootPackageInfo.matcherClass.isInstance(recursiveParent))) {
-                    rootPackageInfo.packages.add(maxPackage);
                     if (maxPackage.reDIrect) {
-                        // the above recursive traversal only operates in sub-packages of "this"
-                        // so we have to process redirected packages explicitly
+                        /* the above recursive traversal only operates in sub-packages of "this"
+                         * so we have to process redirected packages explicitly.
+                         * N.B. this will add the root of the re-direction hence the else clause.
+                         */
                         rootPackageInfo.packages.addAll(checkReDirectedSubpackages(classpath, maxPackage));
+                    } else {
+                        rootPackageInfo.packages.add(maxPackage);
                     }
                 }
             }
