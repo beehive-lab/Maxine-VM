@@ -88,14 +88,13 @@ public final class JavaPrototype extends Prototype {
     /**
      * Gets all packages in the specified root package that extend the specified package class.
      *
-     * @param maxPackageClass the package class that the package must extend
-     * @param rootPackage the root package in which to begin the search
+     * @param rootPackage the root package which defines the package class to match and in which to begin the search
      * @return a sequence of the packages that match the criteria
      */
-    private List<MaxPackage> getPackages(final Class<? extends MaxPackage> maxPackageClass, MaxPackage rootPackage) {
+    private List<MaxPackage> getPackages(MaxPackage rootPackage) {
         final List<MaxPackage> packages = new LinkedList<MaxPackage>();
         for (MaxPackage maxPackage : rootPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath())) {
-            if (maxPackageClass.isInstance(maxPackage) && vmConfig().isMaxineVMPackage(maxPackage)) {
+            if (vmConfig().isMaxineVMPackage(maxPackage)) {
                 packages.add(maxPackage);
             }
         }
@@ -394,16 +393,14 @@ public final class JavaPrototype extends Prototype {
 
         loadMethodSubstitutions(config, packageLoader);
 
-        // Need all of C1X
-        loadPackage("com.sun.cri", true);
-        loadPackage("com.sun.c1x", true);
-
         if (complete) {
 
             // TODO: Load the following package groups in parallel
-            loadPackages(getPackages(BasePackage.class, new com.sun.max.Package()));
-            loadPackages(getPackages(VMPackage.class, new com.sun.max.vm.Package()));
-            loadPackages(getPackages(AsmPackage.class, new com.sun.max.asm.Package()));
+            // Unfortunately the nesting means the first call scans everything
+            loadPackages(getPackages(new com.sun.max.Package()));
+            loadPackages(getPackages(new com.sun.max.vm.Package()));
+            loadPackages(getPackages(new com.sun.max.asm.Package()));
+            loadPackages(getPackages(new com.sun.max.ext.Package()));
 
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
