@@ -90,16 +90,14 @@ public final class JavaPrototype extends Prototype {
      * @param rootPackage the root package which defines the package class to match and in which to begin the search
      * @return a sequence of the packages that match the criteria
      */
-    private List<MaxPackage> getPackages(MaxPackage rootPackage) {
+    private List<MaxPackage> getPackages(MaxPackage[] rootPackages) {
         final List<MaxPackage> packages = new LinkedList<MaxPackage>();
-        for (MaxPackage maxPackage : rootPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath())) {
+        for (MaxPackage maxPackage : MaxPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath(), rootPackages)) {
             if (vmConfig().isMaxineVMPackage(maxPackage)) {
                 packages.add(maxPackage);
             }
         }
-        MaxPackage[] result = packages.toArray(new MaxPackage[packages.size()]);
-        java.util.Arrays.sort(result);
-        return java.util.Arrays.asList(result);
+        return packages;
     }
 
     /**
@@ -289,38 +287,28 @@ public final class JavaPrototype extends Prototype {
     /**
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
-    private void loadMethodSubstitutions(final VMConfiguration vmConfiguration, final PackageLoader pl) {
-        new ClassSearch(true) {
-            @Override
-            protected boolean visitClass(String className) {
-                if (className.endsWith(".Package")) {
-                    try {
-                        Class<?> packageClass = Class.forName(className);
-                        if (VMPackage.class.isAssignableFrom(packageClass)) {
-                            VMPackage vmPackage = (VMPackage) packageClass.newInstance();
-                            if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
-                                String[] classes = pl.listClassesInPackage(vmPackage.name(), false);
-                                for (String cn : classes) {
-                                    try {
-                                        Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
-                                        METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
-                                        if (annotation != null) {
-                                            loadClass(c);
-                                            METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
-                                        }
-                                    } catch (Exception e) {
-                                        throw ProgramError.unexpected(e);
-                                    }
-                                }
+    private void loadMethodSubstitutions(final VMConfiguration vmConfiguration, List<MaxPackage> packages) {
+        for (MaxPackage maxPackage : packages) {
+            // VMConfigPackage subclasses may contain SUBSTITUTIONS
+            if (maxPackage instanceof VMConfigPackage) {
+                VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;
+                if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
+                    String[] classes = packageLoader.listClassesInPackage(vmPackage.name(), false);
+                    for (String cn : classes) {
+                        try {
+                            Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
+                            METHOD_SUBSTITUTIONS annotation = c.getAnnotation(METHOD_SUBSTITUTIONS.class);
+                            if (annotation != null) {
+                                loadClass(c);
+                                METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotation, toClassActor(c));
                             }
+                        } catch (Exception e) {
+                            throw ProgramError.unexpected(e);
                         }
-                    } catch (Exception e) {
-                        throw ProgramError.unexpected(e);
                     }
                 }
-                return true;
             }
-        }.run(pl.classpath);
+        }
     }
 
     /**
@@ -390,16 +378,13 @@ public final class JavaPrototype extends Prototype {
         config.bootCompilerScheme().createSnippets(packageLoader);
         Snippet.register();
 
-        loadMethodSubstitutions(config, packageLoader);
+        final List<MaxPackage> packages = getPackages(new MaxPackage[] {new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package()});
+
+        loadMethodSubstitutions(config, packages);
 
         if (complete) {
 
-            // TODO: Load the following package groups in parallel
-            // Unfortunately the nesting means the first call scans everything
-            loadPackages(getPackages(new com.sun.max.Package()));
-            loadPackages(getPackages(new com.sun.max.vm.Package()));
-            loadPackages(getPackages(new com.sun.max.asm.Package()));
-            loadPackages(getPackages(new com.sun.max.ext.Package()));
+            loadPackages(packages);
 
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
