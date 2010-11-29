@@ -77,6 +77,7 @@ public final class MaxineVM {
     private static final List<String> MAXINE_CODE_BASE_LIST = new ArrayList<String>();
 
     private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
+    private static final String TEST_PREFIX = "test.";
 
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
@@ -187,11 +188,14 @@ public final class MaxineVM {
      */
     @HOSTED_ONLY
     public static void registerMaxinePackages(List<MaxPackage> packages) {
-        // we really only need to search for packages outside the MAXINE_CLASS_PACKAGE_PREFIX namespace
+        // We really only need to search for packages outside the MAXINE_CLASS_PACKAGE_PREFIX namespace.
+        // Any TEST_PREFIX packages are also included.
         MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
+        MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + MAXINE_CLASS_PACKAGE_PREFIX);
         for (MaxPackage maxPackage : packages) {
             if (!maxPackage.name().startsWith(MAXINE_CLASS_PACKAGE_PREFIX)) {
                 MAXINE_CODE_BASE_LIST.add(maxPackage.name());
+                MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + maxPackage.name());
             }
         }
     }
