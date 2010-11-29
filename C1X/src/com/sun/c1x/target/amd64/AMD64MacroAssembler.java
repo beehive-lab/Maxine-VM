@@ -432,7 +432,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         // provoke OS null exception if reg = null by
         // accessing M[reg] w/o changing any (non-CC) registers
         // NOTE: cmpl is plenty here to provoke a segv
-        cmpptr(AMD64.rax, new CiAddress(CiKind.Word, reg.asValue(Word), 0));
+        testl(AMD64.rax, new CiAddress(CiKind.Word, reg.asValue(Word), 0));
         // Note: should probably use testl(X86Register.rax, new Address(reg, 0));
         // may be shorter code (however, this version of
         // testl needs to be implemented first)

@@ -161,6 +161,16 @@ public abstract class Instruction extends Value {
         return p;
     }
 
+    @Override
+    public BlockBegin block() {
+        // TODO(tw): Make this more efficient.
+        Instruction cur = this;
+        while (!(cur instanceof BlockEnd)) {
+            cur = cur.next;
+        }
+        return ((BlockEnd) cur).begin;
+    }
+
     /**
      * Gets the list of exception handlers associated with this instruction.
      * @return the list of exception handlers for this instruction

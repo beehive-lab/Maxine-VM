@@ -153,13 +153,32 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         } else {
             lir.msb(value.result(), reg);
         }
- }
+    }
+
+    public boolean livesLonger(Value x, Value y) {
+        BlockBegin bx = x.block();
+        BlockBegin by = y.block();
+        if (bx == null || by == null) {
+            return false;
+        }
+        return bx.loopDepth() < by.loopDepth();
+    }
 
     public void visitArithmeticOpFloat(ArithmeticOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         assert !left.isStack() || !right.isStack() : "can't both be memory operands";
         boolean mustLoadBoth = (x.opcode == Bytecodes.FREM || x.opcode == Bytecodes.DREM);
+
+        // Both are in register, swap operands such that the short-living one is on the left side.
+        if (x.isCommutative() && left.isRegisterOrVariable() && right.isRegisterOrVariable()) {
+            if (livesLonger(x.x(), x.y())) {
+                LIRItem tmp = left;
+                left = right;
+                right = tmp;
+            }
+        }
+
         if (left.isRegisterOrVariable() || x.x().isConstant() || mustLoadBoth) {
             left.loadItem();
         }

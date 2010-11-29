@@ -50,6 +50,7 @@ public final class Phi extends Value {
      * Get the join block for this phi.
      * @return the join block of this phi
      */
+    @Override
     public BlockBegin block() {
         return block;
     }

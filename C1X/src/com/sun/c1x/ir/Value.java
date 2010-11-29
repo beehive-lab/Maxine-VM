@@ -96,6 +96,8 @@ public abstract class Value {
      */
     public Value subst;
 
+    public abstract BlockBegin block();
+
     /**
      * Creates a new value with the specified kind.
      * @param kind the type of this value
