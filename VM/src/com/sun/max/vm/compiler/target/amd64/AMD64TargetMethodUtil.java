@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
-import com.sun.max.asm.amd64.*;
+import com.sun.c1x.target.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -39,7 +39,7 @@ public final class AMD64TargetMethodUtil {
     private static final int RJMP = 0xe9;
 
     public static int registerReferenceMapSize() {
-        return Unsigned.idiv(AMD64GeneralRegister64.ENUMERATOR.numberOfValues(), Bytes.WIDTH);
+        return Unsigned.idiv(AMD64.cpuRegisters.length, Bytes.WIDTH);
     }
 
     public static boolean isPatchableCallSite(Address callSite) {

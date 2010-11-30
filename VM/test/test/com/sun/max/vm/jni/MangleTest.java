@@ -192,7 +192,7 @@ public class MangleTest extends MaxTestCase {
                     // Too many generated methods
                     return true;
                 }
-                if (className.startsWith(new com.sun.max.vm.asm.Package().name())) {
+                if (className.startsWith("com.sun.max.vm.asm.")) {
                     // Too many generated methods
                     return true;
                 }
