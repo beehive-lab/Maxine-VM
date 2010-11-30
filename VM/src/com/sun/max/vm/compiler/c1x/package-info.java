@@ -29,7 +29,7 @@
  * Note that the majority of the interfaces, e.g., {@link com.sun.cri.ri.RiMethod} do not require adaptation as they are implemented
  * directly by Maxine, e.g., {@link com.sun.max.vm.actor.member.MethodActor}.
  * <p>
- * MaxineC1X defines {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme} which implements
+ * This package defines {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme} which implements
  * {@link com.sun.max.vm.compiler.RuntimeCompilerScheme} and conforms to the standard API for schemes in Maxine. In
  * particular it implements the {@link com.sun.max.vm.VMScheme#initialize} method that is called during VM startup with
  * the startup phase as argument. Note that this includes the special
