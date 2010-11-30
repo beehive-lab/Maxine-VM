@@ -20,7 +20,6 @@
  */
 package com.sun.max.platform;
 
-import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 

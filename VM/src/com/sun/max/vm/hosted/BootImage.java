@@ -30,7 +30,6 @@ import java.nio.channels.FileChannel.MapMode;
 import java.util.*;
 
 import com.sun.max.*;
-import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;

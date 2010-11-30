@@ -23,7 +23,7 @@ package com.sun.max.vm.stack.sparc;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.*;
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 
 /**

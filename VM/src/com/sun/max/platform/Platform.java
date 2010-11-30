@@ -30,7 +30,6 @@ import java.util.regex.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.hosted.*;

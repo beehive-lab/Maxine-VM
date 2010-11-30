@@ -23,7 +23,7 @@ package com.sun.max.vm.hosted;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.*;
-import com.sun.max.asm.ISA.Category;
+import com.sun.max.lang.ISA.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
