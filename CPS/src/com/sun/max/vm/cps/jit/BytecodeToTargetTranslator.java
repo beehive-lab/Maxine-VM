@@ -295,9 +295,9 @@ public abstract class BytecodeToTargetTranslator {
      * @param template the compiled code to emit
      */
     protected void emitAndRecordStops(TargetMethod template) {
-        if (template.numberOfDirectCalls() > 0) {
-            alignTemplateWithPatchableSite(template);
-        }
+//        if (template.numberOfDirectCalls() > 0) {
+//            alignTemplateWithPatchableSite(template);
+//        }
         stops.add(template, codeBuffer.currentPosition(), opcodeBci);
         codeBuffer.emit(template);
     }
