@@ -64,8 +64,8 @@ public abstract class VMConfigPackage extends MaxPackage {
      * Constructor for redirected extension classes.
      * @param packageName
      */
-    protected VMConfigPackage(String packageName) {
-        super(packageName);
+    protected VMConfigPackage(String... packageNames) {
+        super(packageNames);
     }
 
 }
