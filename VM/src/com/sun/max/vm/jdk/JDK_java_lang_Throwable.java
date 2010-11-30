@@ -21,6 +21,7 @@
 package com.sun.max.vm.jdk;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
 import java.util.*;
 
@@ -121,7 +122,7 @@ public final class JDK_java_lang_Throwable {
             if (targetMethod == null || targetMethod.classMethodActor() == null) {
                 // native frame or stub frame without a class method actor
                 continue;
-            } else if (targetMethod.classMethodActor().isTrapStub()) {
+            } else if (targetMethod.is(TrapStub)) {
                 // Reset the stack trace. We want the trace to start from the trapped frame
                 elements.clear();
                 inTrappedFrame = true;

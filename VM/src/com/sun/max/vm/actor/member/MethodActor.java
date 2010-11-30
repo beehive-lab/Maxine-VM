@@ -44,7 +44,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reflection.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -133,11 +132,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     @INLINE
-    public final boolean isTrapStub() {
-        return Trap.isTrapStub(this);
-    }
-
-    @INLINE
     public final boolean isTemplate() {
         return isTemplate(flags());
     }
@@ -175,26 +169,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     @INLINE
     public final boolean isNeverInline() {
         return isNeverInline(flags());
-    }
-
-    @INLINE
-    public final boolean isStaticTrampoline() {
-        return isStaticTrampoline(flags());
-    }
-
-    @INLINE
-    public final boolean isTrampoline() {
-        return isTrampoline(flags());
-    }
-
-    @INLINE
-    public final boolean isVirtualTrampoline() {
-        return isVirtualTrampoline(flags());
-    }
-
-    @INLINE
-    public final boolean isInterfaceTrampoline() {
-        return isInterfaceTrampoline(flags());
     }
 
     public final boolean isApplicationVisible() {

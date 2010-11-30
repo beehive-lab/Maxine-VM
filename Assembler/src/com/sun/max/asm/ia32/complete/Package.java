@@ -22,6 +22,7 @@ package com.sun.max.asm.ia32.complete;
 
 import com.sun.max.*;
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 
 /**
  * @see MaxPackage

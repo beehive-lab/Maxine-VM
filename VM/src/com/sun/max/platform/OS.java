@@ -20,8 +20,6 @@
  */
 package com.sun.max.platform;
 
-import static com.sun.max.platform.OS.UnixFlag.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 
@@ -32,16 +30,11 @@ import com.sun.max.program.*;
  */
 public enum OS {
 
-    DARWIN("Darwin",    UNIX),
-    LINUX("Linux",      UNIX),
-    SOLARIS("Solaris",  UNIX),
-    WINDOWS("Windows", !UNIX),
-    GUESTVM("GuestVM", !UNIX);
-
-    /**
-     * Specifies if this is a Unix OS.
-     */
-    public final boolean unix;
+    DARWIN("Darwin"),
+    LINUX("Linux"),
+    SOLARIS("Solaris"),
+    WINDOWS("Windows"),
+    GUESTVM("GuestVM");
 
     /**
      * The identifier of this OS as part of a class name.
@@ -60,12 +53,7 @@ public enum OS {
     }
 
     private OS(String className) {
-        this(className, true);
-    }
-
-    private OS(String className, boolean unix) {
         this.className = className;
-        this.unix = unix;
     }
 
     public static OS fromName(String name) {
@@ -97,9 +85,5 @@ public enum OS {
             current = getCurrent();
         }
         return current;
-    }
-
-    static class UnixFlag {
-        public static final boolean UNIX = true;
     }
 }

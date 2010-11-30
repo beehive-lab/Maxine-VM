@@ -25,7 +25,6 @@ import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.*;
@@ -34,7 +33,6 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.thread.*;
 
@@ -78,12 +76,11 @@ public abstract class Safepoint {
     }
 
     @HOSTED_ONLY
-    public static Safepoint create(VMConfiguration vmConfiguration) {
+    public static Safepoint create() {
         try {
             final String isa = platform().isa.name();
             final Class<?> safepointClass = Class.forName(MaxPackage.fromClass(Safepoint.class).subPackage(isa.toLowerCase()).name() + "." + isa + Safepoint.class.getSimpleName());
-            final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
-            return (Safepoint) constructor.newInstance(vmConfiguration);
+            return (Safepoint) safepointClass.newInstance();
         } catch (Exception exception) {
             exception.printStackTrace();
             throw ProgramError.unexpected("could not create safepoint: " + exception);

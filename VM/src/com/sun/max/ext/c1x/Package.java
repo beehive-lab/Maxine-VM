@@ -25,6 +25,6 @@ import com.sun.max.ext.*;
 public class Package extends ExtPackage {
 
     public Package() {
-        super("com.sun.c1x");
+        super("com.sun.cri", "com.sun.c1x");
     }
 }

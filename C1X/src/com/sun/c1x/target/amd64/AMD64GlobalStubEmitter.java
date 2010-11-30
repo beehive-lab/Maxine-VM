@@ -72,7 +72,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void reset(CiKind resultKind, CiKind[] argTypes) {
-        asm = new AMD64MacroAssembler(compiler, compiler.globalStubRegisterConfig);
+        asm = new AMD64MacroAssembler.WithCompiler(compiler, compiler.globalStubRegisterConfig);
         saveSize = 0;
         argsSize = 0;
         argOffsets = new int[argTypes.length];

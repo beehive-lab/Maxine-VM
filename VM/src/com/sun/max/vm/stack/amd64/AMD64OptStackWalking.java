@@ -20,6 +20,10 @@
  */
 package com.sun.max.vm.stack.amd64;
 
+import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+
 import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
@@ -41,7 +45,6 @@ import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.trampoline.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -192,10 +195,10 @@ public class AMD64OptStackWalking {
         Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
         Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
         Pointer callerFP;
-        if (Trap.isTrapStub(targetMethod.classMethodActor)) {
+        if (targetMethod.is(TrapStub)) {
             // RBP is whatever was in the frame pointer register at the time of the trap
-            Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
-            callerFP = stackFrameWalker.readWord(trapState, AMD64TrapStateAccess.CSA.offsetOf(AMD64.rbp)).asPointer();
+            Pointer calleeSaveArea = sp;
+            callerFP = stackFrameWalker.readWord(calleeSaveArea, AMD64TrapStateAccess.CSA.offsetOf(AMD64.rbp)).asPointer();
         } else {
             // Propagate RBP unchanged as OPT methods do not touch this register.
             callerFP = current.fp();
@@ -227,60 +230,56 @@ public class AMD64OptStackWalking {
      * @param preparer
      * @param registerConfig TODO
      */
-    public static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer, RiRegisterConfig registerConfig) {
-        TargetMethod trampolineTargetMethod = callee.targetMethod();
-        ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
-        ClassMethodActor callerMethod;
+    public static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+        RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
+        TargetMethod trampoline = callee.targetMethod();
+        ClassMethodActor calledMethod;
         TargetMethod targetMethod = current.targetMethod();
-        Pointer calleeSaveStart = trampolineTargetMethod.getCalleeSaveStart(callee.sp());
+
+        Pointer calleeSaveStart = callee.sp();
+        CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
+        CiRegister[] regs = registerConfig.getCallingConventionRegisters(Type.JavaCall, CPU);
 
         // figure out what method the caller is trying to call
-        if (trampolineMethodActor.isStaticTrampoline()) {
+        if (trampoline.is(StaticTrampoline)) {
             int stopIndex = targetMethod.findClosestStopIndex(current.ip().minus(1));
-            callerMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
+            calledMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
         } else {
-            // this is an virtual or interface call; figure out the receiver method based on the
+            // this is a virtual or interface call; figure out the receiver method based on the
             // virtual or interface index
-            final Object receiver = calleeSaveStart.getReference().toJava(); // read receiver object on stack
-            final ClassActor classActor = ObjectAccess.readClassActor(receiver);
-            assert trampolineTargetMethod.referenceLiterals().length == 1;
-            final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
-            if (trampolineMethodActor.isVirtualTrampoline()) {
-                callerMethod = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex);
+            Object receiver = calleeSaveStart.plus(csa.offsetOf(regs[0])).getReference().toJava();
+            ClassActor classActor = ObjectAccess.readClassActor(receiver);
+            // The virtual dispatch trampoline stubs put the virtual dispatch index into the
+            // scratch register and then save it to the stack.
+            int index = vm().stubs.readVirtualDispatchIndexFromTrampolineFrame(calleeSaveStart);
+            if (trampoline.is(VirtualTrampoline)) {
+                calledMethod = classActor.getVirtualMethodActorByVTableIndex(index);
             } else {
-                callerMethod = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex);
+                assert trampoline.is(InterfaceTrampoline);
+                calledMethod = classActor.getVirtualMethodActorByIIndex(index);
             }
         }
 
-        CiRegister[] parameterRegisters = registerConfig.getCallingConventionRegisters(Type.JavaCall);
-        CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
-
-        // use the caller method to fill out the reference map for the saved parameters in the trampoline frame
-        int parameterRegisterIndex = 0;
-        if (!callerMethod.isStatic()) {
+        int regIndex = 0;
+        if (!trampoline.is(StaticTrampoline)) {
             // set a bit for the receiver object
-            int offset = csa == null ? 0 : csa.offsetOf(parameterRegisters[parameterRegisterIndex]);
+            int offset = csa.offsetOf(regs[regIndex++]);
             preparer.setReferenceMapBits(current, calleeSaveStart.plus(offset), 1, 1);
-            parameterRegisterIndex = 1;
         }
 
-        SignatureDescriptor descriptor = callerMethod.descriptor();
-        for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
-            TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
-            CiRegister parameterRegister = parameterRegisters[parameterRegisterIndex];
-            if (parameterRegister.isFpu()) {
-                // done since all subsequent parameters are known to be passed on the stack
-                // and covered by the reference map for the stack at this call point
-                return;
-            }
-            Kind parameterKind = parameter.toKind();
-            if (parameterKind.isReference) {
+        SignatureDescriptor sig = calledMethod.descriptor();
+        for (int i = 0; i < sig.numberOfParameters() && regIndex < regs.length; ++i) {
+            TypeDescriptor arg = sig.parameterDescriptorAt(i);
+            CiRegister reg = regs[regIndex];
+            Kind kind = arg.toKind();
+            if (kind.isReference) {
                 // set a bit for this parameter
-                int offset = csa == null ? parameterRegisterIndex * Word.size() : csa.offsetOf(parameterRegister);
+                int offset = csa.offsetOf(reg);
                 preparer.setReferenceMapBits(current, calleeSaveStart.plus(offset), 1, 1);
             }
-            if (parameterKind != Kind.FLOAT && parameterKind != Kind.DOUBLE) {
-                parameterRegisterIndex++;
+            if (kind != Kind.FLOAT && kind != Kind.DOUBLE) {
+                // Only iterating over the integral arg registers
+                regIndex++;
             }
         }
     }

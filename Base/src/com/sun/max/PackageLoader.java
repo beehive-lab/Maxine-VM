@@ -64,16 +64,19 @@ public class PackageLoader {
      * @param packageName the name of the package from which classes are loaded
      * @param recursive if true, then classes in sub-packages are loaded as well, otherwise only classes in the package
      *            denoted by {@code packageName} are loaded
+     * @param initialize specifies whether the loaded classes should be {@linkplain Classes#initialize(Class) initialized}
      * @return the loaded classes
      */
-    public List<Class> load(final String packageName, final boolean recursive) {
+    public List<Class> load(final String packageName, final boolean recursive, boolean initialize) {
         Trace.line(traceLevel, "loading: " + packageName);
         final List<Class> classes = new ArrayList<Class>();
         String[] classNames = listClassesInPackage(packageName, recursive);
         for (String className : classNames) {
             final Class javaClass = loadClass(className);
             if (javaClass != null) {
-                Classes.initialize(javaClass);
+                if (initialize) {
+                    Classes.initialize(javaClass);
+                }
                 classes.add(javaClass);
             }
         }
@@ -113,10 +116,11 @@ public class PackageLoader {
      * @param maxPackage the package from which classes are loaded
      * @param recursive if true, then classes in sub-packages are loaded as well, otherwise only classes in
      *            {@code maxPackage} are loaded
+     * @param initialize specifies whether the loaded classes should be {@linkplain Classes#initialize(Class) initialized}
      * @return the loaded classes
      */
-    public List<Class> load(MaxPackage maxPackage, boolean recursive) {
-        return load(maxPackage.name(), recursive);
+    public List<Class> load(MaxPackage maxPackage, boolean recursive, boolean initialize) {
+        return load(maxPackage.name(), recursive, initialize);
     }
 
     /**
@@ -131,7 +135,7 @@ public class PackageLoader {
 
     public void loadAndInitializeAll(Class representative) {
         try {
-            for (Class outerClass : load(MaxPackage.fromClass(representative), false)) {
+            for (Class outerClass : load(MaxPackage.fromClass(representative), false, true)) {
                 initializeAll(outerClass);
             }
         } catch (Throwable throwable) {

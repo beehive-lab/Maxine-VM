@@ -20,12 +20,16 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.asm.*;
+import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
 import com.sun.max.asm.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -34,7 +38,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.type.*;
 
 /**
@@ -62,12 +66,9 @@ public abstract class AdapterGenerator {
      * location for holding this value.
      */
     public static class Sig {
-        public final Kind[] kinds;
+        public final CiKind[] kinds;
         public Sig(SignatureDescriptor signature, int receiver) {
-            kinds = signature.copyParameterKinds(null, receiver);
-            if (receiver == 1) {
-                kinds[0] = Kind.REFERENCE;
-            }
+            kinds = Util.signatureToKinds(signature, receiver == 1 ? CiKind.Object : null);
         }
         @Override
         public boolean equals(Object obj) {
@@ -82,14 +83,14 @@ public abstract class AdapterGenerator {
             if (kinds.length == 0) {
                 return kinds.length;
             }
-            return kinds.length ^ kinds[kinds.length - 1].character;
+            return kinds.length ^ kinds[kinds.length - 1].typeChar;
         }
         @Override
         public String toString() {
             StringBuilder buf = new StringBuilder(kinds.length + 2);
             buf.append('(');
-            for (Kind k : kinds) {
-                buf.append(k.character);
+            for (CiKind k : kinds) {
+                buf.append(k.typeChar);
             }
             return buf.append(')').toString();
         }
@@ -105,15 +106,7 @@ public abstract class AdapterGenerator {
      */
     public final Adapter.Type adapterType;
 
-    /**
-     * The ABI for code compiled with the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT OPT} calling convention.
-     */
-    protected final TargetABI optABI;
-
-    /**
-     * The ABI for code compiled with the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT OPT} calling convention.
-     */
-    protected final TargetABI jitABI;
+    protected final CiRegisterConfig opt;
 
     /**
      * Creates an adapter generator for a given adapter type.
@@ -122,8 +115,7 @@ public abstract class AdapterGenerator {
      * @param adapterType the type of adapter produced by this generator
      */
     protected AdapterGenerator(Adapter.Type adapterType) {
-        this.optABI = vmConfig().targetABIsScheme().optimizedJavaABI;
-        this.jitABI = vmConfig().targetABIsScheme().jitABI;
+        opt = vm().registerConfigs.standard;
         this.adapterType = adapterType;
         AdapterGenerator old = generatorsByCallee.put(adapterType.callee, this);
         assert old == null;
@@ -135,8 +127,8 @@ public abstract class AdapterGenerator {
      * @param kind a value kind
      * @param slotSize the adapter frame slot size of a {@linkplain Kind#isCategory1() category 1} kind
      */
-    public static int frameSizeFor(Kind kind, int slotSize) {
-        return kind.stackSlots * slotSize;
+    public static int frameSizeFor(CiKind kind, int slotSize) {
+        return kind.jvmSlots * slotSize;
     }
 
     /**
@@ -145,9 +137,9 @@ public abstract class AdapterGenerator {
      * @param argKinds the kinds of the arguments
      * @param slotSize the adapter frame slot size of a {@linkplain Kind#isCategory1() category 1} kind
      */
-    public static int frameSizeFor(Kind[] argKinds, int slotSize) {
+    public static int frameSizeFor(CiKind[] argKinds, int slotSize) {
         int size = 0;
-        for (Kind k : argKinds) {
+        for (CiKind k : argKinds) {
             size += frameSizeFor(k, slotSize);
         }
         return size;
@@ -207,7 +199,7 @@ public abstract class AdapterGenerator {
             return null;
         }
 
-        if (callee.isTemplate() || callee.isTrapStub() || callee.isVmEntryPoint()) {
+        if (callee.isTemplate() || callee.isVmEntryPoint()) {
             // Templates do not have adapters as they are not complete methods that are called
             return null;
         }
@@ -231,11 +223,6 @@ public abstract class AdapterGenerator {
                 return null;
             }
             // JIT2OPT parameterless calls still require an adapter to save and restore the frame pointer
-        }
-
-        if (Actor.isTrampoline(flags)) {
-            // Trampolines save and restore all registers
-            return null;
         }
 
         // Access to table of adapters must be synchronized
@@ -295,17 +282,17 @@ public abstract class AdapterGenerator {
     protected abstract int emitPrologue(Object out, Adapter adapter);
 
     /**
-     * Helper method for {@link #emitPrologue(Object, Adapter)} to copy output from an {@link Assembler} object to an
+     * Helper method for {@link #emitPrologue(Object, Adapter)} to copy output from an assembler's {@linkplain Buffer buffer} to an
      * {@link OutputStream} object.
      *
-     * @param asm the assembler used to emit a prologue
+     * @param buffer the code buffer into which a prologue has been assembled
      * @param out if this is an {@link OutputStream} instance, then the
      *            {@linkplain Assembler#output(OutputStream, InlineDataRecorder) output} of {@code asm} is written to it
      */
-    protected void copyIfOutputStream(Assembler asm, Object out) {
+    protected void copyIfOutputStream(Buffer buffer, Object out) {
         if (out instanceof OutputStream) {
             try {
-                asm.output((OutputStream) out, null);
+                ((OutputStream) out).write(buffer.close(true));
             } catch (Exception e) {
                 throw FatalError.unexpected(null, e);
             }

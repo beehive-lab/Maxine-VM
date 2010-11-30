@@ -905,8 +905,6 @@ public final class ClassfileReader {
                             }
                         } else if (annotation.annotationType() == NEVER_INLINE.class) {
                             flags |= NEVER_INLINE;
-                        } else if (annotation.annotationType() == TRAMPOLINE.class) {
-                            flags |= ((TRAMPOLINE) annotation).invocation().flag;
                         } else if (annotation.annotationType() == INTRINSIC.class) {
                             INTRINSIC intrinsicAnnotation = (INTRINSIC) annotation;
                             intrinsic = intrinsicAnnotation.value();

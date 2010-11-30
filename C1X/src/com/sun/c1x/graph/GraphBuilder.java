@@ -2424,7 +2424,7 @@ public final class GraphBuilder {
     }
 
     private void genLoadRegister(int registerId) {
-        CiRegister register = compilation.registerConfig.getRegister(registerId);
+        CiRegister register = compilation.registerConfig.getRegisterForRole(registerId);
         if (register == null) {
             throw new CiBailout("Unsupported READREG operand " + registerId);
         }
@@ -2436,7 +2436,7 @@ public final class GraphBuilder {
     }
 
     private void genStoreRegister(int registerId) {
-        CiRegister register = compilation.registerConfig.getRegister(registerId);
+        CiRegister register = compilation.registerConfig.getRegisterForRole(registerId);
         if (register == null) {
             throw new CiBailout("Unsupported WRITEREG operand " + registerId);
         }

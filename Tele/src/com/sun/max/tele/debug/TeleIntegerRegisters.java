@@ -24,7 +24,7 @@ import static com.sun.max.platform.Platform.*;
 
 import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;

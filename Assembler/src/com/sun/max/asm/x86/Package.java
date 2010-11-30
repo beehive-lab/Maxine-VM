@@ -22,6 +22,7 @@ package com.sun.max.asm.x86;
 
 import com.sun.max.*;
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 
 /**
  * @see MaxPackage

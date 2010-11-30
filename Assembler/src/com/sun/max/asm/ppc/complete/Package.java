@@ -21,6 +21,7 @@
 package com.sun.max.asm.ppc.complete;
 
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 
 /**
  *

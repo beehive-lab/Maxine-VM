@@ -22,10 +22,8 @@ package com.sun.max.vm.asm.amd64;
 
 import static com.sun.max.platform.Platform.*;
 
-import java.util.*;
-
 import com.sun.max.*;
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 
 /**
@@ -38,11 +36,4 @@ public class Package extends VMPackage {
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return platform().isa == ISA.AMD64;
     }
-
-    @Override
-    public Set<MaxPackage> excludes() {
-        final MaxPackage p = new com.sun.max.asm.amd64.complete.Package();
-        return Collections.singleton(p);
-    }
-
 }
