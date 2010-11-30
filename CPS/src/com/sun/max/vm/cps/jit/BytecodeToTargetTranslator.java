@@ -433,8 +433,6 @@ public abstract class BytecodeToTargetTranslator {
 
     protected abstract void fixLookupSwitch(LookupSwitch lookupSwitch);
 
-    protected abstract void alignTemplateWithPatchableSite(TargetMethod template);
-
     protected abstract void alignDirectBytecodeCall(TargetMethod template, ClassMethodActor callee);
 
     public void setGenerated(
