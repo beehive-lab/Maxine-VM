@@ -350,7 +350,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
             RiMethod riMethod = site.method;
             if (riMethod != null) {
-                final ClassMethodActor cma = getClassMethodActor(riMethod);
+                final ClassMethodActor cma = (ClassMethodActor) riMethod;
                 assert cma != null : "unresolved direct call!";
                 directCallees[index] = cma;
             } else if (site.runtimeCall != null) {
@@ -380,10 +380,6 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         initSourceInfo(debugInfos, hasInlinedMethods);
-    }
-
-    private ClassMethodActor getClassMethodActor(RiMethod riMethod) {
-        return (ClassMethodActor) riMethod;
     }
 
     private boolean initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, CiDebugInfo debugInfo, CiDebugInfo[] debugInfos) {
@@ -499,7 +495,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         // (if this entry is an inlined method)
         int start = index * 3;
 
-        ClassMethodActor cma = getClassMethodActor(curPos.method);
+        ClassMethodActor cma = (ClassMethodActor) curPos.method;
         Integer methodIndex = inlinedMethodMap.get(cma);
         if (methodIndex == null) {
             methodIndex = inlinedMethodList.size();

@@ -30,8 +30,19 @@ package com.sun.cri.ci;
 public class CiTarget {
     public final CiArchitecture arch;
 
+    /**
+     * The OS page size.
+     */
     public final int pageSize;
+    
+    /**
+     * Specifies if this is a multi-processor system.
+     */
     public final boolean isMP;
+    
+    /**
+     * The number of {@link #spillSlotSize spill slots} required per kind.
+     */
     private final int[] spillSlotsPerKindMap;
     
     /**
@@ -44,12 +55,32 @@ public class CiTarget {
      */
     public final int spillSlotSize;
 
+    /**
+     * The machine word size on this target.
+     */
     public final int wordSize;
-    public final int referenceSize;
+
+    /**
+     * The stack alignment requirement of the platform. For example,
+     * from Appendix D of <a href="http://www.intel.com/Assets/PDF/manual/248966.pdf">Intel®64 and IA-32 Architectures Optimization Reference Manual</a>:
+     * <pre>
+     *     "It is important to ensure that the stack frame is aligned to a
+     *      16-byte boundary upon function entry to keep local __m128 data,
+     *      parameters, and XMM register spill locations aligned throughout
+     *      a function invocation."
+     * </pre>
+     */
     public final int stackAlignment;
+    
+    /**
+     * @see http://docs.sun.com/app/docs/doc/806-0477/6j9r2e2b9?a=view
+     */
+    public final int stackBias;
+    
+    /**
+     * The cache alignment.
+     */
     public final int cacheAlignment;
-    public final int codeAlignment;
-    public final int heapAlignment;
 
     /**
      * Specifies how {@code long} and {@code double} constants are to be stored
@@ -66,31 +97,26 @@ public class CiTarget {
     public CiTarget(CiArchitecture arch,
              boolean isMP,
              int spillSlotSize,
-             int wordSize,
-             int referenceSize,
              int stackAlignment,
              int pageSize,
              int cacheAlignment,
-             int heapAlignment,
-             int codeAlignment,
-             boolean inlineObjects, boolean debugInfoDoubleWordsInSecondSlot) {
+             boolean inlineObjects,
+             boolean debugInfoDoubleWordsInSecondSlot) {
         this.arch = arch;
         this.pageSize = pageSize;
         this.isMP = isMP;
         this.spillSlotSize = spillSlotSize;
-        this.wordSize = wordSize;
-        this.referenceSize = referenceSize;
+        this.wordSize = arch.wordSize;
         this.stackAlignment = stackAlignment;
+        this.stackBias = 0; // TODO: configure with param once SPARC port exists
         this.cacheAlignment = cacheAlignment;
-        this.codeAlignment = codeAlignment;
-        this.heapAlignment = heapAlignment;
         this.inlineObjects = inlineObjects;
         this.spillSlotsPerKindMap = new int[CiKind.values().length];
         this.debugInfoDoubleWordsInSecondSlot = debugInfoDoubleWordsInSecondSlot;
 
         for (CiKind k : CiKind.values()) {
             // initialize the number of spill slots required for each kind
-            int size = k.sizeInBytes(referenceSize, arch.wordSize);
+            int size = k.sizeInBytes(arch.wordSize);
             int slots = 0;
             while (slots * spillSlotSize < size) {
                 slots++;
@@ -101,11 +127,12 @@ public class CiTarget {
 
     /**
      * Gets the size in bytes of the specified kind for this target.
+     * 
      * @param kind the kind for which to get the size
      * @return the size in bytes of {@code kind}
      */
     public int sizeInBytes(CiKind kind) {
-        return kind.sizeInBytes(referenceSize, wordSize);
+        return kind.sizeInBytes(wordSize);
     }
 
     /**

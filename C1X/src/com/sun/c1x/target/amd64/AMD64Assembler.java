@@ -876,6 +876,16 @@ public class AMD64Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
+    public final void enter(int imm16, int imm8) {
+        emitByte(0xC8);
+        emitShort(imm16);
+        emitByte(imm8);
+    }
+
+    public final void leave() {
+        emitByte(0xC9);
+    }
+
     public final void lock() {
         if ((C1XOptions.Atomics & 1) != 0) {
             // Emit either nothing, a NOP, or a NOP: prefix
@@ -1206,10 +1216,23 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
+    public final void movsxw(CiRegister dst, CiAddress src) { // movsxw
+        prefix(src, dst);
+        emitByte(0x0F);
+        emitByte(0xBF);
+        emitOperand(dst, src);
+    }
+
     public final void movzxd(CiRegister dst, CiRegister src) { // movzxd
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x63);
         emitByte(0xC0 | encode);
+    }
+
+    public final void movzxd(CiRegister dst, CiAddress src) { // movzxd
+        prefix(src, dst);
+        emitByte(0x63);
+        emitOperand(dst, src);
     }
 
     public final void movw(CiAddress dst, int imm16) {

@@ -159,24 +159,17 @@ public final class Platform {
             return null;
         }
 
-        int wordSize = dataModel.wordWidth.numberOfBytes;
+        assert arch.wordSize == dataModel.wordWidth.numberOfBytes;
         boolean isMP = true;
-        int spillSlotSize = wordSize;
-        int cacheAlignment = wordSize;
-        int heapAlignment = wordSize;
-        int codeAlignment = wordSize;
+        int spillSlotSize = arch.wordSize;
+        int cacheAlignment = dataModel.cacheAlignment;
         boolean inlineObjects = false;
-        int referenceSize = wordSize;
         return new CiTarget(arch,
                         isMP,
                         spillSlotSize,
-                        wordSize,
-                        referenceSize,
                         stackAlignment,
                         pageSize,
                         cacheAlignment,
-                        heapAlignment,
-                        codeAlignment,
                         inlineObjects,
                         false);
     }
