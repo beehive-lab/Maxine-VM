@@ -215,7 +215,7 @@ public abstract class Assembler {
 
     protected abstract void emitLong(long longValue);
 
-    protected void emitByteArray(byte[] byteArrayValue, int off, int len) {
+    public void emitByteArray(byte[] byteArrayValue, int off, int len) {
         stream.write(byteArrayValue, off, len);
     }
 

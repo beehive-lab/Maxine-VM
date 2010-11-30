@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.eir;
 
 import static com.sun.max.asm.dis.Disassembler.*;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.asm.*;
@@ -68,7 +69,11 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
 
     public Adapter adapt(ClassMethodActor callee) {
         if (adapterGenerator != null) {
-            return adapterGenerator.adapt(callee, assembler());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(8);
+            Adapter adapter = adapterGenerator.adapt(callee, baos);
+            byte[] prologue = baos.toByteArray();
+            assembler().emitByteArray(prologue, 0, prologue.length);
+            return adapter;
         }
         return null;
     }

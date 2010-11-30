@@ -59,21 +59,6 @@ public abstract class CiArchitecture {
     public final String name;
 
     /**
-     * The name of the platform associated with this architecture (e.g. "X86" or "SPARC").
-     */
-    public final String platform;
-
-    /**
-     * The offset of the lower half of a word in bytes.
-     */
-    public final int lowWordOffset;
-
-    /**
-     * The offset of the upper half of a word in bytes.
-     */
-    public final int highWordOffset;
-
-    /**
      * Array of all available registers on this architecture. The index of each register in this
      * array is equal to its {@linkplain CiRegister#number number}.
      */
@@ -114,7 +99,6 @@ public abstract class CiArchitecture {
 
     protected CiArchitecture(String name,
                     int wordSize,
-                    String backend,
                     ByteOrder byteOrder,
                     CiRegister[] registers,
                     int nativeCallDisplacementOffset,
@@ -123,19 +107,10 @@ public abstract class CiArchitecture {
         this.name = name;
         this.registers = registers;
         this.wordSize = wordSize;
-        this.platform = backend;
         this.byteOrder = byteOrder;
         this.machineCodeCallDisplacementOffset = nativeCallDisplacementOffset;
         this.registerReferenceMapBitCount = registerReferenceMapBitCount;
         this.returnAddressSize = returnAddressSize;
-
-        if (byteOrder == ByteOrder.LittleEndian) {
-            this.lowWordOffset = 0;
-            this.highWordOffset = wordSize;
-        } else {
-            this.lowWordOffset = wordSize;
-            this.highWordOffset = 0;
-        }
 
         registersByName = new HashMap<String, CiRegister>(registers.length);
         for (CiRegister register : registers) {
