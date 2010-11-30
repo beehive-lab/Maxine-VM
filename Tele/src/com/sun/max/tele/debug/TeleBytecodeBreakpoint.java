@@ -30,6 +30,7 @@ import java.util.concurrent.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.asm.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
@@ -347,7 +348,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             this.teleTargetBreakpointManager = vm.teleProcess().targetBreakpointManager();
             // Predefine parameter accessors for reading compilation details
             if (platform().isa == ISA.AMD64) {
-                if (platform().os.unix) {
+                if (platform().os.unix || platform().os == OS.GUESTVM) {
                     parameter0 = AMD64.rdi;
                     parameter1 = AMD64.rsi;
                     parameter2 = AMD64.rdx;
