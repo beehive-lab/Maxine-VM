@@ -30,7 +30,7 @@ import java.util.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;

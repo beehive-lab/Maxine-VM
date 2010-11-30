@@ -21,6 +21,7 @@
 package com.sun.max.asm;
 
 import com.sun.max.*;
+import com.sun.max.lang.*;
 
 /**
  * @author Bernd Mathiske

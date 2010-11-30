@@ -25,7 +25,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import java.lang.reflect.*;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;

@@ -20,9 +20,9 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**

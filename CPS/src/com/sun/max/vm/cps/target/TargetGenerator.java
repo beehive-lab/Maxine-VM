@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.target;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.ir.*;
 

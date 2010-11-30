@@ -32,7 +32,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
