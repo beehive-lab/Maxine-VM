@@ -68,6 +68,7 @@ public final class JavaPrototype extends Prototype {
     private static JavaPrototype theJavaPrototype;
     private final Map<MaxPackage, MaxPackage> excludedMaxPackages = new HashMap<MaxPackage, MaxPackage>();
     private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
+    private List<MaxPackage> candidateMaxPackages;
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
     private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
     private final Map<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
@@ -195,17 +196,6 @@ public final class JavaPrototype extends Prototype {
     }
 
     /**
-     * Loads a sequence of packages.
-     *
-     * @param packages the packages to load
-     */
-    private void loadPackages(List<MaxPackage> packages) {
-        for (MaxPackage p : packages) {
-            loadPackage(p);
-        }
-    }
-
-    /**
      * Loads extra packages and classes that are necessary to build a self-sufficient VM image.
      */
     public void loadCoreJavaPackages() {
@@ -287,8 +277,8 @@ public final class JavaPrototype extends Prototype {
     /**
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
-    private void loadMethodSubstitutions(final VMConfiguration vmConfiguration, List<MaxPackage> packages) {
-        for (MaxPackage maxPackage : packages) {
+    private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
+        for (MaxPackage maxPackage : candidateMaxPackages) {
             // VMConfigPackage subclasses may contain SUBSTITUTIONS
             if (maxPackage instanceof VMConfigPackage) {
                 VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;
@@ -378,15 +368,17 @@ public final class JavaPrototype extends Prototype {
         config.bootCompilerScheme().createSnippets(packageLoader);
         Snippet.register();
 
-        final List<MaxPackage> packages = getPackages(new MaxPackage[] {new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package()});
+        candidateMaxPackages = getPackages(new MaxPackage[] {new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package()});
 
-        MaxineVM.registerMaxinePackages(packages);
+        MaxineVM.registerMaxinePackages(candidateMaxPackages);
 
-        loadMethodSubstitutions(config, packages);
+        loadMethodSubstitutions(config);
 
         if (complete) {
 
-            loadPackages(packages);
+            for (MaxPackage maxPackage: candidateMaxPackages) {
+                loadPackage(maxPackage);
+            }
 
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
@@ -395,6 +387,17 @@ public final class JavaPrototype extends Prototype {
         } else {
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
         }
+    }
+
+    /**
+     * Returns the a priori list of packages that are potentially included in the image.
+     * This may be modified by configuration restrictions or explicit exclusions.
+     * This method can support the latter in allowing pattern matching in generating the
+     * set of exclusions required by {@link MaxPackage#excludes()}.
+     * @return
+     */
+    public List<MaxPackage> getCandidateMaxPackages() {
+        return candidateMaxPackages;
     }
 
     /**

@@ -113,6 +113,11 @@ public final class MaxineVM {
 
     private static long startupTime;
 
+    static {
+        MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
+        MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + MAXINE_CLASS_PACKAGE_PREFIX);
+    }
+
     public enum Phase {
         /**
          * Running on a host VM in order to construct a target VM or to run tests.
@@ -190,8 +195,6 @@ public final class MaxineVM {
     public static void registerMaxinePackages(List<MaxPackage> packages) {
         // We really only need to search for packages outside the MAXINE_CLASS_PACKAGE_PREFIX namespace.
         // Any TEST_PREFIX packages are also included.
-        MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
-        MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + MAXINE_CLASS_PACKAGE_PREFIX);
         for (MaxPackage maxPackage : packages) {
             if (!maxPackage.name().startsWith(MAXINE_CLASS_PACKAGE_PREFIX)) {
                 MAXINE_CODE_BASE_LIST.add(maxPackage.name());

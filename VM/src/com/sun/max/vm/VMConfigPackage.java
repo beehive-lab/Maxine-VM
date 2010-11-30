@@ -40,11 +40,6 @@ public abstract class VMConfigPackage extends MaxPackage {
         return true;
     }
 
-    @Override
-    public boolean isPartOfMaxine() {
-        return isPartOfMaxineVM(VMConfiguration.vmConfig());
-    }
-
     /**
      * Determines if this package contains any classes annotated with {@link METHOD_SUBSTITUTIONS}.
      * @return
