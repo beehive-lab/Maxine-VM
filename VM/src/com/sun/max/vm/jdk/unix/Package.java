@@ -22,6 +22,7 @@ package com.sun.max.vm.jdk.unix;
 
 import static com.sun.max.platform.Platform.*;
 
+import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 
 /**
@@ -34,7 +35,8 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return platform().os.unix;
+        OS os = platform().os;
+        return os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN;
     }
 
     @Override
