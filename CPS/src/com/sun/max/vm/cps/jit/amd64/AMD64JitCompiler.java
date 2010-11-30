@@ -94,17 +94,21 @@ public class AMD64JitCompiler extends JitCompiler {
             unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
         }
 
-        if (phase == MaxineVM.Phase.STARTING) {
+        if (MaxineVM.isDebug() && phase == MaxineVM.Phase.STARTING) {
+            boolean hasTemplateWithTrampoline = false;
             for (TargetMethod code : targetGenerator.templateTable().templates) {
                 if (code != null && code.numberOfDirectCalls() > 0) {
                     Object [] directCallees = code.directCallees();
                     for (int i = 0; i < code.numberOfDirectCalls(); i++) {
                         if (code.getTargetMethod(directCallees[i]) == null) {
-                            Log.println("Template " + code.name() + " has pachable direct call site");
+                            hasTemplateWithTrampoline = true;
+                            Log.println("Template " + code.name() +
+                                            " has pachable direct call site at stop position " + i);
                         }
                     }
                 }
             }
+            FatalError.check(!hasTemplateWithTrampoline, "JIT compiler must not have static trampoline in templates");
         }
     }
 
