@@ -53,15 +53,15 @@ import com.sun.max.program.*;
 public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     private String packageName;
-    private final boolean reDIrect;
+    private final String[] redirects;
     private final boolean recursive;
     private static final Class[] NO_CLASSES = new Class[0];
 
     /**
-     * No recursion, no redirection.
+     * No redirection, no recursion.
      */
     protected MaxPackage() {
-        this(null, false, false);
+        this(null, false);
     }
 
     /**
@@ -69,29 +69,20 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * @param recursive
      */
     protected MaxPackage(boolean recursive) {
-        this(null, false, recursive);
-    }
-
-    /**
-     * Used only for recursion support.
-     * @param packageName name of recursively included sub-package
-     * @param recursive exists solely to distinguish constructor, value ignored
-     */
-    protected MaxPackage(String packageName, boolean recursive) {
-        this(packageName, false, true);
+        this(null, recursive);
     }
 
     /**
      * Redirection and recursion.
      * @param packageName
      */
-    protected MaxPackage(String packageName) {
-        this(packageName, true, true);
+    protected MaxPackage(String... redirects) {
+        this(redirects, true);
     }
 
-    private MaxPackage(String packageName, boolean reDirect, boolean recursive) {
-        this.packageName = packageName == null ? getClass().getPackage().getName() : packageName;
-        this.reDIrect = reDirect;
+    private MaxPackage(String[] redirects, boolean recursive) {
+        this.packageName = getClass().getPackage().getName();
+        this.redirects = redirects;
         this.recursive = recursive;
         assert getClass().getSimpleName().equals(Package.class.getSimpleName());
     }
@@ -122,9 +113,11 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     // @Deprecated - only used in a CPS test
     public static MaxPackage fromJava(String name) {
-        return new MaxPackage(name, false) {
+        final MaxPackage result =  new MaxPackage() {
 
         };
+        result.packageName = name;
+        return result;
     }
 
     public static MaxPackage fromClass(Class javaClass) {
@@ -136,10 +129,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     }
 
     public java.lang.Package toJava() {
-        if (reDIrect) {
-            java.lang.Package.getPackage(name());
-        }
-        return getClass().getPackage();
+        return java.lang.Package.getPackage(name());
     }
 
     public String name() {
@@ -260,14 +250,14 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                     }
                 }
                 if ((recursiveParent == null && rootPackageInfo.matcherClass.isInstance(maxPackage)) || (recursiveParent != null && rootPackageInfo.matcherClass.isInstance(recursiveParent))) {
-                    if (maxPackage.reDIrect) {
+                    rootPackageInfo.packages.add(maxPackage);
+                    if (maxPackage.redirects != null) {
                         /* the above recursive traversal only operates in sub-packages of "this"
                          * so we have to process redirected packages explicitly.
-                         * N.B. this will add the root of the re-direction hence the else clause.
                          */
-                        rootPackageInfo.packages.addAll(checkReDirectedSubpackages(classpath, maxPackage));
-                    } else {
-                        rootPackageInfo.packages.add(maxPackage);
+                        for (String redirect : maxPackage.redirects) {
+                            rootPackageInfo.packages.addAll(checkReDirectedSubpackages(classpath, maxPackage, redirect));
+                        }
                     }
                 }
             }
@@ -325,7 +315,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         }
     }
 
-    private static List<MaxPackage> checkReDirectedSubpackages(Classpath classpath, final MaxPackage redirectedPackage) {
+    private static List<MaxPackage> checkReDirectedSubpackages(Classpath classpath, MaxPackage redirector, final String redirectedPackage) {
         final ArrayList<MaxPackage> result = new ArrayList<MaxPackage>();
         final Set<String> packageNames = new TreeSet<String>();
         // find all the packages that start with the redirected package name
@@ -333,12 +323,12 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
             @Override
             protected boolean visitClass(String className) {
                 final String pkgName = Classes.getPackageName(className);
-                if (pkgName.startsWith(redirectedPackage.name())) {
+                if (pkgName.startsWith(redirectedPackage)) {
                     packageNames.add(pkgName);
                 }
                 return true;
             }
-        }.run(classpath, redirectedPackage.name().replace('.', '/'));
+        }.run(classpath, redirectedPackage.replace('.', '/'));
         for (String pkgName : packageNames) {
             /* A redirected package is not expected to contain any Package classes, and the
             * expectation is that we load the entire tree. However, any Package classes
@@ -346,7 +336,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
             */
             MaxPackage maxPackage = MaxPackage.fromName(pkgName);
             if (maxPackage == null) {
-                maxPackage = createRecursivePackageInstance(redirectedPackage, pkgName);
+                maxPackage = createRecursivePackageInstance(redirector, pkgName);
             }
             result.add(maxPackage);
         }
