@@ -48,4 +48,14 @@ public class UnixAMD64EirTemplateABI extends UnixAMD64EirJavaABI {
         initTargetABI(new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI, registerRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT));
         makeUnallocatable(AMD64EirRegister.General.RBP);
     }
+
+    /**
+     * Indicate whether this ABI is for templates.
+     * @return true if ABI is for generating templates.
+     */
+    @HOSTED_ONLY
+    @Override
+    public boolean templatesOnly() {
+        return true;
+    }
 }

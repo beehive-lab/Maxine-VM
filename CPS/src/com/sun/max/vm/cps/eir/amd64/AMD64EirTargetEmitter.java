@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.eir.amd64;
 
 import static com.sun.max.vm.cps.eir.EirStackSlot.Purpose.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
@@ -139,4 +140,12 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
         return code[offset] == (byte) 0xE8;
     }
 
+    /**
+     * Indicates whether this emitter is for a template.
+     * @return
+     */
+    @HOSTED_ONLY
+    boolean templatesOnly() {
+        return abi().templatesOnly();
+    }
 }

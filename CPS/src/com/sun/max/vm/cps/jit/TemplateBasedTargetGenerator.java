@@ -28,7 +28,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.jit.amd64.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.template.*;
@@ -92,9 +91,6 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         codeGenerator.generate();
 
         codeGenerator.emitEpilogue();
-
-        // FIXME: clean this up
-        ((BytecodeToAMD64TargetTranslator) codeGenerator).printExtraNopsStatistics();
 
         // Produce target method
         final Object[] referenceLiterals = codeGenerator.packReferenceLiterals();
