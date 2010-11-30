@@ -52,29 +52,12 @@ import com.sun.max.program.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class MaxPackage implements Comparable<MaxPackage> {
+public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
-    private final String packageName;
+    private String packageName;
     private final boolean reDIrect;
     private final boolean recursive;
     private static final Class[] NO_CLASSES = new Class[0];
-
-    /**
-     * Used to represent the missing {@code Package} classes in recursively included packages.
-     * Using the simple name {@code Package} meets the naming assertion check in {@link MaxPackage#MaxPackage(String, boolean, boolean)}.
-     */
-    static class Package extends MaxPackage {
-        private MaxPackage root;
-        Package(MaxPackage root, String packageName, boolean recursive) {
-            super(packageName, root.reDIrect, recursive);
-            this.root = root;
-        }
-
-        @Override
-        public boolean isPartOfMaxine() {
-            return root.isPartOfMaxine();
-        }
-    }
 
     /**
      * No recursion, no redirection.
@@ -113,16 +96,6 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         this.reDIrect = reDirect;
         this.recursive = recursive;
         assert getClass().getSimpleName().equals(Package.class.getSimpleName());
-    }
-
-    /**
-     * Is the package denoted by this instance part of the VM?
-     * Default assumption is that all packages are included in the VM.
-     * Particular subclasses may override and/or specialise (i.e. ignore) this method.
-     * @return
-     */
-    public boolean isPartOfMaxine() {
-        return false;
     }
 
     /**
@@ -326,15 +299,20 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
     }
 
     /**
-     * Create a {@code MaxPackage} instance that denotes a sub-package of a recursively included package.
-     * Note that we don't try to create the correct subclass corresponding to the parent (which would require the deprecated clone
-     * technology), we just create an instance of our nested class.
+     * Create a {@code MaxPackage} instance that denotes a sub-package of a recursively included package
+     * by cloning the parent and resetting the {@link #packageName}.
      * @param parent
      * @param pkgName
      * @return
      */
     private static MaxPackage createRecursivePackageInstance(MaxPackage parent, String pkgName) {
-        return new Package(parent, pkgName, true);
+        try {
+            MaxPackage pkg = (MaxPackage) parent.clone();
+            pkg.packageName = pkgName;
+            return pkg;
+        } catch (CloneNotSupportedException ex) {
+            throw ProgramError.unexpected("MaxPackage failed to clone " + parent);
+        }
     }
 
     private static List<MaxPackage> checkReDirectedSubpackages(Classpath classpath, final MaxPackage redirectedPackage) {
@@ -352,9 +330,17 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
             }
         }.run(classpath, redirectedPackage.name().replace('.', '/'));
         for (String pkgName : packageNames) {
-            // A redirected package is not expected to contain any Package classes, and the
-            // expectation is that we load the entire tree.
-            result.add(createRecursivePackageInstance(redirectedPackage, pkgName));
+            /* A redirected package is not expected to contain any Package classes, and the
+            * expectation is that we load the entire tree. However, any Package classes
+            * that do exist are honored.
+            */
+            MaxPackage maxPackage = MaxPackage.fromName(pkgName);
+            if (maxPackage == null) {
+                maxPackage = createRecursivePackageInstance(redirectedPackage, pkgName);
+            } else {
+                System.console();
+            }
+            result.add(maxPackage);
         }
         return result;
 
