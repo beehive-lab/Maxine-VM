@@ -66,7 +66,6 @@ public final class JavaPrototype extends Prototype {
     public static final String EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME = "max.image.extraClassesAndPackages";
 
     private static JavaPrototype theJavaPrototype;
-    private final Map<MaxPackage, MaxPackage> excludedMaxPackages = new HashMap<MaxPackage, MaxPackage>();
     private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
     private List<MaxPackage> candidateMaxPackages;
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
@@ -157,19 +156,6 @@ public final class JavaPrototype extends Prototype {
      * @param maxPackage the package to load
      */
     private void loadPackage(MaxPackage maxPackage) {
-        final MaxPackage excludedBy = excludedMaxPackages.get(maxPackage);
-        if (excludedBy != null) {
-            Trace.line(1, "Excluding " + maxPackage + " (excluded by " + excludedBy + ")");
-            return;
-        }
-
-        for (MaxPackage excludedPackage : maxPackage.excludes()) {
-            if (loadedMaxPackages.contains(excludedPackage)) {
-                ProgramError.unexpected("Package " + excludedPackage + " is excluded by " + maxPackage + ". " +
-                                "Adjust class path to ensure " + maxPackage + " is loaded before " + excludedPackage);
-            }
-            excludedMaxPackages.put(excludedPackage, maxPackage);
-        }
         packageLoader.load(maxPackage, false, true);
         loadedMaxPackages.add(maxPackage);
     }

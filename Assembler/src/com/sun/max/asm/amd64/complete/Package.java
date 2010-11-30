@@ -25,16 +25,11 @@ import com.sun.max.asm.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class Package extends AsmPackage {
     public Package() {
         super();
-    }
-
-    @Override
-    public boolean isPartOfAssembler(ISA isa) {
-        return isa == ISA.AMD64;
     }
 }
