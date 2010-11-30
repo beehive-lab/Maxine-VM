@@ -33,6 +33,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.*;
 
@@ -277,7 +278,8 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
      */
     private boolean areLabelsValid(byte[] code, Address startAddress) throws AssemblyException {
         for (Label label : directCallLabels) {
-            if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
+            if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND ||
+                            !isCall(code, label.position()) || !AMD64TargetMethodUtil.isPatchableCallSite(Address.fromInt(label.position()))) {
                 if (MaxineVM.isHosted()) {
                     Platform platform = Platform.platform();
                     disassemble(System.out, code, platform.isa, platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);

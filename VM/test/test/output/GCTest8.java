@@ -26,27 +26,40 @@ package test.output;
 public class GCTest8 {
     private static Object lock = new Object();
     static int numCompleted = 0;
+    static int batchSize = 0;
 
+    static int MAX_CONCURRENT_THREADS;
+    static int MAX_TOTAL_THREADS;
+    static {
+        MAX_CONCURRENT_THREADS = Integer.parseInt(System.getProperty("gctest.thread.concurrent", "20"));
+        MAX_TOTAL_THREADS = Integer.parseInt(System.getProperty("gctest.thread.total", "100"));
+    }
     public static void main(String[] args) {
         int numStarted = 0;
-        // Starts 20 threads.
+        // Starts MAX_CONCURRENT_THREADS  threads.
         // Waits to drop down to 15 to starts new threads again.
-        for (numStarted = 0; numStarted < 20;) {
+        for (numStarted = 0; numStarted < MAX_CONCURRENT_THREADS;) {
             new HeapFiller(numStarted++).start();
         }
 
-        while (numStarted < 100) {
+        batchSize = MAX_CONCURRENT_THREADS  / 4;
+        if (batchSize == 0) {
+            batchSize = 1;
+        }
+        final  int minThreadThreshold = MAX_CONCURRENT_THREADS - batchSize;
+
+        while (numStarted < MAX_TOTAL_THREADS) {
             try {
                 synchronized (lock) {
-                    while ((numStarted - numCompleted) > 15) {
+                    while ((numStarted - numCompleted) > minThreadThreshold) {
                         lock.wait();
                     }
                 }
             } catch (InterruptedException e) {
             }
-            // Get another 5 started.
-            System.out.println("starting fillers #" + numStarted + " to #" + (numStarted + 5));
-            for (int i = 0; i < 5; i++) {
+            // Get another batch started.
+            System.out.println("starting fillers #" + numStarted + " to #" + (numStarted + batchSize));
+            for (int i = 0; i < batchSize; i++) {
                 new HeapFiller(numStarted++).start();
             }
         }
@@ -55,7 +68,7 @@ public class GCTest8 {
     private static void notifyFillerDone() {
         synchronized (lock) {
             numCompleted++;
-            if (numCompleted % 5 == 0) {
+            if (numCompleted % batchSize == 0) {
                 lock.notifyAll();
             }
         }

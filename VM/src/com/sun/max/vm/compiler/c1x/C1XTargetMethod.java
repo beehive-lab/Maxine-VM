@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.CompilationScheme.*;
 import static com.sun.max.vm.stack.amd64.AMD64OptStackWalking.*;
 
 import java.io.*;
@@ -46,6 +45,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -60,8 +60,6 @@ import com.sun.max.vm.stack.amd64.*;
  * @author Thomas Wuerthinger
  */
 public class C1XTargetMethod extends TargetMethod implements Cloneable {
-
-    private static final int RJMP = 0xe9;
 
     /**
      * An array of pairs denoting the code positions protected by an exception handler.
@@ -515,11 +513,22 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         sourceInfoData[start + 2] = callerIndex;
     }
 
+    @Override
+    public boolean isPatchableCallSite(Address callSite) {
+        return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+    }
+
     @UNSAFE
     @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
+    public final void fixupCallSite(int callOffset, Address callEntryPoint) {
         final int displacement = callEntryPoint.asAddress().minus(codeStart().plus(callOffset)).toInt();
         X86InstructionDecoder.patchRelativeInstruction(code(), callOffset, displacement);
+    }
+
+    @UNSAFE
+    @Override
+    public final void patchCallSite(int callOffset, Address callEntryPoint) {
+        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
     @Override
@@ -529,36 +538,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @UNSAFE
     public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
-        assert oldTargetMethod != newTargetMethod;
-        assert oldTargetMethod.callEntryPoint != CallEntryPoint.C_ENTRY_POINT;
-
-        long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
-        long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
-
-        patchCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset(), newOptEntry, RJMP);
-        patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offset(), newJitEntry, RJMP);
-    }
-
-    @UNSAFE
-    private static void patchCode(TargetMethod targetMethod, int offset, long target, int controlTransferOpcode) {
-        final Pointer callSite = targetMethod.codeStart().plus(offset);
-        final long displacement = (target - (callSite.toLong() + 5L)) & 0xFFFFFFFFL;
-        if (MaxineVM.isHosted()) {
-            final byte[] code = targetMethod.code();
-            code[offset] = (byte) controlTransferOpcode;
-            code[offset + 1] = (byte) displacement;
-            code[offset + 2] = (byte) (displacement >> 8);
-            code[offset + 3] = (byte) (displacement >> 16);
-            code[offset + 4] = (byte) (displacement >> 24);
-        } else {
-            if (CODE_PATCHING_ALIGMMENT_IS_GUARANTEED && callSite.isWordAligned()) {
-                // Patch location must not straddle a cache-line (32-byte) boundary.
-                FatalError.unexpected("Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.", false, null, Pointer.zero());
-            }
-            // The read, modify, write below should be changed to simply a write once we have the method entry point alignment fixed.
-            Word patch = callSite.readWord(0).asAddress().and(0xFFFFFF0000000000L).or((displacement << 8) | controlTransferOpcode);
-            callSite.writeWord(0, patch);
-        }
+        AMD64TargetMethodUtil.forwardTo(oldTargetMethod, newTargetMethod);
     }
 
     @UNSAFE

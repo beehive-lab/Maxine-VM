@@ -79,8 +79,7 @@ public final class MaxineVM {
     private static final List<String> MAXINE_CODE_BASE_LIST = new ArrayList<String>();
 
     private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
-    private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
-    private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
+    private static final String TEST_PREFIX = "test.";
 
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
@@ -118,12 +117,7 @@ public final class MaxineVM {
 
     static {
         MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
-        MAXINE_CODE_BASE_LIST.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
-        final String p = System.getProperty(EXTENDED_CODEBASE_PROPERTY);
-        if (p != null) {
-            final String[] parts = p.split(",");
-            MAXINE_CODE_BASE_LIST.addAll(Arrays.asList(parts));
-        }
+        MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + MAXINE_CLASS_PACKAGE_PREFIX);
     }
 
     public enum Phase {
@@ -191,6 +185,22 @@ public final class MaxineVM {
                 return CString.utf8ToJava(cString);
             } catch (Utf8Exception utf8Exception) {
                 throw FatalError.unexpected("Could not convert C string value of " + this + " to a Java string");
+            }
+        }
+    }
+
+    /**
+     * Register the complete set of packages that comprise the boot image being constructed.
+     * @param packages
+     */
+    @HOSTED_ONLY
+    public static void registerMaxinePackages(List<MaxPackage> packages) {
+        // We really only need to search for packages outside the MAXINE_CLASS_PACKAGE_PREFIX namespace.
+        // Any TEST_PREFIX packages are also included.
+        for (MaxPackage maxPackage : packages) {
+            if (!maxPackage.name().startsWith(MAXINE_CLASS_PACKAGE_PREFIX)) {
+                MAXINE_CODE_BASE_LIST.add(maxPackage.name());
+                MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + maxPackage.name());
             }
         }
     }

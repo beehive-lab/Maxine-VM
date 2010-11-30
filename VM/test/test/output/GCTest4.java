@@ -22,8 +22,13 @@ package test.output;
 
 public class GCTest4 {
 
+    static int MAX_ITERATIONS;
+    static {
+        MAX_ITERATIONS = Integer.parseInt(System.getProperty("gctest.iterations", "50"));
+    }
+
     public static void main(String[] args) {
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < MAX_ITERATIONS; i++) {
             System.out.println("Iteration " + i + "...");
             createList();
         }
