@@ -18,15 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target;
+package com.sun.max.vm.cps.target;
+
+import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
  */
 public abstract class TargetABIsScheme<IntegerRegister_Type extends Symbol, FloatingPointRegister_Type extends Symbol> extends AbstractVMScheme implements VMScheme {
+
+    public static final TargetABIsScheme INSTANCE;
+    static {
+        TargetABIsScheme scheme = null;
+        try {
+            final String isa = platform().isa.name();
+            final Class<?> c = Class.forName("com.sun.max.vm.cps.target." + isa.toLowerCase() + "." + isa + TargetABIsScheme.class.getSimpleName());
+            scheme = (TargetABIsScheme) c.newInstance();
+        } catch (Exception exception) {
+            throw FatalError.unexpected("could not create TrapStateAccess", exception);
+        }
+        INSTANCE = scheme;
+    }
 
     public boolean usingRegisterWindows() {
         return false;
