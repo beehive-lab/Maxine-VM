@@ -38,7 +38,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;

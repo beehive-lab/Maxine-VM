@@ -18,26 +18,40 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.code;
+package com.sun.max.vm.cps.jit;
 
-import com.sun.max.asm.*;
 import com.sun.max.lang.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
- * Helper for modifying the target of a branch in target code.
+ * A constant modifier is a helper for modifying target code.
+ * The modifier is specific to an annotated target code and can be used to
+ * modify copies of that target code to adapt the code to a different constant value.
+ * Currently used by the template-based JIT.
  *
  * @author Laurent Daynes
  */
-public class BranchTargetModifier extends InstructionModifier {
-    final WordWidth displacementWidth;
+public class ConstantModifier extends InstructionModifier {
+    /**
+     * Original value of the constant.
+     */
+    private final Value constantValue;
 
-    public BranchTargetModifier(int position, int length, WordWidth displacementWidth) {
-        super(position, length);
-        this.displacementWidth = displacementWidth;
+    public ConstantModifier(int position, int size, Value value) {
+        super(position, size);
+        constantValue = value;
     }
 
-    public void fix(byte[] codeRegion, int offsetToCode, int dispToBranchTarget) throws AssemblyException {
-        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size);
-        editor.fixBranchRelativeDisplacement(displacementWidth, dispToBranchTarget);
+    public Kind kind() {
+        return constantValue.kind();
+    }
+
+    public WordWidth signedEffectiveWidth() {
+        return constantValue.signedEffectiveWidth();
+    }
+
+    public Value getConstantValue() {
+        return constantValue;
     }
 }

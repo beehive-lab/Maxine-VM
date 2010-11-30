@@ -18,10 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * SPARC stack frame manipulation.
- * 
- * @author Bernd Mathiske
- */
-package com.sun.max.vm.stack.sparc;
+package com.sun.max.vm.cps.jit;
 
+import com.sun.max.asm.*;
+import com.sun.max.lang.*;
+
+/**
+ * Helper for modifying the target of a branch in target code.
+ *
+ * @author Laurent Daynes
+ */
+public class BranchTargetModifier extends InstructionModifier {
+    final WordWidth displacementWidth;
+
+    public BranchTargetModifier(int position, int length, WordWidth displacementWidth) {
+        super(position, length);
+        this.displacementWidth = displacementWidth;
+    }
+
+    public void fix(byte[] codeRegion, int offsetToCode, int dispToBranchTarget) throws AssemblyException {
+        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size);
+        editor.fixBranchRelativeDisplacement(displacementWidth, dispToBranchTarget);
+    }
+}

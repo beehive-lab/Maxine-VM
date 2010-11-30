@@ -25,8 +25,8 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.jit.*;
 
 /**
  * Code buffer used by template-based code generator. It provides the illusion of an append-only, linear byte buffer
