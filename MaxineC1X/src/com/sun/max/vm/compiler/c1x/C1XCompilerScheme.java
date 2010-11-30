@@ -444,7 +444,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     static RiRegisterConfig getRegisterConfig(ClassMethodActor method) throws FatalError {
         Platform platform = Platform.platform();
         if (platform.isa == ISA.AMD64) {
-            if (platform.os.unix) {
+            if (platform.os.unix  || platform.os == OS.GUESTVM) {
                 if (method.isTrapStub()) {
                     return AMD64UnixRegisterConfig.TRAP_STUB;
                 }
