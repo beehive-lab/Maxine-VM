@@ -67,8 +67,8 @@ public class ExtPackage extends VMConfigPackage {
      *
      * @param packageName package name containing classes to include with this extension
      */
-    protected ExtPackage(String packageName) {
-        super(packageName);
+    protected ExtPackage(String... packageNames) {
+        super(packageNames);
     }
 
 }
