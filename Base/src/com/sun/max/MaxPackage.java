@@ -408,16 +408,6 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return Collections.emptySet();
     }
 
-    /**
-     * Gets the set of packages excluded by this package. Excluded packages will not be loaded into a system that is
-     * configured by package loading (such as the Maxine VM) if the package represented by this object is loaded. Such a
-     * system should ensure that configuration fails if any excluded packages encountered on the class path before the
-     * package that excludes them.
-     */
-    public Set<MaxPackage> excludes() {
-        return Collections.emptySet();
-    }
-
     public int compareTo(MaxPackage other) {
         final Set<MaxPackage> myPrerequisites = prerequisites();
         final Set<MaxPackage> otherPrerequisites = other.prerequisites();
