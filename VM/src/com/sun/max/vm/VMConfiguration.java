@@ -132,8 +132,8 @@ public final class VMConfiguration {
     }
 
     @INLINE
-    public BootstrapCompilerScheme bootCompilerScheme() {
-        return bootCompilerScheme;
+    public RuntimeCompilerScheme bootCompilerScheme() {
+        return BootstrapCompilerScheme.Static.compiler();
     }
 
     @INLINE

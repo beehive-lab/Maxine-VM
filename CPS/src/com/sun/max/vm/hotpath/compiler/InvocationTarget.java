@@ -23,6 +23,7 @@ package com.sun.max.vm.hotpath.compiler;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.cps.cir.snippet.*;
 
 public class InvocationTarget {
     public static StaticMethodActor findInvokeStaticTarget(MethodActor method) {
@@ -34,7 +35,7 @@ public class InvocationTarget {
     }
 
     public static VirtualMethodActor findInvokeInterfaceTarget(MethodActor method, Object receiver) {
-        return MethodSelectionSnippet.SelectInterfaceMethod.quasiFold(receiver, (InterfaceMethodActor) method);
+        return CirSelectInterfaceMethod.quasiFold(receiver, (InterfaceMethodActor) method);
     }
 
     public static VirtualMethodActor findInvokeSpecialTarget(ClassActor classActor, MethodActor method) {

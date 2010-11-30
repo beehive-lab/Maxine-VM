@@ -28,6 +28,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.optimize.*;
@@ -93,6 +94,20 @@ public final class CirSelectInterfaceMethod extends CirSnippet {
         return holder.findVirtualMethodActor(declaredMethod);
     }
 
+    /**
+     * Meta-evaluates only up to the virtual method actor, not all the way to the target method's entry point.
+     */
+    public static VirtualMethodActor quasiFold(Object receiver, InterfaceMethodActor interfaceMethod) {
+        final Class receiverClass = receiver.getClass();
+        final ClassActor classActor = ClassActor.fromJava(receiverClass);
+        if (MaxineVM.isHosted() && !BootstrapCompilerScheme.Static.compiler().areSnippetsCompiled()) {
+            return classActor.findVirtualMethodActor(interfaceMethod);
+        }
+        final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());
+        final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceActor.id) - classActor.dynamicHub().iTableStartIndex;
+        return classActor.getVirtualMethodActorByIIndex(interfaceIIndex + interfaceMethod.iIndexInInterface());
+    }
+
     @Override
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         assert arguments.length == Parameter.VALUES.size();
@@ -101,7 +116,7 @@ public final class CirSelectInterfaceMethod extends CirSnippet {
         if (isConstantArgument(arguments, Parameter.receiver)) {
             final Object receiver = getConstantArgumentValue(arguments, Parameter.receiver).asObject();
             try {
-                selectedMethod = MethodSelectionSnippet.SelectInterfaceMethod.quasiFold(receiver, declaredMethod);
+                selectedMethod = quasiFold(receiver, declaredMethod);
             } catch (LinkageError error) {
                 throw new CirFoldingException(error);
             }

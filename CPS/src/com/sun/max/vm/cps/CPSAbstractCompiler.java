@@ -20,10 +20,14 @@
  */
 package com.sun.max.vm.cps;
 
+import static com.sun.max.vm.thread.VmThread.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
 import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
@@ -33,13 +37,21 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
+import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.hotpath.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * @author Bernd Mathiske
  */
 public abstract class CPSAbstractCompiler extends AbstractVMScheme implements BootstrapCompilerScheme {
+
+    public CPSAbstractCompiler() {
+        BootstrapCompilerScheme.Static.setCompiler(this);
+    }
 
     /**
      * Gets this compiler's last IR generator (typically a {@link com.sun.max.vm.cps.target.TargetGenerator}).
@@ -132,5 +144,44 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
 
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
+    }
+
+    /**
+     * Thread local for passing the exception when interpreting with an {@link IrInterpreter}.
+     */
+    @HOSTED_ONLY
+    public static final ThreadLocal<Throwable> INTERPRETER_EXCEPTION = new ThreadLocal<Throwable>() {
+        @Override
+        public void set(Throwable value) {
+            Throwable g = get();
+            assert value == null || g == null;
+            super.set(value);
+        }
+    };
+
+    /**
+     * Executes a safepoint and then gets the Throwable object from the
+     * {@link VmThreadLocal#EXCEPTION_OBJECT} thread local.
+     *
+     * This method is only annotated to be never inlined so that it does something different
+     * if being executed by an {@link IrInterpreter}.
+     */
+    @NEVER_INLINE
+    public static Throwable safepointAndLoadExceptionObject() {
+        if (MaxineVM.isHosted()) {
+            return hostedSafepointAndLoadExceptionObject();
+        }
+        Safepoint.safepoint();
+        Throwable exception = UnsafeCast.asThrowable(EXCEPTION_OBJECT.loadRef(currentTLA()).toJava());
+        EXCEPTION_OBJECT.store3(Reference.zero());
+        FatalError.check(exception != null, "Exception object lost during unwinding");
+        return exception;
+    }
+
+    @HOSTED_ONLY
+    public static Throwable hostedSafepointAndLoadExceptionObject() {
+        Throwable throwable = INTERPRETER_EXCEPTION.get();
+        INTERPRETER_EXCEPTION.set(null);
+        return throwable;
     }
 }

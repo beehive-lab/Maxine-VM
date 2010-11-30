@@ -32,8 +32,8 @@ import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -408,7 +408,7 @@ public final class Machine extends AbstractTeleVMHolder{
         }
     }
 
-    private final ClassMethodActor safepointAndLoadExceptionObject = (ClassMethodActor) MethodActor.fromJava(Classes.findDeclaredMethod(ExceptionDispatcher.class, "safepointAndLoadExceptionObject"));
+    private final ClassMethodActor safepointAndLoadExceptionObject = (ClassMethodActor) MethodActor.fromJava(Classes.findDeclaredMethod(CPSAbstractCompiler.class, "safepointAndLoadExceptionObject"));
 
     public void invokeMethod(ClassMethodActor method) throws TeleInterpreterException {
         final ExecutionFrame oldFrame = currentThread.frame();
@@ -427,7 +427,7 @@ public final class Machine extends AbstractTeleVMHolder{
         }
 
         if (method == safepointAndLoadExceptionObject) {
-            push(widenIfNecessary(ReferenceValue.from(ExceptionDispatcher.hostedSafepointAndLoadExceptionObject())));
+            push(widenIfNecessary(ReferenceValue.from(CPSAbstractCompiler.hostedSafepointAndLoadExceptionObject())));
         } else if (method.isNative()) {
             final Value[] arguments = new Value[numberOfParameters];
             invertOperands(argumentStack, arguments);

@@ -25,7 +25,7 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.bytecode.graft.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.bir.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.operator.*;
@@ -45,7 +45,7 @@ final class BlockTranslator {
         this.translation = translation;
     }
 
-    private static final StaticMethodActor safepointAndLoadExceptionObject = (StaticMethodActor) ClassMethodActor.fromJava(Classes.getDeclaredMethod(ExceptionDispatcher.class, "safepointAndLoadExceptionObject"));
+    private static final StaticMethodActor safepointAndLoadExceptionObject = (StaticMethodActor) ClassMethodActor.fromJava(Classes.getDeclaredMethod(CPSAbstractCompiler.class, "safepointAndLoadExceptionObject"));
 
     private void scanBlock(BlockState blockState) {
         final BytecodeTranslation visitor = new BytecodeTranslation(blockState, translation);

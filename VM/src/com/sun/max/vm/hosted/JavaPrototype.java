@@ -39,8 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.jdk.Package;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -349,10 +348,7 @@ public final class JavaPrototype extends Prototype {
 
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
 
-        config.bootCompilerScheme().createBuiltins(packageLoader);
-        Builtin.register(config.bootCompilerScheme());
-        config.bootCompilerScheme().createSnippets(packageLoader);
-        Snippet.register();
+        BootstrapCompilerScheme.Static.initialize(packageLoader);
 
         candidateMaxPackages = getPackages(new MaxPackage[] {new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package()});
 
