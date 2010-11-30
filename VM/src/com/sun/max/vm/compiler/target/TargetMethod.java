@@ -338,8 +338,16 @@ public abstract class TargetMethod extends MemoryRegion {
                 Object currentDirectCallee = directCallees[i];
                 final TargetMethod callee = getTargetMethod(currentDirectCallee);
                 if (callee == null) {
+                    if (MaxineVM.isHosted()) {
+                        assert !classMethodActor.isTemplate() : "template must not have patchable call site";
+                    }
                     linkedAll = false;
-                    fixupCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
+                    final int s = stopPosition(i);
+                    final Address callSite = codeStart.plus(s);
+                    if (!isPatchableCallSite(callSite)) {
+                        FatalError.unexpected(classMethodActor.qualifiedName() +  " call Site calling static trampoline must be patchable : " + callSite.toHexString());
+                    }
+                    fixupCallSite(s, StaticTrampoline.codeStart().plus(offset));
                 } else {
                     fixupCallSite(stopPosition(i), callee.codeStart().plus(offset));
                 }

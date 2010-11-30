@@ -272,9 +272,10 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
      * Tests whether all call labels are still pointing at CALL instructions.
      */
     private boolean areLabelsValid(byte[] code, Address startAddress) throws AssemblyException {
+        final boolean isTemplate = MaxineVM.isHosted() ? abi().templatesOnly() : false;
         for (Label label : directCallLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND ||
-                            !isCall(code, label.position()) || !AMD64TargetMethodUtil.isPatchableCallSite(Address.fromInt(label.position()))) {
+                            !isCall(code, label.position()) || !(isTemplate || AMD64TargetMethodUtil.isPatchableCallSite(Address.fromInt(label.position())))) {
                 if (MaxineVM.isHosted()) {
                     Platform platform = Platform.platform();
                     disassemble(System.out, code, platform.isa, platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);

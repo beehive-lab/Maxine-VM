@@ -30,6 +30,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.cps.eir.*;
@@ -449,23 +450,22 @@ public interface AMD64EirInstruction {
 
         // Direct calls currently are always 5 bytes long: 1 byte for the call opcode,
         // and 4 bytes for a displacement to the method address.
-        // We must arrange for direct call instructions to be laid out such that:
-        // - the displacement part of the instruction is 4-byte aligned to enable update with a single write instruction.
-        // - the whole call instruction must fit in exactly one cache line.
-        //
-        //  A first simple approach to do this is to force the whole instruction to occupy the top-most 5 bytes of a
-        //  8-bytes aligned chunk of memory: the latter provides guarantees that the whole instruction sits in a 32-bytes cache line.
-        // This is tricky in CPS because of "mutable" assembly objects that may be written before the call instructions
-        // (see com.sun.max.asm.Assembler.Directives). So the simplest is just to add one of this directive for an
-        // 8 byte alignment.
-
+        // We arrange for direct call instructions to be laid out such that they always fit within a 8-byte aligned
+        // block of code. Since code always start at an 8-byte aligned address, we only need to align the position in the code buffer.
+        // We use a variant of the align directive that pads to next 8-byte align position in the code emitter's buffer with nops only if
+        // the instruction about to be emitted would cross an 8 byte-alignment.
+        // Note that we don't enforce alignment constraints on templates, since direct calls in these are guaranteed to target
+        // compiled runtime functions, and therefore, be free of runtime patches.
         @Override
         public void emit(AMD64EirTargetEmitter emitter) {
             final EirLocation location = function().location();
             switch (location.category()) {
                 case METHOD: {
-                    boolean ok = emitter.assembler().directives().align(WordWidth.BITS_64.numberOfBytes, DIRECT_METHOD_CALL_INSTRUCTION_LENGTH);
-                    assert ok;
+                    if (!(MaxineVM.isHosted() && emitter.templatesOnly())) {
+                        // Only align if not for templates.
+                        boolean ok = emitter.assembler().directives().align(WordWidth.BITS_64.numberOfBytes, DIRECT_METHOD_CALL_INSTRUCTION_LENGTH);
+                        assert ok;
+                    }
                     emitter.addDirectCall(this);
                     final int placeHolderBeforeLinking = -1;
                     emitter.assembler().call(placeHolderBeforeLinking);
