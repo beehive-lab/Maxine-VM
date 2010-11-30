@@ -26,7 +26,6 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.CompilationScheme.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -46,6 +45,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.TargetMethod.Flavor;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
@@ -258,14 +258,7 @@ public class Stubs {
 
         // Use the caller's entry point to get the correct entry point.
         final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.callEntryPoint);
-        final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
-        Pointer callDisp = callSite.plus(1);
-        if (CODE_PATCHING_ALIGMMENT_IS_GUARANTEED && !callDisp.isWordAligned()) {
-            // Patching must not occur across a cache line boundary. The easiest way to check for
-            // this is to make sure the call instruction is word aligned.
-            FatalError.unexpected("Call displacement not word aligned: " + callDisp.toHexString());
-        }
-        callSite.writeInt(1, calleeOffset);
+        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeEntryPoint);
     }
 
     /**

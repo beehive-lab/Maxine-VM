@@ -24,9 +24,13 @@ import com.sun.max.unsafe.*;
 
 /**
  * A region-based space supporting the sweeping interface.
- * The allocator is number of (potentially) non-contiguous
- * fixed-size regions. Each region maintains a list of free chunks of minimum size, and occupancy statistics.
- *
+ * The space is made of an number of possibly non-contiguous
+ * fixed-size regions. Each region maintains a list of free chunks
+ * of minimum size, and occupancy statistics.
+ * Both the list and the occupancy statistics are filled during sweeping.
+ * Free chunks are organized in address order; regions with free space are organized in
+ * address order as well.
+ * Allocation is performed on a first-fit basis.s
  *
  * @author Laurent Daynes
  */
@@ -38,9 +42,9 @@ public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSp
      */
     private Size minReclaimableSpace;
 
-    ThreadedRegionList allocatingRegions;
-    ThreadedRegionList fullRegions;
-    ThreadedRegionList candidatesRegions;
+    RegionIDList allocatingRegions;
+    RegionIDList fullRegions;
+    RegionIDList candidatesRegions;
 
     public RegionBasedFirstFitSpace() {
     }

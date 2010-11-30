@@ -18,18 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm;
+package com.sun.max.ext.cri;
 
-/**
- * Denotes a package of classes that are (potentially) in the VM.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Mick Jordan
- */
-public abstract class VMPackage extends VMConfigPackage {
-    public VMPackage() {
+import com.sun.max.ext.*;
+
+public class Package extends ExtPackage {
+    public Package() {
+        super("com.sun.cri");
     }
-
 
 }

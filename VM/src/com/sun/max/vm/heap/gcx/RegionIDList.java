@@ -28,14 +28,12 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Region list management.
- * Heaps organize their memory into non-overlapping spaces made of (possibly) discontinuous regions.
- * Spaces keep track of their regions in list of regions.
- * Thus a region always belong at any one time to a region list.
+ * A doubly linked list of regions implemented as thread list over an array of int value.
+ *
  *
  * @author Laurent Daynes
  */
-public class ThreadedRegionList {
+public class RegionIDList {
     /**
      * Pointer to raw storage of the list.
      */
@@ -115,7 +113,7 @@ public class ThreadedRegionList {
         head = nullElement;
     }
 
-    ThreadedRegionList(Pointer backingStorage, Size length) {
+    RegionIDList(Pointer backingStorage, Size length) {
         listStorage = backingStorage;
         nullElement = length.toInt();
         clear();
@@ -194,7 +192,7 @@ public class ThreadedRegionList {
         clear(elem);
     }
 
-    void append(ThreadedRegionList list) {
+    void append(RegionIDList list) {
         if (isEmpty()) {
             head = list.head;
         } else {
@@ -204,7 +202,7 @@ public class ThreadedRegionList {
         tail = list.tail;
     }
 
-    void prepend(ThreadedRegionList list) {
+    void prepend(RegionIDList list) {
         if (isEmpty()) {
             tail = list.tail;
         } else {

@@ -421,7 +421,12 @@ public interface AMD64EirInstruction {
     }
 
     public static class CALL extends EirCall<EirInstructionVisitor, AMD64EirTargetEmitter> implements AMD64EirInstruction {
+        public static final int DIRECT_METHOD_CALL_INSTRUCTION_LENGTH = 5;
 
+        public static boolean isPatchableCallSite(Address callSite) {
+            return callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH).roundedDownBy(WordWidth.BITS_64.numberOfBytes));
+
+        }
         public CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                     EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                     boolean isNativeFunctionCall, EirMethodGeneration methodGeneration) {
@@ -442,11 +447,28 @@ public interface AMD64EirInstruction {
             }
         }
 
+        // Direct calls currently are always 5 bytes long: 1 byte for the call opcode,
+        // and 4 bytes for a displacement to the method address.
+        // We must arrange for direct call instructions to be laid out such that:
+        // - the displacement part of the instruction is 4-byte aligned to enable update with a single write instruction.
+        // - the whole call instruction must fit in exactly one cache line.
+        //
+        //  A first simple approach to do this is to force the whole instruction to occupy the top-most 5 bytes of a
+        //  8-bytes aligned chunk of memory: the latter provides guarantees that the whole instruction sits in a 32-bytes cache line.
+        // This is tricky in CPS because of "mutable" assembly objects that may be written before the call instructions
+        // (see com.sun.max.asm.Assembler.Directives). So the simplest is just to add one of this directive for an
+        // 8 byte alignment, and fills in nops in from of the call opcode.
+
         @Override
         public void emit(AMD64EirTargetEmitter emitter) {
             final EirLocation location = function().location();
             switch (location.category()) {
                 case METHOD: {
+                    boolean ok = emitter.assembler().directives().align(WordWidth.BITS_64.numberOfBytes, DIRECT_METHOD_CALL_INSTRUCTION_LENGTH);
+                    assert ok;
+//                    emitter.assembler().nop();
+//                    emitter.assembler().nop();
+//                    emitter.assembler().nop();
                     emitter.addDirectCall(this);
                     final int placeHolderBeforeLinking = -1;
                     emitter.assembler().call(placeHolderBeforeLinking);
