@@ -349,6 +349,6 @@ public final class VMConfiguration {
             final ExtPackage extPackage = (ExtPackage) maxPackage;
             return extPackage.isPartOfMaxineVM(this);
         }
-        return maxPackage.isPartOfMaxine();
+        return false;
     }
 }

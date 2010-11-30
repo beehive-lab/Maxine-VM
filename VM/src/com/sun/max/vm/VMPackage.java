@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm;
 
-
 /**
  * Denotes a package of classes that are (potentially) in the VM.
  *
