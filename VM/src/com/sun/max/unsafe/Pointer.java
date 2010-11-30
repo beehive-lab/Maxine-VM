@@ -25,7 +25,6 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Bytes;
 import com.sun.max.platform.*;

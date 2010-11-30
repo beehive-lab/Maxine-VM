@@ -25,7 +25,6 @@ import static com.sun.max.platform.Platform.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -70,7 +69,7 @@ public final class AMD64Safepoint extends Safepoint {
     public static final CiRegister LATCH_REGISTER = AMD64.r14;
 
     @HOSTED_ONLY
-    public AMD64Safepoint(VMConfiguration vmConfiguration) {
+    public AMD64Safepoint() {
     }
 
     @HOSTED_ONLY

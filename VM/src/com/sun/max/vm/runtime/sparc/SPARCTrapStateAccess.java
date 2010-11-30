@@ -28,7 +28,6 @@ import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.sparc.*;
 
@@ -101,7 +100,7 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
     }
 
     @Override
-    public Pointer getInstructionPointer(Pointer trapState) {
+    public Pointer getPC(Pointer trapState) {
         // We're in the trap stub. The latch register is set to the disabled vm thread locals.
         return TRAP_INSTRUCTION_POINTER.load(currentTLA());
     }
@@ -110,12 +109,12 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
      * Set the instruction pointer to which the trap stub should return.
      */
     @Override
-    public void setInstructionPointer(Pointer trapState, Pointer value) {
+    public void setPC(Pointer trapState, Pointer value) {
         TRAP_INSTRUCTION_POINTER.store3(value);
     }
 
     @Override
-    public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
+    public Pointer getSP(Pointer trapState) {
         return trapState.readWord(TRAP_SP_OFFSET).asPointer();
     }
 
@@ -123,8 +122,8 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
      * Get the frame pointer of the trapped frame.
      */
     @Override
-    public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
-        final Pointer registerWindow = getStackPointer(trapState, targetMethod);
+    public Pointer getFP(Pointer trapState) {
+        final Pointer registerWindow = getSP(trapState);
         return SPARCStackFrameLayout.getRegisterInSavedWindow(registerWindow, GPR.I6).asPointer();
     }
 

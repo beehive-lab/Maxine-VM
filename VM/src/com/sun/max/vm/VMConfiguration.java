@@ -41,7 +41,6 @@ import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.trampoline.*;
 
 /**
  * The configuration of a VM, which includes the schemes, safepoint mechanism, etc.
@@ -61,8 +60,6 @@ public final class VMConfiguration {
     public final VMPackage jitCompilerPackage;
     public final VMPackage optCompilerPackage;
     public final VMPackage compilationPackage;
-    public final VMPackage trampolinePackage;
-    public final VMPackage targetABIsPackage;
     public final VMPackage runPackage;
     public final Safepoint safepoint;
     public final TrapStateAccess trapStateAccess;
@@ -87,10 +84,6 @@ public final class VMConfiguration {
     @CONSTANT_WHEN_NOT_ZERO
     private CompilationScheme compilationScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
-    private DynamicTrampolineScheme trampolineScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
-    private TargetABIsScheme targetABIsScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
     private RunScheme runScheme = null;
 
     public VMConfiguration(BuildLevel buildLevel,
@@ -103,8 +96,7 @@ public final class VMConfiguration {
                            VMPackage jitCompilerPackage,
                            VMPackage optCompilerPackage,
                            VMPackage compilationPackage,
-                           VMPackage trampolinePackage,
-                           VMPackage targetABIsPackage, VMPackage runPackage) {
+                           VMPackage runPackage) {
         this.buildLevel = buildLevel;
         this.referencePackage = referencePackage;
         this.layoutPackage = layoutPackage;
@@ -114,11 +106,9 @@ public final class VMConfiguration {
         this.jitCompilerPackage = jitCompilerPackage;
         this.optCompilerPackage = optCompilerPackage;
         this.compilationPackage = compilationPackage;
-        this.trampolinePackage = trampolinePackage;
-        this.targetABIsPackage = targetABIsPackage;
         this.runPackage = runPackage;
-        this.safepoint = Safepoint.create(this);
-        this.trapStateAccess = TrapStateAccess.create(this);
+        this.safepoint = Safepoint.create();
+        this.trapStateAccess = TrapStateAccess.create();
     }
 
     @INLINE
@@ -162,16 +152,6 @@ public final class VMConfiguration {
     }
 
     @INLINE
-    public DynamicTrampolineScheme trampolineScheme() {
-        return trampolineScheme;
-    }
-
-    @INLINE
-    public TargetABIsScheme  targetABIsScheme() {
-        return targetABIsScheme;
-    }
-
-    @INLINE
     public RunScheme runScheme() {
         return runScheme;
     }
@@ -184,8 +164,6 @@ public final class VMConfiguration {
             monitorPackage,
             bootCompilerPackage,
             compilationPackage,
-            trampolinePackage,
-            targetABIsPackage,
             runPackage});
     }
 
@@ -238,9 +216,7 @@ public final class VMConfiguration {
         layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class);
         monitorScheme = loadAndInstantiateScheme(loadedSchemes, monitorPackage, MonitorScheme.class);
         heapScheme = loadAndInstantiateScheme(loadedSchemes, heapPackage, HeapScheme.class);
-        targetABIsScheme = loadAndInstantiateScheme(loadedSchemes, targetABIsPackage, TargetABIsScheme.class);
         bootCompilerScheme = loadAndInstantiateScheme(loadedSchemes, bootCompilerPackage, BootstrapCompilerScheme.class);
-        trampolineScheme = loadAndInstantiateScheme(loadedSchemes, trampolinePackage, DynamicTrampolineScheme.class);
 
         if (jitCompilerPackage != null) {
             jitCompilerScheme = loadAndInstantiateScheme(loadedSchemes, jitCompilerPackage, RuntimeCompilerScheme.class);

@@ -25,7 +25,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;

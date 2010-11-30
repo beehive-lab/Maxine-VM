@@ -35,7 +35,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.trampoline.*;
 
 /**
  * @author Bernd Mathiske
@@ -85,7 +84,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
     public void createSnippets(PackageLoader packageLoader) {
         packageLoader.loadAndInitializeAll(Snippet.class);
         packageLoader.loadAndInitializeAll(HotpathSnippet.class);
-        packageLoader.loadAndInitializeAll(DynamicTrampoline.class);
     }
 
     @HOSTED_ONLY
@@ -100,10 +98,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
     public void compileSnippets() {
         areSnippetsCompiled = true;
         ClassActor.DEFERRABLE_QUEUE_2.runAll();
-    }
-
-    public void staticTrampoline() {
-        throw new UnsupportedOperationException();
     }
 
     @Override

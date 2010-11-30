@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
+import com.sun.c1x.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -41,6 +42,14 @@ import com.sun.max.vm.compiler.target.*;
  * @author Ben L. Titzer
  */
 public interface CompilationScheme extends VMScheme {
+
+    /**
+     * Temporary flag to disable alignment check when code patching. The alignment requirement
+     * is satisfied by C1X (see {@link C1XOptions#AlignCallsForPatching}) but not yet by
+     * CPS and the template JIT.
+     */
+    boolean CODE_PATCHING_ALIGMMENT_IS_GUARANTEED = System.getProperty("non-constant value to fool Eclipse") != null;
+
     /**
      * An enum that selects between different runtime behavior of the compilation scheme.
      */

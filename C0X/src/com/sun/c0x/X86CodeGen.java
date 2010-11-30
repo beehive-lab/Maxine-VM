@@ -654,10 +654,10 @@ public class X86CodeGen extends CodeGen {
                 asm.movsd(dst, elemAddress);
                 break;
             case Object:
-                if (target.referenceSize == 4) {
-                    asm.movl(dst, elemAddress);
-                } else {
+                if (is64bit) {
                     asm.movq(dst, elemAddress);
+                } else {
+                    asm.movl(dst, elemAddress);
                 }
                 break;
             case Word:
@@ -695,10 +695,10 @@ public class X86CodeGen extends CodeGen {
                 asm.movsd(elemAddress, valReg);
                 break;
             case Object:
-                if (target.referenceSize == 4) {
-                    asm.movl(elemAddress, valReg);
-                } else {
+                if (is64bit) {
                     asm.movq(elemAddress, valReg);
+                } else {
+                    asm.movl(elemAddress, valReg);
                 }
                 break;
             case Word:

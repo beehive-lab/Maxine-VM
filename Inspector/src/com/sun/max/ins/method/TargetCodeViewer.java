@@ -76,7 +76,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
                         }
                     }
                 } else {
-                    // Must be a hand crafted stub that has been linked with a ClassMethodActor (e.g C1XCompilerScheme.getTrapStub()).
+                    // Must be a hand crafted stub
                 }
             }
         }

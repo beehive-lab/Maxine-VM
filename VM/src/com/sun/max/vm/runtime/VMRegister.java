@@ -21,7 +21,6 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.max.vm.VMConfiguration.*;
 
 import java.util.*;
 
@@ -224,11 +223,6 @@ public final class VMRegister {
     @INTRINSIC(READ_PC)
     public static Pointer getInstructionPointer() {
         return SpecialBuiltin.getInstructionPointer();
-    }
-
-    @FOLD
-    private static boolean callAddressRegisterExists() {
-        return vmConfig().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.LINK_ADDRESS) != null;
     }
 
     @INLINE

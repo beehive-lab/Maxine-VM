@@ -461,18 +461,6 @@ public class MaxineTester {
 
         static final String INCLUDE_SLOW_TESTS_PROPERTY = "includeSlowTests";
 
-        private static Set<String> loadFailedTests(File file) {
-            if (file.exists()) {
-                System.out.println("Only running the tests listed in " + file.getAbsolutePath());
-                try {
-                    return new HashSet<String>(Files.readLines(file));
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            }
-            return null;
-        }
-
         /**
          * Runs the JUnit tests in a given class.
          *
@@ -497,7 +485,6 @@ public class MaxineTester {
 
             final boolean includeSlowTests = System.getProperty(INCLUDE_SLOW_TESTS_PROPERTY) != null;
 
-            final Set<String> failedTestNames = loadFailedTests(failedFile);
             final Runner runner = new AllTests(testClass) {
                 @Override
                 public void run(RunNotifier notifier) {
@@ -509,9 +496,7 @@ public class MaxineTester {
                                 System.out.println("Omitted slow test: " + description);
                                 return;
                             }
-                            if (failedTestNames == null || failedTestNames.contains(description.toString())) {
-                                super.run(testCase);
-                            }
+                            super.run(testCase);
                         }
                     };
                     result.addListener(createAdaptingListener(notifier));

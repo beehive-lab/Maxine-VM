@@ -282,7 +282,6 @@ projects=( \
     Assembler:src,test            \
     VM:src,test                   \
     CPS:src,test                  \
-    MaxineC1X:src,test            \
     MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \

@@ -240,7 +240,7 @@ public class TeleFields extends AbstractTeleVMHolder {
 
                 });
                 for (MaxPackage maxPackage : rootPackage.getTransitiveSubPackages(classpath)) {
-                    for (Class<?> c : packageLoader.load(maxPackage, false)) {
+                    for (Class<?> c : packageLoader.load(maxPackage, false, true)) {
                         final AccessibleObject[] members = memberClass.equals(Method.class) ? c.getDeclaredMethods() : (memberClass.equals(Field.class) ? c.getDeclaredFields() : c.getDeclaredConstructors());
                         for (AccessibleObject member : members) {
                             if (member.getAnnotation(INSPECTED.class) != null) {

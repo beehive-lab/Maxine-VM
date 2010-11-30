@@ -25,7 +25,7 @@ import junit.framework.*;
 import test.com.sun.max.vm.cps.amd64.*;
 import test.com.sun.max.vm.jit.*;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.jit.*;
