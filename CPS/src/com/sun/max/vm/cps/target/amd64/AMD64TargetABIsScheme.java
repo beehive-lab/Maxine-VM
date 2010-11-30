@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.amd64;
+package com.sun.max.vm.cps.target.amd64;
 
 import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
 import static com.sun.max.asm.amd64.AMD64XMMRegister.*;
@@ -30,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 
 /**
  * @author Bernd Mathiske

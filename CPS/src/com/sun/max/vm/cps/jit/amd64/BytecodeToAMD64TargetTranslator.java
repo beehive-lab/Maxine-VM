@@ -42,6 +42,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.cps.target.amd64.*;
 import com.sun.max.vm.jit.Stop.BackwardBranchBytecodeSafepoint;
 import com.sun.max.vm.jit.*;
@@ -436,7 +437,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
          * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
          */
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        TARGET_ABI = Utils.cast(type, vmConfig().targetABIsScheme().jitABI);
+        TARGET_ABI = Utils.cast(type, TargetABIsScheme.INSTANCE.jitABI);
         // Initialization of the few hand-crafted templates
         final byte rel8 = 0;
         final int rel32 = 0;

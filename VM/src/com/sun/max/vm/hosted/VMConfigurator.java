@@ -27,7 +27,6 @@ import com.sun.max.asm.ISA.Category;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
@@ -65,8 +64,6 @@ public final class VMConfigurator {
             "Specifies the JIT scheme for the target.", VMConfigurator.defaultJitCompilerScheme());
     public final Option<MaxPackage> compScheme = schemeOption("comp", new com.sun.max.vm.compiler.Package(), CompilationScheme.class,
             "Specifies the compilation scheme for the target.", VMConfigurator.defaultCompilationScheme());
-    public final Option<MaxPackage> targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), TargetABIsScheme.class,
-            "Specifies the ABIs scheme for the target", VMConfigurator.defaultTargetABIsScheme());
     public final Option<MaxPackage> runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), RunScheme.class,
             "Specifies the run scheme for the target.", VMConfigurator.defaultRunScheme());
 
@@ -103,7 +100,7 @@ public final class VMConfigurator {
                                     vm(jitScheme),
                                     vm(optScheme),
                                     vm(compScheme),
-                                    vm(targetABIsScheme), vm(runScheme));
+                                    vm(runScheme));
         MaxineVM vm = new MaxineVM(config);
         if (install) {
             MaxineVM.set(vm);

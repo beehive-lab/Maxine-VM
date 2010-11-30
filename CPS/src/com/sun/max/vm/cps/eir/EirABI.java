@@ -27,8 +27,8 @@ import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.EirStackSlot.Purpose;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 

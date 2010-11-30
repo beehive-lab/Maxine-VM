@@ -28,8 +28,8 @@ import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.amd64.*;
+import com.sun.max.vm.cps.target.*;
 
 /**
  * C functions that we implement behave almost like native functions.
