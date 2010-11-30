@@ -24,6 +24,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
@@ -247,5 +248,14 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
             }
         }
         return overflowSize;
+    }
+
+    /**
+     * Indicate whether this ABI is for templates.
+     * @return true if ABI is for generating templates.
+     */
+    @HOSTED_ONLY
+    public boolean templatesOnly() {
+        return false;
     }
 }

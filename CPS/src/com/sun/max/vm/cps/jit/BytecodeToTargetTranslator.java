@@ -296,9 +296,9 @@ public abstract class BytecodeToTargetTranslator {
      * @param template the compiled code to emit
      */
     protected void emitAndRecordStops(TargetMethod template) {
-        if (template.numberOfDirectCalls() > 0) {
-            alignTemplateWithPatchableSite(template);
-        }
+//        if (template.numberOfDirectCalls() > 0) {
+//            alignTemplateWithPatchableSite(template);
+//        }
         stops.add(template, codeBuffer.currentPosition(), opcodeBci);
         codeBuffer.emit(template);
     }
@@ -318,7 +318,7 @@ public abstract class BytecodeToTargetTranslator {
         assert template.numberOfSafepoints() == 0;
         assert template.numberOfStopPositions() == 1;
         assert template.referenceMaps() == null || Bytes.areClear(template.referenceMaps());
-        alignTemplateWithPatchableSite(template);
+        alignDirectBytecodeCall(template, callee);
         int stopPosition = codeBuffer.currentPosition() + template.stopPosition(0);
         stops.add(new BytecodeDirectCall(stopPosition, opcodeBci, callee));
     }
@@ -434,7 +434,7 @@ public abstract class BytecodeToTargetTranslator {
 
     protected abstract void fixLookupSwitch(LookupSwitch lookupSwitch);
 
-    protected abstract void alignTemplateWithPatchableSite(TargetMethod template);
+    protected abstract void alignDirectBytecodeCall(TargetMethod template, ClassMethodActor callee);
 
     public void setGenerated(
             TargetMethod targetMethod,

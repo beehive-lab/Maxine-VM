@@ -46,9 +46,6 @@ public final class AMD64TargetMethodUtil {
         // last byte of call site:
         final Address endOfCallSite = callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
         return callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(endOfCallSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes));
-//        final Address dispAddress = callSite.plus(1);
-//        return dispAddress.isAligned(WordWidth.BITS_32.numberOfBytes) &&
-//        callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(dispAddress.roundedDownBy(WordWidth.BITS_64.numberOfBytes));
     }
 
     /**

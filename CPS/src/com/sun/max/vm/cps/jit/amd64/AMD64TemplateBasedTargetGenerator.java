@@ -26,7 +26,7 @@ import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.template.*;
 
 /**
- *
+ * Implementation of template-based target generator for AMD64.
  *
  * @author Laurent Daynes
  */
