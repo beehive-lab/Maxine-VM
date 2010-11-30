@@ -62,7 +62,7 @@ public class CiTarget {
 
     /**
      * The stack alignment requirement of the platform. For example,
-     * from Appendix D of <a href="http://www.intel.com/Assets/PDF/manual/248966.pdf">Intel®64 and IA-32 Architectures Optimization Reference Manual</a>:
+     * from Appendix D of <a href="http://www.intel.com/Assets/PDF/manual/248966.pdf">Intel 64 and IA-32 Architectures Optimization Reference Manual</a>:
      * <pre>
      *     "It is important to ensure that the stack frame is aligned to a
      *      16-byte boundary upon function entry to keep local __m128 data,
