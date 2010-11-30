@@ -376,7 +376,7 @@ public final class JavaPrototype extends Prototype {
 
         if (complete) {
 
-            for (MaxPackage maxPackage: candidateMaxPackages) {
+            for (MaxPackage maxPackage : candidateMaxPackages) {
                 loadPackage(maxPackage);
             }
 
