@@ -31,6 +31,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
@@ -121,7 +122,8 @@ public class RegisterConfigs {
     @HOSTED_ONLY
     public static RegisterConfigs create() {
         if (platform().isa == ISA.AMD64) {
-            if (platform().os.unix) {
+            OS os = platform().os;
+            if (os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN || os == OS.GUESTVM) {
                 /**
                  * The set of allocatable registers shared by most register configurations.
                  */
