@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.cir.*;
 
 /**
@@ -38,7 +39,7 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.bootCompilerScheme() instanceof CirGeneratorScheme;
+        return BootstrapCompilerScheme.Static.compiler() instanceof CirGeneratorScheme;
     }
 
     @Override

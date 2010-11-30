@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.cps.ir.interpreter;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.lang.reflect.*;
 
 import com.sun.max.collect.*;
@@ -33,6 +31,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateMultiReferenceArray;
@@ -66,7 +65,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         }
 
         public static BirMethod generateBirMethod(ClassMethodActor classMethodActor) {
-            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) vmConfig().bootCompilerScheme();
+            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) BootstrapCompilerScheme.Static.compiler();
             final BirMethod birMethod = birCompilerScheme.birGenerator().makeIrMethod(classMethodActor);
             return birMethod;
         }

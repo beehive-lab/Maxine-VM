@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.snippet.*;
 
 /**
  * This compiler interface extends the {@link RuntimeCompilerScheme} to denote the extra operations
@@ -33,6 +34,32 @@ import com.sun.max.vm.compiler.builtin.*;
  * @author Ben L. Titzer
  */
 public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
+
+    public static class Static {
+        private static BootstrapCompilerScheme compiler;
+
+        public static void setCompiler(BootstrapCompilerScheme comp) {
+            assert compiler == null;
+            compiler = comp;
+        }
+
+        public static BootstrapCompilerScheme compiler() {
+            assert compiler != null;
+            return compiler;
+        }
+
+        /**
+         * Do initialization specific to the installed BootstrapCompilerScheme compiler (if any).
+         */
+        public static void initialize(PackageLoader packageLoader) {
+            if (compiler != null) {
+                compiler.createBuiltins(packageLoader);
+                Builtin.register(compiler);
+                compiler.createSnippets(packageLoader);
+                Snippet.register();
+            }
+        }
+    }
 
     /**
      * Starts up the compiler by building built-in operations.

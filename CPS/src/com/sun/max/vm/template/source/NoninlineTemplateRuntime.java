@@ -31,9 +31,16 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
+import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.SelectInterfaceMethod;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClass;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClassForNew;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveSpecialMethod;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeEntrypoint;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeHolderInitialized;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
@@ -374,7 +381,7 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static Throwable loadException() {
-        return ExceptionDispatcher.safepointAndLoadExceptionObject();
+        return CPSAbstractCompiler.safepointAndLoadExceptionObject();
     }
 
     @NEVER_INLINE

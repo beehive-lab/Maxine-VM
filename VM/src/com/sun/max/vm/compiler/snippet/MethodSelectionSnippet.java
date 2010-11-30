@@ -20,11 +20,8 @@
  */
 package com.sun.max.vm.compiler.snippet;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -79,20 +76,6 @@ public abstract class MethodSelectionSnippet extends Snippet {
     }
 
     public static final class SelectInterfaceMethod extends MethodSelectionSnippet {
-        /**
-         * Meta-evaluates only up to the virtual method actor, not all the way to the target method's entry point.
-         */
-        public static VirtualMethodActor quasiFold(Object receiver, InterfaceMethodActor interfaceMethod) {
-            final Class receiverClass = receiver.getClass();
-            final ClassActor classActor = ClassActor.fromJava(receiverClass);
-            if (MaxineVM.isHosted() && !vmConfig().bootCompilerScheme().areSnippetsCompiled()) {
-                return classActor.findVirtualMethodActor(interfaceMethod);
-            }
-            final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());
-            final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceActor.id) - classActor.dynamicHub().iTableStartIndex;
-            return classActor.getVirtualMethodActorByIIndex(interfaceIIndex + interfaceMethod.iIndexInInterface());
-        }
-
         public static final SelectInterfaceMethod SNIPPET = new SelectInterfaceMethod();
 
         @SNIPPET

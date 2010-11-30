@@ -22,19 +22,15 @@ package test.com.sun.max.vm.jtrun;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
-import com.sun.max.program.option.OptionSet;
-import com.sun.max.program.option.Option;
-import com.sun.max.vm.compiler.RuntimeCompilerScheme;
-import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.test.ProgressPrinter;
-
 import java.lang.reflect.*;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
+
+import com.sun.max.program.option.*;
+import com.sun.max.test.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * The {@code JTMaxine} class implements a main program for running the generated Java tester tests
@@ -169,7 +165,7 @@ public class JTMaxine {
         if ("".equals(name)) {
             return null;
         } else if ("cps".equals(name)) {
-            return vmConfiguration.bootCompilerScheme();
+            return BootstrapCompilerScheme.Static.compiler();
         } else if ("jit".equals(name)) {
             return vmConfiguration.jitCompilerScheme();
         }

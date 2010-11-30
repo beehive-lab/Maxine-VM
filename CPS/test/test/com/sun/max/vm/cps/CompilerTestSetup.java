@@ -68,7 +68,7 @@ public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
     }
 
     public static BootstrapCompilerScheme compilerScheme() {
-        return vmConfig().bootCompilerScheme();
+        return BootstrapCompilerScheme.Static.compiler();
     }
 
     public abstract Method_Type translate(ClassMethodActor classMethodActor);
