@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Laurent Daynes
  */
-public class RegionIDList {
+public class HeapRegionList {
     /**
      * Pointer to raw storage of the list.
      */
@@ -113,7 +113,7 @@ public class RegionIDList {
         head = nullElement;
     }
 
-    RegionIDList(Pointer backingStorage, Size length) {
+    HeapRegionList(Pointer backingStorage, Size length) {
         listStorage = backingStorage;
         nullElement = length.toInt();
         clear();
@@ -192,7 +192,7 @@ public class RegionIDList {
         clear(elem);
     }
 
-    void append(RegionIDList list) {
+    void append(HeapRegionList list) {
         if (isEmpty()) {
             head = list.head;
         } else {
@@ -202,7 +202,7 @@ public class RegionIDList {
         tail = list.tail;
     }
 
-    void prepend(RegionIDList list) {
+    void prepend(HeapRegionList list) {
         if (isEmpty()) {
             tail = list.tail;
         } else {

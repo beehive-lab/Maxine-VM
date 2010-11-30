@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
  * Both the list and the occupancy statistics are filled during sweeping.
  * Free chunks are organized in address order; regions with free space are organized in
  * address order as well.
- * Allocation is performed on a first-fit basis.s
+ * Allocation is performed on a first-fit basis.
  *
  * @author Laurent Daynes
  */
@@ -42,9 +42,15 @@ public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSp
      */
     private Size minReclaimableSpace;
 
-    RegionIDList allocatingRegions;
-    RegionIDList fullRegions;
-    RegionIDList candidatesRegions;
+    /**
+     * List of regions available for allocation.
+     */
+    HeapRegionList allocatingRegions;
+
+    /**
+     * List keeping track of regions without too few free space to be considered for allocation.
+     */
+    HeapRegionList fullRegions;
 
     public RegionBasedFirstFitSpace() {
     }
