@@ -39,9 +39,7 @@ import com.sun.max.program.*;
  * </ul>
  * Generally, for the classes in a package to be included in Maxine, each subpackage must contain
  * a class named {@code Package} that is a subclass of one of the above.
- * However, it is possible to indicate recursive inclusion at the root by using the appropriate constructor,
- * in which case the {@code Package} class must also declare a public constructor {@code Package(String, boolean}}
- * to enable the appropriate {@code Package} instances to be created for the recursive packages.
+ * However, it is possible to indicate recursive inclusion at the root by using the appropriate constructor.
  * <p>
  * It is also possible to redirect the search to another package for extensions that must lie outside the
  * {@code com.sun.max} package name space. These always support recursion.
@@ -198,9 +196,10 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * Finds all sub-packages in the classpath that are an instance of the superclass of the classes specified in
      * {@code rootPackages}. The actual classes should be {@link Package} instances from the package defining the search
      * start point. One pass is made over the file system and the resulting list is all matching packages. However, the
-     * packages for each root are kept separate until the end when they are sorted and then merged in the order
+     * packages for each root are kept separate until the end when they are then merged in the order
      * in {@code rootPackages}. The ordering is important for packages that use {@link MaxPackage#excludes}.
-     * The sorting is merely cosmetic.
+     * HACK alert: To support CPS we sort any root that has packages with non-empty prerequisites.
+     * TODO eliminate prerequisites when CPS dies
      *
      * @param classpath
      * @return list of subclasses of {@link MaxPackage}
@@ -278,7 +277,9 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         index = 0;
         for (RootPackageInfo rootPackageInfo : rootPackagesInfo) {
             final MaxPackage[] temp = rootPackageInfo.packages.toArray(new MaxPackage[rootPackageInfo.packages.size()]);
-            Arrays.sort(temp);
+            if (hasPrerequisites(temp)) {
+                Arrays.sort(temp);
+            }
             System.arraycopy(temp, 0, result, index, temp.length);
             index += temp.length;
         }
@@ -287,6 +288,15 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     public List<MaxPackage> getTransitiveSubPackages(Classpath classpath) {
         return getTransitiveSubPackages(classpath, new MaxPackage[] {this});
+    }
+
+    private static boolean hasPrerequisites(MaxPackage[] packages) {
+        for (MaxPackage maxPackage : packages) {
+            if (!maxPackage.prerequisites().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isPrefixOf(MaxPackage p, MaxPackage[] set) {
@@ -337,8 +347,6 @@ public abstract class MaxPackage implements Comparable<MaxPackage>, Cloneable {
             MaxPackage maxPackage = MaxPackage.fromName(pkgName);
             if (maxPackage == null) {
                 maxPackage = createRecursivePackageInstance(redirectedPackage, pkgName);
-            } else {
-                System.console();
             }
             result.add(maxPackage);
         }
