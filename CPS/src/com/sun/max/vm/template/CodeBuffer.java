@@ -116,6 +116,10 @@ public final class CodeBuffer {
         Bytes.copy(buffer, toArray, length);
     }
 
+    public byte[] buffer() {
+        return buffer;
+    }
+
     public void emit(byte b) {
         final int nextCurrentOffset = currentPosition + 1;
         if (nextCurrentOffset > buffer.length) {
