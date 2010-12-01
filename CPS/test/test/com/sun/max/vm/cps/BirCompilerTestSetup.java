@@ -35,7 +35,7 @@ public class BirCompilerTestSetup extends CompilerTestSetup<BirMethod> {
     }
 
     public static BirGeneratorScheme birGeneratorScheme() {
-        return (BirGeneratorScheme) BootstrapCompilerScheme.Static.compiler();
+        return (BirGeneratorScheme) CPSCompiler.Static.compiler();
     }
 
     public static BirGenerator birGenerator() {

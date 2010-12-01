@@ -37,7 +37,7 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return BootstrapCompilerScheme.Static.compiler() instanceof DirGeneratorScheme &&
-               BootstrapCompilerScheme.Static.compiler() instanceof AMD64EirGeneratorScheme;
+        return CPSCompiler.Static.compiler() instanceof DirGeneratorScheme &&
+               CPSCompiler.Static.compiler() instanceof AMD64EirGeneratorScheme;
     }
 }

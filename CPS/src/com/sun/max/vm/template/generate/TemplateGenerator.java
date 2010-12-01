@@ -44,7 +44,7 @@ public class TemplateGenerator {
     protected RuntimeCompilerScheme targetCompiler;
 
     public TemplateGenerator() {
-        targetCompiler = vm().config.bootCompilerScheme();
+        targetCompiler = CPSCompiler.Static.compiler();
 
         // Make sure the JavaStackFrame class used for generating the templates are initialized in the target.
         // This will enable all sorts of compiler optimization that we want the templates to benefit from.

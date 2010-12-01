@@ -20,24 +20,15 @@
  */
 package com.sun.max.vm.cps.ir.igv.amd64;
 
-import static com.sun.max.platform.Platform.*;
-
 import com.sun.max.*;
-import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 
 /**
  * @see MaxPackage
  *
  * @author Thomas Wuerthinger
  */
-public class Package extends VMPackage {
+public class Package extends MaxPackage {
     public Package() {
         super();
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return platform().isa == ISA.AMD64;
     }
 }

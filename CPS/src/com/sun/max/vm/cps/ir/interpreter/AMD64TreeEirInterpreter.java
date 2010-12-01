@@ -112,7 +112,7 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
     }
 
     private static AMD64EirGeneratorScheme eirGeneratorScheme() {
-        return (AMD64EirGeneratorScheme) BootstrapCompilerScheme.Static.compiler();
+        return (AMD64EirGeneratorScheme) CPSCompiler.Static.compiler();
     }
 
     /**

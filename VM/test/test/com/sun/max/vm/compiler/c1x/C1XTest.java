@@ -191,9 +191,6 @@ public class C1XTest {
         String compilerName = compilerOption.getValue();
         if (compilerName.equals("c1x")) {
             compilerScheme = new C1XCompilerScheme();
-        } else if (compilerName.equals("boot")) {
-            configuration.initializeSchemes(MaxineVM.Phase.COMPILING);
-            compilerScheme = configuration.bootCompilerScheme();
         } else if (compilerName.equals("jit")) {
             configuration.initializeSchemes(MaxineVM.Phase.COMPILING);
             compilerScheme = configuration.jitCompilerScheme();

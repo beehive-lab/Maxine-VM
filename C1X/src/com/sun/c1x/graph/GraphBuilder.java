@@ -2236,6 +2236,7 @@ public final class GraphBuilder {
                 case PWRITE         : genStorePointer(PWRITE    | (s.readCPI() << 8)); break;
                 case PSET           : genStorePointer(PSET      | (s.readCPI() << 8)); break;
                 case PCMPSWP        : getCompareAndSwap(PCMPSWP | (s.readCPI() << 8)); break;
+                case MEMBAR         : genMemoryBarrier(MEMBAR   | (s.readCPI() << 8)); break;
 
                 case WRETURN        : genMethodReturn(wpop()); break;
                 case READ_PC        : genLoadPC(); break;
@@ -2586,6 +2587,13 @@ public final class GraphBuilder {
         push(kind, append(new CompareAndSwap(opcode, pointer, offset, expectedValue, newValue, stateBefore, false)));
     }
 
+
+    private void genMemoryBarrier(int opcode) {
+        // TODO: Implement this!
+        FrameState stateBefore = curState.immutableCopy(bci());
+        System.out.println("Memory barrier: " + Bytecodes.nameOf(opcode));
+        System.out.println(stateBefore);
+    }
 
     private void genArrayLength() {
         ipush(append(new ArrayLength(apop(), curState.immutableCopy(bci()))));

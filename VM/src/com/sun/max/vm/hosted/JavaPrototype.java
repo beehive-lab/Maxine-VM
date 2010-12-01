@@ -348,7 +348,7 @@ public final class JavaPrototype extends Prototype {
 
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
 
-        BootstrapCompilerScheme.Static.initialize(packageLoader);
+        CPSCompiler.Static.initialize(packageLoader);
 
         candidateMaxPackages = getPackages(new MaxPackage[] {new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package()});
 

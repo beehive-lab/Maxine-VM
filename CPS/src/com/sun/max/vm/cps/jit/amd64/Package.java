@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.jit.amd64;
 import com.sun.max.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.cps.eir.amd64.*;
 
 /**
  * @see MaxPackage
@@ -38,6 +37,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return BootstrapCompilerScheme.Static.compiler() instanceof AMD64EirGeneratorScheme;
+        return vmConfiguration.optCompilerPackage.isSubPackageOf(this) || vmConfiguration.jitCompilerPackage.isSubPackageOf(this);
     }
 }

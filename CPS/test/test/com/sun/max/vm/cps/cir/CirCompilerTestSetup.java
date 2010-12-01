@@ -34,7 +34,7 @@ public abstract class CirCompilerTestSetup extends CompilerTestSetup<CirMethod> 
     }
 
     public static CirGeneratorScheme cirGeneratorScheme() {
-        return (CirGeneratorScheme) BootstrapCompilerScheme.Static.compiler();
+        return (CirGeneratorScheme) CPSCompiler.Static.compiler();
     }
 
     public static CirGenerator cirGenerator() {

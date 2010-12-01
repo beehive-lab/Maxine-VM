@@ -56,9 +56,8 @@ public final class VMConfiguration {
     public final VMPackage layoutPackage;
     public final VMPackage heapPackage;
     public final VMPackage monitorPackage;
-    public final VMPackage bootCompilerPackage;
-    public final VMPackage jitCompilerPackage;
     public final VMPackage optCompilerPackage;
+    public final VMPackage jitCompilerPackage;
     public final VMPackage compilationPackage;
     public final VMPackage runPackage;
     public final Safepoint safepoint;
@@ -76,8 +75,6 @@ public final class VMConfiguration {
     @CONSTANT_WHEN_NOT_ZERO
     private MonitorScheme monitorScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
-    private BootstrapCompilerScheme bootCompilerScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
     private RuntimeCompilerScheme jitCompilerScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
     private RuntimeCompilerScheme optCompilerScheme = null;
@@ -92,19 +89,18 @@ public final class VMConfiguration {
                            VMPackage layoutPackage,
                            VMPackage heapPackage,
                            VMPackage monitorPackage,
-                           VMPackage bootCompilerPackage,
-                           VMPackage jitCompilerPackage,
                            VMPackage optCompilerPackage,
+                           VMPackage jitCompilerPackage,
                            VMPackage compilationPackage,
                            VMPackage runPackage) {
+        assert optCompilerPackage != null;
         this.buildLevel = buildLevel;
         this.referencePackage = referencePackage;
         this.layoutPackage = layoutPackage;
         this.heapPackage = heapPackage;
         this.monitorPackage = monitorPackage;
-        this.bootCompilerPackage = bootCompilerPackage;
-        this.jitCompilerPackage = jitCompilerPackage;
         this.optCompilerPackage = optCompilerPackage;
+        this.jitCompilerPackage = jitCompilerPackage == null ? optCompilerPackage : jitCompilerPackage;
         this.compilationPackage = compilationPackage;
         this.runPackage = runPackage;
         this.safepoint = Safepoint.create();
@@ -129,11 +125,6 @@ public final class VMConfiguration {
     @INLINE
     public MonitorScheme monitorScheme() {
         return monitorScheme;
-    }
-
-    @INLINE
-    public RuntimeCompilerScheme bootCompilerScheme() {
-        return BootstrapCompilerScheme.Static.compiler();
     }
 
     @INLINE
@@ -162,7 +153,6 @@ public final class VMConfiguration {
             layoutPackage,
             heapPackage,
             monitorPackage,
-            bootCompilerPackage,
             compilationPackage,
             runPackage});
     }
@@ -216,22 +206,11 @@ public final class VMConfiguration {
         layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class);
         monitorScheme = loadAndInstantiateScheme(loadedSchemes, monitorPackage, MonitorScheme.class);
         heapScheme = loadAndInstantiateScheme(loadedSchemes, heapPackage, HeapScheme.class);
-        bootCompilerScheme = loadAndInstantiateScheme(loadedSchemes, bootCompilerPackage, BootstrapCompilerScheme.class);
-
-        if (jitCompilerPackage != null) {
+        optCompilerScheme = loadAndInstantiateScheme(loadedSchemes, optCompilerPackage, RuntimeCompilerScheme.class);
+        if (jitCompilerPackage != optCompilerPackage) {
             jitCompilerScheme = loadAndInstantiateScheme(loadedSchemes, jitCompilerPackage, RuntimeCompilerScheme.class);
         } else {
-            // no JIT, always using the optimizing compiler
-            jitCompilerScheme = bootCompilerScheme;
-        }
-        if (MaxPackage.equal(optCompilerPackage, jitCompilerPackage)) {
-            optCompilerScheme = jitCompilerScheme;
-        } else if (MaxPackage.equal(optCompilerPackage, bootCompilerPackage)) {
-            optCompilerScheme = bootCompilerScheme;
-        } else if (optCompilerPackage == null) {
-            optCompilerScheme = bootCompilerScheme;
-        } else {
-            optCompilerScheme = loadAndInstantiateScheme(loadedSchemes, optCompilerPackage, RuntimeCompilerScheme.class);
+            jitCompilerScheme = optCompilerScheme;
         }
 
         if (loadedSchemes == null) {
@@ -258,9 +237,7 @@ public final class VMConfiguration {
      * to adapt the arguments when a call crosses a calling convention boundary.
      */
     public boolean needsAdapters() {
-        return optCompilerScheme.calleeEntryPoint() != bootCompilerScheme.calleeEntryPoint() ||
-               optCompilerScheme.calleeEntryPoint() != jitCompilerScheme.calleeEntryPoint() ||
-               bootCompilerScheme.calleeEntryPoint() != jitCompilerScheme.calleeEntryPoint();
+        return optCompilerScheme.calleeEntryPoint() != jitCompilerScheme.calleeEntryPoint();
     }
 
     public void initializeSchemes(MaxineVM.Phase phase) {

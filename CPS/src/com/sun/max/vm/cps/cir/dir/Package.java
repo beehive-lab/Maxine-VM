@@ -37,7 +37,7 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return BootstrapCompilerScheme.Static.compiler() instanceof CirGeneratorScheme &&
-               BootstrapCompilerScheme.Static.compiler() instanceof DirGeneratorScheme;
+        return CPSCompiler.Static.compiler() instanceof CirGeneratorScheme &&
+               CPSCompiler.Static.compiler() instanceof DirGeneratorScheme;
     }
 }

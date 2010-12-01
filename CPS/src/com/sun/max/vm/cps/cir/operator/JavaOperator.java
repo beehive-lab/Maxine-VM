@@ -295,7 +295,7 @@ public abstract class JavaOperator extends CirOperator {
             visitor.visit(this);
         }
 
-        public void toLCir(Lowerable op, CirCall call, BootstrapCompilerScheme compilerScheme) {
+        public void toLCir(Lowerable op, CirCall call, CPSCompiler compilerScheme) {
             call.setProcedure(cirBuiltin);
         }
 
@@ -343,7 +343,7 @@ public abstract class JavaOperator extends CirOperator {
             visitor.visit(this);
         }
 
-        public void toLCir(Lowerable op, CirCall call, BootstrapCompilerScheme compilerScheme) {
+        public void toLCir(Lowerable op, CirCall call, CPSCompiler compilerScheme) {
             call.setProcedure(snippet);
         }
 
@@ -363,11 +363,11 @@ public abstract class JavaOperator extends CirOperator {
         private final Builtin builtin;
         private final Snippet snippet;
         private JavaBuiltinOrSnippetOperator(Builtin builtin, Snippet snippet) {
-            super(BootstrapCompilerScheme.Static.compiler().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL_STOP);
+            super(CPSCompiler.Static.compiler().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL_STOP);
             this.builtin = builtin;
             this.snippet = snippet;
         }
-        public void toLCir(Lowerable op, CirCall call, BootstrapCompilerScheme compilerScheme) {
+        public void toLCir(Lowerable op, CirCall call, CPSCompiler compilerScheme) {
             if (compilerScheme.isBuiltinImplemented(builtin)) {
                 call.setProcedure(CirBuiltin.get(builtin));
             } else {

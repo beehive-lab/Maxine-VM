@@ -22,14 +22,20 @@ package com.sun.max.vm.template;
 
 import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Laurent Daynes
  */
 public class Package extends VMPackage {
     public Package() {
         super();
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return CPSCompiler.Static.compiler() != null;
     }
 }

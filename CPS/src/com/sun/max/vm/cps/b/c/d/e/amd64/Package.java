@@ -31,11 +31,11 @@ import com.sun.max.vm.compiler.*;
  */
 public class Package extends VMPackage {
     public Package() {
-        registerScheme(BootstrapCompilerScheme.class, BcdeAMD64Compiler.class);
+        registerScheme(RuntimeCompilerScheme.class, BcdeAMD64Compiler.class);
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.bootCompilerPackage.isSubPackageOf(this);
+        return CPSCompiler.Static.isCompilerPackage(this);
     }
 }

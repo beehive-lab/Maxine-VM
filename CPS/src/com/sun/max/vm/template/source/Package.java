@@ -22,12 +22,12 @@ package com.sun.max.vm.template.source;
 
 import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
 * @see MaxPackage
-* 
 *
-*  TODO: need to turn this back into a MaxPackage: don't want to include it in the final image.
+*
 * @author Laurent Daynes
 */
 public class Package extends VMPackage {
@@ -36,4 +36,8 @@ public class Package extends VMPackage {
         super();
     }
 
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return CPSCompiler.Static.compiler() != null;
+    }
 }

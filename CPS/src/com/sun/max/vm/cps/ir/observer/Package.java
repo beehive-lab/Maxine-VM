@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.ir.observer;
 
 import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * @see MaxPackage
@@ -34,4 +35,8 @@ public class Package extends VMPackage {
         super();
     }
 
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return CPSCompiler.Static.compiler() != null;
+    }
 }

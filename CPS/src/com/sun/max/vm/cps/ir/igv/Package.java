@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.cps.ir.igv;
 
+import com.sun.max.*;
 import com.sun.max.vm.*;
 
 /**
@@ -27,13 +28,8 @@ import com.sun.max.vm.*;
  *
  * @author Thomas Wuerthinger
  */
-public class Package extends VMPackage {
+public class Package extends MaxPackage {
     public Package() {
         super();
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return true;
     }
 }

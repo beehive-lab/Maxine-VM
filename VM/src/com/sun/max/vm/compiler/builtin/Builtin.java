@@ -114,7 +114,7 @@ public abstract class Builtin extends Routine implements Comparable<Builtin>, St
     }
 
     @HOSTED_ONLY
-    public static void register(BootstrapCompilerScheme compilerScheme) {
+    public static void register(CPSCompiler compilerScheme) {
         for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses()) {
             for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
                 registerMethod(classMethodActor);

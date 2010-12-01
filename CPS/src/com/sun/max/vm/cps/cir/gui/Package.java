@@ -21,20 +21,14 @@
 package com.sun.max.vm.cps.cir.gui;
 
 import com.sun.max.*;
-import com.sun.max.vm.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Doug Simon
  */
-public class Package extends VMPackage {
+public class Package extends MaxPackage {
     public Package() {
         super();
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return false;
     }
 }

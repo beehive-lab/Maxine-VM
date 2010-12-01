@@ -26,26 +26,33 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 
 /**
- * This compiler interface extends the {@link RuntimeCompilerScheme} to denote the extra operations
- * required for a compiler that can be used to boot strap the Maxine VM.
+ * The interface implemented by the legacy CPS compiler.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Ben L. Titzer
  */
-public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
+public interface CPSCompiler extends RuntimeCompilerScheme {
 
     public static class Static {
-        private static BootstrapCompilerScheme compiler;
+        private static CPSCompiler compiler;
+        private static MaxPackage compilerPackage;
 
-        public static void setCompiler(BootstrapCompilerScheme comp) {
+        public static void setCompiler(CPSCompiler c) {
             assert compiler == null;
-            compiler = comp;
+            compiler = c;
+            compilerPackage = MaxPackage.fromClass(compiler.getClass());
         }
 
-        public static BootstrapCompilerScheme compiler() {
-            assert compiler != null;
+        public static CPSCompiler compiler() {
             return compiler;
+        }
+
+        public static boolean isCompilerPackage(MaxPackage maxPackage) {
+            if (compilerPackage == null) {
+                return false;
+            }
+            return compilerPackage.isSubPackageOf(maxPackage);
         }
 
         /**

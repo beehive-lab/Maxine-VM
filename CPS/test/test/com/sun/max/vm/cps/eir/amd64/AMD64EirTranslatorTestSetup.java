@@ -45,7 +45,7 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     }
 
     public static AMD64EirGeneratorScheme eirGeneratorScheme() {
-        return (AMD64EirGeneratorScheme) BootstrapCompilerScheme.Static.compiler();
+        return (AMD64EirGeneratorScheme) CPSCompiler.Static.compiler();
     }
 
     public static AMD64EirGenerator eirGenerator() {

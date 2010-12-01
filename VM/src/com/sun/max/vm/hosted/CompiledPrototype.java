@@ -400,17 +400,14 @@ public class CompiledPrototype extends Prototype {
             if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
                 compiler = vmConfig().jitCompilerScheme();
                 if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
-                    compiler = vmConfig().bootCompilerScheme();
-                    if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
-                        try {
-                            // TODO: remove reflective dependency here!
-                            Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
-                            Constructor constructor = type.getConstructor();
-                            compiler = (RuntimeCompilerScheme) constructor.newInstance();
-                            compiler.initialize(Phase.BOOTSTRAPPING);
-                        } catch (Exception e) {
-                            throw ProgramError.unexpected(e);
-                        }
+                    try {
+                        // TODO: remove reflective dependency here!
+                        Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
+                        Constructor constructor = type.getConstructor();
+                        compiler = (RuntimeCompilerScheme) constructor.newInstance();
+                        compiler.initialize(Phase.BOOTSTRAPPING);
+                    } catch (Exception e) {
+                        throw ProgramError.unexpected(e);
                     }
                 }
             }

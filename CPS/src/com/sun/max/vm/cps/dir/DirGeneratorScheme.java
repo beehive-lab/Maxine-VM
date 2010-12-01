@@ -25,7 +25,7 @@ import com.sun.max.vm.compiler.*;
 /**
  * @author Bernd Mathiske
  */
-public interface DirGeneratorScheme extends BootstrapCompilerScheme {
+public interface DirGeneratorScheme extends CPSCompiler {
 
     DirGenerator dirGenerator();
 

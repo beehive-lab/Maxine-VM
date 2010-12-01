@@ -165,7 +165,7 @@ public class JTMaxine {
         if ("".equals(name)) {
             return null;
         } else if ("cps".equals(name)) {
-            return BootstrapCompilerScheme.Static.compiler();
+            return CPSCompiler.Static.compiler();
         } else if ("jit".equals(name)) {
             return vmConfiguration.jitCompilerScheme();
         }
