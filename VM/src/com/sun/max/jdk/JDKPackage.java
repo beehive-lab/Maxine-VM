@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,13 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ext.cri;
+package com.sun.max.jdk;
 
-import com.sun.max.ext.*;
+import com.sun.max.vm.*;
 
-public class Package extends ExtPackage {
-    public Package() {
-        super("com.sun.cri");
+/**
+ * Represents the inclusion of a package from the JDK.
+ *
+ * @author Mick Jordan
+ */
+
+public class JDKPackage extends VMConfigPackage {
+    /**
+     * Use this constructor to redirect the search for classes to the given package name
+     * and its sub-packages. I.e. recursion is assumed.
+     *
+     * @param packageName package name containing classes to include with this extension
+     */
+    protected JDKPackage(String... packageNames) {
+        this(true, packageNames);
+    }
+
+    /**
+     * Use this constructor to redirect the search for classes to the given package name
+     * with optional recursion into sub-packages.
+     *
+     * @param packageName package name containing classes to include with this extension
+     */
+
+    protected JDKPackage(boolean recursive, String... packageNames) {
+        super(recursive, packageNames);
     }
 
 }
