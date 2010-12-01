@@ -24,12 +24,24 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 
+/**
+ * The heap region table centralizes all the descriptors for all regions in the heap space.
+ * Region descriptors of all the regions are allocated in a single contiguous space in order
+ * to enable a simple mapping from region address to region descriptor, which in turn, enables
+ * direct retrieval of a region descriptor from an arbitrary pointer to the heap space.
+ * The index in the region table forms a unique region identifier that can be simply maps to a region
+ * descriptor and the region address in the heap space. The region table occupies the first bytes of
+ * the heap space.
+ *
+ * @author Laurent Daynes
+ */
+public final class RegionTable {
+    static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
 
-public class RegionTable< R extends HeapRegionHeader> {
-    @CONSTANT_WHEN_NOT_ZERO
-    private Pointer table = Pointer.zero();
+    private Pointer table() {
+        return Reference.fromJava(this).toOrigin().plus(TableOffset);
+    }
     @CONSTANT_WHEN_NOT_ZERO
     private int length;
 
@@ -42,33 +54,27 @@ public class RegionTable< R extends HeapRegionHeader> {
     @CONSTANT_WHEN_NOT_ZERO
     private int log2RegionSizeInBytes;
 
-
     /**
      * Base address of the contiguous space backing up the heap regions.
      */
     @CONSTANT_WHEN_NOT_ZERO
     private Pointer regionBaseAddress;
 
-    final int regionHeaderSize;
+    final int regionInfoSize;
 
-    final Class <R>regionClass;
-
-    public RegionTable(Class<R> regionClass) {
-        this.regionClass = regionClass;
-        this.regionHeaderSize = ClassActor.fromJava(regionClass).dynamicTupleSize().toInt();
+    public RegionTable(Class<HeapRegionInfo> regionInfoClass) {
+        this.regionInfoSize = ClassActor.fromJava(regionInfoClass).dynamicTupleSize().toInt();
     }
 
-    public void initialize(Pointer table, int length) {
-        FatalError.check(table.isZero(), "must be initialized once only");
-        this.table = table;
+    public void initialize(int length) {
         this.length = length;
-        this.regionSizeInBytes = HeapRegionHeader.regionSizeOption.getValue().toInt();
+        this.regionSizeInBytes = HeapRegionInfo.regionSizeOption.getValue().toInt();
         log2RegionSizeInBytes = Integer.numberOfTrailingZeros(this.regionSizeInBytes);
     }
 
-    R addressToRegion(Address addr) {
+    HeapRegionInfo addressToRegion(Address addr) {
         final int rindex = addr.minus(regionBaseAddress).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
-        final Pointer raddr = table.plus(rindex * regionSizeInBytes);
-        return regionClass.cast(Reference.fromOrigin(raddr).toJava());
+        final Pointer raddr = table().plus(rindex * regionSizeInBytes);
+        return HeapRegionInfo.toHeapRegionInfo(raddr);
     }
 }
