@@ -62,6 +62,11 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         register(new VMBooleanXXOption("-XX:+", "UseLOS", "Use a large object space"),
                         MaxineVM.Phase.PRISTINE);
 
+    // Temporary. For testing initial skeleton of the heap region manager
+    static final VMBooleanXXOption useHeapRegionManager =
+        register(new VMBooleanXXOption("-XX:-", "UseHRM", "Use the heap region manager"),
+                        MaxineVM.Phase.PRISTINE);
+
    /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
      * appended to a TLAB to fill unused space before a TLAB refill.
@@ -204,7 +209,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     @Override
     public int reservedVirtualSpaceSize() {
-        // 2^30 Kb = 1 TB of reserved space.
+        // 2^30 Kb = 1 TB of reserved virtual space.
         // This will be truncated as soon as we taxed what we need at initialization time.
         return Size.G.toInt();
     }
