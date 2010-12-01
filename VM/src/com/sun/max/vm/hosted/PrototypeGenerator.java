@@ -21,7 +21,6 @@
 package com.sun.max.vm.hosted;
 
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.hosted.JavaPrototype.*;
 
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;

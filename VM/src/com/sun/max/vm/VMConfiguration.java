@@ -30,7 +30,6 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
-import com.sun.max.ext.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
