@@ -41,13 +41,6 @@ import com.sun.max.vm.cps.target.*;
  */
 public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
 
-    private final PoolSet<AMD64EirRegister> callerSavedRegisters = PoolSet.of(AMD64EirRegister.General.pool(), RAX, RCX, RDX, RSI, RDI, R8, R9, R10);
-
-    @Override
-    public PoolSet<AMD64EirRegister> callerSavedRegisters() {
-        return callerSavedRegisters;
-    }
-
     /**
      * Creates an ABI for a VM entry point or VM exit point.
      * @param isVmEntryPoint {@code true} if this is an ABI for methods called from C/native code, {@code false} if it
