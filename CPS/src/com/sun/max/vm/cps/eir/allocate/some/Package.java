@@ -38,6 +38,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return BootstrapCompilerScheme.Static.compiler() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(this);
+        return CPSCompiler.Static.compiler() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(this);
     }
 }

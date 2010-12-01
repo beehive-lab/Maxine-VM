@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.*;
  * 
  * @author Bernd Mathiske
  */
-public interface CirGeneratorScheme extends BootstrapCompilerScheme {
+public interface CirGeneratorScheme extends CPSCompiler {
 
     /**
      * @return the CIR generator for this scheme

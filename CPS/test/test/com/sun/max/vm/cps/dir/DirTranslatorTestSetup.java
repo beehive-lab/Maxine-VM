@@ -40,7 +40,7 @@ public class DirTranslatorTestSetup extends CompilerTestSetup<DirMethod> {
     }
 
     public static DirGeneratorScheme dirGeneratorScheme() {
-        return (DirGeneratorScheme) BootstrapCompilerScheme.Static.compiler();
+        return (DirGeneratorScheme) CPSCompiler.Static.compiler();
     }
 
     public static DirGenerator dirGenerator() {

@@ -22,7 +22,7 @@ package com.sun.max.vm.cps.bir;
 
 import com.sun.max.vm.compiler.*;
 
-public interface BirGeneratorScheme extends BootstrapCompilerScheme {
+public interface BirGeneratorScheme extends CPSCompiler {
 
     BirGenerator birGenerator();
 

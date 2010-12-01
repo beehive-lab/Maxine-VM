@@ -65,7 +65,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         }
 
         public static BirMethod generateBirMethod(ClassMethodActor classMethodActor) {
-            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) BootstrapCompilerScheme.Static.compiler();
+            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) CPSCompiler.Static.compiler();
             final BirMethod birMethod = birCompilerScheme.birGenerator().makeIrMethod(classMethodActor);
             return birMethod;
         }

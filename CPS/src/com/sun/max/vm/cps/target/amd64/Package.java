@@ -25,6 +25,7 @@ import static com.sun.max.platform.Platform.*;
 import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * @see MaxPackage
@@ -35,6 +36,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return platform().isa == ISA.AMD64;
+        return CPSCompiler.Static.compiler() != null && platform().isa == ISA.AMD64;
     }
 }

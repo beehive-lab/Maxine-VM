@@ -100,7 +100,7 @@ public final class CirSelectInterfaceMethod extends CirSnippet {
     public static VirtualMethodActor quasiFold(Object receiver, InterfaceMethodActor interfaceMethod) {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
-        if (MaxineVM.isHosted() && !BootstrapCompilerScheme.Static.compiler().areSnippetsCompiled()) {
+        if (MaxineVM.isHosted() && !CPSCompiler.Static.compiler().areSnippetsCompiled()) {
             return classActor.findVirtualMethodActor(interfaceMethod);
         }
         final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());

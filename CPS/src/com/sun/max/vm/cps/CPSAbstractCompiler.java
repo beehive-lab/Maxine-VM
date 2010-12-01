@@ -47,10 +47,10 @@ import com.sun.max.vm.thread.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class CPSAbstractCompiler extends AbstractVMScheme implements BootstrapCompilerScheme {
+public abstract class CPSAbstractCompiler extends AbstractVMScheme implements CPSCompiler {
 
     public CPSAbstractCompiler() {
-        BootstrapCompilerScheme.Static.setCompiler(this);
+        CPSCompiler.Static.setCompiler(this);
     }
 
     /**
@@ -120,10 +120,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
             return Utils.cast(type, irMethodType);
         }
         return null;
-    }
-
-    public boolean compilesToTargetMethod() {
-        return TargetMethod.class.isAssignableFrom(irGenerator().irMethodType);
     }
 
     public final TargetMethod compile(ClassMethodActor classMethodActor) {

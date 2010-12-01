@@ -420,8 +420,8 @@ public class BootImage {
         public final String layoutPackageName;
         public final String heapPackageName;
         public final String monitorPackageName;
-        public final String compilerPackageName;
         public final String compilationPackageName;
+        public final String optPackageName;
         public final String jitPackageName;
         public final String runPackageName;
 
@@ -457,12 +457,12 @@ public class BootImage {
             return (VMPackage) MaxPackage.fromName(monitorPackageName);
         }
 
-        public VMPackage compilerPackage() {
-            return (VMPackage) MaxPackage.fromName(compilerPackageName);
-        }
-
         public VMPackage compilationPackage() {
             return (VMPackage) MaxPackage.fromName(compilationPackageName);
+        }
+
+        public VMPackage optPackage() {
+            return (VMPackage) MaxPackage.fromName(optPackageName);
         }
 
         public VMPackage jitPackage() {
@@ -487,7 +487,7 @@ public class BootImage {
             layoutPackageName = Utf8.readString(inputStream);
             heapPackageName = Utf8.readString(inputStream);
             monitorPackageName = Utf8.readString(inputStream);
-            compilerPackageName = Utf8.readString(inputStream);
+            optPackageName = Utf8.readString(inputStream);
             compilationPackageName = Utf8.readString(inputStream);
             jitPackageName =  Utf8.readString(inputStream);
             runPackageName = Utf8.readString(inputStream);
@@ -504,11 +504,11 @@ public class BootImage {
             layoutPackageName = vmConfiguration.layoutPackage.name();
             heapPackageName = vmConfiguration.heapPackage.name();
             monitorPackageName = vmConfiguration.monitorPackage.name();
-            compilerPackageName = vmConfiguration.bootCompilerPackage.name();
+            optPackageName = vmConfiguration.optCompilerPackage.name();
             compilationPackageName = vmConfiguration.compilationPackage.name();
             // Jit Package is optional and may be null. In which case, fall back to the default compiler.
             if (vmConfiguration.jitCompilerPackage == null) {
-                jitPackageName = compilerPackageName;
+                jitPackageName = optPackageName;
             } else {
                 jitPackageName = vmConfiguration.jitCompilerPackage.name();
             }
@@ -529,7 +529,7 @@ public class BootImage {
             checkPackage(layoutPackageName);
             checkPackage(heapPackageName);
             checkPackage(monitorPackageName);
-            checkPackage(compilerPackageName);
+            checkPackage(optPackageName);
             checkPackage(jitPackageName);
             checkPackage(runPackageName);
         }
@@ -659,9 +659,8 @@ public class BootImage {
                                                       stringInfo.layoutPackage(),
                                                       stringInfo.heapPackage(),
                                                       stringInfo.monitorPackage(),
-                                                      stringInfo.compilerPackage(),
+                                                      stringInfo.optPackage(),
                                                       stringInfo.jitPackage(),
-                                                      null,
                                                       stringInfo.compilationPackage(),
                                                       stringInfo.runPackage());
 
