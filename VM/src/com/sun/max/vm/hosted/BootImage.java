@@ -600,7 +600,7 @@ public class BootImage {
      * Gets the class method actor for the first method with the specified name found
      * while traversing all the class method actors declared by a given class and
      * its super classes.
-     * @param name name the method name
+     * @param n the method name
      * @param javaClass the class in which to start the search for a method named "run"
      *
      * @return the found method or null
