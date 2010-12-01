@@ -68,7 +68,6 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.hosted.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -214,7 +213,7 @@ public abstract class TeleVM implements MaxVM {
                     usage(options.targetLocationOption);
                 }
             } else {
-                ProgramError.unexpected("usage: " + options.targetKindOption.getHelp());
+                TeleError.unexpected("usage: " + options.targetKindOption.getHelp());
             }
             if (mode == Mode.ATTACH || mode == Mode.ATTACHWAITING) {
                 if (kind == Kind.FILE) {
@@ -233,7 +232,7 @@ public abstract class TeleVM implements MaxVM {
         }
 
         private static void usage(Option<List<String>> locationOption) {
-            ProgramError.unexpected("usage: " + locationOption.getHelp());
+            TeleError.unexpected("usage: " + locationOption.getHelp());
         }
     }
 
@@ -340,11 +339,11 @@ public abstract class TeleVM implements MaxVM {
                 // dump
                 final File dumpFile = new File(targetLocation.target);
                 if (!dumpFile.exists()) {
-                    FatalError.unexpected("core dump file: " + targetLocation.target + " does not exist or is not accessible");
+                    TeleError.unexpected("core dump file: " + targetLocation.target + " does not exist or is not accessible");
                 }
                 final File vmFile = new File(vmDirectory, "maxvm");
                 if (!vmFile.exists()) {
-                    FatalError.unexpected("vm file: " + vmFile + " does not exist or is not accessible");
+                    TeleError.unexpected("vm file: " + vmFile + " does not exist or is not accessible");
                 }
                 cons = klass.getDeclaredConstructor(new Class[] {TeleVM.class, File.class, File.class});
                 args = new Object[] {this, vmFile, dumpFile};
@@ -354,7 +353,7 @@ public abstract class TeleVM implements MaxVM {
             }
             teleChannelProtocol = (TeleChannelProtocol) cons.newInstance(args);
         } catch (Exception ex) {
-            FatalError.unexpected("failed to create instance of " + className, ex);
+            TeleError.unexpected("failed to create instance of " + className, ex);
         }
 
     }
@@ -374,7 +373,7 @@ public abstract class TeleVM implements MaxVM {
         try {
             LogManager.getLogManager().getLogger("").setLevel(Level.parse(logLevel));
         } catch (IllegalArgumentException e) {
-            ProgramWarning.message("Invalid level specified for java.util.logging root logger: " + logLevel + " [using " + Level.SEVERE + "]");
+            TeleWarning.message("Invalid level specified for java.util.logging root logger: " + logLevel + " [using " + Level.SEVERE + "]");
             LogManager.getLogManager().getLogger("").setLevel(Level.SEVERE);
         }
 
@@ -522,7 +521,7 @@ public abstract class TeleVM implements MaxVM {
             final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class});
             teleVM = (TeleVM) cons.newInstance(new Object[] {bootImageFile, bootImage, sourcepath, commandlineArguments});
         } catch (Exception ex) {
-            FatalError.unexpected("failed to instantiate " + className, ex);
+            TeleError.unexpected("failed to instantiate " + className, ex);
         }
         return teleVM;
     }
@@ -530,7 +529,7 @@ public abstract class TeleVM implements MaxVM {
     private static void checkClasspath(Classpath classpath) {
         for (Entry classpathEntry : classpath.entries()) {
             if (classpathEntry.isPlainFile()) {
-                ProgramWarning.message("Class path entry is neither a directory nor a JAR file: " + classpathEntry);
+                TeleWarning.message("Class path entry is neither a directory nor a JAR file: " + classpathEntry);
             }
         }
     }
@@ -759,7 +758,7 @@ public abstract class TeleVM implements MaxVM {
         teleReferenceScheme.setTeleVM(this);
 
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
-            ProgramError.unexpected("unable to lock during creation");
+            TeleError.unexpected("unable to lock during creation");
         }
         this.teleFields = new TeleFields(this);
         this.teleMethods = new TeleMethods(this);
@@ -819,12 +818,12 @@ public abstract class TeleVM implements MaxVM {
      * <br>
      * Some lazy initialization is done, in order to avoid cycles during startup.
      *
-     * @throws ProgramError if unable to acquire the VM lock
+     * @throws TeleError if unable to acquire the VM lock
      * @see #lock
      */
     public final void updateVMCaches() {
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
-            ProgramError.unexpected("TeleVM unable to acquire VM lock for update");
+            TeleError.unexpected("TeleVM unable to acquire VM lock for update");
         }
         try {
             updateTracer.begin();
@@ -846,7 +845,7 @@ public abstract class TeleVM implements MaxVM {
                 teleCodeCache.initialize();
                 if (isAttaching()) {
                     // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
-                    ProgramError.check((teleFields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
+                    TeleError.check((teleFields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
                     teleClassRegistry.processAttachFixupList();
                 }
             }
@@ -1110,7 +1109,7 @@ public abstract class TeleVM implements MaxVM {
      * @throws BootImageException
      */
     protected TeleProcess attachToTeleProcess() throws BootImageException {
-        throw FatalError.unimplemented();
+        throw TeleError.unimplemented();
     }
 
     /**
@@ -1530,18 +1529,17 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * Gets a canonical local {@link ClassActor} corresponding to a
-     * {@link ClassActor} in the VM, creating one if needed by
-     * loading the class using the
-     * {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER} from either the
-     * classpath, or if not found on the classpath, by copying the classfile
-     * from the VM.
+     * Gets the canonical local {@link ClassActor} corresponding to a
+     * {@link ClassActor} in the VM, creating it if needed.
+     * Creation is done by loading the class, either from the classpath if present, or
+     * by copying the classfile from the VM.  In either case the class is loaded by the
+     * {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
      *
      * @param classActorReference  a {@link ClassActor} in the VM.
-     * @return Local, equivalent {@link ClassActor}, possibly created by
-     *         loading from the classpath, or if not found, by copying and
-     *         loading the classfile from the VM.
+     * @return Local, canonical, equivalent {@link ClassActor} created by loading the same class.
      * @throws InvalidReferenceException if the argument does not point to a valid heap object in the VM.
+     * @throws NoClassDefFoundError if the classfile is not on the classpath and the copy from the VM fails.
+     * @throws TeleError if a classfile copied from the VM is cannot be loaded
      */
     public final ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
         checkReference(classActorReference);
@@ -1560,7 +1558,13 @@ public abstract class TeleVM implements MaxVM {
                     name, ClassfileReader.saveClassDir));
             }
             final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
-            return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.makeClassActor(name, classfile);
+            try {
+                return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.makeClassActor(name, classfile);
+            } catch (ClassFormatError classFormatError) {
+                final String msg = "in " + tracePrefix() + " unable to load classfile copied from VM, error message follows:\n   " + classFormatError;
+                TeleError.unexpected(msg, null);
+                return null;
+            }
         }
     }
 
@@ -1569,21 +1573,6 @@ public abstract class TeleVM implements MaxVM {
         final Reference hubReference = wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
         final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
         return makeClassActor(classActorReference);
-    }
-
-    /**
-     * @param objectReference    An {@link Object} in the VM.
-     * @return Local {@link Hub}, equivalent to the hub of the object.
-     * @throws InvalidReferenceException
-     */
-    public final Hub makeLocalHubForObject(Reference objectReference) throws InvalidReferenceException {
-        checkReference(objectReference);
-        final Reference hubReference = wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
-        final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
-        final ClassActor objectClassActor = makeClassActor(classActorReference);
-        final ClassActor hubClassActor = makeClassActorForTypeOf(hubReference);
-        return (StaticHub.class.isAssignableFrom(hubClassActor.toJava())) ? objectClassActor.staticHub()
-                : objectClassActor.dynamicHub();
     }
 
     public final Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException {
@@ -1611,7 +1600,7 @@ public abstract class TeleVM implements MaxVM {
                 checkReference(reference);
                 return TeleReferenceValue.from(this, wordToReference(layoutScheme.wordArrayLayout.getWord(reference, index)));
             default:
-                throw ProgramError.unknownCase("unknown array kind");
+                throw TeleError.unknownCase("unknown array kind");
         }
     }
 
@@ -1646,7 +1635,7 @@ public abstract class TeleVM implements MaxVM {
                 layoutScheme.wordArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             default:
-                throw ProgramError.unknownCase("unknown array kind");
+                throw TeleError.unknownCase("unknown array kind");
         }
     }
 
@@ -1742,7 +1731,7 @@ public abstract class TeleVM implements MaxVM {
                 }
             });
         } catch (MaxVMBusyException maxVMBusyException) {
-            ProgramError.unexpected("Unable to set initial GC completed listener");
+            TeleError.unexpected("Unable to set initial GC completed listener");
         }
     }
 
@@ -1792,7 +1781,7 @@ public abstract class TeleVM implements MaxVM {
         } else if (reference instanceof HostedReference) {
             return TeleReferenceValue.from(this, Reference.fromJava(reference.toJava()));
         }
-        throw ProgramError.unexpected("Got a non-Prototype, non-Tele reference in createReferenceValue");
+        throw TeleError.unexpected("Got a non-Prototype, non-Tele reference in createReferenceValue");
     }
 
     public final File findJavaSourceFile(ClassActor classActor) {
@@ -2295,7 +2284,7 @@ public abstract class TeleVM implements MaxVM {
             try {
                 TeleVM.this.breakpointManager().makeBreakpoint(methodCodeLocation);
             } catch (MaxVMBusyException maxVMBusyException) {
-                ProgramError.unexpected("breakpoint creation failed");
+                TeleError.unexpected("breakpoint creation failed");
             }
             Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + methodCodeLocation);
         }
@@ -2308,7 +2297,7 @@ public abstract class TeleVM implements MaxVM {
                     try {
                         breakpoint.remove();
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        ProgramError.unexpected("breakpoint removal failed");
+                        TeleError.unexpected("breakpoint removal failed");
                     }
                 }
             }

@@ -37,15 +37,15 @@ import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.*;
+import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -655,10 +655,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             case ARM:
             case PPC:
             case IA32:
-                FatalError.unimplemented();
+                InspectorError.unimplemented();
                 return null;
         }
-        ProgramError.unknownCase();
+        InspectorError.unknownCase();
         return null;
     }
 

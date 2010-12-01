@@ -25,8 +25,8 @@ import java.awt.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.Inspector.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.gui.Inspector.MenuKind;
+import com.sun.max.ins.util.*;
 
 public interface InspectorFrame extends RootPaneContainer, Prober {
 
@@ -69,9 +69,9 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
      *
      * @param menuKind the type (and name) of the menu being requested.
      * @return a menu, possibly new, in the menu bar.
-     * @throws ProgramError if the frame has no menu bar.
+     * @throws InspectorError if the frame has no menu bar.
      */
-    InspectorMenu makeMenu(MenuKind menuKind) throws ProgramError;
+    InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError;
 
     /**
      * Makes this frame the one currently selected in the window system.

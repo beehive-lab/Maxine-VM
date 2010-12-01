@@ -33,13 +33,13 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.type.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -370,10 +370,10 @@ public final class ObjectHeaderTable extends InspectorTable {
                             // No length header field
                             break;
                         default:
-                            ProgramError.unknownCase();
+                            InspectorError.unknownCase();
                     }
                 } else {
-                    ProgramError.unknownCase();
+                    InspectorError.unknownCase();
                 }
                 label.setOpaque(true);
                 labels[row] = label;

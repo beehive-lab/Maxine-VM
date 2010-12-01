@@ -18,46 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.file;
-
-import java.io.*;
-
-import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
-import com.sun.max.ins.util.*;
-
 /**
- * Base class for inspectors that display information from files.
+ * General, non-gui utilities for the Inspector.
  *
  * @author Michael Van De Vanter
  */
-public abstract class FileInspector extends Inspector {
-
-    private File file;
-
-    public File file() {
-        return file;
-    }
-
-    protected FileInspector(Inspection inspection, File file) {
-        super(inspection);
-        this.file = file;
-    }
-
-    public abstract void highlightLine(int lineNumber);
-
-    protected String readFile() {
-        String text = null;
-        try {
-            final FileInputStream fileInputStream = new FileInputStream(file);
-            final int length = fileInputStream.available();
-            final byte[] bytes = new byte[length];
-            fileInputStream.read(bytes);
-            text = new String(bytes);
-        } catch (IOException exception) {
-            InspectorError.unexpected(exception);
-        }
-        return text;
-    }
-
-}
+package com.sun.max.ins.util;

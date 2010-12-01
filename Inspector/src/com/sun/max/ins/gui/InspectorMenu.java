@@ -25,7 +25,7 @@ import java.util.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.util.*;
 
 /**
  * A menu that can be manifest in the GUI by a {@linkplain JMenu standard menu}.
@@ -69,7 +69,7 @@ public class InspectorMenu extends JMenu implements Prober {
             final JMenu menu = (JMenu) object;
             this.add(menu);
         } else {
-            ProgramError.unexpected("Inappropriate argument");
+            InspectorError.unexpected("Inappropriate argument");
         }
     }
 

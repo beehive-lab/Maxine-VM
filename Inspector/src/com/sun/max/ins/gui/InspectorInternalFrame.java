@@ -26,8 +26,8 @@ import java.beans.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.sun.max.ins.gui.Inspector.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.gui.Inspector.MenuKind;
+import com.sun.max.ins.util.*;
 
 /**
  * A internal frame controlled by an {@linkplain Inspector inspector}.
@@ -92,8 +92,8 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
         return inspector;
     }
 
-    public InspectorMenu makeMenu(MenuKind menuKind) throws ProgramError {
-        ProgramError.check(menuBar != null);
+    public InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError {
+        InspectorError.check(menuBar != null);
         return menuBar.makeMenu(menuKind);
     }
 
@@ -104,7 +104,7 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
             }
             setSelected(true);
         } catch (PropertyVetoException e) {
-            ProgramError.unexpected();
+            InspectorError.unexpected();
         }
     }
 

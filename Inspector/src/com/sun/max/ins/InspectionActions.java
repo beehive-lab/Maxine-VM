@@ -36,6 +36,7 @@ import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
@@ -3530,7 +3531,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             } catch (DuplicateWatchpointException duplicateWatchpointException) {
                 gui().errorMessage(duplicateWatchpointException.getMessage());
             } catch (MaxVMBusyException maxVMBusyException) {
-                ProgramWarning.message("Watchpoint creation failed:  VM busy");
+                InspectorWarning.message("Watchpoint creation failed", maxVMBusyException);
             }
         }
 
@@ -4146,7 +4147,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 try {
                     vm().runToInstruction(targetLocation, false, false);
                 } catch (Exception exception) {
-                    throw new InspectorError("Run to instruction (ignoring breakpoints) could not be performed.", exception);
+                    InspectorError.unexpected("Run to instruction (ignoring breakpoints) could not be performed.", exception);
                 }
             } else {
                 gui().errorMessage("No instruction selected");
@@ -4203,7 +4204,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     vm().runToInstruction(targetLocation, false, true);
                     // TODO (mlvdv)  narrow the catch
                 } catch (Exception exception) {
-                    throw new InspectorError("Run to selection instruction could not be performed.", exception);
+                    InspectorError.unexpected("Run to selection instruction could not be performed.", exception);
                 }
             } else {
                 gui().errorMessage("No instruction selected");
@@ -4262,7 +4263,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                             try {
                                 vm().runToInstruction(instructionMap.instructionLocation(index), false, false);
                             } catch (Exception exception) {
-                                throw new InspectorError("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
+                                InspectorError.unexpected("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
                             }
                             break;
                         }
@@ -4314,7 +4315,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                             try {
                                 vm().runToInstruction(instructionMap.instructionLocation(index), false, true);
                             } catch (Exception exception) {
-                                throw new InspectorError("Run to next call instruction could not be performed.", exception);
+                                InspectorError.unexpected("Run to next call instruction could not be performed.", exception);
                             }
                             break;
                         }
@@ -4491,7 +4492,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final Value returnValue = vm().interpretMethod(classMethodActor, arguments);
                 gui().informationMessage("Method " + classMethodActor.name + " returned " + returnValue.toString());
             } catch (TeleInterpreterException teleInterpreterException) {
-                throw new InspectorError(teleInterpreterException);
+                InspectorError.unexpected("Interpreter failure", teleInterpreterException);
             }
         }
     }

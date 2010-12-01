@@ -35,7 +35,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -568,7 +568,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 }
                 setFont(style().bytecodeOperandFont());
             } else {
-                ProgramError.unexpected("unrecognized table value at row=" + row + ", col=" + col);
+                InspectorError.unexpected("unrecognized table value at row=" + row + ", col=" + col);
             }
             setBackgroundForRow(renderer, row);
             return renderer;

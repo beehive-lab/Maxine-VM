@@ -23,9 +23,10 @@ package com.sun.max.tele.channel.agent;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
-import com.sun.max.program.*;
-import com.sun.max.tele.channel.TeleChannelDataIOProtocol;
-import com.sun.max.tele.channel.iostream.TeleChannelDataIOProtocolImpl.*;
+
+import com.sun.max.tele.channel.*;
+import com.sun.max.tele.channel.iostream.TeleChannelDataIOProtocolImpl.ArrayMode;
+import com.sun.max.tele.util.*;
 
 /**
  * An adaptor that provides a mechanism for remote reflective invocation of the {@link TeleChannelDataIOProtocol} methods.
@@ -90,12 +91,12 @@ public abstract class RemoteInvocationProtocolAdaptor {
                 return m;
             }
         }
-        ProgramError.unexpected("RIProtocolAdaptor: cannot find method " + name);
+        TeleError.unexpected("RIProtocolAdaptor: cannot find method " + name);
         return null;
     }
 
     /**
-     * Set the array paramater mode for given parameter of given method.
+     * Set the array parameter mode for given parameter of given method.
      * @param methodName name of method
      * @param param parameter index, based at zero
      * @param mode the array mode
@@ -157,7 +158,7 @@ public abstract class RemoteInvocationProtocolAdaptor {
                 }
                 result[index] = data;
             } else {
-                ProgramError.unexpected("unexpected argument type readArgs: " + klass.getName());
+                TeleError.unexpected("unexpected argument type readArgs: " + klass.getName());
             }
             //Trace.line(2, "    value " + result[index] + ((klass == long.class) ? (" 0x" + Long.toHexString((Long) result[index])) : ""));
             index++;
@@ -184,7 +185,7 @@ public abstract class RemoteInvocationProtocolAdaptor {
                 // //Trace.line(2, "  0x" + Long.toHexString((Long) result));
                 out.writeLong((Long) result);
             } else {
-                ProgramError.unexpected("unexpected result type writeResult: " + m.returnType.getName());
+                TeleError.unexpected("unexpected result type writeResult: " + m.returnType.getName());
             }
         }
         out.flush();

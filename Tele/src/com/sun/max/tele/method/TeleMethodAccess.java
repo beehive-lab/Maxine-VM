@@ -20,10 +20,10 @@
  */
 package com.sun.max.tele.method;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -53,7 +53,7 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
             if (methodActor.name.string.equals(name)) {
                 if (uniqueMethodActor != null) {
-                    ProgramError.unexpected("need to disambiguate method named '" + name + "' in " + classActor.name + " with a signature");
+                    TeleError.unexpected("need to disambiguate method named '" + name + "' in " + classActor.name + " with a signature");
                 }
                 uniqueMethodActor = methodActor;
             }
@@ -67,10 +67,10 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
         super(teleVM);
         if (signature != null) {
             methodActor = findMethodActor(holder, name, signature);
-            ProgramError.check(methodActor != null, "could not find method " + name + signature + " in " + holder);
+            TeleError.check(methodActor != null, "could not find method " + name + signature + " in " + holder);
         } else {
             methodActor = findMethodActor(holder, name);
-            ProgramError.check(methodActor != null, "could not find method named '" + name + "' in " + holder);
+            TeleError.check(methodActor != null, "could not find method named '" + name + "' in " + holder);
         }
     }
 
@@ -99,7 +99,7 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
      * @throws TeleInterpreterException if an uncaught exception occurs during execution of the method
      */
     public Value interpret(Value... arguments) throws MaxVMBusyException, TeleInterpreterException {
-        ProgramError.check(methodActor instanceof ClassMethodActor, "cannot interpret interface method");
+        TeleError.check(methodActor instanceof ClassMethodActor, "cannot interpret interface method");
         Value result = null;
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();

@@ -20,8 +20,8 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 
 /**
  * Access to a memory watchpoint in the Maxine VM.
@@ -82,9 +82,9 @@ public interface MaxWatchpoint {
      * @param read whether the watchpoint should trap when watched memory is read from
      * @return whether set succeeded
      * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
-     * @throws ProgramError if watchpoint has been removed
+     * @throws TeleError if watchpoint has been removed
      */
-    boolean setTrapOnRead(boolean read) throws MaxVMBusyException, ProgramError;
+    boolean setTrapOnRead(boolean read) throws MaxVMBusyException, TeleError;
 
     /**
      * Set write flag for this watchpoint.
@@ -94,9 +94,9 @@ public interface MaxWatchpoint {
      * @param write whether the watchpoint should trap when watched memory is written to
      * @return whether set succeeded.
      * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
-     * @throws ProgramError if watchpoint has been removed
+     * @throws TeleError if watchpoint has been removed
      */
-    boolean setTrapOnWrite(boolean write) throws MaxVMBusyException, ProgramError;
+    boolean setTrapOnWrite(boolean write) throws MaxVMBusyException, TeleError;
 
     /**
      * Set execute flag for this watchpoint.
@@ -106,9 +106,9 @@ public interface MaxWatchpoint {
      * @param exec whether the watchpoint should trap when watched memory is executed from
      * @return whether set succeeded.
      * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
-     * @throws ProgramError if watchpoint has been removed
+     * @throws TeleError if watchpoint has been removed
      */
-    boolean setTrapOnExec(boolean exec) throws MaxVMBusyException, ProgramError;
+    boolean setTrapOnExec(boolean exec) throws MaxVMBusyException, TeleError;
 
     /**
      * Set GC flag for this watchpoint.
@@ -118,9 +118,9 @@ public interface MaxWatchpoint {
      * @param gc whether the watchpoint is active during garbage collection
      * @return whether set succeeded.
      * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
-     * @throws ProgramError if watchpoint has been removed
+     * @throws TeleError if watchpoint has been removed
      */
-    boolean setEnabledDuringGC(boolean gc) throws MaxVMBusyException, ProgramError;
+    boolean setEnabledDuringGC(boolean gc) throws MaxVMBusyException, TeleError;
 
     /**
      * Determines whether the watchpoint is subject to relocation in the VM.
@@ -147,9 +147,9 @@ public interface MaxWatchpoint {
      *
      * @return whether the removal succeeded.
      * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
-     * @throws ProgramError if watchpoint has already been removed
+     * @throws TeleError if watchpoint has already been removed
      */
-    boolean remove() throws MaxVMBusyException, ProgramError;
+    boolean remove() throws MaxVMBusyException, TeleError;
 
     /**
      * For object-based watchpoints, returns the object with which the watchpoint is associated.

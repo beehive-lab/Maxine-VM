@@ -33,6 +33,7 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -210,7 +211,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public static <Member_Type extends Member> void updateSource(final Class sourceClass, final Class<Member_Type> memberClass, final InspectedMemberReifier<Member_Type> memberReifier, final boolean inInspector) {
         final File sourceFile = new File(JavaProject.findSourceDirectory(), sourceClass.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         if (!sourceFile.exists()) {
-            ProgramWarning.message("Source file does not exist: " + sourceFile.getAbsolutePath());
+            TeleWarning.message("Source file does not exist: " + sourceFile.getAbsolutePath());
         }
 
         final Runnable runnable = new Runnable() {
@@ -260,15 +261,15 @@ public class TeleFields extends AbstractTeleVMHolder {
                 try {
                     final boolean changed = Files.updateGeneratedContent(sourceFile, charArrayWriter, "    // START GENERATED CONTENT", "    // END GENERATED CONTENT", false);
                     if (changed) {
-                        ProgramWarning.message("The source file " + sourceFile + " was updated" + (inInspector ? ": recompile and restart the inspector" : ""));
+                        TeleWarning.message("The source file " + sourceFile + " was updated" + (inInspector ? ": recompile and restart the inspector" : ""));
                     } else {
                         Trace.line(1, "The source file " + sourceFile + " did not need to be updated.");
                     }
                 } catch (IOException exception) {
                     if (inInspector) {
-                        ProgramWarning.message("Error while verifying that " + sourceFile + " is up to date: " + exception);
+                        TeleWarning.message("Error while verifying that " + sourceFile + " is up to date", exception);
                     } else {
-                        ProgramError.unexpected(exception);
+                        TeleError.unexpected(exception);
                     }
                 }
             }
@@ -332,7 +333,7 @@ public class TeleFields extends AbstractTeleVMHolder {
                         break;
                     }
                     default: {
-                        ProgramError.unexpected("Invalid field kind: " + kind);
+                        TeleError.unexpected("Invalid field kind: " + kind);
                     }
                 }
                 writer.println(";");

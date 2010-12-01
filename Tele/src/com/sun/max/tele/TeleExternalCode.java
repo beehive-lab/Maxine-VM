@@ -25,10 +25,10 @@ import static com.sun.max.platform.Platform.*;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
@@ -222,7 +222,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             // Fail if the region specified by 'address' and 'size' overlaps an existing native entry
             teleExternalCode = new TeleExternalCode(teleVM, codeStart, codeSize, name);
         } catch (IllegalArgumentException illegalArgumentException) {
-            ProgramError.unexpected("External native code region is overlapping an existing code region");
+            TeleError.unexpected("External native code region is overlapping an existing code region");
         }
         return teleExternalCode;
     }

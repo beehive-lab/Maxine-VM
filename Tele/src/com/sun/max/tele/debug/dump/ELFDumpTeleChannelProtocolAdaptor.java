@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.dump;
 
+import static com.sun.max.elf.ELFProgramHeaderTable.*;
+
 import java.io.*;
 
 import com.sun.max.elf.*;
@@ -28,11 +30,9 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.iostream.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.runtime.*;
-
-import static com.sun.max.elf.ELFProgramHeaderTable.*;
 
 public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocolAdaptor implements TeleChannelProtocol {
 
@@ -58,7 +58,7 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
             // This is not needed currently as we cannot look up symbols from shared libraries.
             //symbolLookup = new ELFSymbolLookup(new File(vm.getParent(), "libjvm.so"));
         } catch (Exception ex) {
-            FatalError.unexpected("failed to open dump file: " + dump, ex);
+            TeleError.unexpected("failed to open dump file: " + dump, ex);
         }
     }
 
@@ -115,7 +115,7 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
                 entryHandler.processNoteEntry(type, name, desc);
             }
         } catch (IOException ex) {
-            FatalError.unexpected("error reading dump file note section", ex);
+            TeleError.unexpected("error reading dump file note section", ex);
         }
 
     }
@@ -175,7 +175,7 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
                 }
             }
         }
-        FatalError.unexpected("failed to find the start of the boot heap");
+        TeleError.unexpected("failed to find the start of the boot heap");
         return 0;
     }
 
@@ -198,7 +198,7 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
                 ELFDataInputStream ds = new ELFDataInputStream(header, dumpRaf);
                 return ds.read_Elf64_Addr();
             } catch (Throwable ex) {
-                FatalError.unexpected("failed to get boot heap address", ex);
+                TeleError.unexpected("failed to get boot heap address", ex);
                 return 0;
             }
         }
@@ -357,11 +357,11 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
     }
 
     protected static void inappropriate(String methodName) {
-        FatalError.unexpected("method: " + methodName + " should not be called in dump mode");
+        TeleError.unexpected("method: " + methodName + " should not be called in dump mode");
     }
 
     protected static void unimplemented(String methodName) {
-        FatalError.unexpected("method: " + methodName + " is unimplemented");
+        TeleError.unimplemented("method: " + methodName);
     }
 
 }
