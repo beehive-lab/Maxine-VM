@@ -59,18 +59,45 @@ public class PackageLoader {
     }
 
     /**
-     * Loads classes under a given package.
+    /**
+     * Lists the classes under a given package.
      *
-     * @param packageName the name of the package from which classes are loaded
-     * @param recursive if true, then classes in sub-packages are loaded as well, otherwise only classes in the package
-     *            denoted by {@code packageName} are loaded
+     * @param packageName the name of the package to search
+     * @return the class names
+     */
+    public String[] listClassesInPackage(final MaxPackage maxPackage) {
+        final HashSet<String> classNames = new HashSet<String>();
+        final String packageName = maxPackage.name();
+        final ClassSearch classSearch = new ClassSearch() {
+            @Override
+            protected boolean visitClass(boolean isArchiveEntry, String className) {
+                if (!className.endsWith("package-info")) {
+                    if (!classNames.contains(className)) {
+                        if (maxPackage.isIncluded(className)) {
+                            classNames.add(className);
+                        }
+                    }
+                }
+                return true;
+            }
+        };
+        classSearch.run(classpath, packageName.replace('.', '/'));
+        return classNames.toArray(new String[classNames.size()]);
+    }
+
+    /**
+     * Loads classes under a given package, subject to inclusions/exclusions.
+     *
+     * @param maxPackage the package from which classes are loaded
      * @param initialize specifies whether the loaded classes should be {@linkplain Classes#initialize(Class) initialized}
      * @return the loaded classes
      */
-    public List<Class> load(final String packageName, final boolean recursive, boolean initialize) {
+    public List<Class> load(MaxPackage maxPackage, boolean initialize) {
+        final String packageName = maxPackage.name();
         Trace.line(traceLevel, "loading: " + packageName);
+        maxPackage.loading();
         final List<Class> classes = new ArrayList<Class>();
-        String[] classNames = listClassesInPackage(packageName, recursive);
+        String[] classNames = listClassesInPackage(maxPackage);
         for (String className : classNames) {
             final Class javaClass = loadClass(className);
             if (javaClass != null) {
@@ -85,45 +112,6 @@ public class PackageLoader {
     }
 
     /**
-     * Lists the classes under a given package.
-     *
-     * @param packageName the name of the package to search
-     * @param recursive if true, then classes in sub-packages are listed as well
-     * @return the class names
-     */
-    public String[] listClassesInPackage(final String packageName, final boolean recursive) {
-        final HashSet<String> classNames = new HashSet<String>();
-        final ClassSearch classSearch = new ClassSearch() {
-            @Override
-            protected boolean visitClass(boolean isArchiveEntry, String className) {
-                if (!className.endsWith("package-info")) {
-                    if (!classNames.contains(className)) {
-                        if (recursive || Classes.getPackageName(className).equals(packageName)) {
-                            classNames.add(className);
-                        }
-                    }
-                }
-                return true;
-            }
-        };
-        classSearch.run(classpath, packageName.replace('.', '/'));
-        return classNames.toArray(new String[classNames.size()]);
-    }
-
-    /**
-     * Loads classes under a given package.
-     *
-     * @param maxPackage the package from which classes are loaded
-     * @param recursive if true, then classes in sub-packages are loaded as well, otherwise only classes in
-     *            {@code maxPackage} are loaded
-     * @param initialize specifies whether the loaded classes should be {@linkplain Classes#initialize(Class) initialized}
-     * @return the loaded classes
-     */
-    public List<Class> load(MaxPackage maxPackage, boolean recursive, boolean initialize) {
-        return load(maxPackage.name(), recursive, initialize);
-    }
-
-    /**
      * Initializes the given class and all its inner classes, recursively.
      */
     private void initializeAll(Class outerClass) {
@@ -135,7 +123,7 @@ public class PackageLoader {
 
     public void loadAndInitializeAll(Class representative) {
         try {
-            for (Class outerClass : load(MaxPackage.fromClass(representative), false, true)) {
+            for (Class outerClass : load(MaxPackage.fromClass(representative), true)) {
                 initializeAll(outerClass);
             }
         } catch (Throwable throwable) {

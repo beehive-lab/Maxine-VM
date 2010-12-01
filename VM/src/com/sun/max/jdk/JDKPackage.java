@@ -18,56 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ext;
+package com.sun.max.jdk;
 
 import com.sun.max.vm.*;
 
 /**
- * The superclass of a package that defines an <i>extension</i> to the Maxine VM.
- * It may reside anywhere in the universal package name space, but it must be
- * referenced initially from a sub-package of {@code com.sun.max.ext}.
- *
- * For extensions in which the author has complete control over package naming
- * and a compilation dependence on Maxine is acceptable, the recommended
- * approach is to place extensions directly in a sub-package of {@code com.sun.max.ext},
- * and use the default constructor. Then, provided that the package is on the boot image
- * build classpath, all classes in the package will be included in the image.
- *
- * For situations where the extension cannot depend on Maxine and/or uses package names
- * in the universal package space, e.g. {@code com.acme.*}, use the <i>redirect</i>
- * {@link #ExtPackage(String) constructor}.
- *
- * Extension packages are configurable with a {@link VMConfiguration} instance
- * but are not subclasses of {@link VMPackage} to keep the search namespace
- * separate.
+ * Represents the inclusion of a package from the JDK.
  *
  * @author Mick Jordan
  */
-public class ExtPackage extends VMConfigPackage {
 
-    /**
-     * Use this constructor when the extension classes are located in the same
-     * package as this class.
-     */
-    protected ExtPackage() {
-    }
-
-    /**
-     * Use this constructor when the extension classes are located in the same
-     * package as this class and you want all classes in sub-packages to be included
-     * regardless of whether they have a {code Package} class.
-     */
-    protected ExtPackage(boolean recursive) {
-        super(true);
-    }
-
+public class JDKPackage extends VMConfigPackage {
     /**
      * Use this constructor to redirect the search for classes to the given package name
      * and its sub-packages. I.e. recursion is assumed.
      *
      * @param packageName package name containing classes to include with this extension
      */
-    protected ExtPackage(String... packageNames) {
+    protected JDKPackage(String... packageNames) {
         this(true, packageNames);
     }
 
@@ -78,7 +46,8 @@ public class ExtPackage extends VMConfigPackage {
      * @param packageName package name containing classes to include with this extension
      */
 
-    protected ExtPackage(boolean recursive, String... packageNames) {
+    protected JDKPackage(boolean recursive, String... packageNames) {
         super(recursive, packageNames);
     }
+
 }

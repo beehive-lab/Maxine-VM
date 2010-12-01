@@ -289,7 +289,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
 
     protected void compilePackage(MaxPackage p) {
         Trace.begin(1, "compiling package: " + p.name());
-        for (Class javaType : javaPrototype().packageLoader().load(p, false, true)) {
+        for (Class javaType : javaPrototype().packageLoader().load(p, true)) {
             compileClass(javaType);
         }
         Trace.end(1, "compiling package: " + p.name());

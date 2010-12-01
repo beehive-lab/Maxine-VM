@@ -65,7 +65,15 @@ public abstract class VMConfigPackage extends MaxPackage {
      * @param packageName
      */
     protected VMConfigPackage(String... packageNames) {
-        super(packageNames);
+        this(true, packageNames);
+    }
+
+    /**
+     * Constructor for redirected extension classes with optional recursion nto sub-packages.
+     * @param packageName
+     */
+    protected VMConfigPackage(boolean recursive, String... packageNames) {
+        super(packageNames, recursive);
     }
 
 }

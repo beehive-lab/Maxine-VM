@@ -67,7 +67,6 @@ public final class PrototypeGenerator {
         if (prototypeJit) {
             vmConfig().compilationScheme().setMode(Mode.PROTOTYPE_JIT);
         }
-        javaPrototype().loadCoreJavaPackages();
 
         GraphPrototype graphPrototype;
         int numberOfClassActors = 0;
