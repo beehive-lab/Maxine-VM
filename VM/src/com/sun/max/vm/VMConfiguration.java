@@ -317,13 +317,10 @@ public final class VMConfiguration {
             final AsmPackage asmPackage = (AsmPackage) maxPackage;
             return asmPackage.isPartOfAssembler(platform().isa);
         }
-        if (maxPackage instanceof VMPackage) {
-            final VMPackage vmPackage = (VMPackage) maxPackage;
+        // VM, Ext and JDK
+        if (maxPackage instanceof VMConfigPackage) {
+            final VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;
             return vmPackage.isPartOfMaxineVM(this);
-        }
-        if (maxPackage instanceof ExtPackage) {
-            final ExtPackage extPackage = (ExtPackage) maxPackage;
-            return extPackage.isPartOfMaxineVM(this);
         }
         return false;
     }

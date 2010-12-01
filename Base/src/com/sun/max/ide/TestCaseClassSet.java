@@ -84,7 +84,7 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
      */
     public TestCaseClassSet add(MaxPackage maxPackage) {
         final PackageLoader packageLoader = new PackageLoader(maxPackage.getClass().getClassLoader(), Classpath.fromSystem());
-        for (Class javaClass : packageLoader.load(maxPackage, false, false)) {
+        for (Class javaClass : packageLoader.load(maxPackage, false)) {
             if (isJUnitTestCaseClass(javaClass)) {
                 final Class<Class<? extends TestCase>> type = null;
                 add(Utils.cast(type, javaClass));
