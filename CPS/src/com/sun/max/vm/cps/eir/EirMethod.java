@@ -64,10 +64,6 @@ public class EirMethod extends AbstractIrMethod {
         return classMethodActor().isTemplate();
     }
 
-    public boolean isTrampoline() {
-        return classMethodActor().isTrampoline();
-    }
-
     public EirMethod(ClassMethodActor classMethodActor, EirABI eirABI) {
         super(classMethodActor);
         abi = eirABI;

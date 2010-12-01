@@ -32,6 +32,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -98,6 +99,7 @@ public abstract class VerificationType {
     public static final ObjectType THROWABLE = new ResolvedObjectType(ClassActor.fromJava(Throwable.class));
     public static final ObjectType CLONEABLE = new ResolvedObjectType(ClassActor.fromJava(Cloneable.class));
     public static final ObjectType SERIALIZABLE = new ResolvedObjectType(ClassActor.fromJava(Serializable.class));
+    public static final ObjectType VM_REFERENCE = new ResolvedObjectType(ClassActor.fromJava(Reference.class));
 
     public static final ObjectType OBJECT_ARRAY = new ResolvedArrayType((ArrayClassActor) ClassActor.fromJava(Object[].class), OBJECT);
     public static final ObjectType BYTE_ARRAY = new ResolvedArrayType((ArrayClassActor) ClassActor.fromJava(byte[].class), BYTE);

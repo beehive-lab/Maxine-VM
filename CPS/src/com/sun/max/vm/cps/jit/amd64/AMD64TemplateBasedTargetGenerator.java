@@ -20,20 +20,20 @@
  */
 package com.sun.max.vm.cps.jit.amd64;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.template.*;
 
 /**
- *
+ * Implementation of template-based target generator for AMD64.
  *
  * @author Laurent Daynes
  */
 public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenerator {
 
     public AMD64TemplateBasedTargetGenerator(JitCompiler jitCompiler) {
-        super(jitCompiler, InstructionSet.AMD64);
+        super(jitCompiler, ISA.AMD64);
     }
 
     @Override

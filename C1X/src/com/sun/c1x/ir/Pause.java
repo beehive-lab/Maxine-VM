@@ -35,6 +35,7 @@ public final class Pause extends Instruction {
      */
     public Pause() {
         super(CiKind.Void);
+        setFlag(Flag.LiveSideEffect);
     }
 
     /**

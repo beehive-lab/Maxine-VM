@@ -416,6 +416,8 @@ public enum BytecodeTemplate {
     LSB,
     MSB,
 
+    LOAD_EXCEPTION(-1),
+
 //    JNICALL,
     READREG$fp_cpu,
     READREG$sp_cpu,
@@ -562,7 +564,7 @@ public enum BytecodeTemplate {
     @HOSTED_ONLY
     public static void main(String[] args) {
         for (BytecodeTemplate bt : values()) {
-            System.out.print(bt);
+            System.out.print(bt.ordinal() + ": " + bt);
             if (bt.initialized != null) {
                 System.out.print(" -- uninitialized");
             } else if (bt.resolved != null) {

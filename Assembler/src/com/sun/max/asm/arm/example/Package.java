@@ -21,6 +21,7 @@
 package com.sun.max.asm.arm.example;
 
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 
 /**
  *
@@ -32,7 +33,7 @@ public class Package extends AsmPackage {
     }
 
     @Override
-    public boolean isPartOfAssembler(InstructionSet instructionSet) {
-        return instructionSet == InstructionSet.ARM;
+    public boolean isPartOfAssembler(ISA isa) {
+        return isa == ISA.ARM;
     }
 }

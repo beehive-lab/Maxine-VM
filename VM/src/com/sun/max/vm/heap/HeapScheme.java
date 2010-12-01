@@ -68,32 +68,18 @@ public interface HeapScheme extends VMScheme {
     boolean isGcThread(Thread thread);
 
     /**
-     * Given the size of the boot image, calculates the size of the auxiliary space that the substrate is to allocate
-     * and pass to the target VM.
-     */
-    @HOSTED_ONLY
-    int auxiliarySpaceSize(int bootImageSize);
-
-    /**
      * Return the amount of virtual space (in KB) that must be reserved by the boot image loader to map
      * the boot image. The boot image is mapped at the beginning of this reserved space.
      *
      * Help with heap scheme that requires the heap to be contiguous with, or at a specific location (above or below) with respect to the boot region.
      * By default, assume the heap scheme doesn't require any space contiguous to the boot image and returns 0, which indicates to the boot image
-     * loader that it only needs to reserve what's needed for the boot image only.
+     * loader that it only needs to reserve what's needed for the boot image.
      *
      * @return a size in KB
      */
     int reservedVirtualSpaceSize();
 
     BootRegionMappingConstraint bootRegionMappingConstraint();
-
-    /**
-     * Initialize the auxiliary space, which is provided by the substrate.
-     * This space can e.g. be used to support write barriers in the primordial phase,
-     * for instance by holding a primordial card table that covers the boot image.
-     */
-    void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace);
 
     /**
      * Allocate a new array object and fill in its header and initial data.
@@ -287,6 +273,12 @@ public interface HeapScheme extends VMScheme {
      * heap.
      */
     void disableImmortalMemoryAllocation();
+
+    /**
+     * Announces that the current thread is detaching from the VM so that
+     * thread-local resources (e.g. TLABs) can be released.
+     */
+    void notifyCurrentThreadDetach();
 
     /**
      * Creates the singleton code manager for the VM.

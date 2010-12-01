@@ -25,7 +25,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import java.lang.reflect.*;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -147,7 +147,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
     }
 
     protected static void createVMConfiguration() {
-        Platform.set(platform().constrainedByInstructionSet(InstructionSet.SPARC));
+        Platform.set(platform().constrainedByInstructionSet(ISA.SPARC));
         VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.Package());
     }
 }

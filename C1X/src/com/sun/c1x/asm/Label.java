@@ -47,6 +47,13 @@ public final class Label {
         return position;
     }
 
+    public Label() {
+    }
+
+    public Label(int position) {
+        bind(position);
+    }
+
     /**
      * Binds the label to the specified position.
      * @param pos the position

@@ -41,7 +41,7 @@ public abstract class Assembler {
         this.directives = new Directives(byteData, isValidCode);
     }
 
-    public abstract InstructionSet instructionSet();
+    public abstract ISA isa();
 
     public final Directives directives() {
         return directives;
@@ -100,7 +100,7 @@ public abstract class Assembler {
          *                current address that is divisible by this value. Note that this computed address will be the
          *                current address if the current address is already aligned by {@code alignment}
          */
-        public void align(int alignment) {
+        private void alignIfSpaceLeftSmallerThan(int alignment, int requiredSpace) {
             final int startPosition = currentPosition();
 
             // We avoid sign problems with '%' below by masking off the sign bit:
@@ -111,11 +111,35 @@ public abstract class Assembler {
             for (int i = 0; i < padSize; i++) {
                 emitByte(padByte);
             }
-            new AlignmentPadding(Assembler.this, startPosition, currentPosition(), alignment, padByte) {
+            new AlignmentPadding(Assembler.this, startPosition, currentPosition(), alignment, requiredSpace, padByte) {
                 public boolean isCode() {
                     return isValidCode;
                 }
             };
+        }
+
+        public void align(int alignment) {
+            alignIfSpaceLeftSmallerThan(alignment, alignment);
+        }
+
+        /**
+         * Enforce that the next assembled object fits within an aligned chunk.
+         * The specified space required by the next assembled object must be smaller or equals to the specified alignment. If the object cannot fit in the current chunk,
+         * Inserts as many {@linkplain #padByte pad bytes} as necessary to ensure that the next assembled object starts
+         * at the next alignment.
+         *
+         * @param alignment
+         *                the next assembled object is guaranteed to fit in within a block of memory whose starting address is the next
+         *                 address starting at the
+         *                current address that is divisible by this value.
+         *  @param requiredSpace size of the next assembled object; it must be smaller or equals to alignment
+         */
+        public boolean align(int alignment, int requiredSpace) {
+            if (alignment < requiredSpace) {
+                return false;
+            }
+            alignIfSpaceLeftSmallerThan(alignment, requiredSpace);
+            return true;
         }
 
         public void inlineByte(byte byteValue) {
@@ -215,7 +239,7 @@ public abstract class Assembler {
 
     protected abstract void emitLong(long longValue);
 
-    protected void emitByteArray(byte[] byteArrayValue, int off, int len) {
+    public void emitByteArray(byte[] byteArrayValue, int off, int len) {
         stream.write(byteArrayValue, off, len);
     }
 
@@ -571,7 +595,7 @@ public abstract class Assembler {
      * @throws AssemblyException
      */
     public final int offsetInstructionRelative(Label label, AssemblyObject assembledObject) throws AssemblyException {
-        final int position = (instructionSet().relativeBranchFromStart) ? assembledObject.startPosition() : assembledObject.endPosition();
+        final int position = (isa().relativeBranchFromStart) ? assembledObject.startPosition() : assembledObject.endPosition();
         return labelOffsetRelative(label, position);
     }
 }

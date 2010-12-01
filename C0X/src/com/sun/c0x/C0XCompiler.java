@@ -20,12 +20,9 @@
  */
 package com.sun.c0x;
 
-import com.sun.cri.ci.CiCompiler;
-import com.sun.cri.ci.CiResult;
-import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ri.RiMethod;
-import com.sun.cri.ri.RiRuntime;
-import com.sun.cri.xir.RiXirGenerator;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.*;
 
 /**
  * The {@code C0XCompiler} class definition.
@@ -47,26 +44,7 @@ public class C0XCompiler extends CiCompiler {
         this.runtime = runtime;
         this.target = target;
     }
-    /**
-     * Compile the specified method.
-     *
-     * @param method the method to compile
-     * @return a {@link com.sun.cri.ci.CiTargetMethod target method} representing the compiled method
-     */
-    @Override
-    public CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator) {
-        C0XCompilation comp = new C0XCompilation(runtime, method, target);
-        comp.compile();
-        return null;
-    }
 
-    /**
-     * Compile the specified method.
-     *
-     * @param method the method to compile
-     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
-     * @return a {@link com.sun.cri.ci.CiTargetMethod target method} representing the compiled method
-     */
     @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
         C0XCompilation comp = new C0XCompilation(runtime, method, target);

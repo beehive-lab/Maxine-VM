@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.debug.IRChecker.IRCheckException;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.value.*;
@@ -95,23 +96,28 @@ public class IR {
     }
 
     private void buildGraph() {
-        topScope = new IRScope(null, -1, compilation.method, compilation.osrBCI);
+        topScope = new IRScope(null, null, compilation.method, compilation.osrBCI);
 
         // Graph builder must set the startBlock and the osrEntryBlock
         new GraphBuilder(compilation, this).build(topScope);
         assert startBlock != null;
         verifyAndPrint("After graph building");
+
+        if (C1XOptions.PrintCompilation) {
+            TTY.print(String.format("%3d blocks | ", this.numberOfBlocks()));
+        }
     }
 
     private void optimize1() {
+        if (!compilation.isTypesafe()) {
+            new UnsafeCastEliminator(this);
+            verifyAndPrint("After unsafe cast elimination");
+        }
+
         // do basic optimizations
         if (C1XOptions.PhiSimplify) {
             new PhiSimplifier(this);
             verifyAndPrint("After phi simplification");
-        }
-        if (C1XOptions.OptLoopPeeling) {
-            LoopPeeler.peelLoops(this);
-            verifyAndPrint("After Loop peeling");
         }
         if (C1XOptions.OptNullCheckElimination) {
             new NullCheckEliminator(this);
@@ -184,16 +190,35 @@ public class IR {
      * @param phase the name of the phase for printing
      */
     public void verifyAndPrint(String phase) {
-        if (C1XOptions.IRChecking) {
-            new IRChecker(this, phase).check();
+        verify(phase);
+        printToCFGFile(phase);
+        printToTTY(phase);
+    }
+
+    void printToTTY(String phase) {
+        if (C1XOptions.PrintHIR) {
+            TTY.println(phase);
+            print(false);
         }
+    }
+
+    void printToCFGFile(String phase) {
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
         if (cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
         }
-        if (C1XOptions.PrintHIR) {
-            TTY.println(phase);
-            print(false);
+    }
+
+    void verify(String phase) {
+        if (C1XOptions.IRChecking) {
+            try {
+                new IRChecker(this, phase).check();
+            } catch (IRCheckException e) {
+                // Print the CFG (to TTY and CFG file) so that the error message context makes sense
+                print(false);
+                printToCFGFile(phase);
+                throw e;
+            }
         }
     }
 

@@ -26,6 +26,7 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
@@ -37,21 +38,21 @@ import com.sun.max.program.*;
  */
 public abstract class Assembly<Template_Type extends Template> {
 
-    private static MaxPackage instructionSetPackage(InstructionSet instructionSet) {
+    private static MaxPackage isaPackage(ISA isa) {
         final MaxPackage thisPackage = MaxPackage.fromClass(Assembly.class);
-        return thisPackage.subPackage(instructionSet.category.name().toLowerCase(), instructionSet.name().toLowerCase());
+        return thisPackage.subPackage(isa.category.name().toLowerCase(), isa.name().toLowerCase());
     }
 
-    private final InstructionSet instructionSet;
+    private final ISA isa;
     private final Class<Template_Type> templateType;
 
-    protected Assembly(InstructionSet instructionSet, Class<Template_Type> templateType) {
-        this.instructionSet = instructionSet;
+    protected Assembly(ISA isa, Class<Template_Type> templateType) {
+        this.isa = isa;
         this.templateType = templateType;
     }
 
-    public InstructionSet instructionSet() {
-        return instructionSet;
+    public ISA isa() {
+        return isa;
     }
 
     public Class<Template_Type> templateType() {
@@ -59,7 +60,7 @@ public abstract class Assembly<Template_Type extends Template> {
     }
 
     public MaxPackage getPackage() {
-        return instructionSetPackage(instructionSet);
+        return isaPackage(isa);
     }
 
     protected abstract List<Template_Type> createTemplates();

@@ -35,7 +35,8 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return OperatingSystem.UNIX.contains(platform().operatingSystem);
+        OS os = platform().os;
+        return os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN;
     }
 
     @Override

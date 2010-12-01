@@ -21,17 +21,13 @@
 package com.sun.max.tele.debug;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
 
-import com.sun.max.asm.amd64.*;
-import com.sun.max.asm.sparc.*;
+import com.sun.c1x.target.amd64.*;
+import com.sun.cri.ci.*;
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VMRegister.Role;
 
 /**
  * Encapsulates the values of the integer (or general purpose) registers for a tele native thread.
@@ -42,38 +38,25 @@ import com.sun.max.vm.runtime.VMRegister.Role;
  */
 public final class TeleIntegerRegisters extends TeleRegisters {
 
-    private final Symbol indirectCallRegister;
+    private final CiRegister indirectCallRegister;
+    private final CiRegister fp;
+    private final CiRegister sp;
 
-    public TeleIntegerRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
-        super(teleVM, teleRegisterSet, createSymbolizer());
-        switch (platform().instructionSet()) {
-            case AMD64: {
-                indirectCallRegister = AMD64GeneralRegister64.RAX;
-                break;
-            }
-            case SPARC: {
-                indirectCallRegister = null;
-                break;
-            }
-            default: {
-                throw TeleError.unimplemented();
-            }
+    public static CiRegister[] getIntegerRegisters() {
+        if (platform().isa == ISA.AMD64) {
+            return AMD64.cpuRegisters;
         }
+        throw FatalError.unimplemented();
     }
 
-    /**
-     * Gets the symbols representing all the integer registers of the instruction set denoted by a given VM
-     * configuration.
-     */
-    public static Symbolizer<? extends Symbol> createSymbolizer() {
-        switch (platform().instructionSet()) {
-            case AMD64:
-                return AMD64GeneralRegister64.ENUMERATOR;
-            case SPARC:
-                return GPR.SYMBOLIZER;
-            default:
-                TeleError.unimplemented();
-                return null;
+    public TeleIntegerRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
+        super(teleVM, teleRegisterSet, getIntegerRegisters());
+        if (platform().isa == ISA.AMD64) {
+            indirectCallRegister = AMD64.rax;
+            sp = AMD64.rsp;
+            fp = AMD64.rbp;
+        } else {
+            throw FatalError.unimplemented();
         }
     }
 
@@ -95,7 +78,7 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * @return the current stack pointer
      */
     Pointer stackPointer() {
-        return get(Role.CPU_STACK_POINTER, null);
+        return getValue(sp).asPointer();
     }
 
     /**
@@ -104,20 +87,6 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * @return the current frame pointer
      */
     Pointer framePointer() {
-        return get(Role.CPU_FRAME_POINTER, null);
-    }
-
-    /**
-     * Gets the value of the register denoted by a given role in a given target ABI.
-     *
-     * @param role the role denoting the register of interest
-     * @param targetABI the ABI used to convert {@code role} to a platform dependent register. If this value is null,
-     *            then the {@linkplain TargetABIsScheme#nativeABI() native ABI} is used.
-     * @return the value of the register denoted by {@code role} and {@code targetABI}
-     */
-    Pointer get(VMRegister.Role role, TargetABI targetABI) {
-        final TargetABI abi = targetABI == null ? vmConfig().targetABIsScheme().nativeABI : targetABI;
-        final Symbol register = abi.registerRoleAssignment.integerRegisterActingAs(role);
-        return getValue(register).asPointer();
+        return getValue(fp).asPointer();
     }
 }

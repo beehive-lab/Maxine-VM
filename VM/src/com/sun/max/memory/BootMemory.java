@@ -31,16 +31,13 @@ import com.sun.max.vm.reference.*;
  * This can be used even before having allocation via JNI enabled.
  * It is immediately present at boot time, right after mapping the boot image.
  *
- * The {@link #lock} object must be synchronized if {@link #bufferUseRequiresSynchronization()} is
- * true when using the {@linkplain #address() buffer}.
- *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public final class BootMemory {
 
     /**
-     * Making this constructor {@linkplain HOSTED_ONLY prototype-only} forces all {@code BootMemory}
+     * Making this constructor {@link HOSTED_ONLY} forces all {@code BootMemory}
      * objects to live in the boot heap.
      *
      * @param size the size of the buffer
@@ -58,7 +55,10 @@ public final class BootMemory {
     /**
      * The offset of the byte array data from the byte array object's origin.
      */
-    private static final Offset dataOffset = Layout.byteArrayLayout().getElementOffsetFromOrigin(0);
+    @FOLD
+    private static Offset dataOffset() {
+        return Layout.byteArrayLayout().getElementOffsetFromOrigin(0);
+    }
 
     /**
      * The raw pointer to element 0 of {@link #bufferBytes}.
@@ -73,7 +73,7 @@ public final class BootMemory {
             if (MaxineVM.isHosted()) {
                 buffer = Memory.mustAllocate(bufferBytes.length);
             } else {
-                buffer = Reference.fromJava(bufferBytes).toOrigin().plus(dataOffset);
+                buffer = Reference.fromJava(bufferBytes).toOrigin().plus(dataOffset());
             }
         }
         return buffer;

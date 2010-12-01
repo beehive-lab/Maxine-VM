@@ -52,7 +52,7 @@ public abstract class Prototype {
     /**
      * The default place where native libraries are placed by the make system.
      */
-    private static final String LIBRARY_BUILD_PATH = "Native/generated/" + OperatingSystem.current().asPackageName() + "/";
+    private static final String LIBRARY_BUILD_PATH = "Native/generated/" + OS.current().asPackageName() + "/";
 
     /**
      * The name of the default hosted native library.
@@ -74,8 +74,7 @@ public abstract class Prototype {
      */
     public static synchronized void loadLibrary(String name) {
         if (!isPathHacked) {
-            final File projectPath = JavaProject.findVcsProjectDirectory();
-            final File workspacePath = projectPath.getParentFile();
+            final File workspacePath =  JavaProject.findMaxineRootDirectory();
             final String[] usrPaths = (String[]) WithoutAccessCheck.getStaticField(ClassLoader.class, "usr_paths");
             final String libraryPath = new File(workspacePath, LIBRARY_BUILD_PATH).getPath() + File.pathSeparator + Utils.toString(usrPaths, File.pathSeparator);
             JDKInterceptor.setLibraryPath(libraryPath);

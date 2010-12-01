@@ -93,6 +93,23 @@ public class AMD64JitCompiler extends JitCompiler {
         if (MaxineVM.isHosted()) {
             unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
         }
+
+        if (MaxineVM.isDebug() && phase == MaxineVM.Phase.STARTING) {
+            boolean hasTemplateWithTrampoline = false;
+            for (TargetMethod code : targetGenerator.templateTable().templates) {
+                if (code != null && code.numberOfDirectCalls() > 0) {
+                    Object [] directCallees = code.directCallees();
+                    for (int i = 0; i < code.numberOfDirectCalls(); i++) {
+                        if (code.getTargetMethod(directCallees[i]) == null) {
+                            hasTemplateWithTrampoline = true;
+                            Log.println("Template " + code.name() +
+                                            " has pachable direct call site at stop position " + i);
+                        }
+                    }
+                }
+            }
+            FatalError.check(!hasTemplateWithTrampoline, "JIT compiler must not have static trampoline in templates");
+        }
     }
 
     private static ClassMethodActor unwindMethod;
@@ -127,7 +144,7 @@ public class AMD64JitCompiler extends JitCompiler {
         int unwindFrameSize = getUnwindFrameSize();
 
         // Put the exception where the exception handler expects to find it
-        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(throwable));
+        VmThreadLocal.EXCEPTION_OBJECT.store3(Reference.fromJava(throwable));
 
         if (throwable instanceof StackOverflowError) {
             // This complete call-chain must be inlined down to the native call

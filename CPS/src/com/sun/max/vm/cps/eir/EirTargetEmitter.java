@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.eir;
 
 import static com.sun.max.asm.dis.Disassembler.*;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.asm.*;
@@ -32,6 +33,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.*;
 
@@ -68,7 +70,11 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
 
     public Adapter adapt(ClassMethodActor callee) {
         if (adapterGenerator != null) {
-            return adapterGenerator.adapt(callee, assembler());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(8);
+            Adapter adapter = adapterGenerator.adapt(callee, baos);
+            byte[] prologue = baos.toByteArray();
+            assembler().emitByteArray(prologue, 0, prologue.length);
+            return adapter;
         }
         return null;
     }
@@ -271,11 +277,13 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
      * Tests whether all call labels are still pointing at CALL instructions.
      */
     private boolean areLabelsValid(byte[] code, Address startAddress) throws AssemblyException {
+        final boolean isTemplate = MaxineVM.isHosted() ? abi().templatesOnly() : false;
         for (Label label : directCallLabels) {
-            if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
+            if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND ||
+                            !isCall(code, label.position()) || !(isTemplate || AMD64TargetMethodUtil.isPatchableCallSite(Address.fromInt(label.position())))) {
                 if (MaxineVM.isHosted()) {
                     Platform platform = Platform.platform();
-                    disassemble(System.out, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    disassemble(System.out, code, platform.isa, platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }
@@ -284,7 +292,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
                 if (MaxineVM.isHosted()) {
                     Platform platform = Platform.platform();
-                    disassemble(System.out, code, platform.instructionSet(), platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
+                    disassemble(System.out, code, platform.isa, platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
             }

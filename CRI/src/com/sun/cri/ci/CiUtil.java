@@ -25,16 +25,17 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ri.*;
 
 /**
  * Miscellaneous collection of utility methods used in the {@code CRI} project.
- * This methods may also be used by the compiler and runtime classes.
  * 
  * @author Doug Simon
  */
 public class CiUtil {
     
+    public static final String NEW_LINE = String.format("%n");
     /**
      * Extends the functionality of {@link Class#getSimpleName()} to include a non-empty string for anonymous and local
      * classes.
@@ -76,9 +77,11 @@ public class CiUtil {
     public static boolean isOdd(int n) {
         return (n & 1) == 1;
     }
+    
     public static boolean isEven(int n) {
         return (n & 1) == 0;
     }
+    
     /**
      * Checks whether the specified integer is a power of two.
      *
@@ -88,6 +91,7 @@ public class CiUtil {
     public static boolean isPowerOf2(int val) {
         return val != 0 && (val & val - 1) == 0;
     }
+    
     /**
      * Checks whether the specified long is a power of two.
      *
@@ -97,6 +101,7 @@ public class CiUtil {
     public static boolean isPowerOf2(long val) {
         return val != 0 && (val & val - 1) == 0;
     }
+    
     /**
      * Computes the log (base 2) of the specified integer, rounding down.
      * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
@@ -108,6 +113,7 @@ public class CiUtil {
         assert val > 0 && isPowerOf2(val);
         return 31 - Integer.numberOfLeadingZeros(val);
     }
+    
     /**
      * Computes the log (base 2) of the specified long, rounding down.
      * (E.g {@code log2(8) = 3}, {@code log2(21) = 4})
@@ -119,10 +125,12 @@ public class CiUtil {
         assert val > 0 && isPowerOf2(val);
         return 63 - Long.numberOfLeadingZeros(val);
     }
+    
     public static int align(int size, int align) {
         assert isPowerOf2(align);
         return (size + align - 1) & ~(align - 1);
     }
+    
     /**
      * Gets a word with the nth bit set.
      * @param n the nth bit to set
@@ -131,6 +139,7 @@ public class CiUtil {
     public static int nthBit(int n) {
         return (n >= Integer.SIZE ? 0 : 1 << (n));
     }
+    
     /**
      * Gets a word with the right-most n bits set.
      * @param n the number of right most bits to set
@@ -139,6 +148,7 @@ public class CiUtil {
     public static int rightNBits(int n) {
         return nthBit(n) - 1;
     }
+    
     /**
      * Converts a given type to its Java programming language name. The following are examples of strings returned by
      * this method:
@@ -366,6 +376,14 @@ public class CiUtil {
         }
         return sb.toString();
     }
+    
+    /**
+     * Gets a stack trace element for a given method and bytecode index.
+     */
+    public static StackTraceElement toStackTraceElement(RiMethod method, int bci) {
+        return new StackTraceElement(CiUtil.toJavaName(method.holder()), method.name(), null, -1);
+    }
+    
     /**
      * Converts a Java source-language class name into the internal form.
      *
@@ -411,5 +429,199 @@ public class CiUtil {
      */
     public static <T> Set<T> newIdentityHashSet() {
         return Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
+    }
+    
+    /**
+     * Prepends the String {@code indentation} to every line in String {@code lines},
+     * including a possibly non-empty line following the final newline.
+     */
+    public static String indent(String lines, String indentation) {
+        if (lines.length() == 0) {
+            return lines;
+        }
+        final String newLine = "\n";
+        if (lines.endsWith(newLine)) {
+            return indentation + (lines.substring(0, lines.length() - 1)).replace(newLine, newLine + indentation) + newLine;
+        }
+        return indentation + lines.replace(newLine, newLine + indentation);
+    }
+
+    /**
+     * Formats a given table as a string. The value of each cell is produced by {@link String#valueOf(Object)}.
+     * 
+     * @param cells the cells of the table in row-major order
+     * @param cols the number of columns per row
+     * @param lpad the number of space padding inserted before each formatted cell value
+     * @param rpad the number of space padding inserted after each formatted cell value
+     * @return a string with one line per row and each column left-aligned
+     */
+    public static String tabulate(Object[] cells, int cols, int lpad, int rpad) {
+        int rows = (cells.length + (cols - 1)) / cols;
+        int[] colWidths = new int[cols];
+        for (int col = 0; col < cols; col++) {
+            for (int row = 0; row < rows; row++) {
+                int index = col + (row * cols);
+                if (index < cells.length) {
+                    Object cell = cells[index];
+                    colWidths[col] = Math.max(colWidths[col], String.valueOf(cell).length());
+                }
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        String nl = NEW_LINE;
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                int index = col + (row * cols);
+                if (index < cells.length) {
+                    for (int i = 0; i < lpad; i++) {
+                        sb.append(' ');
+                    }
+                    Object cell = cells[index];
+                    String s = String.valueOf(cell);
+                    int w = s.length();
+                    sb.append(s);
+                    while (w < colWidths[col]) {
+                        sb.append(' ');
+                        w++;
+                    }
+                    for (int i = 0; i < rpad; i++) {
+                        sb.append(' ');
+                    }
+                }
+            }
+            sb.append(nl);
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * Convenient shortcut for calling {@link #appendLocation(StringBuilder, RiMethod, int)}
+     * without having to supply a a {@link StringBuilder} instance and convert the result
+     * to a string. 
+     */
+    public static String toLocation(RiMethod method, int bci) {
+        return appendLocation(new StringBuilder(), method, bci).toString();
+    }
+    
+    
+    /**
+     * Appends a string representation of a location specified by a given method and bci to
+     * a given {@link StringBuilder}. If a stack trace element with a non-null file name
+     * and non-negative line number is {@linkplain RiMethod#toStackTraceElement(int) available}
+     * for the given method, then the string returned is the {@link StackTraceElement#toString()}
+     * value of the stack trace element, suffixed by the bci location. For example:
+     * <pre>
+     *     java.lang.String.valueOf(String.java:2930) [bci: 12]
+     * </pre>
+     * Otherwise, the string returned is the value of {@code CiUtil.format("%H.%n(%p)"}, suffixed
+     * by the bci location. For example:
+     * <pre>
+     *     java.lang.String.valueOf(int) [bci: 12]
+     * </pre>
+     * 
+     * @param sb
+     * @param method
+     * @param bci
+     * @return
+     */
+    public static StringBuilder appendLocation(StringBuilder sb, RiMethod method, int bci) {
+        StackTraceElement ste = method.toStackTraceElement(bci);
+        if (ste.getFileName() != null && ste.getLineNumber() > 0) {
+            sb.append(ste);
+        } else {
+            sb.append(CiUtil.format("%H.%n(%p)", method, false));
+        }
+        return sb.append(" [bci: ").append(bci).append(']');
+    }
+
+    /**
+     * Appends a formatted code position to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param pos the code position to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder append(StringBuilder sb, CiCodePos pos) {
+        appendLocation(sb.append("at "), pos.method, pos.bci);
+        if (pos.caller != null) {
+            sb.append(NEW_LINE);
+            append(sb, pos.caller);
+        }
+        return sb;
+    }
+
+    /**
+     * Appends the formatted values of a given frame to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param separator the string to be inserted between each slot-value string.
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder appendValues(StringBuilder sb, Frame frame, String separator) {
+        String sep = "";
+        if (frame.numLocals != 0) {
+            for (int i = 0; i < frame.numLocals; i++) {
+                sb.append(sep).append("local[").append(i).append("] = ").append(frame.getLocalValue(i));
+                sep = separator;
+            }
+        }
+        if (frame.numStack != 0) {
+            for (int i = 0; i < frame.numStack; i++) {
+                sb.append(sep).append("stack[").append(i).append("] = ").append(frame.getStackValue(i));
+                sep = separator;
+            }
+        }
+        if (frame.numLocks != 0) {
+            for (int i = 0; i < frame.numLocks; i++) {
+                sb.append(sep).append("lock[").append(i).append("] = ").append(frame.getLockValue(i));
+                sep = separator;
+            }
+        }
+        return sb;
+    }
+
+    /**
+     * Appends a formatted frame to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param frame the frame to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder append(StringBuilder sb, Frame frame) {
+        appendLocation(sb.append("at "), frame.method, frame.bci);
+        String sep = NEW_LINE + "  ";
+        if (frame.values.length > 0) {
+            sb.append(sep);
+            appendValues(sb, frame, sep);
+        }
+        if (frame.caller != null) {
+            sb.append(NEW_LINE);
+            append(sb, frame.caller);
+        }
+        return sb;
+    }
+    
+    /**
+     * Appends a formatted debuginfo to a {@link StringBuilder}.
+     * 
+     * @param sb the {@link StringBuilder} to append to
+     * @param info the debug info to format and append to {@code sb}
+     * @return the value of {@code sb}
+     */
+    public static StringBuilder append(StringBuilder sb, CiDebugInfo info) {
+        String nl = NEW_LINE;
+        if (info.hasRegisterRefMap()) {
+            sb.append("reg-ref-map: ").append(info.registerRefMap).append(nl);
+        }
+        if (info.hasStackRefMap()) {
+            sb.append("frame-ref-map: ").append(info.frameRefMap).append(nl);
+        }
+        Frame frame = info.frame();
+        if (frame != null) {
+            append(sb, frame);
+        } else {
+            append(sb, info.codePos);
+        }
+        return sb;
     }
 }

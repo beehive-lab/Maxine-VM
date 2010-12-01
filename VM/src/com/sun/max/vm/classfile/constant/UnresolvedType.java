@@ -79,6 +79,15 @@ public abstract class UnresolvedType implements RiType {
             this.cpi = cpi;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof InPool) {
+                InPool other = (InPool) o;
+                return typeDescriptor.equals(other.typeDescriptor) &&
+                       pool == other.pool && cpi == other.cpi;
+            }
+            return false;
+        }
     }
 
     /**
@@ -89,6 +98,16 @@ public abstract class UnresolvedType implements RiType {
         public ByAccessingClass(TypeDescriptor typeDescriptor, ClassActor accessingClass) {
             super(typeDescriptor);
             this.accessingClass = accessingClass;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof ByAccessingClass) {
+                ByAccessingClass other = (ByAccessingClass) o;
+                return typeDescriptor.equals(other.typeDescriptor) &&
+                       accessingClass.equals(other.accessingClass);
+            }
+            return false;
         }
     }
 
@@ -193,14 +212,12 @@ public abstract class UnresolvedType implements RiType {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return typeDescriptor.hashCode();
     }
 
     @Override
-    public boolean equals(Object o) {
-        return o == this;
-    }
+    public abstract boolean equals(Object o);
 
     @Override
     public String toString() {

@@ -22,35 +22,38 @@ package com.sun.cri.ci;
 
 import java.util.*;
 
-import com.sun.cri.ri.*;
-
 /**
  * Represents a target machine register.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public final class CiRegister {
+public final class CiRegister implements Comparable<CiRegister> {
 
     /**
      * Invalid register.
      */
-    public static final CiRegister None = new CiRegister(-1, -1, "noreg");
+    public static final CiRegister None = new CiRegister(-1, -1, 0, "noreg");
 
     /**
      * Frame pointer of the current method. All spill slots and outgoing stack-based arguments
      * are addressed relative to this register.
      */
-    public static final CiRegister Frame = new CiRegister(-2, -2, "framereg", RegisterFlag.CPU);
+    public static final CiRegister Frame = new CiRegister(-2, -2, 0, "framereg", RegisterFlag.CPU);
 
     /**
      * Frame pointer for the caller of the current method. All incoming stack-based arguments
      * are address relative to this register.
      */
-    public static final CiRegister CallerFrame = new CiRegister(-3, -3, "caller-framereg", RegisterFlag.CPU);
+    public static final CiRegister CallerFrame = new CiRegister(-3, -3, 0, "caller-framereg", RegisterFlag.CPU);
 
     /**
-     * The identifier for this register that is unique across all the registers in a {@link RiRegisterConfig}.
+     * Literals pointer register.
+     */
+    public static final CiRegister Literals = new CiRegister(-4, -4, 0, "literals", RegisterFlag.CPU);
+
+    /**
+     * The identifier for this register that is unique across all the registers in a {@link CiArchitecture}.
      * A valid register has {@code number > 0}.
      */
     public final int number;
@@ -66,6 +69,11 @@ public final class CiRegister {
      */
     public final int encoding;
 
+    /**
+     * The size of the stack slot used to spill the value of this register.
+     */
+    public final int spillSlotSize;
+    
     /**
      * The set of {@link RegisterFlag} values associated with this register.
      */
@@ -95,27 +103,24 @@ public final class CiRegister {
         /**
          * Denotes a floating point register.
          */
-        FPU,
-        
-        /**
-         * Denotes a register guaranteed to be non-zero if read in compiled Java code.
-         * For example, a register dedicated to holding the current thread.
-         */
-        NonZero;
+        FPU;
 
         public final int mask = 1 << (ordinal() + 1);
     }
 
     /**
-     * Create a {@code CiRegister} instance.
+     * Creates a {@code CiRegister} instance.
+     * 
      * @param number unique identifier for the register
      * @param encoding the target machine encoding for the register
+     * @param spillSlotSize the size of the stack slot used to spill the value of the register
      * @param name the mnemonic name for the register
      * @param flags the set of {@link RegisterFlag} values for the register
      */
-    public CiRegister(int number, int encoding, String name, RegisterFlag... flags) {
+    public CiRegister(int number, int encoding, int spillSlotSize, String name, RegisterFlag... flags) {
         this.number = number;
         this.name = name;
+        this.spillSlotSize = spillSlotSize;
         this.flags = createMask(flags);
         this.encoding = encoding;
 
@@ -133,7 +138,7 @@ public final class CiRegister {
         return result;
     }
 
-    private boolean checkFlag(RegisterFlag f) {
+    public boolean isSet(RegisterFlag f) {
         return (flags & f.mask) != 0;
     }
 
@@ -166,21 +171,14 @@ public final class CiRegister {
      * Determines if this a floating point register.
      */
     public boolean isFpu() {
-        return checkFlag(RegisterFlag.FPU);
+        return isSet(RegisterFlag.FPU);
     }
 
     /**
      * Determines if this a general purpose register.
      */
     public boolean isCpu() {
-        return checkFlag(RegisterFlag.CPU);
-    }
-
-    /**
-     * Determines if this a register guaranteed to be non-zero if read in compiled Java code.
-     */
-    public boolean isNonZero() {
-        return checkFlag(RegisterFlag.NonZero);
+        return isSet(RegisterFlag.CPU);
     }
 
     /**
@@ -188,165 +186,75 @@ public final class CiRegister {
      * @return {@code true} iff this register has the {@link RegisterFlag#Byte} attribute set.
      */
     public boolean isByte() {
-        return checkFlag(RegisterFlag.Byte);
+        return isSet(RegisterFlag.Byte);
+    }
+
+    /**
+     * Categorizes a set of registers by {@link RegisterFlag}.
+     * 
+     * @param registers a list of registers to be categorized
+     * @return a map from each {@link RegisterFlag} constant to the list of registers for which the flag is
+     *         {@linkplain #isSet(RegisterFlag) set}
+     */
+    public static EnumMap<RegisterFlag, CiRegister[]> categorize(CiRegister[] registers) {
+        EnumMap<RegisterFlag, CiRegister[]> result = new EnumMap<RegisterFlag, CiRegister[]>(RegisterFlag.class);
+        for (RegisterFlag flag : RegisterFlag.values()) {
+            ArrayList<CiRegister> list = new ArrayList<CiRegister>();
+            for (CiRegister r : registers) {
+                if (r.isSet(flag)) {
+                    list.add(r);
+                }
+            }
+            result.put(flag, list.toArray(new CiRegister[list.size()]));
+        }
+        return result;
+    }
+
+    /**
+     * Gets the maximum register {@linkplain #number number} in a given set of registers.
+     * 
+     * @param registers the set of registers to process
+     * @return the maximum register number for any register in {@code registers}
+     */
+    public static int maxRegisterNumber(CiRegister[] registers) {
+        int max = Integer.MIN_VALUE;
+        for (CiRegister r : registers) {
+            if (r.number > max) {
+                max = r.number;
+            }
+        }
+        return max;
+    }
+    
+    /**
+     * Gets the maximum register {@linkplain #encoding encoding} in a given set of registers.
+     * 
+     * @param registers the set of registers to process
+     * @return the maximum register encoding for any register in {@code registers}
+     */
+    public static int maxRegisterEncoding(CiRegister[] registers) {
+        int max = Integer.MIN_VALUE;
+        for (CiRegister r : registers) {
+            if (r.encoding > max) {
+                max = r.encoding;
+            }
+        }
+        return max;
     }
 
     @Override
     public String toString() {
         return name;
     }
-
-    /**
-     * Register information required by a register allocator.
-     */
-    public static class AllocationSpec {
-
-        /**
-         * The set of registers a register allocator can use. This includes
-         * both general purpose and floating point registers.
-         */
-        public final CiRegister[] allocatableRegisters;
-
-        /**
-         * The set of CPU registers a register allocator can use. The {@linkplain CiRegister#number numbers}
-         * of the registers in this array are contiguous and increasing.
-         */
-        public final CiRegister[] allocatableCpuRegisters;
-
-        /**
-         * The set of floating point registers a register allocator can use. The {@linkplain CiRegister#number numbers}
-         * of the registers in this array are contiguous and increasing.
-         */
-        public final CiRegister[] allocatableFPRegisters;
-
-        /**
-         * The set of {@linkplain RegisterFlag#Byte byte} registers a register allocator can use. The {@linkplain CiRegister#number numbers}
-         * of the registers in this array are contiguous and increasing.
-         */
-        public final CiRegister[] allocatableByteRegisters;
-
-        /**
-         * Map from {@linkplain CiRegister#number register numbers} to registers.
-         */
-        public final CiRegister[] registerMap;
-
-        /**
-         * The set of caller saved registers. Values in these registers must be saved and restored around call sites.
-         */
-        public final CiRegister[] callerSaveRegisters;
-
-        /**
-         * The intersection of the {@linkplain #allocatableRegisters allocatable} and
-         * {@linkplain #callerSaveRegisters caller-save} registers.
-         */
-        public final CiRegister[] callerSaveAllocatableRegisters;
-
-        /**
-         * Map from {@linkplain CiRegister#number register numbers} to booleans indicating if
-         * the denoted registers are {@linkplain #allocatableRegisters allocatable}.
-         */
-        private final boolean[] allocatableRegistersMap;
-
-        /**
-         * Map from {@linkplain CiRegister#number register numbers} to booleans indicating if
-         * the denoted registers are {@linkplain #callerSaveRegisters caller-saved}.
-         */
-        private final boolean[] callerSaveRegistersMap;
-
-        /**
-         * Map from {@linkplain CiRegister#number register numbers} to reference map indexes
-         * for the denoted registers. Entries for registers not covered by the reference map
-         * (i.e. registers that can never hold a reference) are {@code null}.
-         */
-        public final int[] refMapIndexMap;
-
-        /**
-         * The length of the {@linkplain #registerMap register map}.
-         */
-        public final int nofRegs;
-
-        /**
-         * The number of registers that can potentially contain an object reference at a safepoint.
-         * There are exactly this many non-{@code null} entries in {@link #refMapIndexMap}.
-         */
-        public final int refMapSize;
-
-        AllocationSpec(CiRegister[] allocatableRegisters, CiRegister[] referenceMapTemplate, CiRegister[] callerSaveRegisters) {
-            this.allocatableRegisters = allocatableRegisters;
-
-            ArrayList<CiRegister> cpuRegs = new ArrayList<CiRegister>();
-            ArrayList<CiRegister> fpRegs = new ArrayList<CiRegister>();
-            ArrayList<CiRegister> byteRegs = new ArrayList<CiRegister>();
-            int maxRegNum = 0;
-
-            for (CiRegister r : allocatableRegisters) {
-                if (r.isCpu()) {
-                    cpuRegs.add(r);
-                }
-
-                if (r.isByte()) {
-                    byteRegs.add(r);
-                }
-
-                if (r.isFpu()) {
-                    fpRegs.add(r);
-                }
-                maxRegNum = Math.max(maxRegNum, r.number);
-            }
-
-            allocatableFPRegisters = fpRegs.toArray(new CiRegister[fpRegs.size()]);
-            allocatableCpuRegisters = cpuRegs.toArray(new CiRegister[cpuRegs.size()]);
-            allocatableByteRegisters = byteRegs.toArray(new CiRegister[byteRegs.size()]);
-            
-            nofRegs = maxRegNum + 1;
-            this.refMapSize = referenceMapTemplate.length;
-            this.registerMap = new CiRegister[nofRegs];
-            this.refMapIndexMap = new int[nofRegs];
-            this.allocatableRegistersMap = new boolean[nofRegs];
-            this.callerSaveRegistersMap = new boolean[nofRegs];
-            this.callerSaveRegisters = callerSaveRegisters;
-            for (CiRegister r : allocatableRegisters) {
-                assert registerMap[r.number] == null : "duplicate register!";
-                registerMap[r.number] = r;
-                allocatableRegistersMap[r.number] = true;
-            }
-
-            ArrayList<CiRegister> csList = new ArrayList<CiRegister>();
-            for (CiRegister r : callerSaveRegisters) {
-                callerSaveRegistersMap[r.number] = true;
-                if (isAllocatable(r)) {
-                    csList.add(r);
-                }
-            }
-            this.callerSaveAllocatableRegisters = csList.toArray(new CiRegister[csList.size()]);
-
-            Arrays.fill(refMapIndexMap, -1);
-            for (int i = 0; i < referenceMapTemplate.length; i++) {
-                CiRegister r = referenceMapTemplate[i];
-                if (r != null) {
-                    refMapIndexMap[r.number] = i;
-                }
-            }
+    
+    @Override
+    public int compareTo(CiRegister o) {
+        if (number < o.number) {
+            return -1;
         }
-
-        /**
-         * Determines if a given register is allocatable by a register allocator.
-         *
-         * @param register a register to test
-         * @return {@code true} if {@code register} is allocatable, {@code false} otherwise
-         */
-        public boolean isAllocatable(CiRegister register) {
-            return register.number >= 0 && register.number < nofRegs && allocatableRegistersMap[register.number];
+        if (number > o.number) {
+            return 1;
         }
-
-        /**
-         * Determines if a given register is {@linkplain #callerSaveRegisters caller saved}.
-         *
-         * @param register a register to test
-         * @return {@code true} if {@code register} is caller saved, {@code false} otherwise
-         */
-        public boolean isCallerSave(CiRegister register) {
-            return register.number < nofRegs && callerSaveRegistersMap[register.number];
-        }
-}
+        return 0;
+    }
 }

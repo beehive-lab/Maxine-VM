@@ -25,12 +25,16 @@ import static com.sun.cri.ci.CiUtil.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.alloc.Interval.RegisterBinding;
+import com.sun.c1x.alloc.Interval.RegisterPriority;
+import com.sun.c1x.alloc.Interval.SpillState;
+import com.sun.c1x.alloc.Interval.State;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 /**
  *
@@ -40,7 +44,6 @@ final class LinearScanWalker extends IntervalWalker {
 
     private CiRegister[] availableRegs;
 
-    private final CiRegister.AllocationSpec allocatableRegisters;
     private final int[] usePos;
     private final int[] blockPos;
 
@@ -64,13 +67,12 @@ final class LinearScanWalker extends IntervalWalker {
     LinearScanWalker(LinearScan allocator, Interval unhandledFixedFirst, Interval unhandledAnyFirst) {
         super(allocator, unhandledFixedFirst, unhandledAnyFirst);
         moveResolver = new MoveResolver(allocator);
-        allocatableRegisters = allocator.allocationSpec;
-        spillIntervals = Util.uncheckedCast(new List[allocatableRegisters.nofRegs]);
-        for (int i = 0; i < allocatableRegisters.nofRegs; i++) {
+        spillIntervals = Util.uncheckedCast(new List[allocator.registers.length]);
+        for (int i = 0; i < allocator.registers.length; i++) {
             spillIntervals[i] = new ArrayList<Interval>(2);
         }
-        usePos = new int[allocatableRegisters.nofRegs];
-        blockPos = new int[allocatableRegisters.nofRegs];
+        usePos = new int[allocator.registers.length];
+        blockPos = new int[allocator.registers.length];
     }
 
     void initUseLists(boolean onlyProcessUsePos) {
@@ -85,55 +87,40 @@ final class LinearScanWalker extends IntervalWalker {
         }
     }
 
-    void excludeFromUse(CiValue location) {
-        assert location.isRegister() : "interval must have a register assigned (stack slots not allowed)";
-        int i = location.asRegister().number;
-        if (i >= availableRegs[0].number && i <= availableRegs[availableRegs.length - 1].number) {
-            usePos[i] = 0;
-        }
-    }
-
     void excludeFromUse(Interval i) {
-        assert i.location() != null : "interval has no register assigned";
-        excludeFromUse(i.location());
-    }
-
-    void setUsePos(CiValue reg, Interval interval, int usePos, boolean onlyProcessUsePos) {
-        assert usePos != 0 : "must use excludeFromUse to set usePos to 0";
-        int i = reg.asRegister().number;
-        if (i >= availableRegs[0].number && i <= availableRegs[availableRegs.length - 1].number) {
-            if (this.usePos[i] > usePos) {
-                this.usePos[i] = usePos;
-            }
-            if (!onlyProcessUsePos) {
-                spillIntervals[i].add(interval);
-            }
+        CiValue location = i.location();
+        int i1 = location.asRegister().number;
+        if (i1 >= availableRegs[0].number && i1 <= availableRegs[availableRegs.length - 1].number) {
+            usePos[i1] = 0;
         }
     }
 
     void setUsePos(Interval interval, int usePos, boolean onlyProcessUsePos) {
-        assert interval.location() != null : "interval has no register assigned";
         if (usePos != -1) {
-            setUsePos(interval.location(), interval, usePos, onlyProcessUsePos);
-        }
-    }
-
-    void setBlockPos(CiValue location, Interval interval, int blockPos) {
-        int reg = location.asRegister().number;
-        if (reg >= availableRegs[0].number && reg <= availableRegs[availableRegs.length - 1].number) {
-            if (this.blockPos[reg] > blockPos) {
-                this.blockPos[reg] = blockPos;
-            }
-            if (usePos[reg] > blockPos) {
-                usePos[reg] = blockPos;
+            assert usePos != 0 : "must use excludeFromUse to set usePos to 0";
+            int i = interval.location().asRegister().number;
+            if (i >= availableRegs[0].number && i <= availableRegs[availableRegs.length - 1].number) {
+                if (this.usePos[i] > usePos) {
+                    this.usePos[i] = usePos;
+                }
+                if (!onlyProcessUsePos) {
+                    spillIntervals[i].add(interval);
+                }
             }
         }
     }
 
     void setBlockPos(Interval i, int blockPos) {
-        assert i.location() != null : "interval has no register assigned";
         if (blockPos != -1) {
-            setBlockPos(i.location(), i, blockPos);
+            int reg = i.location().asRegister().number;
+            if (reg >= availableRegs[0].number && reg <= availableRegs[availableRegs.length - 1].number) {
+                if (this.blockPos[reg] > blockPos) {
+                    this.blockPos[reg] = blockPos;
+                }
+                if (usePos[reg] > blockPos) {
+                    usePos[reg] = blockPos;
+                }
+            }
         }
     }
 
@@ -770,7 +757,7 @@ final class LinearScanWalker extends IntervalWalker {
             }
 
             if (firstUsage <= interval.from() + 1) {
-                assert false : "cannot spill interval that is used in first instruction (possible reason: no register found)";
+                assert false : "cannot spill interval that is used in first instruction (possible reason: no register found) firstUsage=" + firstUsage + ", interval.from()=" + interval.from();
                 // assign a reasonable register and do a bailout in product mode to avoid errors
                 allocator.assignSpillSlot(interval);
                 throw new CiBailout("LinearScan: no register found");
@@ -828,13 +815,14 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     void initVarsForAlloc(Interval interval) {
+        EnumMap<RegisterFlag, CiRegister[]> categorizedRegs = allocator.compilation.registerConfig.getCategorizedAllocatableRegisters();
         if (allocator.operands.mustBeByteRegister(interval.operand)) {
             assert interval.kind() != CiKind.Float && interval.kind() != CiKind.Double : "cpu regs only";
-            availableRegs = allocatableRegisters.allocatableByteRegisters;
+            availableRegs = categorizedRegs.get(RegisterFlag.Byte);
         } else if (interval.kind() == CiKind.Float || interval.kind() == CiKind.Double) {
-            availableRegs = allocatableRegisters.allocatableFPRegisters;
+            availableRegs = categorizedRegs.get(RegisterFlag.FPU);
         } else {
-            availableRegs = allocatableRegisters.allocatableCpuRegisters;
+            availableRegs = categorizedRegs.get(RegisterFlag.CPU);
         }
     }
 

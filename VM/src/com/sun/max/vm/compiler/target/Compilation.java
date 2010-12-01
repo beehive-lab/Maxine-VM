@@ -32,6 +32,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * This class represents an ongoing or completed compilation.
@@ -40,8 +41,17 @@ import com.sun.max.vm.stack.*;
  */
 public class Compilation implements Future<TargetMethod> {
 
-    private static final VMBooleanXXOption GC_ON_COMPILE_OPTION = register(new VMBooleanXXOption("-XX:-GCOnCompilation",
-        "When specified, the compiler will request GC before every compilation operation."), MaxineVM.Phase.STARTING);
+    /**
+     * Used to detect re-entrant compilation which indicates the boot image closure was not incomplete.
+     */
+    private static final ObjectThreadLocal<Compilation> COMPILATION = new ObjectThreadLocal<Compilation>("COMPILATION", "current compilation");
+
+    private static boolean GCOnCompilation;
+    private static String GCOnCompilationOf;
+    static {
+        VMOptions.addFieldOption("-XX:", "GCOnCompilation", Compilation.class, "Perform a GC before every compilation.");
+        VMOptions.addFieldOption("-XX:", "GCOnCompilationOf", Compilation.class, "Perform a GC before every compilation of a method whose fully qualified name contains <value>.");
+    }
 
     public static final VMBooleanXXOption TIME_COMPILATION = register(new VMBooleanXXOption("-XX:-TimeCompilation",
         "Report time spent in compilation.") {
@@ -160,19 +170,25 @@ public class Compilation implements Future<TargetMethod> {
         Throwable error = null;
         String methodString = "";
         try {
-            if (StackReferenceMapPreparer.VerifyRefMaps) {
+            methodString = logBeforeCompilation(compiler);
+            if (!MaxineVM.isHosted() && StackReferenceMapPreparer.VerifyRefMaps) {
                 StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
             }
-            if (GC_ON_COMPILE_OPTION.getValue() && Heap.isInitialized()) {
-                System.gc();
-            }
+
+            gcIfRequested(classMethodActor, methodString);
+
             long startCompile = 0;
             if (TIME_COMPILATION.getValue()) {
                 startCompile = System.currentTimeMillis();
             }
 
+            // Check for recursive compilation
+            if (COMPILATION.get() != null) {
+                FatalError.unexpected("Compilation of " + classMethodActor + " while compiling " + COMPILATION.get().classMethodActor);
+            }
+            COMPILATION.set(this);
+
             // attempt the compilation
-            methodString = logBeforeCompilation(compiler);
             targetMethod = compiler.compile(classMethodActor);
 
             if (targetMethod == null) {
@@ -203,6 +219,8 @@ public class Compilation implements Future<TargetMethod> {
                 classMethodActor.notifyAll();
             }
 
+            COMPILATION.set((Compilation) null);
+
             // notify any compilation observers
             observeAfterCompilation(observers, compiler, targetMethod);
         }
@@ -216,6 +234,29 @@ public class Compilation implements Future<TargetMethod> {
         }
 
         return targetMethod;
+    }
+
+    /**
+     * Invokes a garbage collection if the {@link #GCOnCompilation} or
+     * {@link #GCOnCompilationOf} options imply one is requested for
+     * the compilation of a given method.
+     *
+     * @param method the method about to be compiled
+     * @param methodString the value of {@code method.format("%H.%n(%p)} if it has been pre-computed, {@code null} otherwise
+     */
+    private void gcIfRequested(ClassMethodActor method, String methodString) {
+        if (Heap.isInitialized()) {
+            if (GCOnCompilation) {
+                System.gc();
+            } else if (GCOnCompilationOf != null) {
+                if (methodString == null) {
+                    methodString = method.format("%H.%n(%p)");
+                }
+                if (methodString.contains(GCOnCompilationOf)) {
+                    System.gc();
+                }
+            }
+        }
     }
 
     private void logCompilationError(Throwable error, RuntimeCompilerScheme compiler, String methodString) {

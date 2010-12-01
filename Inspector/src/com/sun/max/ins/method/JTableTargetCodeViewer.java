@@ -32,7 +32,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
@@ -647,8 +646,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        InstructionSet instructionSet = platform().instructionSet();
-        switch (instructionSet) {
+        ISA isa = platform().isa;
+        switch (isa) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;
             case SPARC:

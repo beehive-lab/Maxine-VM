@@ -21,6 +21,7 @@
 package com.sun.max.asm.sparc.complete;
 
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 
 /**
  *
@@ -32,7 +33,7 @@ public class Package extends AsmPackage {
     }
 
     @Override
-    public boolean isPartOfAssembler(InstructionSet instructionSet) {
-        return instructionSet == InstructionSet.SPARC;
+    public boolean isPartOfAssembler(ISA isa) {
+        return isa == ISA.SPARC;
     }
 }

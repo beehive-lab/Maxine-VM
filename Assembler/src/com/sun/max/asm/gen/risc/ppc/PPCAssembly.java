@@ -22,9 +22,9 @@ package com.sun.max.asm.gen.risc.ppc;
 
 import java.util.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
+import com.sun.max.lang.*;
 
 /**
  * @author Doug Simon
@@ -36,7 +36,7 @@ public final class PPCAssembly extends RiscAssembly {
     private static final boolean GENERATING_POWER5_INSTRUCTIONS = false;
 
     private PPCAssembly() {
-        super(InstructionSet.PPC, RiscTemplate.class);
+        super(ISA.PPC, RiscTemplate.class);
     }
 
     public boolean generatingDeprecatedInstructions() {

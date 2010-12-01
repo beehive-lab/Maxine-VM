@@ -149,7 +149,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
             } else {
                 final Reference typeDescriptorToClassActorReference = vm().teleFields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
                 tableReference = vm().teleFields().HashMap_table.readReference(typeDescriptorToClassActorReference);
-                final int length = vmConfig().layoutScheme().arrayHeaderLayout.readLength(tableReference);
+                final int length = vmConfig().layoutScheme().arrayLayout.readLength(tableReference);
                 for (int i = 0; i < length; i++) {
                     Reference entryReference = vm().readReference(tableReference, i);
                     while (!entryReference.isZero()) {

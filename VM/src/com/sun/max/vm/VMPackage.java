@@ -20,28 +20,16 @@
  */
 package com.sun.max.vm;
 
-import com.sun.max.*;
-import com.sun.max.annotate.*;
-
 /**
  * Denotes a package of classes that are (potentially) in the VM.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Mick Jordan
  */
-public abstract class VMPackage extends MaxPackage {
+public abstract class VMPackage extends VMConfigPackage {
     public VMPackage() {
     }
 
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return true;
-    }
 
-    /**
-     * Determines if this package contains any classes annotated with {@link METHOD_SUBSTITUTIONS}.
-     * @return
-     */
-    public boolean containsMethodSubstitutions() {
-        return false;
-    }
 }

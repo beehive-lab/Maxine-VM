@@ -42,6 +42,7 @@ import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -1743,26 +1744,18 @@ public final class JniFunctionsSource {
         return VmThread.fromJniEnv(env).pendingException() != null;
     }
 
-    @FOLD
-    private static ClassActor DirectByteBuffer() {
-        return ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));
-    }
-
-    @FOLD
-    private static MethodActor DirectByteBufferConstructor() {
-        return DirectByteBuffer().findClassMethodActor(SymbolTable.INIT, SignatureDescriptor.fromJava(void.class, long.class, int.class));
-    }
+    private static final ClassActor DirectByteBuffer = ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));
 
     @VM_ENTRY_POINT
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
-        int cap = (int) capacity;
-        return JniHandles.createLocalHandle(DirectByteBufferConstructor().invokeConstructor(LongValue.from(address.toLong()), IntValue.from(cap)).asObject());
+        ByteBuffer buffer = ObjectAccess.createDirectByteBuffer(address.toLong(), (int) capacity);
+        return JniHandles.createLocalHandle(buffer);
     }
 
     @VM_ENTRY_POINT
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
         Object buf = buffer.unhand();
-        if (DirectByteBuffer().isInstance(buf)) {
+        if (DirectByteBuffer.isInstance(buf)) {
             long address = ClassRegistry.Buffer_address.getLong(buf);
             return Pointer.fromLong(address);
         }
@@ -1772,7 +1765,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
         Object buf = buffer.unhand();
-        if (DirectByteBuffer().isInstance(buf)) {
+        if (DirectByteBuffer.isInstance(buf)) {
             return ((Buffer) buf).capacity();
         }
         return -1;

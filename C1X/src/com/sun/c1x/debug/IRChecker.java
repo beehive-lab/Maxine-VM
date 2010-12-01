@@ -48,8 +48,8 @@ public class IRChecker extends ValueVisitor {
     public static class IRCheckException extends RuntimeException {
         public static final long serialVersionUID = 8974598793158772L;
 
-        public IRCheckException(String phase, String msg) {
-            super("IRCheck error " + phase + ": " + msg);
+        public IRCheckException(String msg) {
+            super(msg);
         }
     }
 
@@ -116,10 +116,15 @@ public class IRChecker extends ValueVisitor {
         }
     }
 
+    private Instruction currentInstruction;
+    private BlockBegin currentBlock;
+
     private class CheckValues implements BlockClosure {
         public void apply(BlockBegin block) {
+            currentBlock = block;
             Instruction instr = block;
             while (instr != null) {
+                currentInstruction = instr;
                 basicChecker.apply(instr);
                 instr.allValuesDo(basicChecker);
                 instr.accept(IRChecker.this);
@@ -301,30 +306,25 @@ public class IRChecker extends ValueVisitor {
         assertNull(i.displacement(), "displacement should be null");
         assertKind(i.newValue(), i.kind);
         assertKind(i.expectedValue(), i.kind);
+        checkPointerOpOffsetOrIndex(i.offset());
         switch (i.opcode) {
             case Bytecodes.PCMPSWP_INT:
                 assertKind(i, CiKind.Int);
-                assertKind(i.offset(), CiKind.Word);
                 break;
             case Bytecodes.PCMPSWP_INT_I:
                 assertKind(i, CiKind.Int);
-                assertKind(i.offset(), CiKind.Int);
                 break;
             case Bytecodes.PCMPSWP_REFERENCE:
                 assertKind(i, CiKind.Object);
-                assertKind(i.offset(), CiKind.Word);
                 break;
             case Bytecodes.PCMPSWP_REFERENCE_I:
                 assertKind(i, CiKind.Object);
-                assertKind(i.offset(), CiKind.Int);
                 break;
             case Bytecodes.PCMPSWP_WORD:
                 assertKind(i, CiKind.Word);
-                assertKind(i.offset(), CiKind.Word);
                 break;
             case Bytecodes.PCMPSWP_WORD_I:
                 assertKind(i, CiKind.Word);
-                assertKind(i.offset(), CiKind.Int);
                 break;
             default:
                 fail("Illegal CompareAndSwap opcode: " + Bytecodes.nameOf(i.opcode));
@@ -718,7 +718,7 @@ public class IRChecker extends ValueVisitor {
     @Override
     public void visitIf(If i) {
         assertKind(i, CiKind.Illegal);
-        if (!Util.equalKinds(i.x(), i.y())) {
+        if (!Util.archKindsEqual(i.x(), i.y())) {
             fail("Operands of If instruction must have same type");
         }
         if (i.successors().size() != 2) {
@@ -1030,22 +1030,26 @@ public class IRChecker extends ValueVisitor {
     public void visitLoadPC(LoadPC i) {
     }
 
+    private void checkPointerOpOffsetOrIndex(Value value) {
+        if (!value.kind.isInt() && !Util.archKindsEqual(value.kind, CiKind.Word)) {
+            fail("Type mismatch: " + value.kind + " should be of type " + CiKind.Int + " or " + CiKind.Word);
+        }
+    }
+
     @Override
     public void visitLoadPointer(LoadPointer i) {
         assertKind(i.pointer(), CiKind.Word);
         if (i.displacement() == null) {
-            if (!i.offset().kind.isWord()) {
-                assertKind(i.offset(), CiKind.Int);
-            }
+            checkPointerOpOffsetOrIndex(i.offset());
         } else {
-            assertKind(i.index(), CiKind.Int);
+            checkPointerOpOffsetOrIndex(i.index());
             assertKind(i.displacement(), CiKind.Int);
         }
     }
 
     @Override
     public void visitLoadRegister(LoadRegister i) {
-        assertNonNull(i.register(), "Register must not be null");
+        assertNonNull(i.register, "Register must not be null");
     }
 
     @Override
@@ -1072,6 +1076,10 @@ public class IRChecker extends ValueVisitor {
     }
 
     @Override
+    public void visitBreakpointTrap(BreakpointTrap i) {
+    }
+
+    @Override
     public void visitResolveClass(ResolveClass i) {
     }
 
@@ -1091,11 +1099,9 @@ public class IRChecker extends ValueVisitor {
     public void visitStorePointer(StorePointer i) {
         assertKind(i.pointer(), CiKind.Word);
         if (i.displacement() == null) {
-            if (!i.offset().kind.isWord()) {
-                assertKind(i.offset(), CiKind.Int);
-            }
+            checkPointerOpOffsetOrIndex(i.offset());
         } else {
-            assertKind(i.index(), CiKind.Int);
+            checkPointerOpOffsetOrIndex(i.index());
             assertKind(i.displacement(), CiKind.Int);
         }
     }
@@ -1135,7 +1141,7 @@ public class IRChecker extends ValueVisitor {
 
     private void assertKind(Value i, CiKind kind) {
         assertNonNull(i, "Value should not be null");
-        if (i.kind != kind) {
+        if (!Util.archKindsEqual(i.kind, kind)) {
             fail("Type mismatch: " + i + " should be of type " + kind);
         }
     }
@@ -1190,7 +1196,12 @@ public class IRChecker extends ValueVisitor {
     }
 
     private void fail(String msg) {
-        throw new IRCheckException(phase, msg);
+        String location = "";
+        try {
+            location = "B" + currentBlock.blockID + ", bci " + currentInstruction.bci() + ": ";
+        } catch (Throwable e) {
+        }
+        throw new IRCheckException(location + "IR error " + phase + ": " + msg);
     }
 
     private class BasicValueChecker implements ValueClosure {

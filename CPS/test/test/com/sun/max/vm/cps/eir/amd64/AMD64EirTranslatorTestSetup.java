@@ -25,7 +25,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -64,7 +64,7 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
 
     @Override
     protected void initializeVM() {
-        Platform.set(platform().constrainedByInstructionSet(InstructionSet.AMD64));
+        Platform.set(platform().constrainedByInstructionSet(ISA.AMD64));
         VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.e.amd64.Package());
     }
 }

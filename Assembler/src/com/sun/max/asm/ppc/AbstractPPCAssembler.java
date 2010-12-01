@@ -21,6 +21,7 @@
 package com.sun.max.asm.ppc;
 
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 
 /**
  * The abstract base class for PowerPC assemblers.
@@ -31,7 +32,7 @@ import com.sun.max.asm.*;
 public abstract class AbstractPPCAssembler extends BigEndianAssembler {
 
     @Override
-    public final InstructionSet instructionSet() {
-        return InstructionSet.PPC;
+    public final ISA isa() {
+        return ISA.PPC;
     }
 }

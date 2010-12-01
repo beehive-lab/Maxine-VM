@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiKind.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -28,6 +29,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
 
 /**
@@ -70,7 +72,7 @@ import com.sun.cri.ri.*;
  */
 public final class FrameMap {
 
-    private final C1XCompiler compiler;
+    private final C1XCompilation compilation;
     private final CiCallingConvention incomingArguments;
 
     /**
@@ -107,12 +109,13 @@ public final class FrameMap {
 
     /**
      * Creates a new frame map for the specified method.
-     * @param compiler the compiler, which includes the runtime and target
+     *
+     * @param compilation the compilation context
      * @param method the outermost method being compiled
      * @param monitors the number of monitors allocated on the stack for this method
      */
-    public FrameMap(C1XCompiler compiler, RiMethod method, int monitors) {
-        this.compiler = compiler;
+    public FrameMap(C1XCompilation compilation, RiMethod method, int monitors) {
+        this.compilation = compilation;
         this.frameSize = -1;
         this.spillSlotCount = -2;
 
@@ -122,47 +125,22 @@ public final class FrameMap {
             incomingArguments = new CiCallingConvention(new CiValue[0], 0);
         } else {
             CiKind receiver = !isStatic(method.accessFlags()) ? method.holder().kind() : null;
-            incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signature(), receiver), false);
+            incomingArguments = getCallingConvention(Util.signatureToKinds(method.signature(), receiver), JavaCallee);
         }
     }
 
     /**
-     * Gets the calling convention for calling runtime methods with the specified signature.
-     * @param signature the signature of the arguments
-     * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
-     */
-    public CiCallingConvention runtimeCallingConvention(CiKind[] signature) {
-        CiCallingConvention cc = compiler.target.registerConfig.getRuntimeCallingConvention(signature, compiler.target);
-        assert cc.stackSize == 0 : "runtime call should not have stack arguments";
-        return cc;
-    }
-
-    /**
-     * Gets the calling convention for calling Java methods with the specified signature.
+     * Gets the calling convention for a call with the specified signature.
      *
+     * @param type the type of calling convention being requested
      * @param signature the signature of the arguments
-     * @param outgoing if {@code true}, the reserved space on the stack for outgoing stack parameters is adjusted if necessary
      * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
      */
-    public CiCallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing) {
-        CiCallingConvention cc = compiler.target.registerConfig.getJavaCallingConvention(signature, outgoing, compiler.target);
-        if (outgoing) {
-            assert frameSize == -1 : "frame size must not yet be fixed!";
-            reserveOutgoing(cc.stackSize);
-        }
-        return cc;
-    }
-
-    /**
-     * Gets the calling convention for calling native code with the specified signature.
-     *
-     * @param signature the signature of the arguments
-     * @param outgoing if {@code true}, the reserved space on the stack for outgoing stack parameters is adjusted if necessary
-     * @return a {@link CiCallingConvention} instance describing the location of parameters and the return value
-     */
-    public CiCallingConvention nativeCallingConvention(CiKind[] signature, boolean outgoing) {
-        CiCallingConvention cc = compiler.target.registerConfig.getNativeCallingConvention(signature, outgoing, compiler.target);
-        if (outgoing) {
+    public CiCallingConvention getCallingConvention(CiKind[] signature, Type type) {
+        CiCallingConvention cc = compilation.registerConfig.getCallingConvention(type, signature, compilation.target);
+        if (type == RuntimeCall) {
+            assert cc.stackSize == 0 : "runtime call should not have stack arguments";
+        } else if (type.out) {
             assert frameSize == -1 : "frame size must not yet be fixed!";
             reserveOutgoing(cc.stackSize);
         }
@@ -205,7 +183,9 @@ public final class FrameMap {
         assert spillSlotCount >= 0 : "must be positive";
 
         this.spillSlotCount = spillSlotCount;
-        this.frameSize = compiler.target.alignFrameSize(stackBlocksEnd());
+        int frameSize = stackBlocksEnd();
+        frameSize += compilation.registerConfig.getCalleeSaveArea().size;
+        this.frameSize = compilation.target.alignFrameSize(frameSize);
     }
 
     /**
@@ -225,9 +205,9 @@ public final class FrameMap {
      * @return a stack address
      */
     public CiAddress toStackAddress(CiStackSlot slot) {
-        int size = compiler.target.sizeInBytes(slot.kind);
+        int size = compilation.target.sizeInBytes(slot.kind);
         if (slot.inCallerFrame()) {
-            int offset = slot.index() * compiler.target.spillSlotSize;
+            int offset = slot.index() * compilation.target.spillSlotSize;
             return new CiAddress(slot.kind, CiRegister.CallerFrame.asValue(), offset);
         } else {
             int offset = spOffsetForOutgoingOrSpillSlot(slot.index(), size);
@@ -242,25 +222,31 @@ public final class FrameMap {
      * @return a representation of the stack location
      */
     public CiAddress toStackAddress(StackBlock stackBlock) {
-        return new CiAddress(CiKind.Word, compiler.target.stackPointerRegister.asValue(Word), spOffsetForStackBlock(stackBlock));
+        return new CiAddress(CiKind.Word, compilation.registerConfig.getFrameRegister().asValue(Word), spOffsetForStackBlock(stackBlock));
     }
 
     /**
-     * Converts the monitor index into a stack address.
+     * Converts the monitor index into the stack address of the object reference in the on-stack monitor.
+     *
      * @param monitorIndex the monitor index
      * @return a representation of the stack address
      */
-    public CiAddress toMonitorObjectStackAddress(int monitorIndex) {
-        return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorObject(monitorIndex));
+    public CiStackSlot toMonitorObjectStackAddress(int monitorIndex) {
+        int byteIndex = spOffsetForMonitorObject(monitorIndex);
+        assert byteIndex % compilation.target.wordSize == 0;
+        return CiStackSlot.get(CiKind.Object, byteIndex / compilation.target.wordSize);
     }
 
     /**
-     * Converts the monitor index into a stack address.
+     * Converts the monitor index into the stack address of the on-stak monitor.
+     *
      * @param monitorIndex the monitor index
      * @return a representation of the stack address
      */
-    public CiAddress toMonitorBaseStackAddress(int monitorIndex) {
-        return new CiAddress(CiKind.Object, CiRegister.Frame.asValue(), spOffsetForMonitorBase(monitorIndex));
+    public CiStackSlot toMonitorBaseStackAddress(int monitorIndex) {
+        int byteIndex = spOffsetForMonitorBase(monitorIndex);
+        assert byteIndex % compilation.target.wordSize == 0;
+        return CiStackSlot.get(CiKind.Object, byteIndex / compilation.target.wordSize);
     }
 
     /**
@@ -271,7 +257,7 @@ public final class FrameMap {
     public void reserveOutgoing(int argsSize) {
         assert spillSlotCount == -2 : "cannot reserve outgoing stack slot space once register allocation has started";
         if (argsSize > outgoingSize) {
-            outgoingSize = Util.roundUp(argsSize, compiler.target.spillSlotSize);
+            outgoingSize = Util.roundUp(argsSize, compilation.target.spillSlotSize);
         }
     }
 
@@ -303,7 +289,7 @@ public final class FrameMap {
      *         allocation is complete and the size of the frame has been {@linkplain #finalizeFrame(int) finalized}.
      */
     public StackBlock reserveStackBlock(int size) {
-        int wordSize = compiler.target.sizeInBytes(CiKind.Word);
+        int wordSize = compilation.target.sizeInBytes(CiKind.Word);
         assert (size % wordSize) == 0;
         StackBlock block = new StackBlock(size, stackBlocksSize);
         stackBlocksSize += size;
@@ -326,14 +312,15 @@ public final class FrameMap {
      */
     private int spOffsetForOutgoingOrSpillSlot(int slotIndex, int size) {
         assert slotIndex >= 0 && slotIndex < (initialSpillSlot() + spillSlotCount) : "invalid spill slot";
-        int offset = slotIndex * compiler.target.spillSlotSize;
+        int offset = slotIndex * compilation.target.spillSlotSize;
         assert offset <= (frameSize() - size) : "slot outside of frame";
         return offset;
     }
 
     private int spOffsetForMonitorBase(int index) {
         assert index >= 0 && index < monitorCount : "invalid monitor index";
-        int size = compiler.runtime.sizeofBasicObjectLock();
+        int size = compilation.runtime.sizeOfBasicObjectLock();
+        assert size != 0 : "monitors are not on the stack in this VM";
         int offset = monitorsStart() + index * size;
         assert offset <= (frameSize() - size) : "monitor outside of frame";
         return offset;
@@ -344,7 +331,7 @@ public final class FrameMap {
     }
 
     private int spillEnd() {
-        return spillStart() + spillSlotCount * compiler.target.spillSlotSize;
+        return spillStart() + spillSlotCount * compilation.target.spillSlotSize;
     }
 
     private int monitorsStart() {
@@ -352,7 +339,7 @@ public final class FrameMap {
     }
 
     private int monitorsEnd() {
-        return monitorsStart() + (monitorCount * compiler.runtime.sizeofBasicObjectLock());
+        return monitorsStart() + (monitorCount * compilation.runtime.sizeOfBasicObjectLock());
     }
 
     private int stackBlocksStart() {
@@ -364,7 +351,7 @@ public final class FrameMap {
     }
 
     private int spOffsetForMonitorObject(int index)  {
-        return spOffsetForMonitorBase(index) + compiler.runtime.basicObjectLockOffsetInBytes();
+        return spOffsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
     }
 
     /**
@@ -377,7 +364,7 @@ public final class FrameMap {
         if (spillSlotCount == -2) {
             spillSlotCount = -1;
         }
-        return outgoingSize / compiler.target.spillSlotSize;
+        return outgoingSize / compilation.target.spillSlotSize;
     }
 
 }

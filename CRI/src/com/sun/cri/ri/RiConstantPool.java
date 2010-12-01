@@ -20,8 +20,6 @@
  */
 package com.sun.cri.ri;
 
-import com.sun.cri.ci.*;
-
 /**
  * Represents the runtime representation of the constant pool that is
  * used by the compiler when parsing bytecode. The {@code lookupXXX} methods look up a constant
@@ -83,11 +81,4 @@ public interface RiConstantPool {
      * @return the {@code CiConstant} instance representing the constant
      */
     Object lookupConstant(int cpi);
-
-    /**
-     * Constant object that can be used to identify this constant pool when it is referenced from the code.
-     *
-     * @return a constant object representing this constant pool
-     */
-    CiConstant encoding();
 }

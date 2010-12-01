@@ -22,6 +22,8 @@ package com.sun.cri.ci;
 
 import java.util.*;
 
+import com.sun.cri.ci.CiRegister.RegisterFlag;
+
 
 /**
  * Represents a CPU architecture, including information such as its endianness, CPU
@@ -41,6 +43,12 @@ public abstract class CiArchitecture {
     }
 
     /**
+     * The number of bits required in a bit map covering all the registers that may store references.
+     * The bit position of a register in the map is the register's {@linkplain CiRegister#number number}.
+     */
+    public final int registerReferenceMapBitCount;
+
+    /**
      * Represents the natural size of words (typically registers and pointers) of this architecture, in bytes.
      */
     public final int wordSize;
@@ -51,26 +59,14 @@ public abstract class CiArchitecture {
     public final String name;
 
     /**
-     * The name of the platform associated with this architecture (e.g. "X86" or "SPARC").
-     */
-    public final String platform;
-
-    /**
-     * The offset of the lower half of a word in bytes.
-     */
-    public final int lowWordOffset;
-
-    /**
-     * The offset of the upper half of a word in bytes.
-     */
-    public final int highWordOffset;
-
-    /**
      * Array of all available registers on this architecture. The index of each register in this
      * array is equal to its {@linkplain CiRegister#number number}.
      */
     public final CiRegister[] registers;
-
+    
+    /**
+     * Map of all registers keyed by their {@linkplain CiRegister#name names}.
+     */
     public final HashMap<String, CiRegister> registersByName;
 
     /**
@@ -85,27 +81,53 @@ public abstract class CiArchitecture {
 
     public final int returnAddressSize;
 
-    protected CiArchitecture(String name, int wordSize, String backend, ByteOrder byteOrder, CiRegister[] registers, int nativeCallDisplacementOffset, int returnAddressSize) {
+    private final EnumMap<RegisterFlag, CiRegister[]> registersByTypeAndEncoding;
+    
+    /**
+     * Gets the register for a given {@linkplain CiRegister#encoding encoding} and type.
+     * 
+     * @param encoding a register value as used in a machine instruction 
+     * @param type the type of the register
+     */
+    public CiRegister registerFor(int encoding, RegisterFlag type) {
+        CiRegister[] regs = registersByTypeAndEncoding.get(type);
+        assert encoding >= 0 && encoding < regs.length;
+        CiRegister reg = regs[encoding];
+        assert reg != null;
+        return reg;
+    }
+
+    protected CiArchitecture(String name,
+                    int wordSize,
+                    ByteOrder byteOrder,
+                    CiRegister[] registers,
+                    int nativeCallDisplacementOffset,
+                    int registerReferenceMapBitCount,
+                    int returnAddressSize) {
         this.name = name;
         this.registers = registers;
         this.wordSize = wordSize;
-        this.platform = backend;
         this.byteOrder = byteOrder;
         this.machineCodeCallDisplacementOffset = nativeCallDisplacementOffset;
+        this.registerReferenceMapBitCount = registerReferenceMapBitCount;
         this.returnAddressSize = returnAddressSize;
-
-        if (byteOrder == ByteOrder.LittleEndian) {
-            this.lowWordOffset = 0;
-            this.highWordOffset = wordSize;
-        } else {
-            this.lowWordOffset = wordSize;
-            this.highWordOffset = 0;
-        }
 
         registersByName = new HashMap<String, CiRegister>(registers.length);
         for (CiRegister register : registers) {
             registersByName.put(register.name, register);
             assert registers[register.number] == register;
+        }
+
+        registersByTypeAndEncoding = new EnumMap<CiRegister.RegisterFlag, CiRegister[]>(RegisterFlag.class);
+        EnumMap<RegisterFlag, CiRegister[]> categorizedRegs = CiRegister.categorize(registers);
+        for (RegisterFlag type : RegisterFlag.values()) {
+            CiRegister[] regs = categorizedRegs.get(type);
+            int max = CiRegister.maxRegisterEncoding(regs);
+            CiRegister[] regsByEnc = new CiRegister[max + 1];
+            for (CiRegister reg : regs) {
+                regsByEnc[reg.encoding] = reg;
+            }
+            registersByTypeAndEncoding.put(type, regsByEnc);
         }
     }
 

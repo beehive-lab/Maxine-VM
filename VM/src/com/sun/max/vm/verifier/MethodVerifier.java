@@ -68,7 +68,7 @@ public abstract class MethodVerifier {
      */
     public VerificationType getObjectType(TypeDescriptor typeDescriptor) {
         if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
-            throw verifyError("Expected a non-primitive type");
+            verifyError("Expected a non-primitive type");
         }
         return classVerifier().getObjectType(typeDescriptor);
     }
@@ -114,7 +114,14 @@ public abstract class MethodVerifier {
         }
     }
 
-    public VerifyError verifyError(String message) {
+    public void verifyError(String message) {
+        if (Verifier.noVerify.isPresent()) {
+            return;
+        }
+        fatalVerifyError(message);
+    }
+
+    public VerifyError fatalVerifyError(String message) {
         final int currentOpcodePosition = currentOpcodePositionOrMinusOne();
         try {
             int sourceLine = currentOpcodePosition == -1 ? -1 : classMethodActor.sourceLineNumber(currentOpcodePosition);
@@ -138,7 +145,7 @@ public abstract class MethodVerifier {
     public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
         if (!toType.isAssignableFrom(fromType)) {
             if (!VerificationType.isTypeIncompatibilityBetweenPointerAndAccessor(fromType, toType)) {
-                throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
+                verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
             }
         }
     }

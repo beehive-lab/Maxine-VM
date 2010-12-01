@@ -21,20 +21,23 @@
 package com.sun.max.vm.stack;
 
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologueForC;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
@@ -130,7 +133,7 @@ public abstract class StackFrameWalker {
          * Gets the address of the next instruction that will be executed in this frame.
          * If this is not the {@linkplain #isTopFrame() top frame}, then this is the
          * return address saved by a call instruction. The exact interpretation of this
-         * return address depends on the {@linkplain InstructionSet#offsetToReturnPC platform}.
+         * return address depends on the {@linkplain ISA#offsetToReturnPC platform}.
          *
          * @return the current instruction pointer.
          */
@@ -168,7 +171,7 @@ public abstract class StackFrameWalker {
             if (targetMethod == null) {
                 return CalleeKind.NATIVE;
             }
-            if (targetMethod.isTrapStub()) {
+            if (targetMethod.is(TrapStub)) {
                 return CalleeKind.TRAP_STUB;
             }
             if (targetMethod.isTrampoline()) {
@@ -234,7 +237,6 @@ public abstract class StackFrameWalker {
     private Purpose purpose = null;
     private Pointer currentAnchor;
     private StackFrame calleeStackFrame;
-    private Pointer trapState;
 
     /**
      * Walks a thread's stack.
@@ -261,7 +263,6 @@ public abstract class StackFrameWalker {
         current.fp = fp;
         current.isTopFrame = true;
 
-        this.trapState = Pointer.zero();
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
@@ -269,7 +270,7 @@ public abstract class StackFrameWalker {
 
         while (!current.sp.isZero()) {
             Pointer adjustedIP;
-            if (!isTopFrame && Platform.platform().instructionSet().offsetToReturnPC == 0) {
+            if (!isTopFrame && Platform.platform().isa.offsetToReturnPC == 0) {
                 // Adjust the current IP to ensure it is within the call instruction of the current frame.
                 // This ensures we will always get the correct method, even if the call instruction was the
                 // last instruction in a method and calls a method never expected to return (such as a call
@@ -296,11 +297,6 @@ public abstract class StackFrameWalker {
                 if (!walkFrame(current, callee, targetMethod, purpose, context)) {
                     break;
                 }
-
-                // clear the trap state if we didn't just walk over the trap stub
-                if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
-                    trapState = Pointer.zero();
-                }
             } else {
                 // did not find target method => in native code
                 if (purpose == INSPECTING) {
@@ -310,7 +306,9 @@ public abstract class StackFrameWalker {
                     }
                 } else if (purpose == RAW_INSPECTING) {
                     final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                    if (!stackFrameVisitor.visitFrame(null, current.ip, current.fp, current.sp, isTopFrame)) {
+                    current.targetMethod = null;
+                    current.isTopFrame = isTopFrame;
+                    if (!stackFrameVisitor.visitFrame(current, callee)) {
                         break;
                     }
                 }
@@ -327,22 +325,22 @@ public abstract class StackFrameWalker {
                     }
 
                     ClassMethodActor lastJavaCalleeMethodActor = calleeMethod.classMethodActor();
-                    if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
-                        if (lastJavaCalleeMethodActor.isTrapStub()) {
-                            Pointer anchor = nextNativeStubAnchor();
-                            if (!anchor.isZero()) {
-                                // This can only occur in the inspector and implies that execution is in
-                                // Trap.trapStub() as a result a trap or signal while execution was in
-                                // native code.
-                                advanceFrameInNative(anchor, purpose);
-                            } else {
-                                // This can only occur in the inspector and implies that execution is in the platform specific
-                                // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
-                                // particular, the return instruction pointer slot has not been updated with the instruction
-                                // pointer at which the fault occurred.
-                                break;
-                            }
-                        } else if (!advanceVmEntryPointFrame(calleeMethod)) {
+                    if (calleeMethod.is(TrapStub)) {
+                        Pointer anchor = nextNativeStubAnchor();
+                        if (!anchor.isZero()) {
+                            // This can only occur in the Inspector and implies that execution is in
+                            // the trap stub as a result a trap or signal while execution was in
+                            // native code.
+                            advanceFrameInNative(anchor, purpose);
+                        } else {
+                            // This can only occur in the inspector and implies that execution is in the platform specific
+                            // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
+                            // particular, the return instruction pointer slot has not been updated with the instruction
+                            // pointer at which the fault occurred.
+                            break;
+                        }
+                    } else if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
+                        if (!advanceVmEntryPointFrame(calleeMethod)) {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor == null) {
@@ -381,7 +379,7 @@ public abstract class StackFrameWalker {
         } else if (purpose == Purpose.RAW_INSPECTING) {
             // walk the frame for inspect (compiled frames)
             RawStackFrameVisitor visitor = (RawStackFrameVisitor) context;
-            proceed = visitor.visitFrame(current.targetMethod(), current.ip(), current.sp(), current.sp(), current.isTopFrame());
+            proceed = visitor.visitFrame(current, callee);
         }
         // in any case, advance to the next frame
         targetMethod.advance(current);
@@ -428,7 +426,7 @@ public abstract class StackFrameWalker {
     private void checkVmEntrypointCaller(TargetMethod lastJavaCallee, final TargetMethod targetMethod) {
         if (lastJavaCallee != null && lastJavaCallee.classMethodActor() != null) {
             final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
-            if (classMethodActor.isVmEntryPoint() && !classMethodActor.isTrapStub()) {
+            if (classMethodActor.isVmEntryPoint()) {
                 Log.print("Caller of VM entry point (@VM_ENTRY_POINT annotated method) \"");
                 Log.print(lastJavaCallee.regionName());
                 Log.print("\" is not native code: ");
@@ -664,7 +662,6 @@ public abstract class StackFrameWalker {
 
         current.reset();
         callee.reset();
-        trapState = Pointer.zero();
         purpose = null;
         defaultStackUnwindingContext.stackPointer = Pointer.zero();
         defaultStackUnwindingContext.throwable = null;
@@ -694,26 +691,6 @@ public abstract class StackFrameWalker {
             callee.copyFrom(current);
         }
         current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer());
-    }
-
-    /**
-     * Records the trap state when walking a trap frame. This information can be subsequently {@linkplain #trapState()
-     * accessed} when walking the frame in which the trap occurred.
-     *
-     * @param trapState the state pertinent to a trap
-     */
-    public void setTrapState(Pointer trapState) {
-        this.trapState = trapState;
-    }
-
-    /**
-     * Gets the state stored in the trap frame just below the frame currently being walked (i.e. the frame in which the
-     * trap occurred).
-     *
-     * @return {@link Pointer#zero()} if the current frame is not a frame in which a trap occurred
-     */
-    public Pointer trapState() {
-        return trapState;
     }
 
     /**
@@ -827,6 +804,32 @@ public abstract class StackFrameWalker {
         }
     }
 
+    /**
+     * Extracts a list of {@link CiDebugInfo} objects from a list of real stack frames.
+     *
+     * @param stackFrames a list of stack frames {@linkplain StackFrameWalker#frames(List, Pointer, Pointer, Pointer)
+     *            gathered} during a walk of a thread's stack
+     * @return an array of {@link CiDebugInfo} objects derived from {@code stackFrames}
+     */
+    public static CiDebugInfo[] extractDebugInfoStack(List<StackFrame> stackFrames) {
+        List<CiDebugInfo> elements = new ArrayList<CiDebugInfo>();
+        for (StackFrame stackFrame : stackFrames) {
+            if (stackFrame instanceof AdapterStackFrame) {
+                continue;
+            }
+            final TargetMethod targetMethod = stackFrame.targetMethod();
+            if (targetMethod == null || targetMethod.classMethodActor() == null) {
+                // native frame or stub frame without a class method actor
+                continue;
+            }
+            CiDebugInfo info = targetMethod.getDebugInfo(stackFrame.ip, false);
+            if (info != null) {
+                elements.add(info);
+            }
+        }
+        return (CiDebugInfo[]) elements.toArray(new CiDebugInfo[elements.size()]);
+    }
+
     public abstract Word readWord(Address address, int offset);
     public abstract byte readByte(Address address, int offset);
     public abstract int readInt(Address address, int offset);
@@ -834,26 +837,8 @@ public abstract class StackFrameWalker {
     /**
      * Reads the value of a given VM thread local from the safepoint-enabled thread locals.
      *
-     * @param local the VM thread local to read
-     * @return the value (as a word) of {@code local} in the safepoint-enabled thread locals
-     */
-    public abstract Word readWord(VmThreadLocal local);
-
-    /**
-     * Reads the value of a given VM thread local from the safepoint-enabled thread locals.
-     *
-     * @param local the VM thread local to read
+     * @param tl the VM thread local to read
      * @return the value (as a pointer) of {@code local} in the safepoint-enabled thread locals
      */
-    public Pointer readPointer(VmThreadLocal local) {
-        return readWord(local).asPointer();
-    }
-
-    /**
-     * Updates the stack walker's frame and stack pointers with those specified by the target ABI (use the ABI stack and frame pointers).
-     * This may be necessary when initiating stack walking: by default the stack frame walker uses the stack and frame pointers defined by the CPU.
-     * This is incorrect when the ABI pointers differs from the CPU pointers (like it is the case with some JIT implementation, currently).
-     * @param targetABI
-     */
-    public abstract void useABI(TargetABI targetABI);
+    public abstract Pointer readPointer(VmThreadLocal tl);
 }

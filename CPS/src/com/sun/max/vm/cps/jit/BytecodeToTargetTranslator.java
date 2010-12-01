@@ -41,6 +41,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.jit.*;
@@ -113,7 +114,8 @@ public abstract class BytecodeToTargetTranslator {
      */
     protected final int[] bytecodeToTargetCodePositionMap;
 
-    protected boolean[] blockStarts;
+    protected final boolean[] blockStarts;
+    protected boolean[] exceptionHandlers;
     protected int numberOfBlocks;
     private int previousBytecode = -1;
 
@@ -164,6 +166,15 @@ public abstract class BytecodeToTargetTranslator {
             this.branchTargets = null;
         }
         adapterGenerator = AdapterGenerator.forCallee(classMethodActor, CallEntryPoint.JIT_ENTRY_POINT);
+
+        ExceptionHandlerEntry[] exceptionHandlers = codeAttribute.exceptionHandlerTable();
+        if (exceptionHandlers.length != 0) {
+            this.exceptionHandlers = new boolean[code.length];
+            for (ExceptionHandlerEntry e : exceptionHandlers) {
+                this.exceptionHandlers[e.handlerPosition()] = true;
+            }
+        }
+
     }
 
     public abstract TargetABI targetABI();
@@ -180,6 +191,9 @@ public abstract class BytecodeToTargetTranslator {
 
         if (Bytecodes.isBlockEnd(previousBytecode)) {
             startBlock(opcodePosition);
+            if (exceptionHandlers != null && exceptionHandlers[opcodePosition]) {
+                emitHandlerEntry();
+            }
         }
         previousBytecode = representativeOpcode;
     }
@@ -282,6 +296,9 @@ public abstract class BytecodeToTargetTranslator {
      * @param template the compiled code to emit
      */
     protected void emitAndRecordStops(TargetMethod template) {
+//        if (template.numberOfDirectCalls() > 0) {
+//            alignTemplateWithPatchableSite(template);
+//        }
         stops.add(template, codeBuffer.currentPosition(), opcodeBci);
         codeBuffer.emit(template);
     }
@@ -301,6 +318,7 @@ public abstract class BytecodeToTargetTranslator {
         assert template.numberOfSafepoints() == 0;
         assert template.numberOfStopPositions() == 1;
         assert template.referenceMaps() == null || Bytes.areClear(template.referenceMaps());
+        alignDirectBytecodeCall(template, callee);
         int stopPosition = codeBuffer.currentPosition() + template.stopPosition(0);
         stops.add(new BytecodeDirectCall(stopPosition, opcodeBci, callee));
     }
@@ -415,6 +433,8 @@ public abstract class BytecodeToTargetTranslator {
     protected abstract void fixTableSwitch(TableSwitch tableSwitch);
 
     protected abstract void fixLookupSwitch(LookupSwitch lookupSwitch);
+
+    protected abstract void alignDirectBytecodeCall(TargetMethod template, ClassMethodActor callee);
 
     public void setGenerated(
             TargetMethod targetMethod,
@@ -653,14 +673,6 @@ public abstract class BytecodeToTargetTranslator {
     }
 
     public void generate() {
-//        try {
-        generate0();
-//        } catch (Throwable e) {
-//            throw (InternalError) new InternalError("Error translating " + classMethodActor.compilee().toStackTraceElement(bci) + errorSuffix()).initCause(e);
-//        }
-    }
-
-    public void generate0() {
         bci = 0;
         while (bci < code.length) {
             opcodeBci = bci;
@@ -1068,6 +1080,11 @@ public abstract class BytecodeToTargetTranslator {
             assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
             emitAndRecordStops(template);
         }
+    }
+
+    public void emitHandlerEntry() {
+        final TargetMethod template = getCode(LOAD_EXCEPTION);
+        emitAndRecordStops(template);
     }
 
     /**

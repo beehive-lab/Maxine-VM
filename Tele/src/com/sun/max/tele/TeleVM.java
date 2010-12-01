@@ -69,6 +69,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.hosted.*;
 import com.sun.max.vm.tele.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -110,6 +111,7 @@ import com.sun.max.vm.value.*;
  * @author Thomas Wuerthinger
  * @author Hannes Payer
  * @author Mick Jordan
+ * @author Laurent Daynes
  */
 public abstract class TeleVM implements MaxVM {
 
@@ -309,11 +311,11 @@ public abstract class TeleVM implements MaxVM {
 
     /**
      * Create the correct instance of {@link TeleChannelProtocol} based on {@link #targetLocation} and
-     * {@link OperatingSystem}.
+     * {@link OS}.
      *
-     * @param operatingSystem
+     * @param os
      */
-    private void setTeleChannelProtocol(OperatingSystem operatingSystem) {
+    private void setTeleChannelProtocol(OS os) {
         if (mode == Mode.IMAGE) {
             teleChannelProtocol = new ReadOnlyTeleChannelProtocol();
             return;
@@ -323,7 +325,7 @@ public abstract class TeleVM implements MaxVM {
          * com.sun.max.tele.debug.<ospackage>.<os><kind>TeleChannelProtocol, where Kind == Native for LOCAL, TCP for
          * REMOTE and Dump for FILE. os is sanitized to conform to standard class naming rules. E.g. SOLARIS -> Solaris
          */
-        final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() +
+        final String className = "com.sun.max.tele.debug." + os.asPackageName() + "." + os.className +
                         targetLocation.kind.classNameComponent + "TeleChannelProtocol";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -401,6 +403,11 @@ public abstract class TeleVM implements MaxVM {
             sourcepath = sourcepath.prepend(new Classpath(sourcepathList.toArray(new String[sourcepathList.size()])));
         }
         checkClasspath(sourcepath);
+        String heap = options.heapOption.getValue();
+
+        if (heap != null) {
+            System.setProperty(TeleHeap.HEAP_ADDRESS_PROPERTY, heap);
+        }
 
         switch (mode) {
             case CREATE:
@@ -429,7 +436,7 @@ public abstract class TeleVM implements MaxVM {
                  * AND the boot heap will contain references to the dynamic heap.
                  * So the delicate dance that us normally performed when setting up the
                  * TeleClassRegistry is neither entirely necessary nor sufficient.
-                 * The is handled by doing two passes over the class registry and
+                 * This is handled by doing two passes over the class registry and
                  * deferring resolution of those references that are outside the boot heap
                  * until the second pass, after the TeleHeap is fully initialized.
                  * We also need to explicitly refresh the threads and update state.
@@ -445,11 +452,6 @@ public abstract class TeleVM implements MaxVM {
                 break;
 
             case IMAGE:
-                String heap = options.heapOption.getValue();
-                if (heap != null) {
-                    assert System.getProperty(ReadOnlyTeleProcess.HEAP_PROPERTY) == null;
-                    System.setProperty(ReadOnlyTeleProcess.HEAP_PROPERTY, heap);
-                }
                 vm = createReadOnly(bootImageFile, sourcepath);
                 vm.updateVMCaches();
         }
@@ -491,8 +493,7 @@ public abstract class TeleVM implements MaxVM {
                         bootImageConfig.jitCompilerPackage,
                         null,
                         bootImageConfig.compilationPackage,
-                        bootImageConfig.trampolinePackage,
-                        bootImageConfig.targetABIsPackage, bootImageConfig.runPackage);
+                        bootImageConfig.runPackage);
         vm = new MaxineVM(config);
         MaxineVM.set(vm);
         config.loadAndInstantiateSchemes(bootImageConfig.vmSchemes());
@@ -513,8 +514,8 @@ public abstract class TeleVM implements MaxVM {
         initializeVM(bootImage.vmConfiguration);
 
         TeleVM teleVM = null;
-        final OperatingSystem operatingSystem = platform().operatingSystem;
-        final String className = "com.sun.max.tele.debug." + operatingSystem.asPackageName() + "." + operatingSystem.asClassName() + "TeleVM";
+        final OS os = platform().os;
+        final String className = "com.sun.max.tele.debug." + os.asPackageName() + "." + os.className + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
             final Constructor< ? > cons = klass.getDeclaredConstructor(new Class[] {File.class, BootImage.class, Classpath.class, String[].class});
@@ -620,19 +621,25 @@ public abstract class TeleVM implements MaxVM {
 
     private List<MaxVMStateListener> vmStateListeners = new CopyOnWriteArrayList<MaxVMStateListener>();
 
-    private List<MaxGCStartedListener> gcStartedListeners = new CopyOnWriteArrayList<MaxGCStartedListener>();
+    /**
+     * Dispatcher for GC start events.
+     */
+    private VMEventDispatcher<MaxGCStartedListener> gcStartedListeners;
 
     /**
-     * Active breakpoint that triggers at start of GC if {@link gcStartedListeners} is non-empty; null if no listeners.
+     * Dispatcher for GC completion events.
      */
-    private MaxBreakpoint gcStartedBreakpoint = null;
-
-    private List<MaxGCCompletedListener> gcCompletedListeners = new CopyOnWriteArrayList<MaxGCCompletedListener>();
+    private VMEventDispatcher<MaxGCCompletedListener> gcCompletedListeners;
 
     /**
-     * An always active breakpoint that triggers at end of GC if {@link gcCompletedListeners} is non-empty; null if no listeners.
+     * Dispatcher for thread entry events (i.e., when a {@link VmThread} enters its run method).
      */
-    private MaxBreakpoint gcCompletedBreakpoint = null;
+    private VMEventDispatcher<MaxVMThreadEntryListener> threadEntryListeners;
+
+    /**
+     * Dispatcher for thread detaching events (i.e., when a {@link VmThread} has detached  itself from the {@link VmThreadMap#ACTIVE}  list of threads).
+     */
+    private VMEventDispatcher<MaxVMThreadDetachedListener> threadDetachListeners;
 
     private final TeleProcess teleProcess;
 
@@ -692,6 +699,12 @@ public abstract class TeleVM implements MaxVM {
 
     private final TimedTrace updateTracer;
 
+    private final InvalidReferencesLogger invalidReferencesLogger;
+
+    public InvalidReferencesLogger invalidReferencesLogger() {
+        return invalidReferencesLogger;
+    }
+
     /**
      * A lock designed to keep all non-thread-safe client calls from being handled during the VM setup/execute/refresh cycle.
      */
@@ -723,7 +736,7 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        setTeleChannelProtocol(platform().operatingSystem);
+        setTeleChannelProtocol(platform().os);
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
 
@@ -744,7 +757,7 @@ public abstract class TeleVM implements MaxVM {
         final TeleReferenceScheme teleReferenceScheme = (TeleReferenceScheme) vmConfig().referenceScheme();
         teleReferenceScheme.setTeleVM(this);
 
-        if (!tryLock()) {
+        if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             TeleError.unexpected("unable to lock during creation");
         }
         this.teleFields = new TeleFields(this);
@@ -763,6 +776,35 @@ public abstract class TeleVM implements MaxVM {
         this.bytecodeBreakpointManager = new TeleBytecodeBreakpoint.BytecodeBreakpointManager(this);
         this.teleBreakpointManager = new TeleBreakpointManager(this, this.bytecodeBreakpointManager);
         this.watchpointManager = teleProcess.getWatchpointManager();
+        this.invalidReferencesLogger = new InvalidReferencesLogger(this);
+
+        this.gcStartedListeners = new VMEventDispatcher<MaxGCStartedListener>(teleMethods.gcStarted(), "before gc begins") {
+            @Override
+            protected void listenerDo(MaxThread thread, MaxGCStartedListener listener) {
+                listener.gcStarted();
+            }
+        };
+
+        this.gcCompletedListeners = new VMEventDispatcher<MaxGCCompletedListener>(teleMethods.gcCompleted(), "after gc completion") {
+            @Override
+            protected void listenerDo(MaxThread thread, MaxGCCompletedListener listener) {
+                listener.gcCompleted();
+            }
+        };
+
+        this.threadEntryListeners =  new VMEventDispatcher<MaxVMThreadEntryListener>(teleMethods.vmThreadRun(), "at VmThread entry") {
+            @Override
+            protected void listenerDo(MaxThread thread, MaxVMThreadEntryListener listener) {
+                listener.entered(thread);
+            }
+        };
+
+        this.threadDetachListeners =  new VMEventDispatcher<MaxVMThreadDetachedListener>(teleMethods.vmThreadDetached(), "after VmThread detach") {
+            @Override
+            protected void listenerDo(MaxThread thread, MaxVMThreadDetachedListener listener) {
+                listener.detached(thread);
+            }
+        };
 
         tracer.end(null);
     }
@@ -780,7 +822,7 @@ public abstract class TeleVM implements MaxVM {
      * @see #lock
      */
     public final void updateVMCaches() {
-        if (!tryLock()) {
+        if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             TeleError.unexpected("TeleVM unable to acquire VM lock for update");
         }
         try {
@@ -910,79 +952,35 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
-        assert listener != null;
-        gcStartedListeners.add(listener);
-        if (!gcStartedListeners.isEmpty() && gcStartedBreakpoint == null) {
-            final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
-
-                public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-                    Trace.line(TRACE_VALUE, tracePrefix() + " updating GCStartedListeners");
-                    for (MaxGCStartedListener listener : gcStartedListeners) {
-                        listener.gcStarted();
-                    }
-                    return false;
-                }
-            };
-            try {
-                gcStartedBreakpoint = teleProcess.targetBreakpointManager().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
-                gcStartedBreakpoint.setDescription("Internal breakpoint, just after start of GC, to notify listeners");
-            } catch (MaxVMBusyException maxVMBusyException) {
-                gcStartedListeners.remove(listener);
-                throw maxVMBusyException;
-            }
-        }
+        gcStartedListeners.add(listener, teleProcess);
     }
 
     public void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
-        assert listener != null;
         gcStartedListeners.remove(listener);
-        if (gcStartedListeners.isEmpty() && gcStartedBreakpoint != null) {
-            try {
-                gcStartedBreakpoint.remove();
-            } catch (MaxVMBusyException maxVMBusyException) {
-                gcStartedListeners.add(listener);
-                throw maxVMBusyException;
-            }
-            gcStartedBreakpoint = null;
-        }
+    }
+
+    public void addThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException {
+        threadEntryListeners.add(listener, teleProcess);
+    }
+
+    public void addThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException {
+        threadDetachListeners.add(listener, teleProcess);
+    }
+
+    public void removeThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException {
+        threadEntryListeners.remove(listener);
+    }
+
+    public void removeThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException {
+        threadDetachListeners.remove(listener);
     }
 
     public void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
-        assert listener != null;
-        gcCompletedListeners.add(listener);
-        if (!gcCompletedListeners.isEmpty() && gcCompletedBreakpoint == null) {
-            final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
-
-                public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-                    Trace.line(TRACE_VALUE, tracePrefix() + " updating GCCompletedListeners");
-                    for (MaxGCCompletedListener listener : gcCompletedListeners) {
-                        listener.gcCompleted();
-                    }
-                    return false;
-                }
-            };
-            try {
-                gcCompletedBreakpoint = teleProcess.targetBreakpointManager().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
-                gcCompletedBreakpoint.setDescription("Internal breakpoint, just after end of GC, to notify listeners");
-            } catch (MaxVMBusyException maxVMBusyException) {
-                gcCompletedListeners.remove(listener);
-                throw maxVMBusyException;
-            }
-        }
+        gcCompletedListeners.add(listener, teleProcess);
     }
 
     public void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
-        assert listener != null;
         gcCompletedListeners.remove(listener);
-        if (gcCompletedListeners.isEmpty() && gcCompletedBreakpoint != null) {
-            try {
-                gcCompletedBreakpoint.remove();
-            } catch (MaxVMBusyException maxVMBusyException) {
-                gcCompletedListeners.add(listener);
-                throw maxVMBusyException;
-            }
-            gcCompletedBreakpoint = null;
-        }
     }
 
     public final MaxMemoryRegion findMemoryRegion(Address address) {
@@ -1015,6 +1013,16 @@ public abstract class TeleVM implements MaxVM {
         return lock.tryLock();
     }
 
+    public final boolean tryLock(int maxTrials) {
+        int trials = 0;
+        while (!vm().tryLock()) {
+            if (++trials > maxTrials) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Determines whether the calling thread holds the VM lock.
      * <br>
@@ -1044,8 +1052,10 @@ public abstract class TeleVM implements MaxVM {
         lock.unlock();
     }
 
+    private static final int DEFAULT_MAX_LOCK_TRIALS = 100;
+
     public void acquireLegacyVMAccess() throws MaxVMBusyException {
-        if (!tryLock()) {
+        if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             throw new MaxVMBusyException();
         }
     }
@@ -1405,7 +1415,7 @@ public abstract class TeleVM implements MaxVM {
         int offset = teleFields().String_offset.readInt(stringReference);
         final int count = teleFields().String_count.readInt(stringReference);
         final char[] chars = new char[count];
-        final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
+        final ArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
         for (int i = 0; i < count; i++) {
             chars[i] = charArrayLayout.getChar(valueReference, offset);
             offset++;
@@ -1435,7 +1445,7 @@ public abstract class TeleVM implements MaxVM {
             int offset = stringRef.readInt(teleFields.String_offset.fieldActor().offset());
             final int count = stringRef.readInt(teleFields.String_count.fieldActor().offset());
             final char[] chars = new char[count];
-            final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
+            final ArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
             for (int i = 0; i < count; i++) {
                 chars[i] = charArrayLayout.getChar(valueRef, offset);
                 offset++;
@@ -1475,7 +1485,7 @@ public abstract class TeleVM implements MaxVM {
         if (!fieldValue.isZero()) {
             // Assert that this points to an array of references
             final RemoteTeleReference arrayReference = createTemporaryRemoteTeleReference(fieldValue);
-            final int length = vmConfig().layoutScheme().arrayHeaderLayout.readLength(arrayReference);
+            final int length = vmConfig().layoutScheme().arrayLayout.readLength(arrayReference);
 
             // Read the references as words to avoid using too much machinery
             for (int index = 0; index < length; index++) {
@@ -1701,6 +1711,9 @@ public abstract class TeleVM implements MaxVM {
     public void advanceToJavaEntryPoint() throws IOException {
         final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
         final MachineCodeLocation entryLocation = codeManager().createMachineCodeLocation(startEntryAddress, "vm start address");
+
+
+
         try {
             runToInstruction(entryLocation, true, false);
         } catch (Exception exception) {

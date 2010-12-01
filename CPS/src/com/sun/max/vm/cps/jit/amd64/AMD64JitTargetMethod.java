@@ -29,12 +29,13 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.cps.target.amd64.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.type.*;
 
@@ -78,17 +79,27 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
 
     @Override
     public final int registerReferenceMapSize() {
-        return AMD64TargetMethod.registerReferenceMapSize();
+        return AMD64TargetMethodUtil.registerReferenceMapSize();
     }
 
     @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        AMD64TargetMethod.patchCall32Site(this, callOffset, callEntryPoint);
+    public boolean isPatchableCallSite(Address callSite) {
+        return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+    }
+
+    @Override
+    public final void fixupCallSite(int callOffset, Address callEntryPoint) {
+        AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+    }
+
+    @Override
+    public final void patchCallSite(int callOffset, Address callEntryPoint) {
+        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethod.forwardTo(this, newTargetMethod);
+        AMD64TargetMethodUtil.forwardTo(this, newTargetMethod);
     }
 
     /**
@@ -245,9 +256,9 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             // ExceptionDispatcher.
             // Compute the offset to the first stack slot of the Java Stack: frame size - (space for locals + saved RBP
             // + space of the first slot itself).
-            Pointer catcherStackPointer = localVariablesBase.minus(sizeOfNonParameterLocals() + JitStackFrameLayout.JIT_SLOT_SIZE);
+            Pointer catcherStackPointer = localVariablesBase.minus(sizeOfNonParameterLocals());
             // Push the null object on top of the stack first
-            catcherStackPointer.writeReference(0, null);
+          //catcherStackPointer.writeReference(0, Reference.zero());
 
             // found an exception handler, and thus we are done with the stack walker
             stackFrameWalker.reset();
@@ -335,7 +346,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     private void prepareTrampolineRefMap(Cursor caller, StackReferenceMapPreparer preparer) {
         // prepare the reference map for the parameters passed by the current (caller) frame.
         // the call was unresolved and hit a trampoline, so compute the refmap from the signature of
-        // the called method by looking at the bytecode of the caller method--how ugly...
+        // the called method by looking at the bytecode of the caller method
         final int bytecodePosition = bytecodePositionForCallSite(caller.ip());
         final CodeAttribute codeAttribute = classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool;
@@ -355,6 +366,12 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
                 final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
                 final Kind parameterKind = parameter.toKind();
                 if (parameterKind.isReference) {
+                    if (Heap.traceRootScanning()) {
+                        Log.print("    parameter ");
+                        Log.print(i);
+                        Log.print(", type: ");
+                        Log.println(parameter.string);
+                    }
                     preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
                 }
                 int parameterSlots = (!parameterKind.isCategory1) ? 2 : 1;
@@ -364,6 +381,10 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             // Finally deal with the receiver (if any)
             if (!isInvokestatic) {
                 // Mark the slot for the receiver as it is not covered by the method signature:
+                if (Heap.traceRootScanning()) {
+                    Log.print("    receiver, type: ");
+                    Log.println(methodConstant.holder(constantPool).string);
+                }
                 preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
             }
         }

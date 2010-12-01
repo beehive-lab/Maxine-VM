@@ -20,10 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import java.lang.reflect.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -39,30 +35,37 @@ public class IRScope {
     public final IRScope caller;
     public final RiMethod method;
     public final int level;
-    final int callerBCI;
     CiCodePos callerCodeSite;
 
-    FrameState callerState;
-    int numberOfLocks;
+    /**
+     * The frame state at the call site of this scope's caller or {@code null}
+     * if this is not a nested scope.
+     */
+    public final FrameState callerState;
 
-    int lockStackSize;
+    /**
+     * The maximum number of locks held in this scope at any one time
+     * (c.f. maxStack and maxLocals of the Code attribute in a class file).
+     */
+    int maxLocks;
 
-    BitMap storesInLoops;
+    CiBitMap storesInLoops;
 
-    public IRScope(IRScope caller, int callerBCI, RiMethod method, int osrBCI) {
+    public IRScope(IRScope caller, FrameState callerState, RiMethod method, int osrBCI) {
         this.caller = caller;
-        this.callerBCI = callerBCI;
+        this.callerState = callerState;
         this.method = method;
         this.level = caller == null ? 0 : 1 + caller.level;
     }
 
     /**
-     * Sets the minimum number of locks that are necessary for this context.
-     * @param size the number of locks required
+     * Updates the maximum number of locks held in this scope at any one time.
+     *
+     * @param locks a lock count that will replace the current {@linkplain #maxLocks() max locks} for this scope if it is greater
      */
-    public void setMinimumNumberOfLocks(int size) {
-        if (size > numberOfLocks) {
-            numberOfLocks = size;
+    public void updateMaxLocks(int locks) {
+        if (locks > maxLocks) {
+            maxLocks = locks;
         }
     }
 
@@ -70,24 +73,16 @@ public class IRScope {
      * Gets the number of locks in this IR scope.
      * @return the number of locks
      */
-    public final int numberOfLocks() {
-        return numberOfLocks;
+    public final int maxLocks() {
+        return maxLocks;
     }
 
     /**
-     * Gets the bytecode index of the callsite that called this method.
+     * Gets the bytecode index of the call site that called this method.
      * @return the call site's bytecode index
      */
     public final int callerBCI() {
-        return callerBCI;
-    }
-
-    /**
-     * Gets the value stack at the caller of this scope.
-     * @return the value stack at the point of this call
-     */
-    public final FrameState callerState() {
-        return callerState;
+        return callerState == null ? -1 : callerState.bci;
     }
 
     /**
@@ -103,19 +98,11 @@ public class IRScope {
      * whether a phi instruction is required for each local variable.
      * @return the phi bitmap for this IR scope
      */
-    public final BitMap getStoresInLoops() {
+    public final CiBitMap getStoresInLoops() {
         return storesInLoops;
     }
 
-    /**
-     * Sets the caller state for this IRScope.
-     * @param callerState the new caller state
-     */
-    public final void setCallerState(FrameState callerState) {
-        this.callerState = callerState;
-    }
-
-    public final void setStoresInLoops(BitMap storesInLoops) {
+    public final void setStoresInLoops(CiBitMap storesInLoops) {
         this.storesInLoops = storesInLoops;
     }
 
@@ -124,42 +111,13 @@ public class IRScope {
         if (caller == null) {
             return "root-scope: " + method;
         } else {
-            return "inlined-scope: " + method + " [caller bci: " + callerBCI + "]";
+            return "inlined-scope: " + method + " [caller bci: " + callerState.bci + "]";
         }
-    }
-
-    /**
-     * Computes the size of the lock stack and saves it in a field of this scope.
-     */
-    public final void computeLockStackSize() {
-        if (!C1XOptions.OptInlineExcept) {
-            lockStackSize = 0;
-            return;
-        }
-        // (ds) This calculation seems bogus to me. It's computing the stack depth of the closest caller
-        // that has no exception handlers. If I understand how this value is used, I think the correct
-        // thing to compute is the stack depth of the closest inlined call site not covered by an
-        // exception handler.
-        IRScope curScope = this;
-        // Synchronized methods are implemented with a synthesized exception handler
-        while (curScope != null && (curScope.method.exceptionHandlers().length > 0 || Modifier.isSynchronized(curScope.method.accessFlags()))) {
-            curScope = curScope.caller;
-        }
-        lockStackSize = curScope == null ? 0 : curScope.callerState() == null ? 0 : curScope.callerState().stackSize();
-    }
-
-    /**
-     * Gets the lock stack size. The method {@link #computeLockStackSize()} has to be called for this value to be valid.
-     * @return the lock stack size.
-     */
-    public int lockStackSize() {
-        assert lockStackSize >= 0;
-        return lockStackSize;
     }
 
     public CiCodePos callerCodeSite() {
         if (caller != null && callerCodeSite == null) {
-            callerCodeSite = caller.toCodeSite(callerBCI);
+            callerCodeSite = caller.toCodeSite(callerBCI());
         }
         return callerCodeSite;
     }

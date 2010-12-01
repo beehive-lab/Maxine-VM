@@ -1996,6 +1996,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             default: {
                 throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
             }
+
+            case BREAKPOINT_TRAP: {
+                ProgramWarning.message("ignoring breakpoint_trap in " + this.methodTranslation.classMethodActor());
+                break;
+            }
+
             // Checkstyle: resume
         }
         return true;

@@ -36,7 +36,7 @@ import com.sun.max.vm.hosted.*;
 
 public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocolAdaptor implements TeleChannelProtocol {
 
-    protected int threadLocalsAreaSize;
+    protected int tlaSize;
     public boolean bigEndian;
     protected RandomAccessFile dumpRaf;
     protected ELFHeader header;
@@ -63,8 +63,8 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
-        this.threadLocalsAreaSize = threadLocalsAreaSize;
+    public boolean initialize(int tlaSize, boolean bigEndian) {
+        this.tlaSize = tlaSize;
         this.bigEndian = bigEndian;
         return true;
     }
@@ -181,6 +181,11 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
 
     @Override
     public long getBootHeapStart() {
+        // Check if an option has specified the heap address.
+        final long heapAddress = TeleHeap.heapAddressOption();
+        if (heapAddress != 0) {
+            return heapAddress;
+        }
         if (true) {
             return getBootHeapStartHack();
         } else {
@@ -258,7 +263,7 @@ public class ELFDumpTeleChannelProtocolAdaptor extends TeleChannelDataIOProtocol
     }
 
     @Override
-    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
+    public int gatherThreads(long tlaList, long primordialETLA) {
         inappropriate("gatherThreads");
         return 0;
     }

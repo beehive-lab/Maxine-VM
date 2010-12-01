@@ -20,9 +20,9 @@
  */
 package com.sun.max.asm.gen.cisc.x86;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
@@ -30,8 +30,8 @@ import com.sun.max.program.*;
  */
 public abstract class X86Assembly<Template_Type extends X86Template> extends Assembly<Template_Type> {
 
-    public X86Assembly(InstructionSet instructionSet, Class<Template_Type> templateType) {
-        super(instructionSet, templateType);
+    public X86Assembly(ISA isa, Class<Template_Type> templateType) {
+        super(isa, templateType);
     }
 
     @Override

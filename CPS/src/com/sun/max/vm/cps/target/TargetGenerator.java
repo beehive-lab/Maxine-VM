@@ -20,13 +20,13 @@
  */
 package com.sun.max.vm.cps.target;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.ir.*;
 
 public abstract class TargetGenerator extends IrGenerator<RuntimeCompilerScheme, CPSTargetMethod> {
 
-    public TargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, InstructionSet instructionSet) {
-        super(dynamicCompilerScheme, instructionSet.name());
+    public TargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, ISA isa) {
+        super(dynamicCompilerScheme, isa.name());
     }
 }

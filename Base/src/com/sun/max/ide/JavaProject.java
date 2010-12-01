@@ -25,7 +25,7 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.program.*;
-import com.sun.max.program.Classpath.*;
+import com.sun.max.program.Classpath.Entry;
 
 /**
  * Software project-dependent configuration. This is all derived from the
@@ -57,7 +57,7 @@ public final class JavaProject {
     public static final String TEST_SOURCE_DIRECTORY_NAME = "test";
 
     /**
-     * Gets the paths on which all the class files produced by the current Java project can be found.
+     * Gets the paths on which all the class files referenced by the current Java project can be found.
      *
      * @param includeDependencies  if true, the returned path includes the location of the
      *                             class files produced by each of the projects that the current
@@ -67,8 +67,7 @@ public final class JavaProject {
         ArrayList<Entry> classPathEntries = new ArrayList<Entry>();
         for (Entry entry : Classpath.fromSystem().entries()) {
             if (entry.isDirectory()) {
-                final String packageName = MaxPackage.class.getPackage().getName();
-                final File file = new File(entry.path(), packageName.replace('.', File.separatorChar));
+                final File file = new File(entry.path());
                 if (file.exists() && file.isDirectory() && !classPathEntries.contains(entry)) {
                     classPathEntries.add(entry);
                     if (!includeDependencies) {
@@ -90,12 +89,51 @@ public final class JavaProject {
         return new Classpath(classPathEntries);
     }
 
-    /**
-     * @return the first entry in the {@link Classpath#fromSystem system classpath} that contains a {@code com/sun/max}
-     *         subdirectory
+    /** Get the first entry in the {@link Classpath#fromSystem system classpath} that is a project directory.
+     * @return see above
      */
     public static File findClassesOnClasspath() {
         return getClassPath(false).entries().get(0).file();
+    }
+
+    /**
+     * Gets the root directory of the Maxine repository, i.e. the parent of all the project directories.
+     * This can be specified explicitly with the {@value IDE#MAX_PROJECT_DIRECTORY_PROPERTY}
+     * or is computed by finding the first project in the {@link Classpath#fromSystem system classpath}  containing
+     * a "com/sun/max" package.
+     * @return a {@link File} for the Maxine root directory
+     */
+    public static File findMaxineRootDirectory() {
+        File result = null;
+        final String maxDirProp = System.getProperty(IDE.MAX_PROJECT_DIRECTORY_PROPERTY);
+        if (maxDirProp != null) {
+            result = new File(maxDirProp);
+            if (!(result.isDirectory() && result.exists())) {
+                ProgramError.unexpected(IDE.MAX_PROJECT_DIRECTORY_PROPERTY + " is not a Maxine root directory");
+            }
+        } else {
+            for (Entry entry : Classpath.fromSystem().entries()) {
+                if (entry.isDirectory()) {
+                    final String packageName = MaxPackage.class.getPackage().getName();
+                    final File file = new File(entry.path(), packageName.replace('.', File.separatorChar));
+                    if (file.exists() && file.isDirectory()) {
+                        result = entry.file().getParentFile();
+                        break;
+                    }
+                } else if (entry.isArchive()) {
+                    if (IDE.current() == IDE.NETBEANS) {
+                        if (entry.file().getParentFile().getName().equals("dist")) {
+                            result = entry.file().getParentFile();
+                            break;
+                        }
+                    }
+                }
+            }
+            if (result == null) {
+                ProgramError.unexpected("failed to find the Maxine root directory");
+            }
+        }
+        return result.getParentFile().getAbsoluteFile();
     }
 
     /**

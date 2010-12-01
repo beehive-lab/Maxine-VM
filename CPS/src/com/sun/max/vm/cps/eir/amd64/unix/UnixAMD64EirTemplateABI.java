@@ -25,6 +25,7 @@ import com.sun.max.asm.amd64.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.amd64.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -46,5 +47,15 @@ public class UnixAMD64EirTemplateABI extends UnixAMD64EirJavaABI {
                             VMRegister.Role.ABI_FRAME_POINTER, bp);
         initTargetABI(new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI, registerRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT));
         makeUnallocatable(AMD64EirRegister.General.RBP);
+    }
+
+    /**
+     * Indicate whether this ABI is for templates.
+     * @return true if ABI is for generating templates.
+     */
+    @HOSTED_ONLY
+    @Override
+    public boolean templatesOnly() {
+        return true;
     }
 }

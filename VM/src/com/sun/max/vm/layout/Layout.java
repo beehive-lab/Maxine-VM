@@ -102,56 +102,48 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static ArrayHeaderLayout arrayHeaderLayout() {
-        return layoutScheme().arrayHeaderLayout;
+    public static ArrayLayout arrayLayout() {
+        return layoutScheme().arrayLayout;
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer cellToOrigin(Pointer cell) {
         return generalLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer tupleCellToOrigin(Pointer cell) {
         return tupleLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer hybridCellToOrigin(Pointer cell) {
         return hybridLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer arrayCellToOrigin(Pointer cell) {
-        return arrayHeaderLayout().cellToOrigin(cell);
+        return arrayLayout().cellToOrigin(cell);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer originToCell(Pointer origin) {
         return generalLayout().originToCell(origin);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer tupleOriginToCell(Pointer origin) {
         return tupleLayout().originToCell(origin);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer hybridOriginToCell(Pointer origin) {
         return hybridLayout().originToCell(origin);
     }
 
-    @ACCESSOR(Pointer.class)
     @INLINE
     public static Pointer arrayOriginToCell(Pointer origin) {
-        return arrayHeaderLayout().originToCell(origin);
+        return arrayLayout().originToCell(origin);
     }
 
     @UNSAFE
@@ -229,27 +221,27 @@ public final class Layout {
     @ACCESSOR(Reference.class)
     @INLINE
     public static int readArrayLength(Reference reference) {
-        return arrayHeaderLayout().readLength(reference);
+        return arrayLayout().readLength(reference);
     }
 
     @ACCESSOR(Pointer.class)
     @INLINE
     public static int readArrayLength(Pointer pointer) {
-        return arrayHeaderLayout().readLength(pointer);
+        return arrayLayout().readLength(pointer);
     }
 
     @ACCESSOR(Pointer.class)
     @INLINE
     public static void writeArrayLength(Pointer origin, int hashCode) {
-        arrayHeaderLayout().writeLength(origin, hashCode);
+        arrayLayout().writeLength(origin, hashCode);
     }
 
     /**
-     * @see ArrayHeaderLayout#getArraySize(Kind, int)
+     * @see ArrayLayout#getArraySize(Kind, int)
      */
     @INLINE
     public static Size getArraySize(Kind kind, int length) {
-        return arrayHeaderLayout().getArraySize(kind, length);
+        return arrayLayout().getArraySize(kind, length);
     }
 
     @ACCESSOR(Pointer.class)
@@ -266,7 +258,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static ByteArrayLayout byteArrayLayout() {
+    public static ArrayLayout byteArrayLayout() {
         return layoutScheme().byteArrayLayout;
     }
 
@@ -284,7 +276,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static BooleanArrayLayout booleanArrayLayout() {
+    public static ArrayLayout booleanArrayLayout() {
         return layoutScheme().booleanArrayLayout;
     }
 
@@ -302,7 +294,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static ShortArrayLayout shortArrayLayout() {
+    public static ArrayLayout shortArrayLayout() {
         return layoutScheme().shortArrayLayout;
     }
 
@@ -320,7 +312,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static CharArrayLayout charArrayLayout() {
+    public static ArrayLayout charArrayLayout() {
         return layoutScheme().charArrayLayout;
     }
 
@@ -338,7 +330,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static IntArrayLayout intArrayLayout() {
+    public static ArrayLayout intArrayLayout() {
         return layoutScheme().intArrayLayout;
     }
 
@@ -356,7 +348,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static FloatArrayLayout floatArrayLayout() {
+    public static ArrayLayout floatArrayLayout() {
         return layoutScheme().floatArrayLayout;
     }
 
@@ -374,7 +366,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static LongArrayLayout longArrayLayout() {
+    public static ArrayLayout longArrayLayout() {
         return layoutScheme().longArrayLayout;
     }
 
@@ -392,7 +384,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static DoubleArrayLayout doubleArrayLayout() {
+    public static ArrayLayout doubleArrayLayout() {
         return layoutScheme().doubleArrayLayout;
     }
 
@@ -410,7 +402,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static WordArrayLayout wordArrayLayout() {
+    public static ArrayLayout wordArrayLayout() {
         return layoutScheme().wordArrayLayout;
     }
 
@@ -428,7 +420,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    public static ReferenceArrayLayout referenceArrayLayout() {
+    public static ArrayLayout referenceArrayLayout() {
         return layoutScheme().referenceArrayLayout;
     }
 

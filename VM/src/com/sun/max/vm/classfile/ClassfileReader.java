@@ -69,7 +69,7 @@ public final class ClassfileReader {
     public static final char JAVA_MIN_SUPPORTED_VERSION = 45;
     public static final char JAVA_1_5_VERSION = 49;
     public static final char JAVA_6_VERSION = 50;
-    public static final char JAVA_MAX_SUPPORTED_VERSION = 50;
+    public static final char JAVA_MAX_SUPPORTED_VERSION = 51;
     public static final char JAVA_MAX_SUPPORTED_MINOR_VERSION = 0;
 
     protected final ClassfileStream classfileStream;
@@ -843,7 +843,7 @@ public final class ClassfileReader {
 
                 if (MaxineVM.isHosted()) {
                     if (isClinit) {
-                        // Class initializer's for all Maxine class are run while bootstrapping and do not need to be in the boot image.
+                        // Class initializer's for all Maxine classes are run while bootstrapping and do not need to be in the boot image.
                         // The "max.loader.preserveClinitMethods" system property can be used to override this default behaviour.
                         if (MaxineVM.isMaxineClass(classDescriptor) && System.getProperty("max.loader.preserveClinitMethods") == null) {
                             continue nextMethod;
@@ -905,8 +905,6 @@ public final class ClassfileReader {
                             }
                         } else if (annotation.annotationType() == NEVER_INLINE.class) {
                             flags |= NEVER_INLINE;
-                        } else if (annotation.annotationType() == TRAMPOLINE.class) {
-                            flags |= ((TRAMPOLINE) annotation).invocation().flag;
                         } else if (annotation.annotationType() == INTRINSIC.class) {
                             INTRINSIC intrinsicAnnotation = (INTRINSIC) annotation;
                             intrinsic = intrinsicAnnotation.value();

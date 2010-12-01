@@ -20,8 +20,10 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.program.ProgramError.*;
@@ -42,6 +44,13 @@ import com.sun.max.vm.thread.*;
  * @author Paul Caprioli
  */
 public final class FatalError extends Error {
+
+    private static boolean CoreOnError;
+    private static boolean TrapOnError;
+    static {
+        VMOptions.addFieldOption("-XX:", "CoreOnError", FatalError.class, "Generate core dump on fatal error.", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "TrapOnError", FatalError.class, "Issue breakpoint trap on fatal error.", MaxineVM.Phase.PRISTINE);
+    }
 
     static {
         ProgramError.setHandler(new Handler() {
@@ -119,11 +128,10 @@ public final class FatalError extends Error {
         }
 
         Safepoint.disable();
-        breakpoint();
 
         if (recursionCount >= MAX_RECURSION_COUNT) {
             Log.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
-            MaxineVM.native_exit(11);
+            exit(false, Address.zero());
         }
         recursionCount++;
 
@@ -153,7 +161,7 @@ public final class FatalError extends Error {
         }
 
         if (vmThread != null) {
-            dumpStackAndThreadLocals(VmThread.currentVmThreadLocals(), trappedInNative);
+            dumpStackAndThreadLocals(currentTLA(), trappedInNative);
 
             if (throwable != null) {
                 Log.print("------ Cause Exception ------");
@@ -163,16 +171,33 @@ public final class FatalError extends Error {
         }
 
         if (vmThread == null || trappedInNative || Throw.scanStackOnFatalError.getValue()) {
-            final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord();
+            final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.load(currentTLA());
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }
         Log.unlock(lockDisabledSafepoints);
-        if (!trappedInNative) {
-            MaxineVM.native_exit(11);
+        Address ip = Address.zero();
+        if (trappedInNative && !trapState.isZero())  {
+            ip = TrapStateAccess.instance().getPC(trapState);
         }
-        MaxineVM.native_trap_exit(11, trapState.isZero() ? Address.zero() :  TrapStateAccess.instance().getInstructionPointer(trapState));
+        exit(trappedInNative, ip);
+
         throw null; // unreachable
     }
+
+    @NEVER_INLINE
+    private static void exit(boolean doTrapExit, Address instructionPointer) {
+        if (CoreOnError) {
+            MaxineVM.core_dump();
+        }
+        if (TrapOnError) {
+            Bytecodes.breakpointTrap();
+        }
+        if (doTrapExit) {
+            MaxineVM.native_trap_exit(11, instructionPointer);
+        }
+        MaxineVM.native_exit(11);
+    }
+
 
     /**
      * Causes the VM to print an error message and exit immediately.
@@ -182,7 +207,7 @@ public final class FatalError extends Error {
     @NEVER_INLINE
     public static void crash(String message) {
         Log.println(message);
-        MaxineVM.native_exit(11); // should be symbolic
+        exit(false, Address.zero());
     }
 
     /**
@@ -216,30 +241,30 @@ public final class FatalError extends Error {
     /**
      * Dumps the stack and thread locals of a given thread to the log stream.
      *
-     * @param vmThreadLocals VM thread locals of a thread
+     * @param tla VM thread locals of a thread
      * @param trappedInNative specifies if this is for a thread that trapped in native code
      */
-    static void dumpStackAndThreadLocals(Pointer vmThreadLocals, boolean trappedInNative) {
-        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+    static void dumpStackAndThreadLocals(Pointer tla, boolean trappedInNative) {
+        final VmThread vmThread = VmThread.fromTLA(tla);
         Log.print("------ Stack dump for thread ");
         Log.printThread(vmThread, false);
         Log.println(" ------");
-        if (!trappedInNative && vmThreadLocals == VmThread.currentVmThreadLocals()) {
+        if (!trappedInNative && tla == currentTLA()) {
             Throw.stackDump(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
         } else {
-            Throw.stackDump(null, vmThreadLocals);
+            Throw.stackDump(null, tla);
         }
 
         Log.print("------ Thread locals for thread ");
         Log.printThread(vmThread, false);
         Log.println(" ------");
-        Log.printThreadLocals(vmThreadLocals, true);
+        Log.printThreadLocals(tla, true);
     }
 
     static final class DumpStackOfNonCurrentThread implements Pointer.Procedure {
-        public void run(Pointer vmThreadLocals) {
-            if (SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals) != SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord()) {
-                dumpStackAndThreadLocals(vmThreadLocals, false);
+        public void run(Pointer tla) {
+            if (ETLA.load(tla) != ETLA.load(currentTLA())) {
+                dumpStackAndThreadLocals(tla, false);
             }
         }
     }

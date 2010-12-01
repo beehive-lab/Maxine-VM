@@ -23,10 +23,10 @@ package com.sun.c1x.util;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ir.Value;
-import com.sun.c1x.ir.Instruction;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ri.*;
 
 /**
@@ -330,14 +330,33 @@ public class Util {
     }
 
     /**
-     * Utility method to check that two instructions have the same kind.
-     * @param i the first instruction
-     * @param other the second instruction
-     * @return {@code true} if the instructions have the same kind
+     * Determines if the kinds of two given IR nodes are equal at the {@linkplain #archKind(CiKind) architecture}
+     * level in the context of the {@linkplain C1XCompilation#compilation()} compilation.
      */
-    public static boolean equalKinds(Value i, Value other) {
-        return i.kind == other.kind;
+    public static boolean archKindsEqual(Value i, Value other) {
+        return archKindsEqual(i.kind, other.kind);
     }
+
+    /**
+     * Determines if two given kinds are equal at the {@linkplain #archKind(CiKind) architecture} level
+     * in the context of the {@linkplain C1XCompilation#compilation()} compilation.
+     */
+    public static boolean archKindsEqual(CiKind k1, CiKind k2) {
+        C1XCompilation compilation = C1XCompilation.compilation();
+        assert compilation != null : "missing compilation context";
+        return compilation.archKindsEqual(k1, k2);
+    }
+
+    /**
+     * Translates a given kind to a {@linkplain C1XCompilation#archKind(CiKind) canonical architecture}
+     * kind in the context of the {@linkplain C1XCompilation#compilation() current} compilation.
+     */
+    public static CiKind archKind(CiKind kind) {
+        C1XCompilation compilation = C1XCompilation.compilation();
+        assert compilation != null : "missing compilation context";
+        return compilation.archKind(kind);
+    }
+
 
     /**
      * Checks that two instructions are equivalent, optionally comparing constants.
@@ -370,4 +389,39 @@ public class Util {
         return value == null ? "-" : "" + value.kind.typeChar + value.id();
     }
 
+    /**
+     * Prints a given list of {@link CiDebugInfo} objects to {@link TTY}.
+     * <p>
+     * Sample output:
+     * <pre>
+     *     java.lang.ClassLoader.loadClass(ClassLoader.java:296) [bci: 28], frame-ref-map: {0, 1, 4}, reg-ref-map
+     *         local[0] = stack:0:w
+     *         local[1] = stack:1:w
+     *         local[2] = stack:2:w
+     *         local[3] = stack:4:w
+     * </pre>
+     */
+    public static void printDebugInfoStack(CiDebugInfo[] infos, String indent) {
+        for (CiDebugInfo info : infos) {
+            String indentTwice = indent + indent;
+            StringBuilder refMaps = new StringBuilder();
+            if (info.hasRegisterRefMap()) {
+                refMaps.append(", reg-ref-map:").append(info.registerRefMap);
+            }
+            if (info.hasStackRefMap()) {
+                refMaps.append(", frame-ref-map: ").append(info.frameRefMap);
+            }
+            CiCodePos pos = info.codePos;
+            while (pos != null) {
+                TTY.println(CiUtil.appendLocation(new StringBuilder(indent), pos.method, pos.bci).append(refMaps).toString());
+                refMaps.setLength(0);
+                if (pos instanceof Frame) {
+                    Frame frame = (Frame) pos;
+                    String sep = "\n" + indentTwice;
+                    TTY.println(CiUtil.appendValues(new StringBuilder(indentTwice), frame, sep).toString());
+                }
+                pos = pos.caller;
+            }
+        }
+    }
 }

@@ -24,6 +24,8 @@ import static com.sun.max.asm.x86.Scale.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.bytecode.BranchCondition.*;
 
+import java.io.*;
+
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.Assembler.Directives;
@@ -39,8 +41,10 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.cps.target.amd64.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.jit.Stop.BackwardBranchBytecodeSafepoint;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.layout.*;
@@ -74,7 +78,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected int registerReferenceMapSize() {
-        return AMD64TargetMethod.registerReferenceMapSize();
+        return AMD64TargetMethodUtil.registerReferenceMapSize();
     }
 
     @Override
@@ -113,6 +117,34 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         asm.mov(TARGET_ABI.scratchRegister(), SpecialBuiltin.doubleToLong(argument));
         asm.movdq(TARGET_ABI.floatingPointParameterRegisters.get(parameterIndex), TARGET_ABI.scratchRegister());
         codeBuffer.emitCodeFrom(asm);
+    }
+
+    @Override
+    protected void alignDirectBytecodeCall(TargetMethod template, ClassMethodActor callee) {
+        final int alignment = WordWidth.BITS_64.numberOfBytes - 1;
+        if ((codeBuffer.currentPosition() & alignment) == 0) {
+            // don't bother. CodeBuffer is already aligned.
+            return;
+        }
+        if (template.getTargetMethod(callee) != null) {
+            return;
+        }
+        final int callSitePosition = codeBuffer.currentPosition() + template.stopPosition(0);
+        final int roundDownMask = ~alignment;
+        final int endOfCallSite = callSitePosition + (AMD64EirInstruction.CALL.DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
+        if ((callSitePosition & roundDownMask) == (endOfCallSite & roundDownMask)) {
+            // No need for any alignment.
+            return;
+        }
+        // Only one call site. Don't need to align the template to a 8-byte boundaries. It is enough to ensure that the single call
+        // fits within a cache line (currently conservatively assumed to be 8 bytes).
+        final byte nop = (byte) 0x90;
+        int numBytesNeeded = WordWidth.BITS_64.numberOfBytes - (callSitePosition & alignment);
+        // Emit nop instructions to align up to next Word boundary.
+        while (numBytesNeeded > 0) {
+            codeBuffer.emit(nop);
+            --numBytesNeeded;
+        }
     }
 
     @Override
@@ -407,7 +439,10 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     public Adapter emitPrologue() {
         Adapter adapter = null;
         if (adapterGenerator != null) {
-            adapter = adapterGenerator.adapt(classMethodActor, asm);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(13);
+            adapter = adapterGenerator.adapt(classMethodActor, baos);
+            byte[] prologue = baos.toByteArray();
+            asm.emitByteArray(prologue, 0, prologue.length);
         }
 
         // method entry point: setup a regular frame
@@ -431,7 +466,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
          * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
          */
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        TARGET_ABI = Utils.cast(type, vmConfig().targetABIsScheme().jitABI);
+        TARGET_ABI = Utils.cast(type, TargetABIsScheme.INSTANCE.jitABI);
         // Initialization of the few hand-crafted templates
         final byte rel8 = 0;
         final int rel32 = 0;

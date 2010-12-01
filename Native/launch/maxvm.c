@@ -43,6 +43,7 @@ typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
  * http://www.opensource.apple.com/darwinsource/10.5.4/dyld-96.2/src/dyldInitialization.cpp
  */
 #define MAIN_EXTRA_ARGS , char *envp[], char *apple[]
+#define PROG_PATH apple[0]
 
 /*
  * CoreFoundation will be (indirectly) loaded when libjava.jnilib is dynamically linked
@@ -60,6 +61,7 @@ const CFNullRef initializeCoreFoundationOnMainThread;
 #else
 #define LIBRARY_NAME "libjvm.so"
 #define MAIN_EXTRA_ARGS
+#define PROG_PATH argv[0]
 #endif
 
 
@@ -67,7 +69,7 @@ const CFNullRef initializeCoreFoundationOnMainThread;
  * A simple launcher.
  */
 int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
-    char *programPath = argv[0];
+    char *programPath = PROG_PATH;
 	char *p = programPath;
     int prefixLength = 0;
     while (*p) {
@@ -95,9 +97,9 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
             exit(1);
         }
         putenv(dyldLibraryPathDef);
-        execv(argv[0], argv);
+        execv(programPath, argv);
 
-        fprintf(stderr, "execv failed in maxvm: %s", strerror(errno));
+        fprintf(stderr, "execv(%s, ...) failed in maxvm: %s\n", programPath, strerror(errno));
         exit(1);
     }
     char *libraryPath = LIBRARY_NAME;
@@ -120,7 +122,7 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
 	}
 
 #if os_DARWIN
-	return (*maxine)(argc, argv, apple[0]);
+	return (*maxine)(argc, argv, programPath);
 #else
     free(libraryPath);
 	return (*maxine)(argc, argv, NULL);

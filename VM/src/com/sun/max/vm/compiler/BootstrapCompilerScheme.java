@@ -73,10 +73,4 @@ public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
      * @return {@code true} if this compiler supports the specified built-in; {@code false} otherwise
      */
     boolean isBuiltinImplemented(Builtin builtin);
-
-    /**
-     * The compiler's static trampoline. Calls to unresolved static methods will be linked to call
-     * this method in order to resolve and/or compile their targets.
-     */
-    void staticTrampoline();
 }

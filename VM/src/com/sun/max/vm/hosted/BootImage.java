@@ -26,11 +26,10 @@ import static com.sun.max.vm.VMConfiguration.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
-import java.nio.channels.FileChannel.*;
+import java.nio.channels.FileChannel.MapMode;
 import java.util.*;
 
 import com.sun.max.*;
-import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -43,7 +42,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.*;
+import com.sun.max.vm.compiler.CompilationScheme.Static;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
@@ -214,8 +213,6 @@ public class BootImage {
 
         public final int dynamicHeapRegionsArrayFieldOffset;
 
-        public final int auxiliarySpaceSize;
-
         /**
          * Instruct the boot image loader to reserve a range of contiguous virtual space of specified size.
          */
@@ -223,6 +220,8 @@ public class BootImage {
 
         /**
          * Offset to the variable that will hold the address of the virtual space reserved by the boot image loader at boot-load time.
+         *
+         * @see Heap#reservedVirtualSpace
          */
         public final int reservedVirtualSpaceFieldOffset;
 
@@ -235,25 +234,25 @@ public class BootImage {
         /**
          * @see VmThreadMap#ACTIVE
          */
-        public final int threadLocalsListHeadOffset;
+        public final int tlaListHeadOffset;
 
         /**
-         * @see MaxineVM#primordialVmThreadLocals()
+         * @see MaxineVM#primordialETLA
          */
-        public final int primordialThreadLocalsOffset;
+        public final int primordialETLAOffset;
 
         /**
-         * The storage size of one set of VM thread locals.
+         * The size of a TLA.
          */
-        public final int threadLocalsAreaSize;
+        public final int tlaSize;
 
         /**
          * The indexes of the VM thread locals accessed directly by C code.
          */
         public final int SAFEPOINT_LATCH;
-        public final int SAFEPOINTS_ENABLED_THREAD_LOCALS;
-        public final int SAFEPOINTS_DISABLED_THREAD_LOCALS;
-        public final int SAFEPOINTS_TRIGGERED_THREAD_LOCALS;
+        public final int ETLA;
+        public final int DTLA;
+        public final int TTLA;
         public final int NATIVE_THREAD_LOCALS;
         public final int FORWARD_LINK;
         public final int BACKWARD_LINK;
@@ -299,19 +298,18 @@ public class BootImage {
             codeSize = endian.readInt(dataInputStream);
 
             dynamicHeapRegionsArrayFieldOffset = endian.readInt(dataInputStream);
-            auxiliarySpaceSize = endian.readInt(dataInputStream);
             reservedVirtualSpaceSize = endian.readInt(dataInputStream);
             reservedVirtualSpaceFieldOffset = endian.readInt(dataInputStream);
             bootRegionMappingConstraint = endian.readInt(dataInputStream);
-            threadLocalsListHeadOffset = endian.readInt(dataInputStream);
-            primordialThreadLocalsOffset = endian.readInt(dataInputStream);
+            tlaListHeadOffset = endian.readInt(dataInputStream);
+            primordialETLAOffset = endian.readInt(dataInputStream);
 
-            threadLocalsAreaSize = endian.readInt(dataInputStream);
+            tlaSize = endian.readInt(dataInputStream);
 
             SAFEPOINT_LATCH = endian.readInt(dataInputStream);
-            SAFEPOINTS_ENABLED_THREAD_LOCALS = endian.readInt(dataInputStream);
-            SAFEPOINTS_DISABLED_THREAD_LOCALS = endian.readInt(dataInputStream);
-            SAFEPOINTS_TRIGGERED_THREAD_LOCALS = endian.readInt(dataInputStream);
+            ETLA = endian.readInt(dataInputStream);
+            DTLA = endian.readInt(dataInputStream);
+            TTLA = endian.readInt(dataInputStream);
             NATIVE_THREAD_LOCALS = endian.readInt(dataInputStream);
             FORWARD_LINK = endian.readInt(dataInputStream);
             BACKWARD_LINK = endian.readInt(dataInputStream);
@@ -340,7 +338,7 @@ public class BootImage {
             version = VERSION;
             randomID = UUID.randomUUID().hashCode();
             wordSize = platform().wordWidth().numberOfBytes;
-            cacheAlignment = platform().dataModel().cacheAlignment;
+            cacheAlignment = platform().dataModel.cacheAlignment;
             pageSize = platform().pageSize;
             vmRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.MaxineVM_run, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadAddMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_add, CallEntryPoint.C_ENTRY_POINT).toInt();
@@ -355,19 +353,18 @@ public class BootImage {
 
             dynamicHeapRegionsArrayFieldOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "dynamicHeapMemoryRegions");
 
-            auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(heapSize + codeSize);
             reservedVirtualSpaceSize = vmConfiguration.heapScheme().reservedVirtualSpaceSize();
-            reservedVirtualSpaceFieldOffset =  staticFieldPointerOffset(dataPrototype, Heap.class, "reservedVirtualSpace");
+            reservedVirtualSpaceFieldOffset = staticFieldPointerOffset(dataPrototype, Heap.class, "reservedVirtualSpace");
             bootRegionMappingConstraint = vmConfiguration.heapScheme().bootRegionMappingConstraint().ordinal();
-            threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
-            primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
+            tlaListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("tlaListHead").offset();
+            primordialETLAOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialETLA");
 
-            threadLocalsAreaSize = VmThreadLocal.threadLocalsAreaSize().toInt();
+            tlaSize = VmThreadLocal.tlaSize().toInt();
 
             SAFEPOINT_LATCH = VmThreadLocal.SAFEPOINT_LATCH.index;
-            SAFEPOINTS_ENABLED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index;
-            SAFEPOINTS_DISABLED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index;
-            SAFEPOINTS_TRIGGERED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index;
+            ETLA = VmThreadLocal.ETLA.index;
+            DTLA = VmThreadLocal.DTLA.index;
+            TTLA = VmThreadLocal.TTLA.index;
             NATIVE_THREAD_LOCALS = VmThreadLocal.NATIVE_THREAD_LOCALS.index;
             FORWARD_LINK = VmThreadLocal.FORWARD_LINK.index;
             BACKWARD_LINK = VmThreadLocal.BACKWARD_LINK.index;
@@ -415,9 +412,9 @@ public class BootImage {
      */
     public static final class StringInfo extends FieldSection {
         public final String buildLevelName;
-        public final String processorModelName;
-        public final String instructionSetName;
-        public final String operatingSystemName;
+        public final String cpuName;
+        public final String isaName;
+        public final String osName;
 
         public final String referencePackageName;
         public final String layoutPackageName;
@@ -426,24 +423,22 @@ public class BootImage {
         public final String compilerPackageName;
         public final String compilationPackageName;
         public final String jitPackageName;
-        public final String trampolinePackageName;
-        public final String targetABIsPackageName;
         public final String runPackageName;
 
         public BuildLevel buildLevel() {
             return Enums.fromString(BuildLevel.class, buildLevelName);
         }
 
-        public ProcessorModel processorModel() {
-            return Enums.fromString(ProcessorModel.class, processorModelName);
+        public CPU cpu() {
+            return Enums.fromString(CPU.class, cpuName);
         }
 
-        public InstructionSet instructionSet() {
-            return Enums.fromString(InstructionSet.class, instructionSetName);
+        public ISA isa() {
+            return Enums.fromString(ISA.class, isaName);
         }
 
-        public OperatingSystem operatingSystem() {
-            return Enums.fromString(OperatingSystem.class, operatingSystemName);
+        public OS os() {
+            return Enums.fromString(OS.class, osName);
         }
 
         public VMPackage referencePackage() {
@@ -477,14 +472,6 @@ public class BootImage {
             return (VMPackage) MaxPackage.fromName(jitPackageName);
         }
 
-        public VMPackage trampolinePackage() {
-            return (VMPackage) MaxPackage.fromName(trampolinePackageName);
-        }
-
-        public VMPackage targetABIsPackage() {
-            return (VMPackage) MaxPackage.fromName(targetABIsPackageName);
-        }
-
         public VMPackage runPackage() {
             return (VMPackage) MaxPackage.fromName(runPackageName);
         }
@@ -492,9 +479,9 @@ public class BootImage {
         private StringInfo(InputStream inputStream, int offset) throws IOException, Utf8Exception {
             super(offset);
             buildLevelName = Utf8.readString(inputStream);
-            processorModelName = Utf8.readString(inputStream);
-            instructionSetName = Utf8.readString(inputStream);
-            operatingSystemName = Utf8.readString(inputStream);
+            cpuName = Utf8.readString(inputStream);
+            isaName = Utf8.readString(inputStream);
+            osName = Utf8.readString(inputStream);
 
             referencePackageName = Utf8.readString(inputStream);
             layoutPackageName = Utf8.readString(inputStream);
@@ -503,17 +490,15 @@ public class BootImage {
             compilerPackageName = Utf8.readString(inputStream);
             compilationPackageName = Utf8.readString(inputStream);
             jitPackageName =  Utf8.readString(inputStream);
-            trampolinePackageName = Utf8.readString(inputStream);
-            targetABIsPackageName = Utf8.readString(inputStream);
             runPackageName = Utf8.readString(inputStream);
         }
 
         private StringInfo(VMConfiguration vmConfiguration, int offset) {
             super(offset);
             buildLevelName = vmConfiguration.buildLevel.name();
-            processorModelName = platform().processorModel().name();
-            instructionSetName = platform().instructionSet().name();
-            operatingSystemName = platform().operatingSystem.name();
+            cpuName = platform().cpu.name();
+            isaName = platform().isa.name();
+            osName = platform().os.name();
 
             referencePackageName = vmConfiguration.referencePackage.name();
             layoutPackageName = vmConfiguration.layoutPackage.name();
@@ -527,9 +512,6 @@ public class BootImage {
             } else {
                 jitPackageName = vmConfiguration.jitCompilerPackage.name();
             }
-
-            trampolinePackageName = vmConfiguration.trampolinePackage.name();
-            targetABIsPackageName = vmConfiguration.targetABIsPackage.name();
             runPackageName = vmConfiguration.runPackage.name();
         }
 
@@ -539,9 +521,9 @@ public class BootImage {
 
         public void check() throws BootImageException {
             BootImageException.check(buildLevel() != null, "unknown build level: " + buildLevelName);
-            BootImageException.check(processorModel() != null, "unknown processor model: " + processorModelName);
-            BootImageException.check(instructionSet() != null, "unknown instruction set: " + instructionSetName);
-            BootImageException.check(operatingSystem() != null, "unknown operating system: " + operatingSystemName);
+            BootImageException.check(cpu() != null, "unknown processor model: " + cpuName);
+            BootImageException.check(isa() != null, "unknown instruction set: " + isaName);
+            BootImageException.check(os() != null, "unknown operating system: " + osName);
 
             checkPackage(referencePackageName);
             checkPackage(layoutPackageName);
@@ -549,8 +531,6 @@ public class BootImage {
             checkPackage(monitorPackageName);
             checkPackage(compilerPackageName);
             checkPackage(jitPackageName);
-            checkPackage(trampolinePackageName);
-            checkPackage(targetABIsPackageName);
             checkPackage(runPackageName);
         }
 
@@ -671,8 +651,7 @@ public class BootImage {
                 BootImageException.check((codeOffset() % header.pageSize) == 0, "code offset is not page-size aligned");
 
                 final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.cacheAlignment);
-                final ProcessorKind processorKind = new ProcessorKind(stringInfo.processorModel(), stringInfo.instructionSet(), dataModel);
-                final Platform platform = new Platform(processorKind, stringInfo.operatingSystem(), header.pageSize);
+                final Platform platform = new Platform(stringInfo.cpu(), stringInfo.isa(), dataModel, stringInfo.os(), header.pageSize);
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,
@@ -684,8 +663,7 @@ public class BootImage {
                                                       stringInfo.jitPackage(),
                                                       null,
                                                       stringInfo.compilationPackage(),
-                                                      stringInfo.trampolinePackage(),
-                                                      stringInfo.targetABIsPackage(), stringInfo.runPackage());
+                                                      stringInfo.runPackage());
 
                 fileInputStream.skip(header.heapSize + header.codeSize);
                 int trailerOffset = codeOffset() + header.codeSize;

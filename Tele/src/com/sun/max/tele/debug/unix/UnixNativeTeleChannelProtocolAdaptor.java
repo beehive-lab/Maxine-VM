@@ -57,9 +57,9 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
     }
 
     @Override
-    public boolean initialize(int threadLocalsAreaSize, boolean bigEndian) {
+    public boolean initialize(int tlaSize, boolean bigEndian) {
         this.bigEndian = bigEndian;
-        natives.teleInitialize(threadLocalsAreaSize);
+        natives.teleInitialize(tlaSize);
         return true;
     }
 
@@ -223,15 +223,15 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
     }
 
     @Override
-    public boolean gatherThreads(Object teleDomain, Object threadSequence, long threadLocalsList, long primordialThreadLocals) {
-        natives.gatherThreads(processHandle, teleDomain, threadSequence, threadLocalsList, primordialThreadLocals);
+    public boolean gatherThreads(Object teleDomain, Object threadSequence, long tlaList, long primordialETLA) {
+        natives.gatherThreads(processHandle, teleDomain, threadSequence, tlaList, primordialETLA);
         return true;
     }
 
 
     @Override
-    public int gatherThreads(long threadLocalsList, long primordialThreadLocals) {
-        TeleError.unexpected("TeleChannelProtocol.gatherThreads(int, int) should not be called in this configuration");
+    public int gatherThreads(long tlaList, long primordialETLA) {
+        ProgramError.unexpected("TeleChannelProtocol.gatherThreads(int, int) should not be called in this configuration");
         return 0;
     }
 

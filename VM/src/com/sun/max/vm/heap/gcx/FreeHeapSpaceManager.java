@@ -55,11 +55,6 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
                         "Below this size, the space is ignored (dark matter)"),
                         MaxineVM.Phase.PRISTINE);
 
-    public static final VMBooleanXXOption traceTLABOption =  register(new VMBooleanXXOption("-XX:-",
-                    "TraceTLAB",
-                    "Trace TLAB allocation Do nothing for PRODUCT images"),
-                    MaxineVM.Phase.PRISTINE);
-
     private static boolean TraceSweep = false;
     private static boolean TraceTLAB = false;
 
@@ -641,7 +636,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         smallObjectAllocator.hostInitialize();
     }
 
-    public void initialize(Address start, Size initSize, Size maxSize) {
+    public void initialize(HeapScheme heapScheme, Address start, Size initSize, Size maxSize) {
         if (!committedHeapSpace.reserve(start, maxSize)) {
             MaxineVM.reportPristineMemoryFailure("object heap", "reserve", maxSize);
         }
@@ -653,7 +648,7 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
         log2FirstBinSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
         TraceSweep = MaxineVM.isDebug() ? traceSweepingOption.getValue() : false;
-        TraceTLAB = MaxineVM.isDebug() ? traceTLABOption.getValue() : false;
+        TraceTLAB = heapScheme instanceof HeapSchemeWithTLAB && HeapSchemeWithTLAB.traceTLAB();
 
         // Dumb refill policy. Doesn't matter in the long term as we'll switch to a first fit linear allocator with overflow allocator on the side.
         LinearSpaceRefillManager refillManager = (LinearSpaceRefillManager) smallObjectAllocator.refillManager();

@@ -39,8 +39,9 @@ import com.sun.max.ins.type.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.*;
-import com.sun.max.tele.debug.TeleWatchpoint.*;
+import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.tele.debug.TeleWatchpoint.DuplicateWatchpointException;
+import com.sun.max.tele.debug.TeleWatchpoint.TooManyWatchpointsException;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -51,7 +52,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -882,11 +883,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * Action:  makes visible and highlights the {@link ThreadLocalsInspector}.
      */
-    final class ViewVmThreadLocalsAction extends InspectorAction {
+    final class ViewTLAAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "VM thread locals";
 
-        ViewVmThreadLocalsAction(String actionTitle) {
+        ViewTLAAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
         }
@@ -902,13 +903,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private InspectorAction viewVmThreadLocals = new ViewVmThreadLocalsAction(null);
+    private InspectorAction viewTLA = new ViewTLAAction(null);
 
     /**
      * @return an Action that will make visible the {@link ThreadsInspector}.
      */
     public final InspectorAction viewVmThreadLocals() {
-        return viewVmThreadLocals;
+        return viewTLA;
     }
 
     /**

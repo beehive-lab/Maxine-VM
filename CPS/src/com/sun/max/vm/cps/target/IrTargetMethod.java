@@ -26,7 +26,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 
 /**
  * This class exists solely as a work around when running the IR tests where compilation stops at some IR level
@@ -49,12 +49,17 @@ public class IrTargetMethod extends CPSTargetMethod {
     final IrMethod irMethod;
 
     IrTargetMethod(IrMethod irMethod) {
-        super(irMethod.classMethodActor());
+        super(irMethod.classMethodActor(), null);
         this.irMethod = irMethod;
     }
 
     @Override
     protected CPSTargetMethod createDuplicate() {
+        throw ProgramError.unexpected();
+    }
+
+    @Override
+    public boolean isPatchableCallSite(Address callSite) {
         throw ProgramError.unexpected();
     }
 
@@ -69,7 +74,12 @@ public class IrTargetMethod extends CPSTargetMethod {
     }
 
     @Override
-    public void patchCallSite(int callOffset, Word callTarget) {
+    public void fixupCallSite(int callOffset, Address callTarget) {
+        throw ProgramError.unexpected();
+    }
+
+    @Override
+    public void patchCallSite(int callOffset, Address callTarget) {
         throw ProgramError.unexpected();
     }
 

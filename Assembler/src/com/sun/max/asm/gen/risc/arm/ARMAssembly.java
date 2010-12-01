@@ -23,9 +23,9 @@ package com.sun.max.asm.gen.risc.arm;
 
 import java.util.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
+import com.sun.max.lang.*;
 
 /**
  *
@@ -37,7 +37,7 @@ public final class ARMAssembly extends RiscAssembly {
     public static final ARMAssembly ASSEMBLY = new ARMAssembly();
 
     private ARMAssembly() {
-        super(InstructionSet.ARM, RiscTemplate.class);
+        super(ISA.ARM, RiscTemplate.class);
     }
 
     @Override

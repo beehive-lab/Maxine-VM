@@ -80,23 +80,22 @@ typedef struct guestvm_memory_handler *ProcessHandle;
 #endif
 
 /**
- * Searches the thread locals list in the VM's address space for an entry 'tl' such that:
+ * Searches the thread locals list in the VM's address space for an entry 'tla' such that:
  *
- *   tl.stackBase <= stackPointer && stackPointer < (tl.stackBase + tl.stackSize)
+ *   tla.stackBase <= stackPointer && stackPointer < (tla.stackBase + tla.stackSize)
  *
  * If such an entry is found, then its contents are copied from the VM to the structs pointed to by 'tlCopy' and 'ntlCopy'.
  *
  * @param ph a platform specific process handle
- * @param threadLocalsList the head of the thread locals list in the VM's address space
- * @param primordialThreadLocals the primordial thread locals in the VM's address space
+ * @param tlaList the head of the thread locals list in the VM's address space
+ * @param primordialETLA the primordial TLA in the VM's address space
  * @param stackPointer the stack pointer to search with
- * @param tlCopy pointer to storage for a set of thread locals into which the found entry
- *        (if any) will be copied from the VM's address space
+ * @param tlaCopy pointer to a TLA which the found entry (if any) will be copied from the VM's address space
  * @param ntlCopy pointer to storage for a NativeThreadLocalsStruct into which the native thread locals of the found entry
  *        (if any) will be copied from the VM's address space
  * @return the entry that was found, NULL otherwise
  */
-extern ThreadLocals teleProcess_findThreadLocals(ProcessHandle ph, Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy);
+extern TLA teleProcess_findTLA(ProcessHandle ph, Address tlaList, Address primordialETLA, Address stackPointer, TLA tlaCopy, NativeThreadLocals ntlCopy);
 
 /**
  * Makes the upcall to TeleProcess.jniGatherThread
@@ -106,9 +105,9 @@ extern ThreadLocals teleProcess_findThreadLocals(ProcessHandle ph, Address threa
  * @param localHandle the debug handle to a thread (which may differ from the native thread handle in the VM's address space)
  * @param state the execution state of the thread
  * @param instructionPointer
- * @param tl the thread locals found based on the stack pointer of the thread or NULL if no such thread locals were found
+ * @param tla the TLA found based on the stack pointer of the thread or NULL if no such thread locals were found
  */
-extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadList, jlong localHandle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl);
+extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadList, jlong localHandle, ThreadState_t state, jlong instructionPointer, TLA tla);
 
 /**
  * Copies bytes from the tele process into a given direct ByteBuffer or byte array.

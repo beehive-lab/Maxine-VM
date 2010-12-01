@@ -169,7 +169,7 @@ public abstract class BytecodeAssembler {
     }
 
     /**
-     * Adjusts the current stack height. Clients should call this to re-adjust the stack tdepth racking at
+     * Adjusts the current stack height. Clients should call this to re-adjust the stack depth tracking at
      * the beginning of basic blocks as this assembler only accurately tracks the stack depth within
      * a basic block.
      *
@@ -523,6 +523,15 @@ public abstract class BytecodeAssembler {
     public void if_acmpeq(Label label) {
         branch(IF_ACMPEQ, label);
         decStack2();
+    }
+
+    public void anewarray(int typeRefIndex) {
+        emitOpcode(ANEWARRAY);
+        emitCPIndex2(typeRefIndex);
+    }
+
+    public void anewarray(ClassConstant type) {
+        anewarray(constantPoolEditor.indexOf(type, true));
     }
 
     public void invokestatic(int methodRefIndex, int numArgSlots, int numReturnValueSlots) {
@@ -886,7 +895,7 @@ public abstract class BytecodeAssembler {
 
     public void aastore() {
         emitOpcode(AASTORE);
-        adjustStack(3);
+        adjustStack(-3);
     }
 
     public void iadd() {
@@ -1048,4 +1057,50 @@ public abstract class BytecodeAssembler {
             }
         });
     }
+
+    public void caload() {
+        emitOpcode(CALOAD);
+        decStack();
+    }
+
+    public void castore() {
+        emitOpcode(CASTORE);
+        adjustStack(-3);
+    }
+
+    public void dup2() {
+        emitOpcode(DUP2);
+        adjustStack(2);
+    }
+
+    public void i2c() {
+        emitOpcode(I2C);
+    }
+
+    public void iinc(int index, int cnst) {
+        emitOpcode(IINC);
+        // UNSAFE for wide instructions - wide is currently not supported anyway
+        emitCPIndex1(index);
+        emitByte(cnst);
+    }
+
+    public void isub() {
+        emitOpcode(ISUB);
+        decStack();
+    }
+
+    public static final int T_BOOLEAN   = 4;
+    public static final int T_CHAR      = 5;
+    public static final int T_FLOAT     = 6;
+    public static final int T_DOUBLE    = 7;
+    public static final int T_BYTE      = 8;
+    public static final int T_SHORT     = 9;
+    public static final int T_INT       = 10;
+    public static final int T_LONG      = 11;
+
+    public void newarray(int type) {
+        emitOpcode(NEWARRAY);
+        emitByte(type);
+    }
+
 }

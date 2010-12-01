@@ -34,10 +34,9 @@ public abstract class AMD64EirABIsScheme extends EirABIsScheme<AMD64EirRegister>
                     EirABI<AMD64EirRegister> nativeABI,
                     EirABI<AMD64EirRegister> j2cFunctionABI,
                     EirABI<AMD64EirRegister> c2jFunctionABI,
-                    EirABI<AMD64EirRegister> trampolineABI,
                     EirABI<AMD64EirRegister> templateABI,
                     EirABI<AMD64EirRegister> treeABI) {
-        super(javaABI, nativeABI, j2cFunctionABI, c2jFunctionABI, trampolineABI, templateABI, treeABI);
+        super(javaABI, nativeABI, j2cFunctionABI, c2jFunctionABI, templateABI, treeABI);
     }
 
     @Override

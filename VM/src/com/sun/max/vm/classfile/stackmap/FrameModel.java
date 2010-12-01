@@ -24,7 +24,7 @@ import com.sun.max.vm.verifier.types.*;
 
 /**
  * A model of frame to which a stack map frame can be {@link StackMapFrame#applyTo(FrameModel) applied}.
- * 
+ *
  * @author Doug Simon
  */
 public interface FrameModel {
@@ -42,7 +42,7 @@ public interface FrameModel {
 
     /**
      * Stores a value to a local variable.
-     * 
+     *
      * @param type
      *            the type of the value being stored to the local variable at {@code index}
      * @param index
@@ -52,7 +52,7 @@ public interface FrameModel {
 
     /**
      * Adjusts the number of {@linkplain #activeLocals() active locals} down by a given amount.
-     * 
+     *
      * @param numberOfLocals
      *            the number local variables whose definitions are to be killed
      */
@@ -65,7 +65,7 @@ public interface FrameModel {
 
     /**
      * Pushes a value to the stack.
-     * 
+     *
      * @param type the type of the value being pushed
      */
     void push(VerificationType type);

@@ -66,4 +66,10 @@ public final class ResolveClass extends StateSplit {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + "(type: " + type + ", portion: " + portion + ")";
+    }
+
 }

@@ -26,7 +26,6 @@ import static com.sun.max.tele.MaxThreadState.*;
 import java.util.*;
 import java.util.logging.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
@@ -129,7 +128,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
         @Override
         public String toString() {
-            return String.format("id=%d, localHandle=0x%08x, handle=%d, stackRegion=%s, threadLocalsAreasRegion=%s", id, localHandle, handle, MaxMemoryRegion.Util.asString(stackRegion), MaxMemoryRegion.Util.asString(threadLocalsRegion));
+            return String.format("id=%d, localHandle=0x%08x, handle=%d, stackRegion=%s, tlasRegion=%s", id, localHandle, handle, MaxMemoryRegion.Util.asString(stackRegion), MaxMemoryRegion.Util.asString(threadLocalsRegion));
         }
     }
 
@@ -152,7 +151,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             final String name = this.entityName + " Locals";
             this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name, params.threadLocalsRegion.start(), params.threadLocalsRegion.size());
         }
-        this.breakpointIsAtInstructionPointer = platform().instructionSet() == InstructionSet.SPARC;
+        this.breakpointIsAtInstructionPointer = platform().isa == ISA.SPARC;
         final String stackName = this.entityName + " Stack";
         this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.size());
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
@@ -401,7 +400,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             final Address address = this.breakpoint.codeLocation().address();
             if (updateInstructionPointer(address)) {
                 teleRegisterSet.setInstructionPointer(address);
-                Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshingBreakpoint (epoc)h=" + teleProcess().epoch() + ") IP updated for " + this);
+                Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
                 TeleError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + address + " was hit: " + this);
             }
@@ -589,19 +588,19 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
         private Value getValueImpl(int slot) {
             TargetLocation l = null;
 
-            if (!(bytecodeLocation instanceof TargetJavaFrameDescriptor)) {
-                final TargetLocation[] targetLocations = stackFrame.targetMethod().abi().getParameterTargetLocations(stackFrame.targetMethod().classMethodActor().getParameterKinds());
-                if (slot >= targetLocations.length) {
-                    return IntValue.from(0xbadbabe);
-                }
-                l = targetLocations[slot];
-            } else {
-                TargetJavaFrameDescriptor descriptor = (TargetJavaFrameDescriptor) bytecodeLocation;
-                if (slot >= descriptor.locals.length) {
-                    return IntValue.from(0xbadbabe);
-                }
-                l = descriptor.locals[slot];
-            }
+//            if (!(bytecodeLocation instanceof TargetJavaFrameDescriptor)) {
+//                final TargetLocation[] targetLocations = stackFrame.targetMethod().abi().getParameterTargetLocations(stackFrame.targetMethod().classMethodActor().getParameterKinds());
+//                if (slot >= targetLocations.length) {
+//                    return IntValue.from(0xbadbabe);
+//                }
+//                l = targetLocations[slot];
+//            } else {
+//                TargetJavaFrameDescriptor descriptor = (TargetJavaFrameDescriptor) bytecodeLocation;
+//                if (slot >= descriptor.locals.length) {
+//                    return IntValue.from(0xbadbabe);
+//                }
+//                l = descriptor.locals[slot];
+//            }
 
             // System.out.println("STACKFRAME ACCESS at " + slot + ", target=" + l);
 

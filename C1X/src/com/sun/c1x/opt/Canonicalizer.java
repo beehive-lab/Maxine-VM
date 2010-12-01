@@ -21,7 +21,6 @@
 package com.sun.c1x.opt;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static java.lang.reflect.Modifier.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -242,7 +241,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 // floating point operations need to be extra careful
             }
         }
-        assert Util.equalKinds(i, canonical);
+        assert Util.archKindsEqual(i, canonical);
     }
 
     private Value reduceIntOp2(Op2 original, Value x, int y) {
@@ -388,6 +387,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 if (CiUtil.isPowerOf2(y)) {
                     return setCanonical(new ShiftOp(target.arch.is64bit() ? LUSHR : IUSHR, x, intInstr(CiUtil.log2(y))));
                 }
+                break;
             }
             case WREMI: {
                 if (y == 1) {
@@ -395,8 +395,14 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
                 if (CiUtil.isPowerOf2(y)) {
                     int mask = (int) y - 1;
+                    if (target.arch.is64bit()) {
+                        Convert l2i = new Convert(L2I, x, CiKind.Int);
+                        addInstr(l2i);
+                        return setCanonical(new LogicOp(IAND, l2i, intInstr(mask)));
+                    }
                     return setCanonical(new LogicOp(CiKind.Int, IAND, x, intInstr(mask)));
                 }
+                break;
             }
             case WREM: {
                 if (y == 1) {
@@ -410,6 +416,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                     int mask = (int) y - 1;
                     return setCanonical(new LogicOp(IAND, x, intInstr(mask)));
                 }
+                break;
             }
         }
         return null;
@@ -452,26 +459,22 @@ public class Canonicalizer extends DefaultValueVisitor {
 
     @Override
     public void visitLoadField(LoadField i) {
+        if (!i.isLoaded() || !C1XOptions.CanonicalizeConstantFields) {
+            return;
+        }
         if (i.isStatic()) {
-            if (i.isLoaded() && C1XOptions.CanonicalizeConstantFields) {
-
-                // only try to canonicalize static field loads
-                RiField field = i.field();
-                if (field.isConstant()) {
-                    if (method.isClassInitializer()) {
-                        // don't do canonicalization in the <clinit> method
-                        return;
-                    }
-
-                    CiConstant value = field.constantValue(null);
-                    if (value != null) {
-                        setConstant(value);
-                    }
+            RiField field = i.field();
+            CiConstant value = field.constantValue(null);
+            if (value != null) {
+                if (method.isClassInitializer()) {
+                    // don't do canonicalization in the <clinit> method
+                    return;
                 }
+                setConstant(value);
             }
         } else {
             RiField field = i.field();
-            if (i.object().isConstant() && field.isConstant()) {
+            if (i.object().isConstant()) {
                 CiConstant value = field.constantValue(i.object().asConstant().asObject());
                 if (value != null) {
                     setConstant(value);
@@ -516,14 +519,12 @@ public class Canonicalizer extends DefaultValueVisitor {
             }
         } else if (array instanceof LoadField) {
             // the array is a load of a field; check if it is a constant
-            RiField field = ((LoadField) array).field();
-            if (field.isConstant() && isStatic(field.accessFlags())) {
-                CiConstant cons = field.constantValue(null);
-                if (cons != null) {
-                    Object obj = cons.asObject();
-                    if (obj != null) {
-                        setIntConstant(Array.getLength(obj));
-                    }
+            LoadField load = (LoadField) array;
+            CiConstant cons = load.constantValue();
+            if (cons != null) {
+                Object obj = cons.asObject();
+                if (obj != null) {
+                    setIntConstant(Array.getLength(obj));
                 }
             }
         } else if (array.isConstant()) {
@@ -657,7 +658,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
             }
         }
-        assert Util.equalKinds(i, canonical);
+        assert Util.archKindsEqual(i, canonical);
     }
 
     @Override
@@ -837,7 +838,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             // folding did not work, try recognizing special intrinsics
             reduceIntrinsic(i);
         }
-        assert Util.equalKinds(i, canonical);
+        assert Util.archKindsEqual(i, canonical);
     }
 
     private void reduceIntrinsic(Intrinsic i) {
@@ -863,7 +864,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 return;
             }
         }
-        assert Util.equalKinds(i, canonical);
+        assert Util.archKindsEqual(i, canonical);
     }
 
     private boolean foldIntrinsic(Intrinsic i) {

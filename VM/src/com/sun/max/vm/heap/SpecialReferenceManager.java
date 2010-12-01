@@ -28,16 +28,14 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * This class implements support for collecting and processing special references
@@ -87,7 +85,12 @@ public class SpecialReferenceManager {
         JavaMonitorManager.bindStickyMonitor(REFERENCE_LOCK);
     }
 
-    private static Reference discoveredList;
+    /**
+     * The head of the list of discovered reference.
+     * Use an opaque pointer to avoid this to be subject to read/write barriers and reference map.
+     * FIXME: maybe using annotation to do this would be better.
+     */
+    private static Pointer discoveredList;
 
     /**
      * This method processes the special reference objects that were
@@ -104,7 +107,8 @@ public class SpecialReferenceManager {
      */
     public static void processDiscoveredSpecialReferences(ReferenceForwarder refForwarder) {
         // the first pass over the list finds the references that have referents that are no longer reachable
-        java.lang.ref.Reference ref = UnsafeCast.asJDKReference(discoveredList.toJava());
+
+        java.lang.ref.Reference ref = UnsafeCast.asJDKReference(Reference.fromOrigin(Layout.cellToOrigin(discoveredList)).toJava());
         java.lang.ref.Reference last = UnsafeCast.asJDKReference(pendingField.getObject(null));
         final boolean isForwardingGC = refForwarder.isForwarding();
 
@@ -151,7 +155,7 @@ public class SpecialReferenceManager {
             }
         }
         TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
-        discoveredList = Reference.fromOrigin(Pointer.zero());
+        discoveredList = Pointer.zero();
 
         // Special reference map of Inspector
         if (Inspectable.isVmInspected()) {
@@ -195,37 +199,42 @@ public class SpecialReferenceManager {
      * reference object. This method checks to see whether the object has been processed previously,
      * and if not, then adds it to the queue to be processed later.
      *
-     * @param ref the reference that has been discovered
+     * @param cell a pointer at the origin of the reference that has been discovered
      */
-    public static void discoverSpecialReference(Reference ref) {
-        if (ref.readReference(nextField.offset()).isZero()) {
+    public static void discoverSpecialReference(Pointer cell) {
+        final Pointer origin = Layout.cellToOrigin(cell);
+
+        if (origin.readWord(nextField.offset()).isZero()) {
             // the "next" field of this object is null, queue it for later processing
             if (MaxineVM.isDebug()) {
-                boolean hasNullDiscoveredField = ref.readReference(discoveredField.offset()).isZero();
-                boolean isHeadOfDiscoveredList = ref.equals(discoveredList);
+                boolean hasNullDiscoveredField = origin.readWord(discoveredField.offset()).isZero();
+                boolean isHeadOfDiscoveredList = cell.equals(discoveredList);
                 if (!(hasNullDiscoveredField && !isHeadOfDiscoveredList)) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Discovered reference ");
-                    Log.print(ref.toOrigin());
+                    Log.print(cell);
                     Log.print(" ");
                     Log.unlock(lockDisabledSafepoints);
                     FatalError.unexpected(": already discovered");
                 }
             }
-            ref.writeReference(discoveredField.offset(), discoveredList);
-            discoveredList = ref;
+            origin.writeWord(discoveredField.offset(), discoveredList);
+            discoveredList = cell;
             if (TraceReferenceGC) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
-                Log.print(ref.toOrigin());
+                Log.print(cell);
                 Log.print(" ");
-                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(ref).toJava());
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(origin).toJava());
                 Log.print(hub.classActor.name.string);
                 Log.println(" to list of discovered references");
                 Log.unlock(lockDisabledSafepoints);
             }
         }
     }
+
+    @ALIAS(declaringClassName = "java.lang.ref.Finalizer")
+    private static native void register(Object finalizee);
 
     /**
      * Registers an object that has a finalizer with the special reference manager.
@@ -234,11 +243,7 @@ public class SpecialReferenceManager {
      */
     public static void registerFinalizee(Object object) {
         if (FINALIZERS_SUPPORTED) {
-            try {
-                ClassRegistry.Finalizer_register_Object.invoke(ReferenceValue.from(object));
-            } catch (Exception e) {
-                FatalError.unexpected("Could not register object for finalization", e);
-            }
+            register(object);
         }
     }
 
@@ -272,25 +277,8 @@ public class SpecialReferenceManager {
      * Start the thread to handle enqueuing weak references.
      */
     private static void startReferenceHandlerThread() {
-        if (VmThread.referenceHandlerThread != null) {
-            // The thread was built into the boot image. We simply need to start it:
-            VmThread.referenceHandlerThread.start0();
-        } else {
-            // Note: this code is partially copied from java.lang.Reference <clinit>
-            // We cannot simply rerun static initialization because it would allocate a new lock object.
-            ThreadGroup tg = VmThread.systemThreadGroup;
-            try {
-                final Thread handler = (Thread) ClassRegistry.ReferenceHandler_init.invokeConstructor(ReferenceValue.from(tg), ReferenceValue.from("Reference Handler")).asObject();
-                /* If there were a special system-only priority greater than
-                 * MAX_PRIORITY, it would be used here
-                 */
-                handler.setPriority(Thread.MAX_PRIORITY);
-                handler.setDaemon(true);
-                handler.start();
-            } catch (Exception e) {
-                throw FatalError.unexpected("Could not start ReferenceHandler thread", e);
-            }
-        }
+        // The thread was built into the boot image. We simply need to start it:
+        VmThread.referenceHandlerThread.start0();
     }
 
     /**
@@ -298,13 +286,8 @@ public class SpecialReferenceManager {
      */
     private static void startFinalizerThread() {
         if (FINALIZERS_SUPPORTED) {
-            if (VmThread.finalizerThread != null) {
-                // The thread was built into the boot image. We simply need to start it:
-                VmThread.finalizerThread.start0();
-            } else {
-                // it is sufficient just to reinitialize the finalizer class
-                JDK.callInitializer(JDK.java_lang_ref_Finalizer.classActor());
-            }
+            // The thread was built into the boot image. We simply need to start it:
+            VmThread.finalizerThread.start0();
         }
     }
 }

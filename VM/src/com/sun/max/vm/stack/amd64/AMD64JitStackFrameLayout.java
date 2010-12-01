@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.stack.amd64;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -106,7 +108,7 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
     public int frameSize() {
         final int numberOfSlots = 1 + numberOfTemplateSlots; // one extra word for the caller RBP
         final int unalignedSize = numberOfSlots * STACK_SLOT_SIZE + sizeOfNonParameterLocals();
-        return JIT_ABI.alignFrameSize(unalignedSize);
+        return target().alignFrameSize(unalignedSize);
     }
 
     @Override

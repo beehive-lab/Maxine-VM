@@ -188,4 +188,8 @@ public class ProgressPrinter {
             }
         }
     }
+
+    public int failed() {
+        return failed;
+    }
 }

@@ -22,9 +22,9 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import java.util.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
+import com.sun.max.lang.*;
 
 /**
  * @author Bernd Mathiske
@@ -37,7 +37,7 @@ public final class SPARCAssembly extends RiscAssembly {
     private static final boolean GENERATING_V9_INSTRUCTIONS = true;
 
     private SPARCAssembly() {
-        super(InstructionSet.SPARC, RiscTemplate.class);
+        super(ISA.SPARC, RiscTemplate.class);
     }
 
     public boolean generatingDeprecatedInstructions() {

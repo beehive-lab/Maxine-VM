@@ -21,6 +21,7 @@
 package com.sun.max.asm;
 
 import com.sun.max.*;
+import com.sun.max.lang.*;
 
 /**
  * @author Bernd Mathiske
@@ -30,7 +31,7 @@ public class AsmPackage extends MaxPackage {
         super();
     }
 
-    public boolean isPartOfAssembler(InstructionSet instructionSet) {
+    public boolean isPartOfAssembler(ISA isa) {
         return false;
     }
 }

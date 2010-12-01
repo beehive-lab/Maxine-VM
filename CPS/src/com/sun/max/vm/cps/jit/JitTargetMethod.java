@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.jit;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.platform.*;
@@ -78,7 +79,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
     protected JitTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor);
+        super(classMethodActor, CallEntryPoint.JIT_ENTRY_POINT);
     }
 
     public int[] bytecodeToTargetCodePositionMap() {
@@ -95,7 +96,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
 
     @HOSTED_ONLY
     @Override
-    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
         final BytecodeVisitor bytecodeVisitor = new InvokedMethodRecorder(classMethodActor, directCalls, virtualCalls, interfaceCalls);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodeVisitor);
         bytecodeScanner.scan(classMethodActor);
@@ -121,7 +122,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
 
     @Override
     public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
-        if (!implicitExceptionPoint && Platform.platform().instructionSet().offsetToReturnPC == 0) {
+        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
             instructionPointer = instructionPointer.minus(1);
         }
         return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
@@ -130,6 +131,15 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     @Override
     public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
         return new BytecodeLocation(classMethodActor(), bytecodePositionFor(stopPosition(stopIndex)));
+    }
+
+    @Override
+    public CiDebugInfo getDebugInfo(Pointer instructionPointer, boolean implicitExceptionPoint) {
+        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
+            instructionPointer = instructionPointer.minus(1);
+        }
+        int bci = bytecodePositionFor(instructionPointer.asPointer());
+        return new CiDebugInfo(new CiCodePos(null, classMethodActor, bci), null, null);
     }
 
     /**
@@ -228,7 +238,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
                 codeOrCodeBuffer,
                 encodedInlineDataDescriptors,
                 jitStackFrameLayout.frameSize(),
-                jitStackFrameLayout.frameReferenceMapSize(), abi
+                jitStackFrameLayout.frameReferenceMapSize()
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
@@ -272,5 +282,10 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
                 this.referenceMapEditor.set(null);
             }
         }
+    }
+
+    @Override
+    public boolean preserveRegistersForLocalExceptionHandler() {
+        return false;
     }
 }

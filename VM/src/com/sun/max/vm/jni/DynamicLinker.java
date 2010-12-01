@@ -21,19 +21,16 @@
 package com.sun.max.vm.jni;
 
 import java.io.*;
-import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Interface to the platform dependent functions for dealing with dynamically loaded libraries and
@@ -189,6 +186,9 @@ public final class DynamicLinker {
         javaHandle = DynamicLinker.load(path + File.separator + System.mapLibraryName("java"));
     }
 
+    @ALIAS(declaringClass = ClassLoader.class)
+    private static native long findNative(ClassLoader loader, String name);
+
     /**
      * Looks up the symbol for a native method.
      *
@@ -202,30 +202,24 @@ public final class DynamicLinker {
         if (MaxineVM.isHosted()) {
             symbolAddress = MethodID.fromMethodActor(classMethodActor);
         } else {
-            try {
-                // First look in the boot image
-                // TODO: This could be removed if ClassLoader.findNative could find symbols in the boot image
-                symbolAddress = lookupSymbol(Word.zero(), symbol);
-                if (symbolAddress.isZero()) {
-                    final ClassLoader classLoader = classMethodActor.holder().classLoader;
-                    if (classLoader == BootClassLoader.BOOT_CLASS_LOADER && !javaHandle.isZero()) {
-                        symbolAddress = lookupSymbol(javaHandle, symbol);
-                        if (!symbolAddress.isZero()) {
-                            return symbolAddress;
-                        }
-                    }
-
-                    // Now look in the native libraries loaded by the class loader of the class in which this native method was declared
-                    symbolAddress = Address.fromLong(ClassRegistry.ClassLoader_findNative.invoke(ReferenceValue.from(classLoader), ReferenceValue.from(symbol)).asLong());
-                    // Now look in the system library path
-                    if (symbolAddress.isZero() && classLoader != null) {
-                        symbolAddress = Address.fromLong(ClassRegistry.ClassLoader_findNative.invoke(ReferenceValue.NULL, ReferenceValue.from(symbol)).asLong());
+            // First look in the boot image
+            // TODO: This could be removed if ClassLoader.findNative could find symbols in the boot image
+            symbolAddress = lookupSymbol(Word.zero(), symbol);
+            if (symbolAddress.isZero()) {
+                final ClassLoader classLoader = classMethodActor.holder().classLoader;
+                if (classLoader == BootClassLoader.BOOT_CLASS_LOADER && !javaHandle.isZero()) {
+                    symbolAddress = lookupSymbol(javaHandle, symbol);
+                    if (!symbolAddress.isZero()) {
+                        return symbolAddress;
                     }
                 }
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw ProgramError.unexpected(e);
+
+                // Now look in the native libraries loaded by the class loader of the class in which this native method was declared
+                symbolAddress = Address.fromLong(findNative(classLoader, symbol));
+                // Now look in the system library path
+                if (symbolAddress.isZero() && classLoader != null) {
+                    symbolAddress = Address.fromLong(findNative(null, symbol));
+                }
             }
             if (symbolAddress.isZero()) {
                 throw new UnsatisfiedLinkError(symbol);

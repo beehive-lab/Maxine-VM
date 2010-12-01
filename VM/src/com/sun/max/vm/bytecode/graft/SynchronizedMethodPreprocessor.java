@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
 /**
  *
  * @author Doug Simon
-s */
+ */
 public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
 
     public SynchronizedMethodPreprocessor(ConstantPoolEditor constantPoolEditor, MethodActor classMethodActor, CodeAttribute codeAttribute) {
@@ -62,10 +62,8 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
 
         final int monitorExitHandlerAddress = currentAddress();
         setStack(1);
-        pop();
         synchronizedMethodTransformer.releaseMonitor();
         final int monitorExitHandlerEndAddress = currentAddress();
-        invokestatic(ExceptionDispatcher.safepointAndLoadExceptionObject, 0, 1);
         athrow();
 
         trackingStack = false;

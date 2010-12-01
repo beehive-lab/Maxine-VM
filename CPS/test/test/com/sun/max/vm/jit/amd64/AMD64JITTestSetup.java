@@ -25,7 +25,7 @@ import junit.framework.*;
 import test.com.sun.max.vm.cps.amd64.*;
 import test.com.sun.max.vm.jit.*;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.jit.*;
@@ -45,7 +45,7 @@ public class AMD64JITTestSetup extends AMD64TranslatorTestSetup implements JITTe
 
     @Override
     protected void initializeVM() {
-        Platform.set(platform().constrainedByInstructionSet(InstructionSet.AMD64));
+        Platform.set(platform().constrainedByInstructionSet(ISA.AMD64));
         VMConfigurator.installStandardJit(BuildLevel.DEBUG);
     }
 

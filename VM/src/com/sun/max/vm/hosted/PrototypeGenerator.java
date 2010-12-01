@@ -21,7 +21,6 @@
 package com.sun.max.vm.hosted;
 
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.hosted.JavaPrototype.*;
 
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
@@ -67,7 +66,6 @@ public final class PrototypeGenerator {
         if (prototypeJit) {
             vmConfig().compilationScheme().setMode(Mode.PROTOTYPE_JIT);
         }
-        javaPrototype().loadCoreJavaPackages();
 
         GraphPrototype graphPrototype;
         int numberOfClassActors = 0;
@@ -102,7 +100,7 @@ public final class PrototypeGenerator {
      */
     DataPrototype createDataPrototype(boolean tree, boolean prototypeJit) {
         final GraphPrototype graphPrototype = createGraphPrototype(tree, prototypeJit);
-        final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null);
+        final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null, threadsOption.getValue());
         return dataPrototype;
     }
 

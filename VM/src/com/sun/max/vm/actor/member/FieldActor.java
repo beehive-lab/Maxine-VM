@@ -554,12 +554,16 @@ public class FieldActor extends MemberActor implements RiField {
     public void setWord(Object obj, Word value) {
         Reference ref = access(obj, Kind.WORD);
         if (isHosted()) {
-            set(obj, value);
+            setWordHosted(obj, value);
         } else {
             ref.writeWord(offset, value);
         }
     }
 
+    @HOSTED_ONLY
+    private void setWordHosted(Object obj, Word value) {
+        set(obj, value);
+    }
 
     /**
      * Analogous to {@link Field#set(Object, Object)} but without the access checks that may raise {@link IllegalAccessException}.
@@ -640,7 +644,14 @@ public class FieldActor extends MemberActor implements RiField {
 
     @Override
     public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-        return toJava().getAnnotation(annotationClass);
+        try {
+            return toJava().getAnnotation(annotationClass);
+        } catch (NoSuchFieldError e) {
+            if (MaxineVM.isHosted()) {
+                return null;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -695,8 +706,8 @@ public class FieldActor extends MemberActor implements RiField {
 
 
     /**
-     * Determines if the value read from this field will always be the same if it is a non-default value for this
-     * field's type.
+     * Determines if the value read from this field will always be the same if
+     * it is a non-default value for this field's type.
      */
     public boolean isConstantWhenNotZero() {
         return isConstantWhenNotZero(flags());
@@ -739,7 +750,7 @@ public class FieldActor extends MemberActor implements RiField {
     }
 
     public final CiConstant constantValue(Object object) {
-        if (isConstant()) {
+        if (isConstant() || isConstantWhenNotZero()) {
             Value v;
             if (isStatic()) {
                 v = constantValue();
@@ -749,7 +760,9 @@ public class FieldActor extends MemberActor implements RiField {
             }
             if (C1XOptions.CanonicalizeFinalFields) {
                 v = getValue(object);
-                return v.asCiConstant();
+                if (!isConstantWhenNotZero() || !v.isZero()) {
+                    return v.asCiConstant();
+                }
             }
         }
         return null;

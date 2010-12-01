@@ -20,12 +20,15 @@
  */
 package com.sun.max.tele.debug;
 
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
@@ -34,7 +37,7 @@ import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.DefaultMethodKey;
 import com.sun.max.vm.compiler.target.*;
@@ -63,7 +66,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     private static final int TRACE_VALUE = 1;
 
     // Traces each compilation completed in the VM
-    private static final int COMPILATION_TRACE_VALUE = 2;
+    private static final int COMPILATION_TRACE_VALUE = 1;
 
     private final BytecodeBreakpointManager bytecodeBreakpointManager;
 
@@ -305,10 +308,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private final String tracePrefix;
 
         // Platform-specific access to method invocation parameters in the VM.
-        private final Symbol parameter0;
-        private final Symbol parameter1;
-        private final Symbol parameter2;
-        private final Symbol parameter3;
+        private final CiRegister parameter0;
+        private final CiRegister parameter1;
+        private final CiRegister parameter2;
+        private final CiRegister parameter3;
 
         /**
          * Map:  method {@link MethodPositionKey} -> existing bytecode breakpoint (whether enabled or not).
@@ -343,11 +346,11 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             final long startTimeMillis = System.currentTimeMillis();
             this.teleTargetBreakpointManager = vm.teleProcess().targetBreakpointManager();
             // Predefine parameter accessors for reading compilation details
-            parameter0 = (Symbol) vmConfig().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(0);
-            parameter1 = (Symbol) vmConfig().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(1);
-            parameter2 = (Symbol) vmConfig().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(2);
-            parameter3 = (Symbol) vmConfig().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(3);
-
+            CiRegister[] args = MaxineVM.vm().registerConfigs.standard.getCallingConventionRegisters(JavaCall, RegisterFlag.CPU);
+            parameter0 = args[0];
+            parameter1 = args[1];
+            parameter2 = args[2];
+            parameter3 = args[3];
             Trace.end(TRACE_VALUE, tracePrefix() + "initializing", startTimeMillis);
         }
 
@@ -675,7 +678,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             final int charsLength = breakpointClassDescriptorsString.length();
             final Reference charArrayReference = vm().teleFields().InspectableCodeInfo_breakpointClassDescriptorCharArray.readReference(vm());
             TeleError.check(charArrayReference != null && !charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
-            final CharArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
+            final ArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
             for (int index = 0; index < charsLength; index++) {
                 charArrayLayout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));
             }

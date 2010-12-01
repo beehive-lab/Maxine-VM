@@ -50,18 +50,6 @@
 
 #define IMAGE_FILE_NAME  "maxine.vm"
 #define DARWIN_STACK_ALIGNMENT ((Address) 16)
-#define ENABLE_CARD_TABLE_VERIFICATION 0
-
-// Size of extra space that is allocated as part of auxiliary space passed to the primordial thread.
-// This space is used to record the address of all the reference fields that are written to. The recorded
-// references are checked against the card table for corresponding dirty cards.
-// Note : The 1 Gb space is just a guess-timate which can hold only 128 Mb of 64 bit references
-
-#if ENABLE_CARD_TABLE_VERIFICATION
-#define REFERENCE_BUFFER_SIZE (1024*1024*1024)
-#else
-#define REFERENCE_BUFFER_SIZE (0)
-#endif
 
 #if os_DARWIN
 static char *_executablePath;
@@ -179,6 +167,8 @@ static void* loadSymbol(void* handle, const char* symbol) {
 
 #if os_DARWIN
 #include <crt_externs.h>
+#elif os_LINUX
+#include <sys/prctl.h>
 #elif os_SOLARIS
 #define _STRUCTURED_PROC 1 /* Use new definitions in procfs.h instead of those in procfs_old.h */
 #include <sys/procfs.h>
@@ -197,6 +187,20 @@ void debugger_initialize() {
 
     char *port = getenv("MAX_AGENT_PORT");
     if (port != NULL) {
+
+#if os_LINUX && defined(PR_SET_PTRACER)
+        /* See info about PR_SET_PTRACER at https://wiki.ubuntu.com/Security/Features#ptrace */
+        char *val = getenv("MAX_AGENT_PID");
+        if (val == NULL) {
+            log_exit(11, "MAX_AGENT_PID must be set to the agent's PID so that ptrace can access the VM process");
+        }
+        long pid = strtol(val, NULL, 10);
+        if (errno != 0) {
+            log_exit(11, "Error converting MAX_AGENT_PID value \"%s\" to a long value: %s", val, strerror(errno));
+        }
+        prctl(PR_SET_PTRACER, pid, 0, 0, 0);
+#endif
+
         char *hostName = "localhost";
 #if log_TELE
         log_println("Opening agent socket connection to %s:%s", hostName, port);
@@ -275,7 +279,6 @@ void* getJMMInterface(int version);
  */
 typedef jint (*VMRunMethod)(
                 Address bootHeapRegionStart,
-                Address auxiliarySpace,
                 void *openDynamicLibrary(char *),
                 void *dlsym(void *, const char *),
                 char *dlerror(void),
@@ -329,7 +332,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     fd = loadImage();
 
-    threadLocals_initialize(image_header()->threadLocalsAreaSize);
+    tla_initialize(image_header()->tlaSize);
 
     debugger_initialize();
 
@@ -337,31 +340,19 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     Address tlBlock = threadLocalsBlock_createForExistingThread(0);
 
-    Address primordial_tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
-    image_write_value(Address, primordialThreadLocalsOffset, primordial_tl);
+    Address primordial_tla = ETLA_FROM_TLBLOCK(tlBlock);
+    image_write_value(Address, primordialETLAOffset, primordial_tla);
 
 #if log_LOADER
-    log_println("primordial thread locals: %p", primordial_tl);
+    log_println("primordial TLA: %p", primordial_tla);
 #endif
 
-    Address auxiliarySpace = 0;
-    if (image_header()->auxiliarySpaceSize != 0) {
-        Size auxiliarySpaceSize = image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE;
-        auxiliarySpace = (Address) malloc(image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
-        if (auxiliarySpace == 0) {
-            log_exit(1, "Failed to allocate %lu bytes of auxiliary space", auxiliarySpaceSize);
-        }
-#if log_LOADER
-        log_println("allocated %lu bytes of auxiliary space at %p\n", image_header()->auxiliarySpaceSize, auxiliarySpace);
-#endif
-        memset((void *) auxiliarySpace, 1, image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
-    }
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM.run(bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, argc=%d, argv=%p)",
-                    image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
+    log_println("entering Java by calling MaxineVM.run(bootHeapRegionStart=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, argc=%d, argv=%p)",
+                    image_heap(), openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
 #endif
-    exitCode = (*method)(image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
+    exitCode = (*method)(image_heap(), openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
@@ -393,6 +384,16 @@ void *native_executablePath() {
 
 void native_exit(jint code) {
     exit(code);
+}
+
+void core_dump() {
+#if !os_GUESTVMXEN
+    log_print("dumping core....\n  heap @ ");
+    log_print_symbol(image_heap());
+    log_print_newline();
+    kill(getpid(), SIGABRT);
+    sleep(3);
+#endif
 }
 
 void native_trap_exit(int code, Address address) {

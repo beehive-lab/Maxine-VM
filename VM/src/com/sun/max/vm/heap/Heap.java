@@ -47,6 +47,10 @@ public final class Heap {
     private Heap() {
     }
 
+    /**
+     * This field is set to a non-zero value by the native code iff the
+     * heap scheme returns a non-zero value for {@linkplain HeapScheme#reservedVirtualSpaceSize()}.
+     */
     private static Address reservedVirtualSpace = Address.zero();
 
     private static final Size MIN_HEAP_SIZE = Size.M.times(4); // To be adjusted
@@ -80,6 +84,28 @@ public final class Heap {
     }
 
     /**
+     * Conveys the initial/max size for the heap. The {@code getXXXSize} methods can be overridden by an environment that has more knowledge.
+     *
+     * @author Mick Jordan
+     */
+    public static class HeapSizeInfo {
+        protected Size getInitialSize() {
+            return initialHeapSizeOption.getValue();
+        }
+
+        protected Size getMaxSize() {
+            return maxHeapSizeOption.getValue();
+        }
+    }
+
+    private static HeapSizeInfo heapSizeInfo = new HeapSizeInfo();
+
+    @HOSTED_ONLY
+    public static void registerHeapSizeInfo(HeapSizeInfo theHeapSizeInfo) {
+        heapSizeInfo = theHeapSizeInfo;
+    }
+
+    /**
      * Lock for synchronizing access to the heap.
      */
     public static final Object HEAP_LOCK = JavaMonitorManager.newVmLock("HEAP_LOCK");
@@ -107,8 +133,8 @@ public final class Heap {
         if (heapSizingInputValidated) {
             return null;
         }
-        Size max = maxHeapSizeOption.getValue();
-        Size init = initialHeapSizeOption.getValue();
+        Size max = heapSizeInfo.getMaxSize();
+        Size init = heapSizeInfo.getInitialSize();
         if (maxHeapSizeOption.isPresent()) {
             if (max.lessThan(MIN_HEAP_SIZE)) {
                 return "Heap too small";
@@ -148,19 +174,11 @@ public final class Heap {
         return maxSize;
     }
 
-    public static void setMaxSize(Size size) {
-        maxSize = size;
-    }
-
     public static Size initialSize() {
         if (initialSize.isZero()) {
             validateHeapSizing();
         }
         return initialSize;
-    }
-
-    public static void setInitialSize(Size size) {
-        initialSize = size;
     }
 
     /**
@@ -312,10 +330,6 @@ public final class Heap {
      */
     public static boolean isGcThread(Thread thread) {
         return heapScheme().isGcThread(thread);
-    }
-
-    public static void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
-        heapScheme().initializeAuxiliarySpace(primordialVmThreadLocals, auxiliarySpace);
     }
 
     @INLINE

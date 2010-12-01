@@ -22,6 +22,7 @@ package com.sun.max.asm.x86;
 
 import com.sun.max.*;
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 
 /**
  * @see MaxPackage
@@ -34,7 +35,7 @@ public class Package extends AsmPackage {
     }
 
     @Override
-    public boolean isPartOfAssembler(InstructionSet instructionSet) {
-        return instructionSet == InstructionSet.AMD64 || instructionSet == InstructionSet.IA32;
+    public boolean isPartOfAssembler(ISA isa) {
+        return isa == ISA.AMD64 || isa == ISA.IA32;
     }
 }

@@ -48,8 +48,8 @@ import com.sun.max.vm.object.*;
  */
 public abstract class EirToTargetTranslator extends TargetGenerator {
 
-    protected EirToTargetTranslator(TargetGeneratorScheme targetGeneratorScheme, InstructionSet instructionSet, int registerReferenceMapSize) {
-        super(targetGeneratorScheme, instructionSet);
+    protected EirToTargetTranslator(TargetGeneratorScheme targetGeneratorScheme, ISA isa, int registerReferenceMapSize) {
+        super(targetGeneratorScheme, isa);
     }
 
     private Address fixLiteralLabels(EirTargetEmitter emitter, Collection<EirLiteral> literals, Address address) {
@@ -225,7 +225,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
         eirMethod.emit(emitter);
 
-        final DataModel dataModel = Platform.platform().dataModel();
+        final DataModel dataModel = Platform.platform().dataModel;
 
         final Collection<EirLiteral> scalarLiterals = eirMethod.literalPool().scalarLiterals();
         final Collection<EirLiteral> referenceLiterals = eirMethod.literalPool().referenceLiterals();
@@ -285,7 +285,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         code,
                         emitter.inlineDataRecorder().encodedDescriptors(),
                         eirMethod.frameSize(),
-                        frameReferenceMapSize, eirMethod.abi.targetABI()
+                        frameReferenceMapSize
         );
         assert TargetBundleLayout.from(targetMethod).bundleSize().equals(targetBundleLayout.bundleSize()) :
             "computed target bundle size differs from derived target bundle size for " + targetMethod.classMethodActor() +

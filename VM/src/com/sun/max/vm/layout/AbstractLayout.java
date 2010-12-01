@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.layout;
 
+
 /**
  * @author Bernd Mathiske
  */
@@ -33,5 +34,4 @@ public abstract class AbstractLayout implements GeneralLayout {
     public String toString() {
         return name();
     }
-
 }

@@ -23,7 +23,6 @@ package com.sun.max.vm.jdk;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * This class implements a centralized place for naming specific classes in the JDK that are referenced
@@ -94,6 +93,7 @@ public class JDK {
     public static final ClassRef sun_misc_VM                         = new ClassRef(sun.misc.VM.class);
     public static final ClassRef sun_misc_Version                    = new ClassRef(sun.misc.Version.class);
     public static final ClassRef sun_misc_SharedSecrets              = new ClassRef(sun.misc.SharedSecrets.class);
+    public static final ClassRef sun_util_calendar_ZoneInfo              = new ClassRef(sun.util.calendar.ZoneInfo.class);
 
     public static final ClassRef sun_reflect_annotation_AnnotationParser    = new ClassRef(sun.reflect.annotation.AnnotationParser.class);
     public static final ClassRef sun_reflect_Reflection                     = new ClassRef(sun.reflect.Reflection.class);
@@ -167,17 +167,6 @@ public class JDK {
         @Override
         public final Class javaClass() {
             return Classes.forName(className);
-        }
-    }
-
-    /**
-     * Invokes a given class's <clinit> method, translating any exception raised into a {@link FatalError}.
-     */
-    public static void callInitializer(ClassActor classActor) {
-        try {
-            classActor.callInitializer();
-        } catch (Exception e) {
-            FatalError.unexpected("Error re-initializing" + classActor.name(), e);
         }
     }
 }

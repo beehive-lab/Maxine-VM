@@ -84,26 +84,26 @@ ThreadState_t toThreadState(char taskState, pid_t tid) {
     return threadState;
 }
 
-static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong threadLocalsList, long primordialThreadLocals) {
+static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong tlaList, long primordialETLA) {
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
 
     char taskState = task_state(tgid, tid);
 
-    ThreadLocals tl = 0;
+    TLA tla = 0;
     if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, NULL)) {
         Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
-        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
+        TLA threadLocals = (TLA) alloca(tlaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         ProcessHandleStruct ph = {tgid, tid};
-        tl = teleProcess_findThreadLocals(&ph, threadLocalsList, primordialThreadLocals, stackPointer, threadLocals, &nativeThreadLocalsStruct);
+        tla = teleProcess_findTLA(&ph, tlaList, primordialETLA, stackPointer, threadLocals, &nativeThreadLocalsStruct);
     }
-    teleProcess_jniGatherThread(env, linuxTeleProcess, threadList, tid, toThreadState(taskState, tid), (jlong) canonicalStateRegisters.rip, tl);
+    teleProcess_jniGatherThread(env, linuxTeleProcess, threadList, tid, toThreadState(taskState, tid), (jlong) canonicalStateRegisters.rip, tla);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jlong pid, jobject linuxTeleProcess, jobject threads, long threadLocalsList, long primordialThreadLocals) {
+Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jlong pid, jobject linuxTeleProcess, jobject threads, long tlaList, long primordialETLA) {
 
     pid_t *tasks;
     const int nTasks = scan_process_tasks(pid, &tasks);
@@ -115,7 +115,7 @@ Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThr
     int n = 0;
     while (n < nTasks) {
         pid_t tid = tasks[n];
-        gatherThread(env, pid, tid, linuxTeleProcess, threads, threadLocalsList, primordialThreadLocals);
+        gatherThread(env, pid, tid, linuxTeleProcess, threads, tlaList, primordialETLA);
         n++;
     }
     free(tasks);

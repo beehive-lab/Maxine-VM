@@ -20,8 +20,15 @@
  */
 package com.sun.max.vm.stack.amd64;
 
+import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+
+import com.sun.c1x.target.amd64.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.amd64.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -36,9 +43,8 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.trampoline.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -100,7 +106,7 @@ public class AMD64OptStackWalking {
         final int unwindFrameSize = getUnwindFrameSize();
 
         // Put the exception where the exception handler expects to find it
-        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(throwable));
+        VmThreadLocal.EXCEPTION_OBJECT.store3(Reference.fromJava(throwable));
 
         if (throwable instanceof StackOverflowError) {
             // This complete call-chain must be inlined down to the native call
@@ -189,10 +195,10 @@ public class AMD64OptStackWalking {
         Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
         Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
         Pointer callerFP;
-        if (Trap.isTrapStub(targetMethod.classMethodActor)) {
+        if (targetMethod.is(TrapStub)) {
             // RBP is whatever was in the frame pointer register at the time of the trap
-            Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
-            callerFP = stackFrameWalker.readWord(trapState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
+            Pointer calleeSaveArea = sp;
+            callerFP = stackFrameWalker.readWord(calleeSaveArea, AMD64TrapStateAccess.CSA.offsetOf(AMD64.rbp)).asPointer();
         } else {
             // Propagate RBP unchanged as OPT methods do not touch this register.
             callerFP = current.fp();
@@ -205,7 +211,7 @@ public class AMD64OptStackWalking {
         // check whether the current ip is at the first instruction or a return
         // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
         TargetMethod targetMethod = current.targetMethod();
-        Pointer entryPoint = targetMethod.abi().callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
+        Pointer entryPoint = targetMethod.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
                 CallEntryPoint.C_ENTRY_POINT.in(targetMethod) :
                 CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
 
@@ -222,56 +228,58 @@ public class AMD64OptStackWalking {
      * @param current
      * @param callee
      * @param preparer
+     * @param registerConfig TODO
      */
     public static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
-        TargetMethod trampolineTargetMethod = callee.targetMethod();
-        ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
-        ClassMethodActor callerMethod;
+        RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
+        TargetMethod trampoline = callee.targetMethod();
+        ClassMethodActor calledMethod;
         TargetMethod targetMethod = current.targetMethod();
-        Pointer trampolineRegisters = callee.sp();
+
+        Pointer calleeSaveStart = callee.sp();
+        CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
+        CiRegister[] regs = registerConfig.getCallingConventionRegisters(Type.JavaCall, CPU);
 
         // figure out what method the caller is trying to call
-        if (trampolineMethodActor.isStaticTrampoline()) {
+        if (trampoline.is(StaticTrampoline)) {
             int stopIndex = targetMethod.findClosestStopIndex(current.ip().minus(1));
-            callerMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
+            calledMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
         } else {
-            // this is an virtual or interface call; figure out the receiver method based on the
+            // this is a virtual or interface call; figure out the receiver method based on the
             // virtual or interface index
-            final Object receiver = trampolineRegisters.getReference().toJava(); // read receiver object on stack
-            final ClassActor classActor = ObjectAccess.readClassActor(receiver);
-            assert trampolineTargetMethod.referenceLiterals().length == 1;
-            final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
-            if (trampolineMethodActor.isVirtualTrampoline()) {
-                callerMethod = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex);
+            Object receiver = calleeSaveStart.plus(csa.offsetOf(regs[0])).getReference().toJava();
+            ClassActor classActor = ObjectAccess.readClassActor(receiver);
+            // The virtual dispatch trampoline stubs put the virtual dispatch index into the
+            // scratch register and then save it to the stack.
+            int index = vm().stubs.readVirtualDispatchIndexFromTrampolineFrame(calleeSaveStart);
+            if (trampoline.is(VirtualTrampoline)) {
+                calledMethod = classActor.getVirtualMethodActorByVTableIndex(index);
             } else {
-                callerMethod = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex);
+                assert trampoline.is(InterfaceTrampoline);
+                calledMethod = classActor.getVirtualMethodActorByIIndex(index);
             }
         }
 
-        // use the caller method to fill out the reference map for the saved parameters in the trampoline frame
-        int parameterRegisterIndex = 0;
-        if (!callerMethod.isStatic()) {
+        int regIndex = 0;
+        if (!trampoline.is(StaticTrampoline)) {
             // set a bit for the receiver object
-            preparer.setReferenceMapBits(current, trampolineRegisters, 1, 1);
-            parameterRegisterIndex = 1;
+            int offset = csa.offsetOf(regs[regIndex++]);
+            preparer.setReferenceMapBits(current, calleeSaveStart.plus(offset), 1, 1);
         }
 
-        SignatureDescriptor descriptor = callerMethod.descriptor();
-        TargetABI abi = trampolineTargetMethod.abi();
-        for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
-            final TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
-            final Kind parameterKind = parameter.toKind();
-            if (parameterKind.isReference) {
+        SignatureDescriptor sig = calledMethod.descriptor();
+        for (int i = 0; i < sig.numberOfParameters() && regIndex < regs.length; ++i) {
+            TypeDescriptor arg = sig.parameterDescriptorAt(i);
+            CiRegister reg = regs[regIndex];
+            Kind kind = arg.toKind();
+            if (kind.isReference) {
                 // set a bit for this parameter
-                preparer.setReferenceMapBits(current, trampolineRegisters.plusWords(parameterRegisterIndex), 1, 1);
+                int offset = csa.offsetOf(reg);
+                preparer.setReferenceMapBits(current, calleeSaveStart.plus(offset), 1, 1);
             }
-            if (abi.putIntoIntegerRegister(parameterKind)) {
-                parameterRegisterIndex++;
-                if (parameterRegisterIndex >= abi.integerIncomingParameterRegisters.size()) {
-                    // done since all subsequent parameters are known to be passed on the stack
-                    // and covered by the reference map for the stack at this call point
-                    return;
-                }
+            if (kind != Kind.FLOAT && kind != Kind.DOUBLE) {
+                // Only iterating over the integral arg registers
+                regIndex++;
             }
         }
     }

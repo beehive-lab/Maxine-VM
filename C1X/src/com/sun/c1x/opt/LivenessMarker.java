@@ -54,6 +54,10 @@ public class LivenessMarker {
         // first pass: mark root instructions and their inputs
         ir.startBlock.iteratePreOrder(new BlockClosure() {
             public void apply(BlockBegin block) {
+                block.stateBefore().valuesDo(deoptMarker);
+                if (block.stateAfter() != null) {
+                    block.stateAfter().valuesDo(deoptMarker);
+                }
                 Instruction i = block;
                 while ((i = i.next()) != null) {
                     // visit all instructions first, marking control dependent and side-effects
@@ -76,14 +80,15 @@ public class LivenessMarker {
         ir.startBlock.iteratePreOrder(new BlockClosure() {
             public void apply(BlockBegin block) {
                 Instruction prev = block;
-                Instruction i = block;
-                while ((i = i.next()) != null) {
+                Instruction i = block.next();
+                while (i != null) {
                     if (i.isLive()) {
                         prev.resetNext(i); // skip any previous dead instructions
+                        prev = i;
                     } else {
                         C1XMetrics.DeadCodeEliminated++;
                     }
-                    prev = i;
+                    i = i.next();
                 }
             }
         });
@@ -155,7 +160,7 @@ public class LivenessMarker {
         }
     }
 
-    private void markRootInstr(Instruction i) {
+    void markRootInstr(Instruction i) {
         FrameState stateBefore = i.stateBefore();
         if (stateBefore != null) {
             // stateBefore != null implies that this instruction may have side effects
@@ -171,6 +176,10 @@ public class LivenessMarker {
             // input values to block ends are control dependencies
             i.inputValuesDo(valueMarker);
             setFlag(i, Value.Flag.LiveControl);
+        }
+        FrameState stateAfter = i.stateAfter();
+        if (stateAfter != null) {
+            stateAfter.valuesDo(deoptMarker);
         }
     }
 

@@ -21,6 +21,7 @@
 package com.sun.max.asm.sparc;
 
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 
 /**
  * Abstract base class for implementing a SPARC assembler.
@@ -30,7 +31,7 @@ import com.sun.max.asm.*;
 public abstract class AbstractSPARCAssembler extends BigEndianAssembler {
 
     @Override
-    public final InstructionSet instructionSet() {
-        return InstructionSet.SPARC;
+    public final ISA isa() {
+        return ISA.SPARC;
     }
 }

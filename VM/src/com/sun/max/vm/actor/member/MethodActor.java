@@ -31,6 +31,7 @@ import java.util.*;
 import sun.reflect.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -43,7 +44,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reflection.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -132,11 +132,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     @INLINE
-    public final boolean isTrapStub() {
-        return Trap.isTrapStub(this);
-    }
-
-    @INLINE
     public final boolean isTemplate() {
         return isTemplate(flags());
     }
@@ -174,26 +169,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     @INLINE
     public final boolean isNeverInline() {
         return isNeverInline(flags());
-    }
-
-    @INLINE
-    public final boolean isStaticTrampoline() {
-        return isStaticTrampoline(flags());
-    }
-
-    @INLINE
-    public final boolean isTrampoline() {
-        return isTrampoline(flags());
-    }
-
-    @INLINE
-    public final boolean isVirtualTrampoline() {
-        return isVirtualTrampoline(flags());
-    }
-
-    @INLINE
-    public final boolean isInterfaceTrampoline() {
-        return isInterfaceTrampoline(flags());
     }
 
     public final boolean isApplicationVisible() {
@@ -252,7 +227,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      *
      * @return {@code null} if this method has no {@link ACCESSOR} annotation
      */
-    public final Class accessor() {
+    public final Class<?> accessor() {
         return holder().classRegistry().get(ACCESSOR, this);
     }
 
@@ -370,7 +345,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     /**
      * Gets the invocation stub for this method actor, creating it first if necessary.
      */
-    public InvocationStub makeInvocationStub() {
+    public final InvocationStub makeInvocationStub() {
         ClassRegistry classRegistry = holder().classRegistry();
         InvocationStub invocationStub = classRegistry.get(INVOCATION_STUB, this);
         if (invocationStub == null) {
@@ -403,9 +378,12 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      *
      * This method throws the same exceptions as {@link Method#invoke(Object, Object...)}.
      *
+     * NOTE: Reflection invocation should not be used for accessing otherwise hidden methods in the JDK.
+     * Instead, method {@linkplain ALIAS aliasing} mechanism should be used.
+     *
      * @param argumentValues the values to be passed as the arguments of the invocation
      */
-    public Value invoke(Value... argumentValues) throws InvocationTargetException, IllegalAccessException {
+    public final Value invoke(Value... argumentValues) throws InvocationTargetException, IllegalAccessException {
         assert !isInstanceInitializer();
         if (MaxineVM.isHosted()) {
             // When running hosted, the generated stub cannot be executed, because it does not verify.
@@ -434,10 +412,13 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      *
      * This method throws the same exceptions as {@link Constructor#newInstance(Object...)}.
      *
+     * NOTE: Reflection invocation should not be used for accessing otherwise hidden constructors in the JDK.
+     * Instead, method {@linkplain ALIAS aliasing} mechanism should be used.
+     *
      * @param argumentValues the values to be passed as the arguments of the invocation. Note that this does not include
      *            the uninitialized object as it is created by this invocation.
      */
-    public Value invokeConstructor(Value... argumentValues) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+    public final Value invokeConstructor(Value... argumentValues) throws InvocationTargetException, IllegalAccessException, InstantiationException {
         assert isInstanceInitializer();
         final ConstructorInvocationStub stub = UnsafeCast.asConstructorInvocationStub(makeInvocationStub());
         if (MaxineVM.isHosted()) {
@@ -547,7 +528,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return RiExceptionHandler.NONE;
     }
 
-    @Override
     public boolean hasBalancedMonitors() {
         return true; // TODO: do the required analysis
     }
@@ -573,7 +553,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return null;
     }
 
-    public final Object liveness(int bci) {
+    public CiBitMap[] livenessMap() {
         return null;
     }
 

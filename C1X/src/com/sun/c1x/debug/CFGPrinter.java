@@ -206,42 +206,49 @@ public class CFGPrinter {
 
         FrameState state = block.stateBefore();
 
-        if (state.stackSize() > 0) {
-            begin("stack");
-            out.print("size ").println(state.stackSize());
-
-            int i = 0;
-            while (i < state.stackSize()) {
-                Value value = state.stackAt(i);
-                out.disableIndentation();
-                out.print(InstructionPrinter.stateString(i, value, block));
-                printOperand(value);
-                out.println();
-                out.enableIndentation();
-                i += value.kind.sizeInSlots();
-            }
-            end("stack");
-        }
-
-        if (state.locksSize() > 0) {
-            begin("locks");
-            out.print("size ").println(state.locksSize());
-
-            for (int i = 0; i < state.locksSize(); ++i) {
-                Value value = state.lockAt(i);
-                out.disableIndentation();
-                out.print(InstructionPrinter.stateString(i, value, block));
-                printOperand(value);
-                out.println();
-                out.enableIndentation();
-            }
-            end("locks");
-        }
-
         do {
+            int stackSize = state.stackSize();
+            if (stackSize > 0) {
+                begin("stack");
+                out.print("size ").println(stackSize);
+                out.print("method \"").print(CiUtil.toLocation(state.scope().method, state.bci)).println('"');
+
+                int i = 0;
+                while (i < stackSize) {
+                    Value value = state.stackAt(i);
+                    out.disableIndentation();
+                    out.print(InstructionPrinter.stateString(i, value, block));
+                    printOperand(value);
+                    out.println();
+                    out.enableIndentation();
+                    if (value == null) {
+                        i++;
+                    } else {
+                        i += value.kind.sizeInSlots();
+                    }
+                }
+                end("stack");
+            }
+
+            if (state.locksSize() > 0) {
+                begin("locks");
+                out.print("size ").println(state.locksSize());
+                out.print("method \"").print(CiUtil.toLocation(state.scope().method, state.bci)).println('"');
+
+                for (int i = 0; i < state.locksSize(); ++i) {
+                    Value value = state.lockAt(i);
+                    out.disableIndentation();
+                    out.print(InstructionPrinter.stateString(i, value, block));
+                    printOperand(value);
+                    out.println();
+                    out.enableIndentation();
+                }
+                end("locks");
+            }
+
             begin("locals");
             out.print("size ").println(state.localsSize());
-            out.print("method \"").print(CiUtil.format("%f %h.%n(%p):%r", state.scope().method, false)).println('"');
+            out.print("method \"").print(CiUtil.toLocation(state.scope().method, state.bci)).println('"');
             int i = 0;
             while (i < state.localsSize()) {
                 Value value = state.localAt(i);
@@ -257,7 +264,7 @@ public class CFGPrinter {
                     i++;
                 }
             }
-            state = state.scope().callerState();
+            state = state.callerState();
             end("locals");
         } while (state != null);
 
@@ -274,43 +281,35 @@ public class CFGPrinter {
 
         StringBuilder buf = new StringBuilder();
 
-        if (state.stackSize() > 0) {
-            int i = 0;
-            buf.append("stack: ");
-            while (i < state.stackSize()) {
-                if (i == 0) {
-                    buf.append(' ');
-                }
-                Value value = state.stackAt(i);
-                buf.append(stateValueToString(value, operandFmt)).append(' ');
-                i++;
-            }
-            buf.append("\n");
-        }
-
-        if (state.locksSize() > 0) {
-            buf.append("locks: ");
-            for (int i = 0; i < state.locksSize(); ++i) {
-                if (i == 0) {
-                    buf.append(' ');
-                }
-                Value value = state.lockAt(i);
-                buf.append(stateValueToString(value, operandFmt)).append(' ');
-            }
-            buf.append("\n");
-        }
-
-        boolean multipleScopes = state.scope().callerState() != null;
-        int bci = -1;
         do {
-            // Only qualify locals with method name if there are multiple scopes (due to inlining)
-            if (multipleScopes) {
-                buf.append(CiUtil.format("%H.%n(%p)", state.scope().method, false));
-                if (bci >= 0) {
-                    buf.append(" @ ").append(bci);
+            buf.append(CiUtil.toLocation(state.scope().method, state.bci));
+            buf.append('\n');
+            if (state.stackSize() > 0) {
+                int i = 0;
+                buf.append("stack: ");
+                while (i < state.stackSize()) {
+                    if (i == 0) {
+                        buf.append(' ');
+                    }
+                    Value value = state.stackAt(i);
+                    buf.append(stateValueToString(value, operandFmt)).append(' ');
+                    i++;
                 }
-                buf.append('\n');
+                buf.append("\n");
             }
+
+            if (state.locksSize() > 0) {
+                buf.append("locks: ");
+                for (int i = 0; i < state.locksSize(); ++i) {
+                    if (i == 0) {
+                        buf.append(' ');
+                    }
+                    Value value = state.lockAt(i);
+                    buf.append(stateValueToString(value, operandFmt)).append(' ');
+                }
+                buf.append("\n");
+            }
+
             buf.append("locals: ");
             int i = 0;
             while (i < state.localsSize()) {
@@ -322,8 +321,7 @@ public class CFGPrinter {
                 i++;
             }
             buf.append("\n");
-            bci = state.scope().callerBCI();
-            state = state.scope().callerState();
+            state = state.callerState();
         } while (state != null);
         return buf.toString();
     }
@@ -521,9 +519,6 @@ public class CFGPrinter {
         out.printf("%d %s ", interval.operandNumber, (interval.operand.isRegister() ? "fixed" : interval.kind().name()));
         if (interval.operand.isRegister()) {
             out.printf("\"[%s|%c]\"", interval.operand.name(), interval.operand.kind.typeChar);
-            if (!true) {
-                out.print(' ');
-            }
         } else {
             if (interval.location() != null) {
                 out.printf("\"[%s|%c]\"", interval.location().name(), interval.location().kind.typeChar);

@@ -55,7 +55,7 @@ public class BlockPrinter implements BlockClosure {
         ip.printInstruction(block);
         LogStream out = ip.out();
         out.println();
-        printStack(block.stateBefore(), out);
+        printFrameState(block.stateBefore(), out);
         out.println();
 
         out.println("inlining depth " + block.stateBefore().scope().level);
@@ -71,7 +71,7 @@ public class BlockPrinter implements BlockClosure {
 
     }
 
-    private static void printStack(FrameState newFrameState, LogStream out) {
+    private static void printFrameState(FrameState newFrameState, LogStream out) {
         int startPosition = out.position();
         if (newFrameState.stackEmpty()) {
           out.print("empty stack");
@@ -84,18 +84,22 @@ public class BlockPrinter implements BlockClosure {
             }
             Value value = newFrameState.stackAt(i);
             out.print(i + ":" + Util.valueString(value));
-              i += value.kind.sizeInSlots();
-            if (value instanceof Phi) {
-                Phi phi = (Phi) value;
-                if (phi.operand() != null) {
-                    out.print(" ");
-                    out.print(phi.operand().toString());
+            if (value == null) {
+                i++;
+            } else {
+                i += value.kind.sizeInSlots();
+                if (value instanceof Phi) {
+                    Phi phi = (Phi) value;
+                    if (phi.operand() != null) {
+                        out.print(" ");
+                        out.print(phi.operand().toString());
+                    }
                 }
             }
           }
           out.print(']');
         }
-        if (!newFrameState.noActiveLocks()) {
+        if (newFrameState.locksSize() != 0) {
             // print out the lines on the line below this
             // one at the same indentation level.
             out.println();

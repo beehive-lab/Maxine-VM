@@ -23,18 +23,16 @@ package com.sun.max.vm.hosted;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.*;
-import com.sun.max.asm.InstructionSet.Category;
+import com.sun.max.lang.ISA.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.trampoline.*;
 
 /**
  * This class is used to create and install a {@linkplain MaxineVM VM} whose configuration
@@ -62,14 +60,10 @@ public final class VMConfigurator {
             "Specifies the boot compiler scheme for the target.", VMConfigurator.defaultCompilerScheme());
     public final Option<MaxPackage> optScheme = schemeOption("opt", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
             "Specifies the optimizing compiler scheme for the target.", VMConfigurator.defaultCompilerScheme());
-    public final Option<MaxPackage> jitScheme = schemeOption("jit", MaxPackage.fromName("com.sun.max.vm.jit"), RuntimeCompilerScheme.class,
+    public final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
             "Specifies the JIT scheme for the target.", VMConfigurator.defaultJitCompilerScheme());
     public final Option<MaxPackage> compScheme = schemeOption("comp", new com.sun.max.vm.compiler.Package(), CompilationScheme.class,
             "Specifies the compilation scheme for the target.", VMConfigurator.defaultCompilationScheme());
-    public final Option<MaxPackage> trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
-            "Specifies the dynamic trampoline scheme for the target.", VMConfigurator.defaultTrampolineScheme());
-    public final Option<MaxPackage> targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), TargetABIsScheme.class,
-            "Specifies the ABIs scheme for the target", VMConfigurator.defaultTargetABIsScheme());
     public final Option<MaxPackage> runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), RunScheme.class,
             "Specifies the run scheme for the target.", VMConfigurator.defaultRunScheme());
 
@@ -106,8 +100,7 @@ public final class VMConfigurator {
                                     vm(jitScheme),
                                     vm(optScheme),
                                     vm(compScheme),
-                                    vm(trampolineScheme),
-                                    vm(targetABIsScheme), vm(runScheme));
+                                    vm(runScheme));
         MaxineVM vm = new MaxineVM(config);
         if (install) {
             MaxineVM.set(vm);
@@ -120,11 +113,11 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link BootstrapCompilerScheme}.
      */
     public static VMPackage defaultCompilerScheme() {
-        switch (platform().instructionSet()) {
+        switch (platform().isa) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             default:
-                throw FatalError.unexpected(platform().instructionSet().toString());
+                throw FatalError.unexpected(platform().isa.toString());
         }
     }
 
@@ -132,7 +125,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link RuntimeCompilerScheme}.
      */
     public static VMPackage defaultJitCompilerScheme() {
-        switch (platform().instructionSet()) {
+        switch (platform().isa) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
             default:
@@ -151,7 +144,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link TargetABIsScheme}.
      */
     public static VMPackage defaultTargetABIsScheme() {
-        switch (platform().instructionSet()) {
+        switch (platform().isa) {
             case AMD64:
                 return new com.sun.max.vm.compiler.target.amd64.Package();
             default:
@@ -177,7 +170,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link LayoutScheme}.
      */
     public static VMPackage defaultLayoutScheme() {
-        if (platform().instructionSet().category == Category.RISC) {
+        if (platform().isa.category == Category.RISC) {
             // On SPARC, the HOM layout enables more optimized code for accessing array elements
             // smaller than a word as there is no need to perform address arithmetic to skip
             // over the header; the origin is pointing at array element 0.
@@ -201,13 +194,6 @@ public final class VMConfigurator {
      */
     public static VMPackage defaultMonitorScheme() {
         return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
-    }
-
-    /**
-     * Gets the package providing the default {@link DynamicTrampolineScheme}.
-     */
-    public static VMPackage defaultTrampolineScheme() {
-        return new com.sun.max.vm.trampoline.template.Package();
     }
 
     public static void installStandardJit(BuildLevel buildLevel) {

@@ -137,8 +137,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     // Check for the special case where we can't determine what caused the VM to stop
                     boolean eventCauseFound = false;
 
+                    assert vm().lockHeldByCurrentThread();
+                    vm().unlock();
                     // Wait here for VM process to stop
                     ProcessState newState = waitUntilStopped();
+                    vm().lock();
+
                     ++epoch;
 
                     // Case 1. The process has died; throw an exception.
@@ -161,6 +165,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     TeleProcess.this.updateCache();
                     targetBreakpointManager().setActiveAll(false);
 
+                    int newlystarted = 0;
+                    int newlydetached = 0;
                     // Look through all the threads to see which, if any, have events triggered that caused the stop
                     for (TeleNativeThread thread : threads()) {
                         switch(thread.state()) {
@@ -173,6 +179,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                                     // At a breakpoint where we should really stop; create a record
                                     teleBreakpointEvents.add(new TeleBreakpointEvent(breakpoint, thread));
                                     resumeExecution = false;
+                                } else {
+                                    if (breakpoint.codeLocation().equals(vm().teleMethods().vmThreadRun())) {
+                                        newlystarted++;
+                                    } else if (breakpoint.codeLocation().equals(vm().teleMethods().vmThreadDetached())) {
+                                        newlydetached++;
+                                    }
+                                    Trace.line(TRACE_VALUE, tracePrefix() + (resumeExecution ? " RESUMING" : " STOPPING") + " execution after thread [id=" + thread.id() + "] triggered breakpoint");
                                 }
                                 break;
                             case WATCHPOINT:
@@ -182,7 +195,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                                 if (systemTeleWatchpoint != null && systemTeleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE + 1, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering system watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
+                                    final int triggeredWatchpointCode = readWatchpointAccessCode();
+                                    teleWatchpointEvent = new TeleWatchpointEvent(systemTeleWatchpoint, thread, triggeredWatchpointAddress, triggeredWatchpointCode);
                                     resumeExecution = false;
+                                    break;
                                 }
                                 final TeleWatchpoint clientTeleWatchpoint = watchpointManager.findClientWatchpointContaining(triggeredWatchpointAddress);
                                 if (clientTeleWatchpoint != null && clientTeleWatchpoint.handleTriggerEvent(thread)) {
@@ -206,15 +222,27 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                         resumeExecution = false;
                         pauseRequestPending = false;
                     }
-                    TeleError.check(eventCauseFound, "Process halted for no apparent cause");
+                    if (!eventCauseFound) {
+                        new Exception("Process halted for no apparent cause").printStackTrace();
+                    }
+                    // ProgramError.check(eventCauseFound, "Process halted for no apparent cause");
+
+                    // CLEANUP: debugging traces...
+                    if (newlystarted > 0 || newlydetached > 0) {
+                        Trace.line(TRACE_VALUE, tracePrefix() + " e(" + epoch + ") " + "Hit " +
+                                        newlystarted + " VmThread.run() breakpoints " +
+                                        newlydetached + " VmThread.detached() breakpoints " +
+                                        ", resume execution = " + resumeExecution + " " +
+                                        request);
+                    }
                     if (resumeExecution) {
-                        Trace.line(TRACE_VALUE + 1, tracePrefix() + "Resuming execution after handling event triggers: " + request);
+                        Trace.line(TRACE_VALUE, tracePrefix() + "Resuming execution after handling event triggers: " + request);
                         restoreBreakpointsAndResume(request.withClientBreakpoints);
                     }
                 } while (resumeExecution);
                 // Finished with these now
                 targetBreakpointManager().removeTransientBreakpoints();
-                Trace.end(TRACE_VALUE + 1, tracePrefix() + "waiting for execution to stop: " + request);
+                Trace.end(TRACE_VALUE /*+ 1*/, tracePrefix() + " e(" + epoch + ") " + "waiting for execution to stop: " + request);
                 Trace.begin(TRACE_VALUE + 1, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
                 Trace.end(TRACE_VALUE + 1, tracePrefix() + "firing execution post-request action: " + request);
@@ -253,7 +281,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
         void scheduleRequest(TeleEventRequest request, boolean isSynchronous) {
             final Thread currentThread = Thread.currentThread();
             if (currentThread == this) {
-                Trace.begin(TRACE_VALUE + 1, tracePrefix() + "immediate execution request: " + traceSuffix(isSynchronous));
+                Trace.begin(TRACE_VALUE + 1, tracePrefix()  + "immediate execution request: " + traceSuffix(isSynchronous));
                 execute(request, true);
                 Trace.end(TRACE_VALUE + 1, tracePrefix() + "immediate execution request: " + request + traceSuffix(isSynchronous));
             } else {

@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -44,7 +45,6 @@ final class MoveResolver {
     private final List<Interval> mappingTo;
     private boolean multipleReadsAllowed;
     private final int[] registerBlocked;
-    private final CiRegister.AllocationSpec allocatableRegisters;
 
     private int registerBlocked(int reg) {
         return registerBlocked[reg];
@@ -72,14 +72,13 @@ final class MoveResolver {
         this.mappingTo = new ArrayList<Interval>(8);
         this.insertIdx = -1;
         this.insertionBuffer = new LIRInsertionBuffer();
-        this.allocatableRegisters = allocator.allocationSpec;
-        this.registerBlocked = new int[allocator.allocationSpec.nofRegs];
+        this.registerBlocked = new int[allocator.registers.length];
         assert checkEmpty();
     }
 
     boolean checkEmpty() {
         assert mappingFrom.size() == 0 && mappingFromOpr.size() == 0 && mappingTo.size() == 0 : "list must be empty before and after processing";
-        for (int i = 0; i < allocatableRegisters.nofRegs; i++) {
+        for (int i = 0; i < allocator.registers.length; i++) {
             assert registerBlocked(i) == 0 : "register map must be empty before and after processing";
         }
         assert !multipleReadsAllowed : "must have default value";
@@ -194,7 +193,7 @@ final class MoveResolver {
 
     private void insertMove(Interval fromInterval, Interval toInterval) {
         assert fromInterval.operand != toInterval.operand : "from and to interval equal: " + fromInterval;
-        assert fromInterval.kind() == toInterval.kind() : "move between different types";
+        assert Util.archKindsEqual(fromInterval.kind(), toInterval.kind()) : "move between different types";
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
@@ -340,7 +339,7 @@ final class MoveResolver {
         }
 
         assert fromInterval.operand != toInterval.operand : "from and to interval equal: " + fromInterval;
-        assert fromInterval.kind() == toInterval.kind();
+        assert Util.archKindsEqual(fromInterval.kind(), toInterval.kind());
         mappingFrom.add(fromInterval);
         mappingFromOpr.add(CiValue.IllegalValue);
         mappingTo.add(toInterval);

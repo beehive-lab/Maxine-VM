@@ -405,7 +405,7 @@ public abstract class Value {
     public int id() {
         if (id == 0) {
             C1XMetrics.UniqueValueIdsAssigned++;
-            id = C1XCompilation.current().nextID();
+            id = C1XCompilation.compilation().nextID();
         }
         return id;
     }

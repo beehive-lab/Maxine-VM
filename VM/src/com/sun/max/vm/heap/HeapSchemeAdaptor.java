@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.management.*;
@@ -35,7 +36,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -158,17 +158,16 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     @HOSTED_ONLY
     public CodeManager createCodeManager() {
-        switch (Platform.platform().operatingSystem) {
+        switch (Platform.platform().os) {
             case LINUX: {
                 return new LowAddressCodeManager();
             }
-
-            case GUESTVM:
-                return new FixedAddressCodeManager();
-
             case DARWIN:
             case SOLARIS: {
                 return new VariableAddressCodeManager();
+            }
+            case GUESTVM: {
+                return new FixedAddressCodeManager();
             }
             default: {
                 FatalError.unimplemented();
@@ -199,6 +198,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         throw FatalError.unimplemented();
     }
 
+    public void notifyCurrentThreadDetach() {
+        // nothing by default
+    }
+
     @INLINE(override = true)
     public boolean usesTLAB() {
         return false;
@@ -210,13 +213,13 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     public void disableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.zero());
+        final Pointer etla = ETLA.load(currentTLA());
+        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.zero());
     }
 
     public void enableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.allOnes());
+        final Pointer etla = ETLA.load(currentTLA());
+        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.allOnes());
     }
 
     public long maxObjectInspectionAge() {

@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.stack.sparc;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
@@ -178,7 +178,7 @@ public final class SPARCStackFrameLayout {
     }
 
     public static Pointer getReturnAddress(Cursor current, StackFrameWalker stackFrameWalker) {
-        return getCallerPC(current, stackFrameWalker).plus(InstructionSet.SPARC.offsetToReturnPC);
+        return getCallerPC(current, stackFrameWalker).plus(ISA.SPARC.offsetToReturnPC);
     }
 
     public static Pointer getCallerFramePointer(Cursor current, StackFrameWalker stackFrameWalker) {

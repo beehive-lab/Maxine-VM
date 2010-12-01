@@ -66,7 +66,7 @@ import com.sun.max.util.*;
  * the Klein assembly framework as the use of static typing in this framework leaves far fewer opportunities to specify
  * illegal arguments without incurring a syntax or type error from javac. The majority of the remaining possibilities
  * for specifying illegal arguments lies in RISC assemblers' featuring immediate fields whose ranges of legal values is
- * not exactly described by a Java primitive type (e.g. int, short, char, etc).
+ * not precisely described by a Java primitive type (e.g. int, short, char, etc).
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -83,7 +83,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         this.assembly = assembly;
         this.addressWidth = addressWidth;
         this.components = components;
-        this.tmpFilePrefix = System.getProperty("user.name") + "-" + assembly.instructionSet().name().toLowerCase() + "-asmTest-";
+        this.tmpFilePrefix = System.getProperty("user.name") + "-" + assembly.isa().name().toLowerCase() + "-asmTest-";
     }
 
     public Assembly<Template_Type> assembly() {

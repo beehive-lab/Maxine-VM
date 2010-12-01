@@ -25,7 +25,6 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Bytes;
 import com.sun.max.platform.*;
@@ -327,7 +326,7 @@ public abstract class Pointer extends Address implements Accessor {
     @UNSAFE
     @FOLD
     private static boolean risc() {
-        return Platform.platform().instructionSet().category == InstructionSet.Category.RISC;
+        return Platform.platform().isa.category == ISA.Category.RISC;
     }
 
     @BUILTIN(ReadByteAtIntOffset.class)

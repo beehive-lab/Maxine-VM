@@ -26,7 +26,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
@@ -47,18 +46,6 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
 
     public boolean isGcThread(Thread thread) {
         return false;
-    }
-
-    public int adjustedCardTableShift() {
-        return -1;
-    }
-
-    public int auxiliarySpaceSize(int bootImageSize) {
-        return 0;
-    }
-
-    public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
-
     }
 
     public Object createArrayIntoCell(DynamicHub hub, int length, Pointer cell) {
@@ -147,10 +134,6 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
 
     public Pointer gcBumpAllocate(MemoryRegion region, Size size) {
         return Pointer.zero();
-    }
-
-    @Override
-    public void finalize(MaxineVM.Phase phase) {
     }
 
     @INLINE

@@ -299,7 +299,11 @@ public class InstructionPrinter extends ValueVisitor {
             while (!hasPhisOnStack && i < state.stackSize()) {
                 Value value = state.stackAt(i);
                 hasPhisOnStack = isPhiAtBlock(value, block);
-                i += value.kind.sizeInSlots();
+                if (value != null && !value.isIllegal()) {
+                    i += value.kind.sizeInSlots();
+                } else {
+                    i++;
+                }
             }
 
             do {
@@ -313,7 +317,7 @@ public class InstructionPrinter extends ValueVisitor {
                         i++;
                     }
                 }
-                state = state.scope().callerState();
+                state = state.callerState();
             } while (state != null);
         }
 
@@ -336,7 +340,7 @@ public class InstructionPrinter extends ValueVisitor {
                     }
                 }
                 out.println();
-                state = state.scope().callerState();
+                state = state.callerState();
             } while (state != null);
         }
 
@@ -414,6 +418,8 @@ public class InstructionPrinter extends ValueVisitor {
             } else {
                 out.print("<object: ").print(value.kind.format(object)).print('>');
             }
+        } else if (value.kind.isWord()) {
+            out.print("0x").print(Long.toHexString(value.asLong()));
         } else if (value.kind.isJsr()) {
             out.print("bci:").print(constant.asConstant().valueString());
         } else {
@@ -481,7 +487,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitIntrinsic(Intrinsic intrinsic) {
-        out.print(intrinsic.intrinsic().simpleClassName()).print('.').print(intrinsic.intrinsic().name()).print('(');
+        out.print(intrinsic.intrinsic().className).print('.').print(intrinsic.intrinsic().name()).print('(');
         for (int i = 0; i < intrinsic.arguments().length; i++) {
           if (i > 0) {
               out.print(", ");
@@ -727,7 +733,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = target.sizeInBytes(i.kind);
+            int scale = target.sizeInBytes(i.dataKind);
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(")");
@@ -735,7 +741,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitLoadRegister(LoadRegister i) {
-        out.print(i.register().toString());
+        out.print(i.register.toString());
     }
 
     @Override
@@ -762,7 +768,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (i.displacement() == null) {
             out.print(" + ").print(i.offset());
         } else {
-            int scale = target.sizeInBytes(i.pointer().kind);
+            int scale = target.sizeInBytes(i.dataKind);
             out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
         }
         out.print(") := ").print(i.value());
@@ -770,7 +776,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitStoreRegister(StoreRegister i) {
-        out.print(i.register().toString()).print(" := ").print(i.value());
+        out.print(i.register.toString()).print(" := ").print(i.value());
     }
 
     @Override
@@ -797,7 +803,12 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
+    public void visitBreakpointTrap(BreakpointTrap i) {
+        out.print("breakpoint_trap");
+    }
+
+    @Override
     public void visitMonitorAddress(MonitorAddress i) {
-        out.println("monitor_address (").print(i.monitor()).print(")");
+        out.print("monitor_address (").print(i.monitor()).print(")");
     }
 }

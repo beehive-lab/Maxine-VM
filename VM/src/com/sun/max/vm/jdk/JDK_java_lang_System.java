@@ -20,18 +20,19 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.type.ClassRegistry.*;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.nio.charset.*;
 import java.util.*;
 
+import sun.misc.*;
 import sun.reflect.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -39,13 +40,12 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.NativeProperty;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Implements method substitutions for {@link java.lang.System java.lang.System}.
@@ -63,34 +63,43 @@ public final class JDK_java_lang_System {
     private static void registerNatives() {
     }
 
+    @ALIAS(declaringClass = System.class)
+    private static PrintStream out;
+
+    @ALIAS(declaringClass = System.class)
+    private static PrintStream err;
+
+    @ALIAS(declaringClass = System.class)
+    private static InputStream in;
+
     /**
      * Sets the input stream {@link java.lang.System#in System.in} to the specified input stream.
      *
-     * @param in the new system input stream
+     * @param is the new system input stream
      */
     @SUBSTITUTE
-    private static void setIn0(InputStream in) {
-        System_in.setObject(null, in);
+    private static void setIn0(InputStream is) {
+        in = is;
     }
 
     /**
      * Sets the output stream {@link java.lang.System#out System.out} to the specified output stream.
      *
-     * @param out the new system output stream
+     * @param ps the new system output stream
      */
     @SUBSTITUTE
-    private static void setOut0(PrintStream out) {
-        System_out.setObject(null, out);
+    private static void setOut0(PrintStream ps) {
+        out = ps;
     }
 
     /**
      * Sets the error stream {@link java.lang.System#err System.err} to the specified error stream.
      *
-     * @param err the new system error stream
+     * @param ps the new system error stream
      */
     @SUBSTITUTE
-    private static void setErr0(PrintStream err) {
-        System_err.setObject(null, err);
+    private static void setErr0(PrintStream ps) {
+        err = ps;
     }
 
     /**
@@ -372,7 +381,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the path of the Java home
      */
     private static String findJavaHome() {
-        switch (platform().operatingSystem) {
+        switch (platform().os) {
             case GUESTVM:
             case SOLARIS:
             case LINUX: {
@@ -418,7 +427,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the java library path as determined from the OS environment
      */
     private static String getenvJavaLibraryPath() {
-        switch (platform().operatingSystem) {
+        switch (platform().os) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -439,7 +448,7 @@ public final class JDK_java_lang_System {
      * @return a string representing the Java class path as determined from the OS environment
      */
     private static String getenvClassPath() {
-        switch (platform().operatingSystem) {
+        switch (platform().os) {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
@@ -483,7 +492,7 @@ public final class JDK_java_lang_System {
      * @return the name of this VM's target ISA
      */
     private static String getISA() {
-        switch (Platform.platform().instructionSet()) {
+        switch (Platform.platform().isa) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -505,7 +514,7 @@ public final class JDK_java_lang_System {
      * @return a list of this VM's target ISAs
      */
     private static String getISAList() {
-        switch (Platform.platform().instructionSet()) {
+        switch (Platform.platform().isa) {
             case ARM:
                 FatalError.unimplemented();
                 break;
@@ -614,6 +623,22 @@ public final class JDK_java_lang_System {
         }
     }
 
+    // Checkstyle: stop method name check
+
+    @ALIAS(declaringClassName = "java.lang.ProcessEnvironment", name = "<clinit>")
+    private static native void ProcessEnvironment_clinit();
+
+    @ALIAS(declaringClassName = "java.lang.ApplicationShutdownHooks", name = "<clinit>")
+    private static native void ApplicationShutdownHooks_clinit();
+
+    @ALIAS(declaringClass = File.class, name = "<clinit>")
+    private static native void File_clinit();
+
+    @ALIAS(declaringClass = Perf.class, name = "<clinit>")
+    private static native void Perf_clinit();
+
+    // Checkstyle: resume method name check
+
     /**
      * Initializes system properties from a wide variety of sources.
      */
@@ -655,13 +680,13 @@ public final class JDK_java_lang_System {
         }
 
         // 3. reinitialize java.lang.ProcessEnvironment with this process's environment
-        JDK.callInitializer(JDK.java_lang_ProcessEnvironment.classActor());
+        ProcessEnvironment_clinit();
 
         // 3.1. reinitialize java.lang.ApplicationShutdownHooks
-        JDK.callInitializer(JDK.java_lang_ApplicationShutdownHooks.classActor());
+        ApplicationShutdownHooks_clinit();
 
         // 4. perform OS-specific initialization
-        switch (Platform.platform().operatingSystem) {
+        switch (Platform.platform().os) {
             case DARWIN:
                 setIfAbsent(properties, "os.name", "Mac OS X");
                 initBasicUnixProperties(properties);
@@ -705,9 +730,9 @@ public final class JDK_java_lang_System {
 
         // 7. set up classpath and library path
         final String[] javaAndZipLibraryPaths = new String[2];
-        if (Platform.platform().operatingSystem == OperatingSystem.DARWIN) {
+        if (Platform.platform().os == OS.DARWIN) {
             initDarwinPathProperties(properties, javaHome, javaAndZipLibraryPaths);
-        } else if (Platform.platform().operatingSystem == OperatingSystem.WINDOWS) {
+        } else if (Platform.platform().os == OS.WINDOWS) {
             initWindowsPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else {
             initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
@@ -730,10 +755,10 @@ public final class JDK_java_lang_System {
         BootClassLoader.BOOT_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
         // 10. initialize the file system with current runtime values as opposed to bootstrapping values
-        JDK.callInitializer(ClassActor.fromJava(File.class));
+        File_clinit();
 
         // 11. initialize the management performance class with current runtime values
-        JDK.callInitializer(ClassActor.fromJava(sun.misc.Perf.class));
+        Perf_clinit();
 
         // 12. load the character encoding class
         final String sunJnuEncodingValue = properties.getProperty("sun.jnu.encoding");
@@ -792,12 +817,12 @@ public final class JDK_java_lang_System {
         javaAndZipLibraryPaths[0] = jreLibIsaPath;
         javaAndZipLibraryPaths[1] = jreLibIsaPath;
 
-        final OperatingSystem os = Platform.platform().operatingSystem;
-        if (os == OperatingSystem.LINUX) {
+        final OS os = Platform.platform().os;
+        if (os == OS.LINUX) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
-        } else if (os == OperatingSystem.SOLARIS) {
+        } else if (os == OS.SOLARIS) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/jdk/packages/lib/ext"));
-        } else if (os == OperatingSystem.GUESTVM) {
+        } else if (os == OS.GUESTVM) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext")));
         } else {
             ProgramError.unknownCase(os.toString());
@@ -907,7 +932,7 @@ public final class JDK_java_lang_System {
         if (libraryName == null) {
             throw new NullPointerException();
         }
-        switch (platform().operatingSystem) {
+        switch (platform().os) {
             case DARWIN:
                 // System.loadLibrary() first wants to look for a library with the extension ".jnilib",
                 // then if the library was not found, try again with extension ".dylib".
@@ -920,17 +945,23 @@ public final class JDK_java_lang_System {
             case WINDOWS:
                 return libraryName + ".dll";
             default:
-                ProgramError.unknownCase();
-                return null;
+                throw ProgramError.unknownCase();
         }
     }
 
+    @ALIAS(declaringClass = Runtime.class)
+    private native void loadLibrary0(Class fromClass, String libname);
+
     private static final VirtualMethodActor Runtime_loadLibrary0 = ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0");
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native JDK_java_lang_System asThis(Runtime runtime);
 
     /**
      * Loads a native library, searching the library paths as necessary.
      *
      * @param name the name of the library to load
+     * @see BootClassLoader#loadJavaAndZipNativeLibraries(String, String)
      */
     @SUBSTITUTE
     @NEVER_INLINE
@@ -938,15 +969,12 @@ public final class JDK_java_lang_System {
         if (name.equals("zip")) {
             // Do nothing, since we already loaded this library ahead of time
             // to avoid bootstrap issues with class loading (and thus dynamic constant pool resolution).
-            // See {@link VMClassLoader.loadJavaAndZipLibraries()}.
         } else {
             // ATTENTION: these statements must have the exact same side effects as the original code of the substitutee:
             final Class callerClass = Reflection.getCallerClass(2);
-            try {
-                Runtime_loadLibrary0.invoke(ReferenceValue.from(Runtime.getRuntime()), ReferenceValue.from(callerClass), ReferenceValue.from(name));
-            } catch (InvocationTargetException invocationTargetException) {
-                throw invocationTargetException.getTargetException();
-            }
+
+            Runtime runtime = Runtime.getRuntime();
+            asThis(runtime).loadLibrary0(callerClass, name);
         }
 
         // This has been added to re-initialize those classes in the boot image that had to wait for this library to appear:

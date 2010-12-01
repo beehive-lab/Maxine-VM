@@ -220,7 +220,9 @@ ifeq ($(OS),solaris)
         CFLAGS = -g -xc99 -errwarn -errtags -errfmt=error $(KPIC_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) -D$(TARGET_WORD_SIZE) $(OTHER_CFLAGS)
     endif
     C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) 
-    LINK_MAIN = $(CC) $(ARCH_FLAG) -lc -lthread -ldl -o $(MAIN)
+    # The '-R' linker option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
+    # find Maxine's version of the libjvm.so library.
+    LINK_MAIN = $(CC) $(ARCH_FLAG) -lc -lthread -ldl -R$(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
     LINK_LIB = $(CC) -G $(ARCH_FLAG) -lresolv -lc -lm -ldl -lthread -lrt -lproc
     LIB_PREFIX = lib
     LIB_SUFFIX = .so
@@ -309,6 +311,7 @@ ifeq ($(OS),guestvm)
         HOSTOS_LC = solaris
     endif
     JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(HOSTOS_LC)
+    JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)
     # if we are building TELE need access to Xen debugger header
     ifeq ($(TARGET),TELE) 
         ifndef XEN_ROOT
@@ -316,9 +319,20 @@ ifeq ($(OS),guestvm)
         endif
         CFLAGS += -I $(XEN_ROOT)/tools/debugger/gdbsx/xg
     endif
+    
 else
-    JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
+    ifeq ($(OS),darwin)
+        JNI_H_PATH=$(shell ls $(foreach base,/Developer/SDKs/MacOSX10.*.sdk/ /,$(base)System/Library/Frameworks/JavaVM.framework/Versions/1.6*/Headers/jni.h) 2>/dev/null | tail -1)
+        JNI_INCLUDES = -I $(dir $(JNI_H_PATH))
+    else
+        JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
+        JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)
+    endif
 endif
 
-C_DEPENDENCIES_FLAGS += $(JNI_INCLUDES)
-CFLAGS += $(JNI_INCLUDES)
+ifeq "$(JNI_H_PATH)" ""
+    $(error Could not find path to jni.h)
+endif
+
+C_DEPENDENCIES_FLAGS += $(JNI_INCLUDES) -DJNI_H_PATH=\"$(JNI_H_PATH)\"
+CFLAGS += $(JNI_INCLUDES) -DJNI_H_PATH=\"$(JNI_H_PATH)\"

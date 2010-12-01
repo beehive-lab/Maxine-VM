@@ -33,27 +33,26 @@
 #include "ptrace.h"
 
 static const char* requestToString(int request, char *unknownRequestNameBuf, int unknownRequestNameBufLength) {
-#define CASE(req) case req: return STRINGIZE(req)
     switch (request) {
-        CASE(PT_TRACEME);
-        CASE(PT_READ_I);
-        CASE(PT_READ_D);
-        CASE(PT_READ_U);
-        CASE(PT_WRITE_I);
-        CASE(PT_WRITE_D);
-        CASE(PT_WRITE_U);
-        CASE(PT_CONTINUE);
-        CASE(PT_KILL);
-        CASE(PT_STEP);
-        CASE(PT_ATTACH);
-        CASE(PT_DETACH);
-        CASE(PT_GETREGS);
-        CASE(PT_SETREGS);
-        CASE(PT_GETFPREGS);
-        CASE(PT_SETOPTIONS);
-        CASE(PT_GETEVENTMSG);
-        CASE(PT_GETSIGINFO);
-        CASE(PT_SETSIGINFO);
+        case PT_TRACEME: return "TRACEME";;
+        case PT_READ_I: return "READ_I";;
+        case PT_READ_D: return "READ_D";;
+        case PT_READ_U: return "READ_U";;
+        case PT_WRITE_I: return "WRITE_I";;
+        case PT_WRITE_D: return "WRITE_D";;
+        case PT_WRITE_U: return "WRITE_U";;
+        case PT_CONTINUE: return "CONTINUE";;
+        case PT_KILL: return "KILL";;
+        case PT_STEP: return "STEP";;
+        case PT_ATTACH: return "ATTACH";;
+        case PT_DETACH: return "DETACH";;
+        case PT_GETREGS: return "GETREGS";;
+        case PT_SETREGS: return "SETREGS";;
+        case PT_GETFPREGS: return "GETFPREGS";;
+        case PT_SETOPTIONS: return "SETOPTIONS";;
+        case PT_GETEVENTMSG: return "GETEVENTMSG";;
+        case PT_GETSIGINFO: return "GETSIGINFO";;
+        case PT_SETSIGINFO: return "SETSIGINFO";;
     }
     snprintf(unknownRequestNameBuf, unknownRequestNameBufLength, "<unknown:%d>", request);
     return unknownRequestNameBuf;

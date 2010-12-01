@@ -21,13 +21,11 @@
 package com.sun.max.vm.stack;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -60,8 +58,6 @@ public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
 
     public static final int JIT_STACK_BIAS = getJitStackBias();
 
-    public static final TargetABI JIT_ABI = vmConfig().targetABIsScheme().jitABI;
-
     private static final Endianness ENDIANNESS =  platform().endianness();
 
     public static final int CATEGORY1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
@@ -88,12 +84,12 @@ public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
     }
 
     private static int getJitSlotSize() {
-        final int stackFrameAlignment = vmConfig().targetABIsScheme().jitABI.stackFrameAlignment;
+        final int stackFrameAlignment = target().stackAlignment;
         return Ints.roundUnsignedUpByPowerOfTwo(stackFrameAlignment, Word.size());
     }
 
     private static int getJitStackBias() {
-        return vmConfig().targetABIsScheme().jitABI.stackBias;
+        return target().stackBias;
     }
 
     protected JitStackFrameLayout(ClassMethodActor classMethodActor) {

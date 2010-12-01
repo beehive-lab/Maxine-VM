@@ -22,6 +22,8 @@ package com.sun.max.vm.bytecode.refmaps;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 
+import java.util.*;
+
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -176,13 +178,18 @@ public abstract class ReferenceMapInterpreter {
      * Helper class used by {@link ReferenceMapInterpreter#createFrames0(ReferenceMapInterpreterContext)}.
      */
     class FramesInitialization implements FrameModel, VerificationRegistry {
-
         int activeLocals;
+        final boolean[] isSecondDoubleWord;
+
+        public FramesInitialization() {
+            isSecondDoubleWord = new boolean[codeAttribute.maxLocals];
+        }
 
         // Implementation of ParameterVisitor
 
         /**
          * Interprets the parameters in a method's signature to initialize the frame state of the entry block.
+         * @param maxLocals TODO
          */
         public void interpret(SignatureDescriptor signature) {
             for (int i = 0; i < signature.numberOfParameters(); ++i) {
@@ -202,13 +209,21 @@ public abstract class ReferenceMapInterpreter {
         }
 
         public void chopLocals(int numberOfLocals) {
-            activeLocals -= numberOfLocals;
+            for (int i = 0; i < numberOfLocals; i++) {
+                if (isSecondDoubleWord[activeLocals - 1]) {
+                    isSecondDoubleWord[activeLocals - 1] = false;
+                    activeLocals -= 2;
+                } else {
+                    activeLocals--;
+                }
+            }
             adjustCurrentFrame();
         }
 
         public void clear() {
             activeLocals = 0;
             sp = 0;
+            Arrays.fill(isSecondDoubleWord, false);
             adjustCurrentFrame();
         }
 
@@ -241,8 +256,11 @@ public abstract class ReferenceMapInterpreter {
         public void store(VerificationType type, int index) {
             if (type.isCategory2()) {
                 storeCategory2(index);
+                isSecondDoubleWord[index] = false;
+                isSecondDoubleWord[index + 1] = true;
                 activeLocals = Math.max(activeLocals, index + 2);
             } else {
+                isSecondDoubleWord[index] = false;
                 storeCategory1(index, isReference(type));
                 activeLocals = Math.max(activeLocals, index + 1);
             }
@@ -1223,6 +1241,8 @@ public abstract class ReferenceMapInterpreter {
                         final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
                         pop(parameter.toKind());
                     }
+                    // Pop the last synthetic parameter which is the native function address
+                    popCategory1();
                     if (atSearchPosition) {
                         visitReferencesAtCurrentBytecodePosition(visitor, true);
                     }
@@ -1231,6 +1251,7 @@ public abstract class ReferenceMapInterpreter {
                     break;
                 }
 
+                case CALL:
                 case INVOKESPECIAL:
                 case INVOKEVIRTUAL:
                 case INVOKEINTERFACE:
@@ -1245,7 +1266,7 @@ public abstract class ReferenceMapInterpreter {
                         final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
                         pop(parameter.toKind());
                     }
-                    if (opcode != Bytecodes.INVOKESTATIC) {
+                    if (opcode != Bytecodes.INVOKESTATIC && opcode != CALL) {
                         popCategory1(); // receiver
                     }
 
@@ -1367,6 +1388,7 @@ public abstract class ReferenceMapInterpreter {
                         pop(parameter.toKind());
                     } else {
                         assert methodSignature.numberOfParameters() == 0;
+                        popCategory1();
                     }
                     push(methodSignature.resultKind());
                     break;
@@ -1582,11 +1604,68 @@ public abstract class ReferenceMapInterpreter {
                 case LSB:
                 case MSB:
                     skip2();
-                    popCategory2(); // pop Word whose bits are scanned
-                    pushCategory1(); // push back an int with the bit index or -1
                     break;
+                case ICMP:
+                case WCMP:
+                    skip2();
+                    popCategory1();
+                    popCategory1();
+                    break;
+                case UWCMP:
+                case UCMP:
+                    skip2();
+                    popCategory1();
+                    break;
+                case ALLOCSTKVAR: {
+                    final int index = readUnsigned2();
+                    final MethodRefConstant methodConstant = constantPool.methodAt(index);
+                    final SignatureDescriptor methodSignature = methodConstant.signature(constantPool);
+                    assert methodSignature.numberOfParameters() == 1;
+                    assert methodSignature.resultKind().isWord;
+                    final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(0);
+                    pop(parameter.toKind());
+                    pushCategory1();
+                    break;
+                }
+                case ALLOCA:
+                case PAUSE:
+                case SAFEPOINT:
+                case FLUSHW:
+                case BREAKPOINT_TRAP: {
+                    skip2();
+                    break;
+                }
+                case WRITEREG: {
+                    skip2();
+                    popCategory1();
+                    break;
+                }
+                case READ_PC:
+                case READREG: {
+                    skip2();
+                    pushCategory1();
+                    break;
+                }
+                case JNIOP: {
+                    opcode |= readUnsigned2() << 8;
+                    switch (opcode) {
+                        case JNIOP_J2N:
+                        case JNIOP_N2J: {
+                            break;
+                        }
+                        case JNIOP_LINK: {
+                            pushCategory1();
+                            break;
+                        }
+                        default: {
+                            FatalError.unexpected("Unknown bytcode");
+                        }
+                    }
+                    break;
+                }
                 default: {
-                    FatalError.unexpected("Unknown bytcode");
+                    String name = Bytecodes.nameOf(opcode);
+                    FatalError.unexpected("Unknown bytcode: " + name);
                 }
             }
 

@@ -20,14 +20,20 @@
  */
 package com.sun.max.vm.cps.dir.eir;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.util.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.eir.*;
-import com.sun.max.vm.cps.eir.EirTraceObserver.*;
+import com.sun.max.vm.cps.eir.EirStackSlot.Purpose;
+import com.sun.max.vm.cps.eir.EirTraceObserver.Transformation;
 import com.sun.max.vm.cps.eir.allocate.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.type.*;
@@ -60,10 +66,6 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         return createReturn(eirBlock);
     }
 
-    protected EirInstruction createTrapStubExit(EirBlock eirBlock) {
-        return createReturn(eirBlock);
-    }
-
     protected abstract EirEpilogue createEpilogue(EirBlock eirBlock);
 
     @Override
@@ -74,14 +76,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         final EirEpilogue eirEpilogue = createEpilogue(eirBlock);
         eirBlock.appendInstruction(eirEpilogue);
         if (!isTemplate()) {
-            ClassMethodActor classMethodActor = eirMethod.classMethodActor();
-            if (classMethodActor.isTrampoline()) {
-                eirBlock.appendInstruction(createTrampolineExit(eirBlock, classMethodActor.isStaticTrampoline()));
-            } else if (eirMethod().classMethodActor().isTrapStub()) {
-                eirBlock.appendInstruction(createTrapStubExit(eirBlock));
-            } else {
-                eirBlock.appendInstruction(createReturn(eirBlock));
-            }
+            eirBlock.appendInstruction(createReturn(eirBlock));
         }
         return eirEpilogue;
     }
@@ -142,16 +137,26 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
         calleeSavedEirVariables = new EirVariable[calleeSavedEirRegisters.length];
         calleeRepositoryEirVariables = new EirVariable[calleeSavedEirRegisters.length];
+
+        CiRegisterConfig registerConfig = vm().registerConfigs.getRegisterConfig(classMethodActor());
+        CiCalleeSaveArea csa = registerConfig.getCalleeSaveArea();
+
         for (int i = 0; i < calleeSavedEirRegisters.length; i++) {
-            final EirVariable sharedEirVariable = sharedEirVariables[calleeSavedEirRegisters[i].serial()];
+            EirRegister eirRegister = calleeSavedEirRegisters[i];
+            final EirVariable sharedEirVariable = sharedEirVariables[eirRegister.serial()];
             if (sharedEirVariable != null) {
                 calleeSavedEirVariables[i] = sharedEirVariable;
                 isCalleeSavedParameter.set(i);
             } else {
-                calleeSavedEirVariables[i] = createEirVariable(calleeSavedEirRegisters[i].kind());
+                calleeSavedEirVariables[i] = createEirVariable(eirRegister.kind());
             }
-            calleeRepositoryEirVariables[i] = createEirVariable(calleeSavedEirRegisters[i].kind());
-            calleeRepositoryEirVariables[i].fixLocation(allocateSpillStackSlot());
+            calleeRepositoryEirVariables[i] = createEirVariable(eirRegister.kind());
+            EirStackSlot spillStackSlot = allocateSpillStackSlot();
+            calleeRepositoryEirVariables[i].fixLocation(spillStackSlot);
+
+            CiRegister reg = target().arch.registerFor(eirRegister.ordinal, eirRegister.kind().isWord ? RegisterFlag.CPU :  RegisterFlag.FPU);
+            assert spillStackSlot.purpose == Purpose.LOCAL;
+            assert spillStackSlot.offset == csa.offsetOf(reg);
         }
 
         final EirBlock prologueBlock = createEirBlock(IrBlock.Role.NORMAL);

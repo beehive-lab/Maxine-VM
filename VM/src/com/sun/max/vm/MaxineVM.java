@@ -37,6 +37,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.c1x.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.BootImage.Header;
 import com.sun.max.vm.hosted.*;
@@ -77,8 +79,7 @@ public final class MaxineVM {
     private static final List<String> MAXINE_CODE_BASE_LIST = new ArrayList<String>();
 
     private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
-    private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
-    private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
+    private static final String TEST_PREFIX = "test.";
 
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
@@ -102,12 +103,13 @@ public final class MaxineVM {
     private static MaxineVM vm;
 
     /**
-     * The primordial thread locals.
+     * The {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA of the primordial thread.
      *
-     * The address of this field is exposed to native code via {@link Header#primordialThreadLocalsOffset}
-     * so that it can be initialized by the C substrate. It also enables a debugger attached to the VM to find it.
+     * The address of this field is exposed to native code via {@link Header#primordialETLAOffset}
+     * so that it can be initialized by the C substrate. It also enables a debugger attached to
+     * the VM to find it (as it's not part of the thread list).
      */
-    private static Pointer primordialThreadLocals;
+    private static Pointer primordialETLA;
 
     private static int exitCode = 0;
 
@@ -115,12 +117,7 @@ public final class MaxineVM {
 
     static {
         MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
-        MAXINE_CODE_BASE_LIST.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
-        final String p = System.getProperty(EXTENDED_CODEBASE_PROPERTY);
-        if (p != null) {
-            final String[] parts = p.split(",");
-            MAXINE_CODE_BASE_LIST.addAll(Arrays.asList(parts));
-        }
+        MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + MAXINE_CLASS_PACKAGE_PREFIX);
     }
 
     public enum Phase {
@@ -153,6 +150,12 @@ public final class MaxineVM {
          * Executing application code.
          */
         RUNNING,
+
+        /**
+         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VMOperation} thread still live.
+         * Last chance to interpose, but be careful what you do. In particular, thread creation is not permitted.
+         */
+        TERMINATING
     }
 
     /**
@@ -186,6 +189,22 @@ public final class MaxineVM {
         }
     }
 
+    /**
+     * Register the complete set of packages that comprise the boot image being constructed.
+     * @param packages
+     */
+    @HOSTED_ONLY
+    public static void registerMaxinePackages(List<MaxPackage> packages) {
+        // We really only need to search for packages outside the MAXINE_CLASS_PACKAGE_PREFIX namespace.
+        // Any TEST_PREFIX packages are also included.
+        for (MaxPackage maxPackage : packages) {
+            if (!maxPackage.name().startsWith(MAXINE_CLASS_PACKAGE_PREFIX)) {
+                MAXINE_CODE_BASE_LIST.add(maxPackage.name());
+                MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + maxPackage.name());
+            }
+        }
+    }
+
     public static String name() {
         return "Maxine VM";
     }
@@ -200,6 +219,14 @@ public final class MaxineVM {
     @INLINE
     public static MaxineVM vm() {
         return vm;
+    }
+
+    /**
+     * Gets the current VM context.
+     */
+    @INLINE
+    public static MaxRiRuntime runtime() {
+        return vm.runtime;
     }
 
     /**
@@ -292,7 +319,11 @@ public final class MaxineVM {
                 final boolean isTestPackage = maxPackage.name().startsWith("test.com.sun.max.");
                 HOSTED_CLASSES.put(javaClass, !isTestPackage);
                 return !isTestPackage;
+            } else if (maxPackage.getClass().getAnnotation(HOSTED_ONLY.class) != null) {
+                HOSTED_CLASSES.put(javaClass, true);
+                return true;
             }
+
         }
 
         try {
@@ -358,15 +389,10 @@ public final class MaxineVM {
         exitCode = code;
     }
 
-    public static Pointer primordialVmThreadLocals() {
-        return primordialThreadLocals;
-    }
-
     /**
      * Entry point called by the substrate.
      *
      * ATTENTION: this signature must match 'VMRunMethod' in "Native/substrate/maxine.c"
-     * ATTENTION: If you change this signature, you must also change the result returned by @linkplain{runMethodParameterTypes}
      *
      * VM startup, initialization and exit code reporting routine running in the primordial native thread.
      *
@@ -378,17 +404,15 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
+    public static int run(Pointer bootHeapRegionStart, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
-        Pointer vmThreadLocals = primordialThreadLocals;
+        Pointer tla = primordialETLA;
 
-        Safepoint.initializePrimordial(vmThreadLocals);
-
-        Heap.initializeAuxiliarySpace(vmThreadLocals, auxiliarySpace);
+        Safepoint.setLatchRegister(tla);
 
         // The primordial thread should never allocate from the heap
         Heap.disableAllocationForCurrentThread();
@@ -489,11 +513,20 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void native_trap_exit(int code, Address address);
 
+    @C_FUNCTION
+    public static native void core_dump();
+
+    public final MaxRiRuntime runtime;
     public final VMConfiguration config;
     public Phase phase = Phase.BOOTSTRAPPING;
+    public final RegisterConfigs registerConfigs;
+    public final Stubs stubs;
 
     public MaxineVM(VMConfiguration configuration) {
         this.config = configuration;
+        this.runtime = new MaxRiRuntime();
+        this.registerConfigs = RegisterConfigs.create();
+        this.stubs = new Stubs(registerConfigs);
     }
 
     public static void reportPristineMemoryFailure(String memoryAreaName, String operation, Size numberOfBytes) {

@@ -20,6 +20,7 @@
  */
 package jtt.threads;
 
+
 /*
  * @Harness: java
  * @Runs: 0 = true
@@ -29,24 +30,33 @@ package jtt.threads;
 public class Thread_isInterrupted05 {
 
     public static boolean test(int i)  throws InterruptedException {
-        final Thread waitInterruptee = new WaitInterruptee();
+        final WaitInterruptee waitInterruptee = new WaitInterruptee();
         waitInterruptee.start();
         waitInterruptee.interrupt();
         waitInterruptee.join();
+
+        if (waitInterruptee.throwable != null) {
+            throw new RuntimeException(waitInterruptee.throwable);
+        }
         return true;
     }
 
     static class WaitInterruptee extends Thread {
+        Throwable throwable;
         public WaitInterruptee() {
             super("WaitInterruptee");
         }
         @Override
         public void run() {
-            synchronized (this) {
-                try {
-                    wait();
-                } catch (InterruptedException ex) {
+            try {
+                synchronized (this) {
+                    try {
+                        wait();
+                    } catch (InterruptedException ex) {
+                    }
                 }
+            } catch (Throwable t) {
+                throwable = t;
             }
         }
     }

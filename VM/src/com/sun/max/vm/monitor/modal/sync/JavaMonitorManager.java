@@ -447,8 +447,8 @@ public class JavaMonitorManager {
     }
 
     private static class ProtectedMonitorGatherer implements Pointer.Procedure {
-        public void run(Pointer vmThreadLocals) {
-            VmThread thread = VmThread.fromVmThreadLocals(vmThreadLocals);
+        public void run(Pointer tla) {
+            VmThread thread = VmThread.fromTLA(tla);
             final JavaMonitor monitor = thread.protectedMonitor;
             if (monitor != null) {
                 final ManagedMonitor managedMonitor = (ManagedMonitor) monitor;

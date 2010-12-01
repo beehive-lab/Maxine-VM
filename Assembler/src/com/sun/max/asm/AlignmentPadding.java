@@ -23,32 +23,42 @@ package com.sun.max.asm;
 /**
  * Byte stream padding for memory alignment in the assembler. This pseudo-instruction pads the byte stream to ensure that the next
  * memory location is aligned on the specified boundary.
+ * Padding may also be performed conditionally to the amount of space left in the byte stream before the next aligned boundary.
  *
  * @author David Liu
+ * @author Laurent Daynes
  */
 public abstract class AlignmentPadding extends MutableAssembledObject {
 
-    public AlignmentPadding(Assembler assembler, int startPosition, int endPosition, int alignment, byte padByte) {
+    public AlignmentPadding(Assembler assembler, int startPosition, int endPosition, int alignment, int requiredSpace, byte padByte) {
         super(assembler, startPosition, endPosition);
         this.alignment = alignment;
         this.padByte = padByte;
+        this.maxMisalignment = alignment - requiredSpace;
         assembler.addAlignmentPadding(this);
     }
 
     private final int alignment;
 
-    public int alignment() {
+    public final int alignment() {
         return alignment;
     }
+
+    /**
+     * Max misalignment supported. If greater than that, pad to the next alignment.
+     * By default, this is zero, meaning that padding is always performed to the next alignment.
+     * When we want to pad only if there isn't enough space to fit the next object of size s, maxMisalignment is
+     * set to alignment - s.
+     */
+    private final int maxMisalignment;
 
     private final byte padByte;
 
     public void updatePadding() {
         // We avoid sign problems with '%' below by masking off the sign bit:
         final long unsignedAddend = (assembler().baseAddress() + startPosition()) & 0x7fffffffffffffffL;
-
         final int misalignmentSize = (int) (unsignedAddend % alignment);
-        variableSize = (misalignmentSize > 0) ? (alignment - misalignmentSize) : 0;
+        variableSize =  (misalignmentSize <= maxMisalignment)  ? 0 :  alignment - misalignmentSize;
     }
 
     @Override

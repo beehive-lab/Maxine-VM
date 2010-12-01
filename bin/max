@@ -170,7 +170,7 @@ if [ -z "${JAVA_HOME}" ]; then
     elif [ -d /usr/jdk/latest ]; then
        export JAVA_HOME=/usr/jdk/latest
     else
-       echo "JAVA_HOME must be set to a JDK 6 installation directory"
+       echo "JAVA_HOME is not defined. It must point to a JDK 6 installation directory"
        exit 1;
     fi
 fi
@@ -215,16 +215,23 @@ if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
     case $OS in
         Darwin* )
-            if [ "$java_version" != "1.6.0_20" ]; then
+            supported_macosx_jdks="1.6.0_20 1.6.0_22"
+            version_found=0
+            for maxos_java_version in $supported_macosx_jdks; do
+                if [ "$java_version" = "$maxos_java_version" ]; then
+                    version_found=1
+                fi
+            done
+            if [ $version_found -eq 0 ]; then
                 # Integration with the JDK on Mac OS X has proven to be brittle
                 # due to the way in which the JDK libraries are linked against
                 # each other. For example, in version 1.6.0_17 libjava.jnilib
                 # had a Mach-O load command that explicitly specified a hard coded
                 # absolute path to libclient.dylib. In version 1.6.0_20, the linkage
                 # mechanism was changed to use @rpath/ commands instead (see the
-                # man page for dyld(1)). To keep things simple, only an exact
-                # version of the Mac OS X JDK is supported.
-                echo "WARNING: Only JDK 1.6.0_20 is known to work with Maxine on Mac OS X"
+                # man page for dyld(1)). To keep things simple, only exact
+                # versions of the Mac OS X JDK are supported.
+                echo "WARNING: Only the following JDK versions are known to work with Maxine on Mac OS X: ${supported_macosx_jdks/ /, }"
             fi
             MAXINE_OS=darwin
             ;;
@@ -275,7 +282,6 @@ projects=( \
     Assembler:src,test            \
     VM:src,test                   \
     CPS:src,test                  \
-    MaxineC1X:src,test            \
     MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \
@@ -306,7 +312,7 @@ projects=( ${projects[@]} ${extra_projects[@]} )
 
 test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP environment variable to specify a class path for Junit4 classes"; exit 1; }
 junit_version="`$jvm -cp ${JUNIT4_CP} junit.runner.Version 2>&1`"
-if [[ "$junit_version" != 4.8.1 ]]; then
+if [[ "$junit_version" != 4.8.1  && "$junit_version" != 4.5 ]]; then
     echo "The value of JUNIT4_CP ($JUNIT4_CP) does not denote a JUnit4.8.1 installation."
     echo "Running \"$jvm -cp ${JUNIT4_CP} junit.runner.Version\" produced:"
     echo "$junit_version"
@@ -338,7 +344,7 @@ method_finder_pattern_help='A pattern is a class name pattern followed by an opt
     method name contains "wait", all methods in a class whose name
     contains "String" and all methods in any class whose name
     contains "Util", the method name contains "add" and the
-    megnature is (int, float).
+    signature is (int, float).
     
     The type of matching performed for a given class/method name is determined
     by the position of '^' in the pattern name as follows:
@@ -880,15 +886,19 @@ configs_usage=""
 configs_help="prints the predefined image configurations"
 
 function run_configs() {
-    image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
-    configs_message=$(printf "    %-15s %s\n " "Configuration" "Expansion")
+    #image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration`
+    
+    #echo $image_configs
+    
+    printf "The available preconfigured option sets are:\n\n"
+    printf "    %-15s %s\n" "Configuration" "Expansion"
 
-    for image_config in ${image_configs[@]}; do
+    ${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | \
+    while read image_config; do
         image_config_args="${image_config/*\#/}"
-        configs_message=$(printf "%s\n    @%-15s %s" "$configs_message" "${image_config/\#*/}" "${image_config_args//,/ }")
+        printf "    @%-15s %s\n" "${image_config/\#*/}" "${image_config_args//,/ }"
     done
 
-    printf "The available preconfigured option sets are:\n\n%s\n" "$configs_message"
 }
 
 #=======================================
@@ -897,7 +907,6 @@ function run_configs() {
 
 image_usage="[options] classes|packages..."
 function image_help() {
-    image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort`
     image_help_message="build a boot image
 
     Run the BootImageGenerator to build a Maxine boot image. The classes
@@ -941,14 +950,13 @@ function image_help() {
 
 function run_image() {
     system_props=""
-    vm_args=""
     image_args=""
     while [ "$1" != "" ]; do
         case $1 in
             @*)
                 if [ -z "$image_configs" ]; then
                     # Lazily construct this variable as it requires running a Java program
-                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | sort)
+                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration)
                 fi
                 image_config_arg=${1/@/}
                 for image_config in ${image_configs[@]}; do
@@ -968,22 +976,6 @@ function run_image() {
                 run_help image
                 exit 1
                 ;;
-            -vmargs=* )
-                # Merge with VM args specified by '--' prefix
-                if [ -z "$vm_args" ]; then
-                    vm_args="${1/-vmargs=/}"
-                else
-                    vm_args="$vm_args ${1/-vmargs=/}"
-                fi
-                ;;
-            --* )
-                # Merge with VM args specified by explicit '-vmarg' option
-                if [ -z "$vm_args" ]; then
-                    vm_args="${1/-/}"
-                else
-                    vm_args="$vm_args ${1/-/}"
-                fi
-                ;;
             -platform | -cpu | -isa | -os | -endianness | -bits | -page | -nsig )
                 prop_name="max.${1/-/}"
                 shift
@@ -996,11 +988,7 @@ function run_image() {
         shift
     done
 
-    if [ -z "$vm_args" ]; then
-        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args
-    else
-        run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
-    fi
+	run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args
 }
 
 #=======================================
@@ -1307,7 +1295,7 @@ inspect_help="launch a given program under the Inspector
 
 function run_inspect() {
     save_class_dir="$MAXVM_DIR/inspected_classes"
-    vm_args="-XX:SaveClassDir=$save_class_dir"
+    vm_args="-XX:SaveClassDir=$save_class_dir -XX:+TrapOnError"
     inspector_args="-vmdir=$MAXVM_DIR"
     inspector_cp="$MAXVM_DIR/inspected_classes"
     mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
@@ -1569,7 +1557,11 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-maxvm-config-alias=cpscps -fail-fast"
+gate_presets="-image-configs=cpscps,mscpscps -fail-fast"
+if [ "$MAXINE_OS" == "linux" ]; then
+    # MSHeapScheme does not yet work on Linux
+    gate_presets="-image-configs=cpscps -fail-fast"
+fi 
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
     If this commands exits with a 0 exit code, then the source code is in
@@ -1587,44 +1579,18 @@ function run_gate() {
 }
 
 
-
 #=======================================
 # 'msgate' command
 #=======================================
 
 msgate_usage="[options]"
-msgate_presets="-maxvm-config-alias=mscpscps -fail-fast"
+msgate_presets="-image-configs=mscpscps -fail-fast -tests=output:GC+WeakReference"
 
-msgate_testlist="-tests=output:"
-sep=""
-i=0
-while [ ! $i == "8" ] ; do
-  msgate_testlist="${msgate_testlist}${sep}GCTest$i"
-  i=$[ $i + 1 ]
-  sep="+"
-done
-i=1
-while [ ! $i == "5" ] ; do
-  msgate_testlist="${msgate_testlist}${sep}WeakReferenceTestt$i"
-  i=$[ $i + 1 ]
-done
-
-msgate_presets="$msgate_presets $msgate_testlist"
-
-msgate_help="run the tests used to validate a push to the stable Maxine repository using MS heap scheme
-
-    If this commands exits with a 0 exit code, then the source code is in
-    a state that would be accepted for integration into the main repository.
-
-    This is simply a wrapper for invoking the \"max test\" command with the following
-    preset options:
-
-        ${msgate_presets}
-
-    Use \"max msgate -help\" to see what other options this command accepts."
+msgate_help="run the GC tests using the MS heap scheme"
 
 function run_msgate() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${msgate_presets} "$@"
+    gate_presets=$msgate_presets
+    run_gate "$@"
 }
 
 #=======================================
@@ -1727,7 +1693,11 @@ function usage() {
         command=${run_command/run_/}
         help=""
         help_var="${command}_help"
-        help=${!help_var}
+        if [ "`type -t ${help_var}`" = "function" ]; then
+            help=`$help_var`
+        else
+            help=${!help_var}
+        fi
         if [ -z "$help" ]; then
             help="[no description available]"
         fi

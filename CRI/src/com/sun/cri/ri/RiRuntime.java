@@ -76,18 +76,16 @@ public interface RiRuntime {
     boolean mustNotCompile(RiMethod method);
 
     /**
-     * Offset of the lock within the lock object.
+     * Offset of the lock within the lock object on the stack.
      *
      * @return the offset in bytes
      */
     int basicObjectLockOffsetInBytes();
 
     /**
-     * Size of a lock object.
-     *
-     * @return the size in bytes
+     * Get the size in bytes of a lock object on the stack.
      */
-    int sizeofBasicObjectLock();
+    int sizeOfBasicObjectLock();
 
     /**
      * The offset of the normal entry to the code. The compiler inserts NOP instructions to satisfy this constraint.
@@ -205,4 +203,10 @@ public interface RiRuntime {
      */
     boolean recordLeafMethodAssumption(RiMethod method);
 
+    /**
+     * Gets the register configuration to use when compiling a given method.
+     * 
+     * @param method the top level method of a compilation
+     */
+    RiRegisterConfig getRegisterConfig(RiMethod method);
 }

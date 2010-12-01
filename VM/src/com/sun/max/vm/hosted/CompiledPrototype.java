@@ -34,7 +34,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -43,7 +43,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.hosted.CompiledPrototype.Link.*;
+import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.*;
@@ -74,11 +74,6 @@ public class CompiledPrototype extends Prototype {
     private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
 
     private static RuntimeCompilerScheme c1xCompiler;
-
-    /**
-     * Methods that must be statically compiled in the boot image.
-     */
-    private static final Set<ClassMethodActor> imageMethodActors = Collections.newSetFromMap(new IdentityHashMap<ClassMethodActor, Boolean>());
 
     /**
      * The link from a <i>referrer</i> method to a <i>referent</i> method where the referrer caused the referent to be
@@ -266,13 +261,6 @@ public class CompiledPrototype extends Prototype {
     private void processNewTargetMethod(TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-        // if this method contains anonymous classes, add them:
-        final Set<ClassActor> anonymousClasses = lookupAnonymousClasses(classMethodActor);
-        if (anonymousClasses != null) {
-            for (ClassActor classActor : anonymousClasses) {
-                processNewClass(classActor);
-            }
-        }
         // add the methods referenced in the target method's literals
         if (targetMethod.referenceLiterals() != null) {
             for (Object literal : targetMethod.referenceLiterals()) {
@@ -284,11 +272,25 @@ public class CompiledPrototype extends Prototype {
         final Set<MethodActor> directCalls = new HashSet<MethodActor>();
         final Set<MethodActor> virtualCalls = new HashSet<MethodActor>();
         final Set<MethodActor> interfaceCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> inlinedMethods = new HashSet<MethodActor>();
         // gather all direct, virtual, and interface calls and add them
-        targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
+        targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls, inlinedMethods);
         addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
         addMethods(classMethodActor, virtualCalls, Relationship.VIRTUAL_CALL);
         addMethods(classMethodActor, interfaceCalls, Relationship.INTERFACE_CALL);
+
+        // if this method (or any that it inlines) contains anonymous classes, add them:
+        inlinedMethods.add(classMethodActor);
+        for (MethodActor m : inlinedMethods) {
+            if (m != null) {
+                final Set<ClassActor> anonymousClasses = lookupAnonymousClasses(m);
+                if (anonymousClasses != null) {
+                    for (ClassActor classActor : anonymousClasses) {
+                        processNewClass(classActor);
+                    }
+                }
+            }
+        }
     }
 
     private void traceNewTargetMethod(TargetMethod targetMethod) {
@@ -364,14 +366,6 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    /**
-     * Registers a given method that must be statically compiled in the boot image.
-     */
-    public static void registerImageMethod(ClassMethodActor imageMethodActor) {
-        ProgramError.check(imageMethodActor != null);
-        imageMethodActors.add(imageMethodActor);
-    }
-
     public static void registerJitClass(Class javaClass) {
         ClassActor classActor = ClassActor.fromJava(javaClass);
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
@@ -425,36 +419,53 @@ public class CompiledPrototype extends Prototype {
         return c1xCompiler;
     }
 
-    private static List<MethodActor> imageInvocationStubMethodActors = new LinkedList<MethodActor>();
-    private static List<MethodActor> imageConstructorStubMethodActors = new LinkedList<MethodActor>();
+    /**
+     * Methods that must be statically compiled in the boot image.
+     */
+    private static Set<MethodActor> imageMethodActors = new HashSet<MethodActor>();
+    private static Set<MethodActor> imageInvocationStubMethodActors = new HashSet<MethodActor>();
+    private static Set<MethodActor> imageConstructorStubMethodActors = new HashSet<MethodActor>();
+
+    /**
+     * Registers a given method that must be statically compiled in the boot image.
+     */
+    public static void registerImageMethod(ClassMethodActor m) {
+        assert imageMethodActors != null : "too late to add VM entry point " + m;
+        ProgramError.check(m != null);
+        imageMethodActors.add(m);
+    }
 
     /**
      * Request the given method have a statically generated and compiled invocation stub in the boot image.
      */
-    public static void registerImageInvocationStub(MethodActor methodActorWithInvocationStub) {
-        imageInvocationStubMethodActors.add(methodActorWithInvocationStub);
+    public static void registerImageInvocationStub(MethodActor m) {
+        assert imageInvocationStubMethodActors != null : "too late to add VM entry point " + m;
+        imageInvocationStubMethodActors.add(m);
     }
 
     /**
      * Request that the given method have a statically generated and compiled constructor stub in the boot image.
-     * @param methodActor
+     * @param m
      */
-    public static void registerImageConstructorStub(MethodActor methodActor) {
-        imageConstructorStubMethodActors.add(methodActor);
+    public static void registerImageConstructorStub(MethodActor m) {
+        assert imageConstructorStubMethodActors != null : "too late to add VM entry point " + m;
+        imageConstructorStubMethodActors.add(m);
     }
 
-    private void addVMEntryPoints() {
-        final Relationship vmEntryPoint = null;
+    private boolean entryPointsDone;
+
+    private void addEntrypoints0() {
+        final Relationship entryPoint = null;
 
         final RunScheme runScheme = vmConfig().runScheme();
-        add(ClassRegistry.MaxineVM_run, null, vmEntryPoint);
-        add(ClassRegistry.VmThread_run, null, vmEntryPoint);
-        add(ClassRegistry.VmThread_attach, null, vmEntryPoint);
-        add(ClassRegistry.VmThread_detach, null, vmEntryPoint);
-        add(ClassRegistry.findMethod("run", runScheme.getClass()), null, vmEntryPoint);
+        add(ClassRegistry.MaxineVM_run, null, entryPoint);
+        add(ClassRegistry.VmThread_run, null, entryPoint);
+        add(ClassRegistry.VmThread_attach, null, entryPoint);
+        add(ClassRegistry.VmThread_detach, null, entryPoint);
+        add(ClassRegistry.findMethod("run", runScheme.getClass()), null, entryPoint);
 
-        addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
-        addMethods(null, imageMethodActors, vmEntryPoint);
+        addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), entryPoint);
+        addMethods(null, imageMethodActors, entryPoint);
         // we would prefer not to invoke stub-generation/compilation for the shutdown hooks procedure, e.g., after an OutOfMemoryError
         try {
             registerImageInvocationStub(ClassActor.fromJava(Class.forName("java.lang.Shutdown")).findLocalStaticMethodActor("shutdown"));
@@ -470,20 +481,25 @@ public class CompiledPrototype extends Prototype {
                 addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedMethodStub(valuesMethod));
             }
             final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
-            addMethods(null, stubClassActor.localVirtualMethodActors(), vmEntryPoint);
+            addMethods(null, stubClassActor.localVirtualMethodActors(), entryPoint);
         }
         for (MethodActor methodActor : imageConstructorStubMethodActors) {
             addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedConstructorStub(methodActor));
         }
 
-        add(ClassActor.fromJava(DebugBreak.class).findLocalStaticMethodActor("here"), null, vmEntryPoint);
+        add(ClassActor.fromJava(DebugBreak.class).findLocalStaticMethodActor("here"), null, entryPoint);
         // pre-compile the dynamic linking methods, which reduces startup time
-        add(ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0"), null, vmEntryPoint);
-        add(ClassActor.fromJava(Runtime.class).findLocalStaticMethodActor("loadLibrary"), null, vmEntryPoint);
-        add(ClassActor.fromJava(System.class).findLocalStaticMethodActor("loadLibrary"), null, vmEntryPoint);
-        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary0"), null, vmEntryPoint);
-        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary"), null, vmEntryPoint);
-        add(ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).findLocalStaticMethodActor("<clinit>"), null, vmEntryPoint);
+        add(ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0"), null, entryPoint);
+        add(ClassActor.fromJava(Runtime.class).findLocalStaticMethodActor("loadLibrary"), null, entryPoint);
+        add(ClassActor.fromJava(System.class).findLocalStaticMethodActor("loadLibrary"), null, entryPoint);
+        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary0"), null, entryPoint);
+        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary"), null, entryPoint);
+        add(ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).findLocalStaticMethodActor("<clinit>"), null, entryPoint);
+
+        // It's too late now to register any further methods to be compiled into the boot image
+        imageMethodActors = null;
+        imageConstructorStubMethodActors = null;
+        imageInvocationStubMethodActors = null;
     }
 
     private void addStaticAndVirtualMethods(ClassActor classActor) {
@@ -624,11 +640,8 @@ public class CompiledPrototype extends Prototype {
         final CodeRegion region = Code.bootCodeRegion;
         region.setSize(Size.fromInt(Integer.MAX_VALUE / 4)); // enable virtually infinite allocations
         // 2. add only entrypoint methods and methods not to be compiled.
-
-        //add(MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(String.class, int[].class, int.class, int.class)), null, null);
-
         addMethodsReferencedByExistingTargetCode();
-        addVMEntryPoints();
+        addEntrypoints0();
     }
 
     public boolean compile() {
@@ -651,11 +664,20 @@ public class CompiledPrototype extends Prototype {
                 Adapter adapter = null;
                 ClassMethodActor classMethodActor = targetMethod.classMethodActor;
                 if (classMethodActor != null) {
-                    AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.abi().callEntryPoint);
+                    AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.callEntryPoint);
                     adapter = gen != null ? gen.make(classMethodActor) : null;
                 }
                 if (!targetMethod.linkDirectCalls(adapter)) {
-                    ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
+                    final Object[] directCallees = targetMethod.directCallees();
+                    if (directCallees != null) {
+                        for (int i = 0; i < directCallees.length; i++) {
+                            Object currentDirectCallee = directCallees[i];
+                            final TargetMethod callee = targetMethod.getTargetMethod(currentDirectCallee);
+                            if (callee == null) {
+                                ProgramWarning.message("did not link direct callee " + currentDirectCallee + " in method: " + targetMethod);
+                            }
+                        }
+                    }
                 }
             }
         }

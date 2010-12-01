@@ -26,24 +26,90 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * @author Doug Simon
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> extends HomArrayHeaderLayout implements ArrayLayout<Value_Type> {
+public class HomArrayLayout extends HomGeneralLayout implements ArrayLayout {
+    public final int headerSize;
+    public final Kind elementKind;
 
-    protected final Kind<Value_Type> elementKind;
-
-    public HomArrayLayout(Kind<Value_Type> elementKind) {
+    HomArrayLayout(Kind elementKind) {
+        headerSize = -arrayLengthOffset;
         this.elementKind = elementKind;
     }
 
     @INLINE
-    public final Kind<Value_Type> elementKind() {
+    public final int headerSize() {
+        return headerSize;
+    }
+
+    public HeaderField[] headerFields() {
+        return new HeaderField[] {HeaderField.LENGTH, HeaderField.HUB, HeaderField.MISC};
+    }
+
+    @INLINE
+    public final Size getArraySize(Kind kind, int length) {
+        return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize).wordAligned();
+    }
+
+    @Override
+    @INLINE
+    public final Pointer cellToOrigin(Pointer cell) {
+        return cell.plus(headerSize);
+    }
+
+    @Override
+    @INLINE
+    public final Pointer originToCell(Pointer origin) {
+        return origin.minus(headerSize);
+    }
+
+    @Override
+    public boolean isArrayLayout() {
+        return true;
+    }
+
+    @Override
+    public Offset getOffsetFromOrigin(HeaderField headerField) {
+        if (headerField == HeaderField.LENGTH) {
+            return Offset.fromInt(arrayLengthOffset);
+        }
+        return super.getOffsetFromOrigin(headerField);
+    }
+
+    @INLINE
+    static final Word lengthToWord(int length) {
+        return Address.fromInt(length).shiftedLeft(1).or(1);
+    }
+
+    @INLINE
+    static int wordToLength(Word word) {
+        return word.asAddress().unsignedShiftedRight(1).toInt();
+    }
+
+    public int arrayLengthOffset() {
+        return arrayLengthOffset;
+    }
+
+    @INLINE
+    public final int readLength(Accessor accessor) {
+        return wordToLength(accessor.readWord(arrayLengthOffset));
+    }
+
+    @INLINE
+    public final void writeLength(Accessor accessor, int length) {
+        accessor.writeWord(arrayLengthOffset, lengthToWord(length));
+    }
+
+    @INLINE
+    public final Kind elementKind() {
         return elementKind;
     }
 
@@ -60,11 +126,6 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
     @INLINE
     public final int elementSize() {
         return elementKind().width.numberOfBytes;
-    }
-
-    @INLINE
-    protected final int originDisplacement() {
-        return 0;
     }
 
     @INLINE
@@ -151,6 +212,28 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
     }
 
     public void copyElements(Accessor src, int srcIndex, Object dst, int dstIndex, int length) {
-        src.copyElements(originDisplacement(), srcIndex, dst, dstIndex, length);
+        src.copyElements(0, srcIndex, dst, dstIndex, length);
     }
+
+    @INLINE public final boolean   getBoolean(Accessor accessor, int index) { return accessor.getBoolean(0, index); }
+    @INLINE public final byte      getByte(Accessor accessor, int index) { return accessor.getByte(0, index); }
+    @INLINE public final char      getChar(Accessor accessor, int index) { return accessor.getChar(0, index); }
+    @INLINE public final short     getShort(Accessor accessor, int index) { return accessor.getShort(0, index);  }
+    @INLINE public final int       getInt(Accessor accessor, int index) { return accessor.getInt(0, index); }
+    @INLINE public final float     getFloat(Accessor accessor, int index) { return accessor.getFloat(0, index); }
+    @INLINE public final long      getLong(Accessor accessor, int index) { return accessor.getLong(0, index); }
+    @INLINE public final double    getDouble(Accessor accessor, int index) { return accessor.getDouble(0, index); }
+    @INLINE public final Word      getWord(Accessor accessor, int index) { return accessor.getWord(0, index); }
+    @INLINE public final Reference getReference(Accessor accessor, int index) { return accessor.getReference(0, index); }
+
+    @INLINE public final void setBoolean(Accessor accessor, int index, boolean value) { accessor.setBoolean(0, index, value); }
+    @INLINE public final void setByte(Accessor accessor, int index, byte value) {  accessor.setByte(0, index, value); }
+    @INLINE public final void setChar(Accessor accessor, int index, char value) { accessor.setChar(0, index, value); }
+    @INLINE public final void setShort(Accessor accessor, int index, short value) { accessor.setShort(0, index, value); }
+    @INLINE public final void setInt(Accessor accessor, int index, int value) { accessor.setInt(0, index, value); }
+    @INLINE public final void setFloat(Accessor accessor, int index, float value) { accessor.setFloat(0, index, value); }
+    @INLINE public final void setLong(Accessor accessor, int index, long value) { accessor.setLong(0, index, value); }
+    @INLINE public final void setDouble(Accessor accessor, int index, double value) { accessor.setDouble(0, index, value); }
+    @INLINE public final void setWord(Accessor accessor, int index, Word value) { accessor.setWord(0, index, value); }
+    @INLINE public final void setReference(Accessor accessor, int index, Reference element) { accessor.setReference(0, index, element); }
 }

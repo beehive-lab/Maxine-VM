@@ -100,8 +100,8 @@ public class CiUnresolvedMethod implements RiMethod {
         throw unresolved("maxStackSize()");
     }
 
-    public Object liveness(int bci) {
-        throw unresolved("maxStackSize()");
+    public CiBitMap[] livenessMap() {
+        throw unresolved("livenessMap()");
     }
 
     public boolean canBeStaticallyBound() {
@@ -126,8 +126,20 @@ public class CiUnresolvedMethod implements RiMethod {
         return o == this;
     }
 
+    public StackTraceElement toStackTraceElement(int bci) {
+        return new StackTraceElement(CiUtil.toJavaName(holder), name, null, -1);
+    }
+    
     @Override
     public String toString() {
         return CiUtil.format("%H.%n(%p) [unresolved]", this, false);
+    }
+    
+    public Class<?> accessor() {
+        return null;
+    }
+    
+    public int intrinsic() {
+        return 0;
     }
 }

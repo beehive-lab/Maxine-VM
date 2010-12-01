@@ -39,4 +39,18 @@ public class UnresolvedField extends CiUnresolvedField {
         this.constantPool = constantPool;
         this.cpi = cpi;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof UnresolvedField) {
+            UnresolvedField other = (UnresolvedField) o;
+            return constantPool == other.constantPool && cpi == other.cpi;
+        }
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
 }

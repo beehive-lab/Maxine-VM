@@ -21,7 +21,7 @@
 package com.sun.max.vm.cps.jit;
 
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -69,8 +69,8 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         }
     }
 
-    protected TemplateBasedTargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, InstructionSet instructionSet) {
-        super(dynamicCompilerScheme, instructionSet);
+    protected TemplateBasedTargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, ISA isa) {
+        super(dynamicCompilerScheme, isa);
     }
 
     protected abstract BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor);

@@ -204,8 +204,8 @@ typedef struct GatherThreadArgument {
     JNIEnv *env;
     jobject teleProcess;
     jobject threadList;
-    Address threadLocalsList;
-    Address primordialThreadLocals;
+    Address tlaList;
+    Address primordialETLA;
 } *GatherThreadArgument;
 
 static int gatherThread(void *data, const lwpstatus_t *ls) {
@@ -214,18 +214,18 @@ static int gatherThread(void *data, const lwpstatus_t *ls) {
     jlong lwpId = ls->pr_lwpid;
     ThreadState_t threadState = lwpStatusToThreadState(ls);
 
-    ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
+    TLA threadLocals = (TLA) alloca(tlaSize());
     NativeThreadLocalsStruct nativeThreadLocalsStruct;
     Address stackPointer = ls->pr_reg[R_SP];
     Address instructionPointer = ls->pr_reg[R_PC];
-    ThreadLocals tl = teleProcess_findThreadLocals(a->ph, a->threadLocalsList, a->primordialThreadLocals, stackPointer, threadLocals, &nativeThreadLocalsStruct);
-    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadList, lwpId, threadState, instructionPointer, tl);
+    TLA tla = teleProcess_findTLA(a->ph, a->tlaList, a->primordialETLA, stackPointer, threadLocals, &nativeThreadLocalsStruct);
+    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadList, lwpId, threadState, instructionPointer, tla);
 
     return 0;
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject  this, jlong processHandle, jobject teleProcess, jobject threadList, long threadLocalsList, long primordialThreadLocals) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject  this, jlong processHandle, jobject teleProcess, jobject threadList, long tlaList, long primordialETLA) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
     struct GatherThreadArgument a;
@@ -233,8 +233,8 @@ Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *e
     a.env = env;
     a.teleProcess = teleProcess;
     a.threadList = threadList;
-    a.threadLocalsList = threadLocalsList;
-    a.primordialThreadLocals = primordialThreadLocals;
+    a.tlaList = tlaList;
+    a.primordialETLA = primordialETLA;
 
     int error = Plwp_iter(ph, gatherThread, &a);
     if (error != 0) {

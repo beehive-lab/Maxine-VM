@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
 import java.util.*;
 
@@ -109,7 +109,7 @@ public abstract class Adapter extends TargetMethod {
      * @param callPosition TODO
      */
     public Adapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
-        super(description, vmConfig().targetABIsScheme().optimizedJavaABI);
+        super(Adapter, description, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         this.setFrameSize(frameSize);
         this.generator = generator;
 
@@ -124,21 +124,27 @@ public abstract class Adapter extends TargetMethod {
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        FatalError.unimplemented();
+        FatalError.unexpected("Adapter should never be forwarded");
     }
 
     @Override
-    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
     }
 
     @Override
-    public void patchCallSite(int callOffset, Word callEntryPoint) {
-        FatalError.unimplemented();
+    public boolean isPatchableCallSite(Address callSite) {
+        FatalError.unexpected("Adapter should never be patched");
+        return false;
     }
 
     @Override
-    public String referenceMapsToString() {
-        return "";
+    public void fixupCallSite(int callOffset, Address callEntryPoint) {
+        FatalError.unexpected("Adapter should never be patched");
+    }
+
+    @Override
+    public void patchCallSite(int callOffset, Address callEntryPoint) {
+        FatalError.unexpected("Adapter should never be patched");
     }
 
     @Override

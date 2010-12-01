@@ -40,15 +40,12 @@ public abstract class AbstractAssembler {
     public final Buffer codeBuffer;
     public final CiTarget target;
     public final CiTargetMethod targetMethod;
-    public final List<ExceptionInfo> exceptionInfoList;
-    protected final int wordSize;
+    public List<ExceptionInfo> exceptionInfoList;
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
-        this.targetMethod = new CiTargetMethod(target.allocationSpec.refMapSize);
+        this.targetMethod = new CiTargetMethod();
         this.codeBuffer = new Buffer(target.arch.byteOrder);
-        this.exceptionInfoList = new ArrayList<ExceptionInfo>();
-        this.wordSize = target.wordSize;
     }
 
     public final void bind(Label l) {
@@ -68,7 +65,7 @@ public abstract class AbstractAssembler {
 
     public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset) {
         // Install code, data and frame size
-        targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
+        targetMethod.setTargetCode(codeBuffer.close(false), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
         // Record exception handlers if they exist
@@ -93,31 +90,44 @@ public abstract class AbstractAssembler {
             C1XMetrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
         }
 
-        if (C1XOptions.PrintAssembly) {
+        if (C1XOptions.PrintAssembly && !TTY.isSuppressed()) {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Name: " + name);
             TTY.println("Frame size: " + targetMethod.frameSize());
-            TTY.println("Register size: " + targetMethod.referenceRegisterCount());
+            TTY.println("Register size: " + target.arch.registerReferenceMapBitCount);
 
-            Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
-            Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
+            if (C1XOptions.PrintCodeBytes) {
+                Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
+                Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
+            }
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
-            TTY.println(runtime.disassemble(targetMethod));
+            String disassembly = runtime.disassemble(targetMethod);
+            TTY.println(disassembly);
+            boolean noDis = disassembly == null || disassembly.length() == 0;
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Safepoint x : targetMethod.safepoints) {
                 TTY.println(x.toString());
+                if (noDis && x.debugInfo != null) {
+                    TTY.println(CiUtil.indent(x.debugInfo.toString(), "  "));
+                }
             }
 
             Util.printSection("Direct Call Sites", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Call x : targetMethod.directCalls) {
                 TTY.println(x.toString());
+                if (noDis && x.debugInfo != null) {
+                    TTY.println(CiUtil.indent(x.debugInfo.toString(), "  "));
+                }
             }
 
             Util.printSection("Indirect Call Sites", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Call x : targetMethod.indirectCalls) {
                 TTY.println(x.toString());
+                if (noDis && x.debugInfo != null) {
+                    TTY.println(CiUtil.indent(x.debugInfo.toString(), "  "));
+                }
             }
 
             Util.printSection("Data Patches", Util.SUB_SECTION_CHARACTER);
@@ -137,7 +147,10 @@ public abstract class AbstractAssembler {
     public void recordExceptionHandlers(int pcOffset, LIRDebugInfo info) {
         if (info != null) {
             if (info.exceptionHandlers != null) {
-                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers, info.bci));
+                if (exceptionInfoList == null) {
+                    exceptionInfoList = new ArrayList<ExceptionInfo>(4);
+                }
+                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers, info.state.bci));
             }
         }
     }
@@ -145,27 +158,25 @@ public abstract class AbstractAssembler {
     public void recordImplicitException(int pcOffset, LIRDebugInfo info) {
         // record an implicit exception point
         if (info != null) {
-            targetMethod.recordSafepoint(pcOffset, info.registerRefMap(), info.stackRefMap(), info.debugInfo());
+            targetMethod.recordSafepoint(pcOffset, info.debugInfo());
             recordExceptionHandlers(pcOffset, info);
         }
     }
 
     protected void recordDirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
-        byte[] stackMap = info != null ? info.stackRefMap() : null;
         CiDebugInfo debugInfo = info != null ? info.debugInfo() : null;
-        targetMethod.recordCall(posBefore, target, debugInfo, stackMap, true);
+        targetMethod.recordCall(posBefore, target, debugInfo, true);
     }
 
     protected void recordIndirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
-        byte[] stackMap = info != null ? info.stackRefMap() : null;
         CiDebugInfo debugInfo = info != null ? info.debugInfo() : null;
-        targetMethod.recordCall(posBefore, target, debugInfo, stackMap, false);
+        targetMethod.recordCall(posBefore, target, debugInfo, false);
     }
 
-    public void recordSafepoint(int pos, byte[] registerMap, byte[] stackMap, LIRDebugInfo info) {
+    public void recordSafepoint(int pos, LIRDebugInfo info) {
         // safepoints always need debug info
         CiDebugInfo debugInfo = info.debugInfo();
-        targetMethod.recordSafepoint(pos, registerMap, stackMap, debugInfo);
+        targetMethod.recordSafepoint(pos, debugInfo);
     }
 
     public CiAddress recordDataReferenceInCode(CiConstant data) {

@@ -38,15 +38,38 @@ public final class UnsafeCast extends Instruction {
     private Value value;
 
     /**
+     * Denotes if this is a redundant cast at the machine level. That is the source
+     * and the destination kind are implemented by the same machine kind.
+     */
+    public final boolean redundant;
+
+    /**
      * Creates a new UnsafeCast instruction.
      *
      * @param toType the the being cast to
      * @param value the value being cast
      */
-    public UnsafeCast(RiType toType, Value value) {
+    public UnsafeCast(RiType toType, Value value, boolean redundant) {
         super(toType.kind().stackKind());
         this.toType = toType;
         this.value = value;
+        this.redundant = redundant;
+    }
+
+    /**
+     * Gets the first non-redundant value derived from this value. If this
+     * value is not {@linkplain #redundant}, then it is returned. Otherwise,
+     * the first value found by following {@link #value()} that is not an
+     * unsafe cast or is not redundant is returned.
+     */
+    public Value nonRedundantReplacement() {
+        if (!redundant) {
+            return this;
+        }
+        if (!(value instanceof UnsafeCast)) {
+            return value;
+        }
+        return ((UnsafeCast) value).nonRedundantReplacement();
     }
 
     /**

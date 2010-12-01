@@ -22,6 +22,7 @@ package com.sun.c1x.value;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
@@ -35,14 +36,14 @@ import com.sun.cri.ci.*;
  * {@link FrameState#copy()}.
  * Contrariwise and as an optimization, an instance referenced as {@code MutableFrameState} can be assigned to
  * a variable, field, or method parameter of type {@link FrameState} without creating an immutable copy before
- * (using {@link #immutableCopy()}) if the state is not mutated after the assignment.
+ * (using {@link #immutableCopy(int)}) if the state is not mutated after the assignment.
  *
  * @author Michael Duller
  */
 public class MutableFrameState extends FrameState {
 
-    public MutableFrameState(IRScope irScope, int maxLocals, int maxStack) {
-        super(irScope, maxLocals, maxStack);
+    public MutableFrameState(IRScope irScope, int bci, int maxLocals, int maxStack) {
+        super(irScope, bci, maxLocals, maxStack);
     }
 
     /**
@@ -87,7 +88,7 @@ public class MutableFrameState extends FrameState {
     }
 
     public void clearLocals() {
-        for (int i = 0; i < values.length; i++) {
+        for (int i = 0; i < maxLocals; i++) {
             values[i] = null;
         }
     }
@@ -110,9 +111,6 @@ public class MutableFrameState extends FrameState {
         xpush(assertKind(kind, x));
         if (kind.sizeInSlots() == 2) {
             xpush(null);
-        }
-        if (kind.isWord()) {
-            unsafe = true;
         }
     }
 
@@ -155,7 +153,6 @@ public class MutableFrameState extends FrameState {
      * @param x the instruction to push onto the stack
      */
     public void wpush(Value x) {
-        unsafe = true;
         xpush(assertWord(x));
     }
 
@@ -265,43 +262,43 @@ public class MutableFrameState extends FrameState {
         return assertDouble(xpop());
     }
 
-    private Value assertKind(CiKind kind, Value x) {
-        assert x != null && (unsafe || x.kind == kind) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
+    private static Value assertKind(CiKind kind, Value x) {
+        assert x != null && (x.kind == kind || !isTypesafe()) : "kind=" + kind + ", value=" + x + ((x == null) ? "" : ", value.kind=" + x.kind);
         return x;
     }
 
-    private Value assertLong(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Long);
+    private static Value assertLong(Value x) {
+        assert x != null && (x.kind == CiKind.Long || !isTypesafe());
         return x;
     }
 
-    private Value assertJsr(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Jsr);
+    private static Value assertJsr(Value x) {
+        assert x != null && (x.kind == CiKind.Jsr || !isTypesafe());
         return x;
     }
 
-    private Value assertInt(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Int);
+    private static Value assertInt(Value x) {
+        assert x != null && (x.kind == CiKind.Int || !isTypesafe());
         return x;
     }
 
-    private Value assertFloat(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Float);
+    private static Value assertFloat(Value x) {
+        assert x != null && (x.kind == CiKind.Float || !isTypesafe());
         return x;
     }
 
-    private Value assertObject(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Object);
+    private static Value assertObject(Value x) {
+        assert x != null && (x.kind == CiKind.Object || !isTypesafe());
         return x;
     }
 
-    private Value assertWord(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Word);
+    private static Value assertWord(Value x) {
+        assert x != null && (x.kind == CiKind.Word || !isTypesafe());
         return x;
     }
 
-    private Value assertDouble(Value x) {
-        assert x != null && (unsafe || x.kind == CiKind.Double);
+    private static Value assertDouble(Value x) {
+        assert x != null && (x.kind == CiKind.Double || !isTypesafe());
         return x;
     }
 
@@ -329,10 +326,10 @@ public class MutableFrameState extends FrameState {
      */
     public void lock(IRScope scope, Value obj, int totalNumberOfLocks) {
         if (locks == null) {
-            locks = new ArrayList<Value>();
+            locks = new ArrayList<Value>(4);
         }
         locks.add(obj);
-        scope.setMinimumNumberOfLocks(totalNumberOfLocks);
+        scope.updateMaxLocks(totalNumberOfLocks);
     }
 
     /**
@@ -344,9 +341,17 @@ public class MutableFrameState extends FrameState {
 
     /**
      * Gets an immutable copy of this state.
+     * @param bci the bytecode index of the new frame state
      */
-    public FrameState immutableCopy() {
-        return copy(true, true, true);
+    public FrameState immutableCopy(int bci) {
+        return copy(bci, true, true, true);
+    }
+
+    /**
+     * Determines if the current compilation is typesafe.
+     */
+    private static boolean isTypesafe() {
+        return C1XCompilation.compilation().isTypesafe();
     }
 
     private static void assertHigh(Value x) {

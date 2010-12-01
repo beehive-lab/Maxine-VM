@@ -55,7 +55,7 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
     private final TimedTrace updateTracer;
 
     private final TeleReferenceScheme teleReferenceScheme;
-    private final WordArrayLayout wordArrayLayout;
+    private final ArrayLayout wordArrayLayout;
 
     private final Address[] cachedRoots = new Address[InspectableHeapInfo.MAX_NUMBER_OF_ROOTS];
     private final BitSet usedIndices = new BitSet();

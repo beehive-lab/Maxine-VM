@@ -22,6 +22,8 @@ package com.sun.max.vm.cps.target;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.io.*;
@@ -32,13 +34,14 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
+import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
 
 /**
  * Target method that saves for each catch block the ranges in the code that can
@@ -81,21 +84,21 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @INSPECTED
     protected int frameReferenceMapSize;
 
-    public CPSTargetMethod(ClassMethodActor classMethodActor) {
-        super(classMethodActor, null);
+    public CPSTargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
+        super(classMethodActor, callEntryPoint);
     }
 
-    @Override
+    public void cleanup() {
+    }
+
     public boolean contains(Builtin builtin, boolean defaultResult) {
         return defaultResult;
     }
 
-    @Override
     public boolean isNative() {
         return classMethodActor().isNative();
     }
 
-    @Override
     public int count(Builtin builtin, int defaultResult) {
         return defaultResult;
     }
@@ -185,9 +188,21 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return true;
     }
 
-    public final void setGenerated(int[] catchRangePositions, int[] catchBlockPositions, int[] stopPositions, byte[] compressedJavaFrameDescriptors, Object[] directCallees, int numberOfIndirectCalls,
-                    int numberOfSafepoints, byte[] referenceMaps, byte[] scalarLiterals, Object[] referenceLiterals, Object codeOrCodeBuffer, byte[] encodedInlineDataDescriptors, int frameSize,
-                    int frameReferenceMapSize, TargetABI abi) {
+    public final void setGenerated(
+                    int[] catchRangePositions,
+                    int[] catchBlockPositions,
+                    int[] stopPositions,
+                    byte[] compressedJavaFrameDescriptors,
+                    Object[] directCallees,
+                    int numberOfIndirectCalls,
+                    int numberOfSafepoints,
+                    byte[] referenceMaps,
+                    byte[] scalarLiterals,
+                    Object[] referenceLiterals,
+                    Object codeOrCodeBuffer,
+                    byte[] encodedInlineDataDescriptors,
+                    int frameSize,
+                    int frameReferenceMapSize) {
         assert fatalIfNotSorted(catchRangePositions);
         this.catchRangePositions = catchRangePositions;
         this.catchBlockPositions = catchBlockPositions;
@@ -195,7 +210,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         this.encodedInlineDataDescriptors = encodedInlineDataDescriptors;
         this.referenceMaps = referenceMaps;
         this.frameReferenceMapSize = frameReferenceMapSize;
-        super.setABI(abi);
         super.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         super.setFrameSize(frameSize);
         super.setData(scalarLiterals, referenceLiterals, codeOrCodeBuffer);
@@ -225,7 +239,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             code(),
             encodedInlineDataDescriptors,
             frameSize(),
-            frameReferenceMapSize(), super.abi()
+            frameReferenceMapSize()
         );
         return duplicate;
     }
@@ -321,7 +335,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      * @return the bit map denoting which frame slots contain object references at the specified stop in this target method
      * @throws IllegalArgumentException if {@code n < 0 || n>= numberOfStopPositions(stopType)}
      */
-    @Override
     public final ByteArrayBitMap frameReferenceMapFor(StopType stopType, int n) throws IllegalArgumentException {
         return frameReferenceMapFor(stopType.stopPositionIndex(this, n));
     }
@@ -335,7 +348,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      * @param safepointIndex a value between {@code [0 .. numberOfSafepoints())} denoting a safepoint
      * @return the bit map specifying which registers contain object references at the given safepoint position
      */
-    @Override
     public final ByteArrayBitMap registerReferenceMapFor(int safepointIndex) {
         final int registerReferenceMapSize = registerReferenceMapSize();
         // The register reference maps come after all the frame reference maps in _referenceMaps.
@@ -351,7 +363,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return frameReferenceMapSize * numberOfStopPositions();
     }
 
-    @Override
+    /**
+     * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
+     * @return an object that represents the layout of this stack frame
+     */
+    public abstract CompiledStackFrameLayout stackFrameLayout();
+
     public String referenceMapsToString() {
         if (numberOfStopPositions() == 0) {
             return "";
@@ -439,6 +456,14 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         if (stopPositions == null || compressedJavaFrameDescriptors == null) {
             return null;
         }
+        int stopIndex = findStopIndex(instructionPointer);
+        if (stopIndex < 0) {
+            return null;
+        }
+        return TargetJavaFrameDescriptor.get(this, stopIndex);
+    }
+
+    protected int findStopIndex(Pointer instructionPointer) {
         int stopIndex = -1;
         int minDistance = Integer.MAX_VALUE;
         final int position = instructionPointer.minus(codeStart).toInt();
@@ -452,10 +477,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
                 }
             }
         }
-        if (stopIndex < 0) {
-            return null;
-        }
-        return TargetJavaFrameDescriptor.get(this, stopIndex);
+        return stopIndex;
     }
 
     /**
@@ -471,10 +493,10 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @Override
     public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
         if (implicitExceptionPoint) {
-            // CPS target methods don't have Java frame descriptors at implicit throw points. dumb.
+            // CPS target methods don't have Java frame descriptors at implicit throw points.
             return null;
         }
-        if (Platform.platform().instructionSet().offsetToReturnPC == 0) {
+        if (Platform.platform().isa.offsetToReturnPC == 0) {
             instructionPointer = instructionPointer.minus(1);
         }
 
@@ -493,9 +515,39 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return compressedJavaFrameDescriptors;
     }
 
+    @Override
+    public CiDebugInfo getDebugInfo(Pointer instructionPointer, boolean implicitExceptionPoint) {
+        if (implicitExceptionPoint) {
+            // CPS target methods don't have Java frame descriptors at implicit throw points.
+            return null;
+        }
+        if (Platform.platform().isa.offsetToReturnPC == 0) {
+            instructionPointer = instructionPointer.minus(1);
+        }
+
+        if (stopPositions == null || compressedJavaFrameDescriptors == null) {
+            return null;
+        }
+        int stopIndex = findStopIndex(instructionPointer);
+        if (stopIndex < 0) {
+            return null;
+        }
+        TargetJavaFrameDescriptor jfd = TargetJavaFrameDescriptor.get(this, stopIndex);
+        Frame frame = jfd.toFrame(null);
+
+        CiBitMap regRefMap = null;
+        CiBitMap frameRefMap = new CiBitMap(referenceMaps, stopIndex * frameReferenceMapSize, frameReferenceMapSize);
+        if (stopIndex >= numberOfDirectCalls() + numberOfIndirectCalls()) {
+            int regRefMapSize = registerReferenceMapSize();
+            regRefMap = new CiBitMap(referenceMaps, frameReferenceMapsSize() + (regRefMapSize * stopIndex), regRefMapSize);
+        }
+
+        return new CiDebugInfo(frame, regRefMap, frameRefMap);
+    }
+
     @HOSTED_ONLY
     @Override
-    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls, Set<MethodActor> inlinedMethods) {
         if (directCallees != null) {
             for (Object o : directCallees) {
                 if (o instanceof MethodActor) {
@@ -508,13 +560,19 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             final List<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
             final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
             for (int stopIndex = numberOfDirectCalls(); stopIndex < numberOfCalls; ++stopIndex) {
-                final BytecodeLocation location = frameDescriptors.get(stopIndex);
+                BytecodeLocation location = frameDescriptors.get(stopIndex);
                 if (location != null) {
                     final InvokedMethodRecorder invokedMethodRecorder = new InvokedMethodRecorder(location.classMethodActor, directCalls, virtualCalls, interfaceCalls);
                     final BytecodeScanner bytecodeScanner = new BytecodeScanner(invokedMethodRecorder);
                     final byte[] bytecode = location.classMethodActor.codeAttribute().code();
                     if (bytecode != null && location.bytecodePosition < bytecode.length) {
                         bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition);
+                    }
+                    inlinedMethods.add(location.classMethodActor);
+                    location = location.parent();
+                    while (location != null) {
+                        inlinedMethods.add(location.classMethodActor);
+                        location = location.parent();
                     }
                 }
             }
@@ -599,5 +657,24 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             }
             writer.outdent();
         }
+    }
+
+    /**
+     * Traces the {@linkplain #referenceMaps() reference maps} for the stops in the compiled code represented by this object.
+     *
+     * @param writer where the trace is written
+     */
+    public void traceReferenceMaps(IndentWriter writer) {
+        final String refmaps = referenceMapsToString();
+        if (!refmaps.isEmpty()) {
+            writer.println("Reference Maps:");
+            writer.println(Strings.indent(refmaps, writer.indentation()));
+        }
+    }
+
+    @Override
+    public void traceBundle(IndentWriter writer) {
+        super.traceBundle(writer);
+        traceReferenceMaps(writer);
     }
 }

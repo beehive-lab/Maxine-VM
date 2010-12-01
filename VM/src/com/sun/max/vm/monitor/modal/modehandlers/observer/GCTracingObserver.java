@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.observer;
 
+import static com.sun.max.vm.thread.VmThread.*;
+
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.monitor.modal.modehandlers.observer.ObserverModeHandler.*;
@@ -34,7 +36,7 @@ public class GCTracingObserver implements MonitorObserver {
 
     public void notify(Event event, Object object) {
         // Test for GC thread by id, as we might be in the middle of moving VmThread objects.
-        if (VmThreadLocal.ID.getConstantWord().asAddress().toInt() == 1) {
+        if (VmThreadLocal.ID.load(currentTLA()).toInt() == 1) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print(event.name());
             Log.print(" on instance of class defined in: ");
