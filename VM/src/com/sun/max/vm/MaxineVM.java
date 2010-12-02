@@ -459,7 +459,7 @@ public final class MaxineVM {
      */
     @HOSTED_ONLY
     public static void registerImageMethod(ClassMethodActor imageMethod) {
-        CompiledPrototype.registerImageMethod(imageMethod);
+        CompiledPrototype.registerVMEntryPoint(imageMethod);
     }
 
     /**
