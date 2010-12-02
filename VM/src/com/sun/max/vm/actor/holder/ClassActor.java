@@ -64,7 +64,6 @@ import com.sun.max.vm.verifier.*;
 public abstract class ClassActor extends Actor implements RiType {
 
     public static final Deferrable.Queue DEFERRABLE_QUEUE_1 = Deferrable.createDeferred();
-    public static final Deferrable.Queue DEFERRABLE_QUEUE_2 = Deferrable.createDeferred();
 
     public static final char NO_MAJOR_VERSION = (char) -1;
     public static final char NO_MINOR_VERSION = (char) -1;
@@ -314,18 +313,14 @@ public abstract class ClassActor extends Actor implements RiType {
                     final DynamicHub dHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorSerials, allInterfaceActors, vTableLength, dynamicReferenceMap);
                     ClassActor.this.iToV = new int[dHub.iTableLength];
                     ClassActor.this.dynamicHub = dHub.expand(superClassActorSerials, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
+
+                    if (isReferenceClassActor()) {
+                        dynamicHub.initializeVTable(allVirtualMethodActors);
+                        dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
+                    }
                 }
             }
         };
-
-        if (isReferenceClassActor()) {
-            new Deferrable(DEFERRABLE_QUEUE_2) {
-                public void run() {
-                    dynamicHub.initializeVTable(allVirtualMethodActors);
-                    dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
-                }
-            };
-        }
     }
 
     private int getRootClassActorId() {

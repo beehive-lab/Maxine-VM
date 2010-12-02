@@ -30,7 +30,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -109,7 +108,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements CP
     @HOSTED_ONLY
     public void compileSnippets() {
         areSnippetsCompiled = true;
-        ClassActor.DEFERRABLE_QUEUE_2.runAll();
     }
 
     @Override
