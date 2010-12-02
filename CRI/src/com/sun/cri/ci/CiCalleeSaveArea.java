@@ -104,7 +104,7 @@ public class CiCalleeSaveArea {
      */
     public int indexOf(int reg) {
         if (!contains(reg)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(String.valueOf(reg));
         }
         return regNumToIndex[reg];
     }

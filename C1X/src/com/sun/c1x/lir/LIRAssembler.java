@@ -228,7 +228,9 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case DirectCall:
                 emitCallAlignment(op.code);
-                if (op.marks != null) {
+                // fall through
+            case ConstDirectCall:
+               if (op.marks != null) {
                     op.marks.put(XirMark.CALLSITE, asm.recordMark(null, new Mark[0]));
                 }
                 emitDirectCall(op.target, op.info);
