@@ -192,9 +192,14 @@ public abstract class LIRAssembler {
 
     private void printAssembly(AbstractAssembler asm) {
         byte[] currentBytes = asm.codeBuffer.getData(lastDecodeStart, asm.codeBuffer.position());
-        Util.printBytes("Code Part", currentBytes, C1XOptions.PrintAssemblyBytesPerLine);
         if (currentBytes.length > 0) {
-            TTY.println(compilation.runtime.disassemble(currentBytes));
+            String disasm = compilation.runtime.disassemble(currentBytes, lastDecodeStart);
+            if (disasm.length() != 0) {
+                TTY.println(disasm);
+            } else {
+                TTY.println("Code [+%d]: %d bytes", lastDecodeStart, currentBytes);
+                Util.printBytes(lastDecodeStart, currentBytes, C1XOptions.PrintAssemblyBytesPerLine);
+            }
         }
         lastDecodeStart = asm.codeBuffer.position();
     }
