@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import sun.java2d.pipe.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -37,6 +35,7 @@ import com.sun.max.vm.type.*;
  * heap accounts, return free space to it, and may grow or shrink their accounts.
  * The heap region manager may also request a heap account to trade or free some specific
  * regions.
+ *
  *
  * @author Laurent Daynes
  */
@@ -131,7 +130,10 @@ public class HeapRegionManager {
 
         backingStorage.setReserved(startOfHeapSpace, heapSpaceSize);
 
-        // Estimate conservatively what the heap manager needs initially:
+        // Estimate conservatively what the heap manager needs initially. This is to commit
+        // enough memory to get started.
+        // FIXME: initial size should be made to correspond to some notion of initial heap.
+
         // 1. The region info table:
         Size initialSize = tupleSize(regionInfoClass).plus(tupleSize(RegionTable.class));
         // 2. The backing storage for the accounts' region lists
@@ -173,7 +175,7 @@ public class HeapRegionManager {
     }
 
     public <Owner> void close(HeapAccount<Owner> account) {
-
+        // TODO
     }
 
 }

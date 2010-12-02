@@ -28,16 +28,22 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A doubly linked list of regions implemented as thread list over an array of int value.
+ * A doubly linked list of regions implemented as an array of int region identifiers.
+ * Used for region owner ship list, wherein a list can only belong to one ownership list at a time.
+ * This allows to share the backing storage for all the list.
  *
  *
  * @author Laurent Daynes
  */
 public class HeapRegionList {
     /**
-     * Pointer to raw storage of the list.
+     * The value denoting the null element. Used as a list terminator.
+     * Set once, to a value that cannot be
      */
-    final int nullElement;
+    private static final int nullElement = -1;
+     /**
+      * Pointer to raw storage of the list.
+      */
     final Pointer listStorage;
 
     static final int fieldNumberOfBytes = KindEnum.INT.asKind().width.numberOfBytes;
@@ -115,7 +121,6 @@ public class HeapRegionList {
 
     HeapRegionList(Pointer backingStorage, Size length) {
         listStorage = backingStorage;
-        nullElement = length.toInt();
         clear();
     }
 
@@ -193,6 +198,7 @@ public class HeapRegionList {
     }
 
     void append(HeapRegionList list) {
+        FatalError.check(list.listStorage == listStorage, "can only merge list with same listStorage");
         if (isEmpty()) {
             head = list.head;
         } else {
@@ -203,6 +209,7 @@ public class HeapRegionList {
     }
 
     void prepend(HeapRegionList list) {
+        FatalError.check(list.listStorage == listStorage, "can only merge list with same listStorage");
         if (isEmpty()) {
             tail = list.tail;
         } else {
