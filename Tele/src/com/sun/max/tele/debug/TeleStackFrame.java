@@ -21,16 +21,16 @@
 package com.sun.max.tele.debug;
 
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
 import java.util.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleStackFrameWalker.*;
+import com.sun.max.tele.debug.TeleStackFrameWalker.ErrorStackFrame;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
@@ -133,12 +133,9 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
                 // Add a platform-specific offset from the stored code address to the actual call return site.
                 final TargetMethod calleeTargetMethod = callee.targetMethod();
                 if (calleeTargetMethod != null) {
-                    final ClassMethodActor calleeClassMethodActor = calleeTargetMethod.classMethodActor();
-                    if (calleeClassMethodActor != null) {
-                        if (calleeClassMethodActor.isTrapStub()) {
-                            // Special case, where the IP caused a trap; no adjustment.
-                            location = teleVM.codeManager().createMachineCodeLocation(instructionPointer, "stack frame return");
-                        }
+                    if (calleeTargetMethod.is(TrapStub)) {
+                        // Special case, where the IP caused a trap; no adjustment.
+                        location = teleVM.codeManager().createMachineCodeLocation(instructionPointer, "stack frame return");
                     }
                 }
                 if (location == null) {

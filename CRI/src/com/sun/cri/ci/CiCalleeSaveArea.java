@@ -17,7 +17,7 @@ public class CiCalleeSaveArea {
     /**
      * An empty callee-save area.
      */
-    public static final CiCalleeSaveArea EMPTY = new CiCalleeSaveArea(0, new CiRegister[0], 0);
+    public static final CiCalleeSaveArea EMPTY = new CiCalleeSaveArea(0, 0, new CiRegister[0]);
     
     /**
      * The size (in bytes) of the CSA.
@@ -45,10 +45,10 @@ public class CiCalleeSaveArea {
      * Creates an CSA descriptor.
      * 
      * @param size size (in bytes) of the CSA. If this is {@code -1}, then the CSA size will be computed from {@code registers}.
-     * @param registers the registers that can be saved in the CSA
      * @param slotSize the size (in bytes) of an {@linkplain #registerAtIndex(int) indexable} slot in the CSA
+     * @param registers the registers that can be saved in the CSA
      */
-    public CiCalleeSaveArea(int size, CiRegister[] registers, int slotSize) {
+    public CiCalleeSaveArea(int size, int slotSize, CiRegister... registers) {
         assert slotSize == 0 || CiUtil.isPowerOf2(slotSize);
         this.slotSize = slotSize;
         int maxRegNum = -1;

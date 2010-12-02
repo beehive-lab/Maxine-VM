@@ -876,6 +876,16 @@ public class AMD64Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
+    public final void enter(int imm16, int imm8) {
+        emitByte(0xC8);
+        emitShort(imm16);
+        emitByte(imm8);
+    }
+
+    public final void leave() {
+        emitByte(0xC9);
+    }
+
     public final void lock() {
         if ((C1XOptions.Atomics & 1) != 0) {
             // Emit either nothing, a NOP, or a NOP: prefix
@@ -1090,8 +1100,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void movq(CiRegister dst, CiAddress src) {
         if (dst.isFpu()) {
-            assert dst.isFpu();
-                emitByte(0xF3);
+            emitByte(0xF3);
             prefixq(src, dst);
             emitByte(0x0F);
             emitByte(0x7E);
@@ -1111,8 +1120,6 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void movq(CiAddress dst, CiRegister src) {
         if (src.isFpu()) {
-            assert src.isFpu();
-
             emitByte(0x66);
             prefixq(dst, src);
             emitByte(0x0F);
@@ -1209,10 +1216,23 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
+    public final void movsxw(CiRegister dst, CiAddress src) { // movsxw
+        prefix(src, dst);
+        emitByte(0x0F);
+        emitByte(0xBF);
+        emitOperand(dst, src);
+    }
+
     public final void movzxd(CiRegister dst, CiRegister src) { // movzxd
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x63);
         emitByte(0xC0 | encode);
+    }
+
+    public final void movzxd(CiRegister dst, CiAddress src) { // movzxd
+        prefix(src, dst);
+        emitByte(0x63);
+        emitOperand(dst, src);
     }
 
     public final void movw(CiAddress dst, int imm16) {

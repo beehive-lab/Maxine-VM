@@ -67,8 +67,18 @@ public class ExtPackage extends VMConfigPackage {
      *
      * @param packageName package name containing classes to include with this extension
      */
-    protected ExtPackage(String packageName) {
-        super(packageName);
+    protected ExtPackage(String... packageNames) {
+        this(true, packageNames);
     }
 
+    /**
+     * Use this constructor to redirect the search for classes to the given package name
+     * with optional recursion into sub-packages.
+     *
+     * @param packageName package name containing classes to include with this extension
+     */
+
+    protected ExtPackage(boolean recursive, String... packageNames) {
+        super(recursive, packageNames);
+    }
 }

@@ -285,7 +285,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         code,
                         emitter.inlineDataRecorder().encodedDescriptors(),
                         eirMethod.frameSize(),
-                        frameReferenceMapSize, eirMethod.abi.targetABI().registerConfig
+                        frameReferenceMapSize
         );
         assert TargetBundleLayout.from(targetMethod).bundleSize().equals(targetBundleLayout.bundleSize()) :
             "computed target bundle size differs from derived target bundle size for " + targetMethod.classMethodActor() +

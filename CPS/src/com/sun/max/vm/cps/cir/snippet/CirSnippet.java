@@ -24,15 +24,21 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
-import com.sun.max.vm.compiler.snippet.MonitorSnippet.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateMultiReferenceArray;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreatePrimitiveArray;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateReferenceArray;
+import com.sun.max.vm.compiler.snippet.MonitorSnippet.MonitorEnter;
+import com.sun.max.vm.compiler.snippet.MonitorSnippet.MonitorExit;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallEpilogue;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallEpilogueForC;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologueForC;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeHolderInitialized;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.optimize.*;
 import com.sun.max.vm.cps.cir.transform.*;
-import com.sun.max.vm.trampoline.template.*;
 
 /**
  * IR subroutines derived by translating Java methods.
@@ -52,8 +58,6 @@ public class CirSnippet extends CirMethod {
 
         if ((snippet instanceof ArraySetSnippet) ||
             (snippet instanceof FieldWriteSnippet) ||
-            (snippet instanceof TemplateBasedITableTrampoline) ||
-            (snippet instanceof TemplateBasedVTableTrampoline) ||
             (snippet instanceof MonitorEnter) ||
             (snippet instanceof MonitorExit) ||
             (snippet instanceof NativeCallEpilogue) ||
@@ -68,7 +72,6 @@ public class CirSnippet extends CirMethod {
             (snippet instanceof Snippet.RaiseThrowable) ||
             (snippet instanceof MakeClassInitialized) ||
             (snippet instanceof MakeHolderInitialized) ||
-            (snippet instanceof StaticTrampoline) ||
             (snippet instanceof TupleOffsetSnippet)) {
             nonFoldable = true;
         } else {

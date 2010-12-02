@@ -22,9 +22,9 @@ package com.sun.max.asm.gen.risc.sparc;
 
 import java.util.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
+import com.sun.max.lang.*;
 
 /**
  * @author Bernd Mathiske

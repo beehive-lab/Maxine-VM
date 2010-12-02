@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.util.*;
@@ -101,7 +102,7 @@ public final class DynamicHub extends Hub {
             if (compilerCreatesTargetMethods) {
                 vTableEntry = checkCompiled(virtualMethodActor);
                 if (vTableEntry.isZero()) {
-                    vTableEntry = vmConfig().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
+                    vTableEntry = vm().stubs.virtualTrampoline(vTableIndex);
                 }
             } else {
                 vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
@@ -148,7 +149,7 @@ public final class DynamicHub extends Hub {
                     if (compilerCreatesTargetMethods) {
                         iTableEntry = checkCompiled(virtualMethodActor);
                         if (iTableEntry.isZero()) {
-                            iTableEntry = vmConfig().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
+                            iTableEntry = vm().stubs.interfaceTrampoline(iIndex);
                         }
                     } else {
                         iTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();

@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug;
 
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
 import java.io.*;
 import java.lang.management.*;
@@ -30,7 +31,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
@@ -229,12 +229,9 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         // Add a platform-specific offset from the stored code address to the actual call return site.
         final TargetMethod calleeTargetMethod = callee.targetMethod();
         if (calleeTargetMethod != null) {
-            final ClassMethodActor calleeClassMethodActor = calleeTargetMethod.classMethodActor();
-            if (calleeClassMethodActor != null) {
-                if (calleeClassMethodActor.isTrapStub()) {
-                    // Special case, where the IP caused a trap; no adjustment.
-                    return codeManager().createMachineCodeLocation(instructionPointer, "teleStack frame return");
-                }
+            if (calleeTargetMethod.is(TrapStub)) {
+                // Special case, where the IP caused a trap; no adjustment.
+                return codeManager().createMachineCodeLocation(instructionPointer, "teleStack frame return");
             }
         }
         // An ordinary call; apply a platform-specific adjustment to get the real return address.

@@ -4,7 +4,6 @@
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CPS"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/MaxineC1X"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/MaxineELF"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/VMDI"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/C1X"/>

@@ -577,6 +577,9 @@ public class GraphPrototype extends Prototype {
     }
 
     private void exploreClass(Class javaClass) throws ProgramError {
+        if (javaClass.getName().contains("VMManagementImpl")) {
+            System.console();
+        }
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         if (classActor == null) {
             if (MaxineVM.isHostedOnly(javaClass)) {
