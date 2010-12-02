@@ -412,12 +412,13 @@ public abstract class TargetMethod extends MemoryRegion {
                         assert !classMethodActor.isTemplate() : "template must not have patchable call site";
                     }
                     linkedAll = false;
-                    final int s = stopPosition(i);
-                    final Address callSite = codeStart.plus(s);
+                    final int pos = stopPosition(i);
+                    final Address callSite = codeStart.plus(pos);
                     if (!isPatchableCallSite(callSite)) {
-                        FatalError.unexpected(classMethodActor.qualifiedName() +  " call Site calling static trampoline must be patchable : " + callSite.toHexString());
+                        FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
+                                        " [0x" + codeStart.toHexString() + "+" + pos + "]");
                     }
-                    fixupCallSite(s, vm().stubs.staticTrampoline().codeStart.plus(offset));
+                    fixupCallSite(pos, vm().stubs.staticTrampoline().codeStart.plus(offset));
                 } else {
                     fixupCallSite(stopPosition(i), callee.codeStart().plus(offset));
                 }

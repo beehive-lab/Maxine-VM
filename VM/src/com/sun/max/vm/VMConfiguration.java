@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm;
 
-import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
@@ -29,7 +28,6 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
@@ -288,10 +286,6 @@ public final class VMConfiguration {
         }
         if (maxPackage instanceof BasePackage) {
             return true;
-        }
-        if (maxPackage instanceof AsmPackage) {
-            final AsmPackage asmPackage = (AsmPackage) maxPackage;
-            return asmPackage.isPartOfAssembler(platform().isa);
         }
         // VM, Ext and JDK
         if (maxPackage instanceof VMConfigPackage) {

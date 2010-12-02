@@ -45,7 +45,7 @@ public final class AMD64TargetMethodUtil {
     public static boolean isPatchableCallSite(Address callSite) {
         // last byte of call site:
         final Address endOfCallSite = callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
-        return callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(endOfCallSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes));
+        return callSite.roundedDownBy(Word.size()).equals(endOfCallSite.roundedDownBy(Word.size()));
     }
 
     /**
