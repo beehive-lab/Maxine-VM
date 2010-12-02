@@ -284,9 +284,6 @@ public final class VMConfiguration {
         if (maxPackage == null) {
             return false;
         }
-        if (maxPackage instanceof BasePackage) {
-            return true;
-        }
         // VM, Ext and JDK
         if (maxPackage instanceof VMConfigPackage) {
             final VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;

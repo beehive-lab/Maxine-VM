@@ -36,6 +36,6 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        return new CirTranslatorTestSetup(new TestCaseClassSet(new Package()).addToEnd(CirTranslatorTest_max.class, CirTranslatorTest_subtype.class).toTestSuite());
+        return new CirTranslatorTestSetup(new TestCaseClassSet(AllTests.class).addToEnd(CirTranslatorTest_max.class, CirTranslatorTest_subtype.class).toTestSuite());
     }
 }

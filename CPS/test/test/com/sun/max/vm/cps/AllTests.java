@@ -36,7 +36,7 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestCaseClassSet(new Package()).toTestSuite();
+        final TestSuite suite = new TestCaseClassSet(AllTests.class).toTestSuite();
         suite.addTest(test.com.sun.max.vm.cps.cir.AllTests.suite());
         suite.addTest(test.com.sun.max.vm.cps.dir.AllTests.suite());
         return suite;

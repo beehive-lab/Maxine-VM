@@ -108,7 +108,6 @@ public abstract class TargetMethod extends MemoryRegion {
         TrapStub;
     }
 
-    @INSPECTED
     public final Flavor flavor;
 
     /**

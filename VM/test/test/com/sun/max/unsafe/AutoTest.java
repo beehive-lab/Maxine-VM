@@ -34,6 +34,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new TestCaseClassSet(new Package()).toTestSuite();
+        return new TestCaseClassSet(AutoTest.class).toTestSuite();
     }
 }

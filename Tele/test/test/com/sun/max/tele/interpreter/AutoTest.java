@@ -34,7 +34,7 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        final TestCaseClassSet testCaseClassSet = new TestCaseClassSet(new Package());
+        final TestCaseClassSet testCaseClassSet = new TestCaseClassSet(AutoTest.class);
         testCaseClassSet.addToEnd(TeleInterpreterTest_subtype.class);
 
         // Causes infinite regress in interpreter

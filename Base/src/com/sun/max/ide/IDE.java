@@ -20,6 +20,8 @@
  */
 package com.sun.max.ide;
 
+import static com.sun.max.lang.Classes.*;
+
 import java.io.*;
 
 import com.sun.max.*;
@@ -119,8 +121,7 @@ public enum IDE {
     }
 
     public String idePackageName() {
-        final MaxPackage thisPackage = MaxPackage.fromClass(IDE.class);
-        return thisPackage.name() + "." + name().toLowerCase();
+        return getPackageName(IDE.class) + "." + name().toLowerCase();
     }
 
     public abstract File findIdeProjectDirectoryFromClasspathEntry(File classpathEntry);

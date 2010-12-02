@@ -21,13 +21,14 @@
 package com.sun.max.unsafe;
 
 import com.sun.max.*;
+import com.sun.max.vm.*;
 
 /**
  * @see MaxPackage
  *
  * @author Bernd Mathiske
  */
-public class Package extends BasePackage {
+public class Package extends VMPackage {
     public Package() {
         super();
     }
