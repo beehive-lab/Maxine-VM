@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.target.amd64;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -89,7 +91,7 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame
                 registerState = callee.sp();
-                int trapNum = TrapStateAccess.instance().getTrapNumber(registerState);
+                int trapNum = vm().trapStateAccess.getTrapNumber(registerState);
                 Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNum);
                 if (throwableClass != null) {
                     // this trap will cause an exception to be thrown

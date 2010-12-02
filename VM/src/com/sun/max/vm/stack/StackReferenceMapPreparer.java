@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.stack;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -483,7 +484,7 @@ public final class StackReferenceMapPreparer {
      * @param trapState the trap state
      */
     public void prepareStackReferenceMapFromTrap(Pointer tla, Pointer trapState) {
-        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+        final TrapStateAccess trapStateAccess = vm().trapStateAccess;
         final Pointer instructionPointer = trapStateAccess.getPC(trapState);
         final Pointer stackPointer = trapStateAccess.getSP(trapState);
         final Pointer framePointer = trapStateAccess.getFP(trapState);

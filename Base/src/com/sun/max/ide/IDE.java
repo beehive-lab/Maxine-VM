@@ -143,6 +143,7 @@ public enum IDE {
                 ProgramWarning.message("Value of max.ide (" + ideProperty + ") does not correspond with an IDE enum value");
             }
         }
+
         for (IDE ide : IDE.values()) {
             if (ide.packageClassExists()) {
                 // if the package class exists, then the user has chosen an IDE

@@ -174,14 +174,6 @@ public final class JavaProject {
     }
 
     /**
-     * Gets the directory used by the current {@linkplain IDE} to store the metadata for the current project.
-     * The current project is the one containing the main class of this Java process.
-     */
-    public static File findIdeProjectDirectory() {
-        return IDE.current().findIdeProjectDirectoryFromClasspathEntry(findClassesOnClasspath());
-    }
-
-    /**
      * Gets the top-level directory of the current project. That is, the directory that is under VCS control.
      * This may be different from the {@linkplain #findIdeProjectDirectory() IDE project directory}. For example,
      * Netbeans puts the project metadata in a subdirectory (named "nbproject") of the top level project

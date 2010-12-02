@@ -21,7 +21,6 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -34,7 +33,7 @@ import com.sun.max.vm.compiler.target.*;
  * It contains the {@linkplain Trap.Number trap number} and the values of the
  * processor's registers when a trap occurs.
  *
- * There is a single {@linkplain #instance() instance} of this class
+ * There is a single {@linkplain MaxineVM#trapStateAccess instance} of this class
  * for the current platform. This object is used to access and/or modify a given
  * trap state area.
  *
@@ -43,13 +42,6 @@ import com.sun.max.vm.compiler.target.*;
  * @author Mick Jordan
  */
 public abstract class TrapStateAccess {
-
-    /**
-     * Gets the platform specific instance of {@code TrapStateAccess}.
-     */
-    public static TrapStateAccess instance() {
-        return vm().config.trapStateAccess;
-    }
 
     @HOSTED_ONLY
     public static TrapStateAccess create() {
