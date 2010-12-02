@@ -78,7 +78,6 @@ public final class MaxineVM {
     private static final List<String> MAXINE_CODE_BASE_LIST = new ArrayList<String>();
 
     private static final String MAXINE_CLASS_PACKAGE_PREFIX = "com.sun.max";
-    private static final String TEST_PREFIX = "test.";
 
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
@@ -116,7 +115,6 @@ public final class MaxineVM {
 
     static {
         MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
-        MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + MAXINE_CLASS_PACKAGE_PREFIX);
     }
 
     public enum Phase {
@@ -199,7 +197,6 @@ public final class MaxineVM {
         for (MaxPackage maxPackage : packages) {
             if (!maxPackage.name().startsWith(MAXINE_CLASS_PACKAGE_PREFIX)) {
                 MAXINE_CODE_BASE_LIST.add(maxPackage.name());
-                MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + maxPackage.name());
             }
         }
     }
@@ -297,17 +294,17 @@ public final class MaxineVM {
      */
     @HOSTED_ONLY
     public static boolean isHostedOnly(Class<?> javaClass) {
-        if (javaClass == com.sun.max.unsafe.WordArray.class) {
-            System.console();
-        }
-
-
         final Boolean value = HOSTED_CLASSES.get(javaClass);
         if (value != null) {
             return value;
         }
 
         if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
+            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
+            return true;
+        }
+
+        if (MaxPackage.class.isAssignableFrom(javaClass)) {
             HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
             return true;
         }
@@ -525,12 +522,16 @@ public final class MaxineVM {
     public Phase phase = Phase.BOOTSTRAPPING;
     public final RegisterConfigs registerConfigs;
     public final Stubs stubs;
+    public final Safepoint safepoint;
+    public final TrapStateAccess trapStateAccess;
 
     public MaxineVM(VMConfiguration configuration) {
         this.config = configuration;
         this.runtime = new MaxRiRuntime();
         this.registerConfigs = RegisterConfigs.create();
         this.stubs = new Stubs(registerConfigs);
+        this.safepoint = Safepoint.create();
+        this.trapStateAccess = TrapStateAccess.create();
     }
 
     public static void reportPristineMemoryFailure(String memoryAreaName, String operation, Size numberOfBytes) {

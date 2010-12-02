@@ -49,7 +49,9 @@ import com.sun.max.vm.thread.*;
 public abstract class CPSAbstractCompiler extends AbstractVMScheme implements CPSCompiler {
 
     public CPSAbstractCompiler() {
-        CPSCompiler.Static.setCompiler(this);
+        if (MaxineVM.isHosted()) {
+            CPSCompiler.Static.setCompiler(this);
+        }
     }
 
     /**

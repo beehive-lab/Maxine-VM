@@ -36,8 +36,10 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
 
     public static class Static {
         private static CPSCompiler compiler;
+        @HOSTED_ONLY
         private static MaxPackage compilerPackage;
 
+        @HOSTED_ONLY
         public static void setCompiler(CPSCompiler c) {
             assert compiler == null;
             compiler = c;
@@ -48,6 +50,7 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
             return compiler;
         }
 
+        @HOSTED_ONLY
         public static boolean isCompilerPackage(MaxPackage maxPackage) {
             if (compilerPackage == null) {
                 return false;
@@ -58,6 +61,7 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
         /**
          * Do initialization specific to the installed BootstrapCompilerScheme compiler (if any).
          */
+        @HOSTED_ONLY
         public static void initialize(PackageLoader packageLoader) {
             if (compiler != null) {
                 compiler.createBuiltins(packageLoader);
