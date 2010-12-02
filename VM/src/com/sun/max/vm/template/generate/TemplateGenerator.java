@@ -20,9 +20,12 @@
  */
 package com.sun.max.vm.template.generate;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
 
+import com.sun.c1x.util.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -32,8 +35,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.TargetLocation.FloatingPointRegister;
-import com.sun.max.vm.compiler.target.TargetLocation.IntegerRegister;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.template.source.*;
 
@@ -63,10 +64,9 @@ public class TemplateGenerator {
     }
 
     public static boolean hasStackParameters(ClassMethodActor classMethodActor) {
-        TargetABI abi = vmConfig().targetABIsScheme().optimizedJavaABI;
-        TargetLocation[] locations = abi.getParameterTargetLocations(classMethodActor.getParameterKinds());
-        for (TargetLocation location : locations) {
-            if (!(location instanceof IntegerRegister) && !(location instanceof FloatingPointRegister)) {
+        CiKind receiver = !classMethodActor.isStatic() ? classMethodActor.holder().kind() : null;
+        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, Util.signatureToKinds(classMethodActor.signature(), receiver), target()).locations) {
+            if (!arg.isRegister()) {
                 return true;
             }
         }

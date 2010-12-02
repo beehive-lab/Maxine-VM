@@ -34,7 +34,6 @@ import com.sun.max.vm.actor.member.*;
 public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extends AbstractVMScheme implements VMScheme {
 
     public final EirABI<EirRegister_Type> javaABI;
-    public final EirABI<EirRegister_Type> trampolineABI;
     public final EirABI<EirRegister_Type> templateABI;
 
     /**
@@ -69,18 +68,16 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
                             EirABI<EirRegister_Type> nativeABI,
                             EirABI<EirRegister_Type> j2cFunctionABI,
                             EirABI<EirRegister_Type> c2jFunctionABI,
-                            EirABI<EirRegister_Type> trampolineABI,
                             EirABI<EirRegister_Type> templateABI,
                             EirABI<EirRegister_Type> treeABI
                             ) {
         this.javaABI = javaABI;
-        this.trampolineABI = trampolineABI;
         this.templateABI = templateABI;
         this.j2cFunctionABI = j2cFunctionABI;
         this.c2jFunctionABI = c2jFunctionABI;
         this.nativeABI = nativeABI;
         this.treeABI = treeABI;
-        assert Utils.indexOfIdentical(nativeABI.calleeSavedRegisters(), safepointLatchRegister()) != -1;
+        assert Utils.indexOfIdentical(c2jFunctionABI.calleeSavedRegisters(), safepointLatchRegister()) != -1;
     }
 
     /**
@@ -99,9 +96,6 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
         }
         if (compilee.isTemplate()) {
             return templateABI;
-        }
-        if (compilee.isTrampoline()) {
-            return trampolineABI;
         }
         return javaABI;
     }

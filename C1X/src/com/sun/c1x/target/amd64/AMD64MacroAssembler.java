@@ -40,17 +40,37 @@ import com.sun.cri.xir.*;
 public class AMD64MacroAssembler extends AMD64Assembler {
 
     private final CiRegister rscratch1;
-    private final C1XCompiler compiler;
 
-    public AMD64MacroAssembler(C1XCompiler compiler, RiRegisterConfig registerConfig) {
-        super(compiler.target, registerConfig);
-        this.compiler = compiler;
+    public static class WithCompiler extends AMD64MacroAssembler {
+
+        private final C1XCompiler compiler;
+
+        public WithCompiler(C1XCompiler compiler, RiRegisterConfig registerConfig) {
+            super(compiler.target, registerConfig);
+            this.compiler = compiler;
+        }
+
+        @Override
+        public GlobalStub lookupGlobalStub(XirTemplate template) {
+            return compiler.lookupGlobalStub(template);
+        }
+    }
+
+    public AMD64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
+        super(target, registerConfig);
         this.rscratch1 = registerConfig.getScratchRegister();
+    }
+
+    /**
+     * Must be overridden if compiling code that makes calls to global stubs.
+     */
+    public GlobalStub lookupGlobalStub(XirTemplate template) {
+        throw new IllegalArgumentException("This assembler does not support compiling calls to global stubs");
     }
 
     public final int callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, Object... args) {
         assert args.length == stub.parameters.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
+        return callGlobalStubHelper(lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
     }
 
     public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, Object... args) {

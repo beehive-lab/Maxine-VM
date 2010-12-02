@@ -41,6 +41,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.jit.*;

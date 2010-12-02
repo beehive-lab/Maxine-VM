@@ -26,7 +26,6 @@ import static com.sun.max.tele.MaxThreadState.*;
 import java.util.*;
 import java.util.logging.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;

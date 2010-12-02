@@ -66,7 +66,6 @@ public final class JavaPrototype extends Prototype {
     public static final String EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME = "max.image.extraClassesAndPackages";
 
     private static JavaPrototype theJavaPrototype;
-    private final Map<MaxPackage, MaxPackage> excludedMaxPackages = new HashMap<MaxPackage, MaxPackage>();
     private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
     private List<MaxPackage> candidateMaxPackages;
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
@@ -91,7 +90,7 @@ public final class JavaPrototype extends Prototype {
      * @param rootPackage the root package which defines the package class to match and in which to begin the search
      * @return a sequence of the packages that match the criteria
      */
-    private List<MaxPackage> getPackages(MaxPackage[] rootPackages) {
+    private List<MaxPackage> getPackages(MaxPackage... rootPackages) {
         final List<MaxPackage> packages = new LinkedList<MaxPackage>();
         for (MaxPackage maxPackage : MaxPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath(), rootPackages)) {
             if (vmConfig().isMaxineVMPackage(maxPackage)) {
@@ -156,21 +155,8 @@ public final class JavaPrototype extends Prototype {
      *
      * @param maxPackage the package to load
      */
-    private void loadPackage(MaxPackage maxPackage) {
-        final MaxPackage excludedBy = excludedMaxPackages.get(maxPackage);
-        if (excludedBy != null) {
-            Trace.line(1, "Excluding " + maxPackage + " (excluded by " + excludedBy + ")");
-            return;
-        }
-
-        for (MaxPackage excludedPackage : maxPackage.excludes()) {
-            if (loadedMaxPackages.contains(excludedPackage)) {
-                ProgramError.unexpected("Package " + excludedPackage + " is excluded by " + maxPackage + ". " +
-                                "Adjust class path to ensure " + maxPackage + " is loaded before " + excludedPackage);
-            }
-            excludedMaxPackages.put(excludedPackage, maxPackage);
-        }
-        packageLoader.load(maxPackage, false);
+    private void loadMaxPackage(MaxPackage maxPackage) {
+        packageLoader.load(maxPackage, true);
         loadedMaxPackages.add(maxPackage);
     }
 
@@ -183,7 +169,7 @@ public final class JavaPrototype extends Prototype {
      * @return a sequence of all the classes loaded from the specified package (and potentially its subpackages).
      */
     public List<Class> loadPackage(String name, boolean recursive) {
-        return packageLoader.load(name, recursive);
+        return packageLoader.load(MaxPackage.fromJava(name), true);
     }
 
     /**
@@ -191,7 +177,7 @@ public final class JavaPrototype extends Prototype {
      */
     private void loadVMConfigurationPackages() {
         for (MaxPackage p : vmConfig().packages()) {
-            loadPackage(p);
+            loadMaxPackage(p);
         }
     }
 
@@ -199,57 +185,10 @@ public final class JavaPrototype extends Prototype {
      * Loads extra packages and classes that are necessary to build a self-sufficient VM image.
      */
     public void loadCoreJavaPackages() {
-        if (System.getProperty("max.allow.all.core.packages") == null) {
-            // Don't want the static Map fields initialized
-            HostedBootClassLoader.omitClass(java.lang.reflect.Proxy.class);
-
-            HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(File.class.getName() + "$LazyInitialization"));
-            HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(java.util.Calendar.class.getName() + "$CalendarAccessControlContext"));
-
-            // LogManager and FileSystemPreferences have many side effects
-            // that we do not wish to account for before running the target VM.
-            // In particular they install shutdown hooks,
-            // which then end up in the boot image and cause bugs at target runtime.
-            HostedBootClassLoader.omitPackage("java.util.logging", true);
-            HostedBootClassLoader.omitPackage("java.util.prefs", true);
+        List<MaxPackage> jdkPackages = getPackages(new com.sun.max.jdk.Package());
+        for (MaxPackage jdkPackage : jdkPackages) {
+            loadMaxPackage(jdkPackage);
         }
-
-        loadPackage("java.lang", false);
-        loadPackage("java.lang.reflect", false); // needed to compile and to invoke the main method
-        loadPackage("java.lang.ref", false);
-        loadPackage("java.io", false);
-        loadPackage("java.nio", false);
-        loadPackage("java.nio.charset", false);
-        loadPackage("java.util", false);
-        loadPackage("java.util.zip", false); // needed to load classes from jar/zip files
-        loadPackage("java.util.jar", false); // needed to load classes from jar files
-        loadClass(sun.misc.VM.class);
-
-        // Some of these classes contain field offsets cached in static fields.
-        // These offsets need to be patched with Maxine values.
-        loadPackage("java.util.concurrent.atomic", false);
-
-        // These classes need to be compiled and in the boot image in order to be able to
-        // run the optimizing compiler at run time (amongst other reasons)
-        loadClass(sun.misc.SharedSecrets.class);
-        loadClass(sun.reflect.annotation.AnnotationParser.class);
-        loadClass(sun.reflect.Reflection.class);
-        loadClass(java.util.concurrent.atomic.AtomicLong.class);
-        loadClass(java.security.ProtectionDomain.class);
-        loadClass(java.security.DomainCombiner.class);
-        loadClass(java.security.PrivilegedAction.class);
-
-        // Necessary for Java Run Scheme to initialize the System class:
-        loadClass(sun.misc.Version.class);
-        loadPackage("sun.nio.cs", false);
-
-        // Needed to satisfy the requirement that java.lang.ref.Reference.ReferenceHandler.run()
-        // does not do any allocation (as a result of loading this class) while holding the GC lock.
-        loadClass(sun.misc.Cleaner.class);
-
-        // Necessary for early tracing:
-        loadPackage("java.util.regex", false);
-        loadClass(sun.security.action.GetPropertyAction.class);
 
         String value = System.getProperty(EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME);
         if (value != null) {
@@ -262,9 +201,6 @@ public final class JavaPrototype extends Prototype {
             }
         }
 
-        if (System.getProperty("max.allow.all.core.packages") == null) {
-            HostedBootClassLoader.omitPackage("java.security", false);
-        }
     }
 
     private static List<Class> mainPackageClasses = new ArrayList<Class>();
@@ -283,7 +219,7 @@ public final class JavaPrototype extends Prototype {
             if (maxPackage instanceof VMConfigPackage) {
                 VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;
                 if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
-                    String[] classes = packageLoader.listClassesInPackage(vmPackage.name(), false);
+                    String[] classes = packageLoader.listClassesInPackage(vmPackage);
                     for (String cn : classes) {
                         try {
                             Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
@@ -368,7 +304,7 @@ public final class JavaPrototype extends Prototype {
         config.bootCompilerScheme().createSnippets(packageLoader);
         Snippet.register();
 
-        candidateMaxPackages = getPackages(new MaxPackage[] {new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package()});
+        candidateMaxPackages = getPackages(new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package());
 
         MaxineVM.registerMaxinePackages(candidateMaxPackages);
 
@@ -377,8 +313,10 @@ public final class JavaPrototype extends Prototype {
         if (complete) {
 
             for (MaxPackage maxPackage : candidateMaxPackages) {
-                loadPackage(maxPackage);
+                loadMaxPackage(maxPackage);
             }
+
+            loadCoreJavaPackages();
 
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 

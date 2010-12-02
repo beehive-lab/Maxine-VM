@@ -337,7 +337,7 @@ static void logTrap(int signal, Address ip, Address fault, TLA dtla) {
 }
 
 /**
- * The handler for signals dealt with by Trap.trapStub().
+ * The handler for signals dealt with by Stubs.trapStub.
  */
 static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
     int primordial = 0;

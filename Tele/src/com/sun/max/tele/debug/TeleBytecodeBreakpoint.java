@@ -20,17 +20,15 @@
  */
 package com.sun.max.tele.debug;
 
-import static com.sun.max.platform.Platform.*;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
-import com.sun.max.asm.*;
-import com.sun.max.platform.*;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
@@ -38,12 +36,12 @@ import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.DefaultMethodKey;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 
 /**
@@ -347,19 +345,11 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             final long startTimeMillis = System.currentTimeMillis();
             this.teleTargetBreakpointManager = vm.teleProcess().targetBreakpointManager();
             // Predefine parameter accessors for reading compilation details
-            if (platform().isa == ISA.AMD64) {
-                if (platform().os.unix || platform().os == OS.GUESTVM) {
-                    parameter0 = AMD64.rdi;
-                    parameter1 = AMD64.rsi;
-                    parameter2 = AMD64.rdx;
-                    parameter3 = AMD64.rcx;
-                } else {
-                    throw FatalError.unimplemented();
-                }
-            } else {
-                throw FatalError.unimplemented();
-            }
-
+            CiRegister[] args = MaxineVM.vm().registerConfigs.standard.getCallingConventionRegisters(JavaCall, RegisterFlag.CPU);
+            parameter0 = args[0];
+            parameter1 = args[1];
+            parameter2 = args[2];
+            parameter3 = args[3];
             Trace.end(TRACE_VALUE, tracePrefix() + "initializing", startTimeMillis);
         }
 

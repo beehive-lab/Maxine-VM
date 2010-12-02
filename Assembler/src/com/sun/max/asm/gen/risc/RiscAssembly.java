@@ -23,10 +23,10 @@ package com.sun.max.asm.gen.risc;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.dis.risc.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 
 /**
  * @author Bernd Mathiske

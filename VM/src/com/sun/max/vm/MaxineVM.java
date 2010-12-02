@@ -37,6 +37,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.c1x.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.BootImage.Header;
 import com.sun.max.vm.hosted.*;
@@ -217,6 +219,14 @@ public final class MaxineVM {
     @INLINE
     public static MaxineVM vm() {
         return vm;
+    }
+
+    /**
+     * Gets the current VM context.
+     */
+    @INLINE
+    public static MaxRiRuntime runtime() {
+        return vm.runtime;
     }
 
     /**
@@ -506,11 +516,17 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void core_dump();
 
+    public final MaxRiRuntime runtime;
     public final VMConfiguration config;
     public Phase phase = Phase.BOOTSTRAPPING;
+    public final RegisterConfigs registerConfigs;
+    public final Stubs stubs;
 
     public MaxineVM(VMConfiguration configuration) {
         this.config = configuration;
+        this.runtime = new MaxRiRuntime();
+        this.registerConfigs = RegisterConfigs.create();
+        this.stubs = new Stubs(registerConfigs);
     }
 
     public static void reportPristineMemoryFailure(String memoryAreaName, String operation, Size numberOfBytes) {

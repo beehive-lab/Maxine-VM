@@ -124,7 +124,7 @@ public final class AMD64TargetMethodUtil {
             // Just to prevent concurrent writing and invalidation to the same instruction cache line
             // (although the lock exclude ALL concurrent patching)
             callSite.writeInt(1,  (int) displacement);
-            // FIXME: Needs to invalid ICache to be correct (requires new CPS builtin)
+            // Don't need ICache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
         }
     }
 

@@ -23,8 +23,8 @@ package com.sun.max.vm.cps.eir.amd64;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.*;
 
 /**

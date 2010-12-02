@@ -22,7 +22,7 @@ package com.sun.max.vm.cps.b.c.d.e.amd64.target;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;

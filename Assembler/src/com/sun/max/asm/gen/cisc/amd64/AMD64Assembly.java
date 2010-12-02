@@ -22,8 +22,8 @@ package com.sun.max.asm.gen.cisc.amd64;
 
 import java.util.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.gen.cisc.x86.*;
+import com.sun.max.lang.*;
 
 /**
  * @author Bernd Mathiske
