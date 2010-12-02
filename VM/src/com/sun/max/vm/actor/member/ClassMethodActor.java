@@ -251,8 +251,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     return compilee;
                 }
 
-                //if (!isHiddenToReflection()) {
-                if (!isMiranda()) { // allows constructor substitution
+                if (!isMiranda()) {
                     final boolean isConstructor = isInitializer();
                     final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
                     if (substitute != null) {

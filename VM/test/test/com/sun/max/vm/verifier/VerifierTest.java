@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.verifier;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
 
 import java.io.*;
@@ -427,10 +428,9 @@ public class VerifierTest extends VmTestCase {
         new ClassSearch() {
             @Override
             protected boolean visitClass(String className) {
-                if ((className.startsWith("com.sun.max.vm") || className.startsWith("com.sun.c1x")) && !className.endsWith("package-info")) {
+                if (!className.endsWith("package-info")) {
                     try {
-                        Class< ? > c = Class.forName(className, false, HOSTED_BOOT_CLASS_LOADER);
-                        if (!MaxineVM.isHostedOnly(c)) {
+                        if (!className.startsWith("test.") && isMaxineClass(className) && !isHostedOnly(Class.forName(className, false, HOSTED_BOOT_CLASS_LOADER))) {
                             verify(className, true);
                         }
                     } catch (ClassNotFoundException e) {
