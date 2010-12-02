@@ -38,6 +38,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new VmTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
+        return new VmTestSetup(new TestCaseClassSet(AutoTest.class).toTestSuite());
     }
 }

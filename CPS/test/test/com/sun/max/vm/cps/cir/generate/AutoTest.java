@@ -34,6 +34,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new CirTranslatorTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
+        return new CirTranslatorTestSetup(new TestCaseClassSet(AllTests.class).toTestSuite());
     }
 }

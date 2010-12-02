@@ -77,7 +77,7 @@ public final class MaxineVM {
      */
     private static final List<String> MAXINE_CODE_BASE_LIST = new ArrayList<String>();
 
-    private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
+    private static final String MAXINE_CLASS_PACKAGE_PREFIX = "com.sun.max";
     private static final String TEST_PREFIX = "test.";
 
     @HOSTED_ONLY
@@ -297,6 +297,11 @@ public final class MaxineVM {
      */
     @HOSTED_ONLY
     public static boolean isHostedOnly(Class<?> javaClass) {
+        if (javaClass == com.sun.max.unsafe.WordArray.class) {
+            System.console();
+        }
+
+
         final Boolean value = HOSTED_CLASSES.get(javaClass);
         if (value != null) {
             return value;

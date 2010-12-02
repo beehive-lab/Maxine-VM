@@ -35,7 +35,6 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -274,7 +273,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toJava(this);
         }
-        Metrics.increment("MethodActor.toJava()");
         final Class<?> javaHolder = holder().toJava();
         final ClassLoader holderClassLoader = javaHolder.getClassLoader();
         final Class[] parameterTypes = descriptor().resolveParameterTypes(holderClassLoader);

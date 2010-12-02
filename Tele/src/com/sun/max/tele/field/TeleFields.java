@@ -215,7 +215,6 @@ public class TeleFields extends AbstractTeleVMHolder {
 
         final Runnable runnable = new Runnable() {
             public void run() {
-                final com.sun.max.Package rootPackage = new com.sun.max.Package();
                 final Classpath classpath = Classpath.fromSystem();
                 final PackageLoader packageLoader = new PackageLoader(ClassLoader.getSystemClassLoader(), classpath);
                 if (inInspector) {
@@ -239,19 +238,30 @@ public class TeleFields extends AbstractTeleVMHolder {
                     }
 
                 });
-                for (MaxPackage maxPackage : rootPackage.getTransitiveSubPackages(classpath)) {
-                    for (Class<?> c : packageLoader.load(maxPackage, true)) {
-                        final AccessibleObject[] members = memberClass.equals(Method.class) ? c.getDeclaredMethods() : (memberClass.equals(Field.class) ? c.getDeclaredFields() : c.getDeclaredConstructors());
-                        for (AccessibleObject member : members) {
-                            if (member.getAnnotation(INSPECTED.class) != null) {
-                                if (!reified.contains(member)) {
-                                    reified.add((Member) member);
-                                }
 
+                new ClassSearch() {
+                    final HashSet<String> seenPackages = new HashSet<String>();
+                    @Override
+                    protected boolean visitClass(boolean isArchiveEntry, String className) {
+                        if (!className.endsWith("package-info")) {
+                            Class c = Classes.forName(className, false, getClass().getClassLoader());
+                            String pkg = Classes.getPackageName(className);
+                            if (seenPackages.add(pkg)) {
+                                Trace.line(1, pkg);
+                            }
+                            final AccessibleObject[] members = memberClass.equals(Method.class) ? c.getDeclaredMethods() : (memberClass.equals(Field.class) ? c.getDeclaredFields() : c.getDeclaredConstructors());
+                            for (AccessibleObject member : members) {
+                                if (member.getAnnotation(INSPECTED.class) != null) {
+                                    if (!reified.contains(member)) {
+                                        reified.add((Member) member);
+                                    }
+
+                                }
                             }
                         }
+                        return true;
                     }
-                }
+                }.run(Classpath.fromSystem(), "com/sun/max");
 
                 for (Member member : reified) {
                     memberReifier.reify(memberClass.cast(member), writer);

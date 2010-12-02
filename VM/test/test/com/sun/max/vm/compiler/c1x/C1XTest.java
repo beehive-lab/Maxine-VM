@@ -75,8 +75,6 @@ public class C1XTest {
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false,
         "Stop compilation upon the first bailout.");
-    private static final Option<String> compilerOption = options.newStringOption("compiler-name", "c1x",
-        "Select the compiler; boot,jit,opt,c1x");
     private static final Option<Boolean> compileTargetMethod = options.newBooleanOption("compile-target-method", false,
         "Use the C1X compiler to compile all the way to a TargetMethod instance.");
     private static final Option<Integer> timingOption = options.newIntegerOption("timing", 0,
@@ -172,13 +170,15 @@ public class C1XTest {
 
         Trace.on(traceOption.getValue());
 
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
+        vmConfigurator.optScheme.setValue(new com.sun.max.vm.compiler.c1x.Package());
+        vmConfigurator.jitScheme.setValue(new com.sun.max.vm.compiler.c1x.Package());
+        vmConfigurator.create(true);
+
         // create the prototype
         if (verboseOption.getValue() > 0) {
             out.print("Initializing Java prototype... ");
         }
-
-        VMConfigurator vmConfigurator = new VMConfigurator(options);
-        vmConfigurator.create(true);
         JavaPrototype.initialize(false);
         if (verboseOption.getValue() > 0) {
             out.println("done");
@@ -186,20 +186,8 @@ public class C1XTest {
 
         // create MaxineRuntime
         VMConfiguration configuration = vmConfig();
-        final RuntimeCompilerScheme compilerScheme;
+        final RuntimeCompilerScheme compilerScheme = configuration.optCompilerScheme();
 
-        String compilerName = compilerOption.getValue();
-        if (compilerName.equals("c1x")) {
-            compilerScheme = new C1XCompilerScheme();
-        } else if (compilerName.equals("jit")) {
-            configuration.initializeSchemes(MaxineVM.Phase.COMPILING);
-            compilerScheme = configuration.jitCompilerScheme();
-        } else if (compilerName.equals("opt")) {
-            configuration.initializeSchemes(MaxineVM.Phase.COMPILING);
-            compilerScheme = configuration.optCompilerScheme();
-        } else {
-            throw ProgramError.unexpected("Unknown compiler: " + compilerName);
-        }
 
         String searchCp = searchCpOption.getValue();
         final Classpath classpath = searchCp == null || searchCp.length() == 0 ? Classpath.fromSystem() : new Classpath(searchCp);

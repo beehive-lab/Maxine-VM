@@ -32,8 +32,6 @@ import com.sun.max.program.*;
  * <p>
  * Various subclasses of this package exist for parts of Maxine, namely:
  * <ul>
- * <li>{@link BasePackage} for base (utility) packages in {@code com.sun.max}.
- * <li>{@link AsmPackage} for packages in the Maxine assembler.
  * <li>{@link VMPackage} for packages in the VM proper.
  * <li>{@link ExtPackage} for the extension packages.
  * <li>{@link JDKPackage} for JDK packages
@@ -344,35 +342,28 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      */
     public static List<MaxPackage> getTransitiveSubPackages(Classpath classpath, final MaxPackage[] rootPackages) {
         final RootPackageInfo[] rootPackagesInfo = new RootPackageInfo[rootPackages.length];
-        // Standard use has one root with a common prefix. Arbitrary paths would be more complicated.
-        MaxPackage baseRoot = null;
         int index = 0;
         for (MaxPackage root : rootPackages) {
-            if (isPrefixOf(root, rootPackages)) {
-                baseRoot = root;
-            }
             rootPackagesInfo[index++] = new RootPackageInfo(root, root.getClass().getSuperclass());
-
-        }
-        if (baseRoot == null) {
-            ProgramError.unexpected("MaxPackage.getTransitiveSubPackages: roots have no common prefix");
         }
 
-        // search from baseRoot
-        new ClassSearch() {
-
-            @Override
-            protected boolean visitClass(String className) {
-                final String pkgName = Classes.getPackageName(className);
-                for (int i = 0; i < rootPackages.length; i++) {
-                    MaxPackage root = rootPackages[i];
-                    if (pkgName.startsWith(root.name())) {
-                        rootPackagesInfo[i].packageNames.add(pkgName);
+        // search from roots
+        for (int i = 0; i < rootPackages.length; i++) {
+            final MaxPackage root = rootPackages[i];
+            final RootPackageInfo rootInfo = rootPackagesInfo[i];
+            //long start = System.currentTimeMillis();
+            new ClassSearch() {
+                @Override
+                protected boolean visitClass(String className) {
+                    if (className.startsWith(root.name())) {
+                        final String pkgName = Classes.getPackageName(className);
+                        rootInfo.packageNames.add(pkgName);
                     }
+                    return true;
                 }
-                return true;
-            }
-        }.run(classpath, baseRoot.name().replace('.', '/'));
+            }.run(classpath, root.name().replace('.', '/'));
+            //System.out.println("searched " + root + " [pkgs=" + rootInfo.packageNames.size() + ", time=" + (System.currentTimeMillis() - start) + "ms]");
+        }
 
         // Now find Package classes that match the roots
         int totalSize = 0;
