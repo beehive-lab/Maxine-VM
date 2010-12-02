@@ -167,6 +167,14 @@ public interface RiMethod {
     StackTraceElement toStackTraceElement(int bci);
     
     /**
+     * Indicates whether this method can be linked at compile-time. Always, 
+     * return false if the method cannot be statically bound.
+     * This can be used to reduce use of call site patching on statically bound method,
+     * reduce alignment constraints. Currently used by Maxine only.
+     */
+    boolean canBeStaticallyLinked();
+    
+    /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      * Non-Maxine VMs should just return {@code null}.
      */

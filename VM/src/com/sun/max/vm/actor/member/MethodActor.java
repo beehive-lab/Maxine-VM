@@ -576,4 +576,9 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     public RiSignature signature() {
         return descriptor();
     }
+
+    public boolean canBeStaticallyLinked() {
+        return false;
+    }
+
 }
