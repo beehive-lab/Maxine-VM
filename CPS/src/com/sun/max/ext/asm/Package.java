@@ -20,18 +20,38 @@
  */
 package com.sun.max.ext.asm;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.ext.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.runtime.*;
 
-
+/**
+ * Redirection for the set of Assembler packages to include in the image.
+ *
+ * @author Doug Simon
+ */
 public class Package extends ExtPackage {
+
+    private static String[] packages() {
+        if (platform().isa == ISA.AMD64) {
+            return new String[] {
+                "com.sun.max.asm",
+                "com.sun.max.asm.x86",
+                "com.sun.max.asm.amd64"
+            };
+        }
+        throw FatalError.unimplemented();
+    }
+
     public Package() {
-        super("com.sun.max.asm");
+        super(false, packages());
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.isCompilerPackage(this);
+        return CPSCompiler.Static.compiler() != null;
     }
 }

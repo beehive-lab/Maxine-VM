@@ -30,12 +30,23 @@ import com.sun.max.vm.type.*;
  *
  * @author Mick Jordan
  */
-
 public class Package extends JDKPackage {
-    private static final String[] packages = {"java.lang", "java.lang.reflect", "java.lang.ref",
-        "java.io", "java.nio", "java.nio.charset", "java.security",
-        "java.util", "java.util.zip", "java.util.jar", "java.util.regex", "java.util.concurrent.atomic",
-        "sun.misc", "sun.nio.cs", "sun.security.action"};
+    private static final String[] packages = {
+        "java.lang",
+        "java.lang.reflect",
+        "java.lang.ref",
+        "java.io",
+        "java.nio",
+        "java.nio.charset",
+        "java.security",
+        "java.util",
+        "java.util.zip",
+        "java.util.jar",
+        "java.util.regex",
+        "java.util.concurrent.atomic",
+        "sun.misc",
+        "sun.nio.cs",
+        "sun.security.action"};
 
     private boolean customised;
 
@@ -76,7 +87,6 @@ public class Package extends JDKPackage {
      */
     @Override
     protected void recursiveOverride() {
-        //
         if (name().equals("sun.misc")) {
             setInclusions("Version", "SharedSecrets", "VM", "Cleaner");
         } else if (name().equals("sun.reflect")) {

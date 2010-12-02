@@ -213,11 +213,11 @@ public final class VMConfigurator {
      * Creates and {@linkplain MaxineVM#set(MaxineVM) installs} a VM using all the defaults
      * except for a supplied compiler scheme implementation and build level.
      */
-    public static void installStandard(BuildLevel buildLevel, VMPackage compilerPackage) {
+    public static void installStandard(BuildLevel buildLevel, VMPackage optPackage) {
         VMConfigurator vmConfigurator = new VMConfigurator(null);
         vmConfigurator.buildLevel.setValue(buildLevel);
+        vmConfigurator.optScheme.setValue(optPackage);
         vmConfigurator.jitScheme.setValue(null);
-        vmConfigurator.optScheme.setValue(null);
         vmConfigurator.create(true);
     }
 

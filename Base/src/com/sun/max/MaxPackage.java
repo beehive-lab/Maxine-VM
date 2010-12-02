@@ -393,7 +393,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                         }
                     }
                     if (maxPackage == null) {
-                        System.err.println("WARNING: missing Package class in package: " + pkgName);
+                        // ProgramWarning.message("WARNING: missing Package class in package: " + pkgName);
                         continue;
                     }
                 }
@@ -489,6 +489,9 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                 return true;
             }
         }.run(classpath, redirectedPackage.replace('.', '/'));
+        if (packageNames.isEmpty()) {
+            ProgramWarning.message("Redirect " + redirectedPackage + " does not match and packages on the class path");
+        }
         for (String pkgName : packageNames) {
             /* A redirected package is not expected to contain any Package classes, and the
             * expectation is that we load the entire tree. However, any Package classes
