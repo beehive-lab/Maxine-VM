@@ -46,9 +46,6 @@ public final class InliningAnnotationsValidator {
      * {@linkplain MaxineVM#isHosted() bootstrapping}.
      */
     public static void apply(ClassMethodActor classMethodActor) {
-        if (!MaxineVM.isMaxineClass(classMethodActor.holder())) {
-            return;
-        }
         final Method javaMethod = classMethodActor.toJava();
         if (checked.contains(javaMethod)) {
             return;

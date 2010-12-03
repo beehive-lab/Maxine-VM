@@ -693,7 +693,6 @@ public class FieldActor extends MemberActor implements RiField {
         }
 
         if (isConstant(flags())) {
-            assert MaxineVM.isMaxineClass(holder()) : "@CONSTANT applied to field of non-Maxine class: " + this;
             return MaxineVM.isHosted() || !isStatic() || holder.isInitialized();
         }
         return false;
