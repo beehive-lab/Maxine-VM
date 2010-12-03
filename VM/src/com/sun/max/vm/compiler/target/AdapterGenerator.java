@@ -30,7 +30,6 @@ import java.util.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.max.asm.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;

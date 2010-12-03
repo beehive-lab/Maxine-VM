@@ -153,6 +153,8 @@ public class C1XOptions {
     public static boolean GenCode                       = true;
     public static boolean GenDeopt                      = true;
 
+    public static boolean UseConstDirectCall            = false;
+
     public static boolean GenSynchronization            = true;
     public static boolean GenArrayStoreCheck            = true;
     public static boolean GenBoundsChecks               = true;

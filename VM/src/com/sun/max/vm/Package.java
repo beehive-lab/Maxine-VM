@@ -20,8 +20,7 @@
  */
 package com.sun.max.vm;
 
-import com.sun.max.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.config.*;
 
 /**
  * @see MaxPackage
@@ -32,21 +31,5 @@ public class Package extends VMPackage {
 
     public Package() {
         super();
-    }
-
-    private static final String PACKAGE_NAME = new Package().name();
-
-    /**
-     * Determines if a given class is part of the MaxineVM code base.
-     */
-    public static boolean contains(Class javaClass) {
-        return javaClass.getName().startsWith(PACKAGE_NAME);
-    }
-
-    /**
-     * Determines if a given class represented by a type descriptor is part of the MaxineVM code base.
-     */
-    public static boolean contains(TypeDescriptor typeDescriptor) {
-        return typeDescriptor.toJavaString().startsWith(PACKAGE_NAME);
     }
 }

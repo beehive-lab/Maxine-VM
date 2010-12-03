@@ -33,7 +33,7 @@ import java.util.logging.*;
 
 import javax.swing.*;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.ide.*;
 import com.sun.max.jdwp.vm.core.*;
 import com.sun.max.jdwp.vm.proxy.*;
@@ -489,9 +489,8 @@ public abstract class TeleVM implements MaxVM {
                         bootImageConfig.layoutPackage,
                         bootImageConfig.heapPackage,
                         bootImageConfig.monitorPackage,
-                        bootImageConfig.bootCompilerPackage,
+                        bootImageConfig.optCompilerPackage,
                         bootImageConfig.jitCompilerPackage,
-                        null,
                         bootImageConfig.compilationPackage,
                         bootImageConfig.runPackage);
         vm = new MaxineVM(config);

@@ -36,6 +36,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.hotpath.*;
@@ -141,9 +142,9 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
         vm.create(true);
         JavaPrototype.initialize(false);
         vmConfig().initializeSchemes(Phase.RUNNING);
-        vmConfig().bootCompilerScheme().compileSnippets();
-
-        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + vmConfig().bootCompilerScheme().toString());
+        CPSCompiler compiler = CPSCompiler.Static.compiler();
+        compiler.compileSnippets();
+        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + compiler);
     }
 
     protected static void createVMConfiguration() {

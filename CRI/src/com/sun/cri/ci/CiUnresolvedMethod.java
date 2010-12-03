@@ -134,6 +134,10 @@ public class CiUnresolvedMethod implements RiMethod {
     public String toString() {
         return CiUtil.format("%H.%n(%p) [unresolved]", this, false);
     }
+
+    public boolean hasCompiledCode() {
+        return false;
+    }
     
     public Class<?> accessor() {
         return null;

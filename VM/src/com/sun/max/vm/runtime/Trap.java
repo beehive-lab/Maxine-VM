@@ -21,7 +21,6 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Trap.Number.*;
 import static com.sun.max.vm.thread.VmThread.*;
@@ -126,7 +125,7 @@ public abstract class Trap {
         }
 
         public static boolean isStackOverflow(Pointer trapState) {
-            return TrapStateAccess.instance().getTrapNumber(trapState) == STACK_FAULT;
+            return vm().trapStateAccess.getTrapNumber(trapState) == STACK_FAULT;
         }
     }
 
@@ -210,7 +209,7 @@ public abstract class Trap {
             return;
         }
 
-        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+        final TrapStateAccess trapStateAccess = vm().trapStateAccess;
         final Pointer pc = trapStateAccess.getPC(trapState);
         final Object origin = checkTrapOrigin(trapNumber, trapState, faultAddress, pc);
         if (origin instanceof TargetMethod) {
@@ -267,7 +266,7 @@ public abstract class Trap {
      *         caused the trap or {@code null} if trap occurred in native code
      */
     private static Object checkTrapOrigin(int trapNumber, Pointer trapState, Address faultAddress, Pointer pc) {
-        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+        final TrapStateAccess trapStateAccess = vm().trapStateAccess;
 
         // check to see if this fault originated in a target method
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(pc);
@@ -315,9 +314,8 @@ public abstract class Trap {
      */
     private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapState, Address faultAddress) {
         final Pointer dtla = currentTLA();
-
-        final Safepoint safepoint = vmConfig().safepoint;
-        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+        final Safepoint safepoint = vm().safepoint;
+        final TrapStateAccess trapStateAccess = vm().trapStateAccess;
         final Pointer ttla = TTLA.load(dtla);
         final Pointer safepointLatch = trapStateAccess.getSafepointLatch(trapState);
 
@@ -405,7 +403,7 @@ public abstract class Trap {
         if (targetMethod.preserveRegistersForLocalExceptionHandler()) {
             final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, ip, throwable.getClass());
             if (!catchAddress.isZero()) {
-                final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+                final TrapStateAccess trapStateAccess = vm().trapStateAccess;
                 trapStateAccess.setPC(trapState, catchAddress.asPointer());
                 EXCEPTION_OBJECT.store3(Reference.fromJava(throwable));
 

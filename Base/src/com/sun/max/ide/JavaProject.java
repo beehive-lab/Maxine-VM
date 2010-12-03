@@ -23,7 +23,7 @@ package com.sun.max.ide;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.Entry;
 
@@ -171,14 +171,6 @@ public final class JavaProject {
 
     public static File findSourceDirectory() {
         return getSourcePath(false).entries().get(0).file();
-    }
-
-    /**
-     * Gets the directory used by the current {@linkplain IDE} to store the metadata for the current project.
-     * The current project is the one containing the main class of this Java process.
-     */
-    public static File findIdeProjectDirectory() {
-        return IDE.current().findIdeProjectDirectoryFromClasspathEntry(findClassesOnClasspath());
     }
 
     /**

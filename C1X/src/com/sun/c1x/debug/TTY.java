@@ -205,12 +205,12 @@ public class TTY {
         out().println(f);
     }
 
-    public static void print(String string, Object... args) {
-        out().print(String.format(string, args));
+    public static void print(String format, Object... args) {
+        out().print(String.format(format, args));
     }
 
-    public static void println(String string, Object... args) {
-        out().println(String.format(string, args));
+    public static void println(String format, Object... args) {
+        out().println(String.format(format, args));
     }
 
     public static void fillTo(int i) {

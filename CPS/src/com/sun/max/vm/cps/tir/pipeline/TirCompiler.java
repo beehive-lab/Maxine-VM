@@ -20,11 +20,10 @@
  */
 package com.sun.max.vm.cps.tir.pipeline;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.util.*;
 
 import com.sun.max.program.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.cps.eir.*;
@@ -66,10 +65,9 @@ public class TirCompiler {
 
         final TargetTree targetTree = new TargetTree();
 
-        final AMD64EirGeneratorScheme generator = (AMD64EirGeneratorScheme) vmConfig().bootCompilerScheme();
+        final AMD64EirGeneratorScheme generator = (AMD64EirGeneratorScheme) CPSCompiler.Static.compiler();
         final TreeEirMethod eirMethod = (TreeEirMethod) generator.eirGenerator().makeIrMethod(dirTranslator.method());
-
-        final EirToTargetTranslator targetGenerator = (EirToTargetTranslator) ((AMD64CPSCompiler) vmConfig().bootCompilerScheme()).targetGenerator();
+        final EirToTargetTranslator targetGenerator = (EirToTargetTranslator) ((AMD64CPSCompiler) CPSCompiler.Static.compiler()).targetGenerator();
         final TargetMethod targetMethod = targetGenerator.makeIrMethod(eirMethod);
 
         targetTree.setGenerated(eirMethod, targetMethod);

@@ -35,7 +35,6 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -49,7 +48,6 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
-import com.sun.max.vm.template.*;
 
 /**
  * A collection of objects that represent the compiled target code
@@ -110,7 +108,6 @@ public abstract class TargetMethod extends MemoryRegion {
         TrapStub;
     }
 
-    @INSPECTED
     public final Flavor flavor;
 
     /**
@@ -355,9 +352,9 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param scalarLiterals a byte array encoding the scalar data accessed by this target via code relative offsets
      * @param referenceLiterals an object array encoding the object references accessed by this target via code relative
      *            offsets
-     * @param codeOrCodeBuffer the compiled code, either as a byte array, or as a {@code CodeBuffer} object
+     * @param codeBuffer the buffer containing the compiled code. The compiled code is in the first {@code this.code.length} bytes of {@code codeBuffer}.
      */
-    protected final void setData(byte[] scalarLiterals, Object[] referenceLiterals, Object codeOrCodeBuffer) {
+    protected final void setData(byte[] scalarLiterals, Object[] referenceLiterals, byte[] codeBuffer) {
 
         assert !codeStart.isZero() : "Must call setCodeArrays() first";
 
@@ -372,15 +369,8 @@ public abstract class TargetMethod extends MemoryRegion {
             System.arraycopy(referenceLiterals, 0, this.referenceLiterals, 0, this.referenceLiterals.length);
         }
 
-        // now copy the code (or a code buffer) into the cell for the byte[]
-        if (codeOrCodeBuffer instanceof byte[]) {
-            System.arraycopy(codeOrCodeBuffer, 0, code, 0, code.length);
-        } else if (codeOrCodeBuffer instanceof CodeBuffer) {
-            final CodeBuffer codeBuffer = (CodeBuffer) codeOrCodeBuffer;
-            codeBuffer.copyTo(code);
-        } else {
-            throw ProgramError.unexpected("byte[] or CodeBuffer required in TargetMethod.setGenerated()");
-        }
+        // now copy the code
+        System.arraycopy(codeBuffer, 0, this.code, 0, this.code.length);
     }
 
     public final ClassMethodActor callSiteToCallee(Address callSite) {
@@ -421,12 +411,13 @@ public abstract class TargetMethod extends MemoryRegion {
                         assert !classMethodActor.isTemplate() : "template must not have patchable call site";
                     }
                     linkedAll = false;
-                    final int s = stopPosition(i);
-                    final Address callSite = codeStart.plus(s);
+                    final int pos = stopPosition(i);
+                    final Address callSite = codeStart.plus(pos);
                     if (!isPatchableCallSite(callSite)) {
-                        FatalError.unexpected(classMethodActor.qualifiedName() +  " call Site calling static trampoline must be patchable : " + callSite.toHexString());
+                        FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
+                                        " [0x" + codeStart.toHexString() + "+" + pos + "]");
                     }
-                    fixupCallSite(s, vm().stubs.staticTrampoline().codeStart.plus(offset));
+                    fixupCallSite(pos, vm().stubs.staticTrampoline().codeStart.plus(offset));
                 } else {
                     fixupCallSite(stopPosition(i), callee.codeStart().plus(offset));
                 }
@@ -807,14 +798,6 @@ public abstract class TargetMethod extends MemoryRegion {
      *         code, prologue or epilogue.
      */
     public int bytecodePositionForCallSite(Pointer returnInstructionPointer) {
-        throw FatalError.unimplemented();
-    }
-
-    /**
-     * Creates an duplicate of this target method.
-     * @return a new instance of this target method
-     */
-    public TargetMethod duplicate() {
         throw FatalError.unimplemented();
     }
 

@@ -64,7 +64,6 @@ import com.sun.max.vm.verifier.*;
 public abstract class ClassActor extends Actor implements RiType {
 
     public static final Deferrable.Queue DEFERRABLE_QUEUE_1 = Deferrable.createDeferred();
-    public static final Deferrable.Queue DEFERRABLE_QUEUE_2 = Deferrable.createDeferred();
 
     public static final char NO_MAJOR_VERSION = (char) -1;
     public static final char NO_MINOR_VERSION = (char) -1;
@@ -173,20 +172,8 @@ public abstract class ClassActor extends Actor implements RiType {
         super(name, flags);
         assert kind == typeDescriptor.toKind();
         if (MaxineVM.isHosted()) {
-            if (MaxineVM.isMaxineClass(typeDescriptor)) {
-                initializationState = INITIALIZED;
-            } else {
-                // TODO: At some point, it may be worth trying to put JDK classes into the image in the VERIFIED state
-                // so that their class initializers are run at the 'right time' (i.e. according to the JVM spec).
-                // This solves the issue of having to clear/re-initialize static fields at runtime whose values
-                // depend on the runtime context, not the image build time context.
-                // However, it also raises other issues such as what it means to have instances in existence for
-                // classes that will be re-initialized. Also, all code in the boot image will need to have
-                // the appropriate class initialization barriers (that would be required if the same code
-                // was compiled at runtime).
-                initializationState = INITIALIZED;
-            }
-
+            // All boot image classes are initialized
+            initializationState = INITIALIZED;
         } else {
             initializationState = PREPARED;
         }
@@ -314,18 +301,14 @@ public abstract class ClassActor extends Actor implements RiType {
                     final DynamicHub dHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorSerials, allInterfaceActors, vTableLength, dynamicReferenceMap);
                     ClassActor.this.iToV = new int[dHub.iTableLength];
                     ClassActor.this.dynamicHub = dHub.expand(superClassActorSerials, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
+
+                    if (isReferenceClassActor()) {
+                        dynamicHub.initializeVTable(allVirtualMethodActors);
+                        dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
+                    }
                 }
             }
         };
-
-        if (isReferenceClassActor()) {
-            new Deferrable(DEFERRABLE_QUEUE_2) {
-                public void run() {
-                    dynamicHub.initializeVTable(allVirtualMethodActors);
-                    dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
-                }
-            };
-        }
     }
 
     private int getRootClassActorId() {

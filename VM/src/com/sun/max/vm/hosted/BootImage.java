@@ -29,8 +29,7 @@ import java.nio.*;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.*;
 
-import com.sun.max.*;
-import com.sun.max.collect.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -44,6 +43,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.CompilationScheme.Static;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.BootImage.StringInfo.Key;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -140,7 +140,7 @@ public class BootImage {
         /**
          * Writes the data in this section to a given stream.
          */
-        public abstract void write(OutputStream outputStream) throws IOException;
+        public abstract void write(OutputStream outputStream, Endianness endian) throws IOException;
     }
 
     /**
@@ -164,7 +164,7 @@ public class BootImage {
         }
 
         @Override
-        public void write(OutputStream outputStream) throws IOException {
+        public void write(OutputStream outputStream, Endianness endian) throws IOException {
             for (Field field : fields()) {
                 try {
                     endianness.writeInt(outputStream, field.getInt(this));
@@ -394,7 +394,7 @@ public class BootImage {
         }
 
         @Override
-        public void write(OutputStream outputStream) throws IOException {
+        public void write(OutputStream outputStream, Endianness endian) throws IOException {
             for (Field field : fields()) {
                 try {
                     endianness().writeInt(outputStream, field.getInt(this));
@@ -411,154 +411,119 @@ public class BootImage {
      * <b>ATTENTION: this must match 'image_StringInfo' in "Native/substrate/image.h".</b>
      */
     public static final class StringInfo extends FieldSection {
-        public final String buildLevelName;
-        public final String cpuName;
-        public final String isaName;
-        public final String osName;
+        public enum Key {
+            BUILD(BuildLevel.class),
+            CPU(CPU.class),
+            ISA(ISA.class),
+            OS(OS.class),
+            REFERENCE(VMPackage.class),
+            LAYOUT(VMPackage.class),
+            HEAP(VMPackage.class),
+            MONITOR(VMPackage.class),
+            OPT(VMPackage.class),
+            JIT(VMPackage.class),
+            COMPILATION(VMPackage.class),
+            RUN(VMPackage.class);
 
-        public final String referencePackageName;
-        public final String layoutPackageName;
-        public final String heapPackageName;
-        public final String monitorPackageName;
-        public final String compilerPackageName;
-        public final String compilationPackageName;
-        public final String jitPackageName;
-        public final String runPackageName;
+            Key(Class valueType) {
+                this.valueType = valueType;
+            }
+            public final Class valueType;
+        }
+
+        public final EnumMap<Key, String> values = new EnumMap<Key, String>(Key.class);
 
         public BuildLevel buildLevel() {
-            return Enums.fromString(BuildLevel.class, buildLevelName);
+            return BuildLevel.valueOf(values.get(Key.BUILD));
         }
 
         public CPU cpu() {
-            return Enums.fromString(CPU.class, cpuName);
+            return CPU.valueOf(values.get(Key.CPU));
         }
 
         public ISA isa() {
-            return Enums.fromString(ISA.class, isaName);
+            return ISA.valueOf(values.get(Key.ISA));
         }
 
         public OS os() {
-            return Enums.fromString(OS.class, osName);
+            return OS.valueOf(values.get(Key.OS));
         }
 
-        public VMPackage referencePackage() {
-            return (VMPackage) MaxPackage.fromName(referencePackageName);
+        public VMPackage vmPackage(Key key) {
+            return (VMPackage) MaxPackage.fromName(values.get(key));
         }
 
-        public VMPackage layoutPackage() {
-            return (VMPackage) MaxPackage.fromName(layoutPackageName);
-        }
-
-        public VMPackage heapPackage() {
-            return (VMPackage) MaxPackage.fromName(heapPackageName);
-        }
-
-        public VMPackage monitorPackage() {
-            return (VMPackage) MaxPackage.fromName(monitorPackageName);
-        }
-
-        public VMPackage compilerPackage() {
-            return (VMPackage) MaxPackage.fromName(compilerPackageName);
-        }
-
-        public VMPackage compilationPackage() {
-            return (VMPackage) MaxPackage.fromName(compilationPackageName);
-        }
-
-        public VMPackage jitPackage() {
-            if (jitPackageName == null) {
-                return null;
-            }
-            return (VMPackage) MaxPackage.fromName(jitPackageName);
-        }
-
-        public VMPackage runPackage() {
-            return (VMPackage) MaxPackage.fromName(runPackageName);
-        }
-
-        private StringInfo(InputStream inputStream, int offset) throws IOException, Utf8Exception {
+        private StringInfo(InputStream inputStream, int offset, Endianness endian) throws IOException, Utf8Exception {
             super(offset);
-            buildLevelName = Utf8.readString(inputStream);
-            cpuName = Utf8.readString(inputStream);
-            isaName = Utf8.readString(inputStream);
-            osName = Utf8.readString(inputStream);
-
-            referencePackageName = Utf8.readString(inputStream);
-            layoutPackageName = Utf8.readString(inputStream);
-            heapPackageName = Utf8.readString(inputStream);
-            monitorPackageName = Utf8.readString(inputStream);
-            compilerPackageName = Utf8.readString(inputStream);
-            compilationPackageName = Utf8.readString(inputStream);
-            jitPackageName =  Utf8.readString(inputStream);
-            runPackageName = Utf8.readString(inputStream);
-        }
-
-        private StringInfo(VMConfiguration vmConfiguration, int offset) {
-            super(offset);
-            buildLevelName = vmConfiguration.buildLevel.name();
-            cpuName = platform().cpu.name();
-            isaName = platform().isa.name();
-            osName = platform().os.name();
-
-            referencePackageName = vmConfiguration.referencePackage.name();
-            layoutPackageName = vmConfiguration.layoutPackage.name();
-            heapPackageName = vmConfiguration.heapPackage.name();
-            monitorPackageName = vmConfiguration.monitorPackage.name();
-            compilerPackageName = vmConfiguration.bootCompilerPackage.name();
-            compilationPackageName = vmConfiguration.compilationPackage.name();
-            // Jit Package is optional and may be null. In which case, fall back to the default compiler.
-            if (vmConfiguration.jitCompilerPackage == null) {
-                jitPackageName = compilerPackageName;
-            } else {
-                jitPackageName = vmConfiguration.jitCompilerPackage.name();
+            int count = endian.readInt(inputStream);
+            while (count-- != 0) {
+                put(Key.valueOf(Utf8.readString(inputStream)), Utf8.readString(inputStream));
             }
-            runPackageName = vmConfiguration.runPackage.name();
         }
 
-        private void checkPackage(String packageName) throws BootImageException {
-            BootImageException.check(MaxPackage.fromName(packageName) instanceof VMPackage, "not a VM package: " + packageName);
+        private void put(Key key, Object value) {
+            String oldValue = values.put(key, value.toString());
+            assert oldValue == null : "Multiple values for " + key + ": " + oldValue + ", " + value;
+        }
+
+        private StringInfo(VMConfiguration vmConfig, int offset) {
+            super(offset);
+            put(Key.BUILD, vmConfig.buildLevel);
+            put(Key.CPU, platform().cpu);
+            put(Key.ISA, platform().isa);
+            put(Key.OS, platform().os);
+            put(Key.REFERENCE, vmConfig.referencePackage);
+            put(Key.LAYOUT, vmConfig.layoutPackage);
+            put(Key.HEAP, vmConfig.heapPackage);
+            put(Key.MONITOR, vmConfig.monitorPackage);
+            put(Key.OPT, vmConfig.optCompilerPackage);
+            put(Key.JIT, vmConfig.jitCompilerPackage);
+            put(Key.COMPILATION, vmConfig.compilationPackage);
+            put(Key.RUN, vmConfig.runPackage);
         }
 
         public void check() throws BootImageException {
-            BootImageException.check(buildLevel() != null, "unknown build level: " + buildLevelName);
-            BootImageException.check(cpu() != null, "unknown processor model: " + cpuName);
-            BootImageException.check(isa() != null, "unknown instruction set: " + isaName);
-            BootImageException.check(os() != null, "unknown operating system: " + osName);
-
-            checkPackage(referencePackageName);
-            checkPackage(layoutPackageName);
-            checkPackage(heapPackageName);
-            checkPackage(monitorPackageName);
-            checkPackage(compilerPackageName);
-            checkPackage(jitPackageName);
-            checkPackage(runPackageName);
+            for (Map.Entry<Key, String> e : values.entrySet()) {
+                Key key = e.getKey();
+                String value = e.getValue();
+                if (Enum.class.isAssignableFrom(key.valueType)) {
+                    Enum[] enumConstants = (Enum[]) key.valueType.getEnumConstants();
+                    boolean match = false;
+                    if (enumConstants != null) {
+                        for (Enum c : enumConstants) {
+                            if (c.name().equalsIgnoreCase(value)) {
+                                match = true;
+                                break;
+                            }
+                        }
+                    }
+                    BootImageException.check(match, "No " + key.valueType.getName() + " constant matches " + value);
+                } else {
+                    assert key.valueType == VMPackage.class;
+                    BootImageException.check(MaxPackage.fromName(value) instanceof VMPackage, "not a VM package: " + value);
+                }
+            }
         }
 
         @Override
         public int size() {
-            int size = 0;
-            for (Field field : fields()) {
-                try {
-                    final String string = (String) field.get(this);
-                    size += Utf8.utf8Length(string) + 1;
-                } catch (IllegalAccessException illegalAccessException) {
-                    ProgramError.unexpected();
-                }
+            int size = 4;
+            for (Map.Entry<Key, String> e : values.entrySet()) {
+                size += Utf8.utf8Length(e.getKey().toString()) + 1;
+                size += Utf8.utf8Length(e.getValue()) + 1;
             }
             return size;
         }
 
         @Override
-        public void write(OutputStream outputStream) throws IOException {
-            for (Field field : fields()) {
-                try {
-                    final String string = (String) field.get(this);
-                    Utf8.writeString(outputStream, string);
-                } catch (IllegalAccessException illegalAccessException) {
-                    ProgramError.unexpected();
-                }
+        public void write(OutputStream outputStream, Endianness endian) throws IOException {
+            endian.writeInt(outputStream, values.size());
+            for (Map.Entry<Key, String> e : values.entrySet()) {
+                Utf8.writeString(outputStream, e.getKey().toString());
+                Utf8.writeString(outputStream, e.getValue());
             }
         }
+
         @Override
         public Class<?> fieldType() {
             return String.class;
@@ -634,9 +599,10 @@ public class BootImage {
         try {
             final FileInputStream fileInputStream = new FileInputStream(file);
             try {
-                header = new Header(new DataInputStream(fileInputStream));
+                DataInputStream dataInputStream = new DataInputStream(fileInputStream);
+                header = new Header(dataInputStream);
                 header.check();
-                stringInfo = new StringInfo(fileInputStream, header.size());
+                stringInfo = new StringInfo(dataInputStream, header.size(), header.endianness());
                 stringInfo.check();
                 BootImageException.check(header.stringInfoSize == stringInfo.size(), "inconsistent string area size");
                 relocationData = new byte[header.relocationDataSize];
@@ -655,15 +621,14 @@ public class BootImage {
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,
-                                                      stringInfo.referencePackage(),
-                                                      stringInfo.layoutPackage(),
-                                                      stringInfo.heapPackage(),
-                                                      stringInfo.monitorPackage(),
-                                                      stringInfo.compilerPackage(),
-                                                      stringInfo.jitPackage(),
-                                                      null,
-                                                      stringInfo.compilationPackage(),
-                                                      stringInfo.runPackage());
+                                                      stringInfo.vmPackage(Key.REFERENCE),
+                                                      stringInfo.vmPackage(Key.LAYOUT),
+                                                      stringInfo.vmPackage(Key.HEAP),
+                                                      stringInfo.vmPackage(Key.MONITOR),
+                                                      stringInfo.vmPackage(Key.OPT),
+                                                      stringInfo.vmPackage(Key.JIT),
+                                                      stringInfo.vmPackage(Key.COMPILATION),
+                                                      stringInfo.vmPackage(Key.RUN));
 
                 fileInputStream.skip(header.heapSize + header.codeSize);
                 int trailerOffset = codeOffset() + header.codeSize;
@@ -751,13 +716,13 @@ public class BootImage {
      * @throws IOException
      */
     public void write(OutputStream outputStream) throws IOException {
-        header.write(outputStream);
-        stringInfo.write(outputStream);
+        header.write(outputStream, header.endianness());
+        stringInfo.write(outputStream, header.endianness());
         outputStream.write(relocationData);
         outputStream.write(padding);
         write(heap(), outputStream);
         write(code(), outputStream);
-        trailer.write(outputStream);
+        trailer.write(outputStream, header.endianness());
     }
 
     private void write(ByteBuffer buffer, OutputStream outputStream) throws IOException {

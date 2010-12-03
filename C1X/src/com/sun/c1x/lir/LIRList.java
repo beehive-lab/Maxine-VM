@@ -29,12 +29,12 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.FrameMap.*;
+import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
-import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
+import com.sun.cri.xir.*;
 
 /**
  * This class represents a list of LIR instructions and contains factory methods for creating and appending LIR
@@ -49,9 +49,16 @@ public class LIRList {
     private List<LIRInstruction> operations;
     private final LIRGenerator generator;
 
+    private final LIROpcode runtimeCallOp;
+
+    private LIROpcode directCallOp(RiMethod method) {
+        return C1XOptions.UseConstDirectCall && method.hasCompiledCode() ? LIROpcode.ConstDirectCall : LIROpcode.DirectCall;
+    }
+
     public LIRList(LIRGenerator generator) {
         this.generator = generator;
         this.operations = new ArrayList<LIRInstruction>(8);
+        runtimeCallOp = C1XOptions.UseConstDirectCall ? LIROpcode.ConstDirectCall : LIROpcode.DirectCall;
     }
 
     private void append(LIRInstruction op) {
@@ -60,7 +67,6 @@ public class LIRList {
             op.printOn(TTY.out());
             TTY.println();
         }
-
         operations.add(op);
         assert op.verify();
     }
@@ -78,7 +84,7 @@ public class LIRList {
     }
 
     public void callDirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
-        append(new LIRCall(LIROpcode.DirectCall, method, result, arguments, info, marks, false, pointerSlots));
+        append(new LIRCall(directCallOp(method), method, result, arguments, info, marks, false, pointerSlots));
     }
 
     public void callIndirect(RiMethod method, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
@@ -304,7 +310,7 @@ public class LIRList {
     }
 
     public void callRuntime(CiRuntimeCall rtCall, CiValue result, List<CiValue> arguments, LIRDebugInfo info) {
-        append(new LIRCall(LIROpcode.DirectCall, rtCall, result, arguments, info, null, false, null));
+        append(new LIRCall(runtimeCallOp, rtCall, result, arguments, info, null, false, null));
     }
 
     public void pause() {

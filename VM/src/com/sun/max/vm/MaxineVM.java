@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
@@ -27,15 +28,13 @@ import static com.sun.max.vm.VMOptions.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
@@ -73,16 +72,16 @@ public final class MaxineVM {
     public static final int HARD_EXIT_CODE = -2;
 
     /**
-     * The list of package prefixes denoting classes for which {@link #isMaxineClass(ClassActor)}
-     * and {@link #isMaxineClass(TypeDescriptor)} will return true.
+     * The set of packages denoting classes for which {@link #isBootImageClass(String)} will return true.
      */
-    private static final List<String> MAXINE_CODE_BASE_LIST = new ArrayList<String>();
-
-    private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
-    private static final String TEST_PREFIX = "test.";
+    @HOSTED_ONLY
+    private static final Set<String> BOOT_IMAGE_CODE_BASE_PACKAGES = new HashSet<String>();
 
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
+
+    @HOSTED_ONLY
+    private static final Set<String> KEEP_CLINIT_CLASSES = new HashSet<String>();
 
     private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message.") {
         @Override
@@ -114,11 +113,6 @@ public final class MaxineVM {
     private static int exitCode = 0;
 
     private static long startupTime;
-
-    static {
-        MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
-        MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + MAXINE_CLASS_PACKAGE_PREFIX);
-    }
 
     public enum Phase {
         /**
@@ -190,19 +184,27 @@ public final class MaxineVM {
     }
 
     /**
-     * Register the complete set of packages that comprise the boot image being constructed.
-     * @param packages
+     * Registers the complete set of packages that (potentially) comprise the boot image being constructed.
      */
     @HOSTED_ONLY
-    public static void registerMaxinePackages(List<MaxPackage> packages) {
-        // We really only need to search for packages outside the MAXINE_CLASS_PACKAGE_PREFIX namespace.
-        // Any TEST_PREFIX packages are also included.
+    public static void registerBootImagePackages(List<MaxPackage> packages) {
         for (MaxPackage maxPackage : packages) {
-            if (!maxPackage.name().startsWith(MAXINE_CLASS_PACKAGE_PREFIX)) {
-                MAXINE_CODE_BASE_LIST.add(maxPackage.name());
-                MAXINE_CODE_BASE_LIST.add(TEST_PREFIX + maxPackage.name());
-            }
+            BOOT_IMAGE_CODE_BASE_PACKAGES.add(maxPackage.name());
+            BOOT_IMAGE_CODE_BASE_PACKAGES.add("test." + maxPackage.name());
         }
+    }
+
+    @HOSTED_ONLY
+    public static void registerKeepClassInit(String className) {
+        KEEP_CLINIT_CLASSES.add(className);
+    }
+
+    @HOSTED_ONLY
+    public static boolean keepClassInit(TypeDescriptor classDescriptor) {
+        final String className = classDescriptor.toJavaString();
+        final boolean result = KEEP_CLINIT_CLASSES.contains(className) ||
+            System.getProperty("max.loader.preserveClinitMethods") != null;
+        return result;
     }
 
     public static String name() {
@@ -285,13 +287,7 @@ public final class MaxineVM {
 
     /**
      * Determines if a given class exists only for hosted execution and should not be part
-     * of a generated target image. A class is determined to be a hosted-only class if any
-     * of the following apply:
-     *
-     * 1. It is annotated with {@link HOSTED_ONLY}.
-     * 2. It is nested class in an {@linkplain Class#getEnclosingClass() enclosing} hosted-only class.
-     * 3. It is in a {@linkplain MaxPackage#fromClass(Class) Maxine package} that is not a {@linkplain BasePackage base},
-     *    {@linkplain AsmPackage assembler}, {@linkplain VMPackage VM} or test package.
+     * of a generated target image.
      *
      * @param javaClass the class to check
      * @return {@code true} if the class is only valid while bootstrapping
@@ -304,6 +300,26 @@ public final class MaxineVM {
         }
 
         if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
+            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
+            return true;
+        }
+
+        // We really want to apply @HOSTED_ONLY to the MaxPackage class but can't
+        // until it's in the VM project
+        if (MaxPackage.class.isAssignableFrom(javaClass)) {
+            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
+            return true;
+        }
+
+        // May want to replace this 'magic' interpretation of ".hosted"
+        // with a sentinel class (e.g. HOSTED_ONLY_PACKAGE).
+        if (getPackageName(javaClass).endsWith(".hosted")) {
+            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
+            return true;
+        }
+
+        Class superclass = javaClass.getSuperclass();
+        if (superclass != null && isHostedOnly(superclass)) {
             HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
             return true;
         }
@@ -366,23 +382,10 @@ public final class MaxineVM {
     }
 
     /**
-     * Determines if a given type descriptor denotes a class that is part of the Maxine code base.
+     * Determines if a given class name denotes a class that is (potentially) part of the boot image.
      */
-    public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
-        final String className = typeDescriptor.toJavaString();
-        for (final String prefix : MAXINE_CODE_BASE_LIST) {
-            if (className.startsWith(prefix)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Determines if a given class actor denotes a class that is part of the Maxine code base.
-     */
-    public static boolean isMaxineClass(ClassActor classActor) {
-        return isMaxineClass(classActor.typeDescriptor);
+    public static boolean isBootImageClass(String className) {
+        return BOOT_IMAGE_CODE_BASE_PACKAGES.contains(getPackageName(className));
     }
 
     public static void setExitCode(int code) {
@@ -459,7 +462,7 @@ public final class MaxineVM {
      */
     @HOSTED_ONLY
     public static void registerImageMethod(ClassMethodActor imageMethod) {
-        CompiledPrototype.registerImageMethod(imageMethod);
+        CompiledPrototype.registerVMEntryPoint(imageMethod);
     }
 
     /**
@@ -521,12 +524,16 @@ public final class MaxineVM {
     public Phase phase = Phase.BOOTSTRAPPING;
     public final RegisterConfigs registerConfigs;
     public final Stubs stubs;
+    public final Safepoint safepoint;
+    public final TrapStateAccess trapStateAccess;
 
     public MaxineVM(VMConfiguration configuration) {
         this.config = configuration;
         this.runtime = new MaxRiRuntime();
         this.registerConfigs = RegisterConfigs.create();
         this.stubs = new Stubs(registerConfigs);
+        this.safepoint = Safepoint.create();
+        this.trapStateAccess = TrapStateAccess.create();
     }
 
     public static void reportPristineMemoryFailure(String memoryAreaName, String operation, Size numberOfBytes) {
