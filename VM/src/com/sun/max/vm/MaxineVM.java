@@ -35,7 +35,6 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
@@ -73,11 +72,10 @@ public final class MaxineVM {
     public static final int HARD_EXIT_CODE = -2;
 
     /**
-     * The set of packages denoting classes for which {@link #isMaxineClass(ClassActor)}
-     * and {@link #isMaxineClass(TypeDescriptor)} will return true.
+     * The set of packages denoting classes for which {@link #isBootImageClass(String)} will return true.
      */
     @HOSTED_ONLY
-    private static final Set<String> MAXINE_CODE_BASE_PACKAGES = new HashSet<String>();
+    private static final Set<String> BOOT_IMAGE_CODE_BASE_PACKAGES = new HashSet<String>();
 
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
@@ -189,10 +187,10 @@ public final class MaxineVM {
      * Registers the complete set of packages that (potentially) comprise the boot image being constructed.
      */
     @HOSTED_ONLY
-    public static void registerMaxinePackages(List<MaxPackage> packages) {
+    public static void registerBootImagePackages(List<MaxPackage> packages) {
         for (MaxPackage maxPackage : packages) {
-            MAXINE_CODE_BASE_PACKAGES.add(maxPackage.name());
-            MAXINE_CODE_BASE_PACKAGES.add("test." + maxPackage.name());
+            BOOT_IMAGE_CODE_BASE_PACKAGES.add(maxPackage.name());
+            BOOT_IMAGE_CODE_BASE_PACKAGES.add("test." + maxPackage.name());
         }
     }
 
@@ -384,24 +382,10 @@ public final class MaxineVM {
     }
 
     /**
-     * Determines if a given class name denotes a class that is part of the Maxine code base.
+     * Determines if a given class name denotes a class that is (potentially) part of the boot image.
      */
-    public static boolean isMaxineClass(String className) {
-        return MAXINE_CODE_BASE_PACKAGES.contains(getPackageName(className));
-    }
-
-    /**
-     * Determines if a given type descriptor denotes a class that is part of the Maxine code base.
-     */
-    public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
-        return isMaxineClass(typeDescriptor.toJavaString());
-    }
-
-    /**
-     * Determines if a given class actor denotes a class that is part of the Maxine code base.
-     */
-    public static boolean isMaxineClass(ClassActor classActor) {
-        return isMaxineClass(classActor.typeDescriptor);
+    public static boolean isBootImageClass(String className) {
+        return BOOT_IMAGE_CODE_BASE_PACKAGES.contains(getPackageName(className));
     }
 
     public static void setExitCode(int code) {

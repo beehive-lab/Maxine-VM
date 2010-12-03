@@ -66,7 +66,7 @@ public final class JavaPrototype extends Prototype {
 
     private static JavaPrototype theJavaPrototype;
     private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
-    private List<MaxPackage> candidateMaxPackages;
+    private List<MaxPackage> candidateBootImagePackages;
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
     private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
     private final Map<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
@@ -196,7 +196,7 @@ public final class JavaPrototype extends Prototype {
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
     private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
-        for (MaxPackage maxPackage : candidateMaxPackages) {
+        for (MaxPackage maxPackage : candidateBootImagePackages) {
             // VMConfigPackage subclasses may contain SUBSTITUTIONS
             if (maxPackage instanceof BootImagePackage) {
                 BootImagePackage vmPackage = (BootImagePackage) maxPackage;
@@ -278,9 +278,9 @@ public final class JavaPrototype extends Prototype {
         }
 
         // TODO remove new com.sun.max.vm.Package() once com.sun.max.config..vm.Package is in effect
-        candidateMaxPackages = getPackages(new com.sun.max.vm.Package(), new com.sun.max.config.Package());
+        candidateBootImagePackages = getPackages(new com.sun.max.vm.Package(), new com.sun.max.config.Package());
 
-        MaxineVM.registerMaxinePackages(candidateMaxPackages);
+        MaxineVM.registerBootImagePackages(candidateBootImagePackages);
 
         // moved to after getPackages to ensure that there is no actual loading until the configuration has been generated
         // to make sure that the configuration tweaks, e.g. whether to keep <clinit>, are processed before the class is loaded.
@@ -295,7 +295,7 @@ public final class JavaPrototype extends Prototype {
 
         if (complete) {
 
-            for (MaxPackage maxPackage : candidateMaxPackages) {
+            for (MaxPackage maxPackage : candidateBootImagePackages) {
                 loadMaxPackage(maxPackage);
             }
 
@@ -318,7 +318,7 @@ public final class JavaPrototype extends Prototype {
      * @return
      */
     public List<MaxPackage> getCandidateMaxPackages() {
-        return candidateMaxPackages;
+        return candidateBootImagePackages;
     }
 
     /**
@@ -534,10 +534,7 @@ public final class JavaPrototype extends Prototype {
             return replace == NULL ? null : replace;
         }
         if (object instanceof Thread || object instanceof ThreadGroup) {
-            if (MaxineVM.isMaxineClass(ClassActor.fromJava(object.getClass()))) {
-                ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
-            }
-            return null;
+            ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
         }
         return object;
     }
