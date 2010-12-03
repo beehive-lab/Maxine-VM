@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.member.*;
  *
  * @author Doug Simon
  */
+@HOSTED_ONLY
 public final class InliningAnnotationsValidator {
     private InliningAnnotationsValidator() {
     }
