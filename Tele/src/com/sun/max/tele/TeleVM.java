@@ -398,7 +398,7 @@ public abstract class TeleVM implements MaxVM {
         }
         final File bootImageFile = BootImageGenerator.getBootImageFile(vmDirectory);
 
-        Classpath sourcepath = JavaProject.getSourcePath(true);
+        Classpath sourcepath = JavaProject.getSourcePath(TeleVM.class, true);
         final List<String> sourcepathList = options.sourcepathOption.getValue();
         if (sourcepathList != null) {
             sourcepath = sourcepath.prepend(new Classpath(sourcepathList.toArray(new String[sourcepathList.size()])));

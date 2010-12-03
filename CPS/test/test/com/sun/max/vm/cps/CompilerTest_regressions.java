@@ -35,7 +35,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.b.c.*;
 import com.sun.max.vm.cps.bir.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.jit.*;
@@ -360,13 +359,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
     public void test_continuation_sharing() {
         final ClassMethodActor methodActor = getClassMethodActor("perform_join", SignatureDescriptor.create(int.class));
         compileMethod(methodActor);
-    }
-
-    public void test_CirGenerator_SWITCH_TABLE_com_sun_max_vm_type_KindEnum() {
-        final ClassMethodActor methodActor = getEnumSwitchTranslationTableInitializer(BytecodeTranslation.class, KindEnum.class);
-        if (methodActor != null) {
-            compileMethod(methodActor);
-        }
     }
 
     public void test_Classpath_readClassFile() {

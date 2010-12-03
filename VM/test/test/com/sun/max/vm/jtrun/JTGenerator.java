@@ -108,7 +108,7 @@ public class JTGenerator {
             }
 
             if (forceCompileOption.getValue() || (filesUpdated && compileOption.getValue()))  {
-                ToolChain.compile(new String[] {className("JTConfig"), className("JTRuns")});
+                ToolChain.compile(JTGenerator.class, new String[] {className("JTConfig"), className("JTRuns")});
                 System.out.println(jtConfigFile + " recompiled.");
                 System.out.println(jtRunsFile + " recompiled.");
             }

@@ -756,7 +756,7 @@ interface AMD64AssemblerSpecification {
                 "-i=" + AMD64AssemblerSpecification.class.getName(),
                 "-r=" + AMD64AssemblerMethods.class.getName(),
                 "-l=" + AMD64AssemblerMethods.class.getName(),
-                "-d=" + JavaProject.findSourceDirectory().getAbsolutePath()
+                "-d=" + JavaProject.findSourceDirectory(Generator.class).getAbsolutePath()
             };
             com.sun.max.asm.gen.cisc.amd64.AMD64AssemblerGenerator.main(programArguments);
         }

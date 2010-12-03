@@ -121,7 +121,7 @@ public final class BootImageGenerator {
      * and related files are located.
      */
     public static File getDefaultVMDirectory() {
-        return new File(JavaProject.findMaxineRootDirectory(), DEFAULT_VM_DIRECTORY);
+        return new File(JavaProject.findWorkspaceDirectory(), DEFAULT_VM_DIRECTORY);
     }
 
     /**

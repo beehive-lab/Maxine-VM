@@ -242,16 +242,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return NO_CLASSES;
     }
 
-    public MaxPackage subPackage(String... suffices) {
-        String name = name();
-        for (String suffix : suffices) {
-            name += "." + suffix;
-        }
-        final MaxPackage subPackage = fromName(name);
-        ProgramError.check(subPackage != null, "Could not find sub-package of " + this + " named " + name);
-        return subPackage;
-    }
-
     public boolean isSubPackageOf(MaxPackage superPackage) {
         return name().startsWith(superPackage.name());
     }

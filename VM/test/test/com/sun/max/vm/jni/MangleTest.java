@@ -94,7 +94,7 @@ public class MangleTest extends MaxTestCase {
         }
         try {
             final File tempFile = File.createTempFile("MangleTest_", ".h");
-            final String[] args = {"-o", tempFile.getAbsolutePath(), "-classpath", JavaProject.getClassPath(true).toString(), declaringClass.getName()};
+            final String[] args = {"-o", tempFile.getAbsolutePath(), "-classpath", Classpath.fromSystem()/* JavaProject.getClassPath(true)*/.toString(), declaringClass.getName()};
             ToolChain.javah(args);
             final String headerFile = new String(Files.toChars(tempFile));
             tempFile.delete();

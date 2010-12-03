@@ -71,17 +71,18 @@ public final class ToolChain {
      * </pre>
      *
      *
+     * @param projClass a class denoting a project (i.e. any class in the project)
      * @param className the name of the class to be compiled
      * @param options options for modifying the compilation
      * @return true if the compilation succeeded without any errors, false otherwise
      */
-    public static boolean compile(String className, String... options) {
-        return compile(new String[] {className}, options);
+    public static boolean compile(Class projClass, String className, String... options) {
+        return compile(projClass, new String[] {className}, options);
     }
 
     /**
      * Compiles the source for one or more given classes. The location of the source files to be compiled and the
-     * directory to which the output class files are to be written are determined by the current {@link JavaProject}
+     * directory to which the output class files are to be written are determined by a given project
      * context.
      * <p>
      * The supported {@code options} are:
@@ -92,14 +93,15 @@ public final class ToolChain {
      * </pre>
      *
      *
+     * @param projClass a class denoting a project (i.e. any class in the project)
      * @param className the name of the class to be compiled
      * @param options options for modifying the compilation
      * @return true if the compilation succeeded without any errors, false otherwise
      */
-    public static boolean compile(String[] classNames, String... options) {
+    public static boolean compile(Class projClass, String[] classNames, String... options) {
 
-        final Classpath classPath = JavaProject.getClassPath(true);
-        final Classpath sourcePath = JavaProject.getSourcePath(true);
+        final Classpath classPath = JavaProject.getClassPath(projClass, true);
+        final Classpath sourcePath = JavaProject.getSourcePath(projClass, true);
         final String outputDirectory = classPath.entries().get(0).toString();
 
         final ArrayList<File> sourceFiles = new ArrayList<File>(classNames.length);

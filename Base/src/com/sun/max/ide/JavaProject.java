@@ -23,31 +23,51 @@ package com.sun.max.ide;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.config.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.Entry;
 
 /**
- * Software project-dependent configuration. This is all derived from the
- * {@link Classpath#fromSystem() system class path} and assumption that
- * each project has the following directory structure:
- *
- * Eclipse:
- * <top-level-project-dir>/src            # Source files
- * <top-level-project-dir>/test           # Test source files
- * <top-level-project-dir>/bin            # Non-test and test class files
- *
- * Netbeans:
- * <top-level-project-dir>/src                      # Source files
- * <top-level-project-dir>/test                     # Test source files
- * <top-level-project-dir>/dist/<project-name>.jar  # Packaged non-test class files
- * <top-level-project-dir>/build/classes            # Non-test class files
- * <top-level-project-dir>/build/test/classes       # Test class files
+ * Software project-dependent configuration derived from the
+ * {@linkplain Classpath#fromSystem() system class path}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public final class JavaProject {
+
+    /**
+     * System property name specifying the Maxine workspace directory.
+     */
+    public static final String MAX_WORKSPACE_PROPERTY = "max.workspace";
+
+    /**
+     * A set of project names that can be used to detect the Maxine workspace.
+     */
+    private static final String[] WORKSPACE_PROJECTS = {"VM", "C1X", "CRI", "Native"};
+
+    /**
+     * Determines if a given directory is Maxine workspace directory.
+     *
+     * @param dir a directory to test
+     * @return {@code true} if {@code dir} is a directory containing sub-directories listed in {@link #WORKSPACE_PROJECTS}
+     */
+    public static boolean isWorkspace(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            int count = 0;
+            for (String proj : WORKSPACE_PROJECTS) {
+                for (File f : files) {
+                    if (f.getName().equals(proj) && f.isDirectory()) {
+                        count++;
+                    }
+                }
+            }
+            if (count == WORKSPACE_PROJECTS.length) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private JavaProject() {
     }
@@ -57,97 +77,116 @@ public final class JavaProject {
     public static final String TEST_SOURCE_DIRECTORY_NAME = "test";
 
     /**
-     * Gets the paths on which all the class files referenced by the current Java project can be found.
+     * Gets the paths on which all the class files referenced by a Java project can be found.
      *
+     * @param projClass a class denoting a project (i.e. any class in the project)
      * @param includeDependencies  if true, the returned path includes the location of the
      *                             class files produced by each of the projects that the current
      *                             project depends upon
      */
-    public static Classpath getClassPath(boolean includeDependencies) {
+    public static Classpath getClassPath(Class projClass, boolean includeDependencies) {
+        String classfile = projClass.getName().replace('.', '/') + ".class";
         ArrayList<Entry> classPathEntries = new ArrayList<Entry>();
+        Entry projEntry = null;
         for (Entry entry : Classpath.fromSystem().entries()) {
-            if (entry.isDirectory()) {
-                final File file = new File(entry.path());
-                if (file.exists() && file.isDirectory() && !classPathEntries.contains(entry)) {
-                    classPathEntries.add(entry);
-                    if (!includeDependencies) {
-                        break;
-                    }
-                }
-            } else if (entry.isArchive()) {
-                if (IDE.current() == IDE.NETBEANS) {
-                    if (entry.file().getParentFile().getName().equals("dist")) {
-                        classPathEntries.add(entry);
-                    }
-                }
+            if (entry.contains(classfile)) {
+                projEntry = entry;
+                classPathEntries.add(entry);
+                break;
             }
-
         }
         if (classPathEntries.isEmpty()) {
             throw new JavaProjectNotFoundException("Could not find path to Java project classes");
         }
+        if (includeDependencies) {
+            for (Entry entry : Classpath.fromSystem().entries()) {
+                if (entry != projEntry) {
+                    classPathEntries.add(entry);
+                }
+            }
+        }
         return new Classpath(classPathEntries);
     }
 
-    /** Get the first entry in the {@link Classpath#fromSystem system classpath} that is a project directory.
-     * @return see above
-     */
-    public static File findClassesOnClasspath() {
-        return getClassPath(false).entries().get(0).file();
-    }
+    static class WorkspaceFinder extends ClasspathTraversal {
 
-    /**
-     * Gets the root directory of the Maxine repository, i.e. the parent of all the project directories.
-     * This can be specified explicitly with the {@value IDE#MAX_PROJECT_DIRECTORY_PROPERTY}
-     * or is computed by finding the first project in the {@link Classpath#fromSystem system classpath}  containing
-     * a "com/sun/max" package.
-     * @return a {@link File} for the Maxine root directory
-     */
-    public static File findMaxineRootDirectory() {
-        File result = null;
-        final String maxDirProp = System.getProperty(IDE.MAX_PROJECT_DIRECTORY_PROPERTY);
-        if (maxDirProp != null) {
-            result = new File(maxDirProp);
-            if (!(result.isDirectory() && result.exists())) {
-                ProgramError.unexpected(IDE.MAX_PROJECT_DIRECTORY_PROPERTY + " is not a Maxine root directory");
+        File workspace;
+        File project;
+
+
+        boolean deriveWorkspace(File start) {
+            File dir = start;
+            File child = null;
+            while (dir != null) {
+                if (isWorkspace(dir)) {
+                    workspace = dir;
+                    project = child;
+                    return true;
+                }
+                child = dir;
+                dir = dir.getParentFile();
             }
-        } else {
-            for (Entry entry : Classpath.fromSystem().entries()) {
-                if (entry.isDirectory()) {
-                    final String packageName = MaxPackage.class.getPackage().getName();
-                    final File file = new File(entry.path(), packageName.replace('.', File.separatorChar));
-                    if (file.exists() && file.isDirectory()) {
-                        result = entry.file().getParentFile();
-                        break;
-                    }
-                } else if (entry.isArchive()) {
-                    if (IDE.current() == IDE.NETBEANS) {
-                        if (entry.file().getParentFile().getName().equals("dist")) {
-                            result = entry.file().getParentFile();
-                            break;
-                        }
-                    }
+            return false;
+        }
+
+        @Override
+        protected boolean visitFile(File parent, String resource) {
+            String classFile = JavaProject.class.getName().replace('.', File.separatorChar) + ".class";
+            if (resource.equals(classFile)) {
+                if (deriveWorkspace(parent)) {
+                    return false;
                 }
             }
-            if (result == null) {
-                ProgramError.unexpected("failed to find the Maxine root directory");
-            }
+            return true;
         }
-        return result.getParentFile().getAbsoluteFile();
+        @Override
+        protected boolean visitArchiveEntry(java.util.zip.ZipFile archive, java.util.zip.ZipEntry resource) {
+            String classFile = JavaProject.class.getName().replace('.', File.separatorChar) + ".class";
+            if (resource.equals(classFile)) {
+                File archiveFile = new File(archive.getName());
+                if (deriveWorkspace(archiveFile)) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     /**
-     * Gets the paths on which all the Java source files for the current Java project can be found.
+     * Gets Maxine workspace directory (i.e. the parent of all the {@linkplain #WORKSPACE_PROJECTS representative project directories}).
+     * This can be specified explicitly with the {@value JavaProject#MAX_WORKSPACE_PROPERTY}
+     * or is derived from the {@linkplain Classpath#fromSystem() system class path}.
      *
+     * @return the Maxine workspace directory
+     */
+    public static File findWorkspaceDirectory() {
+        final String prop = System.getProperty(JavaProject.MAX_WORKSPACE_PROPERTY);
+        if (prop != null) {
+            File dir = new File(prop);
+            ProgramError.check(isWorkspace(dir), prop + " is not a Maxine workspace directory");
+            return dir;
+        }
+        WorkspaceFinder finder = new WorkspaceFinder();
+        finder.run(Classpath.fromSystem());
+        ProgramError.check(finder.workspace != null, "failed to find the Maxine workspace directory");
+        return finder.workspace;
+    }
+
+    /**
+     * Gets the paths on which all the Java source files for a Java project can be found.
+     *
+     * @param projClass a class denoting a project (i.e. any class in the project)
      * @param includeDependencies  if true, the returned path includes the location of the
      *                             Java source files for each of the projects that the current
      *                             project depends upon
      */
-    public static Classpath getSourcePath(boolean includeDependencies) {
-        final Classpath classPath = getClassPath(includeDependencies);
+    public static Classpath getSourcePath(Class projClass, boolean includeDependencies) {
+        final Classpath classPath = getClassPath(projClass, includeDependencies);
         final List<String> sourcePath = new LinkedList<String>();
         for (Entry entry : classPath.entries()) {
-            final File projectDirectory = IDE.current().findVcsProjectDirectoryFromClasspathEntry(entry.file());
+            WorkspaceFinder finder = new WorkspaceFinder();
+            finder.deriveWorkspace(entry.file());
+            final File projectDirectory = finder.project;
             if (projectDirectory != null) {
                 final File srcDirectory = new File(projectDirectory, SOURCE_DIRECTORY_NAME);
                 if (srcDirectory.exists() && srcDirectory.isDirectory()) {
@@ -169,28 +208,12 @@ public final class JavaProject {
         return new Classpath(sourcePath.toArray(new String[sourcePath.size()]));
     }
 
-    public static File findSourceDirectory() {
-        return getSourcePath(false).entries().get(0).file();
-    }
-
     /**
-     * Gets the top-level directory of the current project. That is, the directory that is under VCS control.
-     * This may be different from the {@linkplain #findIdeProjectDirectory() IDE project directory}. For example,
-     * Netbeans puts the project metadata in a subdirectory (named "nbproject") of the top level project
-     * directory where as Eclipse puts the project metadata in <i>dot</i> files (e.g. ".classpath", ".project")
-     * in the top level directory.
-     * The current project is the one containing the main class of this Java process.
+     * Find the primary source directory for a project.
+     *
+     * @param projClass a class denoting a project (i.e. any class in the project)
      */
-    public static File findVcsProjectDirectory() {
-        final IDE ide = IDE.current();
-        if (ide == null) {
-            throw ProgramError.unexpected("Cannot determine IDE in order to find project directory");
-        }
-        final File classpath = findClassesOnClasspath().getAbsoluteFile();
-        final File projDir = ide.findVcsProjectDirectoryFromClasspathEntry(classpath);
-        if (projDir == null) {
-            throw ProgramError.unexpected("Cannot find project directory for IDE: " + ide + ", classpath = " + classpath);
-        }
-        return projDir;
+    public static File findSourceDirectory(Class projClass) {
+        return getSourcePath(projClass, false).entries().get(0).file();
     }
 }
