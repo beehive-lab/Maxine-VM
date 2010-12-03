@@ -535,8 +535,7 @@ public final class JavaPrototype extends Prototype {
         }
         if (object instanceof Thread || object instanceof ThreadGroup) {
             if (MaxineVM.isMaxineClass(ClassActor.fromJava(object.getClass()))) {
-//                ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
-                Trace.line(1, "WARNING: Instance of thread class " + object.getClass().getName() + " will be null in the image");
+                ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
             }
             return null;
         }
