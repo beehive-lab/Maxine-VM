@@ -39,6 +39,6 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        return new AMD64EirTranslatorTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
+        return new AMD64EirTranslatorTestSetup(new TestCaseClassSet(AllTests.class).toTestSuite());
     }
 }

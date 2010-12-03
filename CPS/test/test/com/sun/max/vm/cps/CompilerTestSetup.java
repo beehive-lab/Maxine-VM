@@ -67,8 +67,8 @@ public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
         return createDisassembler(platform.isa, platform.wordWidth(), targetMethod.codeStart().toLong(), inlineDataDecoder);
     }
 
-    public static BootstrapCompilerScheme compilerScheme() {
-        return vmConfig().bootCompilerScheme();
+    public static CPSCompiler compilerScheme() {
+        return CPSCompiler.Static.compiler();
     }
 
     public abstract Method_Type translate(ClassMethodActor classMethodActor);

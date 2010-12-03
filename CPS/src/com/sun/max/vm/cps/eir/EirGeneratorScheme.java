@@ -25,7 +25,7 @@ import com.sun.max.vm.compiler.*;
 /**
  * @author Bernd Mathiske
  */
-public interface EirGeneratorScheme<EirGenerator_Type extends EirGenerator> extends BootstrapCompilerScheme {
+public interface EirGeneratorScheme<EirGenerator_Type extends EirGenerator> extends CPSCompiler {
 
     EirGenerator_Type eirGenerator();
 

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.actor.member;
 
-import com.sun.max.vm.compiler.*;
 
 /**
  * Hiroshi pointed out that the following leads to an
@@ -69,10 +68,4 @@ public class MirandaMethodActor extends VirtualMethodActor {
     public final boolean isMiranda() {
         return true;
     }
-
-    @Override
-    public boolean isDeclaredInline(BootstrapCompilerScheme compilerScheme) {
-        return false;
-    }
-
 }

@@ -22,7 +22,7 @@ package com.sun.max.vm.hosted;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.ISA.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -56,10 +56,8 @@ public final class VMConfigurator {
             "Specifies the heap scheme for the target.", VMConfigurator.defaultHeapScheme());
     public final Option<MaxPackage> monitorScheme = schemeOption("monitor", new com.sun.max.vm.monitor.Package(), MonitorScheme.class,
             "Specifies the monitor scheme for the target.", VMConfigurator.defaultMonitorScheme());
-    public final Option<MaxPackage> bootScheme = schemeOption("boot", new com.sun.max.vm.compiler.Package(), BootstrapCompilerScheme.class,
-            "Specifies the boot compiler scheme for the target.", VMConfigurator.defaultCompilerScheme());
     public final Option<MaxPackage> optScheme = schemeOption("opt", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
-            "Specifies the optimizing compiler scheme for the target.", VMConfigurator.defaultCompilerScheme());
+            "Specifies the optimizing compiler scheme for the target.", VMConfigurator.defaultOptCompilerScheme());
     public final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
             "Specifies the JIT scheme for the target.", VMConfigurator.defaultJitCompilerScheme());
     public final Option<MaxPackage> compScheme = schemeOption("comp", new com.sun.max.vm.compiler.Package(), CompilationScheme.class,
@@ -96,9 +94,8 @@ public final class VMConfigurator {
                                     vm(layoutScheme),
                                     vm(heapScheme),
                                     vm(monitorScheme),
-                                    vm(bootScheme),
-                                    vm(jitScheme),
                                     vm(optScheme),
+                                    vm(jitScheme),
                                     vm(compScheme),
                                     vm(runScheme));
         MaxineVM vm = new MaxineVM(config);
@@ -110,9 +107,9 @@ public final class VMConfigurator {
     }
 
     /**
-     * Gets the package providing the default {@link BootstrapCompilerScheme}.
+     * Gets the package providing the default {@link VMConfiguration#optCompilerScheme()}.
      */
-    public static VMPackage defaultCompilerScheme() {
+    public static VMPackage defaultOptCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
                 return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
@@ -122,7 +119,7 @@ public final class VMConfigurator {
     }
 
     /**
-     * Gets the package providing the default {@link RuntimeCompilerScheme}.
+     * Gets the package providing the default {@link VMConfiguration#jitCompilerScheme()}.
      */
     public static VMPackage defaultJitCompilerScheme() {
         switch (platform().isa) {
@@ -209,19 +206,18 @@ public final class VMConfigurator {
      * except for a supplied build level.
      */
     public static void installStandard(BuildLevel buildLevel) {
-        installStandard(buildLevel, defaultCompilerScheme());
+        installStandard(buildLevel, defaultOptCompilerScheme());
     }
 
     /**
      * Creates and {@linkplain MaxineVM#set(MaxineVM) installs} a VM using all the defaults
      * except for a supplied compiler scheme implementation and build level.
      */
-    public static void installStandard(BuildLevel buildLevel, VMPackage compilerPackage) {
+    public static void installStandard(BuildLevel buildLevel, VMPackage optPackage) {
         VMConfigurator vmConfigurator = new VMConfigurator(null);
         vmConfigurator.buildLevel.setValue(buildLevel);
-        vmConfigurator.bootScheme.setValue(compilerPackage);
+        vmConfigurator.optScheme.setValue(optPackage);
         vmConfigurator.jitScheme.setValue(null);
-        vmConfigurator.optScheme.setValue(null);
         vmConfigurator.create(true);
     }
 

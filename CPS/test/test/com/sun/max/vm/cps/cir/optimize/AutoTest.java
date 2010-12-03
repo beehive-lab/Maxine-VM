@@ -34,6 +34,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new CirOptimizerTestSetup(new TestCaseClassSet(new Package()).addToEnd(CirOptimizerTest_max.class, CirOptimizerTest_subtype.class).toTestSuite());
+        return new CirOptimizerTestSetup(new TestCaseClassSet(AllTests.class).addToEnd(CirOptimizerTest_max.class, CirOptimizerTest_subtype.class).toTestSuite());
     }
 }

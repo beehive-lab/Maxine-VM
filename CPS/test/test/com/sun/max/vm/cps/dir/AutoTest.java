@@ -34,6 +34,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new DirTranslatorTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
+        return new DirTranslatorTestSetup(new TestCaseClassSet(AllTests.class).toTestSuite());
     }
 }

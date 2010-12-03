@@ -258,6 +258,33 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
+    private void addMethods(Set<String> imageMethods) {
+        for (String classNameAndMethod : imageMethods) {
+            final int ix = classNameAndMethod.lastIndexOf('.');
+            if (ix < 0) {
+                ProgramError.unexpected(classNameAndMethod + " not correct format");
+            }
+            final String className = classNameAndMethod.substring(0, ix);
+            final String methodName = classNameAndMethod.substring(ix + 1);
+            try {
+                final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
+                classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
+
+                    public void run(ClassMethodActor classMethodActor) {
+                        if (classMethodActor.holder().name.string.equals(className) && (
+                                        methodName.equals("*") ||
+                                        methodName.equals(classMethodActor.name.string))) {
+                            Trace.line(1, "forcing compilation of method " + classMethodActor.qualifiedName());
+                            add(classMethodActor, null, null);
+                        }
+                    }
+                });
+            } catch (Exception ex) {
+                ProgramError.unexpected("failed to load: " + className + "." + methodName);
+            }
+        }
+    }
+
     private void processNewTargetMethod(TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
@@ -400,17 +427,14 @@ public class CompiledPrototype extends Prototype {
             if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
                 compiler = vmConfig().jitCompilerScheme();
                 if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
-                    compiler = vmConfig().bootCompilerScheme();
-                    if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
-                        try {
-                            // TODO: remove reflective dependency here!
-                            Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
-                            Constructor constructor = type.getConstructor();
-                            compiler = (RuntimeCompilerScheme) constructor.newInstance();
-                            compiler.initialize(Phase.BOOTSTRAPPING);
-                        } catch (Exception e) {
-                            throw ProgramError.unexpected(e);
-                        }
+                    try {
+                        // TODO: remove reflective dependency here!
+                        Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
+                        Constructor constructor = type.getConstructor();
+                        compiler = (RuntimeCompilerScheme) constructor.newInstance();
+                        compiler.initialize(Phase.BOOTSTRAPPING);
+                    } catch (Exception e) {
+                        throw ProgramError.unexpected(e);
                     }
                 }
             }
@@ -422,17 +446,29 @@ public class CompiledPrototype extends Prototype {
     /**
      * Methods that must be statically compiled in the boot image.
      */
-    private static Set<MethodActor> imageMethodActors = new HashSet<MethodActor>();
+    private static Set<MethodActor> extraVMEntryPoints = new HashSet<MethodActor>();
+    private static Set<String> extraVMEntryPointNames = new HashSet<String>();
     private static Set<MethodActor> imageInvocationStubMethodActors = new HashSet<MethodActor>();
     private static Set<MethodActor> imageConstructorStubMethodActors = new HashSet<MethodActor>();
 
     /**
      * Registers a given method that must be statically compiled in the boot image.
+     * Internal use.
      */
-    public static void registerImageMethod(ClassMethodActor m) {
-        assert imageMethodActors != null : "too late to add VM entry point " + m;
+    public static void registerVMEntryPoint(ClassMethodActor m) {
+        assert extraVMEntryPoints != null : "too late to add VM entry point " + m;
         ProgramError.check(m != null);
-        imageMethodActors.add(m);
+        extraVMEntryPoints.add(m);
+    }
+
+    /**
+     * Registers a given method that must be statically compiled in the boot image.
+     * External use (extension support).
+     * @param classAndMethodActor fully qualified name, e.g. a.b.C.m where m may be * to denote all methods
+     */
+    public static void registerVMEntryPoint(String classAndMethodActor) {
+        assert extraVMEntryPointNames != null : "too late to add VM entry point " + classAndMethodActor;
+        extraVMEntryPointNames.add(classAndMethodActor);
     }
 
     /**
@@ -465,7 +501,8 @@ public class CompiledPrototype extends Prototype {
         add(ClassRegistry.findMethod("run", runScheme.getClass()), null, entryPoint);
 
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), entryPoint);
-        addMethods(null, imageMethodActors, entryPoint);
+        addMethods(null, extraVMEntryPoints, entryPoint);
+        addMethods(extraVMEntryPointNames);
         // we would prefer not to invoke stub-generation/compilation for the shutdown hooks procedure, e.g., after an OutOfMemoryError
         try {
             registerImageInvocationStub(ClassActor.fromJava(Class.forName("java.lang.Shutdown")).findLocalStaticMethodActor("shutdown"));
@@ -497,7 +534,7 @@ public class CompiledPrototype extends Prototype {
         add(ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).findLocalStaticMethodActor("<clinit>"), null, entryPoint);
 
         // It's too late now to register any further methods to be compiled into the boot image
-        imageMethodActors = null;
+        extraVMEntryPointNames = null;
         imageConstructorStubMethodActors = null;
         imageInvocationStubMethodActors = null;
     }

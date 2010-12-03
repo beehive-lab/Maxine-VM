@@ -167,7 +167,11 @@ public final class DynamicHub extends Hub {
      */
     @FOLD
     private static boolean compilerCreatesTargetMethods() {
-        return !MaxineVM.isHosted() || vmConfig().bootCompilerScheme().compiledType() != null;
+        if (!isHosted()) {
+            return true;
+        }
+        CPSCompiler compiler = CPSCompiler.Static.compiler();
+        return compiler == null || compiler.compiledType() != null;
     }
 
     @Override

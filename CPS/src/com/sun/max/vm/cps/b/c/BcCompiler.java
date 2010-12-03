@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.b.c;
 
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
@@ -64,18 +63,6 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         final List<IrGenerator> result = new LinkedList<IrGenerator>(super.irGenerators());
         result.add(birToCirTranslator);
         return result;
-    }
-
-    @HOSTED_ONLY
-    @Override
-    public void createBuiltins(PackageLoader packageLoader) {
-        super.createBuiltins(packageLoader);
-    }
-
-    @HOSTED_ONLY
-    @Override
-    public void createSnippets(PackageLoader packageLoader) {
-        super.createSnippets(packageLoader);
     }
 
     @HOSTED_ONLY

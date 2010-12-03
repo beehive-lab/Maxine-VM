@@ -369,8 +369,7 @@ public class Classpath {
     public ClasspathFile readFile(String className, String extension) {
         final String path = className.replace('.', '/') + extension;
         for (Entry entry : entries()) {
-            ClasspathFile classpathFile = null;
-            classpathFile = entry.readFile(path);
+            ClasspathFile classpathFile = entry.readFile(path);
             if (classpathFile != null) {
                 recordPackage(className, classpathFile);
                 return classpathFile;
@@ -388,7 +387,7 @@ public class Classpath {
     }
 
     /**
-     * Searches for an existing file corresponding to an directory entry in this classpath composed with a given path
+     * Searches for an existing file corresponding to a directory entry in this classpath composed with a given path
      * suffix.
      *
      * @param suffix a file path relative to a directory entry of this classpath

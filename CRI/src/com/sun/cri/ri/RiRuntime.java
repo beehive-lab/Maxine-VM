@@ -98,15 +98,16 @@ public interface RiRuntime {
      * Returns the disassembly of the given code bytes. Used for debugging purposes only.
      *
      * @param code the code bytes that should be disassembled
-     * @return the disassembly as a String object
+     * @param address an address at which the bytes are located. This can be used for an address prefix per line of disassembly.
+     * @return the disassembly. This will be of length 0 if the runtime does not support disassembling.
      */
-    String disassemble(byte[] code);
+    String disassemble(byte[] code, long address);
 
     /**
      * Returns the disassembly of the given code bytes. Used for debugging purposes only.
      *
      * @param targetMethod the {@link CiTargetMethod} containing the code bytes that should be disassembled
-     * @return the disassembly as a String object
+     * @return the disassembly. This will be of length 0 if the runtime does not support disassembling.
      */
     String disassemble(CiTargetMethod targetMethod);
 
@@ -115,7 +116,7 @@ public interface RiRuntime {
      * Used for debugging purposes only.
      *
      * @param method the method that should be disassembled
-     * @return the disassembly as a String object
+     * @return the disassembly. This will be of length 0 if the runtime does not support disassembling.
      */
     String disassemble(RiMethod method);
 

@@ -23,11 +23,11 @@ package com.sun.max.asm.gen;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
+import com.sun.max.config.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;

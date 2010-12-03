@@ -25,9 +25,11 @@ import java.util.concurrent.*;
 import com.sun.max.profile.Metrics.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.hotpath.compiler.*;
+import com.sun.max.vm.runtime.*;
 
 public class AsynchronousProfiler implements Runnable {
 
@@ -47,14 +49,16 @@ public class AsynchronousProfiler implements Runnable {
     public static OptionSet optionSet = new OptionSet();
     public static Option<Boolean> profile = optionSet.newBooleanOption("P", false, "(P)rofiles hotpath execution.");
 
-    private static Thread profilerThread = null;
     private static LinkedBlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>();
 
-    static {
-        profilerThread = new Thread(new AsynchronousProfiler());
+    public static void init() {
+        if (MaxineVM.isHosted()) {
+            FatalError.unexpected(AsynchronousProfiler.class.getName() + " should only be started at runtime");
+        }
+        Thread profilerThread = new Thread(new AsynchronousProfiler());
         profilerThread.setPriority(Thread.NORM_PRIORITY);
         profilerThread.setDaemon(true);
-        //profilerThread.start();
+        profilerThread.start();
     }
 
     public void run() {

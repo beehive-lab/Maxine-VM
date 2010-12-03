@@ -308,6 +308,15 @@ public final class Classes {
     }
 
     /**
+     * Gets the package name for the package of a class.
+     *
+     * @return "" if {@code c} is a class in the unnamed package
+     */
+    public static String getPackageName(Class c) {
+        return getPackageName(c.getName());
+    }
+
+    /**
      * Extracts a simple class name from a fully qualified class name.
      */
     public static String getSimpleName(String className) {

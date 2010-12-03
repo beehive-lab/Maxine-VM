@@ -53,7 +53,7 @@ public class InvokedMethodRecorder extends BytecodeAdapter {
         this.interfaceCalls = interfaceCalls;
     }
 
-    private static final String maxPackagePrefix = new com.sun.max.Package().name();
+    private static final String maxPackagePrefix = "com.sun.max";
 
     protected void addMethodCall(int index, Set<MethodActor> sequence) {
         final MethodRefConstant methodRefConstant = constantPool.methodAt(index);

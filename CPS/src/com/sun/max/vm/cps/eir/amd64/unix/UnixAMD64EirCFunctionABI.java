@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.target.*;
@@ -40,13 +39,6 @@ import com.sun.max.vm.cps.target.*;
  * @author Bernd Mathiske
  */
 public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
-
-    private final PoolSet<AMD64EirRegister> callerSavedRegisters = PoolSet.of(AMD64EirRegister.General.pool(), RAX, RCX, RDX, RSI, RDI, R8, R9, R10);
-
-    @Override
-    public PoolSet<AMD64EirRegister> callerSavedRegisters() {
-        return callerSavedRegisters;
-    }
 
     /**
      * Creates an ABI for a VM entry point or VM exit point.

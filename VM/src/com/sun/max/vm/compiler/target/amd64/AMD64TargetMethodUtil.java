@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
-import com.sun.max.asm.amd64.*;
+import com.sun.c1x.target.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -38,14 +38,26 @@ public final class AMD64TargetMethodUtil {
     private static final int RCALL = 0xe8;
     private static final int RJMP = 0xe9;
 
+    /**
+     * Lock to avoid race on concurrent icache invalidation when patching target methods.
+     */
+    private static final Object PatchingLock = new Object();
+
     public static int registerReferenceMapSize() {
-        return Unsigned.idiv(AMD64GeneralRegister64.ENUMERATOR.numberOfValues(), Bytes.WIDTH);
+        return Unsigned.idiv(AMD64.cpuRegisters.length, Bytes.WIDTH);
     }
 
     public static boolean isPatchableCallSite(Address callSite) {
-        // last byte of call site:
+        // We only update the disp of the call instruction.
+        // C1X imposes that disp of the call be aligned to a word boundary.
+        // This may cause up to 7 nops to be inserted before a call.
+        // CPS use the less conservative approach of requiring only that the whole
+        // call instructions fits in a single word (and thus, guaranteed to be within a single cache line).
+        // The following takes care of both
         final Address endOfCallSite = callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
-        return callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(endOfCallSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes));
+        return callSite.plus(1).isWordAligned() ? true :
+        // last byte of call site:
+        callSite.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
     }
 
     /**
@@ -102,15 +114,18 @@ public final class AMD64TargetMethodUtil {
 
     // MT-safe replacement of the displacement of a direct call.
     public static void mtSafePatchCallDisplacement(TargetMethod targetMethod, Pointer callSite, Address target) {
-        // FIXME: should probably acquire a patching lock on the target method.
         if (!isPatchableCallSite(callSite)) {
             FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
         long displacement = target.minus(callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH)).toLong();
         FatalError.check((int) displacement == displacement, "Code displacement out of 32-bit range");
         displacement = displacement & 0xFFFFFFFFL;
-        callSite.writeInt(1,  (int) displacement);
-        // FIXME: Needs to invalid ICache to be correct (requires new builtin/intrisinc)
+        synchronized (PatchingLock) {
+            // Just to prevent concurrent writing and invalidation to the same instruction cache line
+            // (although the lock excludes ALL concurrent patching)
+            callSite.writeInt(1,  (int) displacement);
+            // Don't need icache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
+        }
     }
 
     // Disable instance creation.

@@ -98,7 +98,8 @@ public abstract class AbstractAssembler {
 
             if (C1XOptions.PrintCodeBytes) {
                 Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
-                Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
+                TTY.println("Code: %d bytes", targetMethod.targetCodeSize());
+                Util.printBytes(0L, targetMethod.targetCode(), 0, targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
             }
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);

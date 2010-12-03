@@ -23,14 +23,13 @@
  */
 package test.com.sun.max.vm.cps;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.lang.reflect.*;
 
 import com.sun.max.test.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.*;
@@ -53,7 +52,7 @@ public class EIRTestExecutor implements JavaExecHarness.Executor {
 
     private static void initialize(boolean loadingPackages) {
         JavaPrototype.initialize(loadingPackages);
-        final EirGeneratorScheme compilerScheme = (EirGeneratorScheme) vmConfig().bootCompilerScheme();
+        final EirGeneratorScheme compilerScheme = (EirGeneratorScheme) CPSCompiler.Static.compiler();
         compilerScheme.compileSnippets();
         generator = compilerScheme.eirGenerator();
     }

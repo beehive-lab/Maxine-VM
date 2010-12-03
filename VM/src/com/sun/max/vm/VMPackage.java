@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm;
 
+import com.sun.max.config.*;
+
 /**
  * Denotes a package of classes that are (potentially) in the VM.
  *
@@ -27,9 +29,8 @@ package com.sun.max.vm;
  * @author Doug Simon
  * @author Mick Jordan
  */
-public abstract class VMPackage extends VMConfigPackage {
+public abstract class VMPackage extends BootImagePackage {
     public VMPackage() {
+
     }
-
-
 }

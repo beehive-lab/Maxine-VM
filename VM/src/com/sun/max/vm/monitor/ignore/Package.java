@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.monitor.ignore;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
 

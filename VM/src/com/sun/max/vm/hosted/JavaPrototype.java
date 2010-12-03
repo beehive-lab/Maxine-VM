@@ -30,8 +30,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.sun.c1x.debug.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -39,8 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.jdk.Package;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -58,8 +57,8 @@ import com.sun.max.vm.value.*;
 public final class JavaPrototype extends Prototype {
 
     /**
-     * The name of the system that can be used to specify extra classes and packages to be loaded
-     * into a Java prototype by {@link #loadCoreJavaPackages()}. The value of the property is
+     * The name of the system property that can be used to specify extra classes and packages to be loaded
+     * into a Java prototype by {@link #loadExtraClassesAndPackages()}. The value of the property is
      * parsed as a space separated list of class and package names. Package names are those
      * prefixed by '^'.
      */
@@ -67,7 +66,7 @@ public final class JavaPrototype extends Prototype {
 
     private static JavaPrototype theJavaPrototype;
     private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
-    private List<MaxPackage> candidateMaxPackages;
+    private List<MaxPackage> candidateBootImagePackages;
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
     private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
     private final Map<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
@@ -161,18 +160,6 @@ public final class JavaPrototype extends Prototype {
     }
 
     /**
-     * Loads a package into the prototype, building the internal Actor representations of all the classes in the
-     * prototype.
-     *
-     * @param name the name of the package as a string
-     * @param recursive a boolean indicating whether to load all subpackages of the specified package
-     * @return a sequence of all the classes loaded from the specified package (and potentially its subpackages).
-     */
-    public List<Class> loadPackage(String name, boolean recursive) {
-        return packageLoader.load(MaxPackage.fromJava(name), true);
-    }
-
-    /**
      * Load packages corresponding to VM configurations.
      */
     private void loadVMConfigurationPackages() {
@@ -184,17 +171,12 @@ public final class JavaPrototype extends Prototype {
     /**
      * Loads extra packages and classes that are necessary to build a self-sufficient VM image.
      */
-    public void loadCoreJavaPackages() {
-        List<MaxPackage> jdkPackages = getPackages(new com.sun.max.jdk.Package());
-        for (MaxPackage jdkPackage : jdkPackages) {
-            loadMaxPackage(jdkPackage);
-        }
-
+    public void loadExtraClassesAndPackages() {
         String value = System.getProperty(EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME);
         if (value != null) {
             for (String s : value.split("\\s+")) {
                 if (s.charAt(0) == '^') {
-                    loadPackage(s.substring(1), false);
+                    packageLoader.load(new MaxPackage(s.substring(1), false), true);
                 } else {
                     loadClass(s);
                 }
@@ -214,12 +196,12 @@ public final class JavaPrototype extends Prototype {
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
     private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
-        for (MaxPackage maxPackage : candidateMaxPackages) {
+        for (MaxPackage maxPackage : candidateBootImagePackages) {
             // VMConfigPackage subclasses may contain SUBSTITUTIONS
-            if (maxPackage instanceof VMConfigPackage) {
-                VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;
+            if (maxPackage instanceof BootImagePackage) {
+                BootImagePackage vmPackage = (BootImagePackage) maxPackage;
                 if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
-                    String[] classes = packageLoader.listClassesInPackage(vmPackage);
+                    String[] classes = vmPackage.listClasses(packageLoader.classpath);
                     for (String cn : classes) {
                         try {
                             Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
@@ -295,28 +277,29 @@ public final class JavaPrototype extends Prototype {
             out.println("==================================================================");
         }
 
+        // TODO remove new com.sun.max.vm.Package() once com.sun.max.config..vm.Package is in effect
+        candidateBootImagePackages = getPackages(new com.sun.max.vm.Package(), new com.sun.max.config.Package());
+
+        MaxineVM.registerBootImagePackages(candidateBootImagePackages);
+
+        // moved to after getPackages to ensure that there is no actual loading until the configuration has been generated
+        // to make sure that the configuration tweaks, e.g. whether to keep <clinit>, are processed before the class is loaded.
+
         loadVMConfigurationPackages();
 
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
 
-        config.bootCompilerScheme().createBuiltins(packageLoader);
-        Builtin.register(config.bootCompilerScheme());
-        config.bootCompilerScheme().createSnippets(packageLoader);
-        Snippet.register();
-
-        candidateMaxPackages = getPackages(new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package());
-
-        MaxineVM.registerMaxinePackages(candidateMaxPackages);
+        CPSCompiler.Static.initialize(packageLoader);
 
         loadMethodSubstitutions(config);
 
         if (complete) {
 
-            for (MaxPackage maxPackage : candidateMaxPackages) {
+            for (MaxPackage maxPackage : candidateBootImagePackages) {
                 loadMaxPackage(maxPackage);
             }
 
-            loadCoreJavaPackages();
+            loadExtraClassesAndPackages();
 
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
@@ -335,7 +318,7 @@ public final class JavaPrototype extends Prototype {
      * @return
      */
     public List<MaxPackage> getCandidateMaxPackages() {
-        return candidateMaxPackages;
+        return candidateBootImagePackages;
     }
 
     /**
@@ -551,10 +534,7 @@ public final class JavaPrototype extends Prototype {
             return replace == NULL ? null : replace;
         }
         if (object instanceof Thread || object instanceof ThreadGroup) {
-            if (MaxineVM.isMaxineClass(ClassActor.fromJava(object.getClass()))) {
-                ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
-            }
-            return null;
+            ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
         }
         return object;
     }

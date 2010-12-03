@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps.cir;
 
+import static com.sun.max.lang.Classes.*;
 import junit.framework.*;
 
 import org.junit.runner.*;
@@ -34,7 +35,7 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(new Package().name());
+        final TestSuite suite = new TestSuite(getPackageName(AllTests.class));
         suite.addTest(test.com.sun.max.vm.cps.cir.transform.AllTests.suite());
         suite.addTest(test.com.sun.max.vm.cps.cir.generate.AllTests.suite());
         //suite.addTest(test.com.sun.max.vm.cps.cir.optimize.AllTests.suite());

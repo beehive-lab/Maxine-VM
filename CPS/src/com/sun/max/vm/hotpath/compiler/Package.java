@@ -21,14 +21,16 @@
 package com.sun.max.vm.hotpath.compiler;
 
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 public class Package extends VMPackage {
     public Package() {
         super();
     }
 
+
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return true;
+        return CPSCompiler.Static.compiler() != null;
     }
 }

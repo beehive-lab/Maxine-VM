@@ -24,8 +24,8 @@ import java.lang.reflect.*;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.optimize.*;
@@ -97,7 +97,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                 try {
                     call = method.fold(cirOptimizer, arguments);
                 } catch (CirFoldingException cirFoldingException) {
-                    ExceptionDispatcher.INTERPRETER_EXCEPTION.set(cirFoldingException.getCause());
+                    CPSAbstractCompiler.INTERPRETER_EXCEPTION.set(cirFoldingException.getCause());
                     call = CirFoldable.Static.createExceptionCall(cirFoldingException.getCause(), arguments);
                 }
             } else if (procedure instanceof CirBuiltin) {
@@ -115,7 +115,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                 if (procedure instanceof CirExceptionContinuationParameter) {
                     assert arguments.length == 1;
                     final CirConstant throwable = (CirConstant) arguments[0];
-                    ExceptionDispatcher.INTERPRETER_EXCEPTION.set(null);
+                    CPSAbstractCompiler.INTERPRETER_EXCEPTION.set(null);
                     throw new InvocationTargetException((Throwable) throwable.value().asObject());
                 }
                 ProgramError.unexpected("call to variable other than continuation parameter: " + procedure);

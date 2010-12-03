@@ -216,7 +216,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             byte[] referenceMaps,
             byte[] scalarLiteralBytes,
             Object[] referenceLiterals,
-            Object codeOrCodeBuffer,
+            byte[] codeBuffer,
             byte[] encodedInlineDataDescriptors,
             ByteArrayBitMap isDirectRuntimeCall,
             int[] bytecodeToTargetCodePositionMap,
@@ -235,7 +235,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
                 referenceMaps,
                 scalarLiteralBytes,
                 referenceLiterals,
-                codeOrCodeBuffer,
+                codeBuffer,
                 encodedInlineDataDescriptors,
                 jitStackFrameLayout.frameSize(),
                 jitStackFrameLayout.frameReferenceMapSize()
