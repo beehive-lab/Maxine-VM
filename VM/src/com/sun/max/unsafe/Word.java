@@ -31,6 +31,7 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -63,7 +64,7 @@ public abstract class Word {
     /**
      * The array of all the subclasses of {@link Word} that are accessible on the classpath when
      * in hosted mode. This value of this array and {@link #unboxedToBoxedTypes} is constructed
-     * by scanning the classpath for all classes named "Package" that subclasses {@link MaxPackage}.
+     * by scanning the class path for all classes named "Package" that subclasses {@link MaxPackage}.
      * An instance of each such class is instantiated and its {@link MaxPackage#wordSubclasses()} method
      * is invoked to obtain the set of classes in the denoted package that subclass {@code Word}.
      */

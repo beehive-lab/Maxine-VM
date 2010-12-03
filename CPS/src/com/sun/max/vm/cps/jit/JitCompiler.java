@@ -20,10 +20,15 @@
  */
 package com.sun.max.vm.cps.jit;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.cps.b.c.d.e.amd64.target.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Template based JIT compiler.
@@ -37,6 +42,15 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
 
     @HOSTED_ONLY
     protected JitCompiler() {
+        CPSCompiler compiler = CPSCompiler.Static.compiler();
+        if (compiler == null) {
+            if (platform().isa == ISA.AMD64) {
+                compiler = new AMD64CPSCompiler();
+            } else {
+                throw FatalError.unimplemented();
+            }
+            assert CPSCompiler.Static.compiler() == compiler;
+        }
     }
 
     @Override

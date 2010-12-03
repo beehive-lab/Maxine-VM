@@ -33,6 +33,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.ir.*;
@@ -200,7 +201,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
 
     @Override
     public IrMethod translate(ClassMethodActor classMethodActor) {
-        CPSAbstractCompiler cpsCompilerScheme = (CPSAbstractCompiler) vmConfig().bootCompilerScheme();
+        CPSAbstractCompiler cpsCompilerScheme = (CPSAbstractCompiler) CPSCompiler.Static.compiler();
         return cpsCompilerScheme.compileIR(classMethodActor);
     }
 

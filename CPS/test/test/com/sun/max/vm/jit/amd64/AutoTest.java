@@ -34,7 +34,7 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new AMD64JITTestSetup(new TestCaseClassSet(new Package()).toTestSuite()) {
+        return new AMD64JITTestSetup(new TestCaseClassSet(AutoTest.class).toTestSuite()) {
             @Override
             public boolean disassembleCompiledMethods() {
                 return false;

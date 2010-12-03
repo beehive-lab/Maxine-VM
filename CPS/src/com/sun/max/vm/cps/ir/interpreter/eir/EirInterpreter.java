@@ -29,12 +29,12 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
-import com.sun.max.vm.cps.ir.interpreter.eir.EirCPU.*;
-import com.sun.max.vm.cps.ir.interpreter.eir.EirStack.*;
+import com.sun.max.vm.cps.ir.interpreter.eir.EirCPU.InstructionAddress;
+import com.sun.max.vm.cps.ir.interpreter.eir.EirStack.StackAddressOutOfBoundsException;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -394,7 +394,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
                 }
                 ReferenceValue throwable = ReferenceValue.from(invocationTargetException.getTargetException());
                 cpu().write(eirGenerator.catchParameterLocation(), throwable);
-                ExceptionDispatcher.INTERPRETER_EXCEPTION.set(invocationTargetException.getTargetException());
+                CPSAbstractCompiler.INTERPRETER_EXCEPTION.set(invocationTargetException.getTargetException());
                 cpu().gotoBlock(frame.catchBlock());
                 return;
             }

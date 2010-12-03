@@ -22,7 +22,6 @@ package com.sun.max.vm.stack.amd64;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;

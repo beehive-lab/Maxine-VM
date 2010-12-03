@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.stack;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.stack.sparc.*;
 
 /**
  * The ABI of some platforms requires the use of a stack bias. The bias is a constant offset that needs to be added to the registers holding the
@@ -45,11 +46,6 @@ public enum StackBias {
      */
     SPARC_V9 {
         @Override
-        public int stackBias() {
-            return SPARCStackFrameLayout.STACK_BIAS;
-        }
-
-        @Override
         public boolean isStackPointerBiased() {
             return true;
         }
@@ -66,11 +62,6 @@ public enum StackBias {
      */
     JIT_SPARC_V9 {
         @Override
-        public int stackBias() {
-            return SPARCStackFrameLayout.STACK_BIAS;
-        }
-
-        @Override
         public boolean isStackPointerBiased() {
             return true;
         }
@@ -84,8 +75,8 @@ public enum StackBias {
         return unbiasedPointer.minus(stackBias());
     }
 
-    public int stackBias() {
-        return 0;
+    public final int stackBias() {
+        return platform().stackBias;
     }
 
     public boolean isStackPointerBiased() {

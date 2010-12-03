@@ -91,23 +91,17 @@ typedef struct image_Header {
  */
 extern image_Header image_header(void);
 
+typedef struct image_KeyValue {
+    char *key;
+    char *value;
+} *image_KeyValue;
+
 /*
  *  ATTENTION: this must match 'com.sun.max.vm.hosted.BootImage.StringInfo'.
  */
 typedef struct image_StringInfo {
-    char *buildLevel;
-    char *cpu;
-    char *isa;
-    char *os;
-
-    char *referencePackageName;
-    char *layoutPackageName;
-    char *heapPackageName;
-    char *monitorPackageName;
-    char *compilerPackageName;
-    char *compilationPackageName;
-    char *jitPackageName;
-    char *runPackageName;
+    int count;
+    image_KeyValue* values;
 } *image_StringInfo;
 
 /**

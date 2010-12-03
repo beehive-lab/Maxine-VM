@@ -84,7 +84,7 @@ public class CriticalNativeMethod extends CriticalMethod {
      * Links the native function.
      * @return the address of the native function's implementation
      */
-    public Address link() {
+    public final Address link() {
         return classMethodActor.nativeFunction.link().asAddress();
     }
 }

@@ -624,7 +624,6 @@ public final class JDK_java_lang_System {
     }
 
     // Checkstyle: stop method name check
-
     @ALIAS(declaringClassName = "java.lang.ProcessEnvironment", name = "<clinit>")
     private static native void ProcessEnvironment_clinit();
 

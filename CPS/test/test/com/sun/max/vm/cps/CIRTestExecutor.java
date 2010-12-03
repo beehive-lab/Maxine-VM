@@ -20,14 +20,13 @@
  */
 package test.com.sun.max.vm.cps;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.lang.reflect.*;
 
 import com.sun.max.test.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.hosted.*;
@@ -48,7 +47,7 @@ public class CIRTestExecutor implements JavaExecHarness.Executor {
 
     private static void initialize(boolean loadingPackages) {
         JavaPrototype.initialize(loadingPackages);
-        final CirGeneratorScheme compilerScheme = (CirGeneratorScheme) vmConfig().bootCompilerScheme();
+        final CirGeneratorScheme compilerScheme = (CirGeneratorScheme) CPSCompiler.Static.compiler();
         compilerScheme.compileSnippets();
         generator = compilerScheme.cirGenerator();
     }

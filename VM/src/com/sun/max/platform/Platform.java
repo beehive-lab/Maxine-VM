@@ -34,7 +34,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.sparc.*;
 
 /**
  * Platform configuration information. This class maintains a current {@link #platform() platform} context
@@ -253,7 +252,7 @@ public final class Platform {
         this.pageSize = pageSize;
 
         if (cpu == CPU.SPARCV9 && os == OS.SOLARIS) {
-            this.stackBias = SPARCStackFrameLayout.STACK_BIAS;
+            this.stackBias = 2047;
         } else {
             this.stackBias = 0;
         }

@@ -442,7 +442,7 @@ public abstract class BytecodeToTargetTranslator {
             byte[] compressedJavaFrameDescriptors,
             byte[] scalarLiteralBytes,
             Object[] referenceLiterals,
-            Object codeOrCodeBuffer,
+            byte[] codeBuffer,
             TargetABI abi) {
 
         JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
@@ -458,7 +458,7 @@ public abstract class BytecodeToTargetTranslator {
             stops.referenceMaps,
             scalarLiteralBytes,
             referenceLiterals,
-            codeOrCodeBuffer,
+            codeBuffer,
             inlineDataRecorder.encodedDescriptors(),
             stops.isDirectCallToRuntime,
             bytecodeToTargetCodePositionMap,

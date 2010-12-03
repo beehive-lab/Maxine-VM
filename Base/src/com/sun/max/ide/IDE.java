@@ -20,9 +20,11 @@
  */
 package com.sun.max.ide;
 
+import static com.sun.max.lang.Classes.*;
+
 import java.io.*;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.program.*;
 
 /**
@@ -119,8 +121,7 @@ public enum IDE {
     }
 
     public String idePackageName() {
-        final MaxPackage thisPackage = MaxPackage.fromClass(IDE.class);
-        return thisPackage.name() + "." + name().toLowerCase();
+        return getPackageName(IDE.class) + "." + name().toLowerCase();
     }
 
     public abstract File findIdeProjectDirectoryFromClasspathEntry(File classpathEntry);
@@ -142,6 +143,7 @@ public enum IDE {
                 ProgramWarning.message("Value of max.ide (" + ideProperty + ") does not correspond with an IDE enum value");
             }
         }
+
         for (IDE ide : IDE.values()) {
             if (ide.packageClassExists()) {
                 // if the package class exists, then the user has chosen an IDE

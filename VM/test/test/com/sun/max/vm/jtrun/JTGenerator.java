@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.jtrun;
 
+import static com.sun.max.lang.Classes.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -29,7 +31,8 @@ import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
-import com.sun.max.test.JavaExecHarness.*;
+import com.sun.max.test.JavaExecHarness.JavaTestCase;
+import com.sun.max.test.JavaExecHarness.Run;
 import com.sun.max.util.*;
 
 public class JTGenerator {
@@ -116,7 +119,7 @@ public class JTGenerator {
     }
 
     private static String className(String className) {
-        return (new Package().name() + "." + packageOption.getValue() + ".") + className;
+        return (getPackageName(JTGenerator.class) + "." + packageOption.getValue() + ".") + className;
     }
 
     private static String fileName(String className) {

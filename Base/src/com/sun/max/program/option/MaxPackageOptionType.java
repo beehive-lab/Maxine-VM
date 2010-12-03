@@ -20,7 +20,7 @@
  */
 package com.sun.max.program.option;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 
 /**
  * The {@code MaxPackageOptionType} class.
