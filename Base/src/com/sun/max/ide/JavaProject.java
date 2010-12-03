@@ -23,7 +23,6 @@ package com.sun.max.ide;
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.config.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.Entry;
