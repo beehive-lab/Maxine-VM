@@ -97,6 +97,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     @Override
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.BOOTSTRAPPING) {
+            C1XOptions.UseConstDirectCall = true; // Default
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.globalStub);
             // search for the runtime call and register critical methods
             for (Method m : RuntimeCalls.class.getDeclaredMethods()) {

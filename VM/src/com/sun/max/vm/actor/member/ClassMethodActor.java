@@ -438,4 +438,9 @@ public abstract class ClassMethodActor extends MethodActor {
     public int targetMethodCount() {
         return TargetState.targetMethodCount(targetState);
     }
+
+    @Override
+    public boolean hasCompiledCode() {
+        return targetMethodCount() > 0;
+    }
 }
