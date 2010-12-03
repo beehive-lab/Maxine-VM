@@ -50,17 +50,15 @@ public class LIRList {
     private final LIRGenerator generator;
 
     private final LIROpcode runtimeCallOp;
-    private final boolean exploitStaticLink;
 
     private LIROpcode directCallOp(RiMethod method) {
-        return exploitStaticLink && method.canBeStaticallyLinked() ? LIROpcode.ConstDirectCall : LIROpcode.DirectCall;
+        return C1XOptions.UseConstDirectCall && method.hasCompiledCode() ? LIROpcode.ConstDirectCall : LIROpcode.DirectCall;
     }
 
     public LIRList(LIRGenerator generator) {
         this.generator = generator;
         this.operations = new ArrayList<LIRInstruction>(8);
-        exploitStaticLink = C1XOptions.UseConstDirectCall;
-        runtimeCallOp = exploitStaticLink ? LIROpcode.ConstDirectCall : LIROpcode.DirectCall;
+        runtimeCallOp = C1XOptions.UseConstDirectCall ? LIROpcode.ConstDirectCall : LIROpcode.DirectCall;
     }
 
     private void append(LIRInstruction op) {

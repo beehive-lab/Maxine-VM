@@ -454,7 +454,7 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     @Override
-    public boolean canBeStaticallyLinked() {
-        return (canBeStaticallyBound() || isConstructor()) && targetMethodCount() > 0;
+    public boolean hasCompiledCode() {
+        return targetMethodCount() > 0;
     }
 }

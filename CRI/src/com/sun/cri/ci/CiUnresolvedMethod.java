@@ -135,7 +135,7 @@ public class CiUnresolvedMethod implements RiMethod {
         return CiUtil.format("%H.%n(%p) [unresolved]", this, false);
     }
 
-    public boolean canBeStaticallyLinked() {
+    public boolean hasCompiledCode() {
         return false;
     }
     
