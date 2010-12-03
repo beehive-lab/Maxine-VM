@@ -297,6 +297,7 @@ public class LinearSpaceAllocator {
         HeapFreeChunk.setFreeChunkNext(cell, Address.zero());
         return cell;
     }
+
     void makeParsable() {
         Pointer cell = setTopToLimit();
         Pointer hardLimit = hardLimit().asPointer();

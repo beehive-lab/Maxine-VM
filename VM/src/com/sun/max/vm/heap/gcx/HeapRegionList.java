@@ -54,6 +54,7 @@ public class HeapRegionList {
 
     private int head;
     private int tail;
+    private int size;
 
     @INLINE
     private void checkNonNullElem(int elem) {
@@ -115,6 +116,7 @@ public class HeapRegionList {
     }
 
     void clear() {
+        size = 0;
         tail = nullElement;
         head = nullElement;
     }
@@ -125,7 +127,18 @@ public class HeapRegionList {
     }
 
     public boolean isEmpty() {
-        return head == nullElement;
+        return size == 0;
+    }
+
+    boolean contains(int elem) {
+        int cursor = head;
+        while (cursor != nullElement) {
+            if (cursor == elem) {
+                return true;
+            }
+            cursor = next(cursor);
+        }
+        return false;
     }
 
     /**
@@ -137,11 +150,13 @@ public class HeapRegionList {
             head = elem;
             tail = elem;
             clear(elem);
+            size = 1;
         } else {
             // Add to tail
             setNext(tail, elem);
             init(elem, nullElement, tail);
             tail = elem;
+            size++;
         }
     }
 
@@ -150,10 +165,12 @@ public class HeapRegionList {
             head = elem;
             tail = elem;
             clear(elem);
+            size = 1;
         } else {
             // Insert at head
             setPrev(head, elem);
             init(elem, head, nullElement);
+            size++;
         }
     }
 
@@ -165,6 +182,7 @@ public class HeapRegionList {
             init(newElem, elem, nextElem);
             setNext(elem, newElem);
             setPrev(nextElem, newElem);
+            size++;
         }
     }
 
@@ -174,6 +192,9 @@ public class HeapRegionList {
      */
     void remove(int elem) {
         FatalError.check(elem != nullElement, "Must be a valid list element");
+        if (MaxineVM.isDebug()) {
+            FatalError.check(!contains(elem), "element must be in list");
+        }
         int nextElem = next(elem);
         int prevElem = prev(elem);
         if (nextElem == nullElement) {

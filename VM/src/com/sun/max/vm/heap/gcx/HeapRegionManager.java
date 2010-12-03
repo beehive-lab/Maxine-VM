@@ -56,10 +56,37 @@ public class HeapRegionManager {
     /**
      * Total number of regions.
      */
-    private int totalNumRegions;
+    private int capacity;
 
     /**
-     * Backing storage for the heap account lists (see {@link HeapAccount#allocated and HeapAccount#committed}).
+     * Total number of unreserved regions.
+     */
+    private int unreserved;
+
+    // Region Management interface private to Heap Account.
+    // May want to revisit how the two interacts to better control
+    // use of these sensitive operations.
+
+    /**
+     * Reserve exactly the number of regions requested, or fail.
+     * @param numRegions number of region requested
+     * @return true if the number of regions requested was reserved
+     */
+    boolean reserveOrFail(int numRegions) {
+        if (numRegions > unreserved) {
+            return false;
+        }
+        unreserved -= numRegions;
+        return true;
+    }
+
+    void release(int numRegions) {
+        FatalError.check((unreserved + numRegions) <= capacity, "invalid request");
+        unreserved += numRegions;
+    }
+
+    /**
+     * Backing storage for the heap account lists tracking region ownership.
      */
     private int [] heapAccountListStorage;
 

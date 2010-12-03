@@ -40,15 +40,11 @@ public class HeapAccount<Owner>{
      * Guaranteed reserve of space for this account.
      */
     private Size reserve;
+
     /**
-     * List of regions allocated to the account owner.
+     * List of regions allocated to the account owner. All allocated regions are committed
      */
     private HeapRegionList allocated;
-    /**
-     * List of committed regions (i.e., allocated backing storage in real memory),
-     * but not allocated.
-     */
-    private HeapRegionList committed;
 
     HeapAccount(Owner owner, Size reserve) {
         this.owner = owner;
@@ -58,4 +54,7 @@ public class HeapAccount<Owner>{
 
     public Owner owner() { return owner; }
 
+    public int allocate(int numRegions) {
+        return 0;
+    }
 }
