@@ -296,11 +296,11 @@ public final class JDKInterceptor {
      * @param javaClass the java class that declared the field
      * @param fieldName the name of the field as a string
      */
-    public static void resetField(Class javaClass, String fieldName) {
-        Map<String, InterceptedField> fieldMap = interceptedFieldMap.get(javaClass.getName());
+    public static void resetField(String className, String fieldName) {
+        Map<String, InterceptedField> fieldMap = interceptedFieldMap.get(className);
         if (fieldMap == null) {
             fieldMap = new HashMap<String, InterceptedField>();
-            interceptedFieldMap.put(javaClass.getName(), fieldMap);
+            interceptedFieldMap.put(className, fieldMap);
         }
         fieldMap.put(fieldName, new ZeroField(fieldName, true));
     }
