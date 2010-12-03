@@ -77,7 +77,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * List of classes to explicitly reinitialise in the {@link MaxineVM.Phase#STARTING} phase.
      * This supports extensions to the boot image.
      */
-    private static Set<String> reinitClasses = new HashSet<String>();
+    private static List<String> reinitClasses = new LinkedList<String>();
 
     @HOSTED_ONLY
     public JavaRunScheme() {
