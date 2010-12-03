@@ -18,10 +18,11 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max;
+package com.sun.max.config;
 
 import java.util.*;
 
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 

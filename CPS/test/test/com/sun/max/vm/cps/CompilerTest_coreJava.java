@@ -23,6 +23,7 @@ package test.com.sun.max.vm.cps;
 import java.util.*;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.cps.ir.*;
 
 /**

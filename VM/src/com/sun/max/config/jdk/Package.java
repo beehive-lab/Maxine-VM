@@ -18,11 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.jdk.std;
+package com.sun.max.config.jdk;
 
 import java.io.File;
-import com.sun.max.jdk.*;
+
+import com.sun.max.config.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.run.java.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -30,7 +32,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Mick Jordan
  */
-public class Package extends JDKPackage {
+public class Package extends BootImagePackage {
     private static final String[] packages = {
         "java.lang",
         "java.lang.reflect",
@@ -48,10 +50,14 @@ public class Package extends JDKPackage {
         "sun.nio.cs",
         "sun.security.action"};
 
-    private boolean customised;
+    private static boolean customised;
 
     public Package() {
         super(false, packages);
+        JavaRunScheme.registerClassForReInit("java.lang.ProcessEnvironment");
+        JavaRunScheme.registerClassForReInit("java.lang.ApplicationShutdownHooks");
+        JavaRunScheme.registerClassForReInit("java.io.File");
+        JavaRunScheme.registerClassForReInit("sun.misc.Perf");
     }
 
     /**

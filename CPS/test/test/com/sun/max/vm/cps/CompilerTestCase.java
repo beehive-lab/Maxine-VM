@@ -38,6 +38,7 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
+import com.sun.max.config.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;

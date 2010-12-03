@@ -34,6 +34,7 @@ import java.util.logging.*;
 import javax.swing.*;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.ide.*;
 import com.sun.max.jdwp.vm.core.*;
 import com.sun.max.jdwp.vm.proxy.*;

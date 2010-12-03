@@ -21,6 +21,7 @@
 package com.sun.max.vm.monitor.modal.schemes.inflated_only;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
 

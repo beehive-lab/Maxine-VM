@@ -77,7 +77,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * List of classes to explicitly reinitialise in the {@link MaxineVM.Phase#STARTING} phase.
      * This supports extensions to the boot image.
      */
-    private static List<String> reinitClasses = new LinkedList<String>();
+    private static Set<String> reinitClasses = new HashSet<String>();
 
     @HOSTED_ONLY
     public JavaRunScheme() {
@@ -91,6 +91,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     @HOSTED_ONLY
     public static void registerClassForReInit(String className) {
         CompiledPrototype.registerVMEntryPoint(className + ".<clinit>");
+        MaxineVM.registerKeepClassInit(className);
         Trace.line(1, "registering "  +  className + " for reinitialization");
         reinitClasses.add(className);
     }
@@ -161,8 +162,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 // This hack enables (platform-dependent) tracing before the eventual System properties are set:
                 System.setProperty("line.separator", "\n");
 
-                initializeSystemClass();
-
                 // Normally, we would have to initialize tracing this late,
                 // because 'PrintWriter.<init>()' relies on a system property ("line.separator"), which is accessed during 'initializeSystemClass()'.
 
@@ -174,8 +173,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     } catch (Exception e) {
                         FatalError.unexpected("Error re-initializing" + className, e);
                     }
-
                 }
+
+                initializeSystemClass();
+
                 break;
             }
             default: {

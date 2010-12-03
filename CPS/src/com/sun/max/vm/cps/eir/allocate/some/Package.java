@@ -21,6 +21,7 @@
 package com.sun.max.vm.cps.eir.allocate.some;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.eir.*;

@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
@@ -247,8 +248,8 @@ public final class VMConfiguration {
             return false;
         }
         // VM, Ext and JDK
-        if (maxPackage instanceof VMConfigPackage) {
-            final VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;
+        if (maxPackage instanceof BootImagePackage) {
+            final BootImagePackage vmPackage = (BootImagePackage) maxPackage;
             return vmPackage.isPartOfMaxineVM(this);
         }
         return false;

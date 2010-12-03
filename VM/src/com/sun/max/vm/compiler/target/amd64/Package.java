@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.target.amd64;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 

@@ -18,32 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ext;
-
 /**
- *
+ * This package and its sub-packages are interpreted specially when building the Maxine VM.
  *
  * @author Mick Jordan
  */
-public class Package extends ExtPackage {
-    public Package() {
-        super(false,
-            "com.sun.max",
-            "com.sun.max.annotate",
-            "com.sun.max.collect",
-            "com.sun.max.io",
-            "com.sun.max.lang",
-            "com.sun.max.profile",
-            "com.sun.max.program",
-            "com.sun.max.program.option",
-            "com.sun.max.util",
-            "com.sun.max.util.timer",
-
-            "com.sun.max.atomic",
-            "com.sun.max.memory",
-            "com.sun.max.platform",
-            "com.sun.max.unsafe"
-        );
-    }
-
-}
+package com.sun.max.config;

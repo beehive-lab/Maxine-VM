@@ -21,6 +21,7 @@
 package com.sun.max.ide.shell;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 
 /**
  * @see MaxPackage

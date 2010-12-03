@@ -33,6 +33,7 @@ import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
