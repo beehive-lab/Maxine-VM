@@ -39,8 +39,7 @@ import com.sun.max.program.*;
 public abstract class Assembly<Template_Type extends Template> {
 
     private static MaxPackage isaPackage(ISA isa) {
-        final MaxPackage thisPackage = MaxPackage.fromClass(Assembly.class);
-        return thisPackage.subPackage(isa.category.name().toLowerCase(), isa.name().toLowerCase());
+        return MaxPackage.fromName(Classes.getPackageName(Assembly.class) + "." + isa.category.name().toLowerCase() + "." + isa.name().toLowerCase());
     }
 
     private final ISA isa;

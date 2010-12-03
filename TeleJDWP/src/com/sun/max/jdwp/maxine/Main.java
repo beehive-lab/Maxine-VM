@@ -96,7 +96,7 @@ public class Main {
 
         Prototype.loadLibrary(TeleVM.TELE_LIBRARY_NAME);
 
-        final Classpath sourcepath = JavaProject.getSourcePath(true);
+        final Classpath sourcepath = JavaProject.getSourcePath(Main.class, true);
         checkClasspath(sourcepath);
 
         TeleVM t = null;

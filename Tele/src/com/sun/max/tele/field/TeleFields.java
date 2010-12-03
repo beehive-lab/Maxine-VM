@@ -208,7 +208,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     }
 
     public static <Member_Type extends Member> void updateSource(final Class sourceClass, final Class<Member_Type> memberClass, final InspectedMemberReifier<Member_Type> memberReifier, final boolean inInspector) {
-        final File sourceFile = new File(JavaProject.findSourceDirectory(), sourceClass.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
+        final File sourceFile = new File(JavaProject.findSourceDirectory(TeleFields.class), sourceClass.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         if (!sourceFile.exists()) {
             ProgramWarning.message("Source file does not exist: " + sourceFile.getAbsolutePath());
         }

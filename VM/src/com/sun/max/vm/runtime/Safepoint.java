@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.thread.VmThread.*;
@@ -29,7 +30,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.config.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -79,7 +79,7 @@ public abstract class Safepoint {
     public static Safepoint create() {
         try {
             final String isa = platform().isa.name();
-            final Class<?> safepointClass = Class.forName(MaxPackage.fromClass(Safepoint.class).subPackage(isa.toLowerCase()).name() + "." + isa + Safepoint.class.getSimpleName());
+            final Class<?> safepointClass = Class.forName(getPackageName(Safepoint.class) + "." + isa.toLowerCase() + "." + isa + Safepoint.class.getSimpleName());
             return (Safepoint) safepointClass.newInstance();
         } catch (Exception exception) {
             exception.printStackTrace();
