@@ -29,22 +29,21 @@ import com.sun.max.config.*;
  */
 public class Package extends BootImagePackage {
     public Package() {
-        super(false,
-            "com.sun.max",
-            "com.sun.max.annotate",
-            "com.sun.max.collect",
-            "com.sun.max.io",
-            "com.sun.max.lang",
-            "com.sun.max.profile",
-            "com.sun.max.program",
-            "com.sun.max.program.option",
-            "com.sun.max.util",
-            "com.sun.max.util.timer",
-
-            "com.sun.max.atomic",
-            "com.sun.max.memory",
-            "com.sun.max.platform",
-            "com.sun.max.unsafe"
+        super(
+            "com.sun.max.*",
+            "com.sun.max.annotate.*",
+            "com.sun.max.collect.*",
+            "com.sun.max.io.*",
+            "com.sun.max.lang.*",
+            "com.sun.max.profile.*",
+            "com.sun.max.program.*",
+            "com.sun.max.program.option.*",
+            "com.sun.max.util.*",
+            "com.sun.max.util.timer.*",
+            "com.sun.max.atomic.*",
+            "com.sun.max.memory.*",
+            "com.sun.max.platform.*",
+            "com.sun.max.unsafe.*"
         );
     }
 

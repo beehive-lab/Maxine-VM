@@ -57,8 +57,8 @@ import com.sun.max.vm.value.*;
 public final class JavaPrototype extends Prototype {
 
     /**
-     * The name of the system that can be used to specify extra classes and packages to be loaded
-     * into a Java prototype by {@link #loadCoreJavaPackages()}. The value of the property is
+     * The name of the system property that can be used to specify extra classes and packages to be loaded
+     * into a Java prototype by {@link #loadExtraClassesAndPackages()}. The value of the property is
      * parsed as a space separated list of class and package names. Package names are those
      * prefixed by '^'.
      */
@@ -160,18 +160,6 @@ public final class JavaPrototype extends Prototype {
     }
 
     /**
-     * Loads a package into the prototype, building the internal Actor representations of all the classes in the
-     * prototype.
-     *
-     * @param name the name of the package as a string
-     * @param recursive a boolean indicating whether to load all subpackages of the specified package
-     * @return a sequence of all the classes loaded from the specified package (and potentially its subpackages).
-     */
-    public List<Class> loadPackage(String name, boolean recursive) {
-        return packageLoader.load(MaxPackage.fromJava(name), true);
-    }
-
-    /**
      * Load packages corresponding to VM configurations.
      */
     private void loadVMConfigurationPackages() {
@@ -183,12 +171,12 @@ public final class JavaPrototype extends Prototype {
     /**
      * Loads extra packages and classes that are necessary to build a self-sufficient VM image.
      */
-    public void loadCoreJavaPackages() {
+    public void loadExtraClassesAndPackages() {
         String value = System.getProperty(EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME);
         if (value != null) {
             for (String s : value.split("\\s+")) {
                 if (s.charAt(0) == '^') {
-                    loadPackage(s.substring(1), false);
+                    packageLoader.load(new MaxPackage(s.substring(1), false), true);
                 } else {
                     loadClass(s);
                 }
@@ -213,7 +201,7 @@ public final class JavaPrototype extends Prototype {
             if (maxPackage instanceof BootImagePackage) {
                 BootImagePackage vmPackage = (BootImagePackage) maxPackage;
                 if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
-                    String[] classes = packageLoader.listClassesInPackage(vmPackage);
+                    String[] classes = vmPackage.listClasses(packageLoader.classpath);
                     for (String cn : classes) {
                         try {
                             Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
@@ -311,7 +299,7 @@ public final class JavaPrototype extends Prototype {
                 loadMaxPackage(maxPackage);
             }
 
-            loadCoreJavaPackages();
+            loadExtraClassesAndPackages();
 
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 

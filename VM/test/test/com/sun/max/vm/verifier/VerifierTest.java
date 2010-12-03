@@ -428,9 +428,10 @@ public class VerifierTest extends VmTestCase {
         new ClassSearch() {
             @Override
             protected boolean visitClass(String className) {
-                if (!className.endsWith("package-info")) {
+                if ((className.startsWith("com.sun.max.vm") || className.startsWith("com.sun.c1x")) && !className.endsWith("package-info") && isMaxineClass(className)) {
                     try {
-                        if (!className.startsWith("test.") && isMaxineClass(className) && !isHostedOnly(Class.forName(className, false, HOSTED_BOOT_CLASS_LOADER))) {
+                        Class< ? > c = Class.forName(className, false, HOSTED_BOOT_CLASS_LOADER);
+                        if (!isHostedOnly(c)) {
                             verify(className, true);
                         }
                     } catch (ClassNotFoundException e) {

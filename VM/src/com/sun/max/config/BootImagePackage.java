@@ -32,48 +32,33 @@ import com.sun.max.vm.*;
 public abstract class BootImagePackage extends MaxPackage {
 
     /**
-     * Determines if this package is part of the VM under the given configuration.
-     * @param vmConfiguration
-     * @return
+     * Determines if this package is part of the boot image under the given configuration.
+     *
+     * @param vmConfig
      */
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
         return true;
     }
 
     /**
      * Determines if this package contains any classes annotated with {@link METHOD_SUBSTITUTIONS}.
-     * @return
      */
     public boolean containsMethodSubstitutions() {
         return false;
     }
 
-    protected BootImagePackage() {
-
-    }
-
     /**
-     * Use this when all sub-packages should considered included.
-     * @param recursive
+     * @see MaxPackage#MaxPackage()
      */
-    protected BootImagePackage(boolean recursive) {
-        super(true);
+    protected BootImagePackage() {
     }
 
     /**
      * Constructor for redirected extension classes.
+     *
      * @param packageName
      */
-    protected BootImagePackage(String... packageNames) {
-        this(true, packageNames);
+    protected BootImagePackage(String... packageSpecs) {
+        super(packageSpecs);
     }
-
-    /**
-     * Constructor for redirected extension classes with optional recursion nto sub-packages.
-     * @param packageName
-     */
-    protected BootImagePackage(boolean recursive, String... packageNames) {
-        super(packageNames, recursive);
-    }
-
 }
