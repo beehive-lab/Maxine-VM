@@ -23,8 +23,8 @@ package com.sun.max.config.jdk;
 import java.io.File;
 
 import com.sun.max.config.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.run.java.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -51,13 +51,19 @@ public class Package extends BootImagePackage {
         "sun.security.action"};
 
     private static boolean customised;
+    private static boolean reinits;
 
     public Package() {
         super(false, packages);
-        JavaRunScheme.registerClassForReInit("java.lang.ProcessEnvironment");
-        JavaRunScheme.registerClassForReInit("java.lang.ApplicationShutdownHooks");
-        JavaRunScheme.registerClassForReInit("java.io.File");
-        JavaRunScheme.registerClassForReInit("sun.misc.Perf");
+        // order is important
+        // we shouldn't be called more than once but are (Word class search)
+        if (!reinits) {
+            MaxineVM.registerKeepClassInit("java.lang.ProcessEnvironment");
+            MaxineVM.registerKeepClassInit("java.lang.ApplicationShutdownHooks");
+            MaxineVM.registerKeepClassInit("java.io.File");
+            MaxineVM.registerKeepClassInit("sun.misc.Perf");
+            reinits = true;
+        }
     }
 
     /**

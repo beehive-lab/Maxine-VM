@@ -624,7 +624,6 @@ public final class JDK_java_lang_System {
     }
 
     // Checkstyle: stop method name check
-/*
     @ALIAS(declaringClassName = "java.lang.ProcessEnvironment", name = "<clinit>")
     private static native void ProcessEnvironment_clinit();
 
@@ -636,7 +635,6 @@ public final class JDK_java_lang_System {
 
     @ALIAS(declaringClass = Perf.class, name = "<clinit>")
     private static native void Perf_clinit();
-*/
 
     // Checkstyle: resume method name check
 
@@ -681,10 +679,10 @@ public final class JDK_java_lang_System {
         }
 
         // 3. reinitialize java.lang.ProcessEnvironment with this process's environment
-//        ProcessEnvironment_clinit();
+        ProcessEnvironment_clinit();
 
         // 3.1. reinitialize java.lang.ApplicationShutdownHooks
-//        ApplicationShutdownHooks_clinit();
+        ApplicationShutdownHooks_clinit();
 
         // 4. perform OS-specific initialization
         switch (Platform.platform().os) {
@@ -756,10 +754,10 @@ public final class JDK_java_lang_System {
         BootClassLoader.BOOT_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
         // 10. initialize the file system with current runtime values as opposed to bootstrapping values
-//        File_clinit();
+        File_clinit();
 
         // 11. initialize the management performance class with current runtime values
-//        Perf_clinit();
+        Perf_clinit();
 
         // 12. load the character encoding class
         final String sunJnuEncodingValue = properties.getProperty("sun.jnu.encoding");
