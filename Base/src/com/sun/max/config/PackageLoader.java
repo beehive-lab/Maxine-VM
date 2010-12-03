@@ -22,7 +22,6 @@ package com.sun.max.config;
 
 import java.util.*;
 
-import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 

@@ -21,7 +21,6 @@
 package com.sun.max.vm.type;
 
 import com.sun.cri.ci.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.*;
