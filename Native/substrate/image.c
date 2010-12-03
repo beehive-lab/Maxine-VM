@@ -165,8 +165,8 @@ static void readStringInfo(int fd) {
     char *s;
     int keyValueCount = 0;
     char *keyValueData;
-#if !MEMORY_IMAGE
     int n;
+#if !MEMORY_IMAGE
     n = read(fd, &keyValueCount, 4);
     if (n != 4) {
         log_exit(2, "could not read string info key/value count");
