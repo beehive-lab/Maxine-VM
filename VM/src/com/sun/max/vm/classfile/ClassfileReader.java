@@ -846,7 +846,8 @@ public final class ClassfileReader {
                     if (isClinit) {
                         // Class initializer's for all Maxine classes are run while bootstrapping and do not need to be in the boot image.
                         // The "max.loader.preserveClinitMethods" system property can be used to override this default behaviour.
-                        if (MaxineVM.isMaxineClass(classDescriptor) && System.getProperty("max.loader.preserveClinitMethods") == null) {
+                        // and specific (JDK) classes can be designated as overrides for reinitialisation purposes.
+                        if (!MaxineVM.keepClassInit(classDescriptor)) {
                             continue nextMethod;
                         }
                     }

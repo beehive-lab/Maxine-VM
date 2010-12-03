@@ -25,12 +25,12 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;

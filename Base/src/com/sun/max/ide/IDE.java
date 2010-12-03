@@ -25,6 +25,7 @@ import static com.sun.max.lang.Classes.*;
 import java.io.*;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.program.*;
 
 /**

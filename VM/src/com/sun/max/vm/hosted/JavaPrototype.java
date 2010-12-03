@@ -30,8 +30,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.sun.c1x.debug.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -184,11 +184,6 @@ public final class JavaPrototype extends Prototype {
      * Loads extra packages and classes that are necessary to build a self-sufficient VM image.
      */
     public void loadCoreJavaPackages() {
-        List<MaxPackage> jdkPackages = getPackages(new com.sun.max.jdk.Package());
-        for (MaxPackage jdkPackage : jdkPackages) {
-            loadMaxPackage(jdkPackage);
-        }
-
         String value = System.getProperty(EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME);
         if (value != null) {
             for (String s : value.split("\\s+")) {
@@ -215,8 +210,8 @@ public final class JavaPrototype extends Prototype {
     private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
         for (MaxPackage maxPackage : candidateMaxPackages) {
             // VMConfigPackage subclasses may contain SUBSTITUTIONS
-            if (maxPackage instanceof VMConfigPackage) {
-                VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;
+            if (maxPackage instanceof BootImagePackage) {
+                BootImagePackage vmPackage = (BootImagePackage) maxPackage;
                 if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
                     String[] classes = packageLoader.listClassesInPackage(vmPackage);
                     for (String cn : classes) {
@@ -294,15 +289,19 @@ public final class JavaPrototype extends Prototype {
             out.println("==================================================================");
         }
 
+        // TODO remove new com.sun.max.vm.Package() once com.sun.max.config..vm.Package is in effect
+        candidateMaxPackages = getPackages(new com.sun.max.vm.Package(), new com.sun.max.config.Package());
+
+        MaxineVM.registerMaxinePackages(candidateMaxPackages);
+
+        // moved to after getPackages to ensure that there is no actual loading until the configuration has been generated
+        // to make sure that the configuration tweaks, e.g. whether to keep <clinit>, are processed before the class is loaded.
+
         loadVMConfigurationPackages();
 
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
 
         CPSCompiler.Static.initialize(packageLoader);
-
-        candidateMaxPackages = getPackages(new com.sun.max.vm.Package(), new com.sun.max.ext.Package());
-
-        MaxineVM.registerMaxinePackages(candidateMaxPackages);
 
         loadMethodSubstitutions(config);
 
@@ -548,7 +547,8 @@ public final class JavaPrototype extends Prototype {
         }
         if (object instanceof Thread || object instanceof ThreadGroup) {
             if (MaxineVM.isMaxineClass(ClassActor.fromJava(object.getClass()))) {
-                ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
+//                ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
+                Trace.line(1, "WARNING: Instance of thread class " + object.getClass().getName() + " will be null in the image");
             }
             return null;
         }

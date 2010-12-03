@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
+import com.sun.max.config.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;

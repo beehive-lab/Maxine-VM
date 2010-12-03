@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,13 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ext.c1x;
+package com.sun.max.config.base;
 
-import com.sun.max.ext.*;
+import com.sun.max.config.*;
 
-public class Package extends ExtPackage {
-
+/**
+ *
+ * @author Doug Simon
+ * @author Mick Jordan
+ */
+public class Package extends BootImagePackage {
     public Package() {
-        super("com.sun.cri", "com.sun.c1x");
+        super(false,
+            "com.sun.max",
+            "com.sun.max.annotate",
+            "com.sun.max.collect",
+            "com.sun.max.io",
+            "com.sun.max.lang",
+            "com.sun.max.profile",
+            "com.sun.max.program",
+            "com.sun.max.program.option",
+            "com.sun.max.util",
+            "com.sun.max.util.timer",
+
+            "com.sun.max.atomic",
+            "com.sun.max.memory",
+            "com.sun.max.platform",
+            "com.sun.max.unsafe"
+        );
     }
+
 }

@@ -30,6 +30,7 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -81,6 +82,9 @@ public final class MaxineVM {
 
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
+
+    @HOSTED_ONLY
+    private static final Set<String> KEEP_CLINIT_CLASSES = new HashSet<String>();
 
     private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message.") {
         @Override
@@ -191,6 +195,19 @@ public final class MaxineVM {
             MAXINE_CODE_BASE_PACKAGES.add(maxPackage.name());
             MAXINE_CODE_BASE_PACKAGES.add("test." + maxPackage.name());
         }
+    }
+
+    @HOSTED_ONLY
+    public static void registerKeepClassInit(String className) {
+        KEEP_CLINIT_CLASSES.add(className);
+    }
+
+    @HOSTED_ONLY
+    public static boolean keepClassInit(TypeDescriptor classDescriptor) {
+        final String className = classDescriptor.toJavaString();
+        final boolean result = KEEP_CLINIT_CLASSES.contains(className) ||
+            System.getProperty("max.loader.preserveClinitMethods") != null;
+        return result;
     }
 
     public static String name() {

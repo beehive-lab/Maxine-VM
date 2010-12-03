@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.target;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
 /**

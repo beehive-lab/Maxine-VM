@@ -25,7 +25,7 @@ import com.sun.max.vm.compiler.*;
 
 /**
  * The package class that describes the C1X packages to the Maxine configurator.
- * @see com.sun.max.MaxPackage
+ * @see com.sun.max.config.MaxPackage
  *
  * @author Ben L. Titzer
  */

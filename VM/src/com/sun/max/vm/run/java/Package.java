@@ -21,6 +21,7 @@
 package com.sun.max.vm.run.java;
 
 import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.run.*;
 

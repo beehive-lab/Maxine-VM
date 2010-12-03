@@ -18,10 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm;
+package com.sun.max.config;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
+import com.sun.max.vm.*;
 
 /**
  * Maxine packages that are subject to configuration with a {@link VMConfiguration} instance.
@@ -29,7 +31,7 @@ import com.sun.max.annotate.*;
  * @author Mick Jordan
  */
 
-public abstract class VMConfigPackage extends MaxPackage {
+public abstract class BootImagePackage extends MaxPackage {
 
     /**
      * Determines if this package is part of the VM under the given configuration.
@@ -48,7 +50,7 @@ public abstract class VMConfigPackage extends MaxPackage {
         return false;
     }
 
-    protected VMConfigPackage() {
+    protected BootImagePackage() {
 
     }
 
@@ -56,7 +58,7 @@ public abstract class VMConfigPackage extends MaxPackage {
      * Use this when all sub-packages should considered included.
      * @param recursive
      */
-    protected VMConfigPackage(boolean recursive) {
+    protected BootImagePackage(boolean recursive) {
         super(true);
     }
 
@@ -64,7 +66,7 @@ public abstract class VMConfigPackage extends MaxPackage {
      * Constructor for redirected extension classes.
      * @param packageName
      */
-    protected VMConfigPackage(String... packageNames) {
+    protected BootImagePackage(String... packageNames) {
         this(true, packageNames);
     }
 
@@ -72,7 +74,7 @@ public abstract class VMConfigPackage extends MaxPackage {
      * Constructor for redirected extension classes with optional recursion nto sub-packages.
      * @param packageName
      */
-    protected VMConfigPackage(boolean recursive, String... packageNames) {
+    protected BootImagePackage(boolean recursive, String... packageNames) {
         super(packageNames, recursive);
     }
 

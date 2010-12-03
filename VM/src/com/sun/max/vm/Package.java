@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 
 /**
  * @see MaxPackage

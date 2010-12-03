@@ -18,11 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max;
+package com.sun.max.config;
 
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -30,14 +31,8 @@ import com.sun.max.program.*;
  * Describes a package in the Maxine VM, providing programmatic package information manipulation, which is
  * lacking in {@link java.lang.Package}.
  * <p>
- * Various subclasses of this package exist for parts of Maxine, namely:
- * <ul>
- * <li>{@link VMPackage} for packages in the VM proper.
- * <li>{@link ExtPackage} for the extension packages.
- * <li>{@link JDKPackage} for JDK packages
- * </ul>
  * Generally, for the classes in a package to be included in Maxine, each sub-package must contain
- * a class named {@code Package} that is a subclass of one of the above.
+ * a class named {@code Package} that is a subclass of {@link MaxPackage}.
  * However, it is possible to indicate recursive inclusion at the root by using the appropriate constructor.
  * In the recursive case, anonymous instances are cloned from the root  instance, with
  * {@link #packageName} appropriately modified.
