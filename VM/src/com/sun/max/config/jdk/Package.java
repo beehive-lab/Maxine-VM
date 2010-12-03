@@ -35,6 +35,7 @@ import com.sun.max.vm.type.*;
 public class Package extends BootImagePackage {
     private static final String[] packages = {
         "java.lang.*",
+        "java.lang.reflect.*",
         "java.lang.ref.*",
         "java.io.*",
         "java.nio.*",
