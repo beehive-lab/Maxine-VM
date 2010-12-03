@@ -31,7 +31,6 @@ import com.sun.max.config.*;
  */
 public abstract class VMPackage extends BootImagePackage {
     public VMPackage() {
+
     }
-
-
 }

@@ -34,27 +34,33 @@ import com.sun.max.vm.type.*;
  */
 public class Package extends BootImagePackage {
     private static final String[] packages = {
-        "java.lang",
-        "java.lang.reflect",
-        "java.lang.ref",
-        "java.io",
-        "java.nio",
-        "java.nio.charset",
-        "java.security",
-        "java.util",
-        "java.util.zip",
-        "java.util.jar",
-        "java.util.regex",
-        "java.util.concurrent.atomic",
-        "sun.misc",
-        "sun.nio.cs",
-        "sun.security.action"};
+        "java.lang.*",
+        "java.lang.ref.*",
+        "java.io.*",
+        "java.nio.*",
+        "java.nio.charset.*",
+        "java.security.ProtectionDomain",
+        "java.security.DomainCombiner",
+        "java.security.PrivilegedAction",
+        "java.util.*",
+        "java.util.zip.*",
+        "java.util.jar.*",
+        "java.util.regex.*",
+        "java.util.concurrent.atomic.*",
+        "sun.misc.Version",
+        "sun.misc.SharedSecrets",
+        "sun.misc.VM",
+        "sun.misc.Cleaner",
+        "sun.reflect.Reflection",
+        "sun.nio.cs.*",
+        "sun.security.action.GetPropertyAction"
+    };
 
     private static boolean customised;
     private static boolean reinits;
 
     public Package() {
-        super(false, packages);
+        super(packages);
         // order is important
         // we shouldn't be called more than once but are (Word class search)
         if (!reinits) {
@@ -90,25 +96,6 @@ public class Package extends BootImagePackage {
                 HostedBootClassLoader.omitPackage("java.security", false);
             }
             customised = true;
-        }
-    }
-
-    /**
-     * Called after the cloned instance for all the sub-packages in {@link #packages} is created.
-     * It allows us to set the inclusions for those packages that we want to customise.
-     */
-    @Override
-    protected void recursiveOverride() {
-        if (name().equals("sun.misc")) {
-            setInclusions("Version", "SharedSecrets", "VM", "Cleaner");
-        } else if (name().equals("sun.reflect")) {
-            setInclusions("Reflection");
-        } else if (name().equals("sun.reflect.annotation")) {
-            setInclusions("AnnotationParser");
-        } else if (name().equals("java.security")) {
-            setInclusions("ProtectionDomain", "DomainCombiner", "PrivilegedAction");
-        } else if (name().equals("sun.security.action")) {
-            setInclusions("GetPropertyAction");
         }
     }
 }

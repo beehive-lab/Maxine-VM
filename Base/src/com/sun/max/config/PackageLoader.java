@@ -59,33 +59,6 @@ public class PackageLoader {
     }
 
     /**
-    /**
-     * Lists the classes under a given package.
-     *
-     * @param packageName the name of the package to search
-     * @return the class names
-     */
-    public String[] listClassesInPackage(final MaxPackage maxPackage) {
-        final HashSet<String> classNames = new HashSet<String>();
-        final String packageName = maxPackage.name();
-        final ClassSearch classSearch = new ClassSearch() {
-            @Override
-            protected boolean visitClass(boolean isArchiveEntry, String className) {
-                if (!className.endsWith("package-info")) {
-                    if (!classNames.contains(className)) {
-                        if (maxPackage.isIncluded(className)) {
-                            classNames.add(className);
-                        }
-                    }
-                }
-                return true;
-            }
-        };
-        classSearch.run(classpath, packageName.replace('.', '/'));
-        return classNames.toArray(new String[classNames.size()]);
-    }
-
-    /**
      * Loads classes under a given package, subject to inclusions/exclusions.
      *
      * @param maxPackage the package from which classes are loaded
@@ -97,7 +70,7 @@ public class PackageLoader {
         Trace.line(traceLevel, "loading: " + packageName);
         maxPackage.loading();
         final List<Class> classes = new ArrayList<Class>();
-        String[] classNames = listClassesInPackage(maxPackage);
+        String[] classNames = maxPackage.listClasses(classpath);
         for (String className : classNames) {
             final Class javaClass = loadClass(className);
             if (javaClass != null) {

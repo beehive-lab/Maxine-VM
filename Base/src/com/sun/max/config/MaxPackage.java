@@ -20,6 +20,8 @@
  */
 package com.sun.max.config;
 
+import static com.sun.max.lang.Classes.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -31,23 +33,11 @@ import com.sun.max.program.*;
  * Describes a package in the Maxine VM, providing programmatic package information manipulation, which is
  * lacking in {@link java.lang.Package}.
  * <p>
- * Generally, for the classes in a package to be included in Maxine, each sub-package must contain
- * a class named {@code Package} that is a subclass of {@link MaxPackage}.
- * However, it is possible to indicate recursive inclusion at the root by using the appropriate constructor.
- * In the recursive case, anonymous instances are cloned from the root  instance, with
- * {@link #packageName} appropriately modified.
- * <p>
- * It is also possible to redirect the search to another package for extensions that must lie outside the
- * {@code com.sun.max} package name space. These always support recursion.
- * <p>
- * The exact set of classes that are loaded from a package can be further constrained by the
- * {@link #setExclusions(String...)} and {@link #setInclusions(String...)} methods.
- * <p>
  * To deal with initialization cycles with code that would naturally execute in the constructor,
  * this can be delayed until just before loading by overriding the {@link #loading} method.
  * N.B. be aware that this will be called for all cloned instances in the recursive context.
  * Before any class is actually loaded it is checked for inclusion by calling {@link #isIncluded(String)}.
- * The default implementation checks the {@link #classExclusions} and {@link #classInclusions} lists.
+ * The default implementation checks the {@link #classExclusions} and {@link #classes} lists.
  * <p>
  * It is recommended to include a file called 'package-info.java' in every package, which is where you can put
  * package-related JavaDoc comments.
@@ -58,163 +48,138 @@ import com.sun.max.program.*;
  */
 public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
-    private String packageName;
-    private final String[] redirects;
-    private final boolean recursive;
-    private List<String> classInclusions;
-    private List<String> classExclusions;
-    private static final Class[] NO_CLASSES = new Class[0];
+    /**
+     * The name of the package.
+     */
+    private String name;
+
+    private Map<String, MaxPackage> others = Collections.emptyMap();
 
     /**
-     * No redirection, no recursion.
+     * Specifies if this package also denotes all its sub-packages.
+     */
+    public boolean recursive;
+
+    /**
+     * Exact set of classes to be returned by {@link #listClasses(Classpath)}.
+     * If this value is {@code null}, then a class path {@linkplain ClassSearch search}
+     * is performed to find the classes in this package.
+     */
+    private Set<String> classes;
+
+    private static final Class[] NO_CLASSES = {};
+
+    /**
+     * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}.
      */
     protected MaxPackage() {
-        this(null, false);
+        this.name = getPackageName(getClass());
     }
 
     /**
-     * No redirection, optional recursion.
-     * @param recursive
+     * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}
+     * and, if {@code recursive == true}, all its sub-packages.
      */
-    protected MaxPackage(boolean recursive) {
-        this(null, recursive);
-    }
-
-    /**
-     * Redirection and recursion.
-     * @param packageName
-     */
-    protected MaxPackage(String... redirects) {
-        this(redirects, true);
-    }
-
-    /**
-     * Redirection optional recursion.
-     *
-     * @param redirects
-     * @param recursive
-     */
-    protected MaxPackage(String[] redirects, boolean recursive) {
-        this.packageName = getClass().getPackage().getName();
-        this.redirects = redirects;
+    public MaxPackage(String pkgName, boolean recursive) {
+        this.name = pkgName == null ? getClass().getPackage().getName() : pkgName;
         this.recursive = recursive;
     }
 
     /**
-     * Specifies a list of just those classes that should be loaded from this package.
-     * @param classNames
+     * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}
+     * as well as the packages specified by {@code packageSpecs}.
+     *
+     * A package specification is one of the following:
+     * <ol>
+     * <li>A string ending with {@code ".*"} (e.g. {@code "com.sun.max.unsafe.*"}). This denotes a single package.</li>
+     * <li>A string ending with {@code ".**"} (e.g. {@code "com.sun.max.asm.**"}). This denotes a package and all its sub-packages.</li>
+     * <li>A name of a class available in the current runtime via {@link Class#forName(String)}.</li>
+     * </ol>
+     *
+     * @param packageSpecs a set of package specifications
      */
-    protected void setInclusions(String... classNames) {
-        if (classInclusions == null) {
-            classInclusions = new ArrayList<String>(classNames.length);
-        }
-        for (String classname : classNames) {
-            classInclusions.add(classname);
-        }
-    }
+    protected MaxPackage(String... packageSpecs) {
+        this.name = getClass().getPackage().getName();
+        this.recursive = false;
 
-    /**
-     * As {@link #setInclusions(String...), except specified as {@Class classes} for better error checking.
-     * @param classes
-     */
-    protected void setInclusions(Class<?>... classes) {
-        for (Class<?> klass : classes) {
-            checkInExclusion(klass);
-            setInclusions(klass.getSimpleName());
-        }
-    }
-
-    /**
-     * Specifies a list of classes to exclude from this package.
-     * @param classNames
-     */
-    protected void setExclusions(String... classNames) {
-        if (classExclusions == null) {
-            classExclusions = new ArrayList<String>(classNames.length);
-        }
-        for (String classname : classNames) {
-            classExclusions.add(classname);
-        }
-    }
-
-    /**
-     * As {@link #setExclusions(String...), except specified as {@Class classes} for better error checking.
-     * @param classes
-     */
-    protected void setExclusions(Class<?>... classes) {
-        for (Class<?> klass : classes) {
-            checkInExclusion(klass);
-            setExclusions(klass.getSimpleName());
-        }
-    }
-
-    private void checkInExclusion(Class<?> klass) {
-        final String classPackageName = klass.getPackage().getName();
-        if (!classPackageName.equals(packageName)) {
-            throw new IllegalArgumentException("class " + klass.getName() + " is not in package " + packageName);
-        }
-    }
-
-    /**
-     * Determines whether a given class should be included based on {{@link #setExclusions(String...)} and {@link #setInclusions(String...)}.
-     * @param qualClassName fully qualified name of class to check for inclusion
-     * @return true if and only if the class should be included (loaded)
-     */
-    public boolean isIncluded(String qualClassName) {
-        final int index = qualClassName.lastIndexOf('.');
-        if (!packageName.equals(qualClassName.substring(0, index))) {
-            return false;
-        }
-
-        if (classInclusions == null && classExclusions == null) {
-            return true;
-        }
-        final String className = qualClassName.substring(index + 1);
-        // If no inclusions then default is to include unless excluded below
-        boolean included = classInclusions == null;
-        // inclusions take precedence
-        if (classInclusions != null) {
-            for (String classInclusion : classInclusions) {
-                if (classInclusion.equals(className)) {
-                    Trace.line(1, "  class " + className + " explicitly included");
-                    included = true;
-                    break;
+        Map<String, MaxPackage> pkgs = new TreeMap<String, MaxPackage>();
+        for (String spec : packageSpecs) {
+            String pkgName;
+            String className = null;
+            boolean recursive = false;
+            if (spec.endsWith(".**")) {
+                recursive = true;
+                pkgName = spec.substring(0, spec.length() - 3);
+            } else if (spec.endsWith(".*")) {
+                pkgName = spec.substring(0, spec.length() - 2);
+            } else {
+                className = spec;
+                try {
+                    Class.forName(className);
+                } catch (ClassNotFoundException e) {
+                    throw ProgramError.unexpected("Package specification does not end with \".*\" or \".**\" or name a class on the class path: " + spec);
                 }
+                pkgName = getPackageName(className);
+            }
+
+            // Honor existing Package.java classes.
+            MaxPackage pkg = fromName(pkgName);
+            if (pkg == null) {
+                pkg = pkgs.get(pkgName);
+                if (pkg == null) {
+                    pkg = cloneAs(pkgName);
+                }
+                pkg.recursive = recursive;
+            } else {
+                assert !pkg.recursive : "Package created via reflection should not be recursive";
+                pkg.recursive = recursive;
+            }
+            MaxPackage oldPkg = pkgs.put(pkgName, pkg);
+            assert oldPkg == null || oldPkg == pkg;
+            if (className != null) {
+                if (pkg.classes == null) {
+                    pkg.classes = new HashSet<String>();
+                }
+                pkg.classes.add(className);
             }
         }
-        if (included) {
-            if (classExclusions != null) {
-                for (String classExclusion : classExclusions) {
-                    if (classExclusion.equals(className)) {
-                        Trace.line(1, "  class " + className + " explicitly excluded");
-                        included = false;
-                        break;
+
+        this.others = pkgs;
+    }
+
+    /**
+     * Lists the classes included from this package.
+     * If this package object was created based on at least one explicit
+     * class name, then only the set of explicit class names is returned.
+     * Otherwise the names of all the class files on the given class path
+     * whose package name matches this package is returned.
+     *
+     * Note that in the former case, there is no check as to whether the
+     * class files really exist.
+     *
+     * @param name the name of the package to search
+     * @return the class names
+     */
+    public String[] listClasses(Classpath classpath) {
+        final HashSet<String> classNames = new HashSet<String>();
+        if (classes != null) {
+            assert !classes.isEmpty();
+            return classes.toArray(new String[classes.size()]);
+        }
+        final ClassSearch classSearch = new ClassSearch() {
+            @Override
+            protected boolean visitClass(boolean isArchiveEntry, String className) {
+                if (!className.endsWith("package-info") && !classNames.contains(className) && name.equals(getPackageName(className))) {
+                    if (className.equals("com.sun.c1x")) {
+                        System.console();
                     }
+                    classNames.add(className);
                 }
-
+                return true;
             }
-        }
-        return included;
-    }
-
-    /**
-     * The list of classes to be included from this package.
-     * Only these classes should be loaded.
-     * If the list is not empty then {@link #getClassExclusions()} is implicitly defined.
-     * @return list of classes to include or {@code null}
-     */
-    public List<String> getClassInclusions() {
-        return classInclusions;
-    }
-
-    /**
-     * The list of class to be excluded from this package.
-     * All classes except these should be loaded from the package.
-     * If the list is not empty then {@link #getInclusions()} is implicitly defined.
-     * @return list of classes to exclude or {@code null}
-     */
-    public List<String> getClassExclusions() {
-        return classExclusions;
+        };
+        classSearch.run(classpath, name.replace('.', '/'));
+        return classNames.toArray(new String[classNames.size()]);
     }
 
     /**
@@ -248,13 +213,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return null;
     }
 
-    // @Deprecated - only used in a CPS test
-    public static MaxPackage fromJava(String name) {
-        final MaxPackage result =  new MaxPackage();
-        result.packageName = name;
-        return result;
-    }
-
     public static MaxPackage fromClass(Class javaClass) {
         final java.lang.Package javaPackage = javaClass.getPackage();
         if (javaPackage == null) {
@@ -263,16 +221,8 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return fromName(javaPackage.getName());
     }
 
-    public java.lang.Package toJava() {
-        return java.lang.Package.getPackage(name());
-    }
-
     public String name() {
-        return packageName;
-    }
-
-    public String lastIdentifier() {
-        return packageName.substring(packageName.lastIndexOf('.') + 1);
+        return name;
     }
 
     public MaxPackage superPackage() {
@@ -306,14 +256,23 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return name().startsWith(superPackage.name());
     }
 
-    private static class RootPackageInfo {
+    static class RootPackageInfo {
         final MaxPackage root;
-        final Class<?> matcherClass;
-        final Set<String> packageNames = new TreeSet<String>();
-        List<MaxPackage> packages;
-        RootPackageInfo(MaxPackage root, Class<?> matcherClass) {
+        final Set<String> pkgNames = new TreeSet<String>();
+
+        RootPackageInfo(Classpath classpath, final MaxPackage root) {
             this.root = root;
-            this.matcherClass = matcherClass;
+            //long start = System.currentTimeMillis();
+            new ClassSearch() {
+                @Override
+                protected boolean visitClass(String className) {
+                    if (className.startsWith(root.name())) {
+                        pkgNames.add(Classes.getPackageName(className));
+                    }
+                    return true;
+                }
+            }.run(classpath, root.name().replace('.', '/'));
+            //System.out.println("scan: " + root + " [pkgs=" + pkgNames.size() + ", time=" + (System.currentTimeMillis() - start) + "ms]");
         }
 
         @Override
@@ -322,105 +281,91 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         }
     }
 
+
+    protected MaxPackage cloneAs(String pkgName) {
+        assert fromName(pkgName) == null;
+        try {
+            MaxPackage pkg = (MaxPackage) clone();
+            pkg.name = pkgName;
+            return pkg;
+        } catch (CloneNotSupportedException ex) {
+            throw ProgramError.unexpected("MaxPackage failed to clone " + this);
+        }
+
+    }
+
+    private static boolean add(MaxPackage pkg, Map<String, MaxPackage> pkgMap, ArrayList<MaxPackage> pkgs) {
+        pkgs.add(pkg);
+        MaxPackage oldPkg = pkgMap.put(pkg.name(), pkg);
+        assert oldPkg == null || oldPkg == pkg;
+        return !pkg.prerequisites().isEmpty();
+    }
+
     /**
-     * Finds all sub-packages in the classpath that are an instance of the superclass of the classes specified in
-     * {@code rootPackages}. The actual classes should be {@link Package} instances from the package defining the search
-     * start point. One pass is made over the file system and the resulting list is all matching packages. However, the
-     * packages for each root are kept separate until the end when they are then merged in the order
-     * in {@code rootPackages}. The ordering is important for packages that use {@link MaxPackage#excludes}.
+     * Finds all sub-packages in the class path for a given set of root packages.
+     *
      * HACK alert: To support CPS we sort any root that has packages with non-empty prerequisites.
      * TODO eliminate prerequisites when CPS dies
      *
-     * @param classpath
-     * @param rootPackages array of subclass of {@code MaxPackage} that define search start and match
-     * @return list of subclasses of {@link MaxPackage}
+     * @param classpath the class path to search for packages
+     * @param roots array of subclass of {@code MaxPackage} that define search start and match
+     * @return list of packages in the closure denoted by {@code roots}
      */
-    public static List<MaxPackage> getTransitiveSubPackages(Classpath classpath, final MaxPackage[] rootPackages) {
-        final RootPackageInfo[] rootPackagesInfo = new RootPackageInfo[rootPackages.length];
-        int index = 0;
-        for (MaxPackage root : rootPackages) {
-            rootPackagesInfo[index++] = new RootPackageInfo(root, root.getClass().getSuperclass());
+    public static List<MaxPackage> getTransitiveSubPackages(Classpath classpath, final MaxPackage[] roots) {
+        final Map<String, MaxPackage> pkgMap = new TreeMap<String, MaxPackage>();
+        final ArrayList<MaxPackage> pkgs = new ArrayList<MaxPackage>();
+
+        final ArrayList<RootPackageInfo> rootInfos = new ArrayList<RootPackageInfo>(roots.length);
+        for (MaxPackage root : roots) {
+            rootInfos.add(new RootPackageInfo(classpath, root));
         }
 
-        // search from roots
-        for (int i = 0; i < rootPackages.length; i++) {
-            final MaxPackage root = rootPackages[i];
-            final RootPackageInfo rootInfo = rootPackagesInfo[i];
-            //long start = System.currentTimeMillis();
-            new ClassSearch() {
-                @Override
-                protected boolean visitClass(String className) {
-                    if (className.startsWith(root.name())) {
-                        final String pkgName = Classes.getPackageName(className);
-                        rootInfo.packageNames.add(pkgName);
-                    }
-                    return true;
-                }
-            }.run(classpath, root.name().replace('.', '/'));
-            //System.out.println("searched " + root + " [pkgs=" + rootInfo.packageNames.size() + ", time=" + (System.currentTimeMillis() - start) + "ms]");
-        }
+        int rootIndex = 0;
+        int listIndex = 0;
 
-        // Now find Package classes that match the roots
-        int totalSize = 0;
-        for (RootPackageInfo rootPackageInfo : rootPackagesInfo) {
-            rootPackageInfo.packages = new ArrayList<MaxPackage>(rootPackageInfo.packageNames.size());
-            for (String pkgName : rootPackageInfo.packageNames) {
-                MaxPackage maxPackage = MaxPackage.fromName(pkgName);
-                MaxPackage recursiveParent = null;
-                if (maxPackage == null) {
-                    // check for a parent with recursive == true
-                    // there is an assumption that parent packages are processed before sub-packages
-                    for (MaxPackage parent : rootPackageInfo.packages) {
-                        if (pkgName.startsWith(parent.name()) && parent.recursive) {
-                            // need to create a clone of parent class with sub-package name
-                            maxPackage = createRecursivePackageInstance(parent, pkgName);
-                            recursiveParent = parent;
-                            break;
+        while (rootIndex < rootInfos.size()) {
+            boolean hasPrerequisites = false;
+            RootPackageInfo info = rootInfos.get(rootIndex++);
+            for (String pkgName : info.pkgNames) {
+                MaxPackage pkg = MaxPackage.fromName(pkgName);
+                if (pkg == null) {
+                    String parentPkgName = getPackageName(pkgName);
+                    while (parentPkgName.length() != 0) {
+                        MaxPackage parent = pkgMap.get(parentPkgName);
+                        if (parent != null) {
+                            pkg = parent.others.get(pkgName);
+                            if (pkg == null && parent.recursive) {
+                                pkg = parent.cloneAs(pkgName);
+                            }
                         }
+                        parentPkgName = getPackageName(parentPkgName);
                     }
-                    if (maxPackage == null) {
+                    if (pkg == null) {
                         // ProgramWarning.message("WARNING: missing Package class in package: " + pkgName);
                         continue;
                     }
                 }
-                if ((recursiveParent == null && rootPackageInfo.matcherClass.isInstance(maxPackage)) || (recursiveParent != null && rootPackageInfo.matcherClass.isInstance(recursiveParent))) {
-                    rootPackageInfo.packages.add(maxPackage);
-                    if (maxPackage.redirects != null && maxPackage.redirects.length > 0) {
-                        /* the above recursive traversal only operates in sub-packages of "this"
-                         * so we have to process redirected packages explicitly.
-                         */
-                        for (String redirect : maxPackage.redirects) {
-                            rootPackageInfo.packages.addAll(checkRedirectedSubpackages(classpath, maxPackage, redirect));
-                        }
+
+                hasPrerequisites = add(pkg, pkgMap, pkgs) || hasPrerequisites;
+
+                for (final MaxPackage otherPkg : pkg.others.values()) {
+                    hasPrerequisites = add(otherPkg, pkgMap, pkgs) || hasPrerequisites;
+                    if (!otherPkg.name().startsWith(info.root.name()) && otherPkg.recursive) {
+                        rootInfos.add(new RootPackageInfo(classpath, otherPkg));
                     }
                 }
             }
-            totalSize += rootPackageInfo.packages.size();
-        }
-        final MaxPackage[] result = new MaxPackage[totalSize];
-        index = 0;
-        for (RootPackageInfo rootPackageInfo : rootPackagesInfo) {
-            final MaxPackage[] temp = rootPackageInfo.packages.toArray(new MaxPackage[rootPackageInfo.packages.size()]);
-            if (hasPrerequisites(temp)) {
-                Arrays.sort(temp);
+            if (hasPrerequisites) {
+                Collections.sort(pkgs.subList(listIndex, pkgs.size()));
             }
-            System.arraycopy(temp, 0, result, index, temp.length);
-            index += temp.length;
+            listIndex = pkgs.size();
         }
-        return Arrays.asList(result);
+
+        return pkgs;
     }
 
     public List<MaxPackage> getTransitiveSubPackages(Classpath classpath) {
         return getTransitiveSubPackages(classpath, new MaxPackage[] {this});
-    }
-
-    private static boolean hasPrerequisites(MaxPackage[] packages) {
-        for (MaxPackage maxPackage : packages) {
-            if (!maxPackage.prerequisites().isEmpty()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static boolean isPrefixOf(MaxPackage p, MaxPackage[] set) {
@@ -430,67 +375,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
             }
         }
         return true;
-    }
-
-
-    /**
-     * Called after this instance is created for recursively sub-packages.
-     * Allows {@link #setExclusions(String...)} or {@link #setInclusions(String...)} to
-     * be called for such instances.
-     */
-    protected void recursiveOverride() {
-    }
-
-    /**
-     * Create a {@code MaxPackage} instance that denotes a sub-package of a recursively included package
-     * by cloning the parent and resetting the {@link #packageName}.
-     * @param parent
-     * @param pkgName
-     * @return
-     */
-    private static MaxPackage createRecursivePackageInstance(MaxPackage parent, String pkgName) {
-        try {
-            MaxPackage pkg = (MaxPackage) parent.clone();
-            pkg.packageName = pkgName;
-            pkg.recursiveOverride();
-            return pkg;
-        } catch (CloneNotSupportedException ex) {
-            throw ProgramError.unexpected("MaxPackage failed to clone " + parent);
-        }
-    }
-
-    private static List<MaxPackage> checkRedirectedSubpackages(Classpath classpath, MaxPackage redirector, final String redirectedPackage) {
-        final ArrayList<MaxPackage> result = new ArrayList<MaxPackage>();
-        final Set<String> packageNames = new TreeSet<String>();
-        final boolean exactMatch = redirector.recursive == false;
-        // Find all the packages that start with or equal  the redirected package name.
-        // If redirector.recursive == false, we only process the actual redirected package (exact match)
-        new ClassSearch() {
-            @Override
-            protected boolean visitClass(String className) {
-                final String pkgName = Classes.getPackageName(className);
-                if (exactMatch && pkgName.equals(redirectedPackage) || !exactMatch && pkgName.startsWith(redirectedPackage)) {
-                    packageNames.add(pkgName);
-                }
-                return true;
-            }
-        }.run(classpath, redirectedPackage.replace('.', '/'));
-        if (packageNames.isEmpty()) {
-            ProgramWarning.message("Redirect " + redirectedPackage + " does not match and packages on the class path");
-        }
-        for (String pkgName : packageNames) {
-            /* A redirected package is not expected to contain any Package classes, and the
-            * expectation is that we load the entire tree. However, any Package classes
-            * that do exist are honored.
-            */
-            MaxPackage maxPackage = MaxPackage.fromName(pkgName);
-            if (maxPackage == null) {
-                maxPackage = createRecursivePackageInstance(redirector, pkgName);
-            }
-            result.add(maxPackage);
-        }
-        return result;
-
     }
 
     private Map<Class<? extends Scheme>, Class<? extends Scheme>> schemeTypeToImplementation;
@@ -541,7 +425,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
             return true;
         }
         if (other instanceof MaxPackage) {
-            return packageName.equals(((MaxPackage) other).packageName);
+            return name.equals(((MaxPackage) other).name);
         }
         return false;
     }
@@ -560,7 +444,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         final Set<MaxPackage> otherPrerequisites = other.prerequisites();
         if (myPrerequisites.isEmpty()) {
             if (otherPrerequisites.isEmpty()) {
-                return packageName.compareTo(other.packageName);
+                return name.compareTo(other.name);
             }
             return -1;
         }
@@ -577,7 +461,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                 return -1;
             }
         }
-        return packageName.compareTo(other.packageName);
+        return name.compareTo(other.name);
     }
 
     public synchronized <S extends Scheme> Class<? extends S> loadSchemeImplementation(Class<S> schemeType) {

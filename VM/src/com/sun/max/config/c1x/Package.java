@@ -25,6 +25,7 @@ import com.sun.max.config.*;
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.sun.cri", "com.sun.c1x");
+        super(
+            "com.sun.cri.**", "com.sun.c1x.**");
     }
 }

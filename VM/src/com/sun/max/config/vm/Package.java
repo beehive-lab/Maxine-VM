@@ -27,7 +27,6 @@ import com.sun.max.config.*;
  *
  * @author Mick Jordan
  */
-
 public class Package extends BootImagePackage {
     public Package() {
     }

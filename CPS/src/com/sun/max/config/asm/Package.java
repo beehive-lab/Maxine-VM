@@ -38,16 +38,16 @@ public class Package extends BootImagePackage {
     private static String[] packages() {
         if (platform().isa == ISA.AMD64) {
             return new String[] {
-                "com.sun.max.asm",
-                "com.sun.max.asm.x86",
-                "com.sun.max.asm.amd64"
+                "com.sun.max.asm.*",
+                "com.sun.max.asm.x86.*",
+                "com.sun.max.asm.amd64.*"
             };
         }
         throw FatalError.unimplemented();
     }
 
     public Package() {
-        super(false, packages());
+        super(packages());
     }
 
     @Override
