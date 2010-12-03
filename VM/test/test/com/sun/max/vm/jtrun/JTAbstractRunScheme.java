@@ -97,7 +97,7 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
 
     @HOSTED_ONLY
     private void addMethodToImage(ClassMethodActor method) {
-        CompiledPrototype.registerImageMethod(method);
+        CompiledPrototype.registerVMEntryPoint(method);
     }
 
     private boolean classesRegistered;
