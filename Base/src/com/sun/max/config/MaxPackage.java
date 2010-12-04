@@ -70,6 +70,11 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     private static final Class[] NO_CLASSES = {};
 
     /**
+     * Anti-includes, i.e., everything but these classes.
+     */
+    private Set<String> excludes;
+
+    /**
      * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}.
      */
     protected MaxPackage() {
@@ -86,14 +91,17 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     }
 
     /**
-     * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}
-     * as well as the packages specified by {@code packageSpecs}.
+     * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()} as well as
+     * the packages specified by {@code packageSpecs}.
      *
      * A package specification is one of the following:
      * <ol>
      * <li>A string ending with {@code ".*"} (e.g. {@code "com.sun.max.unsafe.*"}). This denotes a single package.</li>
-     * <li>A string ending with {@code ".**"} (e.g. {@code "com.sun.max.asm.**"}). This denotes a package and all its sub-packages.</li>
+     * <li>A string ending with {@code ".**"} (e.g. {@code "com.sun.max.asm.**"}). This denotes a package and all its
+     * sub-packages.</li>
      * <li>A name of a class available in the current runtime via {@link Class#forName(String)}.</li>
+     * <li>A name of a class available in the current runtime preceded by a {@code "^"}. This denotes a class to be excluded. I.e.
+     * it implies all classes in the package except those explicitly excluded. Only specifications of this form may appear together in one call.
      * </ol>
      *
      * @param packageSpecs a set of package specifications
@@ -101,11 +109,17 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     protected MaxPackage(String... packageSpecs) {
         this.name = getClass().getPackage().getName();
         this.recursive = false;
+        boolean seenAnExclude = false;
+        boolean first = true;
 
         Map<String, MaxPackage> pkgs = new TreeMap<String, MaxPackage>();
         for (String spec : packageSpecs) {
             String pkgName;
             String className = null;
+            boolean isAnExclude = isExclude(spec);
+            if ((seenAnExclude && !isAnExclude) || (isAnExclude && !first)) {
+                throw ProgramError.unexpected("Class exclude specification is incompatible with other specifications: " + spec);
+            }
             boolean recursive = false;
             if (spec.endsWith(".**")) {
                 recursive = true;
@@ -113,7 +127,16 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
             } else if (spec.endsWith(".*")) {
                 pkgName = spec.substring(0, spec.length() - 2);
             } else {
-                className = spec;
+                if (isAnExclude) {
+                    seenAnExclude = true;
+                    if (excludes == null) {
+                        excludes = new HashSet<String>();
+                    }
+                    className = spec.substring(1);
+                    excludes.add(className);
+                } else {
+                    className = spec;
+                }
                 try {
                     Class.forName(className);
                 } catch (ClassNotFoundException e) {
@@ -122,29 +145,44 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                 pkgName = getPackageName(className);
             }
 
-            // Honor existing Package.java classes.
-            MaxPackage pkg = fromName(pkgName);
-            if (pkg == null) {
-                pkg = pkgs.get(pkgName);
-                if (pkg == null) {
-                    pkg = cloneAs(pkgName);
-                }
-                pkg.recursive = recursive;
+            // Honor existing Package.java classes, but watch for recursion when we are explicitly
+            // including classes in this package
+            MaxPackage pkg = null;
+            if (className != null && pkgName.equals(name)) {
+                pkg = this;
             } else {
-                assert !pkg.recursive : "Package created via reflection should not be recursive";
-                pkg.recursive = recursive;
+                pkg = fromName(pkgName);
+                if (pkg == null) {
+                    pkg = pkgs.get(pkgName);
+                    if (pkg == null) {
+                        pkg = cloneAs(pkgName);
+                    }
+                    pkg.recursive = recursive;
+                } else {
+                    assert !pkg.recursive : "Package created via reflection should not be recursive";
+                    pkg.recursive = recursive;
+                }
+                MaxPackage oldPkg = pkgs.put(pkgName, pkg);
+                assert oldPkg == null || oldPkg == pkg;
             }
-            MaxPackage oldPkg = pkgs.put(pkgName, pkg);
-            assert oldPkg == null || oldPkg == pkg;
-            if (className != null) {
+            if (className != null && !isAnExclude) {
                 if (pkg.classes == null) {
                     pkg.classes = new HashSet<String>();
                 }
                 pkg.classes.add(className);
             }
+            first = false;
         }
 
         this.others = pkgs;
+    }
+
+    /**
+     * Specify a set of classes to exclude from this package.
+     * @param classNames
+     */
+    protected boolean isExclude(String className) {
+        return className.charAt(0) == '^';
     }
 
     /**
@@ -169,10 +207,8 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         final ClassSearch classSearch = new ClassSearch() {
             @Override
             protected boolean visitClass(boolean isArchiveEntry, String className) {
-                if (!className.endsWith("package-info") && !classNames.contains(className) && name.equals(getPackageName(className))) {
-                    if (className.equals("com.sun.c1x")) {
-                        System.console();
-                    }
+                if (!className.endsWith("package-info") && !classNames.contains(className) && name.equals(getPackageName(className)) &&
+                                (excludes == null || !excludes.contains(className))) {
                     classNames.add(className);
                 }
                 return true;
