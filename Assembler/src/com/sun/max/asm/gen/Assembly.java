@@ -25,7 +25,6 @@ import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
-import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -37,10 +36,6 @@ import com.sun.max.program.*;
  * @author Adam Spitz
  */
 public abstract class Assembly<Template_Type extends Template> {
-
-    private static MaxPackage isaPackage(ISA isa) {
-        return MaxPackage.fromName(Classes.getPackageName(Assembly.class) + "." + isa.category.name().toLowerCase() + "." + isa.name().toLowerCase());
-    }
 
     private final ISA isa;
     private final Class<Template_Type> templateType;
@@ -56,10 +51,6 @@ public abstract class Assembly<Template_Type extends Template> {
 
     public Class<Template_Type> templateType() {
         return templateType;
-    }
-
-    public MaxPackage getPackage() {
-        return isaPackage(isa);
     }
 
     protected abstract List<Template_Type> createTemplates();

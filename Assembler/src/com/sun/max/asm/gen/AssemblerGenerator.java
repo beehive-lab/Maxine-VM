@@ -29,7 +29,6 @@ import java.util.*;
 import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
-import com.sun.max.config.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
@@ -255,18 +254,16 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
      * @param templateList the list of templates for which code is being generated
      * @return a set of packages sorted by name
      */
-    public Set<MaxPackage> getImportPackages(String className, Iterable<Template_Type> templateList) {
-        final int indexOfLastPeriod = className.lastIndexOf('.');
-        final String outputPackageName = indexOfLastPeriod == -1 ? "" : className.substring(0, indexOfLastPeriod);
-        final MaxPackage outputPackage = MaxPackage.fromName(outputPackageName);
-        final Set<MaxPackage> packages = new TreeSet<MaxPackage>();
-        packages.add(MaxPackage.fromClass(AssemblyException.class));
-        packages.add(MaxPackage.fromClass(Label.class));
+    public Set<String> getImportPackages(String className, Iterable<Template_Type> templateList) {
+        final String outputPackage = getPackageName(className);
+        final Set<String> packages = new TreeSet<String>();
+        packages.add(getPackageName(AssemblyException.class));
+        packages.add(getPackageName(Label.class));
         for (Template_Type template : templateList) {
             for (Parameter parameter : template.parameters()) {
                 final Class type = parameter.type();
                 if (!type.isPrimitive()) {
-                    final MaxPackage p = MaxPackage.fromClass(type);
+                    final String p = getPackageName(type);
                     if (!p.equals(outputPackage)) {
                         packages.add(p);
                     }
