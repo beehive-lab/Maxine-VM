@@ -30,8 +30,8 @@ import java.util.List;
 import javax.swing.*;
 
 import com.sun.max.*;
-import com.sun.max.config.*;
 import com.sun.max.gui.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 
@@ -362,30 +362,27 @@ public class OptionsDialog extends JDialog {
 
     }
 
-    protected static class PackageGUIOption extends GUIOption<MaxPackage> {
+    protected static class PackageGUIOption extends GUIOption<String> {
         private final JComboBox values;
 
-        protected PackageGUIOption(Option<MaxPackage> option) {
+        protected PackageGUIOption(Option<String> option) {
             super(option);
 
-            final MaxPackageOptionType type = (MaxPackageOptionType) option.getType();
+            final PackageOptionType type = (PackageOptionType) option.getType();
 
-            final List<MaxPackage> maxPackages = new LinkedList<MaxPackage>();
-            for (MaxPackage maxPackage : type.superPackage.getTransitiveSubPackages(Classpath.fromSystem())) {
-                final Class<Scheme> schemeClass = Utils.cast(type.classType);
-                if (maxPackage.schemeTypeToImplementation(schemeClass) != null) {
-                    maxPackages.add(maxPackage);
+            final Set<String> pkgNames = new TreeSet<String>();
+            final String root = type.superPackage;
+            new ClassSearch() {
+                @Override
+                protected boolean visitClass(String className) {
+                    if (className.startsWith(root)) {
+                        pkgNames.add(Classes.getPackageName(className));
+                    }
+                    return true;
                 }
-            }
+            }.run(Classpath.fromSystem(), root.replace('.', '/'));
 
-            final MaxPackage[] pkgs = maxPackages.toArray(new MaxPackage[maxPackages.size()]);
-            Arrays.sort(pkgs, new Comparator<MaxPackage>() {
-                public int compare(MaxPackage o1, MaxPackage o2) {
-                    return o1.name().compareTo(o2.name());
-                }
-            });
-
-            this.values = new JComboBox(pkgs);
+            this.values = new JComboBox(pkgNames.toArray());
             input = this.values;
 
             // The combo box must be editable as the prepopulated items are just those packages found from the super package
@@ -395,12 +392,12 @@ public class OptionsDialog extends JDialog {
         }
 
         @Override
-        public MaxPackage getValue() {
+        public String getValue() {
             return option.getType().parseValue(values.getSelectedItem().toString());
         }
 
         @Override
-        public void setValue(MaxPackage p) {
+        public void setValue(String p) {
             if (p != null) {
                 values.setSelectedItem(p);
                 guard.setSelected(true);
@@ -441,8 +438,8 @@ public class OptionsDialog extends JDialog {
             final Option<List<Object>> opt = Utils.cast(option);
             return new ListGUIOption(opt);
         }
-        if (type instanceof MaxPackageOptionType) {
-            final Option<MaxPackage> opt = Utils.cast(option);
+        if (type instanceof PackageOptionType) {
+            final Option<String> opt = Utils.cast(option);
             return new PackageGUIOption(opt);
         }
         return null;
