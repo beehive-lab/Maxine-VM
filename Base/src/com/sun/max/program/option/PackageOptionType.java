@@ -20,35 +20,43 @@
  */
 package com.sun.max.program.option;
 
-import com.sun.max.config.*;
+import static com.sun.max.lang.Classes.*;
+
 
 /**
- * The {@code MaxPackageOptionType} class.
+ * The {@code PackageOptionType} class.
  * Created Nov 20, 2007
  *
  * @author Ben L. Titzer
  */
-public class MaxPackageOptionType extends Option.Type<MaxPackage> {
-    public final MaxPackage superPackage;
-    public final Class classType;
+public class PackageOptionType extends Option.Type<String> {
+    public final String superPackage;
 
-    public MaxPackageOptionType(MaxPackage superPackage, Class classType) {
-        super(MaxPackage.class, "vm-package");
+    public PackageOptionType(String superPackage) {
+        super(String.class, "vm-package");
         this.superPackage = superPackage;
-        this.classType = classType;
     }
+
+    private Class packageClass(String pkgName) {
+        try {
+            return Class.forName(pkgName + ".Package");
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
+
     @Override
-    public MaxPackage parseValue(String string) {
-        final String fullName = superPackage.name() + "." + string;
+    public String parseValue(String string) {
+        final String fullName = superPackage + "." + string;
         if (string != null && string.length() > 0) {
-            MaxPackage result = MaxPackage.fromName(fullName);
-            if (result == null) {
-                result = MaxPackage.fromName(string);
+            Class pkgClass = packageClass(fullName);
+            if (pkgClass == null) {
+                pkgClass = packageClass(string);
             }
-            if (result == null) {
-                throw new Option.Error("MaxPackage not found: " + string + " (or " + fullName + ")");
+            if (pkgClass == null) {
+                throw new Option.Error("Package not found: " + string + " (or " + fullName + ")");
             }
-            return result;
+            return getPackageName(pkgClass);
         }
         return null;
     }
