@@ -22,10 +22,10 @@ package com.sun.max.tele;
 
 import java.util.*;
 
-import com.sun.max.*;
+import com.sun.max.vm.*;
 
 /**
- * Inspector support for a specific implementation of a {@link Scheme} in the VM.
+ * Inspector support for a specific implementation of a {@link VMScheme} in the VM.
  *
  * @author Michael Van De Vanter
  */
