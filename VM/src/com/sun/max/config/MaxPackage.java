@@ -25,9 +25,9 @@ import static com.sun.max.lang.Classes.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 
 /**
  * Describes a package in the Maxine VM, providing programmatic package information manipulation, which is
@@ -367,7 +367,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return true;
     }
 
-    private Map<Class<? extends Scheme>, Class<? extends Scheme>> schemeTypeToImplementation;
+    private Map<Class<? extends VMScheme>, Class<? extends VMScheme>> schemeTypeToImplementation;
 
     /**
      * Registers a class in this package that implements a given scheme type.
@@ -375,13 +375,13 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * @param schemeType a scheme type
      * @param schemeImplementation a class that implements {@code schemType}
      */
-    public synchronized <S extends Scheme> void registerScheme(Class<S> schemeType, Class<? extends S> schemeImplementation) {
+    public synchronized <S extends VMScheme> void registerScheme(Class<S> schemeType, Class<? extends S> schemeImplementation) {
         assert schemeType.isInterface() || Modifier.isAbstract(schemeType.getModifiers());
         assert schemeImplementation.getPackage().getName().equals(name()) : "cannot register implmentation class from another package: " + schemeImplementation;
         if (schemeTypeToImplementation == null) {
-            schemeTypeToImplementation = new IdentityHashMap<Class<? extends Scheme>, Class<? extends Scheme>>();
+            schemeTypeToImplementation = new IdentityHashMap<Class<? extends VMScheme>, Class<? extends VMScheme>>();
         }
-        Class<? extends Scheme> oldValue = schemeTypeToImplementation.put(schemeType, schemeImplementation);
+        Class<? extends VMScheme> oldValue = schemeTypeToImplementation.put(schemeType, schemeImplementation);
         assert oldValue == null;
     }
 
@@ -391,11 +391,11 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * @return the class directly within this package that implements {@code scheme} or null if no such class
      *         exists
      */
-    public synchronized <S extends Scheme> Class<? extends S> schemeTypeToImplementation(Class<S> schemeType) {
+    public synchronized <S extends VMScheme> Class<? extends S> schemeTypeToImplementation(Class<S> schemeType) {
         if (schemeTypeToImplementation == null) {
             return null;
         }
-        final Class< ? extends Scheme> implementation = schemeTypeToImplementation.get(schemeType);
+        final Class< ? extends VMScheme> implementation = schemeTypeToImplementation.get(schemeType);
         if (implementation == null) {
             return null;
         }
@@ -454,7 +454,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return name.compareTo(other.name);
     }
 
-    public synchronized <S extends Scheme> Class<? extends S> loadSchemeImplementation(Class<S> schemeType) {
+    public synchronized <S extends VMScheme> Class<? extends S> loadSchemeImplementation(Class<S> schemeType) {
         final Class<? extends S> schemeImplementation = schemeTypeToImplementation(schemeType);
         if (schemeImplementation == null) {
             ProgramError.unexpected("could not find subclass of " + schemeType + " in " + this);
@@ -471,7 +471,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * @param schemeType the interface or abstract class defining a scheme type
      * @return a new instance of the scheme implementation class
      */
-    public synchronized <S extends Scheme> S loadAndInstantiateScheme(Class<S> schemeType) {
+    public synchronized <S extends VMScheme> S loadAndInstantiateScheme(Class<S> schemeType) {
         final Class<? extends S> schemeImplementation = loadSchemeImplementation(schemeType);
         try {
             return schemeImplementation.newInstance();

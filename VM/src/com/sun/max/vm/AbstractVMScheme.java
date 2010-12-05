@@ -26,11 +26,13 @@ import com.sun.max.program.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class AbstractVMScheme extends AbstractScheme {
+public abstract class AbstractVMScheme {
 
+    public final String name;
     private final Class<? extends VMScheme> specification;
 
     protected AbstractVMScheme() {
+        name = getClass().getSimpleName();
         Class<? extends VMScheme> specification = null;
         Class<?> implementation = getClass();
         ProgramError.check(VMScheme.class.isAssignableFrom(implementation), "Subclass of " + AbstractVMScheme.class + " must implement " + VMScheme.class + ": " + implementation);
@@ -63,4 +65,12 @@ public abstract class AbstractVMScheme extends AbstractScheme {
         // default: do nothing.
     }
 
+    public String name() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
