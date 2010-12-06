@@ -4480,7 +4480,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 }
                 receiver = vm().createReferenceValue(vm().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
                 final ClassActor dynamicClass = receiver.getClassActor();
-                classMethodActor = dynamicClass.findClassMethodActor(classMethodActor);
+                classMethodActor = dynamicClass.findClassMethodActor(classMethodActor.name, classMethodActor.descriptor());
             }
             final Value[] arguments = MethodArgsDialog.getArgs(inspection(), classMethodActor, receiver);
             if (arguments == null) {
