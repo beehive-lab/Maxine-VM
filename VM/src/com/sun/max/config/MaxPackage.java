@@ -88,8 +88,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * <li>A string ending with {@code ".**"} (e.g. {@code "com.sun.max.asm.**"}). This denotes a package and all its
      * sub-packages.</li>
      * <li>A name of a class available in the current runtime via {@link Class#forName(String)}.</li>
-     * <li>A name of a class available in the current runtime preceded by a {@code "^"}. This denotes a class to be excluded. I.e.
-     * it implies all classes in the package except those explicitly excluded. Only specifications of this form may appear together in one call.
      * </ol>
      *
      * @param packageSpecs a set of package specifications
@@ -274,8 +272,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         }
     }
 
-
-    protected MaxPackage cloneAs(String pkgName) {
+    private MaxPackage cloneAs(String pkgName) {
         assert fromName(pkgName) == null;
         try {
             MaxPackage pkg = (MaxPackage) clone();
@@ -391,15 +388,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return getTransitiveSubPackages(classpath, new MaxPackage[] {this});
     }
 
-    private static boolean isPrefixOf(MaxPackage p, MaxPackage[] set) {
-        for (MaxPackage s : set) {
-            if (!s.name().startsWith(p.name())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private Map<Class<? extends VMScheme>, Class<? extends VMScheme>> schemeTypeToImplementation;
 
     /**
@@ -433,13 +421,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
             return null;
         }
         return implementation.asSubclass(schemeType);
-    }
-
-    public static boolean equal(MaxPackage p1, MaxPackage p2) {
-        if (p1 == null) {
-            return p2 == null;
-        }
-        return p1.equals(p2);
     }
 
     @Override
