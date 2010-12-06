@@ -166,15 +166,19 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                 assert oldPkg == null || oldPkg == pkg;
             }
             if (className != null && !isAnExclude) {
-                if (pkg.classes == null) {
-                    pkg.classes = new HashSet<String>();
-                }
+                pkg.initClasses();
                 pkg.classes.add(className);
             }
             first = false;
         }
 
         this.others = pkgs;
+    }
+
+    private void initClasses() {
+        if (classes == null) {
+            classes = new HashSet<String>();
+        }
     }
 
     /**
@@ -320,10 +324,34 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     }
 
+    /**
+     * Add a new package or merge if it is existing.
+     * @param pkg the (presumed) new package
+     * @param pkgMap the global map if all packages discovered so far
+     * @param pkgs the list of packages that will eventually be returned (this may go away)
+     * @return
+     */
     private static boolean add(MaxPackage pkg, Map<String, MaxPackage> pkgMap, ArrayList<MaxPackage> pkgs) {
         pkgs.add(pkg);
         MaxPackage oldPkg = pkgMap.put(pkg.name(), pkg);
-        assert oldPkg == null || oldPkg == pkg;
+        if (oldPkg == pkg) {
+            // if this identical then we must have added it to the list previously
+            assert pkgs.contains(pkg);
+        } else {
+            if (oldPkg == null) {
+                // new
+            } else {
+                // merge into oldPkg, checking consistency
+                if (pkg.recursive != oldPkg.recursive) {
+                    throw ProgramError.unexpected("mutiple package specs for: " + pkg.name + " disagree on recursion");
+                }
+                pkg.others.putAll(oldPkg.others);
+                if (oldPkg.classes != null) {
+                    pkg.initClasses();
+                    pkg.classes.addAll(oldPkg.classes);
+                }
+            }
+        }
         return !pkg.prerequisites().isEmpty();
     }
 
@@ -332,6 +360,11 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      *
      * HACK alert: To support CPS we sort any root that has packages with non-empty prerequisites.
      * TODO eliminate prerequisites when CPS dies
+     *
+     * We maintain a global map of all the packages discovered. Duplicates may arise in the processing from
+     * different subsystems referencing the same package, possibly including different subsets of the classes
+     * in the package. The last occurrence of a package becomes the canonical representative and duplicates have their
+     * relevant state merged into it.
      *
      * @param classpath the class path to search for packages
      * @param roots array of subclass of {@code MaxPackage} that define search start and match
