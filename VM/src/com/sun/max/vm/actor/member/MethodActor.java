@@ -496,16 +496,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return MethodID.toMethodActor(MethodID.fromWord(Word.read(stream)));
     }
 
-    @FOLD
-    public static VirtualMethodActor findVirtual(ClassActor classActor, String name) {
-        return classActor.findLocalVirtualMethodActor(name);
-    }
-
-    @FOLD
-    public static StaticMethodActor findStatic(Class javaClass, String name) {
-        return ClassActor.fromJava(javaClass).findLocalStaticMethodActor(name);
-    }
-
     public final int accessFlags() {
         return flags() & JAVA_METHOD_FLAGS;
     }

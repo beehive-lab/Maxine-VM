@@ -56,7 +56,7 @@ public class TeleStaticTuple extends TeleTupleObject {
 
     @Override
     public Object shallowCopy() {
-        return StaticTuple.create(classActorForObjectType());
+        return ClassActor.create(classActorForObjectType());
     }
 
     @Override

@@ -24,11 +24,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 
 public class LinearSpaceAllocator {
@@ -122,7 +121,7 @@ public class LinearSpaceAllocator {
 
     @HOSTED_ONLY
     public void hostInitialize() {
-        TOP_OFFSET = ClassActor.fromJava(LinearSpaceAllocator.class).findFieldActor(SymbolTable.makeSymbol("top")).offset();
+        TOP_OFFSET = ClassRegistry.findField(LinearSpaceAllocator.class, "top").offset();
     }
 
     void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size headroom, Size minTLABSize) {
