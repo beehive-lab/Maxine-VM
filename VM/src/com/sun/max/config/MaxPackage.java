@@ -63,11 +63,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     private static final Class[] NO_CLASSES = {};
 
     /**
-     * Anti-includes, i.e., everything but these classes.
-     */
-    private Set<String> excludes;
-
-    /**
      * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}.
      */
     protected MaxPackage() {
@@ -102,17 +97,11 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     protected MaxPackage(String... packageSpecs) {
         this.name = getClass().getPackage().getName();
         this.recursive = false;
-        boolean seenAnExclude = false;
-        boolean first = true;
 
         Map<String, MaxPackage> pkgs = new TreeMap<String, MaxPackage>();
         for (String spec : packageSpecs) {
             String pkgName;
             String className = null;
-            boolean isAnExclude = isExclude(spec);
-            if ((seenAnExclude && !isAnExclude) || (isAnExclude && !first)) {
-                throw ProgramError.unexpected("Class exclude specification is incompatible with other specifications: " + spec);
-            }
             boolean recursive = false;
             if (spec.endsWith(".**")) {
                 recursive = true;
@@ -120,16 +109,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
             } else if (spec.endsWith(".*")) {
                 pkgName = spec.substring(0, spec.length() - 2);
             } else {
-                if (isAnExclude) {
-                    seenAnExclude = true;
-                    if (excludes == null) {
-                        excludes = new HashSet<String>();
-                    }
-                    className = spec.substring(1);
-                    excludes.add(className);
-                } else {
-                    className = spec;
-                }
+                className = spec;
                 try {
                     Class.forName(className);
                 } catch (ClassNotFoundException e) {
@@ -158,11 +138,10 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                 MaxPackage oldPkg = pkgs.put(pkgName, pkg);
                 assert oldPkg == null || oldPkg == pkg;
             }
-            if (className != null && !isAnExclude) {
+            if (className != null) {
                 pkg.initClasses();
                 pkg.classes.add(className);
             }
-            first = false;
         }
 
         this.others = pkgs;
@@ -172,14 +151,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         if (classes == null) {
             classes = new HashSet<String>();
         }
-    }
-
-    /**
-     * Specify a set of classes to exclude from this package.
-     * @param classNames
-     */
-    protected boolean isExclude(String className) {
-        return className.charAt(0) == '^';
     }
 
     /**
@@ -204,8 +175,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         final ClassSearch classSearch = new ClassSearch() {
             @Override
             protected boolean visitClass(boolean isArchiveEntry, String className) {
-                if (!className.endsWith("package-info") && !classNames.contains(className) && name.equals(getPackageName(className)) &&
-                                (excludes == null || !excludes.contains(className))) {
+                if (!className.endsWith("package-info") && !classNames.contains(className) && name.equals(getPackageName(className))) {
                     classNames.add(className);
                 }
                 return true;
@@ -318,14 +288,12 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     }
 
     /**
-     * Add a new package or merge if it is existing.
-     *
+     * Add a new package or merge previous state in if it exists already.
      * @param pkg the (presumed) new package
-     * @param pkgMap the global map if all packages discovered so far
-     * @param pkgs the list of packages that will eventually be returned (this may go away)
+     * @param pkgMap the global map of all packages discovered so far
+     * @param pkgs the list of packages that will eventually be returned (this may go away as pkgMap and pkgs should be equivalent)
      */
     private static void add(MaxPackage pkg, Map<String, MaxPackage> pkgMap, ArrayList<MaxPackage> pkgs) {
-        pkgs.add(pkg);
         MaxPackage oldPkg = pkgMap.put(pkg.name(), pkg);
         if (oldPkg == pkg) {
             // if this identical then we must have added it to the list previously
@@ -333,15 +301,16 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         } else {
             if (oldPkg == null) {
                 // new
+                pkgs.add(pkg);
             } else {
                 // merge into oldPkg, checking consistency
                 if (pkg.recursive != oldPkg.recursive) {
-                    throw ProgramError.unexpected("mutiple package specs for: " + pkg.name + " disagree on recursion");
+                    throw ProgramError.unexpected("multiple package specs for: " + pkg.name + " disagree on recursion");
                 }
-                pkg.others.putAll(oldPkg.others);
-                if (oldPkg.classes != null) {
-                    pkg.initClasses();
-                    pkg.classes.addAll(oldPkg.classes);
+                oldPkg.others.putAll(pkg.others);
+                if (pkg.classes != null) {
+                    oldPkg.initClasses();
+                    oldPkg.classes.addAll(pkg.classes);
                 }
             }
         }
@@ -350,12 +319,9 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     /**
      * Finds all sub-packages in the class path for a given set of root packages.
      *
-     * HACK alert: To support CPS we sort any root that has packages with non-empty prerequisites.
-     * TODO eliminate prerequisites when CPS dies
-     *
      * We maintain a global map of all the packages discovered. Duplicates may arise in the processing from
      * different subsystems referencing the same package, possibly including different subsets of the classes
-     * in the package. The last occurrence of a package becomes the canonical representative and duplicates have their
+     * in the package. The first occurrence of a package is the canonical representative and duplicates have their
      * relevant state merged into it.
      *
      * @param classpath the class path to search for packages
@@ -403,10 +369,22 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                         rootInfos.add(new RootPackageInfo(classpath, otherPkg));
                     }
                 }
+
+                check(pkgMap, pkgs);
             }
         }
 
         return pkgs;
+    }
+
+    private static void check(Map<String, MaxPackage> pkgMap, List<MaxPackage> pkgs) {
+        assert pkgMap.size() == pkgs.size();
+        for (MaxPackage pkg : pkgs) {
+            assert pkgMap.containsValue(pkg);
+        }
+        for (MaxPackage pkg : pkgMap.values()) {
+            assert pkgs.contains(pkg);
+        }
     }
 
     public List<MaxPackage> getTransitiveSubPackages(Classpath classpath) {
