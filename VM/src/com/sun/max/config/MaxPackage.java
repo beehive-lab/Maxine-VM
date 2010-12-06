@@ -25,6 +25,7 @@ import static com.sun.max.lang.Classes.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -32,20 +33,12 @@ import com.sun.max.vm.*;
 /**
  * Describes a package in the Maxine VM, providing programmatic package information manipulation, which is
  * lacking in {@link java.lang.Package}.
- * <p>
- * To deal with initialization cycles with code that would naturally execute in the constructor,
- * this can be delayed until just before loading by overriding the {@link #loading} method.
- * N.B. be aware that this will be called for all cloned instances in the recursive context.
- * Before any class is actually loaded it is checked for inclusion by calling {@link #isIncluded(String)}.
- * The default implementation checks the {@link #classExclusions} and {@link #classes} lists.
- * <p>
- * It is recommended to include a file called 'package-info.java' in every package, which is where you can put
- * package-related JavaDoc comments.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Mick Jordan
  */
+@HOSTED_ONLY
 public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     /**
