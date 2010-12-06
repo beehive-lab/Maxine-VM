@@ -326,12 +326,12 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     /**
      * Add a new package or merge if it is existing.
+     *
      * @param pkg the (presumed) new package
      * @param pkgMap the global map if all packages discovered so far
      * @param pkgs the list of packages that will eventually be returned (this may go away)
-     * @return
      */
-    private static boolean add(MaxPackage pkg, Map<String, MaxPackage> pkgMap, ArrayList<MaxPackage> pkgs) {
+    private static void add(MaxPackage pkg, Map<String, MaxPackage> pkgMap, ArrayList<MaxPackage> pkgs) {
         pkgs.add(pkg);
         MaxPackage oldPkg = pkgMap.put(pkg.name(), pkg);
         if (oldPkg == pkg) {
@@ -352,7 +352,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                 }
             }
         }
-        return !pkg.prerequisites().isEmpty();
     }
 
     /**
@@ -380,10 +379,8 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         }
 
         int rootIndex = 0;
-        int listIndex = 0;
 
         while (rootIndex < rootInfos.size()) {
-            boolean hasPrerequisites = false;
             RootPackageInfo info = rootInfos.get(rootIndex++);
             for (String pkgName : info.pkgNames) {
                 MaxPackage pkg = MaxPackage.fromName(pkgName);
@@ -405,19 +402,15 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                     }
                 }
 
-                hasPrerequisites = add(pkg, pkgMap, pkgs) || hasPrerequisites;
+                add(pkg, pkgMap, pkgs);
 
                 for (final MaxPackage otherPkg : pkg.others.values()) {
-                    hasPrerequisites = add(otherPkg, pkgMap, pkgs) || hasPrerequisites;
+                    add(otherPkg, pkgMap, pkgs);
                     if (!otherPkg.name().startsWith(info.root.name()) && otherPkg.recursive) {
                         rootInfos.add(new RootPackageInfo(classpath, otherPkg));
                     }
                 }
             }
-            if (hasPrerequisites) {
-                Collections.sort(pkgs.subList(listIndex, pkgs.size()));
-            }
-            listIndex = pkgs.size();
         }
 
         return pkgs;
@@ -480,9 +473,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     @Override
     public boolean equals(Object other) {
-        if (other == this) {
-            return true;
-        }
         if (other instanceof MaxPackage) {
             return name.equals(((MaxPackage) other).name);
         }
@@ -494,32 +484,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return name().hashCode();
     }
 
-    public Set<MaxPackage> prerequisites() {
-        return Collections.emptySet();
-    }
-
     public int compareTo(MaxPackage other) {
-        final Set<MaxPackage> myPrerequisites = prerequisites();
-        final Set<MaxPackage> otherPrerequisites = other.prerequisites();
-        if (myPrerequisites.isEmpty()) {
-            if (otherPrerequisites.isEmpty()) {
-                return name.compareTo(other.name);
-            }
-            return -1;
-        }
-        for (MaxPackage myPrerequisite : myPrerequisites) {
-            if (other.equals(myPrerequisite)) {
-                return 1;
-            }
-        }
-        if (otherPrerequisites.isEmpty()) {
-            return 1;
-        }
-        for (MaxPackage otherPrerequisite : otherPrerequisites) {
-            if (equals(otherPrerequisite)) {
-                return -1;
-            }
-        }
         return name.compareTo(other.name);
     }
 
