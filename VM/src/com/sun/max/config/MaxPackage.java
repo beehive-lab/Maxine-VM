@@ -291,17 +291,14 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * Add a new package or merge previous state in if it exists already.
      * @param pkg the (presumed) new package
      * @param pkgMap the global map of all packages discovered so far
-     * @param pkgs the list of packages that will eventually be returned (this may go away as pkgMap and pkgs should be equivalent)
      */
-    private static void add(MaxPackage pkg, Map<String, MaxPackage> pkgMap, ArrayList<MaxPackage> pkgs) {
+    private static void add(MaxPackage pkg, Map<String, MaxPackage> pkgMap) {
         MaxPackage oldPkg = pkgMap.put(pkg.name(), pkg);
         if (oldPkg == pkg) {
             // if this identical then we must have added it to the list previously
-            assert pkgs.contains(pkg);
         } else {
             if (oldPkg == null) {
                 // new
-                pkgs.add(pkg);
             } else {
                 // merge into oldPkg, checking consistency
                 if (pkg.recursive != oldPkg.recursive) {
@@ -330,7 +327,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      */
     public static List<MaxPackage> getTransitiveSubPackages(Classpath classpath, final MaxPackage[] roots) {
         final Map<String, MaxPackage> pkgMap = new TreeMap<String, MaxPackage>();
-        final ArrayList<MaxPackage> pkgs = new ArrayList<MaxPackage>();
 
         final ArrayList<RootPackageInfo> rootInfos = new ArrayList<RootPackageInfo>(roots.length);
         for (MaxPackage root : roots) {
@@ -361,30 +357,18 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                     }
                 }
 
-                add(pkg, pkgMap, pkgs);
-
+                add(pkg, pkgMap);
                 for (final MaxPackage otherPkg : pkg.others.values()) {
-                    add(otherPkg, pkgMap, pkgs);
+                    add(otherPkg, pkgMap);
                     if (!otherPkg.name().startsWith(info.root.name()) && otherPkg.recursive) {
                         rootInfos.add(new RootPackageInfo(classpath, otherPkg));
                     }
                 }
 
-                check(pkgMap, pkgs);
             }
         }
 
-        return pkgs;
-    }
-
-    private static void check(Map<String, MaxPackage> pkgMap, List<MaxPackage> pkgs) {
-        assert pkgMap.size() == pkgs.size();
-        for (MaxPackage pkg : pkgs) {
-            assert pkgMap.containsValue(pkg);
-        }
-        for (MaxPackage pkg : pkgMap.values()) {
-            assert pkgs.contains(pkg);
-        }
+        return Arrays.asList(pkgMap.values().toArray(new MaxPackage[pkgMap.size()]));
     }
 
     public List<MaxPackage> getTransitiveSubPackages(Classpath classpath) {
