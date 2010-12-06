@@ -164,6 +164,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 // Normally, we would have to initialize tracing this late,
                 // because 'PrintWriter.<init>()' relies on a system property ("line.separator"), which is accessed during 'initializeSystemClass()'.
 
+                initializeSystemClass();
+
                 // reinitialise any registered classes
                 for (String className : reinitClasses) {
                     try {
@@ -173,8 +175,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                         FatalError.unexpected("Error re-initializing" + className, e);
                     }
                 }
-
-                initializeSystemClass();
 
                 break;
             }
