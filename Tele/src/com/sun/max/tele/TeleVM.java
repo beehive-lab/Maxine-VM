@@ -45,6 +45,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.tcp.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
@@ -277,6 +278,8 @@ public abstract class TeleVM implements MaxVM {
             "Executes the commands in a file on startup.");
         public final Option<String> logLevelOption = newStringOption("logLevel", Level.SEVERE.getName(),
             "Level to set for java.util.logging root logger.");
+        public final Option<Boolean> usePrecompilationBreakpoints = newBooleanOption("precomp-bp", false,
+            "Method entry bytecode breakpoints also stop VM prior to compilation of matching methods.");
 
         /**
          * This field is {@code null} if {@link #readOnly} is {@code false}.
@@ -369,6 +372,10 @@ public abstract class TeleVM implements MaxVM {
         mode = Mode.valueOf(options.modeOption.getValue().toUpperCase());
 
         TargetLocation.set(options);
+
+        if (options.usePrecompilationBreakpoints.getValue()) {
+            BytecodeBreakpointManager.usePrecompilationBreakpoints = true;
+        }
 
         final String logLevel = options.logLevelOption.getValue();
         try {

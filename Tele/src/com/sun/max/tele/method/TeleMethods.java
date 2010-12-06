@@ -60,7 +60,7 @@ public class TeleMethods extends AbstractTeleVMHolder {
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCStarted = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCStarted", SignatureDescriptor.create("()V"));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableIncreaseMemoryRequested = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableIncreaseMemoryRequested", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Size;)V"));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableObjectRelocated = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableObjectRelocated", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;Lcom/sun/max/unsafe/Address;)V"));
-    public final TeleStaticMethodAccess InspectableCodeInfo_inspectableCompilationComplete = new TeleStaticMethodAccess(vm(), InspectableCodeInfo.class, "inspectableCompilationComplete", SignatureDescriptor.create("(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/max/vm/compiler/target/TargetMethod;)V"));
+    public final TeleStaticMethodAccess InspectableCodeInfo_inspectableCompilationEvent = new TeleStaticMethodAccess(vm(), InspectableCodeInfo.class, "inspectableCompilationEvent", SignatureDescriptor.create("(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/max/vm/compiler/target/TargetMethod;)V"));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCCompleted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCCompleted", SignatureDescriptor.create("(J)V"));
     public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCStarted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCStarted", SignatureDescriptor.create("(J)V"));
     public final TeleStaticMethodAccess TargetBreakpoint_findOriginalCode = new TeleStaticMethodAccess(vm(), TargetBreakpoint.class, "findOriginalCode", SignatureDescriptor.create("(J)[B"));
@@ -72,7 +72,7 @@ public class TeleMethods extends AbstractTeleVMHolder {
 
     // CAUTION:  order-dependent declarations; these must follow the auto-generated fields.
     // Note that for this to work correctly, the named methods must be compiled into the boot heap.
-    private CodeLocation compilationComplete = CodeLocation.createMachineCodeLocation(vm(), InspectableCodeInfo_inspectableCompilationComplete, "Compilation complete (internal)");
+    private CodeLocation compilationEvent = CodeLocation.createMachineCodeLocation(vm(), InspectableCodeInfo_inspectableCompilationEvent, "Compilation start or complete (internal)");
     private CodeLocation gcCompleted = CodeLocation.createMachineCodeLocation(vm(), InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
     private CodeLocation gcStarted = CodeLocation.createMachineCodeLocation(vm(), InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
     private CodeLocation vmThreadRunning = CodeLocation.createMachineCodeLocation(vm(), VmThread_run, "VmThread running (internal) ");
@@ -107,10 +107,10 @@ public class TeleMethods extends AbstractTeleVMHolder {
     }
 
     /**
-     * @return a VM method for internal (non-client) use that is called when each method compilation completes.
+     * @return a VM method for internal (non-client) use that is called when each method compilation starts or finished.
      */
-    public CodeLocation compilationComplete() {
-        return compilationComplete;
+    public CodeLocation compilationEvent() {
+        return compilationEvent;
     }
 
     /**
