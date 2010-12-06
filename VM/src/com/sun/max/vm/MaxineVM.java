@@ -304,13 +304,6 @@ public final class MaxineVM {
             return true;
         }
 
-        // We really want to apply @HOSTED_ONLY to the MaxPackage class but can't
-        // until it's in the VM project
-        if (MaxPackage.class.isAssignableFrom(javaClass)) {
-            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
-            return true;
-        }
-
         // May want to replace this 'magic' interpretation of ".hosted"
         // with a sentinel class (e.g. HOSTED_ONLY_PACKAGE).
         if (getPackageName(javaClass).endsWith(".hosted")) {
