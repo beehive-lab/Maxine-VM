@@ -42,16 +42,6 @@ public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSp
      */
     private Size minReclaimableSpace;
 
-    /**
-     * List of regions available for allocation.
-     */
-    HeapRegionList allocatingRegions;
-
-    /**
-     * List keeping track of regions without too few free space to be considered for allocation.
-     */
-    HeapRegionList fullRegions;
-
     public RegionBasedFirstFitSpace() {
     }
 

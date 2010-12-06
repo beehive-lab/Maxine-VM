@@ -151,7 +151,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     @INLINE
     static final long bitmaskFor(int bitIndex) {
-        return 1L << bitIndexInWord(bitIndex);
+        return 1L << bitIndex;
     }
 
     static final void printVisitedCell(Address cell, String message) {

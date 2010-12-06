@@ -40,7 +40,8 @@ public class HeapRegionList {
      * The value denoting the null element. Used as a list terminator.
      * Set once, to a value that cannot be
      */
-    private static final int nullElement = -1;
+    private static final int nullElement = HeapRegionConstants.INVALID_REGION_ID;
+
      /**
       * Pointer to raw storage of the list.
       */

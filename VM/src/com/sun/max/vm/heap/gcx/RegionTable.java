@@ -19,6 +19,7 @@
  * Company, Ltd.
  */
 package com.sun.max.vm.heap.gcx;
+import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -39,42 +40,50 @@ import com.sun.max.vm.reference.*;
 public final class RegionTable {
     static final int TableOffset = ClassActor.fromJava(RegionTable.class).dynamicTupleSize().toInt();
 
+    @CONSTANT_WHEN_NOT_ZERO
+    private static RegionTable theRegionTable;
+
     private Pointer table() {
         return Reference.fromJava(this).toOrigin().plus(TableOffset);
     }
-    @CONSTANT_WHEN_NOT_ZERO
-    private int length;
-
-    /**
-     * Region size in bytes.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    private int regionSizeInBytes;
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private int log2RegionSizeInBytes;
 
     /**
      * Base address of the contiguous space backing up the heap regions.
      */
     @CONSTANT_WHEN_NOT_ZERO
-    private Pointer regionBaseAddress;
+    private  Address regionBaseAddress;
 
-    final int regionInfoSize;
+    @CONSTANT_WHEN_NOT_ZERO
+    private int regionInfoSize;
 
-    public RegionTable(Class<HeapRegionInfo> regionInfoClass) {
-        this.regionInfoSize = ClassActor.fromJava(regionInfoClass).dynamicTupleSize().toInt();
+    @CONSTANT_WHEN_NOT_ZERO
+    private int length;
+
+    private boolean isInHeapRegion(Address addr) {
+        return HeapRegionManager.theHeapRegionManager.contains(addr);
     }
 
-    public void initialize(int length) {
-        this.length = length;
-        this.regionSizeInBytes = HeapRegionInfo.regionSizeOption.getValue().toInt();
-        log2RegionSizeInBytes = Integer.numberOfTrailingZeros(this.regionSizeInBytes);
+    private RegionTable() {
     }
 
-    HeapRegionInfo addressToRegion(Address addr) {
-        final int rindex = addr.minus(regionBaseAddress).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
-        final Pointer raddr = table().plus(rindex * regionSizeInBytes);
-        return HeapRegionInfo.toHeapRegionInfo(raddr);
+    static void initialize(RegionTable regionTable, Class<HeapRegionInfo> regionInfoClass, Address firstRegion, int numRegions) {
+        regionTable.regionBaseAddress = firstRegion;
+        regionTable.length = numRegions;
+        regionTable.regionInfoSize = ClassActor.fromJava(regionInfoClass).dynamicTupleSize().toInt();
+        theRegionTable = regionTable;
+    }
+
+    public Pointer regionAddress(int regionID) {
+        return table().plus(regionID * regionSizeInBytes);
+    }
+    public int addressToRegionID(Address addr) {
+        if (!isInHeapRegion(addr)) {
+            return INVALID_REGION_ID;
+        }
+        return addr.minus(regionBaseAddress).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+    }
+
+    public HeapRegionInfo addressToRegion(Address addr) {
+        return HeapRegionInfo.toHeapRegionInfo(regionAddress(addressToRegionID(addr)));
     }
 }
