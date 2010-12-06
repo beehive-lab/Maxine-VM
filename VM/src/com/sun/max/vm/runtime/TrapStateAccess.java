@@ -20,10 +20,10 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.config.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
@@ -47,9 +47,8 @@ public abstract class TrapStateAccess {
     public static TrapStateAccess create() {
         try {
             final String isa = platform().isa.name();
-            final Class<?> trapStateAccessClass = Class.forName(MaxPackage.fromClass(TrapStateAccess.class).subPackage(isa.toLowerCase()).name()
-                                                  + "." + isa + TrapStateAccess.class.getSimpleName());
-            return (TrapStateAccess) trapStateAccessClass.newInstance();
+            final Class<?> c = Class.forName(getPackageName(TrapStateAccess.class) + "." + isa.toLowerCase() + "." + isa + TrapStateAccess.class.getSimpleName());
+            return (TrapStateAccess) c.newInstance();
         } catch (Exception exception) {
             throw FatalError.unexpected("could not create TrapStateAccess", exception);
         }

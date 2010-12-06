@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.compiler.c1x;
 
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
@@ -171,8 +172,9 @@ public class C1XTest {
         Trace.on(traceOption.getValue());
 
         VMConfigurator vmConfigurator = new VMConfigurator(options);
-        vmConfigurator.optScheme.setValue(new com.sun.max.vm.compiler.c1x.Package());
-        vmConfigurator.jitScheme.setValue(new com.sun.max.vm.compiler.c1x.Package());
+        String c1xPackage = getPackageName(C1XCompilerScheme.class);
+        vmConfigurator.optScheme.setValue(c1xPackage);
+        vmConfigurator.jitScheme.setValue(c1xPackage);
         vmConfigurator.create(true);
 
         // create the prototype

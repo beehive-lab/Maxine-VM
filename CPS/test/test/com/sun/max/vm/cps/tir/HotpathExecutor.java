@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps.tir;
 
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -112,7 +113,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
 
     public void initialize(JavaTestCase testCase, boolean loadingPackages) {
         final ClassActor classActor = ClassActor.fromJava(testCase.clazz);
-        final StaticMethodActor staticMethodActor = classActor.findLocalStaticMethodActor("test");
+        final StaticMethodActor staticMethodActor = (StaticMethodActor) MethodActor.fromJava(getDeclaredMethod(testCase.clazz, "test"));
         if (staticMethodActor != null) {
             testCase.slot1 = classActor;
             testCase.slot2 = staticMethodActor;

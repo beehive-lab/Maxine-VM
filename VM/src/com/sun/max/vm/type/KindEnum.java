@@ -74,7 +74,7 @@ public enum KindEnum {
 
     static {
         // Sanity check to ensure that the values in Native/substrate/kind.h match those of this enum
-        final File file = new File(new File(JavaProject.findMaxineRootDirectory(), "Native/substrate/kind.h").getAbsolutePath());
+        final File file = new File(new File(JavaProject.findWorkspaceDirectory(), "Native/substrate/kind.h").getAbsolutePath());
         try {
             String content = new String(Files.toChars(file));
             for (KindEnum kind : VALUES) {

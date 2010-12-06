@@ -69,7 +69,7 @@ public abstract class EirAllocatorFactory {
         if (factoryClassName == null) {
             final String isa = Platform.platform().isa.name().toLowerCase();
             final String algorithm = System.getProperty(EIR_ALLOCATOR_ALGORITHM_PROPERTY_NAME, DEFAULT_ALGORITHM);
-            final String factoryPackageName = new Package().subPackage(algorithm, isa).name();
+            final String factoryPackageName = Classes.getPackageName(EirAllocator.class) + "." + algorithm + "." + isa;
             factoryClassName = factoryPackageName + ".Factory";
         }
         try {
