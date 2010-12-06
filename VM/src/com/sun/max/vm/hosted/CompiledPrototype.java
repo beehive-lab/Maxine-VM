@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.hosted;
 
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
@@ -42,12 +43,10 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -268,7 +267,7 @@ public class CompiledPrototype extends Prototype {
             final String methodName = classNameAndMethod.substring(ix + 1);
             try {
                 final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
-                classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
+                forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
 
                     public void run(ClassMethodActor classMethodActor) {
                         if (classMethodActor.holder().name.string.equals(className) && (
@@ -504,11 +503,7 @@ public class CompiledPrototype extends Prototype {
         addMethods(null, extraVMEntryPoints, entryPoint);
         addMethods(extraVMEntryPointNames);
         // we would prefer not to invoke stub-generation/compilation for the shutdown hooks procedure, e.g., after an OutOfMemoryError
-        try {
-            registerImageInvocationStub(ClassActor.fromJava(Class.forName("java.lang.Shutdown")).findLocalStaticMethodActor("shutdown"));
-        } catch (ClassNotFoundException classNotFoundException) {
-            FatalError.unexpected("cannot load java.lang.Shutdown");
-        }
+        registerImageInvocationStub(MethodActor.fromJava(getDeclaredMethod(JDK.java_lang_Shutdown.javaClass(), "shutdown")));
 
         for (MethodActor methodActor : imageInvocationStubMethodActors) {
             if (methodActor.holder().toJava().isEnum() && methodActor.name.equals("values")) {
@@ -524,14 +519,13 @@ public class CompiledPrototype extends Prototype {
             addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedConstructorStub(methodActor));
         }
 
-        add(ClassActor.fromJava(DebugBreak.class).findLocalStaticMethodActor("here"), null, entryPoint);
         // pre-compile the dynamic linking methods, which reduces startup time
-        add(ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0"), null, entryPoint);
-        add(ClassActor.fromJava(Runtime.class).findLocalStaticMethodActor("loadLibrary"), null, entryPoint);
-        add(ClassActor.fromJava(System.class).findLocalStaticMethodActor("loadLibrary"), null, entryPoint);
-        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary0"), null, entryPoint);
-        add(ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor("loadLibrary"), null, entryPoint);
-        add(ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).findLocalStaticMethodActor("<clinit>"), null, entryPoint);
+        add(ClassRegistry.findMethod("loadLibrary0", Runtime.class), null, entryPoint);
+        add(ClassRegistry.findMethod("loadLibrary", Runtime.class), null, entryPoint);
+        add(ClassRegistry.findMethod("loadLibrary", System.class), null, entryPoint);
+        add(ClassRegistry.findMethod("loadLibrary0", ClassLoader.class), null, entryPoint);
+        add(ClassRegistry.findMethod("loadLibrary", ClassLoader.class), null, entryPoint);
+        add(ClassRegistry.findMethod(JDK.java_lang_ProcessEnvironment, "<clinit>"), null, entryPoint);
 
         // It's too late now to register any further methods to be compiled into the boot image
         extraVMEntryPointNames = null;
@@ -650,10 +644,24 @@ public class CompiledPrototype extends Prototype {
         return ProgramError.unexpected("Error occurred while compiling " + classMethodActor, error);
     }
 
+    private void forAllClassMethodActors(ClassActor classActor, Procedure<ClassMethodActor> procedure) {
+        for (VirtualMethodActor virtualMethodActor : classActor.allVirtualMethodActors()) {
+            procedure.run(virtualMethodActor);
+        }
+        do {
+            for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
+                procedure.run(staticMethodActor);
+            }
+            classActor = classActor.superClassActor;
+        } while (classActor != null);
+    }
+
+
+
     public void compileFoldableMethods() {
         Trace.begin(1, "compiling foldable methods");
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
-            classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
+            forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (classMethodActor.isDeclaredFoldable()) {
                         add(classMethodActor, null, null);

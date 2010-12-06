@@ -109,29 +109,29 @@ public final class InspectableCodeInfo {
     }
 
     /**
-     * Makes information inspectable concerning a method compilation that has just completed.
+     * Makes information inspectable concerning a method compilation event.
      * <br>
      * <strong>Note:</strong> further optimization here is possible if it is determined that the string
      * comparisons here (compare against every string in the list every time a method is compiled)
      * take too long.  It is hard to imagine improving unless a bottleneck is being created by
      * having a very large number of classes listed with bytecode breakpoints.
      *
-     * @param targetMethod compilation just completed
+     * @param method method involved in compilation event
+     * @param targetMethod compilation just completed or {@code null} if this is a pre-compilation notification
      */
-    public static void notifyCompilationComplete(TargetMethod targetMethod) {
+    public static void notifyCompilationEvent(ClassMethodActor method, TargetMethod targetMethod) {
         if (Inspectable.isVmInspected()) {
             if (breakpointClassDescriptorsEpoch > lastRefreshedBreakpointClassDescriptorsEpoch) {
                 refreshBreakpointClassDescriptors();
                 lastRefreshedBreakpointClassDescriptorsEpoch = breakpointClassDescriptorsEpoch;
             }
             if (breakpointClassDescriptors.length > 0) {
-                final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-                final String typeDescriptorString = classMethodActor.holder().typeDescriptor.string;
+                final String typeDescriptorString = method.holder().typeDescriptor.string;
                 for (String breakpointClassTypeDescriptor : breakpointClassDescriptors) {
                     if (breakpointClassTypeDescriptor.equals(typeDescriptorString)) {
                         // Match:  the method just compiled is in a class on the list of type descriptors written into the VM by the Inspector.
                         // Call the method that the Inspector is watching.
-                        inspectableCompilationComplete(typeDescriptorString, classMethodActor.name.string, classMethodActor.descriptor.string, targetMethod);
+                        inspectableCompilationEvent(typeDescriptorString, method.name.string, method.descriptor.string, targetMethod);
                         break;
                     }
                 }
@@ -140,7 +140,7 @@ public final class InspectableCodeInfo {
     }
 
     /**
-     * An empty method whose purpose is to be interrupted by the Inspector when it needs to monitor method compilations
+     * An empty method whose purpose is to be interrupted by the Inspector when it needs to monitor method compilation events
      * in the VM. The arguments are deliberately made simple so that they can be read with low-level mechanisms in the
      * Inspector. <br>
      * <strong>Important:</strong> The Inspector assumes that this method is loaded and compiled in the boot image and
@@ -149,11 +149,11 @@ public final class InspectableCodeInfo {
      * @param holderType type description for class holding the method
      * @param methodName name of the the method
      * @param signature argument type descriptors for the method
-     * @param targetMethod the result of the method compilation
+     * @param targetMethod the result of the method compilation or {@code null} if this is a pre-compilation notification
      */
     @NEVER_INLINE
     @INSPECTED
-    private static void inspectableCompilationComplete(String holderType, String methodName, String signature, TargetMethod targetMethod) {
+    private static void inspectableCompilationEvent(String holderType, String methodName, String signature, TargetMethod targetMethod) {
     }
 
 }

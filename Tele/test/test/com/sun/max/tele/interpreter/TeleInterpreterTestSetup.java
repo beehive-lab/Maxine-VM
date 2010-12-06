@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.tele.interpreter;
 
+import static com.sun.max.lang.Classes.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
@@ -27,9 +28,11 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.cps.b.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.reference.hosted.*;
 
 /**
  *  @author Athul Acharya
@@ -53,9 +56,9 @@ public class TeleInterpreterTestSetup extends CompilerTestSetup<ActorIrMethod> {
     protected void initializeVM() {
         VMConfigurator vmConfigurator = new VMConfigurator(null);
         vmConfigurator.buildLevel.setValue(BuildLevel.DEBUG);
-        vmConfigurator.optScheme.setValue(new com.sun.max.vm.cps.b.Package());
+        vmConfigurator.optScheme.setValue(getPackageName(BCompiler.class));
         vmConfigurator.jitScheme.setValue(null);
-        vmConfigurator.referenceScheme.setValue(new com.sun.max.vm.reference.hosted.Package());
+        vmConfigurator.referenceScheme.setValue(getPackageName(HostedReference.class));
         vmConfigurator.create(true);
     }
 

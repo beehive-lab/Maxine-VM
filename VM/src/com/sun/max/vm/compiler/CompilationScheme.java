@@ -235,13 +235,23 @@ public interface CompilationScheme extends VMScheme {
     public static final class Inspect {
 
         /**
+         * Announces that a compilation is being started; must be called for
+         * certain Inspector services to work.
+         *
+         * @param method a method about to be compiled
+         */
+        public static void notifyCompilationStart(ClassMethodActor method) {
+            InspectableCodeInfo.notifyCompilationEvent(method, null);
+        }
+
+        /**
          * Announces that a compilation has just been completed; must be called for
          * certain Inspector services to work.
          *
          * @param targetMethod a compilation that was just completed.
          */
         public static void notifyCompilationComplete(TargetMethod targetMethod) {
-            InspectableCodeInfo.notifyCompilationComplete(targetMethod);
+            InspectableCodeInfo.notifyCompilationEvent(targetMethod.classMethodActor, targetMethod);
             inspectableCompilationComplete(targetMethod);
         }
 

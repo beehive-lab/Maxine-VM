@@ -28,11 +28,11 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A chunk of free space in the heap.
@@ -60,8 +60,8 @@ public class HeapFreeChunk {
     protected static final int SIZE_INDEX;
 
     static {
-        NEXT_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("next")).offset() >> Word.widthValue().log2numberOfBytes;
-        SIZE_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("size")).offset() >> Word.widthValue().log2numberOfBytes;
+        NEXT_INDEX = ClassRegistry.findField(HeapFreeChunk.class, "next").offset() >> Word.widthValue().log2numberOfBytes;
+        SIZE_INDEX = ClassRegistry.findField(HeapFreeChunk.class, "size").offset() >> Word.widthValue().log2numberOfBytes;
     }
 
     private static final long HEAP_FREE_CHUNK_MARKER = 0xdadadadadadadadaL;

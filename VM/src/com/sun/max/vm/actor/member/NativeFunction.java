@@ -22,8 +22,8 @@ package com.sun.max.vm.actor.member;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -51,11 +51,18 @@ public class NativeFunction {
      */
     @NEVER_INLINE
     private boolean isOverloadedByNativeMethod() {
-        return classMethodActor.holder().forAllClassMethodActors(new Predicate<ClassMethodActor>() {
-            public boolean evaluate(ClassMethodActor cma) {
-                return classMethodActor != cma && cma.isNative() && cma.name.equals(classMethodActor.name);
+        ClassActor holder = classMethodActor.holder();
+        for (MethodActor method : holder.localVirtualMethodActors()) {
+            if (method != classMethodActor && method.isNative() && method.name.equals(classMethodActor.name())) {
+                return true;
             }
-        });
+        }
+        for (MethodActor method : holder.localStaticMethodActors()) {
+            if (method != classMethodActor && method.isNative() && method.name.equals(classMethodActor.name())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

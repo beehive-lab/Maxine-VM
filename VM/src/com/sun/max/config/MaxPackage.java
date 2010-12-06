@@ -25,27 +25,20 @@ import static com.sun.max.lang.Classes.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 
 /**
  * Describes a package in the Maxine VM, providing programmatic package information manipulation, which is
  * lacking in {@link java.lang.Package}.
- * <p>
- * To deal with initialization cycles with code that would naturally execute in the constructor,
- * this can be delayed until just before loading by overriding the {@link #loading} method.
- * N.B. be aware that this will be called for all cloned instances in the recursive context.
- * Before any class is actually loaded it is checked for inclusion by calling {@link #isIncluded(String)}.
- * The default implementation checks the {@link #classExclusions} and {@link #classes} lists.
- * <p>
- * It is recommended to include a file called 'package-info.java' in every package, which is where you can put
- * package-related JavaDoc comments.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Mick Jordan
  */
+@HOSTED_ONLY
 public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     /**
@@ -70,6 +63,11 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     private static final Class[] NO_CLASSES = {};
 
     /**
+     * Anti-includes, i.e., everything but these classes.
+     */
+    private Set<String> excludes;
+
+    /**
      * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}.
      */
     protected MaxPackage() {
@@ -86,14 +84,17 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     }
 
     /**
-     * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}
-     * as well as the packages specified by {@code packageSpecs}.
+     * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()} as well as
+     * the packages specified by {@code packageSpecs}.
      *
      * A package specification is one of the following:
      * <ol>
      * <li>A string ending with {@code ".*"} (e.g. {@code "com.sun.max.unsafe.*"}). This denotes a single package.</li>
-     * <li>A string ending with {@code ".**"} (e.g. {@code "com.sun.max.asm.**"}). This denotes a package and all its sub-packages.</li>
+     * <li>A string ending with {@code ".**"} (e.g. {@code "com.sun.max.asm.**"}). This denotes a package and all its
+     * sub-packages.</li>
      * <li>A name of a class available in the current runtime via {@link Class#forName(String)}.</li>
+     * <li>A name of a class available in the current runtime preceded by a {@code "^"}. This denotes a class to be excluded. I.e.
+     * it implies all classes in the package except those explicitly excluded. Only specifications of this form may appear together in one call.
      * </ol>
      *
      * @param packageSpecs a set of package specifications
@@ -101,11 +102,17 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
     protected MaxPackage(String... packageSpecs) {
         this.name = getClass().getPackage().getName();
         this.recursive = false;
+        boolean seenAnExclude = false;
+        boolean first = true;
 
         Map<String, MaxPackage> pkgs = new TreeMap<String, MaxPackage>();
         for (String spec : packageSpecs) {
             String pkgName;
             String className = null;
+            boolean isAnExclude = isExclude(spec);
+            if ((seenAnExclude && !isAnExclude) || (isAnExclude && !first)) {
+                throw ProgramError.unexpected("Class exclude specification is incompatible with other specifications: " + spec);
+            }
             boolean recursive = false;
             if (spec.endsWith(".**")) {
                 recursive = true;
@@ -113,7 +120,16 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
             } else if (spec.endsWith(".*")) {
                 pkgName = spec.substring(0, spec.length() - 2);
             } else {
-                className = spec;
+                if (isAnExclude) {
+                    seenAnExclude = true;
+                    if (excludes == null) {
+                        excludes = new HashSet<String>();
+                    }
+                    className = spec.substring(1);
+                    excludes.add(className);
+                } else {
+                    className = spec;
+                }
                 try {
                     Class.forName(className);
                 } catch (ClassNotFoundException e) {
@@ -122,29 +138,48 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                 pkgName = getPackageName(className);
             }
 
-            // Honor existing Package.java classes.
-            MaxPackage pkg = fromName(pkgName);
-            if (pkg == null) {
-                pkg = pkgs.get(pkgName);
-                if (pkg == null) {
-                    pkg = cloneAs(pkgName);
-                }
-                pkg.recursive = recursive;
+            // Honor existing Package.java classes, but watch for recursion when we are explicitly
+            // including classes in this package
+            MaxPackage pkg = null;
+            if (className != null && pkgName.equals(name)) {
+                pkg = this;
             } else {
-                assert !pkg.recursive : "Package created via reflection should not be recursive";
-                pkg.recursive = recursive;
-            }
-            MaxPackage oldPkg = pkgs.put(pkgName, pkg);
-            assert oldPkg == null || oldPkg == pkg;
-            if (className != null) {
-                if (pkg.classes == null) {
-                    pkg.classes = new HashSet<String>();
+                pkg = fromName(pkgName);
+                if (pkg == null) {
+                    pkg = pkgs.get(pkgName);
+                    if (pkg == null) {
+                        pkg = cloneAs(pkgName);
+                    }
+                    pkg.recursive = recursive;
+                } else {
+                    assert !pkg.recursive : "Package created via reflection should not be recursive";
+                    pkg.recursive = recursive;
                 }
+                MaxPackage oldPkg = pkgs.put(pkgName, pkg);
+                assert oldPkg == null || oldPkg == pkg;
+            }
+            if (className != null && !isAnExclude) {
+                pkg.initClasses();
                 pkg.classes.add(className);
             }
+            first = false;
         }
 
         this.others = pkgs;
+    }
+
+    private void initClasses() {
+        if (classes == null) {
+            classes = new HashSet<String>();
+        }
+    }
+
+    /**
+     * Specify a set of classes to exclude from this package.
+     * @param classNames
+     */
+    protected boolean isExclude(String className) {
+        return className.charAt(0) == '^';
     }
 
     /**
@@ -169,10 +204,8 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         final ClassSearch classSearch = new ClassSearch() {
             @Override
             protected boolean visitClass(boolean isArchiveEntry, String className) {
-                if (!className.endsWith("package-info") && !classNames.contains(className) && name.equals(getPackageName(className))) {
-                    if (className.equals("com.sun.c1x")) {
-                        System.console();
-                    }
+                if (!className.endsWith("package-info") && !classNames.contains(className) && name.equals(getPackageName(className)) &&
+                                (excludes == null || !excludes.contains(className))) {
                     classNames.add(className);
                 }
                 return true;
@@ -242,16 +275,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return NO_CLASSES;
     }
 
-    public MaxPackage subPackage(String... suffices) {
-        String name = name();
-        for (String suffix : suffices) {
-            name += "." + suffix;
-        }
-        final MaxPackage subPackage = fromName(name);
-        ProgramError.check(subPackage != null, "Could not find sub-package of " + this + " named " + name);
-        return subPackage;
-    }
-
     public boolean isSubPackageOf(MaxPackage superPackage) {
         return name().startsWith(superPackage.name());
     }
@@ -294,11 +317,34 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     }
 
-    private static boolean add(MaxPackage pkg, Map<String, MaxPackage> pkgMap, ArrayList<MaxPackage> pkgs) {
+    /**
+     * Add a new package or merge if it is existing.
+     *
+     * @param pkg the (presumed) new package
+     * @param pkgMap the global map if all packages discovered so far
+     * @param pkgs the list of packages that will eventually be returned (this may go away)
+     */
+    private static void add(MaxPackage pkg, Map<String, MaxPackage> pkgMap, ArrayList<MaxPackage> pkgs) {
         pkgs.add(pkg);
         MaxPackage oldPkg = pkgMap.put(pkg.name(), pkg);
-        assert oldPkg == null || oldPkg == pkg;
-        return !pkg.prerequisites().isEmpty();
+        if (oldPkg == pkg) {
+            // if this identical then we must have added it to the list previously
+            assert pkgs.contains(pkg);
+        } else {
+            if (oldPkg == null) {
+                // new
+            } else {
+                // merge into oldPkg, checking consistency
+                if (pkg.recursive != oldPkg.recursive) {
+                    throw ProgramError.unexpected("mutiple package specs for: " + pkg.name + " disagree on recursion");
+                }
+                pkg.others.putAll(oldPkg.others);
+                if (oldPkg.classes != null) {
+                    pkg.initClasses();
+                    pkg.classes.addAll(oldPkg.classes);
+                }
+            }
+        }
     }
 
     /**
@@ -306,6 +352,11 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      *
      * HACK alert: To support CPS we sort any root that has packages with non-empty prerequisites.
      * TODO eliminate prerequisites when CPS dies
+     *
+     * We maintain a global map of all the packages discovered. Duplicates may arise in the processing from
+     * different subsystems referencing the same package, possibly including different subsets of the classes
+     * in the package. The last occurrence of a package becomes the canonical representative and duplicates have their
+     * relevant state merged into it.
      *
      * @param classpath the class path to search for packages
      * @param roots array of subclass of {@code MaxPackage} that define search start and match
@@ -321,10 +372,8 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         }
 
         int rootIndex = 0;
-        int listIndex = 0;
 
         while (rootIndex < rootInfos.size()) {
-            boolean hasPrerequisites = false;
             RootPackageInfo info = rootInfos.get(rootIndex++);
             for (String pkgName : info.pkgNames) {
                 MaxPackage pkg = MaxPackage.fromName(pkgName);
@@ -346,19 +395,15 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
                     }
                 }
 
-                hasPrerequisites = add(pkg, pkgMap, pkgs) || hasPrerequisites;
+                add(pkg, pkgMap, pkgs);
 
                 for (final MaxPackage otherPkg : pkg.others.values()) {
-                    hasPrerequisites = add(otherPkg, pkgMap, pkgs) || hasPrerequisites;
+                    add(otherPkg, pkgMap, pkgs);
                     if (!otherPkg.name().startsWith(info.root.name()) && otherPkg.recursive) {
                         rootInfos.add(new RootPackageInfo(classpath, otherPkg));
                     }
                 }
             }
-            if (hasPrerequisites) {
-                Collections.sort(pkgs.subList(listIndex, pkgs.size()));
-            }
-            listIndex = pkgs.size();
         }
 
         return pkgs;
@@ -377,7 +422,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return true;
     }
 
-    private Map<Class<? extends Scheme>, Class<? extends Scheme>> schemeTypeToImplementation;
+    private Map<Class<? extends VMScheme>, Class<? extends VMScheme>> schemeTypeToImplementation;
 
     /**
      * Registers a class in this package that implements a given scheme type.
@@ -385,13 +430,13 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * @param schemeType a scheme type
      * @param schemeImplementation a class that implements {@code schemType}
      */
-    public synchronized <S extends Scheme> void registerScheme(Class<S> schemeType, Class<? extends S> schemeImplementation) {
+    public synchronized <S extends VMScheme> void registerScheme(Class<S> schemeType, Class<? extends S> schemeImplementation) {
         assert schemeType.isInterface() || Modifier.isAbstract(schemeType.getModifiers());
         assert schemeImplementation.getPackage().getName().equals(name()) : "cannot register implmentation class from another package: " + schemeImplementation;
         if (schemeTypeToImplementation == null) {
-            schemeTypeToImplementation = new IdentityHashMap<Class<? extends Scheme>, Class<? extends Scheme>>();
+            schemeTypeToImplementation = new IdentityHashMap<Class<? extends VMScheme>, Class<? extends VMScheme>>();
         }
-        Class<? extends Scheme> oldValue = schemeTypeToImplementation.put(schemeType, schemeImplementation);
+        Class<? extends VMScheme> oldValue = schemeTypeToImplementation.put(schemeType, schemeImplementation);
         assert oldValue == null;
     }
 
@@ -401,11 +446,11 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * @return the class directly within this package that implements {@code scheme} or null if no such class
      *         exists
      */
-    public synchronized <S extends Scheme> Class<? extends S> schemeTypeToImplementation(Class<S> schemeType) {
+    public synchronized <S extends VMScheme> Class<? extends S> schemeTypeToImplementation(Class<S> schemeType) {
         if (schemeTypeToImplementation == null) {
             return null;
         }
-        final Class< ? extends Scheme> implementation = schemeTypeToImplementation.get(schemeType);
+        final Class< ? extends VMScheme> implementation = schemeTypeToImplementation.get(schemeType);
         if (implementation == null) {
             return null;
         }
@@ -421,9 +466,6 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
 
     @Override
     public boolean equals(Object other) {
-        if (other == this) {
-            return true;
-        }
         if (other instanceof MaxPackage) {
             return name.equals(((MaxPackage) other).name);
         }
@@ -435,36 +477,11 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
         return name().hashCode();
     }
 
-    public Set<MaxPackage> prerequisites() {
-        return Collections.emptySet();
-    }
-
     public int compareTo(MaxPackage other) {
-        final Set<MaxPackage> myPrerequisites = prerequisites();
-        final Set<MaxPackage> otherPrerequisites = other.prerequisites();
-        if (myPrerequisites.isEmpty()) {
-            if (otherPrerequisites.isEmpty()) {
-                return name.compareTo(other.name);
-            }
-            return -1;
-        }
-        for (MaxPackage myPrerequisite : myPrerequisites) {
-            if (other.equals(myPrerequisite)) {
-                return 1;
-            }
-        }
-        if (otherPrerequisites.isEmpty()) {
-            return 1;
-        }
-        for (MaxPackage otherPrerequisite : otherPrerequisites) {
-            if (equals(otherPrerequisite)) {
-                return -1;
-            }
-        }
         return name.compareTo(other.name);
     }
 
-    public synchronized <S extends Scheme> Class<? extends S> loadSchemeImplementation(Class<S> schemeType) {
+    public synchronized <S extends VMScheme> Class<? extends S> loadSchemeImplementation(Class<S> schemeType) {
         final Class<? extends S> schemeImplementation = schemeTypeToImplementation(schemeType);
         if (schemeImplementation == null) {
             ProgramError.unexpected("could not find subclass of " + schemeType + " in " + this);
@@ -481,7 +498,7 @@ public class MaxPackage implements Comparable<MaxPackage>, Cloneable {
      * @param schemeType the interface or abstract class defining a scheme type
      * @return a new instance of the scheme implementation class
      */
-    public synchronized <S extends Scheme> S loadAndInstantiateScheme(Class<S> schemeType) {
+    public synchronized <S extends VMScheme> S loadAndInstantiateScheme(Class<S> schemeType) {
         final Class<? extends S> schemeImplementation = loadSchemeImplementation(schemeType);
         try {
             return schemeImplementation.newInstance();

@@ -140,7 +140,7 @@ public class JsrInliningTestSource {
 
     public static boolean compile() {
         final String thisClassName = JsrInliningTestSource.class.getName();
-        if (ToolChain.compile(thisClassName, new String[]{"-noinlinejsr"})) {
+        if (ToolChain.compile(JsrInliningTestSource.class, thisClassName, new String[]{"-noinlinejsr"})) {
             return true;
         }
         ProgramWarning.message("compilation failed for: " + thisClassName);

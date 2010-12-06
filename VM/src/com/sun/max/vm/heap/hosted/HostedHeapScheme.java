@@ -63,7 +63,7 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
 
     public Object createTuple(Hub hub) {
         if (hub instanceof StaticHub) {
-            return StaticTuple.create(hub.classActor);
+            return ClassActor.create(hub.classActor);
         }
         final Class javaTupleClass = hub.classActor.toJava();
         try {

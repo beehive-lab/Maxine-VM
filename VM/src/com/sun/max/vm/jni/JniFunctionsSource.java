@@ -322,7 +322,7 @@ public final class JniFunctionsSource {
         if (methodActor == null || !methodActor.isInitializer()) {
             throw new NoSuchMethodException();
         }
-        final VirtualMethodActor virtualMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor);
+        final VirtualMethodActor virtualMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor.name, methodActor.descriptor());
         if (virtualMethodActor == null) {
             throw new NoSuchMethodException();
         }
@@ -560,7 +560,7 @@ public final class JniFunctionsSource {
         if (methodActor == null || methodActor.isStatic() || methodActor.isInitializer() || methodActor instanceof InterfaceMethodActor) {
             throw new NoSuchMethodException();
         }
-        final VirtualMethodActor virtualMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor);
+        final VirtualMethodActor virtualMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor.name, methodActor.descriptor());
         if (virtualMethodActor == null) {
             throw new NoSuchMethodException();
         }
@@ -1606,12 +1606,16 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int UnregisterNatives(Pointer env, JniHandle javaType) {
-        final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
-            public void run(ClassMethodActor classMethodActor) {
-                classMethodActor.nativeFunction.setAddress(Word.zero());
+        ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
+        for (VirtualMethodActor method : classActor.allVirtualMethodActors()) {
+            method.nativeFunction.setAddress(Word.zero());
+        }
+        do {
+            for (StaticMethodActor method : classActor.localStaticMethodActors()) {
+                method.nativeFunction.setAddress(Word.zero());
             }
-        });
+            classActor = classActor.superClassActor;
+        } while (classActor != null);
         return 0;
     }
 

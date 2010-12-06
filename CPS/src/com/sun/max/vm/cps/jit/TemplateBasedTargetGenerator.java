@@ -117,8 +117,6 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
             // at target runtime, each method gets linked individually right after generating it:
             targetMethod.linkDirectCalls(adapter);
         }
-
-        CompilationScheme.Inspect.notifyCompilationComplete(targetMethod);
     }
 }
 

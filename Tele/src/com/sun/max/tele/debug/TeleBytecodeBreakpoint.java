@@ -302,6 +302,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      */
     public static final class BytecodeBreakpointManager extends AbstractTeleVMHolder {
 
+        public static boolean usePrecompilationBreakpoints;
+
         private static final List<TeleBytecodeBreakpoint> EMPTY_BREAKPOINT_SEQUENCE = Collections.emptyList();
 
         private final TeleTargetBreakpoint.TargetBreakpointManager teleTargetBreakpointManager;
@@ -542,7 +544,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private void createCompilerBreakpoint() throws MaxVMBusyException {
             assert compilerTargetCodeBreakpoint == null;
-            compilerTargetCodeBreakpoint = teleTargetBreakpointManager.makeSystemBreakpoint(vm().teleMethods().compilationComplete(), null);
+            compilerTargetCodeBreakpoint = teleTargetBreakpointManager.makeSystemBreakpoint(vm().teleMethods().compilationEvent(), null);
             compilerTargetCodeBreakpoint.setDescription("System trap for VM compiler");
             compilerTargetCodeBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -563,6 +565,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                             // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
                             if (teleTargetMethod == null) {
                                 final Reference targetMethodReference = vm().wordToReference(teleIntegerRegisters.getValue(parameter3));
+                                if (targetMethodReference.isZero()) {
+                                    // Pre-compilation notification
+                                    if (usePrecompilationBreakpoints) {
+                                        return true;
+                                    }
+                                    continue;
+                                }
                                 teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
                             }
                             try {
