@@ -271,7 +271,7 @@ public abstract class TypeDescriptor extends Descriptor {
                 return false;
             }
 
-            if (MaxineVM.vm().config.isMaxineVMPackage(MaxPackage.fromClass(javaClass))) {
+            if (MaxineVM.vm().config.isMaxineVMPackage(BootImagePackage.fromClass(javaClass))) {
                 return true;
             }
 

@@ -50,35 +50,35 @@ public abstract class CompilerTest_coreJava<Method_Type extends IrMethod> extend
     }
 
     public void test_beans() {
-        compilePackage(new MaxPackage("java.beans", false));
+        compilePackage(new BootImagePackage("java.beans", false));
     }
 
     public void test_reflect() {
-        compilePackage(new MaxPackage("java.lang.reflect", false));
+        compilePackage(new BootImagePackage("java.lang.reflect", false));
     }
 
     public void test_net() {
-        compilePackage(new MaxPackage("java.net", false));
+        compilePackage(new BootImagePackage("java.net", false));
     }
 
     public void test_nio() {
-        compilePackage(new MaxPackage("java.nio", false));
+        compilePackage(new BootImagePackage("java.nio", false));
     }
 
     public void test_security() {
-        compilePackage(new MaxPackage("java.security", false));
+        compilePackage(new BootImagePackage("java.security", false));
     }
 
     public void test_lang() {
-        compilePackage(new MaxPackage("java.lang", false));
+        compilePackage(new BootImagePackage("java.lang", false));
     }
 
     public void test_util() {
-        compilePackage(new MaxPackage("java.util", false));
+        compilePackage(new BootImagePackage("java.util", false));
     }
 
     public void test_io() {
-        compilePackage(new MaxPackage("java.io", false));
+        compilePackage(new BootImagePackage("java.io", false));
     }
 
 }

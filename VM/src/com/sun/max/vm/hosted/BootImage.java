@@ -450,7 +450,7 @@ public class BootImage {
         }
 
         public VMPackage vmPackage(Key key) {
-            return (VMPackage) MaxPackage.fromName(values.get(key));
+            return (VMPackage) BootImagePackage.fromName(values.get(key));
         }
 
         private StringInfo(InputStream inputStream, int offset, Endianness endian) throws IOException, Utf8Exception {
@@ -500,7 +500,7 @@ public class BootImage {
                     BootImageException.check(match, "No " + key.valueType.getName() + " constant matches " + value);
                 } else {
                     assert key.valueType == VMPackage.class;
-                    BootImageException.check(MaxPackage.fromName(value) instanceof VMPackage, "not a VM package: " + value);
+                    BootImageException.check(BootImagePackage.fromName(value) instanceof VMPackage, "not a VM package: " + value);
                 }
             }
         }

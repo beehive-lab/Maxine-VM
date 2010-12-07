@@ -37,13 +37,13 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
     public static class Static {
         private static CPSCompiler compiler;
         @HOSTED_ONLY
-        private static MaxPackage compilerPackage;
+        private static BootImagePackage compilerPackage;
 
         @HOSTED_ONLY
         public static void setCompiler(CPSCompiler c) {
             assert compiler == null;
             compiler = c;
-            compilerPackage = MaxPackage.fromClass(compiler.getClass());
+            compilerPackage = BootImagePackage.fromClass(compiler.getClass());
         }
 
         public static CPSCompiler compiler() {
@@ -51,7 +51,7 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
         }
 
         @HOSTED_ONLY
-        public static boolean isCompilerPackage(MaxPackage maxPackage) {
+        public static boolean isCompilerPackage(BootImagePackage maxPackage) {
             if (compilerPackage == null) {
                 return false;
             }

@@ -54,7 +54,7 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
         final Platform platform = platform();
         wordWidth = platform.wordWidth();
         String p = Classes.getPackageName(EirGenerator.class) + "." + platform.isa.name().toLowerCase() + "." + platform.os.name().toLowerCase();
-        eirABIsScheme = MaxPackage.fromName(p).loadAndInstantiateScheme(EirABIsScheme.class);
+        eirABIsScheme = BootImagePackage.fromName(p).loadAndInstantiateScheme(EirABIsScheme.class);
     }
 
     @Override

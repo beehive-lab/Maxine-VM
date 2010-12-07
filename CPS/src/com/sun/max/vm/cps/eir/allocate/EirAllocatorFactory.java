@@ -107,7 +107,7 @@ public abstract class EirAllocatorFactory {
      * @param allocatorPackage the package to test
      * @return {@code true} if the selected factory is in a sub-package of {@code allocatorPackage}; {@code false} otherwise
      */
-    public static boolean isSelected(MaxPackage allocatorPackage) {
+    public static boolean isSelected(BootImagePackage allocatorPackage) {
         return instance.getClass().getPackage().getName().startsWith(allocatorPackage.name());
     }
 }
