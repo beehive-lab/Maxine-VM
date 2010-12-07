@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.ins.debug.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -294,7 +295,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * This is a view state change that can happen when there is no change to the VM state.
      */
     public void setAddress(Address address) {
-        ProgramError.check(address != null, "setAddress(null) should use zero Address instead");
+        InspectorError.check(address != null, "setAddress(null) should use zero Address instead");
         if ((address.isZero() && hasAddress()) || (!address.isZero() && !address.equals(this.address))) {
             final Address oldAddress = this.address;
             this.address = address;

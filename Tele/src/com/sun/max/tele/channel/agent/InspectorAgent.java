@@ -26,6 +26,7 @@ import java.net.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.channel.TeleChannelProtocol;
 import com.sun.max.tele.channel.tcp.TCPTeleChannelProtocol;
@@ -145,7 +146,7 @@ public class InspectorAgent {
                     Trace.line(1, "client closed connection, terminating");
                     terminated = true;
                 } catch (Exception ex) {
-                    System.err.println(ex);
+                    TeleWarning.message(ex);
                     ex.printStackTrace();
                     Trace.line(1, "terminating connection");
                     terminated = true;

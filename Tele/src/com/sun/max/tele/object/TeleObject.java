@@ -621,7 +621,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
                     }
                     field.set(newTuple, newJavaValue);
                 } catch (IllegalAccessException illegalAccessException) {
-                    ProgramError.unexpected("could not access field: " + field, illegalAccessException);
+                    TeleError.unexpected("could not access field: " + field, illegalAccessException);
                 }
             }
         }
@@ -677,7 +677,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
                 vm().unlock();
             }
         } else {
-            ProgramWarning.message("Deep copy failed (VM busy) for " + this);
+            TeleWarning.message("Deep copy failed (VM busy) for " + this);
         }
         return objectCopy;
     }

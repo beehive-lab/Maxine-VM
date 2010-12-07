@@ -30,9 +30,9 @@ import javax.swing.text.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.actor.member.MethodKey.*;
+import com.sun.max.vm.actor.member.MethodKey.DefaultMethodKey;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
@@ -122,7 +122,7 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
     private DefaultMethodKey methodKey;
 
     public void changedUpdate(DocumentEvent e) {
-        ProgramError.unexpected();
+        InspectorError.unexpected();
     }
 
     public void insertUpdate(DocumentEvent e) {

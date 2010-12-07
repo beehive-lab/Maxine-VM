@@ -24,6 +24,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
@@ -119,11 +120,11 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                     try {
                         objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, teleObject);
                     } catch (InstantiationException e) {
-                        throw ProgramError.unexpected(e);
+                        throw InspectorError.unexpected(e);
                     } catch (IllegalAccessException e) {
-                        throw ProgramError.unexpected(e);
+                        throw InspectorError.unexpected(e);
                     } catch (InvocationTargetException e) {
-                        throw ProgramError.unexpected(e.getTargetException());
+                        throw InspectorError.unexpected(e.getTargetException());
                     }
                     break;
                 }
@@ -140,12 +141,12 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                     try {
                         objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, teleObject);
                     } catch (InstantiationException e) {
-                        throw ProgramError.unexpected();
+                        throw InspectorError.unexpected();
                     } catch (IllegalAccessException e) {
-                        throw ProgramError.unexpected();
+                        throw InspectorError.unexpected();
                     } catch (InvocationTargetException e) {
                         e.printStackTrace();
-                        throw ProgramError.unexpected();
+                        throw InspectorError.unexpected();
                     }
                     break;
                 }

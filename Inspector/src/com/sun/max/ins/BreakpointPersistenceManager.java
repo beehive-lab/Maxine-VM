@@ -22,14 +22,15 @@ package com.sun.max.ins;
 
 import java.util.*;
 
-import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
+import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
+import com.sun.max.ins.util.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.actor.member.MethodKey.*;
+import com.sun.max.vm.actor.member.MethodKey.DefaultMethodKey;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
@@ -70,7 +71,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         } else {
             // TODO (mlvdv) some breakpoints could be saved across image builds,
             // for example method entry bytecode breakpoints.
-            ProgramWarning.message("Ignoring breakpoints related to a different boot image");
+            InspectorWarning.message("Ignoring breakpoints related to a different boot image");
         }
 
         // Once load-in is finished, register for notification of subsequent breakpoint changes in the VM.
@@ -147,10 +148,10 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 } catch (BreakpointCondition.ExpressionException expressionException) {
                     inspection.gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
                 } catch (MaxVMBusyException maxVMBusyException) {
-                    ProgramWarning.message("Unable to recreate target breakpoint from saved settings at: " + address);
+                    InspectorWarning.message("Unable to recreate target breakpoint from saved settings at: " + address, maxVMBusyException);
                 }
             } else {
-                ProgramWarning.message("dropped former breakpoint in runtime-generated code at address: " + address);
+                InspectorWarning.message("dropped former breakpoint in runtime-generated code at address: " + address);
             }
         }
     }
@@ -170,7 +171,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 settings.save(prefix + "." + POSITION_KEY, codeLocation.bytecodePosition());
                 settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             } else {
-                ProgramWarning.message("Unable to save bytecode breakpoint, no key in " + breakpoint);
+                InspectorWarning.message("Unable to save bytecode breakpoint, no key in " + breakpoint);
             }
         }
     }
@@ -185,7 +186,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final MethodKey methodKey = new DefaultMethodKey(holder, name, signature);
             final int bytecodePosition = settings.get(this, prefix + "." + POSITION_KEY, OptionTypes.INT_TYPE, 0);
             if (bytecodePosition > 0) {
-                ProgramWarning.message("Ignoring non-zero bytecode position for saved breakpoint in " + methodKey);
+                InspectorWarning.message("Ignoring non-zero bytecode position for saved breakpoint in " + methodKey);
             }
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
             final MaxCodeLocation location = inspection.vm().codeManager().createBytecodeLocation(methodKey, "loaded by breakpoint persistence manager");
@@ -195,8 +196,8 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 if (bytecodeBreakpoint.isEnabled() != enabled) {
                     bytecodeBreakpoint.setEnabled(enabled);
                 }
-            } catch (MaxVMBusyException e) {
-                ProgramWarning.message("Unable to recreate bytecode breakpoint from saved settings at: " + methodKey);
+            } catch (MaxVMBusyException maxVMBusyException) {
+                InspectorWarning.message("Unable to recreate bytecode breakpoint from saved settings at: " + methodKey, maxVMBusyException);
             }
         }
     }

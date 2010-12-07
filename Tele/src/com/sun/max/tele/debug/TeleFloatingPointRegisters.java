@@ -26,7 +26,7 @@ import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.max.tele.util.*;
 
 /**
  * Encapsulates the values of the floating point registers for a tele native thread.
@@ -41,7 +41,7 @@ public final class TeleFloatingPointRegisters extends TeleRegisters {
         if (platform().isa == ISA.AMD64) {
             return AMD64.xmmRegisters;
         }
-        throw FatalError.unimplemented();
+        throw TeleError.unimplemented();
     }
 
     public TeleFloatingPointRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {

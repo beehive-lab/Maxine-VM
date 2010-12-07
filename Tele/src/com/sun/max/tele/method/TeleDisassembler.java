@@ -32,8 +32,8 @@ import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Disassembler for machine code in the VM.
@@ -152,10 +152,10 @@ public final class TeleDisassembler {
             case PPC:
             case IA32:
             case SPARC: {
-                throw FatalError.unimplemented();
+                throw TeleError.unimplemented();
             }
         }
-        ProgramError.unknownCase();
+        TeleError.unknownCase();
         return null;
     }
 
@@ -170,7 +170,7 @@ public final class TeleDisassembler {
             final Class<List<DisassembledObject>> type = null;
             disassembledObjects = Utils.cast(type, disassembler.scan(new BufferedInputStream(new ByteArrayInputStream(code))));
         } catch (Throwable throwable) {
-            ProgramWarning.message("Could not completely disassemble given code stream - trying partial disassembly instead [error: " + throwable + "]");
+            TeleWarning.message("Could not completely disassemble given code stream - trying partial disassembly instead", throwable);
             final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
             final List<DisassembledObject> objects = new ArrayList<DisassembledObject>();
             try {
@@ -178,7 +178,7 @@ public final class TeleDisassembler {
                     objects.add((DisassembledObject) disassembler.scanOne(bufferedInputStream).get(0));
                 }
             } catch (Throwable t) {
-                ProgramWarning.message("Only partially disassembled given code stream [error: " + t + "]");
+                TeleWarning.message("Only partially disassembled given code stream", t);
             }
             disassembledObjects = objects;
         }

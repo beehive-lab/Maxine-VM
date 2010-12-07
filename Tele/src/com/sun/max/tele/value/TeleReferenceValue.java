@@ -24,10 +24,10 @@ package com.sun.max.tele.value;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
@@ -94,7 +94,7 @@ public final class TeleReferenceValue extends ReferenceValue {
     protected int compareSameKind(ReferenceValue other) {
         // TODO: It seems impossible to find a way to deterministically order the identities of two objects.
         //       So, Value should not implement Comparable!
-        throw ProgramError.unexpected("trying to compare reference values");
+        throw TeleError.unexpected("trying to compare reference values");
     }
 
     @Override

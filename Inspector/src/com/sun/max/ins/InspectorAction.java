@@ -25,6 +25,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import com.sun.max.gui.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 
 /**

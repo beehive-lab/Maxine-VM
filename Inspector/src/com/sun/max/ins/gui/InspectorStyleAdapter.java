@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.util.*;
 
 /**
  * An adaptor for specifying styles in the VM Inspector.
@@ -473,7 +474,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         if (imgURL != null) {
             return new ImageIcon(imgURL, description);
         }
-        System.err.println("Couldn't find file: " + path);
+        InspectorWarning.message("Couldn't find file: " + path);
         return null;
     }
 

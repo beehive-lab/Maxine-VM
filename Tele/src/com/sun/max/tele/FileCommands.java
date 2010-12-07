@@ -22,8 +22,8 @@ package com.sun.max.tele;
 
 import java.io.*;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -74,11 +74,11 @@ public class FileCommands {
                 try {
                     doCommand(teleVM, line);
                 } catch (CommandException commandException) {
-                    ProgramError.unexpected("File Command failed ", commandException);
+                    TeleError.unexpected("File Command failed ", commandException);
                 }
             }
         } catch (IOException ex) {
-            ProgramError.unexpected("Failed to open file: " + filename);
+            TeleError.unexpected("Failed to open file: " + filename);
         } finally {
             if (bs != null) {
                 try {
@@ -120,7 +120,7 @@ public class FileCommands {
                         try {
                             teleVM.breakpointManager().makeBreakpoint(compiledCode.getCallEntryLocation());
                         } catch (MaxVMBusyException e) {
-                            ProgramError.unexpected(" failed to set breakpoint from file: VM Busy");
+                            TeleError.unexpected(" failed to set breakpoint from file: VM Busy");
                             e.printStackTrace();
                         }
                     }
