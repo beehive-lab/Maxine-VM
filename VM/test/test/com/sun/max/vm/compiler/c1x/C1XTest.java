@@ -403,8 +403,8 @@ public class C1XTest {
             try {
                 classActor = ClassActor.fromJava(javaClass);
 
-                MaxPackage maxPackage = MaxPackage.fromClass(javaClass);
-                if (maxPackage != null && maxPackage.name().contains(".prototype")) {
+                BootImagePackage bootImagePackage = BootImagePackage.fromClass(javaClass);
+                if (bootImagePackage != null && bootImagePackage.name().contains(".prototype")) {
                     return null;
                 }
             } catch (Throwable t) {

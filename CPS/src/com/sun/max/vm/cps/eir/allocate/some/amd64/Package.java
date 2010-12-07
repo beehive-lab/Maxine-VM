@@ -20,15 +20,12 @@
  */
 package com.sun.max.vm.cps.eir.allocate.some.amd64;
 
-import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.eir.allocate.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 
 /**
- * @see MaxPackage
- *
  * @author Bernd Mathiske
  */
 public class Package extends VMPackage {

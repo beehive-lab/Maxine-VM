@@ -187,8 +187,8 @@ public final class MaxineVM {
      * Registers the complete set of packages that (potentially) comprise the boot image being constructed.
      */
     @HOSTED_ONLY
-    public static void registerBootImagePackages(List<MaxPackage> packages) {
-        for (MaxPackage maxPackage : packages) {
+    public static void registerBootImagePackages(List<BootImagePackage> packages) {
+        for (BootImagePackage maxPackage : packages) {
             BOOT_IMAGE_CODE_BASE_PACKAGES.add(maxPackage.name());
             BOOT_IMAGE_CODE_BASE_PACKAGES.add("test." + maxPackage.name());
         }
@@ -322,13 +322,13 @@ public final class MaxineVM {
             return true;
         }
 
-        final MaxPackage maxPackage = MaxPackage.fromClass(javaClass);
-        if (maxPackage != null) {
-            if (maxPackage.getClass().getSuperclass() == MaxPackage.class) {
-                final boolean isTestPackage = maxPackage.name().startsWith("test.com.sun.max.");
+        final BootImagePackage pkg = BootImagePackage.fromClass(javaClass);
+        if (pkg != null) {
+            if (pkg.getClass().getSuperclass() == BootImagePackage.class) {
+                final boolean isTestPackage = pkg.name().startsWith("test.com.sun.max.");
                 HOSTED_CLASSES.put(javaClass, !isTestPackage);
                 return !isTestPackage;
-            } else if (maxPackage.getClass().getAnnotation(HOSTED_ONLY.class) != null) {
+            } else if (pkg.getClass().getAnnotation(HOSTED_ONLY.class) != null) {
                 HOSTED_CLASSES.put(javaClass, true);
                 return true;
             }

@@ -65,8 +65,8 @@ public final class JavaPrototype extends Prototype {
     public static final String EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME = "max.image.extraClassesAndPackages";
 
     private static JavaPrototype theJavaPrototype;
-    private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
-    private List<MaxPackage> candidateBootImagePackages;
+    private final Set<BootImagePackage> loadedBootImagePackages = new HashSet<BootImagePackage>();
+    private List<BootImagePackage> candidateBootImagePackages;
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
     private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
     private final Map<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
@@ -89,9 +89,9 @@ public final class JavaPrototype extends Prototype {
      * @param rootPackage the root package which defines the package class to match and in which to begin the search
      * @return a sequence of the packages that match the criteria
      */
-    private List<MaxPackage> getPackages(MaxPackage... rootPackages) {
-        final List<MaxPackage> packages = new LinkedList<MaxPackage>();
-        for (MaxPackage maxPackage : MaxPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath(), rootPackages)) {
+    private List<BootImagePackage> getPackages(BootImagePackage... rootPackages) {
+        final List<BootImagePackage> packages = new LinkedList<BootImagePackage>();
+        for (BootImagePackage maxPackage : BootImagePackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath(), rootPackages)) {
             if (vmConfig().isMaxineVMPackage(maxPackage)) {
                 packages.add(maxPackage);
             }
@@ -154,17 +154,17 @@ public final class JavaPrototype extends Prototype {
      *
      * @param maxPackage the package to load
      */
-    private void loadMaxPackage(MaxPackage maxPackage) {
+    private void loadBootImagePackage(BootImagePackage maxPackage) {
         packageLoader.load(maxPackage, true);
-        loadedMaxPackages.add(maxPackage);
+        loadedBootImagePackages.add(maxPackage);
     }
 
     /**
      * Load packages corresponding to VM configurations.
      */
     private void loadVMConfigurationPackages() {
-        for (MaxPackage p : vmConfig().packages()) {
-            loadMaxPackage(p);
+        for (BootImagePackage p : vmConfig().packages()) {
+            loadBootImagePackage(p);
         }
     }
 
@@ -176,7 +176,7 @@ public final class JavaPrototype extends Prototype {
         if (value != null) {
             for (String s : value.split("\\s+")) {
                 if (s.charAt(0) == '^') {
-                    packageLoader.load(new MaxPackage(s.substring(1), false), true);
+                    packageLoader.load(new BootImagePackage(s.substring(1), false), true);
                 } else {
                     loadClass(s);
                 }
@@ -196,7 +196,7 @@ public final class JavaPrototype extends Prototype {
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
     private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
-        for (MaxPackage maxPackage : candidateBootImagePackages) {
+        for (BootImagePackage maxPackage : candidateBootImagePackages) {
             // VMConfigPackage subclasses may contain SUBSTITUTIONS
             if (maxPackage instanceof BootImagePackage) {
                 BootImagePackage vmPackage = (BootImagePackage) maxPackage;
@@ -295,8 +295,8 @@ public final class JavaPrototype extends Prototype {
 
         if (complete) {
 
-            for (MaxPackage maxPackage : candidateBootImagePackages) {
-                loadMaxPackage(maxPackage);
+            for (BootImagePackage maxPackage : candidateBootImagePackages) {
+                loadBootImagePackage(maxPackage);
             }
 
             loadExtraClassesAndPackages();
@@ -314,10 +314,10 @@ public final class JavaPrototype extends Prototype {
      * Returns the a priori list of packages that are potentially included in the image.
      * This may be modified by configuration restrictions or explicit exclusions.
      * This method can support the latter in allowing pattern matching in generating the
-     * set of exclusions required by {@link MaxPackage#excludes()}.
+     * set of exclusions required by {@link BootImagePackage#excludes()}.
      * @return
      */
-    public List<MaxPackage> getCandidateMaxPackages() {
+    public List<BootImagePackage> getCandidateBootImagePackages() {
         return candidateBootImagePackages;
     }
 

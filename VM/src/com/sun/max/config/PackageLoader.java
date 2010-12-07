@@ -61,16 +61,16 @@ public class PackageLoader {
     /**
      * Loads classes under a given package, subject to inclusions/exclusions.
      *
-     * @param maxPackage the package from which classes are loaded
+     * @param pkg the package from which classes are loaded
      * @param initialize specifies whether the loaded classes should be {@linkplain Classes#initialize(Class) initialized}
      * @return the loaded classes
      */
-    public List<Class> load(MaxPackage maxPackage, boolean initialize) {
-        final String packageName = maxPackage.name();
+    public List<Class> load(BootImagePackage pkg, boolean initialize) {
+        final String packageName = pkg.name();
         Trace.line(traceLevel, "loading: " + packageName);
-        maxPackage.loading();
+        pkg.loading();
         final List<Class> classes = new ArrayList<Class>();
-        String[] classNames = maxPackage.listClasses(classpath);
+        String[] classNames = pkg.listClasses(classpath);
         for (String className : classNames) {
             final Class javaClass = loadClass(className);
             if (javaClass != null) {
@@ -96,7 +96,7 @@ public class PackageLoader {
 
     public void loadAndInitializeAll(Class representative) {
         try {
-            for (Class outerClass : load(MaxPackage.fromClass(representative), true)) {
+            for (Class outerClass : load(BootImagePackage.fromClass(representative), true)) {
                 initializeAll(outerClass);
             }
         } catch (Throwable throwable) {

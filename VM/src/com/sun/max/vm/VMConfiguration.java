@@ -102,8 +102,8 @@ public final class VMConfiguration {
     @INLINE public RunScheme             runScheme()         { return runScheme;         }
 
     @HOSTED_ONLY
-    public List<MaxPackage> packages() {
-        return Arrays.asList(new MaxPackage[] {
+    public List<BootImagePackage> packages() {
+        return Arrays.asList(new BootImagePackage[] {
             referencePackage,
             layoutPackage,
             heapPackage,
@@ -119,7 +119,7 @@ public final class VMConfiguration {
     }
 
     @HOSTED_ONLY
-    private <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(List<VMScheme> loadedSchemes, MaxPackage p, Class<VMScheme_Type> vmSchemeType) {
+    private <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(List<VMScheme> loadedSchemes, BootImagePackage p, Class<VMScheme_Type> vmSchemeType) {
         if (p == null) {
             throw ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
         }
@@ -242,13 +242,12 @@ public final class VMConfiguration {
      * @return {@code true} if the specified package is part of this VM in this configuration
      */
     @HOSTED_ONLY
-    public boolean isMaxineVMPackage(MaxPackage maxPackage) {
-        if (maxPackage == null) {
+    public boolean isMaxineVMPackage(BootImagePackage pkg) {
+        if (pkg == null) {
             return false;
         }
-        // VM, Ext and JDK
-        if (maxPackage instanceof BootImagePackage) {
-            final BootImagePackage vmPackage = (BootImagePackage) maxPackage;
+        if (pkg instanceof BootImagePackage) {
+            final BootImagePackage vmPackage = (BootImagePackage) pkg;
             return vmPackage.isPartOfMaxineVM(this);
         }
         return false;

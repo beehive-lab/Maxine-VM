@@ -114,7 +114,7 @@ public final class VMConfigurator {
     public static VMPackage defaultOptCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
+                return (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             default:
                 throw FatalError.unexpected(platform().isa.toString());
         }
@@ -126,7 +126,7 @@ public final class VMConfigurator {
     public static VMPackage defaultJitCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
+                return (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
             default:
                 throw FatalError.unimplemented();
         }
@@ -233,7 +233,7 @@ public final class VMConfigurator {
         if (value == null) {
             return null;
         }
-        return (VMPackage) MaxPackage.fromName(value);
+        return (VMPackage) BootImagePackage.fromName(value);
     }
 
     /**

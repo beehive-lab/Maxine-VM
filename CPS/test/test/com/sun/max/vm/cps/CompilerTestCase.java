@@ -259,7 +259,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
         }
     }
 
-    protected void compilePackage(MaxPackage p) {
+    protected void compilePackage(BootImagePackage p) {
         Trace.begin(1, "compiling package: " + p.name());
         for (Class javaType : javaPrototype().packageLoader().load(p, true)) {
             compileClass(javaType);
@@ -267,8 +267,8 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
         Trace.end(1, "compiling package: " + p.name());
     }
 
-    protected void compilePackages(List<MaxPackage> packages) {
-        for (MaxPackage p : packages) {
+    protected void compilePackages(List<BootImagePackage> packages) {
+        for (BootImagePackage p : packages) {
             compilePackage(p);
         }
     }
