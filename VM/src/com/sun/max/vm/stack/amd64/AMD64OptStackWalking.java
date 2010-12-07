@@ -247,7 +247,7 @@ public class AMD64OptStackWalking {
         }
 
         int regIndex = 0;
-        if (!trampoline.is(StaticTrampoline)) {
+        if (!calledMethod.isStatic()) {
             // set a bit for the receiver object
             int offset = csa.offsetOf(regs[regIndex++]);
             preparer.setReferenceMapBits(current, calleeSaveStart.plus(offset), 1, 1);
