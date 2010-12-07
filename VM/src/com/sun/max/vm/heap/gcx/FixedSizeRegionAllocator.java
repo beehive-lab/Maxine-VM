@@ -49,8 +49,8 @@ public class FixedSizeRegionAllocator {
      * of the allocated range of contiguous regions.
      */
     static class RegionRange {
-        int firstRegion;
-        int length;
+        int firstRegionId;
+        int numRegions;
     }
 
 
@@ -59,6 +59,7 @@ public class FixedSizeRegionAllocator {
      */
     static final class RegionBitSet {
         static final int LOG2_BITS_PER_WORD =  WordWidth.BITS_64.log2numberOfBits;
+        static final int BIT_INDEX_MASK = WordWidth.BITS_64.numberOfBits - 1;
         static final long ALL_ONES = ~0L;
 
 
@@ -112,6 +113,14 @@ public class FixedSizeRegionAllocator {
          */
         private static long bitmask(int startIndex, int endIndex) {
             return bitsLeftOf(startIndex) & bitsRightOf(endIndex);
+        }
+
+        boolean isSet(int bitIndex) {
+            return (bits[wordIndex(bitIndex)] & bitmask(bitIndex)) != 0L;
+        }
+
+        boolean isClear(int bitIndex) {
+            return (bits[wordIndex(bitIndex)] & bitmask(bitIndex)) == 0L;
         }
 
         void set(int bitIndex) {
@@ -192,16 +201,14 @@ public class FixedSizeRegionAllocator {
         int nextClearBit(int startIndex) {
             int i = wordIndex(startIndex);
             // First, search a clear bit in the same word.
-            long w = bits[i] >> startIndex;
-            if (w == 0L) {
-                return startIndex;
+            long w = ~bits[i] & bitsLeftOf(startIndex);
+            while (w == 0L) {
+                if (++i > bits.length) {
+                    return INVALID_REGION_ID;
+                }
+                w = ~bits[i];
             }
-
-            int clearBit = Long.numberOfTrailingZeros(w);
-            if (clearBit != 0) {
-                return clearBit + startIndex;
-            }
-            return clearBit;
+            return (i << LOG2_BITS_PER_WORD) + Long.numberOfTrailingZeros(w);
         }
 
         int previousSetBit(int startIndex) {
@@ -211,7 +218,7 @@ public class FixedSizeRegionAllocator {
             while (w == 0L) {
                 w = bits[--i];
             }
-            return (i << LOG2_BITS_PER_WORD) + Long.numberOfLeadingZeros(w);
+            return (i << LOG2_BITS_PER_WORD) + (BIT_INDEX_MASK - Long.numberOfLeadingZeros(w));
         }
     }
 
@@ -345,13 +352,13 @@ public class FixedSizeRegionAllocator {
      * @return the identifier of the first region of the allocated range, or INVALID_REGION_ID if the request cannot be satisfied
      */
     synchronized int allocateLessOrEqual(RegionRange request) {
-        assert request != null && request.length > 0;
+        assert request != null && request.numRegions > 0;
         if (numFreeRegions == 0) {
-            request.length = 0;
-            request.firstRegion = INVALID_REGION_ID;
+            request.numRegions = 0;
+            request.firstRegionId = INVALID_REGION_ID;
             return INVALID_REGION_ID;
         }
-        final int rsize = request.length;
+        final int rsize = request.numRegions;
         final int begin = allocated.nextClearBit(residentRegions);
         final int numAllocated = allocated.numClearBitsAt(begin, rsize);
         assert numAllocated != 0;
@@ -360,8 +367,8 @@ public class FixedSizeRegionAllocator {
         if (last > highestAllocated) {
             highestAllocated = last;
         }
-        request.firstRegion = begin;
-        request.length = numAllocated;
+        request.firstRegionId = begin;
+        request.numRegions = numAllocated;
         allocated.set(begin, end);
         numFreeRegions -= numAllocated;
         return begin;
