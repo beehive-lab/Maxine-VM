@@ -47,13 +47,12 @@ public final class HeapRegionManager {
     static final HeapRegionManager theHeapRegionManager = new HeapRegionManager();
 
     /**
-     * Backing storage for the space managed by the region manager.
-     * Provides interface to commit/uncommit space to regions.
+     * Region allocator used by the heap manager.
      */
-    private FixedSizeRegionMemory backingStorage;
+    private FixedSizeRegionAllocator regionAllocator;
 
     boolean contains(Address address) {
-        return backingStorage.contains(address);
+        return regionAllocator.contains(address);
     }
     /**
      * Heap account serving the needs of the heap region manager.
@@ -87,6 +86,11 @@ public final class HeapRegionManager {
         return true;
     }
 
+    /**
+     * Release reserved regions (i.e., "unreserved" them).
+     *
+     * @param numRegions
+     */
     void release(int numRegions) {
         FatalError.check((unreserved + numRegions) <= capacity, "invalid request");
         unreserved += numRegions;
@@ -136,7 +140,7 @@ public final class HeapRegionManager {
 
 
     private HeapRegionManager() {
-        backingStorage = new FixedSizeRegionMemory("Heap Backing Storage");
+        regionAllocator = new FixedSizeRegionAllocator("Heap Backing Storage");
         bootstrapAllocator = new BootstrapAllocator();
     }
 
@@ -173,12 +177,13 @@ public final class HeapRegionManager {
 
         // Round this to an integral number of regions.
         initialSize = initialSize.roundedUpBy(regionSizeInBytes);
-        final Size initialNumRegions = initialSize.unsignedShiftedRight(log2RegionSizeInBytes);
-
-        // Commit space and initialize the bootstrap allocator
-        backingStorage.initialize(startOfHeapSpace, heapSpaceSize, Size.fromInt(regionSizeInBytes), initialNumRegions, initialNumRegions);
+        final int initialNumRegions = initialSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
 
         bootstrapAllocator.initialize(startOfHeapSpace, startOfHeapSpace.plus(initialSize));
+
+        // Commit space and initialize the bootstrap allocator
+        regionAllocator.initialize(startOfHeapSpace, heapSpaceSize, Size.fromInt(regionSizeInBytes), initialNumRegions);
+
 
         // FIXME: Here, ideally, we should have some mechanism to makes the standard allocation mechanism
         // tapping directly on the bootstrap linear allocator over the start of heap space.
@@ -223,7 +228,8 @@ public final class HeapRegionManager {
      * @return the identifier of the first region of the contiguous range allocated or {@link HeapRegionConstants#INVALID_REGION_ID} if the
      * request cannot be satisfied.
      */
-    int allocate(Size numRegions) {
+    int allocate(int numRegions) {
+        regionAllocator.allocate(numRegions);
         return INVALID_REGION_ID;
     }
 
@@ -238,7 +244,7 @@ public final class HeapRegionManager {
      * as many regions as possible
      * @return the number of regions allocated
      */
-    int allocate(HeapRegionList list, Size numRegions, boolean append, boolean exact) {
+    int allocate(HeapRegionList list, int numRegions, boolean append, boolean exact) {
         return 0;
     }
 
@@ -247,13 +253,13 @@ public final class HeapRegionManager {
      * @param firstRegionId identifier of the first region
      * @param numRegions
      */
-    void free(int firstRegionId, Size numRegions) {
+    void free(int firstRegionId, int numRegions) {
     }
 
-    void commit(int firstRegionId, Size numRegions) {
+    void commit(int firstRegionId, int numRegions) {
 
     }
-    void uncommit(int firstRegionId, Size numRegions) {
+    void uncommit(int firstRegionId, int numRegions) {
 
     }
 }
