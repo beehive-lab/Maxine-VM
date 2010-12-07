@@ -26,7 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A region of memory in the VM.
+ * A named region of memory in the VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
