@@ -2410,9 +2410,9 @@ public final class GraphBuilder {
      }
 
     void genNativeCall(int cpi) {
+        Value nativeFunctionAddress = wpop();
         FrameState stateBefore = curState.immutableCopy(bci());
         RiSignature sig = constantPool().lookupSignature(cpi);
-        Value nativeFunctionAddress = wpop();
         Value[] args = curState.popArguments(sig.argumentSlots(false));
 
         RiMethod nativeMethod = scope().method;
