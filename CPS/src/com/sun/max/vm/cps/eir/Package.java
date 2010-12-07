@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.cps.eir;
 
-import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 

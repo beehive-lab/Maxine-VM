@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.eir.amd64.linux;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.config.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;

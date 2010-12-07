@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.cps.dir.eir.amd64;
 
-import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.dir.*;
