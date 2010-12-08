@@ -23,11 +23,47 @@ package com.sun.max.config.vm;
 import com.sun.max.config.*;
 
 /**
- * Placeholder that will eventually redirect to the exact set of com.sun.max.vm packages to include.
+ * {@code com.sun.max.vm.*} packages to include in boot image.
+ * We could simplify this to {@code com.sun.max.vm.**} but for a few
+ * sub-packages that are not to be included.
+ * 
  *
  * @author Mick Jordan
  */
 public class Package extends BootImagePackage {
     public Package() {
+        super(
+            "com.sun.max.vm.*",
+            "com.sun.max.vm.actor.**",
+            "com.sun.max.vm.bytecode.**",
+            "com.sun.max.vm.code.*",
+            "com.sun.max.vm.compiler.**",
+            "com.sun.max.vm.classfile.*",
+            "com.sun.max.vm.classfile.constant.*",
+            "com.sun.max.vm.classfile.stackmap.*",
+            "com.sun.max.vm.collect.*",
+            "com.sun.max.vm.debug.*",
+            "com.sun.max.vm.heap.**",
+            "com.sun.max.vm.instrument.*",
+            "com.sun.max.vm.jdk.**",
+            "com.sun.max.vm.jni.*",
+            "com.sun.max.vm.jvmti.*",
+            "com.sun.max.vm.layout.**",
+            "com.sun.max.vm.management.*",
+            "com.sun.max.vm.monitor.**",
+            "com.sun.max.vm.object.*",
+            "com.sun.max.vm.profile.*",
+            "com.sun.max.vm.reference.**",
+            "com.sun.max.vm.reflection.*",
+            "com.sun.max.vm.run.**",
+            "com.sun.max.vm.runtime.**",
+            "com.sun.max.vm.stack.**",
+            "com.sun.max.vm.tele.*",
+            "com.sun.max.vm.test.*",
+            "com.sun.max.vm.thread.*",
+            "com.sun.max.vm.type.*",
+            "com.sun.max.vm.value.*",
+            "com.sun.max.vm.verifier.**"
+                        );
     }
 }

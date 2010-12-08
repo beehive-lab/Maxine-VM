@@ -18,17 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.run;
+package com.sun.max.config.cps;
 
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
- * @see MaxPackage
- * 
- * @author Bernd Mathiske
+ * Redirect for CPS compiler.
+ *
+ * @author Mick Jordan
+ *
  */
-public class Package extends VMPackage {
+
+public class Package extends BootImagePackage {
     public Package() {
-        super();
+        super("com.sun.max.vm.cps.**",
+                  "com.sun.max.vm.hotpath.**",
+                  "com.sun.max.vm.jit.*",
+                  "com.sun.max.vm.template.*",
+                  "com.sun.max.vm.template.source.*"
+                  );
     }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return CPSCompiler.Static.isCompilerPackage(this);
+    }
+
 }

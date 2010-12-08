@@ -314,10 +314,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
             if (oldPkg == null) {
                 // new
             } else {
-                // merge into oldPkg, checking consistency
-                if (pkg.recursive != oldPkg.recursive) {
-                    throw ProgramError.unexpected("multiple package specs for: " + pkg.name + " disagree on recursion");
-                }
+                // merge into oldPkg
                 oldPkg.others.putAll(pkg.others);
                 if (pkg.classes != null) {
                     oldPkg.initClasses();
@@ -353,6 +350,9 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
             RootPackageInfo info = rootInfos.get(rootIndex++);
             for (String pkgName : info.pkgNames) {
                 BootImagePackage pkg = BootImagePackage.fromName(pkgName);
+                if (pkgName.equals("com.sun.max.vm.actor")) {
+                    System.console();
+                }
                 if (pkg == null) {
                     String parentPkgName = getPackageName(pkgName);
                     while (parentPkgName.length() != 0) {
@@ -361,6 +361,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
                             pkg = parent.others.get(pkgName);
                             if (pkg == null && parent.recursive) {
                                 pkg = parent.cloneAs(pkgName);
+                                break;
                             }
                         }
                         parentPkgName = getPackageName(parentPkgName);

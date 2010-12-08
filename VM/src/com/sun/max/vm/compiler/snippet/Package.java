@@ -23,8 +23,8 @@ package com.sun.max.vm.compiler.snippet;
 import com.sun.max.vm.*;
 
 /**
- * @see MaxPackage
- * 
+ * This cannot be deleted as it is explicitly instantiated during builtin bootstrap.
+ *
  * @author Bernd Mathiske
  */
 public class Package extends VMPackage {
