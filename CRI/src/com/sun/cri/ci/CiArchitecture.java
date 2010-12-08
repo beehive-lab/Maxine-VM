@@ -79,6 +79,10 @@ public abstract class CiArchitecture {
      */
     public final int machineCodeCallDisplacementOffset;
 
+    /**
+     * The size of the return address pushed to the stack by a call instruction.
+     * A value of 0 denotes that call linkage uses registers instead (e.g. SPARC).
+     */
     public final int returnAddressSize;
 
     private final EnumMap<RegisterFlag, CiRegister[]> registersByTypeAndEncoding;
