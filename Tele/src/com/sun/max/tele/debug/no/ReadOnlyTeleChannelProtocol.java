@@ -22,9 +22,9 @@ package com.sun.max.tele.debug.no;
 
 import java.nio.*;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.util.*;
 
 
 /**
@@ -202,7 +202,7 @@ public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
     }
 
     private static void unexpected() {
-        ProgramError.unexpected("ReadOnlyTeleChannel method caalled unexpectedly");
+        TeleError.unexpected("ReadOnlyTeleChannel method caalled unexpectedly");
     }
 
 }

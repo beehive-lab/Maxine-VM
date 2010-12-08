@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.cps.ir;
 
-import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class Package extends VMPackage {
@@ -34,4 +34,8 @@ public class Package extends VMPackage {
         super();
     }
 
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return CPSCompiler.Static.compiler() != null;
+    }
 }

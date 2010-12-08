@@ -20,10 +20,9 @@
  */
 package com.sun.max.vm.cps.cir.snippet;
 
-import java.util.*;
-
-import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.cps.cir.*;
 
 /**
  * @see MaxPackage
@@ -36,11 +35,7 @@ public class Package extends VMPackage {
     }
 
     @Override
-    public Set<MaxPackage> prerequisites() {
-        final MaxPackage p1 = new com.sun.max.vm.cps.cir.builtin.Package();
-        final MaxPackage p2 = new com.sun.max.vm.compiler.snippet.Package();
-        final MaxPackage p3 = new com.sun.max.vm.hotpath.Package();
-        return new HashSet<MaxPackage>(Arrays.asList(p1, p2, p3));
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return CPSCompiler.Static.compiler() instanceof CirGeneratorScheme;
     }
-
 }

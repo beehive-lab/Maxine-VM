@@ -20,10 +20,11 @@
  */
 package com.sun.max.tele.method;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.CodeLocation.*;
+import com.sun.max.tele.method.CodeLocation.BytecodeLocation;
+import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -38,7 +39,7 @@ public final class CodeManager extends AbstractTeleVMHolder implements MaxCodeMa
         super(teleVM);
     }
 
-    public BytecodeLocation createBytecodeLocation(MethodKey methodKey, String description) throws ProgramError {
+    public BytecodeLocation createBytecodeLocation(MethodKey methodKey, String description) throws TeleError {
         return CodeLocation.createBytecodeLocation(vm(), methodKey, description);
     }
 
@@ -46,11 +47,11 @@ public final class CodeManager extends AbstractTeleVMHolder implements MaxCodeMa
         return CodeLocation.createBytecodeLocation(vm(), teleClassMethodActor, bytecodePosition, description);
     }
 
-    public MachineCodeLocation createMachineCodeLocation(Address address, String description) throws ProgramError {
+    public MachineCodeLocation createMachineCodeLocation(Address address, String description) throws TeleError {
         return CodeLocation.createMachineCodeLocation(vm(), address, description);
     }
 
-    public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position, String description) throws ProgramError {
+    public MachineCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position, String description) throws TeleError {
         return CodeLocation.createMachineCodeLocation(vm(), address, teleClassMethodActor, position, description);
     }
 

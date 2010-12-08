@@ -110,15 +110,13 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         null, // java frame descriptors
                         null, // no scalar literals ever
                         referenceLiterals,
-                        codeGenerator.codeBuffer,
+                        codeGenerator.codeBuffer.buffer(),
                         codeGenerator.targetABI());
 
         if (!MaxineVM.isHosted()) {
             // at target runtime, each method gets linked individually right after generating it:
             targetMethod.linkDirectCalls(adapter);
         }
-
-        CompilationScheme.Inspect.notifyCompilationComplete(targetMethod);
     }
 }
 

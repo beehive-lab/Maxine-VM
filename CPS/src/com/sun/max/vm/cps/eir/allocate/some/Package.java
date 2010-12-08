@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.allocate.some;
 
-import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.allocate.*;
 
@@ -37,6 +37,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.bootCompilerScheme() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(this);
+        return CPSCompiler.Static.compiler() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(this);
     }
 }

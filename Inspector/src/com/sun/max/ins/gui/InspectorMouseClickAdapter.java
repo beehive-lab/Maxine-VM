@@ -23,6 +23,7 @@ package com.sun.max.ins.gui;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.util.*;
 
 /**
  * An implementation of {@link MouseListener} that only responds to single

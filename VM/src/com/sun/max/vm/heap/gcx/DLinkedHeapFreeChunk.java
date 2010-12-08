@@ -27,10 +27,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A Circular doubly linked list of free heap chunk.
@@ -48,7 +48,7 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
     private static final int PREV_INDEX;
 
     static {
-        PREV_INDEX = DLINKED_HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("prev")).offset() >> Word.widthValue().log2numberOfBytes;
+        PREV_INDEX = ClassRegistry.findField(DLinkedHeapFreeChunk.class, "prev").offset() >> Word.widthValue().log2numberOfBytes;
     }
 
     @INLINE

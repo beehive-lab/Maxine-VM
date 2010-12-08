@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.*;
 import com.sun.max.vm.*;
 
 /**

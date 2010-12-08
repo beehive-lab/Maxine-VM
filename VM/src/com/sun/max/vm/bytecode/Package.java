@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.bytecode;
 
-import com.sun.max.*;
 import com.sun.max.vm.*;
 
 /**

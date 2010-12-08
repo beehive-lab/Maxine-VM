@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.cps.dir;
 
-import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * @see MaxPackage
@@ -35,6 +35,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.bootCompilerScheme() instanceof DirGeneratorScheme;
+        return CPSCompiler.Static.compiler() instanceof DirGeneratorScheme;
     }
 }

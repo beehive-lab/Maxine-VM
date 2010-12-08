@@ -35,7 +35,6 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -274,7 +273,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toJava(this);
         }
-        Metrics.increment("MethodActor.toJava()");
         final Class<?> javaHolder = holder().toJava();
         final ClassLoader holderClassLoader = javaHolder.getClassLoader();
         final Class[] parameterTypes = descriptor().resolveParameterTypes(holderClassLoader);
@@ -321,10 +319,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     @Override
     public final <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-        final TypeDescriptor annotationTypeDescriptor = JavaTypeDescriptor.forJavaClass(annotationClass);
-        if (MaxineVM.isMaxineClass(annotationTypeDescriptor) && !MaxineVM.isMaxineClass(holder())) {
-            return null;
-        }
         if (isInstanceInitializer()) {
             return toJavaConstructor().getAnnotation(annotationClass);
         }
@@ -500,16 +494,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     public static MethodActor read(DataInput stream) throws IOException {
         return MethodID.toMethodActor(MethodID.fromWord(Word.read(stream)));
-    }
-
-    @FOLD
-    public static VirtualMethodActor findVirtual(ClassActor classActor, String name) {
-        return classActor.findLocalVirtualMethodActor(name);
-    }
-
-    @FOLD
-    public static StaticMethodActor findStatic(Class javaClass, String name) {
-        return ClassActor.fromJava(javaClass).findLocalStaticMethodActor(name);
     }
 
     public final int accessFlags() {

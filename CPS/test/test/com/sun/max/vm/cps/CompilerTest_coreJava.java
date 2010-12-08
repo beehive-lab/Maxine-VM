@@ -22,7 +22,7 @@ package test.com.sun.max.vm.cps;
 
 import java.util.*;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.cps.ir.*;
 
 /**
@@ -50,35 +50,35 @@ public abstract class CompilerTest_coreJava<Method_Type extends IrMethod> extend
     }
 
     public void test_beans() {
-        compilePackage(MaxPackage.fromJava("java.beans"));
+        compilePackage(new BootImagePackage("java.beans", false));
     }
 
     public void test_reflect() {
-        compilePackage(MaxPackage.fromJava("java.lang.reflect"));
+        compilePackage(new BootImagePackage("java.lang.reflect", false));
     }
 
     public void test_net() {
-        compilePackage(MaxPackage.fromJava("java.net"));
+        compilePackage(new BootImagePackage("java.net", false));
     }
 
     public void test_nio() {
-        compilePackage(MaxPackage.fromJava("java.nio"));
+        compilePackage(new BootImagePackage("java.nio", false));
     }
 
     public void test_security() {
-        compilePackage(MaxPackage.fromJava("java.security"));
+        compilePackage(new BootImagePackage("java.security", false));
     }
 
     public void test_lang() {
-        compilePackage(MaxPackage.fromJava("java.lang"));
+        compilePackage(new BootImagePackage("java.lang", false));
     }
 
     public void test_util() {
-        compilePackage(MaxPackage.fromJava("java.util"));
+        compilePackage(new BootImagePackage("java.util", false));
     }
 
     public void test_io() {
-        compilePackage(MaxPackage.fromJava("java.io"));
+        compilePackage(new BootImagePackage("java.io", false));
     }
 
 }

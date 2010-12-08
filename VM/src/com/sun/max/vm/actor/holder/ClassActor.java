@@ -33,7 +33,6 @@ import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -51,6 +50,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 import com.sun.max.vm.verifier.*;
 
 /**
@@ -64,7 +64,6 @@ import com.sun.max.vm.verifier.*;
 public abstract class ClassActor extends Actor implements RiType {
 
     public static final Deferrable.Queue DEFERRABLE_QUEUE_1 = Deferrable.createDeferred();
-    public static final Deferrable.Queue DEFERRABLE_QUEUE_2 = Deferrable.createDeferred();
 
     public static final char NO_MAJOR_VERSION = (char) -1;
     public static final char NO_MINOR_VERSION = (char) -1;
@@ -173,20 +172,8 @@ public abstract class ClassActor extends Actor implements RiType {
         super(name, flags);
         assert kind == typeDescriptor.toKind();
         if (MaxineVM.isHosted()) {
-            if (MaxineVM.isMaxineClass(typeDescriptor)) {
-                initializationState = INITIALIZED;
-            } else {
-                // TODO: At some point, it may be worth trying to put JDK classes into the image in the VERIFIED state
-                // so that their class initializers are run at the 'right time' (i.e. according to the JVM spec).
-                // This solves the issue of having to clear/re-initialize static fields at runtime whose values
-                // depend on the runtime context, not the image build time context.
-                // However, it also raises other issues such as what it means to have instances in existence for
-                // classes that will be re-initialized. Also, all code in the boot image will need to have
-                // the appropriate class initialization barriers (that would be required if the same code
-                // was compiled at runtime).
-                initializationState = INITIALIZED;
-            }
-
+            // All boot image classes are initialized
+            initializationState = INITIALIZED;
         } else {
             initializationState = PREPARED;
         }
@@ -290,7 +277,7 @@ public abstract class ClassActor extends Actor implements RiType {
                 final TupleReferenceMap staticReferenceMap = new TupleReferenceMap(localStaticFieldActors);
                 final StaticHub sHub = new StaticHub(staticTupleSize, ClassActor.this, staticReferenceMap);
                 ClassActor.this.staticHub = sHub.expand(staticReferenceMap, getRootClassActorId());
-                ClassActor.this.staticTuple = StaticTuple.create(ClassActor.this);
+                ClassActor.this.staticTuple = ClassActor.create(ClassActor.this);
 
                 final HashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
                 List<VirtualMethodActor> virtualMethodActors = gatherVirtualMethodActors(allInterfaceActors, methodLookup);
@@ -314,18 +301,14 @@ public abstract class ClassActor extends Actor implements RiType {
                     final DynamicHub dHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorSerials, allInterfaceActors, vTableLength, dynamicReferenceMap);
                     ClassActor.this.iToV = new int[dHub.iTableLength];
                     ClassActor.this.dynamicHub = dHub.expand(superClassActorSerials, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
+
+                    if (isReferenceClassActor()) {
+                        dynamicHub.initializeVTable(allVirtualMethodActors);
+                        dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
+                    }
                 }
             }
         };
-
-        if (isReferenceClassActor()) {
-            new Deferrable(DEFERRABLE_QUEUE_2) {
-                public void run() {
-                    dynamicHub.initializeVTable(allVirtualMethodActors);
-                    dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
-                }
-            };
-        }
     }
 
     private int getRootClassActorId() {
@@ -495,6 +478,20 @@ public abstract class ClassActor extends Actor implements RiType {
         return localInterfaceActors;
     }
 
+    public static Object create(ClassActor classActor) {
+        if (MaxineVM.isHosted()) {
+            return new StaticTuple(classActor);
+        }
+        final Object staticTuple = Heap.createTuple(classActor.staticHub());
+        for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
+            final Value constantValue = fieldActor.constantValue();
+            if (constantValue != null) {
+                fieldActor.writeValue(staticTuple, constantValue);
+            }
+        }
+        return staticTuple;
+    }
+
     @INLINE
     public final Object staticTuple() {
         return staticTuple;
@@ -577,6 +574,7 @@ public abstract class ClassActor extends Actor implements RiType {
         return null;
     }
 
+    @HOSTED_ONLY
     public final FieldActor findStaticFieldActor(int offset) {
         ClassActor holder = this;
         do {
@@ -586,24 +584,6 @@ public abstract class ClassActor extends Actor implements RiType {
             }
             for (InterfaceActor interfaceActor : holder.localInterfaceActors) {
                 final FieldActor interfaceResult = interfaceActor.findStaticFieldActor(offset);
-                if (interfaceResult != null) {
-                    return interfaceResult;
-                }
-            }
-            holder = holder.superClassActor;
-        } while (holder != null);
-        return null;
-    }
-
-    public final FieldActor findStaticFieldActor(String name) {
-        ClassActor holder = this;
-        do {
-            final FieldActor result = holder.findLocalStaticFieldActor(name);
-            if (result != null) {
-                return result;
-            }
-            for (InterfaceActor interfaceActor : holder.localInterfaceActors) {
-                final FieldActor interfaceResult = interfaceActor.findStaticFieldActor(name);
                 if (interfaceResult != null) {
                     return interfaceResult;
                 }
@@ -668,6 +648,7 @@ public abstract class ClassActor extends Actor implements RiType {
         return null;
     }
 
+    @HOSTED_ONLY
     public final FieldActor findInstanceFieldActor(int offset) {
         ClassActor holder = this;
         do {
@@ -680,35 +661,13 @@ public abstract class ClassActor extends Actor implements RiType {
         return null;
     }
 
+    @HOSTED_ONLY
     public final FieldActor findLocalFieldActor(Utf8Constant name, TypeDescriptor descriptor) {
         final FieldActor result = findLocalInstanceFieldActor(name, descriptor);
         if (result != null) {
             return result;
         }
         return findLocalStaticFieldActor(name, descriptor);
-    }
-
-    public FieldActor findFieldActor(Utf8Constant name) {
-        FieldActor fieldActor;
-        ClassActor holder = this;
-        do {
-            fieldActor = holder.findLocalInstanceFieldActor(name);
-            if (fieldActor != null) {
-                return fieldActor;
-            }
-            fieldActor = holder.findLocalStaticFieldActor(name);
-            if (fieldActor != null) {
-                return fieldActor;
-            }
-            for (InterfaceActor interfaceActor : holder.localInterfaceActors()) {
-                fieldActor = interfaceActor.findFieldActor(name);
-                if (fieldActor != null) {
-                    return fieldActor;
-                }
-            }
-            holder = holder.superClassActor;
-        } while (holder != null);
-        return null;
     }
 
     /**
@@ -753,29 +712,6 @@ public abstract class ClassActor extends Actor implements RiType {
         return findMemberActor(localStaticMethodActors, name, descriptor);
     }
 
-    public final boolean forAllStaticMethodActors(Predicate<StaticMethodActor> predicate) {
-        ClassActor classActor = this;
-        do {
-            for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
-                if (!predicate.evaluate(staticMethodActor)) {
-                    return false;
-                }
-            }
-            classActor = classActor.superClassActor;
-        } while (classActor != null);
-        return true;
-    }
-
-    public final void forAllStaticMethodActors(Procedure<StaticMethodActor> procedure) {
-        ClassActor classActor = this;
-        do {
-            for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
-                procedure.run(staticMethodActor);
-            }
-            classActor = classActor.superClassActor;
-        } while (classActor != null);
-    }
-
     public final StaticMethodActor findStaticMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
         ClassActor holder = this;
         do {
@@ -808,48 +744,11 @@ public abstract class ClassActor extends Actor implements RiType {
         return findMemberActor(localVirtualMethodActors, name, descriptor);
     }
 
-    public final VirtualMethodActor findLocalVirtualMethodActor(MethodActor declaredMethod) {
-        return findLocalVirtualMethodActor(declaredMethod.name, declaredMethod.descriptor());
-    }
-
-    public final VirtualMethodActor findLocalVirtualMethodActor(Utf8Constant name) {
-        for (VirtualMethodActor virtualMethodActor : localVirtualMethodActors) {
-            if (virtualMethodActor.name.equals(name)) {
-                return virtualMethodActor;
-            }
-        }
-        return null;
-    }
-
-    public final VirtualMethodActor findLocalVirtualMethodActor(String name) {
-        for (VirtualMethodActor virtualMethodActor : localVirtualMethodActors) {
-            if (virtualMethodActor.name.toString().equals(name)) {
-                return virtualMethodActor;
-            }
-        }
-        return null;
-    }
-
     @CONSTANT
     private VirtualMethodActor[] allVirtualMethodActors;
 
     public final VirtualMethodActor[] allVirtualMethodActors() {
         return allVirtualMethodActors;
-    }
-
-    public final boolean forAllVirtualMethodActors(Predicate<VirtualMethodActor> predicate) {
-        for (VirtualMethodActor virtualMethodActor : allVirtualMethodActors) {
-            if (!predicate.evaluate(virtualMethodActor)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public final void forAllVirtualMethodActors(Procedure<VirtualMethodActor> procedure) {
-        for (VirtualMethodActor virtualMethodActor : allVirtualMethodActors) {
-            procedure.run(virtualMethodActor);
-        }
     }
 
     public final VirtualMethodActor findVirtualMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
@@ -890,38 +789,12 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     public final StaticMethodActor findLocalStaticMethodActor(Utf8Constant name) {
-        // Old style for loop so this can be used in the primordial VM phase:
-        for (int i = 0; i < localStaticMethodActors.length; i++) {
-            final StaticMethodActor staticMethodActor = localStaticMethodActors[i];
+        for (StaticMethodActor staticMethodActor : localStaticMethodActors) {
             if (staticMethodActor.name.equals(name)) {
                 return staticMethodActor;
             }
         }
         return null;
-    }
-
-    public final StaticMethodActor findLocalStaticMethodActor(String name) {
-        return findLocalStaticMethodActor(SymbolTable.makeSymbol(name));
-    }
-
-    public final MethodActor findLocalClassMethodActor(MethodActor declaredMethod) {
-        return findLocalClassMethodActor(declaredMethod.name, declaredMethod.descriptor());
-    }
-
-    public final boolean forAllClassMethodActors(Predicate<ClassMethodActor> predicate) {
-        final Class<Predicate<VirtualMethodActor>> dynamicType = null;
-        if (!forAllVirtualMethodActors(Utils.cast(dynamicType, predicate))) {
-            return false;
-        }
-        final Class<Predicate<StaticMethodActor>> staticType = null;
-        return forAllStaticMethodActors(Utils.cast(staticType, predicate));
-    }
-
-    public final void forAllClassMethodActors(Procedure<ClassMethodActor> procedure) {
-        final Class<Procedure<VirtualMethodActor>> dynamicType = null;
-        forAllVirtualMethodActors(Utils.cast(dynamicType, procedure));
-        final Class<Procedure<StaticMethodActor>> staticType = null;
-        forAllStaticMethodActors(Utils.cast(staticType, procedure));
     }
 
     /**
@@ -967,10 +840,6 @@ public abstract class ClassActor extends Actor implements RiType {
             classActor = classActor.superClassActor;
         } while (classActor != null);
         return null;
-    }
-
-    public final ClassMethodActor findClassMethodActor(MethodActor declaredMethod) {
-        return findClassMethodActor(declaredMethod.name, declaredMethod.descriptor());
     }
 
     @INSPECTED

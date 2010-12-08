@@ -43,7 +43,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.Reference;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -321,7 +320,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
                 } else if (StaticHub.class.isAssignableFrom(javaClass)) {
                     teleObject = new TeleStaticHub(vm(), reference);
                 } else {
-                    throw FatalError.unexpected("invalid hybrid implementation type");
+                    throw TeleError.unexpected("invalid hybrid implementation type");
                 }
             }
         } else if (classActor.isTupleClass()) {
@@ -332,16 +331,16 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
                 try {
                     teleObject = (TeleObject) constructor.newInstance(vm(), reference);
                 } catch (InstantiationException e) {
-                    ProgramError.unexpected();
+                    TeleError.unexpected();
                 } catch (IllegalAccessException e) {
-                    ProgramError.unexpected();
+                    TeleError.unexpected();
                 } catch (InvocationTargetException e) {
                     e.printStackTrace();
-                    ProgramError.unexpected();
+                    TeleError.unexpected();
                 }
             }
         } else {
-            //throw FatalError.unexpected("invalid object implementation type");
+            //throw TeleError.unexpected("invalid object implementation type");
             Trace.line(TRACE_VALUE, tracePrefix() + "failed to create object at apparently valid origin=0x" + reference.toOrigin().toHexString());
             return null;
         }
@@ -363,7 +362,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
             }
             javaClass = javaClass.getSuperclass();
         }
-        ProgramError.unexpected("TeleObjectFactory failed to find constructor for class" + classActor.toJava());
+        TeleError.unexpected("TeleObjectFactory failed to find constructor for class" + classActor.toJava());
         return null;
     }
 

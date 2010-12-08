@@ -30,9 +30,9 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.darwin.DarwinMachO.LoadCommand;
 import com.sun.max.tele.debug.darwin.DarwinMachO.Segment64LoadCommand;
 import com.sun.max.tele.debug.darwin.DarwinMachO.ThreadLoadCommand;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Core file handling for Darwin. Of course, it doesn't use ELF. Mach_O instead.
@@ -61,7 +61,7 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
             this.header = DarwinMachO.Header.read(dumpRaf);
             processLoadCommands();
         } catch (Exception ex) {
-            FatalError.unexpected("failed to open dump file: " + dump, ex);
+            TeleError.unexpected("failed to open dump file: " + dump, ex);
         }
     }
 
@@ -131,7 +131,7 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
                 return slc.vmaddr;
             }
         }
-        FatalError.unexpected("failed to find the start of the boot heap");
+        TeleError.unexpected("failed to find the start of the boot heap");
         return 0;
     }
 
@@ -267,11 +267,11 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
     }
 
     protected static void inappropriate(String methodName) {
-        FatalError.unexpected("method: " + methodName + " should not be called in dump mode");
+        TeleError.unexpected("method: " + methodName + " should not be called in dump mode");
     }
 
     protected static void unimplemented(String methodName) {
-        FatalError.unexpected("method: " + methodName + " is unimplemented");
+        TeleError.unimplemented("method: " + methodName);
     }
 
 }

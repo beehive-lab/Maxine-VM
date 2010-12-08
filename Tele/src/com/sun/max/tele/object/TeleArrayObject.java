@@ -28,12 +28,12 @@ import java.util.logging.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -108,17 +108,17 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public  Address fieldAddress(FieldActor fieldActor) {
-        throw FatalError.unexpected("Maxine Array objects don't contain fields");
+        throw TeleError.unexpected("Maxine Array objects don't contain fields");
     }
 
     @Override
     public Size fieldSize(FieldActor fieldActor) {
-        throw FatalError.unexpected("Maxine Array objects don't contain fields");
+        throw TeleError.unexpected("Maxine Array objects don't contain fields");
     }
 
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
-        throw FatalError.unexpected("Maxine Array objects don't contain fields");
+        throw TeleError.unexpected("Maxine Array objects don't contain fields");
     }
 
     @Override

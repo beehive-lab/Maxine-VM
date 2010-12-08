@@ -48,13 +48,12 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.ClassfileWriter.*;
+import com.sun.max.vm.classfile.ClassfileWriter.MaxineFlags;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.tele.*;
-import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.type.ClassRegistry.*;
+import com.sun.max.vm.type.ClassRegistry.Property;
 import com.sun.max.vm.value.*;
 
 /**
@@ -716,6 +715,8 @@ public final class ClassfileReader {
         return annotations;
     }
 
+    private static final Class BYTECODE_TEMPLATE = Classes.forName("com.sun.max.vm.template.BYTECODE_TEMPLATE");
+
     protected MethodActor[] readMethods(boolean isInterface) {
         final int numberOfMethods = classfileStream.readUnsigned2();
         if (numberOfMethods == 0) {
@@ -843,9 +844,10 @@ public final class ClassfileReader {
 
                 if (MaxineVM.isHosted()) {
                     if (isClinit) {
-                        // Class initializer's for all Maxine classes are run while bootstrapping and do not need to be in the boot image.
+                        // Class initializer's for all boot image classes are run while bootstrapping and do not need to be in the boot image.
                         // The "max.loader.preserveClinitMethods" system property can be used to override this default behaviour.
-                        if (MaxineVM.isMaxineClass(classDescriptor) && System.getProperty("max.loader.preserveClinitMethods") == null) {
+                        // and specific (JDK) classes can be designated as overrides for reinitialisation purposes.
+                        if (!MaxineVM.keepClassInit(classDescriptor)) {
                             continue nextMethod;
                         }
                     }
@@ -896,7 +898,7 @@ public final class ClassfileReader {
                             if (!Platform.platform().isAcceptedBy((PLATFORM) annotation)) {
                                 continue nextMethod;
                             }
-                        } else if (annotation.annotationType() == BYTECODE_TEMPLATE.class) {
+                        } else if (annotation.annotationType() == BYTECODE_TEMPLATE) {
                             flags |= TEMPLATE | UNSAFE;
                         } else if (annotation.annotationType() == INLINE.class) {
                             flags |= INLINE;

@@ -27,8 +27,8 @@ import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.transform.*;
 import com.sun.max.vm.cps.ir.*;
@@ -149,7 +149,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
                 instruction.acceptVisitor(this);
                 if (throwable != null) {
                     if (instruction.catchBlock() != null) {
-                        ExceptionDispatcher.INTERPRETER_EXCEPTION.set(throwable);
+                        CPSAbstractCompiler.INTERPRETER_EXCEPTION.set(throwable);
                         jump(instruction.catchBlock());
                         throwable = null;
                     } else {

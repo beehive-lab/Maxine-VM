@@ -20,14 +20,14 @@
  */
 package com.sun.max.atomic;
 
-import com.sun.max.*;
+import com.sun.max.vm.*;
 
 /**
  * @see MaxPackage
  *
  * @author Doug Simon
  */
-public class Package extends BasePackage {
+public class Package extends VMPackage {
     public Package() {
         super();
     }

@@ -402,7 +402,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                 teleRegisterSet.setInstructionPointer(address);
                 Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
-                ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + address + " was hit: " + this);
+                TeleError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + address + " was hit: " + this);
             }
         } else {
             this.breakpoint = null;
@@ -737,12 +737,12 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                     final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
                     final TeleClassMethodActor teleClassMethodActor = vm().findTeleMethodActor(TeleClassMethodActor.class, classMethodActor);
                     if (teleClassMethodActor == null) {
-                        ProgramWarning.message("Could not find tele class method actor for " + classMethodActor);
+                        TeleWarning.message("Could not find tele class method actor for " + classMethodActor);
                         continue;
                     }
                     compiledCode = vm().codeCache().findCompiledCode(targetMethod.codeStart().asAddress());
                     if (compiledCode == null) {
-                        ProgramWarning.message("Could not find tele target method actor for " + classMethodActor);
+                        TeleWarning.message("Could not find tele target method actor for " + classMethodActor);
                         continue;
                     }
                 }

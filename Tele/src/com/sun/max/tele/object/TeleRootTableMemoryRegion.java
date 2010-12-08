@@ -23,8 +23,8 @@ package com.sun.max.tele.object;
 import java.lang.management.*;
 
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
@@ -66,7 +66,7 @@ public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
             wordsUsed = vm().teleFields().RootTableMemoryRegion_wordsUsed.readLong(getReference());
         } catch (DataIOError dataIOError) {
             // No update; data read failed for some reason other than VM availability
-            ProgramWarning.message("TeleLinearAllocationMemoryRegion dataIOError:");
+            TeleWarning.message("TeleLinearAllocationMemoryRegion dataIOError:", dataIOError);
             dataIOError.printStackTrace();
             // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
         }

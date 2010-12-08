@@ -23,7 +23,6 @@
  */
 package test.com.sun.max.vm.jtrun.all;
 
-import com.sun.max.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.run.*;
 

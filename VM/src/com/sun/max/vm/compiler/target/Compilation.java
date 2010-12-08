@@ -29,6 +29,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.CompilationScheme.Inspect;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -170,6 +171,9 @@ public class Compilation implements Future<TargetMethod> {
         Throwable error = null;
         String methodString = "";
         try {
+
+            Inspect.notifyCompilationStart(classMethodActor);
+
             methodString = logBeforeCompilation(compiler);
             if (!MaxineVM.isHosted() && StackReferenceMapPreparer.VerifyRefMaps) {
                 StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
@@ -190,6 +194,8 @@ public class Compilation implements Future<TargetMethod> {
 
             // attempt the compilation
             targetMethod = compiler.compile(classMethodActor);
+
+            Inspect.notifyCompilationComplete(targetMethod);
 
             if (targetMethod == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));

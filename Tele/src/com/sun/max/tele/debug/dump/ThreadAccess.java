@@ -20,18 +20,17 @@
  */
 package com.sun.max.tele.debug.dump;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.*;
-
-import com.sun.max.program.ProgramError;
-import com.sun.max.program.Trace;
-import com.sun.max.tele.channel.TeleChannelDataIOProtocol;
-import com.sun.max.tele.debug.*;
-import com.sun.max.vm.thread.VmThreadLocal;
-
 import static com.sun.max.tele.thread.NativeThreadLocal.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import java.nio.*;
+import java.util.*;
+
+import com.sun.max.program.*;
+import com.sun.max.tele.channel.*;
+import com.sun.max.tele.debug.*;
+import com.sun.max.tele.util.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Access to Maxine threads in a core dump or other similarly uncooperative environment,
@@ -116,7 +115,7 @@ public abstract class ThreadAccess {
                 TeleProcess teleProcess = (TeleProcess) teleProcessObject;
                 teleProcess.jniGatherThread((List<TeleNativeThread>) threadSeq, t.id, t.localHandle, t.handle, t.state, t.instructionPointer, t.stackBase, t.stackSize, t.tlb, t.tlbSize, t.tlaSize);
             } catch (Exception ex) {
-                ProgramError.unexpected("invoke failure on jniGatherThread", ex);
+                TeleError.unexpected("invoke failure on jniGatherThread", ex);
             }
         }
         return true;

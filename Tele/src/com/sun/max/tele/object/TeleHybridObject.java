@@ -25,14 +25,14 @@ import static com.sun.max.vm.VMConfiguration.*;
 import java.lang.reflect.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
@@ -132,7 +132,7 @@ public abstract class TeleHybridObject extends TeleObject {
                         try {
                             field.set(protoHybridObject, readFieldValue(fieldActor).asBoxedJavaValue());
                         } catch (IllegalAccessException illegalAccessException) {
-                            ProgramError.unexpected("could not access field: " + field, illegalAccessException);
+                            TeleError.unexpected("could not access field: " + field, illegalAccessException);
                         }
                     }
                 }
@@ -150,7 +150,7 @@ public abstract class TeleHybridObject extends TeleObject {
             }
             return newHybridObject;
         } catch (InstantiationException instantiationException) {
-            ProgramError.unexpected("could not allocate instance: " + javaClass, instantiationException);
+            TeleError.unexpected("could not allocate instance: " + javaClass, instantiationException);
         }
         return null;
     }

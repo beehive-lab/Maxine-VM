@@ -47,7 +47,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
     private Mapping<TirInstruction, Value> variantValues = new IdentityHashMapping<TirInstruction, Value>();
     private Mapping<TirTreeCall, BirState> callResults = new IdentityHashMapping<TirTreeCall, BirState>();
 
-    private static ClassMethodActor createTupleOrHybridMethodActor = ClassMethodActor.findStatic(CreateTupleOrHybrid.class, "createTupleOrHybrid");
+    private static ClassMethodActor createTupleOrHybridMethodActor = CreateTupleOrHybrid.SNIPPET.executable;
 
     private Evaluator evaluator = new Evaluator();
     private BirState executionState;

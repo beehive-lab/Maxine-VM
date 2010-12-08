@@ -26,13 +26,13 @@ import com.sun.c1x.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.profile.MethodProfile;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
  * This interface represents a compilation system that coordinations compilation and
@@ -160,7 +160,7 @@ public interface CompilationScheme extends VMScheme {
                 // fast path: method is already compiled just once
                 current = (TargetMethod) targetState;
             } else {
-                if (MaxineVM.isHosted() && vmConfig().bootCompilerScheme().compiledType() == null) {
+                if (MaxineVM.isHosted() && CPSCompiler.Static.compiler().compiledType() == null) {
                     return MethodID.fromMethodActor(classMethodActor).asAddress();
                 }
                 // slower path: method has not been compiled, or been compiled more than once
@@ -235,13 +235,23 @@ public interface CompilationScheme extends VMScheme {
     public static final class Inspect {
 
         /**
+         * Announces that a compilation is being started; must be called for
+         * certain Inspector services to work.
+         *
+         * @param method a method about to be compiled
+         */
+        public static void notifyCompilationStart(ClassMethodActor method) {
+            InspectableCodeInfo.notifyCompilationEvent(method, null);
+        }
+
+        /**
          * Announces that a compilation has just been completed; must be called for
          * certain Inspector services to work.
          *
          * @param targetMethod a compilation that was just completed.
          */
         public static void notifyCompilationComplete(TargetMethod targetMethod) {
-            InspectableCodeInfo.notifyCompilationComplete(targetMethod);
+            InspectableCodeInfo.notifyCompilationEvent(targetMethod.classMethodActor, targetMethod);
             inspectableCompilationComplete(targetMethod);
         }
 

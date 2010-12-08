@@ -26,9 +26,8 @@ import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.cps.b.c.HCirToLCirTranslation.*;
+import com.sun.max.vm.cps.b.c.HCirToLCirTranslation.Verifier;
 import com.sun.max.vm.cps.bir.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.optimize.*;
@@ -127,7 +126,7 @@ public class BirToCirTranslator extends CirGenerator {
     protected void generateIrMethod(CirMethod cirMethod) {
         final ClassMethodActor compilee = cirMethod.classMethodActor().compilee();
         if (!compilee.isHiddenToReflection()) {
-            if (compilee.isStatic() && MaxineVM.isMaxineClass(compilee.holder().typeDescriptor) && compilee.isDeclaredFoldable() && compilee.descriptor().numberOfParameters() == 0) {
+            if (compilee.isStatic() && compilee.isDeclaredFoldable() && compilee.descriptor().numberOfParameters() == 0) {
                 foldAndMemoize(cirMethod);
                 return;
             }

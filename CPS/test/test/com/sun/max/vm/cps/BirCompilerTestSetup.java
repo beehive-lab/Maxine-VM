@@ -20,11 +20,11 @@
  */
 package test.com.sun.max.vm.cps;
 
-import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.bir.*;
 import com.sun.max.vm.hosted.*;
 
@@ -35,7 +35,7 @@ public class BirCompilerTestSetup extends CompilerTestSetup<BirMethod> {
     }
 
     public static BirGeneratorScheme birGeneratorScheme() {
-        return (BirGeneratorScheme) vmConfig().bootCompilerScheme();
+        return (BirGeneratorScheme) CPSCompiler.Static.compiler();
     }
 
     public static BirGenerator birGenerator() {

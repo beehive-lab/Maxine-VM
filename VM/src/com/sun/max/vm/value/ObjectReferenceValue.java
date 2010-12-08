@@ -28,7 +28,9 @@ import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -95,8 +97,8 @@ public final class ObjectReferenceValue extends ReferenceValue {
         if (value == null) {
             return "null";
         }
-        if (StaticTuple.is(value)) {
-            return StaticTuple.toString(value);
+        if (!MaxineVM.isHosted() && ObjectAccess.readHub(value) instanceof StaticHub) {
+            return "staticTuple-" + ObjectAccess.readHub(value).classActor.simpleName();
         }
         return value.toString();
     }

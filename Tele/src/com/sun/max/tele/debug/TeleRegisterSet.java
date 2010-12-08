@@ -23,7 +23,6 @@ package com.sun.max.tele.debug;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -109,7 +108,7 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
                         teleIntegerRegisters.registerData(),
                         teleFloatingPointRegisters.registerData(),
                         teleStateRegisters.registerData())) {
-            ProgramError.unexpected("Error while updating registers for thread: " + this);
+            TeleError.unexpected("Error while updating registers for thread: " + this);
         }
         teleIntegerRegisters.updateCache();
         teleFloatingPointRegisters.updateCache();

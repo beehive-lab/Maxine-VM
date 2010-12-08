@@ -20,10 +20,7 @@
  */
 package com.sun.max.vm.actor.holder;
 
-import java.lang.reflect.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -108,17 +105,5 @@ public class TupleClassActor extends ReferenceClassActor {
 
     public static TupleClassActor fromJava(final Class javaClass) {
         return (TupleClassActor) ClassActor.fromJava(javaClass);
-    }
-
-    public Object newInstance() {
-        try {
-            return ClassMethodActor.findVirtual(this, SymbolTable.INIT.toString()).invokeConstructor().asObject();
-        } catch (InstantiationException intantiationException) {
-            throw ProgramError.unexpected(intantiationException);
-        } catch (IllegalAccessException illegalAccessException) {
-            throw ProgramError.unexpected(illegalAccessException);
-        } catch (InvocationTargetException invocationTargetException) {
-            throw ProgramError.unexpected(invocationTargetException);
-        }
     }
 }

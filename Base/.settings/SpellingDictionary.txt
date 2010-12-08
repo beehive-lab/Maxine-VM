@@ -13,6 +13,7 @@ David
 Daynes
 De
 Doug
+Foo
 Hannes
 Hiroshi
 Jordan
@@ -28,6 +29,7 @@ Maxine
 Michael
 Mick
 Microsystems
+Miranda
 Paul
 Seidl
 Simon
@@ -46,6 +48,7 @@ affordance
 affordances
 allocatable
 appendable
+arg
 bailed
 bailout
 beltway
@@ -84,6 +87,7 @@ epilogue
 finalizer
 finalizers
 floatable
+foo
 generational
 growable
 hashcode
@@ -91,6 +95,8 @@ hexadecimal
 hotspot
 iconic
 iconified
+idiom
+idiomatic
 iff
 initialize
 initialized
@@ -184,6 +190,7 @@ trampolines
 transferable
 transferables
 unboxed
+unboxing
 uncomment
 uncompiled
 undock

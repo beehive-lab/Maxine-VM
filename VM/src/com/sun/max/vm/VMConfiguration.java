@@ -20,16 +20,14 @@
  */
 package com.sun.max.vm;
 
-import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
+import com.sun.max.config.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
@@ -39,7 +37,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * The configuration of a VM, which includes the schemes, safepoint mechanism, etc.
@@ -51,39 +48,27 @@ import com.sun.max.vm.runtime.*;
 public final class VMConfiguration {
 
     public final BuildLevel buildLevel;
-    public final VMPackage referencePackage;
-    public final VMPackage layoutPackage;
-    public final VMPackage heapPackage;
-    public final VMPackage monitorPackage;
-    public final VMPackage bootCompilerPackage;
-    public final VMPackage jitCompilerPackage;
-    public final VMPackage optCompilerPackage;
-    public final VMPackage compilationPackage;
-    public final VMPackage runPackage;
-    public final Safepoint safepoint;
-    public final TrapStateAccess trapStateAccess;
+
+    @HOSTED_ONLY public final VMPackage referencePackage;
+    @HOSTED_ONLY public final VMPackage layoutPackage;
+    @HOSTED_ONLY public final VMPackage heapPackage;
+    @HOSTED_ONLY public final VMPackage monitorPackage;
+    @HOSTED_ONLY public final VMPackage optCompilerPackage;
+    @HOSTED_ONLY public final VMPackage jitCompilerPackage;
+    @HOSTED_ONLY public final VMPackage compilationPackage;
+    @HOSTED_ONLY public final VMPackage runPackage;
 
     private ArrayList<VMScheme> vmSchemes = new ArrayList<VMScheme>();
     private boolean areSchemesLoadedAndInstantiated = false;
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private ReferenceScheme referenceScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
-    private LayoutScheme layoutScheme;
-    @CONSTANT_WHEN_NOT_ZERO
-    private HeapScheme heapScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
-    private MonitorScheme monitorScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
-    private BootstrapCompilerScheme bootCompilerScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
-    private RuntimeCompilerScheme jitCompilerScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
-    private RuntimeCompilerScheme optCompilerScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
-    private CompilationScheme compilationScheme = null;
-    @CONSTANT_WHEN_NOT_ZERO
-    private RunScheme runScheme = null;
+    @CONSTANT_WHEN_NOT_ZERO private ReferenceScheme referenceScheme;
+    @CONSTANT_WHEN_NOT_ZERO private LayoutScheme layoutScheme;
+    @CONSTANT_WHEN_NOT_ZERO private HeapScheme heapScheme;
+    @CONSTANT_WHEN_NOT_ZERO private MonitorScheme monitorScheme;
+    @CONSTANT_WHEN_NOT_ZERO private RuntimeCompilerScheme jitCompilerScheme;
+    @CONSTANT_WHEN_NOT_ZERO private RuntimeCompilerScheme optCompilerScheme;
+    @CONSTANT_WHEN_NOT_ZERO private CompilationScheme compilationScheme;
+    @CONSTANT_WHEN_NOT_ZERO private RunScheme runScheme;
 
     public VMConfiguration(BuildLevel buildLevel,
                            Platform platform,
@@ -91,78 +76,41 @@ public final class VMConfiguration {
                            VMPackage layoutPackage,
                            VMPackage heapPackage,
                            VMPackage monitorPackage,
-                           VMPackage bootCompilerPackage,
-                           VMPackage jitCompilerPackage,
                            VMPackage optCompilerPackage,
+                           VMPackage jitCompilerPackage,
                            VMPackage compilationPackage,
                            VMPackage runPackage) {
+        assert optCompilerPackage != null;
         this.buildLevel = buildLevel;
         this.referencePackage = referencePackage;
         this.layoutPackage = layoutPackage;
         this.heapPackage = heapPackage;
         this.monitorPackage = monitorPackage;
-        this.bootCompilerPackage = bootCompilerPackage;
-        this.jitCompilerPackage = jitCompilerPackage;
         this.optCompilerPackage = optCompilerPackage;
+        this.jitCompilerPackage = jitCompilerPackage == null ? optCompilerPackage : jitCompilerPackage;
         this.compilationPackage = compilationPackage;
         this.runPackage = runPackage;
-        this.safepoint = Safepoint.create();
-        this.trapStateAccess = TrapStateAccess.create();
     }
 
-    @INLINE
-    public ReferenceScheme referenceScheme() {
-        return referenceScheme;
-    }
+    @INLINE public ReferenceScheme       referenceScheme()   { return referenceScheme;   }
+    @INLINE public LayoutScheme          layoutScheme()      { return layoutScheme;      }
+    @INLINE public HeapScheme            heapScheme()        { return heapScheme;        }
+    @INLINE public MonitorScheme         monitorScheme()     { return monitorScheme;     }
+    @INLINE public RuntimeCompilerScheme jitCompilerScheme() { return jitCompilerScheme; }
+    @INLINE public RuntimeCompilerScheme optCompilerScheme() { return optCompilerScheme; }
+    @INLINE public CompilationScheme     compilationScheme() { return compilationScheme; }
+    @INLINE public RunScheme             runScheme()         { return runScheme;         }
 
-    @INLINE
-    public LayoutScheme layoutScheme() {
-        return layoutScheme;
-    }
-
-    @INLINE
-    public HeapScheme heapScheme() {
-        return heapScheme;
-    }
-
-    @INLINE
-    public MonitorScheme monitorScheme() {
-        return monitorScheme;
-    }
-
-    @INLINE
-    public BootstrapCompilerScheme bootCompilerScheme() {
-        return bootCompilerScheme;
-    }
-
-    @INLINE
-    public RuntimeCompilerScheme jitCompilerScheme() {
-        return jitCompilerScheme;
-    }
-
-    @INLINE
-    public RuntimeCompilerScheme optCompilerScheme() {
-        return optCompilerScheme;
-    }
-
-    @INLINE
-    public CompilationScheme compilationScheme() {
-        return compilationScheme;
-    }
-
-    @INLINE
-    public RunScheme runScheme() {
-        return runScheme;
-    }
-
-    public List<MaxPackage> packages() {
-        return Arrays.asList(new MaxPackage[] {
+    @HOSTED_ONLY
+    public List<BootImagePackage> packages() {
+        return Arrays.asList(new BootImagePackage[] {
             referencePackage,
             layoutPackage,
             heapPackage,
             monitorPackage,
-            bootCompilerPackage,
             compilationPackage,
+            optCompilerPackage,
+            jitCompilerPackage,
             runPackage});
     }
 
@@ -170,7 +118,8 @@ public final class VMConfiguration {
         return vmSchemes;
     }
 
-    private <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(List<VMScheme> loadedSchemes, MaxPackage p, Class<VMScheme_Type> vmSchemeType) {
+    @HOSTED_ONLY
+    private <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(List<VMScheme> loadedSchemes, BootImagePackage p, Class<VMScheme_Type> vmSchemeType) {
         if (p == null) {
             throw ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
         }
@@ -215,22 +164,11 @@ public final class VMConfiguration {
         layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class);
         monitorScheme = loadAndInstantiateScheme(loadedSchemes, monitorPackage, MonitorScheme.class);
         heapScheme = loadAndInstantiateScheme(loadedSchemes, heapPackage, HeapScheme.class);
-        bootCompilerScheme = loadAndInstantiateScheme(loadedSchemes, bootCompilerPackage, BootstrapCompilerScheme.class);
-
-        if (jitCompilerPackage != null) {
+        optCompilerScheme = loadAndInstantiateScheme(loadedSchemes, optCompilerPackage, RuntimeCompilerScheme.class);
+        if (jitCompilerPackage != optCompilerPackage) {
             jitCompilerScheme = loadAndInstantiateScheme(loadedSchemes, jitCompilerPackage, RuntimeCompilerScheme.class);
         } else {
-            // no JIT, always using the optimizing compiler
-            jitCompilerScheme = bootCompilerScheme;
-        }
-        if (MaxPackage.equal(optCompilerPackage, jitCompilerPackage)) {
-            optCompilerScheme = jitCompilerScheme;
-        } else if (MaxPackage.equal(optCompilerPackage, bootCompilerPackage)) {
-            optCompilerScheme = bootCompilerScheme;
-        } else if (optCompilerPackage == null) {
-            optCompilerScheme = bootCompilerScheme;
-        } else {
-            optCompilerScheme = loadAndInstantiateScheme(loadedSchemes, optCompilerPackage, RuntimeCompilerScheme.class);
+            jitCompilerScheme = optCompilerScheme;
         }
 
         if (loadedSchemes == null) {
@@ -257,9 +195,7 @@ public final class VMConfiguration {
      * to adapt the arguments when a call crosses a calling convention boundary.
      */
     public boolean needsAdapters() {
-        return optCompilerScheme.calleeEntryPoint() != bootCompilerScheme.calleeEntryPoint() ||
-               optCompilerScheme.calleeEntryPoint() != jitCompilerScheme.calleeEntryPoint() ||
-               bootCompilerScheme.calleeEntryPoint() != jitCompilerScheme.calleeEntryPoint();
+        return optCompilerScheme.calleeEntryPoint() != jitCompilerScheme.calleeEntryPoint();
     }
 
     public void initializeSchemes(MaxineVM.Phase phase) {
@@ -305,20 +241,13 @@ public final class VMConfiguration {
      * Determines if a given package is considered part of the VM under this VM configuration.
      * @return {@code true} if the specified package is part of this VM in this configuration
      */
-    public boolean isMaxineVMPackage(MaxPackage maxPackage) {
-        if (maxPackage == null) {
+    @HOSTED_ONLY
+    public boolean isMaxineVMPackage(BootImagePackage pkg) {
+        if (pkg == null) {
             return false;
         }
-        if (maxPackage instanceof BasePackage) {
-            return true;
-        }
-        if (maxPackage instanceof AsmPackage) {
-            final AsmPackage asmPackage = (AsmPackage) maxPackage;
-            return asmPackage.isPartOfAssembler(platform().isa);
-        }
-        // VM, Ext and JDK
-        if (maxPackage instanceof VMConfigPackage) {
-            final VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;
+        if (pkg instanceof BootImagePackage) {
+            final BootImagePackage vmPackage = (BootImagePackage) pkg;
             return vmPackage.isPartOfMaxineVM(this);
         }
         return false;
