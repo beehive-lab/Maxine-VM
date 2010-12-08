@@ -714,12 +714,15 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setBackgroundForRow(this, row);
             if (bytecodeLocation != null) {
                 final StackTraceElement stackTraceElement = bytecodeLocation.toStackTraceElement();
-                setText(String.valueOf(stackTraceElement.getLineNumber()));
                 final StringBuilder stackTrace = new StringBuilder("<html><table cellpadding=\"1%\"><tr><td></td><td>").append(toolTipText(stackTraceElement)).append("</td></tr>");
+                StackTraceElement top = stackTraceElement;
                 for (BytecodeLocation parent = bytecodeLocation.parent(); parent != null; parent = parent.parent()) {
-                    stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parent.toStackTraceElement())).append("</td></tr>");
+                    StackTraceElement parentSTE = parent.toStackTraceElement();
+                    stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parentSTE)).append("</td></tr>");
+                    top = parentSTE;
                 }
                 setToolTipText(stackTrace.append("</table>").toString());
+                setText(String.valueOf(top.getLineNumber()));
             }
             lastBytecodeLocation = bytecodeLocation;
             setBorderForRow(this, row);
