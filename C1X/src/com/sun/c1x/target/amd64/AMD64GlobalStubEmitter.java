@@ -384,7 +384,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         }
         asm.subq(AMD64.rsp, frameSize());
         asm.setFrameSize(frameSize());
-        int frameToCSA = frameSize() - saveSize;
+        int frameToCSA = 0;
         asm.save(csa, frameToCSA);
         this.savedAllRegisters = true;
     }
@@ -395,7 +395,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
         if (savedAllRegisters) {
             CiCalleeSaveArea csa = compiler.globalStubRegisterConfig.getCalleeSaveArea();
-            int frameToCSA = frameSize() - csa.size;
+            int frameToCSA = 0;
             asm.restore(csa, frameToCSA);
         } else {
             // saved only select registers

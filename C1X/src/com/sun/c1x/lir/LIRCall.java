@@ -54,7 +54,14 @@ public class LIRCall extends LIRInstruction {
         return arguments.toArray(new CiValue[arguments.size()]);
     }
 
-    public LIRCall(LIROpcode opcode, Object target, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, boolean calleeSaved, List<CiValue> pointerSlots) {
+    public LIRCall(LIROpcode opcode,
+                   Object target,
+                   CiValue result,
+                   List<CiValue> arguments,
+                   LIRDebugInfo info,
+                   Map<XirMark, Mark> marks,
+                   boolean calleeSaved,
+                   List<CiValue> pointerSlots) {
         super(opcode, result, info, !calleeSaved, 0, 0, toArray(arguments));
         this.marks = marks;
         this.pointerSlots = pointerSlots;

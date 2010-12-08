@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.stack.amd64.AMD64OptStackWalking.*;
 
 import java.io.*;
@@ -699,8 +700,16 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
                     // can simply use the register ref map at the call site
                     C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
                     csa = c1xCallee.getRegisterConfig().getCalleeSaveArea();
-                    registerState = callee.sp();
+                    if (c1xCallee.is(GlobalStub)) {
+                        // The register state *is* the frame
+                        registerState = callee.sp();
+                    } else {
+                        assert c1xCallee.is(Standard);
+                        // Register state/callee save area directly is at the top of the frame.
+                        registerState = callee.sp().plus(c1xCallee.frameSize());
+                    }
                 } else {
+                    FatalError.unexpected("Only C1XTargetMethods can be callee-saved");
                     // get the register state from the callee's frame
                     registerState = callee.sp();
                 }
