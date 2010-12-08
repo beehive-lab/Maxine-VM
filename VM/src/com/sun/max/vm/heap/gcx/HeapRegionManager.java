@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -49,7 +50,11 @@ public final class HeapRegionManager {
     /**
      * Region allocator used by the heap manager.
      */
-    private FixedSizeRegionAllocator regionAllocator;
+    private final FixedSizeRegionAllocator regionAllocator;
+
+    FixedSizeRegionAllocator regionAllocator() {
+        return regionAllocator;
+    }
 
     boolean contains(Address address) {
         return regionAllocator.contains(address);
@@ -62,6 +67,7 @@ public final class HeapRegionManager {
     /**
      * Total number of regions.
      */
+    @CONSTANT_WHEN_NOT_ZERO
     private int capacity;
 
     /**
@@ -210,11 +216,10 @@ public final class HeapRegionManager {
      * @return
      */
     public <Owner> HeapAccount<Owner> openHeapAccount(Owner owner) {
-        Size initialReserve = Size.zero();
         // Problem starts here: where should we allocate this ? We don't want this to be
         // on the heap account itself as we don't want references from heap management to
         // leak to other heaps.
-        HeapAccount<Owner> account = new HeapAccount<Owner>(owner, initialReserve);
+        HeapAccount<Owner> account = new HeapAccount<Owner>(owner, 0);
         return account;
     }
 
@@ -229,8 +234,7 @@ public final class HeapRegionManager {
      * request cannot be satisfied.
      */
     int allocate(int numRegions) {
-        regionAllocator.allocate(numRegions);
-        return INVALID_REGION_ID;
+        return regionAllocator.allocate(numRegions);
     }
 
     /**
@@ -245,6 +249,7 @@ public final class HeapRegionManager {
      * @return the number of regions allocated
      */
     int allocate(HeapRegionList list, int numRegions, boolean append, boolean exact) {
+
         return 0;
     }
 
@@ -254,13 +259,19 @@ public final class HeapRegionManager {
      * @param numRegions
      */
     void free(int firstRegionId, int numRegions) {
+        // TODO: error handling
+        regionAllocator.free(firstRegionId, numRegions);
     }
 
     void commit(int firstRegionId, int numRegions) {
-
+        // TODO: error handling
+        regionAllocator.commit(firstRegionId, numRegions);
     }
+
     void uncommit(int firstRegionId, int numRegions) {
-
+        // TODO: error handling
+        regionAllocator.uncommit(firstRegionId, numRegions);
     }
+
 }
 

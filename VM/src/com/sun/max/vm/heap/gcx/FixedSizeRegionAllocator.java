@@ -19,8 +19,9 @@
  * Company, Ltd.
  */
 package com.sun.max.vm.heap.gcx;
-
+import static com.sun.max.vm.heap.gcx.RegionRange.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -39,20 +40,6 @@ import com.sun.max.vm.runtime.*;
  * @author Laurent Daynes
  */
 public class FixedSizeRegionAllocator {
-    // This is a simple implementation of a low-level memory manager.
-    // Allocated and committed space is kept track in two bit sets.
-    // BitSet-based allocation has the advantage to be simple and to have a relatively small and fixed footprint,
-    // which is perfect for the heap region manager.
-
-    /**
-     * Arguments to an allocation request. The allocator fills in the length and first region
-     * of the allocated range of contiguous regions.
-     */
-    static class RegionRange {
-        int firstRegionId;
-        int numRegions;
-    }
-
 
     /**
      * A bit set class tailored to the needs of the region allocator.
@@ -345,33 +332,26 @@ public class FixedSizeRegionAllocator {
         return result;
     }
 
-
     /**
      * Allocate the next available contiguous space of a size smaller or equals to the specified number of regions.
      * @param numRegions
      * @return the identifier of the first region of the allocated range, or INVALID_REGION_ID if the request cannot be satisfied
      */
-    synchronized int allocateLessOrEqual(RegionRange request) {
-        assert request != null && request.numRegions > 0;
+    synchronized RegionRange allocateLessOrEqual(int numRegions) {
         if (numFreeRegions == 0) {
-            request.numRegions = 0;
-            request.firstRegionId = INVALID_REGION_ID;
-            return INVALID_REGION_ID;
+            return INVALID_RANGE;
         }
-        final int rsize = request.numRegions;
         final int begin = allocated.nextClearBit(residentRegions);
-        final int numAllocated = allocated.numClearBitsAt(begin, rsize);
+        final int numAllocated = allocated.numClearBitsAt(begin, numRegions);
         assert numAllocated != 0;
         final int end = begin + numAllocated;
         final int last = end - 1;
         if (last > highestAllocated) {
             highestAllocated = last;
         }
-        request.firstRegionId = begin;
-        request.numRegions = numAllocated;
         allocated.set(begin, end);
         numFreeRegions -= numAllocated;
-        return begin;
+        return RegionRange.from(begin, numAllocated);
     }
 
     /**

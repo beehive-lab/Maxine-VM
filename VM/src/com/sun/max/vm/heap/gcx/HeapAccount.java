@@ -20,13 +20,14 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.unsafe.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 
 /**
- * Heap space is managed via heap accounts created on demand by the {@link HeapRegionManager}.
- * A heap account provide a guaranteed reserve of space a heap can allocate regions from.
- * A heap may grow its account, which increase its guaranteed reserve, or shrink it by a
- * number of regions less or equal to the number of free region in its account.
+ * Backing storage for a heap is managed via a heap account created on demand by the {@link HeapRegionManager}.
+ * A heap account provides a guaranteed reserve of space, corresponding to the maximum space required
+ * by the account owner. Space is expressed in terms of number of heap regions, whose size is defined in {@link HeapRegionConstants}.
+ * The account owner can allocate regions on demand up to the account's reserve.
  *
  *
  * @author Laurent Daynes
@@ -37,24 +38,46 @@ public class HeapAccount<Owner>{
      */
     private Owner owner;
     /**
-     * Guaranteed reserve of space for this account.
+     * Guaranteed reserve of regions for this account.
      */
-    private Size reserve;
+    private int reserve;
 
     /**
      * List of regions allocated to the account owner. All allocated regions are committed
      */
     private HeapRegionList allocated;
 
-    HeapAccount(Owner owner, Size reserve) {
+    HeapAccount(Owner owner, int reserve) {
         this.owner = owner;
         this.reserve = reserve;
 
     }
 
+    /**
+     * Number of regions in the reserve.
+     * @return a number of regions.
+     */
+    int reserve() {
+        return reserve;
+    }
+    /**
+     * The owner of the heap account.
+     * @return an object
+     */
     public Owner owner() { return owner; }
 
-    public int allocate(int numRegions) {
-        return 0;
+    /**
+     *
+     * @return
+     */
+    public int allocate() {
+        if (allocated.size() < reserve) {
+            int regionID = theHeapRegionManager.regionAllocator().allocate();
+            if (regionID != INVALID_REGION_ID) {
+                allocated.prepend(regionID);
+            }
+        }
+        return INVALID_REGION_ID;
     }
+
 }
