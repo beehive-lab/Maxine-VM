@@ -23,7 +23,7 @@ package com.sun.max.vm;
 import com.sun.max.config.*;
 
 /**
- * Denotes a package of classes that are (potentially) in the VM.
+ * Scheduled for removal, no added functionality over {@link BootImagePackage}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
