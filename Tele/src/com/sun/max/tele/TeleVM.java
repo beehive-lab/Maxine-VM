@@ -372,6 +372,9 @@ public abstract class TeleVM implements MaxVM {
 
         TargetLocation.set(options);
 
+        // Ensure that method actors are available for class initializers loaded at runtime.
+        MaxineVM.preserveClinitMethods = true;
+
         if (options.usePrecompilationBreakpoints.getValue()) {
             BytecodeBreakpointManager.usePrecompilationBreakpoints = true;
         }

@@ -54,18 +54,7 @@ public class RegisterConfigs {
     public final CiRegisterConfig n2j;
 
     /**
-     * The register configuration for a direct call to native/C code.
-     * This configuration must specify <b>all</b> allocatable registers as caller-saved
-     * so that all object references are on the stack around the native call.
-     * These values will also be spilled to the stack by a native compiler
-     * adhering to the ABI callee-save semantics. However, the ABI does not
-     * specify where they are spilled and so they are not available
-     * to the GC roots scanner.
-     */
-    public final CiRegisterConfig j2n;
-
-    /**
-     * The register configuration for a direct call to a {@linkplain MethodActor#isTrampoline() trampoline}.
+     * The register configuration for a {@linkplain MethodActor#isTrampoline() trampoline}.
      * This configuration lists all parameter registers as callee saved.
      */
     public final CiRegisterConfig trampoline;
@@ -89,9 +78,6 @@ public class RegisterConfigs {
         if (method.isVmEntryPoint()) {
             return n2j;
         }
-        if (method.isCFunction()) {
-            return j2n;
-        }
         if (method.isTemplate()) {
             return jitTemplate;
         }
@@ -102,21 +88,18 @@ public class RegisterConfigs {
     public RegisterConfigs(
                     CiRegisterConfig standard,
                     CiRegisterConfig n2j,
-                    CiRegisterConfig j2n,
                     CiRegisterConfig trampoline,
                     CiRegisterConfig template,
                     CiRegisterConfig globalStub,
                     CiRegisterConfig trapStub) {
         this.standard = standard;
         this.n2j = n2j;
-        this.j2n = j2n;
         this.trampoline = trampoline;
         this.jitTemplate = template;
         this.globalStub = globalStub;
         this.trapStub = trapStub;
 
         assert Arrays.equals(standard.getAllocatableRegisters(), standard.getCallerSaveRegisters()) : "VM requires caller-save for VM to VM calls";
-        assert Arrays.equals(j2n.getAllocatableRegisters(), j2n.getCallerSaveRegisters()) : "VM requires caller-save for J2N calls so that it can find all references";
     }
 
     @HOSTED_ONLY
@@ -165,7 +148,6 @@ public class RegisterConfigs {
                                 roleMap);            // VM register role map
 
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, rbx, rbp, r12, r13, r14, r15));
-                CiRegisterConfig j2n = standard;
                 CiRegisterConfig globalStub = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, allRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapStateAccess.CSA);
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8,
@@ -188,7 +170,7 @@ public class RegisterConfigs {
                                 allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
 
-                return new RegisterConfigs(standard, n2j, j2n, trampoline, template, globalStub, trapStub);
+                return new RegisterConfigs(standard, n2j, trampoline, template, globalStub, trapStub);
             }
         }
         throw FatalError.unimplemented();
