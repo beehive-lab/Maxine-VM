@@ -177,7 +177,7 @@ public class FixedSizeRegionAllocator {
                 int numZeros =  Long.numberOfTrailingZeros(w);
                 return numZeros > maxBits ? maxBits : numZeros;
             }
-            int numZeros = 64 - bitIndex;
+            int numZeros = WordWidth.BITS_64.numberOfBits - (bitIndex & BIT_INDEX_MASK);
             if (numZeros >= maxBits) {
                 return maxBits;
             }
@@ -188,7 +188,7 @@ public class FixedSizeRegionAllocator {
                     numZeros += Long.numberOfTrailingZeros(w);
                     return numZeros > maxBits ? maxBits : numZeros;
                 }
-                numZeros += 64;
+                numZeros += WordWidth.BITS_64.numberOfBits;
                 if (numZeros >= maxBits) {
                     return maxBits;
                 }
