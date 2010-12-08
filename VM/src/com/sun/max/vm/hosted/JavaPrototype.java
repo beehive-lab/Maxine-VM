@@ -278,7 +278,7 @@ public final class JavaPrototype extends Prototype {
         }
 
         // TODO remove new com.sun.max.vm.Package() once com.sun.max.config..vm.Package is in effect
-        candidateBootImagePackages = getPackages(new com.sun.max.vm.Package(), new com.sun.max.config.Package());
+        candidateBootImagePackages = getPackages(new com.sun.max.config.Package());
 
         MaxineVM.registerBootImagePackages(candidateBootImagePackages);
 

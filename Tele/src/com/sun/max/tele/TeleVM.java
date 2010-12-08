@@ -585,8 +585,7 @@ public abstract class TeleVM implements MaxVM {
 
 
     private static VMPackage getInspectorReferencePackage(VMPackage referencePackage) {
-        final BootImagePackage vmReferenceRootPackage = new com.sun.max.vm.reference.Package();
-        final String suffix = referencePackage.name().substring(vmReferenceRootPackage.name().length());
+        final String suffix = referencePackage.name().substring("com.sun.max.vm.reference".length());
         final BootImagePackage inspectorReferenceRootPackage = new com.sun.max.tele.reference.Package();
         return (VMPackage) BootImagePackage.fromName(inspectorReferenceRootPackage.name() + suffix);
     }
