@@ -94,7 +94,7 @@ public class MangleTest extends MaxTestCase {
         }
         try {
             final File tempFile = File.createTempFile("MangleTest_", ".h");
-            final String[] args = {"-o", tempFile.getAbsolutePath(), "-classpath", JavaProject.getClassPath(true).toString(), declaringClass.getName()};
+            final String[] args = {"-o", tempFile.getAbsolutePath(), "-classpath", Classpath.fromSystem()/* JavaProject.getClassPath(true)*/.toString(), declaringClass.getName()};
             ToolChain.javah(args);
             final String headerFile = new String(Files.toChars(tempFile));
             tempFile.delete();
@@ -185,14 +185,14 @@ public class MangleTest extends MaxTestCase {
                 if (isArchiveEntry || className.endsWith("package-info")) {
                     return true;
                 }
-                if (!className.startsWith(new com.sun.max.Package().name())) {
+                if (!className.startsWith("com.sun.max")) {
                     return true;
                 }
-                if (className.startsWith(new com.sun.max.asm.Package().name())) {
+                if (className.startsWith("com.sun.max.asm")) {
                     // Too many generated methods
                     return true;
                 }
-                if (className.startsWith(new com.sun.max.vm.asm.Package().name())) {
+                if (className.startsWith("com.sun.max.vm.asm.")) {
                     // Too many generated methods
                     return true;
                 }

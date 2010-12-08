@@ -22,7 +22,7 @@ package com.sun.max.vm.cps.eir;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -53,10 +53,8 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
         super(eirGeneratorScheme, "EIR");
         final Platform platform = platform();
         wordWidth = platform.wordWidth();
-        final MaxPackage eirPackage = new com.sun.max.vm.cps.eir.Package();
-        final MaxPackage p = eirPackage.subPackage(platform.isa.name().toLowerCase(),
-                                                   platform.os.name().toLowerCase());
-        eirABIsScheme = p.loadAndInstantiateScheme(EirABIsScheme.class);
+        String p = Classes.getPackageName(EirGenerator.class) + "." + platform.isa.name().toLowerCase() + "." + platform.os.name().toLowerCase();
+        eirABIsScheme = BootImagePackage.fromName(p).loadAndInstantiateScheme(EirABIsScheme.class);
     }
 
     @Override

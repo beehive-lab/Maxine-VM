@@ -20,7 +20,7 @@
  */
 package com.sun.max.tele.field;
 
-import com.sun.max.program.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
@@ -33,9 +33,9 @@ public class TeleInstanceReferenceFieldAccess extends TeleInstanceFieldAccess {
 
     public TeleInstanceReferenceFieldAccess(Class holder, String name, Class<?> type) {
         super(holder, name, Kind.REFERENCE);
-        ProgramError.check(ClassActor.fromJava(type).isAssignableFrom(fieldActor().descriptor().resolve(fieldActor().holder().classLoader)), "field has wrong type: " + name + " in class: " + holder);
+        TeleError.check(ClassActor.fromJava(type).isAssignableFrom(fieldActor().descriptor().resolve(fieldActor().holder().classLoader)), "field has wrong type: " + name + " in class: " + holder);
         final Kind kind = fieldActor().descriptor().toKind();
-        ProgramError.check(kind != Kind.WORD, "Word field used as Reference field: " + fieldActor());
+        TeleError.check(kind != Kind.WORD, "Word field used as Reference field: " + fieldActor());
     }
 
     public TeleInstanceReferenceFieldAccess(Class holder, Class<?> type, InjectedReferenceFieldActor injectedReferenceFieldActor) {

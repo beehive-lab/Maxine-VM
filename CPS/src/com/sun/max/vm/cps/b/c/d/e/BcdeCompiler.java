@@ -23,8 +23,8 @@ package com.sun.max.vm.cps.b.c.d.e;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.cps.b.c.d.*;

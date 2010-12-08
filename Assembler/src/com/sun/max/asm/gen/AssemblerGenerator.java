@@ -20,10 +20,11 @@
  */
 package com.sun.max.asm.gen;
 
+import static com.sun.max.lang.Classes.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.asm.*;
@@ -44,7 +45,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     protected OptionSet options = new OptionSet();
 
-    public final Option<File> outputDirectoryOption = options.newFileOption("d", JavaProject.findSourceDirectory(),
+    public final Option<File> outputDirectoryOption = options.newFileOption("d", JavaProject.findSourceDirectory(AssemblerGenerator.class),
             "Source directory of the class(es) containing the for generated assembler methods.");
     public final Option<String> assemblerInterfaceNameOption = options.newStringOption("i", null,
             "Interface used to constrain which assembler methods will be generated. " +
@@ -67,7 +68,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
         Trace.addTo(options);
         this.assembly = assembly;
         final String isa = assembly.isa().name();
-        final String defaultOutputPackage = MaxPackage.fromClass(Assembler.class).subPackage(isa.toLowerCase()).name() + ".complete";
+        final String defaultOutputPackage = getPackageName(Assembler.class) + "." + isa.toLowerCase() + ".complete";
         this.rawAssemblerClassNameOption.setDefaultValue(defaultOutputPackage + "." + isa + "RawAssembler");
         this.labelAssemblerClassNameOption.setDefaultValue(defaultOutputPackage + "." + isa + "LabelAssembler");
         this.sortAssemblerMethods = sortAssemblerMethods;
@@ -253,18 +254,16 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
      * @param templateList the list of templates for which code is being generated
      * @return a set of packages sorted by name
      */
-    public Set<MaxPackage> getImportPackages(String className, Iterable<Template_Type> templateList) {
-        final int indexOfLastPeriod = className.lastIndexOf('.');
-        final String outputPackageName = indexOfLastPeriod == -1 ? "" : className.substring(0, indexOfLastPeriod);
-        final MaxPackage outputPackage = MaxPackage.fromName(outputPackageName);
-        final Set<MaxPackage> packages = new TreeSet<MaxPackage>();
-        packages.add(MaxPackage.fromClass(AssemblyException.class));
-        packages.add(MaxPackage.fromClass(Label.class));
+    public Set<String> getImportPackages(String className, Iterable<Template_Type> templateList) {
+        final String outputPackage = getPackageName(className);
+        final Set<String> packages = new TreeSet<String>();
+        packages.add(getPackageName(AssemblyException.class));
+        packages.add(getPackageName(Label.class));
         for (Template_Type template : templateList) {
             for (Parameter parameter : template.parameters()) {
                 final Class type = parameter.type();
                 if (!type.isPrimitive()) {
-                    final MaxPackage p = MaxPackage.fromClass(type);
+                    final String p = getPackageName(type);
                     if (!p.equals(outputPackage)) {
                         packages.add(p);
                     }
@@ -768,7 +767,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
             if (rawAssemblerClassName.equals(labelAssemblerClassName)) {
                 if (rawAssemblerMethodsUpdated || labelAssemblerMethodsUpdated) {
                     System.out.println("modified: " + getSourceFileFor(rawAssemblerClassName));
-                    if (!ToolChain.compile(rawAssemblerClassName)) {
+                    if (!ToolChain.compile(AssemblerGenerator.class, rawAssemblerClassName)) {
                         List<Template_Type> allTemplates = new ArrayList<Template_Type>(templates());
                         allTemplates.addAll(labelTemplates());
                         throw ProgramError.unexpected("compilation failed for: " + rawAssemblerClassName +
@@ -781,7 +780,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
             } else {
                 if (rawAssemblerMethodsUpdated) {
                     System.out.println("modified: " + getSourceFileFor(rawAssemblerClassName));
-                    if (!ToolChain.compile(rawAssemblerClassName)) {
+                    if (!ToolChain.compile(AssemblerGenerator.class, rawAssemblerClassName)) {
                         throw ProgramError.unexpected("compilation failed for: " + rawAssemblerClassName +
                                         "[Maybe missing an import statement for one of the following packages: " +
                                         getImportPackages(rawAssemblerClassName, templates()));
@@ -792,7 +791,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
                 if (labelAssemblerMethodsUpdated) {
                     System.out.println("modified: " + getSourceFileFor(labelAssemblerClassName));
-                    if (!ToolChain.compile(labelAssemblerClassName)) {
+                    if (!ToolChain.compile(AssemblerGenerator.class, labelAssemblerClassName)) {
                         throw ProgramError.unexpected("compilation failed for: " + labelAssemblerClassName +
                                         "[Maybe missing an import statement for one of the following packages: " +
                                         getImportPackages(labelAssemblerClassName, labelTemplates()));

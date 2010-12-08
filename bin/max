@@ -71,17 +71,7 @@ maxine_dir=""
 make_arg=
 cp_suffix=
 cp_prefix=
-base_ide_dir=shell
 remote=0
-if [ x${MAXINE_IDE} = xINTELLIJ ]; then
-    base_ide_dir=intellij
-fi
-if [ x${MAXINE_IDE} = xNETBEANS ]; then
-    base_ide_dir=netbeans
-fi
-if [ x${MAXINE_IDE} = xECLIPSE ]; then
-    base_ide_dir=eclipse
-fi
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -278,7 +268,7 @@ projects=( \
     CRI:src                       \
     C1X:src                       \
     C0X:src                       \
-    Base:src,test,$base_ide_dir   \
+    Base:src,test                 \
     Assembler:src,test            \
     VM:src,test                   \
     CPS:src,test                  \

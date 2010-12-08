@@ -39,7 +39,7 @@ public class Throw extends JavaOperator implements Lowerable{
         return null;
     }
 
-    public void toLCir(Lowerable op, CirCall call, BootstrapCompilerScheme compilerScheme) {
+    public void toLCir(Lowerable op, CirCall call, CPSCompiler compilerScheme) {
         final CirValue[] args = call.arguments();
         assert args[args.length - 2] == CirValue.UNDEFINED;
         assert call.procedure() == this;

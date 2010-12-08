@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.member.*;
  *
  * @author Doug Simon
  */
+@HOSTED_ONLY
 public final class InliningAnnotationsValidator {
     private InliningAnnotationsValidator() {
     }
@@ -45,9 +46,6 @@ public final class InliningAnnotationsValidator {
      * {@linkplain MaxineVM#isHosted() bootstrapping}.
      */
     public static void apply(ClassMethodActor classMethodActor) {
-        if (!MaxineVM.isMaxineClass(classMethodActor.holder())) {
-            return;
-        }
         final Method javaMethod = classMethodActor.toJava();
         if (checked.contains(javaMethod)) {
             return;

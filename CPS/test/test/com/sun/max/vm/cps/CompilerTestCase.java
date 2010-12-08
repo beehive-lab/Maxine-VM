@@ -38,7 +38,7 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
-import com.sun.max.ide.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -46,7 +46,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.create.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -86,33 +85,6 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
 
     public Method_Type compile(TestBytecodeAssembler asm, Class superClass) {
         return compileMethod(asm.classMethodActor(superClass));
-    }
-
-    /**
-     * Gets the method which creates the translation table to be used for enum switches. This may well return null as
-     * each Java source compiler differs in the way it generates the translation table.
-     *
-     * @param clientClass the class that contains a switch statement over an enum type
-     * @param enumClass the enum type
-     * @return the method that initializes the translation table or null if it could not be found
-     */
-    protected ClassMethodActor getEnumSwitchTranslationTableInitializer(Class clientClass, Class<? extends Enum> enumClass) {
-        final ClassMethodActor classMethodActor;
-        switch (IDE.current()) {
-            case ECLIPSE: {
-                final Utf8Constant name = makeSymbol("$SWITCH_TABLE$" + enumClass.getName().replace('.', '$'));
-                final SignatureDescriptor signature = SignatureDescriptor.create(int[].class);
-                classMethodActor = ClassActor.fromJava(clientClass).findLocalStaticMethodActor(name, signature);
-                break;
-            }
-            default: {
-                classMethodActor = null;
-            }
-        }
-        if (classMethodActor == null) {
-            ProgramWarning.message("could not find the method that initializes the translation table used in " + clientClass + " for a switch over values of enum type " + enumClass.getName());
-        }
-        return classMethodActor;
     }
 
     protected ClassMethodActor getClassMethodActor(Class javaClass, String methodName, SignatureDescriptor signature) {
@@ -287,7 +259,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
         }
     }
 
-    protected void compilePackage(MaxPackage p) {
+    protected void compilePackage(BootImagePackage p) {
         Trace.begin(1, "compiling package: " + p.name());
         for (Class javaType : javaPrototype().packageLoader().load(p, true)) {
             compileClass(javaType);
@@ -295,8 +267,8 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
         Trace.end(1, "compiling package: " + p.name());
     }
 
-    protected void compilePackages(List<MaxPackage> packages) {
-        for (MaxPackage p : packages) {
+    protected void compilePackages(List<BootImagePackage> packages) {
+        for (BootImagePackage p : packages) {
             compilePackage(p);
         }
     }

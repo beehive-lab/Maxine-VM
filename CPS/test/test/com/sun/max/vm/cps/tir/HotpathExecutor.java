@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.cps.tir;
 
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -36,6 +37,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.hotpath.*;
@@ -111,7 +113,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
 
     public void initialize(JavaTestCase testCase, boolean loadingPackages) {
         final ClassActor classActor = ClassActor.fromJava(testCase.clazz);
-        final StaticMethodActor staticMethodActor = classActor.findLocalStaticMethodActor("test");
+        final StaticMethodActor staticMethodActor = (StaticMethodActor) MethodActor.fromJava(getDeclaredMethod(testCase.clazz, "test"));
         if (staticMethodActor != null) {
             testCase.slot1 = classActor;
             testCase.slot2 = staticMethodActor;
@@ -141,9 +143,9 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
         vm.create(true);
         JavaPrototype.initialize(false);
         vmConfig().initializeSchemes(Phase.RUNNING);
-        vmConfig().bootCompilerScheme().compileSnippets();
-
-        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + vmConfig().bootCompilerScheme().toString());
+        CPSCompiler compiler = CPSCompiler.Static.compiler();
+        compiler.compileSnippets();
+        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + compiler);
     }
 
     protected static void createVMConfiguration() {

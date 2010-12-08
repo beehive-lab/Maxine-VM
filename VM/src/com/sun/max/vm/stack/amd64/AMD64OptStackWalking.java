@@ -35,7 +35,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
@@ -59,15 +58,7 @@ public class AMD64OptStackWalking {
     public static final int RIP_CALL_INSTRUCTION_SIZE = 5;
     public static final byte RET = (byte) 0xC3;
 
-    private static int unwindFrameSize = -1;
-    private static ClassMethodActor unwindMethod;
-
-    private static int getUnwindFrameSize() {
-        if (unwindFrameSize == -1) {
-            unwindFrameSize = CompilationScheme.Static.getCurrentTargetMethod(unwindMethod).frameSize();
-        }
-        return unwindFrameSize;
-    }
+    private static CriticalMethod unwindOptimized = new CriticalMethod(AMD64OptStackWalking.class, "unwindOptimized", null);
 
     @NEVER_INLINE
     public static void unwindToCalleeEpilogue(Throwable throwable, Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
@@ -103,7 +94,7 @@ public class AMD64OptStackWalking {
      */
     @NEVER_INLINE
     public static void unwindOptimized(Throwable throwable, Address catchAddress, Pointer stackPointer, Pointer framePointer) {
-        final int unwindFrameSize = getUnwindFrameSize();
+        final int unwindFrameSize = unwindOptimized.targetMethod().frameSize();
 
         // Put the exception where the exception handler expects to find it
         VmThreadLocal.EXCEPTION_OBJECT.store3(Reference.fromJava(throwable));
@@ -125,11 +116,6 @@ public class AMD64OptStackWalking {
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);
         VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
-    }
-
-    public static void initialize() {
-        AMD64OptStackWalking.unwindMethod = ClassActor.fromJava(AMD64OptStackWalking.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwindOptimized"), null);
-        assert AMD64OptStackWalking.unwindMethod != null;
     }
 
     public static void catchException(TargetMethod targetMethod, Cursor current, Cursor callee, Throwable throwable) {

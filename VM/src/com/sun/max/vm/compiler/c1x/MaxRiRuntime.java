@@ -168,14 +168,14 @@ public class MaxRiRuntime implements RiRuntime {
         return classMethodActor.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(classMethodActor.codeAttribute()));
     }
 
-    public String disassemble(byte[] code) {
+    public String disassemble(byte[] code, long address) {
         if (MaxineVM.isHosted()) {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
             writer.flush();
             Platform platform = Platform.platform();
             final InlineDataDecoder inlineDataDecoder = null;
-            final Pointer startAddress = Pointer.fromInt(0);
+            final Pointer startAddress = Pointer.fromLong(address);
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false);
             Disassembler.disassemble(byteArrayOutputStream, code, platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();

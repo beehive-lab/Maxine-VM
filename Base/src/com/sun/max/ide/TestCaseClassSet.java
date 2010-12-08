@@ -20,12 +20,15 @@
  */
 package com.sun.max.ide;
 
+import static com.sun.max.lang.Classes.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
 import junit.framework.*;
 
 import com.sun.max.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
@@ -53,44 +56,49 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
      * @param maxPackage the package to scan for classes
      * @param scanSubPackages specifies if the sub-packages of {@code maxPackage} should also be scanned
      */
-    public TestCaseClassSet(MaxPackage maxPackage, boolean scanSubPackages) {
-        defaultTestSuiteName = maxPackage.name();
-        add(maxPackage);
-        if (scanSubPackages) {
-            for (MaxPackage subPackage : maxPackage.getTransitiveSubPackages(Classpath.fromSystem())) {
-                add(subPackage);
-            }
-        }
+//    public TestCaseClassSet(MaxPackage maxPackage, boolean scanSubPackages) {
+//        this(maxPackage.name(), scanSubPackages);
+//    }
+//
+//    /**
+//     * Creates a set of classes by scanning a given package (but not its sub-packages) for
+//     * {@linkplain #isJUnitTestCaseClass(Class) valid} JUnit test case classes.
+//     *
+//     * @param maxPackage the package to scan for classes
+//     */
+//    public TestCaseClassSet(MaxPackage maxPackage) {
+//        this(maxPackage, false);
+//    }
+
+    public TestCaseClassSet(Class packageRepresentative) {
+        this(packageRepresentative, false);
     }
 
-    /**
-     * Creates a set of classes by scanning a given package (but not its sub-packages) for
-     * {@linkplain #isJUnitTestCaseClass(Class) valid} JUnit test case classes.
-     *
-     * @param maxPackage the package to scan for classes
-     */
-    public TestCaseClassSet(MaxPackage maxPackage) {
-        this(maxPackage, false);
+    public TestCaseClassSet(Class packageRepresentative, boolean scanSubPackages) {
+        this(getPackageName(packageRepresentative), scanSubPackages);
+    }
+
+    public TestCaseClassSet(final String packageName, final boolean scanSubPackages) {
+        defaultTestSuiteName = packageName;
+        new ClassSearch() {
+            @Override
+            protected boolean visitClass(boolean isArchiveEntry, String className) {
+                if (!className.endsWith("package-info")) {
+                    if (scanSubPackages || (Classes.getPackageName(className).equals(packageName))) {
+                        Class javaClass = Classes.forName(className, false, getClass().getClassLoader());
+                        if (isJUnitTestCaseClass(javaClass)) {
+                            final Class<Class<? extends TestCase>> type = null;
+                            add(Utils.cast(type, javaClass));
+                        }
+                    }
+                }
+                return true;
+            }
+        }.run(Classpath.fromSystem(), packageName.replace('.', '/'));
     }
 
     public static boolean isJUnitTestCaseClass(Class javaClass) {
         return javaClass != null && !Modifier.isAbstract(javaClass.getModifiers()) &&  TestCase.class.isAssignableFrom(javaClass);
-    }
-
-    /**
-     * Adds all the classes in {@code maxPackage} that subclass {@link TestCase} to this set.
-     *
-     * @param maxPackage the package to scan for classes
-     */
-    public TestCaseClassSet add(MaxPackage maxPackage) {
-        final PackageLoader packageLoader = new PackageLoader(maxPackage.getClass().getClassLoader(), Classpath.fromSystem());
-        for (Class javaClass : packageLoader.load(maxPackage, false)) {
-            if (isJUnitTestCaseClass(javaClass)) {
-                final Class<Class<? extends TestCase>> type = null;
-                add(Utils.cast(type, javaClass));
-            }
-        }
-        return this;
     }
 
     /**

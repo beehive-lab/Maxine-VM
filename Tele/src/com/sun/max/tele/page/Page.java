@@ -22,9 +22,9 @@ package com.sun.max.tele.page;
 
 import java.nio.*;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.TargetLocation.Kind;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -32,7 +32,7 @@ import com.sun.max.unsafe.*;
  *
  * To avoid double buffering of {@code byte} arrays in the native code that copies bytes from the VM address space, NIO
  * {@linkplain ByteBuffer#isDirect() direct} {@link ByteBuffer}s are used, unless the target VM is remote. The buffer for each page is
- * allocated from a global buffer until the global buffer is exhausted. If the taret VM is remote or the
+ * allocated from a global buffer until the global buffer is exhausted. If the target VM is remote or the
  * global buffer has been exhausted, then the buffer for each page is a heap allocated byte array.
  *
  * @author Bernd Mathiske
@@ -69,7 +69,7 @@ public class Page {
             try {
                 size = Long.parseLong(value);
             } catch (NumberFormatException numberFormatException) {
-                ProgramWarning.message("Malformed value for the \"max.tele.page.directBuffersPoolSize\" property: " + numberFormatException.getMessage());
+                TeleWarning.message("Malformed value for the \"max.tele.page.directBuffersPoolSize\" property", numberFormatException);
             }
         }
         globalDirectBufferPoolSize = size;

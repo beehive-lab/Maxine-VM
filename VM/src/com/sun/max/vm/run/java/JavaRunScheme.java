@@ -42,6 +42,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
@@ -71,6 +72,12 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     private static final AgentVMOption javaagentOption = register(new AgentVMOption(
         "-javaagent", "load Java programming language agent, see java.lang.instrument"), MaxineVM.Phase.STARTING);
 
+    /**
+     * List of classes to explicitly reinitialise in the {@link MaxineVM.Phase#STARTING} phase.
+     * This supports extensions to the boot image.
+     */
+    private static List<String> reinitClasses = new LinkedList<String>();
+
     @HOSTED_ONLY
     public JavaRunScheme() {
     }
@@ -80,6 +87,14 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     private StaticMethodActor[] initIDMethods;
 
+    @HOSTED_ONLY
+    public static void registerClassForReInit(String className) {
+        CompiledPrototype.registerVMEntryPoint(className + ".<clinit>");
+        MaxineVM.registerKeepClassInit(className);
+        Trace.line(1, "registering "  +  className + " for reinitialization");
+        reinitClasses.add(className);
+    }
+
     /**
      * While bootstrapping, searches the class registry for non-Maxine classes that have methods called
      * "initIDs" with signature "()V". Such methods are typically used in the JDK to initialize JNI
@@ -88,7 +103,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     @HOSTED_ONLY
     public List<? extends MethodActor> gatherNativeInitializationMethods() {
         final List<StaticMethodActor> methods = new LinkedList<StaticMethodActor>();
-        final String maxinePackagePrefix = new com.sun.max.Package().name();
+        final String maxinePackagePrefix = "com.sun.max";
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (!classActor.name.toString().startsWith(maxinePackagePrefix)) { // non-Maxine class => JDK class
                 for (StaticMethodActor method : classActor.localStaticMethodActors()) {
@@ -146,34 +161,27 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 // This hack enables (platform-dependent) tracing before the eventual System properties are set:
                 System.setProperty("line.separator", "\n");
 
-                initializeSystemClass();
-
                 // Normally, we would have to initialize tracing this late,
                 // because 'PrintWriter.<init>()' relies on a system property ("line.separator"), which is accessed during 'initializeSystemClass()'.
 
-                setupClassLoaders();
+                initializeSystemClass();
+
+                // reinitialise any registered classes
+                for (String className : reinitClasses) {
+                    try {
+                        final ClassActor classActor = ClassActor.fromJava(Class.forName(className));
+                        classActor.callInitializer();
+                    } catch (Exception e) {
+                        FatalError.unexpected("Error re-initializing" + className, e);
+                    }
+                }
+
                 break;
             }
             default: {
                 break;
             }
         }
-    }
-
-    /**
-     * Arranges for the standard set of class loaders provided by sun.misc.Launcher to be created for the target environment.
-     */
-    private void setupClassLoaders() {
-        // ClassLoader.getSystemClassLoader calls sun.misc.Launcher.getLauncher()
-        // We may need to reinitialize the class loaders in Launcher for the target environment
-        resetLauncher(ClassActor.fromJava(sun.misc.Launcher.class));
-    }
-
-    /**
-     * A hook to reset the state of the Launcher class, if, i.e., it is compiled into the image.
-     * @param launcherClassActor
-     */
-    protected void resetLauncher(ClassActor launcherClassActor) {
     }
 
     /**

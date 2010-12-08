@@ -24,6 +24,7 @@ import java.io.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.util.*;
 
 /**
  * Base class for inspectors that display information from files.
@@ -54,7 +55,7 @@ public abstract class FileInspector extends Inspector {
             fileInputStream.read(bytes);
             text = new String(bytes);
         } catch (IOException exception) {
-            new InspectorError(exception);
+            InspectorError.unexpected(exception);
         }
         return text;
     }

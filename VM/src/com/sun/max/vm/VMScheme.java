@@ -20,12 +20,13 @@
  */
 package com.sun.max.vm;
 
-import com.sun.max.*;
 
 /**
  * @author Bernd Mathiske
  */
-public interface VMScheme extends Scheme {
+public interface VMScheme {
+
+    String name();
 
     /**
      * Gets the class embodying the specification of the scheme implemented by this object.

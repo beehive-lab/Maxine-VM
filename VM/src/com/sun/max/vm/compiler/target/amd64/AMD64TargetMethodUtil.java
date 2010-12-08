@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
-import com.sun.max.asm.amd64.*;
+import com.sun.c1x.target.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -44,7 +44,7 @@ public final class AMD64TargetMethodUtil {
     private static final Object PatchingLock = new Object();
 
     public static int registerReferenceMapSize() {
-        return Unsigned.idiv(AMD64GeneralRegister64.ENUMERATOR.numberOfValues(), Bytes.WIDTH);
+        return Unsigned.idiv(AMD64.cpuRegisters.length, Bytes.WIDTH);
     }
 
     public static boolean isPatchableCallSite(Address callSite) {
@@ -57,7 +57,7 @@ public final class AMD64TargetMethodUtil {
         final Address endOfCallSite = callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
         return callSite.plus(1).isWordAligned() ? true :
         // last byte of call site:
-        callSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes).equals(endOfCallSite.roundedDownBy(WordWidth.BITS_64.numberOfBytes));
+        callSite.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
     }
 
     /**
@@ -122,9 +122,9 @@ public final class AMD64TargetMethodUtil {
         displacement = displacement & 0xFFFFFFFFL;
         synchronized (PatchingLock) {
             // Just to prevent concurrent writing and invalidation to the same instruction cache line
-            // (although the lock exclude ALL concurrent patching)
+            // (although the lock excludes ALL concurrent patching)
             callSite.writeInt(1,  (int) displacement);
-            // Don't need ICache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
+            // Don't need icache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
         }
     }
 

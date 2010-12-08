@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.layout.hosted;
 
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;

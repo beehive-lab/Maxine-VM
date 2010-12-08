@@ -20,11 +20,8 @@
  */
 package com.sun.max.tele.field;
 
-import com.sun.max.program.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -33,9 +30,8 @@ import com.sun.max.vm.type.*;
 public abstract class TeleFieldAccess {
 
     private static FieldActor findFieldActor(Class holder, String name) {
-        final ClassActor classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
-        final FieldActor fieldActor = classActor.findFieldActor(SymbolTable.makeSymbol(name));
-        ProgramError.check(fieldActor != null, "could not find field: " + name + " in class: " + holder);
+        final FieldActor fieldActor = ClassRegistry.findField(holder, name);
+        TeleError.check(fieldActor != null, "could not find field: " + name + " in class: " + holder);
         return fieldActor;
     }
 
@@ -47,7 +43,7 @@ public abstract class TeleFieldAccess {
 
     protected TeleFieldAccess(Class holder, String name, Kind kind) {
         fieldActor = findFieldActor(holder, name);
-        ProgramError.check(fieldActor.kind == kind, "field has wrong kind: " + name + " in class: " + holder);
+        TeleError.check(fieldActor.kind == kind, "field has wrong kind: " + name + " in class: " + holder);
     }
 
     @Override

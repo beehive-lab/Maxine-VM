@@ -20,11 +20,8 @@
  */
 package com.sun.max.vm.actor.holder;
 
-import com.sun.max.vm.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Instances of this class represent static tuples during bootstrapping.
@@ -33,6 +30,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Bernd Mathiske
  */
+@HOSTED_ONLY
 public final class StaticTuple {
 
     private final ClassActor classActor;
@@ -41,22 +39,8 @@ public final class StaticTuple {
         return classActor;
     }
 
-    private StaticTuple(ClassActor classActor) {
+    public StaticTuple(ClassActor classActor) {
         this.classActor = classActor;
-    }
-
-    public static Object create(ClassActor classActor) {
-        if (MaxineVM.isHosted()) {
-            return new StaticTuple(classActor);
-        }
-        final Object staticTuple = Heap.createTuple(classActor.staticHub());
-        for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
-            final Value constantValue = fieldActor.constantValue();
-            if (constantValue != null) {
-                fieldActor.writeValue(staticTuple, constantValue);
-            }
-        }
-        return staticTuple;
     }
 
     public static Object fromJava(Class javaClass) {
@@ -70,20 +54,5 @@ public final class StaticTuple {
     @Override
     public String toString() {
         return "staticTuple-" + classActor.simpleName();
-    }
-
-    public static boolean is(Object object) {
-        if (MaxineVM.isHosted()) {
-            return object instanceof StaticTuple;
-        }
-        return ObjectAccess.readHub(object) instanceof StaticHub;
-    }
-
-    public static String toString(Object staticTuple) {
-        if (MaxineVM.isHosted()) {
-            final StaticTuple s = (StaticTuple) staticTuple;
-            return s.toString();
-        }
-        return "staticTuple-" + ObjectAccess.readHub(staticTuple).classActor.simpleName();
     }
 }

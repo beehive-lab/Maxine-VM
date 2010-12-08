@@ -122,7 +122,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         CiTargetMethod compiledMethod = compiler().compileMethod(method, -1, xirGenerator).targetMethod();
         if (compiledMethod != null) {
             C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
-            CompilationScheme.Inspect.notifyCompilationComplete(c1xTargetMethod);
             return c1xTargetMethod;
         }
         throw FatalError.unexpected("bailout"); // compilation failed

@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.cps.amd64;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
@@ -29,6 +28,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.hosted.*;
 
@@ -42,7 +42,7 @@ public class AMD64TranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
     }
 
     public static TargetGeneratorScheme targetGeneratorScheme() {
-        return (TargetGeneratorScheme) vmConfig().bootCompilerScheme();
+        return (TargetGeneratorScheme) CPSCompiler.Static.compiler();
     }
 
     public static TargetGenerator targetGenerator() {

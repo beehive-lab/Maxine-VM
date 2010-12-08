@@ -42,7 +42,6 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.NativeProperty;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -624,7 +623,6 @@ public final class JDK_java_lang_System {
     }
 
     // Checkstyle: stop method name check
-
     @ALIAS(declaringClassName = "java.lang.ProcessEnvironment", name = "<clinit>")
     private static native void ProcessEnvironment_clinit();
 
@@ -951,8 +949,6 @@ public final class JDK_java_lang_System {
 
     @ALIAS(declaringClass = Runtime.class)
     private native void loadLibrary0(Class fromClass, String libname);
-
-    private static final VirtualMethodActor Runtime_loadLibrary0 = ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0");
 
     @INTRINSIC(UNSAFE_CAST)
     private static native JDK_java_lang_System asThis(Runtime runtime);

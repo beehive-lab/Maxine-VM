@@ -20,7 +20,7 @@
  */
 package com.sun.max.ins.memory;
 
-import com.sun.max.program.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
@@ -46,7 +46,7 @@ public class MemoryWordRegion extends InspectorMemoryRegion {
         super(vm, null, start, wordSize.times(wordCount));
         this.wordCount = wordCount;
         this.wordSize = wordSize;
-        ProgramError.check(start.isAligned(wordSize.toInt()));
+        InspectorError.check(start.isAligned(wordSize.toInt()));
     }
 
     /**

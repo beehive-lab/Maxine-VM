@@ -23,11 +23,9 @@ package com.sun.max.vm.cps.b.c.d.e.amd64.target;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.cps.b.c.d.e.amd64.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.stack.amd64.*;
 
 /**
  * @author Bernd Mathiske
@@ -55,13 +53,5 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
         final List<IrGenerator> result = new LinkedList<IrGenerator>(super.irGenerators());
         result.add((IrGenerator) targetGenerator());
         return result;
-    }
-
-    @Override
-    public void initialize(MaxineVM.Phase phase) {
-        super.initialize(phase);
-        if (MaxineVM.isHosted()) {
-            AMD64OptStackWalking.initialize();
-        }
     }
 }

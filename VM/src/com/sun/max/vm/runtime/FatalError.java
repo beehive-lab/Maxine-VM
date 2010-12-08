@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -157,7 +158,7 @@ public final class FatalError extends Error {
             Log.print("------ Trap State for thread ");
             Log.printThread(vmThread, false);
             Log.println(" ------");
-            TrapStateAccess.instance().logTrapState(trapState);
+            vm().trapStateAccess.logTrapState(trapState);
         }
 
         if (vmThread != null) {
@@ -177,7 +178,7 @@ public final class FatalError extends Error {
         Log.unlock(lockDisabledSafepoints);
         Address ip = Address.zero();
         if (trappedInNative && !trapState.isZero())  {
-            ip = TrapStateAccess.instance().getPC(trapState);
+            ip = vm().trapStateAccess.getPC(trapState);
         }
         exit(trappedInNative, ip);
 

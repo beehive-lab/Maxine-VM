@@ -21,7 +21,7 @@
 package com.sun.max.vm.cps.jit.amd64;
 
 import static com.sun.max.asm.x86.Scale.*;
-import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.bytecode.BranchCondition.*;
 
 import java.io.*;
@@ -38,7 +38,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
@@ -268,7 +267,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 // Note that the safepoint takes place once the stack frame is in the same state as that of the target bytecode.
                 // The reference maps of the target should be used when at this safepoint.
                 final int stopPosition = codeBuffer.currentPosition();
-                codeBuffer.emit(vmConfig().safepoint.code);
+                codeBuffer.emit(vm().safepoint.code);
                 emitSafepoint(new BackwardBranchBytecodeSafepoint(stopPosition, opcodeBci));
             }
             // Compute relative offset.

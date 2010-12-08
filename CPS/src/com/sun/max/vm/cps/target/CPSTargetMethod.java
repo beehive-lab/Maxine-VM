@@ -32,7 +32,6 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -199,7 +198,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
                     byte[] referenceMaps,
                     byte[] scalarLiterals,
                     Object[] referenceLiterals,
-                    Object codeOrCodeBuffer,
+                    byte[] codeBuffer,
                     byte[] encodedInlineDataDescriptors,
                     int frameSize,
                     int frameReferenceMapSize) {
@@ -212,37 +211,13 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         this.frameReferenceMapSize = frameReferenceMapSize;
         super.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         super.setFrameSize(frameSize);
-        super.setData(scalarLiterals, referenceLiterals, codeOrCodeBuffer);
+        super.setData(scalarLiterals, referenceLiterals, codeBuffer);
     }
 
     /**
      * Creates a copy of this target method.
      */
     protected abstract CPSTargetMethod createDuplicate();
-
-    @Override
-    public final TargetMethod duplicate() {
-        final CPSTargetMethod duplicate = createDuplicate();
-        final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
-        Code.allocate(targetBundleLayout, duplicate);
-        duplicate.setGenerated(
-            catchRangePositions(),
-            catchBlockPositions(),
-            stopPositions,
-            compressedJavaFrameDescriptors,
-            directCallees(),
-            numberOfIndirectCalls(),
-            numberOfSafepoints(),
-            referenceMaps(),
-            scalarLiterals(),
-            referenceLiterals(),
-            code(),
-            encodedInlineDataDescriptors,
-            frameSize(),
-            frameReferenceMapSize()
-        );
-        return duplicate;
-    }
 
     /**
      * Gets the size of the reference map covering the registers.

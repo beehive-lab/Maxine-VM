@@ -31,6 +31,7 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -51,7 +52,7 @@ import com.sun.max.vm.value.*;
  * The closure of {@code Word} types (i.e. all the classes that subclass {@link Word}) is {@linkplain #getSubclasses() discovered}
  * during initialization in a hosted environment. This discovery mechanism relies on the same package based
  * facility used to configure the schemes of a VM. Each package that defines one or more {@code Word} subclasses
- * must also declare a subclass of {@link MaxPackage} named "Package" that overrides {@link MaxPackage#wordSubclasses()}.
+ * must also declare a subclass of {@link BootImagePackage} named "Package" that overrides {@link BootImagePackage#wordSubclasses()}.
  *
  * @see WordValue
  *
@@ -63,8 +64,8 @@ public abstract class Word {
     /**
      * The array of all the subclasses of {@link Word} that are accessible on the classpath when
      * in hosted mode. This value of this array and {@link #unboxedToBoxedTypes} is constructed
-     * by scanning the classpath for all classes named "Package" that subclasses {@link MaxPackage}.
-     * An instance of each such class is instantiated and its {@link MaxPackage#wordSubclasses()} method
+     * by scanning the class path for all classes named "Package" that subclasses {@link BootImagePackage}.
+     * An instance of each such class is instantiated and its {@link BootImagePackage#wordSubclasses()} method
      * is invoked to obtain the set of classes in the denoted package that subclass {@code Word}.
      */
     @HOSTED_ONLY
@@ -90,8 +91,8 @@ public abstract class Word {
                     if (className.endsWith(".Package")) {
                         try {
                             Class<?> packageClass = Class.forName(className);
-                            if (MaxPackage.class.isAssignableFrom(packageClass)) {
-                                MaxPackage p = (MaxPackage) packageClass.newInstance();
+                            if (BootImagePackage.class.isAssignableFrom(packageClass)) {
+                                BootImagePackage p = (BootImagePackage) packageClass.newInstance();
                                 Class[] wordClasses = p.wordSubclasses();
                                 if (wordClasses != null) {
                                     for (Class wordClass : wordClasses) {

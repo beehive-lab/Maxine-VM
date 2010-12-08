@@ -20,10 +20,11 @@
  */
 package com.sun.max.vm.hosted;
 
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.*;
-import com.sun.max.lang.ISA.*;
+import com.sun.max.config.*;
+import com.sun.max.lang.ISA.Category;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -48,27 +49,26 @@ public final class VMConfigurator {
 
     public final Option<BuildLevel> buildLevel = options.newEnumOption("build", BuildLevel.PRODUCT, BuildLevel.class,
             "This option selects the build level of the virtual machine.");
-    public final Option<MaxPackage> referenceScheme = schemeOption("reference", new com.sun.max.vm.reference.Package(), ReferenceScheme.class,
-            "Specifies the reference scheme for the target.", VMConfigurator.defaultReferenceScheme());
-    public final Option<MaxPackage> layoutScheme = schemeOption("layout", new com.sun.max.vm.layout.Package(), LayoutScheme.class,
-            "Specifies the layout scheme for the target.", VMConfigurator.defaultLayoutScheme());
-    public final Option<MaxPackage> heapScheme = schemeOption("heap", new com.sun.max.vm.heap.Package(), HeapScheme.class,
-            "Specifies the heap scheme for the target.", VMConfigurator.defaultHeapScheme());
-    public final Option<MaxPackage> monitorScheme = schemeOption("monitor", new com.sun.max.vm.monitor.Package(), MonitorScheme.class,
-            "Specifies the monitor scheme for the target.", VMConfigurator.defaultMonitorScheme());
-    public final Option<MaxPackage> bootScheme = schemeOption("boot", new com.sun.max.vm.compiler.Package(), BootstrapCompilerScheme.class,
-            "Specifies the boot compiler scheme for the target.", VMConfigurator.defaultCompilerScheme());
-    public final Option<MaxPackage> optScheme = schemeOption("opt", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
-            "Specifies the optimizing compiler scheme for the target.", VMConfigurator.defaultCompilerScheme());
-    public final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
-            "Specifies the JIT scheme for the target.", VMConfigurator.defaultJitCompilerScheme());
-    public final Option<MaxPackage> compScheme = schemeOption("comp", new com.sun.max.vm.compiler.Package(), CompilationScheme.class,
-            "Specifies the compilation scheme for the target.", VMConfigurator.defaultCompilationScheme());
-    public final Option<MaxPackage> runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), RunScheme.class,
-            "Specifies the run scheme for the target.", VMConfigurator.defaultRunScheme());
+    public final Option<String> referenceScheme = schemeOption("reference", ReferenceScheme.class, "Specifies the reference scheme for the target.",
+            VMConfigurator.defaultReferenceScheme());
+    public final Option<String> layoutScheme = schemeOption("layout", LayoutScheme.class, "Specifies the layout scheme for the target.",
+            VMConfigurator.defaultLayoutScheme());
+    public final Option<String> heapScheme = schemeOption("heap", HeapScheme.class, "Specifies the heap scheme for the target.",
+            VMConfigurator.defaultHeapScheme());
+    public final Option<String> monitorScheme = schemeOption("monitor", MonitorScheme.class, "Specifies the monitor scheme for the target.",
+            VMConfigurator.defaultMonitorScheme());
+    public final Option<String> optScheme = schemeOption("opt", RuntimeCompilerScheme.class, "Specifies the optimizing compiler scheme for the target.",
+            VMConfigurator.defaultOptCompilerScheme());
+    public final Option<String> jitScheme = schemeOption("jit", RuntimeCompilerScheme.class, "Specifies the JIT scheme for the target.",
+            VMConfigurator.defaultJitCompilerScheme());
+    public final Option<String> compScheme = schemeOption("comp", CompilationScheme.class, "Specifies the compilation scheme for the target.",
+            VMConfigurator.defaultCompilationScheme());
+    public final Option<String> runScheme = schemeOption("run", RunScheme.class, "Specifies the run scheme for the target.",
+            VMConfigurator.defaultRunScheme());
 
-    private Option<MaxPackage> schemeOption(String name, MaxPackage superPackage, Class cl, String help, VMPackage def) {
-        return options.newOption(name, (MaxPackage) def, new MaxPackageOptionType(superPackage, cl), OptionSet.Syntax.REQUIRES_EQUALS, help);
+    private Option<String> schemeOption(String name, Class schemeClass, String help, VMPackage def) {
+        String p = def.name();
+        return options.newOption(name, p, new PackageOptionType(getPackageName(schemeClass)), OptionSet.Syntax.REQUIRES_EQUALS, help);
     }
 
     /**
@@ -96,9 +96,8 @@ public final class VMConfigurator {
                                     vm(layoutScheme),
                                     vm(heapScheme),
                                     vm(monitorScheme),
-                                    vm(bootScheme),
-                                    vm(jitScheme),
                                     vm(optScheme),
+                                    vm(jitScheme),
                                     vm(compScheme),
                                     vm(runScheme));
         MaxineVM vm = new MaxineVM(config);
@@ -110,24 +109,24 @@ public final class VMConfigurator {
     }
 
     /**
-     * Gets the package providing the default {@link BootstrapCompilerScheme}.
+     * Gets the package providing the default {@link VMConfiguration#optCompilerScheme()}.
      */
-    public static VMPackage defaultCompilerScheme() {
+    public static VMPackage defaultOptCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
+                return (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             default:
                 throw FatalError.unexpected(platform().isa.toString());
         }
     }
 
     /**
-     * Gets the package providing the default {@link RuntimeCompilerScheme}.
+     * Gets the package providing the default {@link VMConfiguration#jitCompilerScheme()}.
      */
     public static VMPackage defaultJitCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
+                return (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
             default:
                 throw FatalError.unimplemented();
         }
@@ -209,19 +208,18 @@ public final class VMConfigurator {
      * except for a supplied build level.
      */
     public static void installStandard(BuildLevel buildLevel) {
-        installStandard(buildLevel, defaultCompilerScheme());
+        installStandard(buildLevel, defaultOptCompilerScheme());
     }
 
     /**
      * Creates and {@linkplain MaxineVM#set(MaxineVM) installs} a VM using all the defaults
      * except for a supplied compiler scheme implementation and build level.
      */
-    public static void installStandard(BuildLevel buildLevel, VMPackage compilerPackage) {
+    public static void installStandard(BuildLevel buildLevel, VMPackage optPackage) {
         VMConfigurator vmConfigurator = new VMConfigurator(null);
         vmConfigurator.buildLevel.setValue(buildLevel);
-        vmConfigurator.bootScheme.setValue(compilerPackage);
+        vmConfigurator.optScheme.setValue(optPackage.name());
         vmConfigurator.jitScheme.setValue(null);
-        vmConfigurator.optScheme.setValue(null);
         vmConfigurator.create(true);
     }
 
@@ -230,8 +228,12 @@ public final class VMConfigurator {
      * @param option the option which contains the value
      * @return the option's value casted to a {@code VMPackage}
      */
-    private static VMPackage vm(Option<MaxPackage> option) {
-        return (VMPackage) option.getValue();
+    private static VMPackage vm(Option<String> option) {
+        String value = option.getValue();
+        if (value == null) {
+            return null;
+        }
+        return (VMPackage) BootImagePackage.fromName(value);
     }
 
     /**
