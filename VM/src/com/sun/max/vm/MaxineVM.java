@@ -36,6 +36,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
@@ -199,11 +200,17 @@ public final class MaxineVM {
         KEEP_CLINIT_CLASSES.add(className);
     }
 
+    /**
+     * Global variable determining whether class initializers are to be discarded
+     * or preserved by the {@link ClassfileReader}.
+     */
+    @HOSTED_ONLY
+    public static boolean preserveClinitMethods = System.getProperty("max.loader.preserveClinitMethods") != null;
+
     @HOSTED_ONLY
     public static boolean keepClassInit(TypeDescriptor classDescriptor) {
         final String className = classDescriptor.toJavaString();
-        final boolean result = KEEP_CLINIT_CLASSES.contains(className) ||
-            System.getProperty("max.loader.preserveClinitMethods") != null;
+        final boolean result = preserveClinitMethods || KEEP_CLINIT_CLASSES.contains(className);
         return result;
     }
 
