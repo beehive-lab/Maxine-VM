@@ -1324,24 +1324,25 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitSignificantBitOp(boolean most, CiValue inOpr1, CiValue dst) {
+    protected void emitSignificantBitOp(boolean most, CiValue src, CiValue dst) {
         assert dst.isRegister();
         CiRegister result = dst.asRegister();
-        masm.xorl(result, result);
+        masm.xorq(result, result);
         masm.notq(result);
-        if (inOpr1.isRegister()) {
-            CiRegister value = inOpr1.asRegister();
+        if (src.isRegister()) {
+            CiRegister value = src.asRegister();
+            assert value != result;
             if (most) {
-                masm.bsrl(result, value);
+                masm.bsrq(result, value);
             } else {
-                masm.bsfl(result, value);
+                masm.bsfq(result, value);
             }
         } else {
-            CiAddress laddr = asAddress(inOpr1);
+            CiAddress laddr = asAddress(src);
             if (most) {
-                masm.bsrl(result, laddr);
+                masm.bsrq(result, laddr);
             } else {
-                masm.bsfl(result, laddr);
+                masm.bsfq(result, laddr);
             }
         }
     }
