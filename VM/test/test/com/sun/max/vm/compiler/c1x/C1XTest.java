@@ -98,7 +98,7 @@ public class C1XTest {
         "Reset the metrics before each timing run.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
-    private static final Option<Integer> c1xOptLevel = options.newIntegerOption("C1X:OptLevel", -1,
+    private static final Option<Integer> c1xOptLevel = options.newIntegerOption("C1X:OptLevel", 3,
         "Set the overall optimization level of C1X (-1 to use default settings)");
     private static final Option<List<String>> metricsOption = options.newStringListOption("print-metrics", new String[0],
         "A list of metrics from the C1XMetrics class to print.");
@@ -135,6 +135,7 @@ public class C1XTest {
 
     public static void main(String[] args) throws IOException {
         // set the default optimization level before parsing options
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
         options.parseArguments(args);
         Integer optLevel = c1xOptLevel.getValue();
         if (optLevel >= 0) {
@@ -155,6 +156,7 @@ public class C1XTest {
             try {
                 out = new PrintStream(new FileOutputStream(outFileOption.getValue()));
                 Trace.setStream(out);
+                System.setProperty(TTY.C1X_TTY_LOG_FILE_PROPERTY, outFileOption.getValue().getPath());
             } catch (FileNotFoundException e) {
                 System.err.println("Could not open " + outFileOption.getValue() + " for writing: " + e);
                 System.exit(1);
@@ -171,7 +173,6 @@ public class C1XTest {
 
         Trace.on(traceOption.getValue());
 
-        VMConfigurator vmConfigurator = new VMConfigurator(options);
         String c1xPackage = getPackageName(C1XCompilerScheme.class);
         vmConfigurator.optScheme.setValue(c1xPackage);
         vmConfigurator.jitScheme.setValue(c1xPackage);

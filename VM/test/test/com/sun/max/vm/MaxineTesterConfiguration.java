@@ -252,6 +252,7 @@ public class MaxineTesterConfiguration {
         imageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
         imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
         imageConfig("cpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
+        imageConfig("c1xc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=1");
 
         String c1xPackage = "com.sun.max.vm.compiler.c1x";
         String c1xClass = c1xPackage + ".C1XCompilerScheme";
@@ -286,10 +287,10 @@ public class MaxineTesterConfiguration {
         imageConfig("opt-c1x2",  "-opt=c1x", "--C1X:OptLevel=2", "--XX:+FailOverC1X");
         imageConfig("opt-c1x3",  "-opt=c1x", "--C1X:OptLevel=3", "--XX:+FailOverC1X", "-jit=c1x");
 
-        imageConfig("c1x0",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=0", "--XX:+FailOverC1X");
-        imageConfig("c1x1",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=1", "--XX:+FailOverC1X");
-        imageConfig("c1x2",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=2", "--XX:+FailOverC1X");
-        imageConfig("c1x3",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=3", "--XX:+FailOverC1X");
+        imageConfig("c1x0",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=0");
+        imageConfig("c1x1",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=1");
+        imageConfig("c1x2",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=2");
+        imageConfig("c1x3",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=3");
 
         // Alternate GC configs
         imageConfig("ms",         "-run=java", "-heap=gcx.ms");

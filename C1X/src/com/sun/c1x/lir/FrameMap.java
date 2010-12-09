@@ -45,13 +45,19 @@ import com.sun.cri.ri.*;
  *          | incoming overflow argument 0   |
  *          | return address                 | Caller frame
  *   -------+--------------------------------+----------------  ---
- *          | ALLOCA block n                 |                   ^
+ *          |                                |                   ^
+ *          : callee save area               :                   |
+ *          |                                |                   |
+ *          +--------------------------------+                   |
+ *          | alignment padding              |                   |
+ *          +--------------------------------+                   |
+ *          | ALLOCA block n                 |                   |
  *          :     ...                        :                   |
- *          | ALLOCA block 0                 |                   |
+ *          | ALLOCA block 0                 | Current frame     |
  *          +--------------------------------+                   |
  *          | monitor n                      |                   |
  *          :     ...                        :                   |
- *          | monitor 0                      | Current frame     |
+ *          | monitor 0                      |                   |
  *          +--------------------------------+    ---            |
  *          | spill slot n                   |     ^           frame
  *          :     ...                        :     |           size
@@ -183,7 +189,7 @@ public final class FrameMap {
         assert spillSlotCount >= 0 : "must be positive";
 
         this.spillSlotCount = spillSlotCount;
-        int frameSize = stackBlocksEnd();
+        int frameSize = offsetToStackBlocksEnd();
         frameSize += compilation.registerConfig.getCalleeSaveArea().size;
         this.frameSize = compilation.target.alignFrameSize(frameSize);
     }
@@ -210,7 +216,7 @@ public final class FrameMap {
             int offset = slot.index() * compilation.target.spillSlotSize;
             return new CiAddress(slot.kind, CiRegister.CallerFrame.asValue(), offset);
         } else {
-            int offset = spOffsetForOutgoingOrSpillSlot(slot.index(), size);
+            int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);
             return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
         }
     }
@@ -222,7 +228,7 @@ public final class FrameMap {
      * @return a representation of the stack location
      */
     public CiAddress toStackAddress(StackBlock stackBlock) {
-        return new CiAddress(CiKind.Word, compilation.registerConfig.getFrameRegister().asValue(Word), spOffsetForStackBlock(stackBlock));
+        return new CiAddress(CiKind.Word, compilation.registerConfig.getFrameRegister().asValue(Word), offsetForStackBlock(stackBlock));
     }
 
     /**
@@ -232,7 +238,7 @@ public final class FrameMap {
      * @return a representation of the stack address
      */
     public CiStackSlot toMonitorObjectStackAddress(int monitorIndex) {
-        int byteIndex = spOffsetForMonitorObject(monitorIndex);
+        int byteIndex = offsetForMonitorObject(monitorIndex);
         assert byteIndex % compilation.target.wordSize == 0;
         return CiStackSlot.get(CiKind.Object, byteIndex / compilation.target.wordSize);
     }
@@ -244,13 +250,13 @@ public final class FrameMap {
      * @return a representation of the stack address
      */
     public CiStackSlot toMonitorBaseStackAddress(int monitorIndex) {
-        int byteIndex = spOffsetForMonitorBase(monitorIndex);
+        int byteIndex = offsetForMonitorBase(monitorIndex);
         assert byteIndex % compilation.target.wordSize == 0;
         return CiStackSlot.get(CiKind.Object, byteIndex / compilation.target.wordSize);
     }
 
     /**
-     * Reserve space for stack-based outgoing arguments.
+     * Reserves space for stack-based outgoing arguments.
      *
      * @param argsSize the amount of space to reserve for stack-based outgoing arguments
      */
@@ -296,9 +302,9 @@ public final class FrameMap {
         return block;
     }
 
-    private int spOffsetForStackBlock(StackBlock stackBlock) {
+    private int offsetForStackBlock(StackBlock stackBlock) {
         assert stackBlock.offset >= 0 && stackBlock.offset + stackBlock.size <= stackBlocksSize : "invalid stack block";
-        int offset = stackBlocksStart() + stackBlock.offset;
+        int offset = offsetToStackBlocks() + stackBlock.offset;
         assert offset <= (frameSize() - stackBlock.size) : "spill outside of frame";
         return offset;
     }
@@ -310,48 +316,56 @@ public final class FrameMap {
      * @param size
      * @return
      */
-    private int spOffsetForOutgoingOrSpillSlot(int slotIndex, int size) {
+    private int offsetForOutgoingOrSpillSlot(int slotIndex, int size) {
         assert slotIndex >= 0 && slotIndex < (initialSpillSlot() + spillSlotCount) : "invalid spill slot";
         int offset = slotIndex * compilation.target.spillSlotSize;
         assert offset <= (frameSize() - size) : "slot outside of frame";
         return offset;
     }
 
-    private int spOffsetForMonitorBase(int index) {
+    private int offsetForMonitorBase(int index) {
         assert index >= 0 && index < monitorCount : "invalid monitor index";
         int size = compilation.runtime.sizeOfBasicObjectLock();
         assert size != 0 : "monitors are not on the stack in this VM";
-        int offset = monitorsStart() + index * size;
+        int offset = offsetToMonitors() + index * size;
         assert offset <= (frameSize() - size) : "monitor outside of frame";
         return offset;
     }
 
-    private int spillStart() {
+    private int offsetToSpillArea() {
         return outgoingSize;
     }
 
-    private int spillEnd() {
-        return spillStart() + spillSlotCount * compilation.target.spillSlotSize;
+    private int offsetToSpillEnd() {
+        return offsetToSpillArea() + spillSlotCount * compilation.target.spillSlotSize;
     }
 
-    private int monitorsStart() {
-        return spillEnd();
+    private int offsetToMonitors() {
+        return offsetToSpillEnd();
     }
 
-    private int monitorsEnd() {
-        return monitorsStart() + (monitorCount * compilation.runtime.sizeOfBasicObjectLock());
+    private int offsetToMonitorsEnd() {
+        return offsetToMonitors() + (monitorCount * compilation.runtime.sizeOfBasicObjectLock());
     }
 
-    private int stackBlocksStart() {
-        return monitorsEnd();
+    private int offsetToStackBlocks() {
+        return offsetToMonitorsEnd();
     }
 
-    private int stackBlocksEnd() {
-        return stackBlocksStart() + stackBlocksSize;
+    private int offsetToStackBlocksEnd() {
+        return offsetToStackBlocks() + stackBlocksSize;
     }
 
-    private int spOffsetForMonitorObject(int index)  {
-        return spOffsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
+    public int offsetToCalleeSaveAreaStart() {
+        return offsetToCalleeSaveAreaEnd() - compilation.registerConfig.getCalleeSaveArea().size;
+    }
+
+    public int offsetToCalleeSaveAreaEnd() {
+        return frameSize;
+    }
+
+    private int offsetForMonitorObject(int index)  {
+        return offsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
     }
 
     /**

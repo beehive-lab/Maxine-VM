@@ -189,30 +189,22 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     public void visitArithmeticOpLong(ArithmeticOp x) {
         int opcode = x.opcode;
         if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM) {
-            // emit code for long division or modulus
-            if (is64) {
-                // emit inline 64-bit code
-                LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-                CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
-                CiValue divisor = load(x.y());            // divisor can be in any (other) register
+            // emit inline 64-bit code
+            LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
+            CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
+            CiValue divisor = load(x.y());            // divisor can be in any (other) register
 
-                CiValue result = createResultVariable(x);
-                CiValue resultReg;
-                if (opcode == Bytecodes.LREM) {
-                    resultReg = RDX_L; // remainder result is produced in rdx
-                    lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
-                } else {
-                    resultReg = RAX_L; // division result is produced in rax
-                    lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
-                }
-
-                lir.move(resultReg, result);
+            CiValue result = createResultVariable(x);
+            CiValue resultReg;
+            if (opcode == Bytecodes.LREM) {
+                resultReg = RDX_L; // remainder result is produced in rdx
+                lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
             } else {
-                // emit direct call into the runtime
-                CiRuntimeCall runtimeCall = opcode == Bytecodes.LREM ? CiRuntimeCall.ArithmethicLrem : CiRuntimeCall.ArithmeticLdiv;
-                LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-                setResult(x, callRuntimeWithResult(runtimeCall, info, x.x().operand(), x.y().operand()));
+                resultReg = RAX_L; // division result is produced in rax
+                lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
             }
+
+            lir.move(resultReg, result);
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
@@ -539,7 +531,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             cmp.loadItemForce(RAX_I);
             val.loadItem();
         } else if (kind.isLong()) {
-            assert is64 : "32-bit not implemented";
             cmp.loadItemForce(RAX_L);
             val.loadItemForce(AMD64.rbx.asValue(CiKind.Long));
         } else {

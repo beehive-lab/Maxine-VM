@@ -89,9 +89,14 @@ public abstract class MemberActor extends Actor {
         assert (char) index == index : "exceeded member index range";
         this.holder = classActor;
         this.memberIndex = (char) index;
-        if (MaxineVM.isHosted() && isNative(flags())) {
-            // Make sure the C symbol for a native method is cooked into the boot image
-            ((ClassMethodActor) this).nativeFunction.makeSymbol();
+        if (MaxineVM.isHosted() && this instanceof ClassMethodActor) {
+            ClassMethodActor classMethodActor = (ClassMethodActor) this;
+            if (classMethodActor.isNative() &&
+                !classMethodActor.isBuiltin() &&
+                classMethodActor.intrinsic() == 0) {
+                // Make sure the C symbol for a native method is cooked into the boot image
+                classMethodActor.nativeFunction.makeSymbol();
+            }
         }
     }
 

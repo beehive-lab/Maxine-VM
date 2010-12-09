@@ -43,10 +43,12 @@ public abstract class StateSplit extends Instruction {
     }
 
     /**
-     * Sets the state after this instruction has executed.
+     * Records the state of this instruction before it is executed.
+     *
      * @param stateBefore the state
      */
-    public void setStateBefore(FrameState stateBefore) {
+    public final void setStateBefore(FrameState stateBefore) {
+        assert this.stateBefore == null;
         this.stateBefore = stateBefore;
     }
 
@@ -55,7 +57,7 @@ public abstract class StateSplit extends Instruction {
      * @return the state
      */
     @Override
-    public FrameState stateBefore() {
+    public final FrameState stateBefore() {
         return stateBefore;
     }
 }

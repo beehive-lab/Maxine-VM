@@ -29,6 +29,8 @@ import com.sun.cri.ci.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.snippet.Snippet.DoubleRemainder;
+import com.sun.max.vm.compiler.snippet.Snippet.FloatRemainder;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -142,13 +144,13 @@ public class C1XRuntimeCalls {
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticFrem)
     public static float runtimeArithmeticFrem(float v1, float v2) {
         verifyRefMaps();
-        return v1 % v2;
+        return FloatRemainder.floatRemainder(v1, v2);
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticDrem)
     public static double runtimeArithmeticDrem(double v1, double v2) {
         verifyRefMaps();
-        return v1 % v2;
+        return DoubleRemainder.doubleRemainder(v1, v2);
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticCos)
