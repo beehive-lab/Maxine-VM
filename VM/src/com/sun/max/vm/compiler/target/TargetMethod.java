@@ -26,6 +26,7 @@ import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -78,17 +79,17 @@ public abstract class TargetMethod extends MemoryRegion {
         JitTemplate,
 
         /**
-         * Trampoline for unlinked virtual method dispatch.
+         * Trampoline for virtual method dispatch (i.e. translation of {@link Bytecodes#INVOKEVIRTUAL}).
          */
         VirtualTrampoline,
 
         /**
-         * Trampoline for unlinked interface method dispatch.
+         * Trampoline for interface method dispatch (i.e. translation of {@link Bytecodes#INVOKEINTERFACE}).
          */
         InterfaceTrampoline,
 
         /**
-         * Trampoline for unlinked static method call.
+         * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or {@link Bytecodes#INVOKESTATIC}).
          */
         StaticTrampoline,
 

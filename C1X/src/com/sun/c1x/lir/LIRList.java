@@ -92,7 +92,7 @@ public class LIRList {
     }
 
     public void callNative(CiValue address, String symbol, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
-        append(new LIRCall(LIROpcode.NativeCall, symbol, result, arguments, info, marks, true, null));
+        append(new LIRCall(LIROpcode.NativeCall, symbol, result, arguments, info, marks, false, null));
     }
 
     public void membar(LIROpcode opcode) {
