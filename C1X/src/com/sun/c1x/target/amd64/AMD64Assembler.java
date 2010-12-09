@@ -436,29 +436,29 @@ public class AMD64Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void bsfl(CiRegister dst, CiRegister src) {
-        int encode = prefixAndEncode(dst.encoding, src.encoding);
+    public final void bsfq(CiRegister dst, CiRegister src) {
+        int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBC);
         emitByte(0xC0 | encode);
     }
 
-    public final void bsfl(CiRegister dst, CiAddress src) {
-        prefix(src, dst);
+    public final void bsfq(CiRegister dst, CiAddress src) {
+        prefixq(src, dst);
         emitByte(0xBC);
         emitOperand(dst, src);
     }
 
-    public final void bsrl(CiRegister dst, CiRegister src) {
-        int encode = prefixAndEncode(dst.encoding, src.encoding);
+    public final void bsrq(CiRegister dst, CiRegister src) {
+        int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBD);
         emitByte(0xC0 | encode);
     }
 
 
-    public final void bsrl(CiRegister dst, CiAddress src) {
-        prefix(src, dst);
+    public final void bsrq(CiRegister dst, CiAddress src) {
+        prefixq(src, dst);
         emitByte(0xBD);
         emitOperand(dst, src);
     }
@@ -2375,13 +2375,6 @@ public class AMD64Assembler extends AbstractAssembler {
     public final void andq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x23, 0xC0, dst, src);
-    }
-
-    public final void bsfq(CiRegister dst, CiRegister src) {
-        int encode = prefixqAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0xBC);
-        emitByte(0xC0 | encode);
     }
 
     public final void bswapq(CiRegister reg) {
