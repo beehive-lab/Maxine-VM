@@ -35,7 +35,7 @@ import com.sun.max.vm.*;
  *
  * @author Laurent Daynes.
  */
-public abstract class HeapSweeper {
+public abstract class Sweepable {
 
     //  Debug tracing
     static final VMBooleanXXOption traceSweepingOption =
@@ -84,4 +84,11 @@ public abstract class HeapSweeper {
      * @return total free spaces
      */
     public abstract Size endSweep();
+
+
+    /**
+     * @param verifier
+     */
+    public abstract void verify(AfterMarkSweepVerifier verifier);
+
 }

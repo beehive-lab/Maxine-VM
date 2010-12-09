@@ -55,20 +55,10 @@ public final class HeapRegionManager {
     FixedSizeRegionAllocator regionAllocator() {
         return regionAllocator;
     }
-
-    boolean contains(Address address) {
-        return regionAllocator.contains(address);
-    }
     /**
      * Heap account serving the needs of the heap region manager.
      */
     private HeapAccount<HeapRegionManager> bootHeapAccount;
-
-    /**
-     * Total number of regions.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    private int capacity;
 
     /**
      * Total number of unreserved regions.
@@ -98,15 +88,17 @@ public final class HeapRegionManager {
      * @param numRegions
      */
     void release(int numRegions) {
-        FatalError.check((unreserved + numRegions) <= capacity, "invalid request");
+        FatalError.check((unreserved + numRegions) <= regionAllocator.capacity(), "invalid request");
         unreserved += numRegions;
     }
 
-    /**
-     * Backing storage for the heap account lists tracking region ownership.
-     */
-    private int [] heapAccountListStorage;
+    boolean contains(Address address) {
+        return regionAllocator.contains(address);
+    }
 
+    boolean isValidRegionID(int regionID) {
+        return regionAllocator.isValidRegionId(regionID);
+    }
 
     // One way to make this a throw away object is to allocate it in some far region that
     // we free afterward. An alternative is to make it the heap manager's heap.
@@ -178,8 +170,8 @@ public final class HeapRegionManager {
 
         // 1. The region info table:
         Size initialSize = tupleSize(regionInfoClass).plus(tupleSize(RegionTable.class));
-        // 2. The backing storage for the accounts' region lists
-        initialSize = initialSize.plus(Layout.getArraySize(Kind.INT, numRegions * 2));
+        // 2. The backing storage for the heap region lists
+        initialSize = initialSize.plus(Layout.getArraySize(Kind.INT, numRegions * 2)).times(2);
 
         // Round this to an integral number of regions.
         initialSize = initialSize.roundedUpBy(regionSizeInBytes);
@@ -204,8 +196,12 @@ public final class HeapRegionManager {
             bootstrapAllocator.createTuple(regionInfoClass);
         }
         RegionTable.initialize(regionTable, regionInfoClass, startOfHeapSpace, numRegions);
-        // Allocate the backing storage for account allocation lists.
-        heapAccountListStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
+        // Allocate the backing storage for the region list.
+        int [] listStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
+        HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, listStorage);
+        listStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
+        HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, listStorage);
+
         // Ready to open heap accounts now.
     }
 

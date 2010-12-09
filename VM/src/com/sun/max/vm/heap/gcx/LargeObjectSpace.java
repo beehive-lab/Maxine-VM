@@ -62,7 +62,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Laurent Daynes
  */
-public class LargeObjectSpace extends HeapSweeper {
+public class LargeObjectSpace extends Sweepable {
 
     protected static final int MIN_LARGE_OBJECT_SIZE = Size.K.times(4).toInt();
     protected static final int BLOCK_SIZE = Size.K.times(2).toInt();
@@ -495,4 +495,10 @@ public class LargeObjectSpace extends HeapSweeper {
         }
         return endOfLastProcessedChunk.asPointer();
     }
+
+    @Override
+    public void verify(AfterMarkSweepVerifier verifier) {
+        FatalError.unimplemented();
+    }
+
 }

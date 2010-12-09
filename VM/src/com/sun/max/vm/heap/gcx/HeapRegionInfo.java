@@ -49,6 +49,7 @@ public class HeapRegionInfo {
 
     /**
      * Index, in number of minimum object size relative to the beginning of a region to the first free chunk of the region.
+     *
      */
     short firstFreeChunkIndex;
     /**
@@ -66,13 +67,15 @@ public class HeapRegionInfo {
      */
     short liveData;
 
-    public int liveInWords() {
+    public final int liveInWords() {
         return liveData;
     }
-    public int darkMatterInWords() {
+
+    public final int darkMatterInWords() {
         return regionSizeInWords - (liveData + freeSpace);
     }
-    public int freeSpaceInWords() {
+
+    public final int freeSpaceInWords() {
         return freeSpace;
     }
 
@@ -83,4 +86,5 @@ public class HeapRegionInfo {
     static HeapRegionInfo toHeapRegionInfo(Pointer regionInfoPointer) {
         return asHeapRegionInfo(Reference.fromOrigin(Layout.cellToOrigin(regionInfoPointer)).toJava());
     }
+
 }
