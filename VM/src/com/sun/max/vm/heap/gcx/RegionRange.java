@@ -47,6 +47,7 @@ public abstract class RegionRange extends Word {
         return asRegionRange(encodedRange);
     }
 
+    @INLINE
     protected static RegionRange fromInt(int encodedRange) {
         if (isHosted()) {
             return BoxedRegionRange.fromInt(encodedRange);

@@ -47,11 +47,11 @@ public final class BoxedRegionRange extends RegionRange implements Boxed {
         return new BoxedRegionRange(encodedRange);
     }
 
-    static BoxedRegionRange from(long value) {
+    protected static BoxedRegionRange fromLong(long value) {
         return new BoxedRegionRange(value);
     }
 
-    static BoxedRegionRange from(int value) {
+    protected static BoxedRegionRange fromInt(int value) {
         return new BoxedRegionRange(value);
     }
 }
