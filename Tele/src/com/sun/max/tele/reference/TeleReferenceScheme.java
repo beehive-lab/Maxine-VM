@@ -130,6 +130,7 @@ public abstract class TeleReferenceScheme extends AbstractVMScheme implements Re
                 }
             }
         }
+        teleRoots.flushUnregisteredRoots();
         rawReferenceToRemoteTeleReference = newMap;
     }
 
