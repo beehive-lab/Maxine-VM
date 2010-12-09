@@ -227,8 +227,10 @@ public class FixedSizeRegionAllocator {
     /**
      * Size of the regions.
      */
+    @CONSTANT_WHEN_NOT_ZERO
     private Size regionSize;
 
+    @CONSTANT_WHEN_NOT_ZERO
     private int log2RegionSize;
 
     /**
@@ -285,7 +287,7 @@ public class FixedSizeRegionAllocator {
         allocated.initialize(new long[numFreeRegions]);
         committed.initialize(new long[numFreeRegions]);
 
-        highestAllocated = -1;
+        highestAllocated = INVALID_REGION_ID;
         residentRegions = preCommitted;
         if (residentRegions > 0) {
             allocated.set(0, residentRegions);
@@ -298,12 +300,16 @@ public class FixedSizeRegionAllocator {
         return backingStorage.contains(address);
     }
 
-    private int lastRegion() {
+    /**
+     * The total number of regions managed by this allocator.
+     * @return a number of regions
+     */
+    int capacity() {
         return backingStorage.size().unsignedShiftedRight(log2RegionSize).toInt();
     }
 
-    private boolean isValidRegionId(int regionId) {
-        return regionId >= 0 && regionId <= lastRegion();
+    boolean isValidRegionId(int regionId) {
+        return regionId >= 0 && regionId < capacity();
     }
 
     private Address validRegionStart(int regionId) {

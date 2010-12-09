@@ -62,11 +62,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         register(new VMBooleanXXOption("-XX:+", "UseLOS", "Use a large object space"),
                         MaxineVM.Phase.PRISTINE);
 
-    // Temporary. For testing initial skeleton of the heap region manager
-    static final VMBooleanXXOption useHeapRegionManager =
-        register(new VMBooleanXXOption("-XX:-", "UseHRM", "Use the heap region manager"),
-                        MaxineVM.Phase.PRISTINE);
-
    /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
      * appended to a TLAB to fill unused space before a TLAB refill.
@@ -92,14 +87,14 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     /**
      * Space where objects are allocated from by default.
-     * Implements the {@link HeapSweeper} interface to be notified by a sweeper of
+     * Implements the {@link Sweepable} interface to be notified by a sweeper of
      * free space.
      */
     final FreeHeapSpaceManager objectSpace;
 
     /**
      * Space where large object are allocated from if {@link MSHeapScheme#useLargeObjectSpaceOption} is true.
-     * Implements the {@link HeapSweeper} interface to be notified by a sweeper of
+     * Implements the {@link Sweepable} interface to be notified by a sweeper of
      * free space.
      */
     final LargeObjectSpace largeObjectSpace;

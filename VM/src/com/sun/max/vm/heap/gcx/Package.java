@@ -34,6 +34,10 @@ public class Package extends VMPackage {
     }
 
     @Override
+    public Class[] wordSubclasses() {
+        return new Class[] {RegionRange.class};
+    }
+    @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return vmConfiguration.heapPackage.isSubPackageOf(this);
     }

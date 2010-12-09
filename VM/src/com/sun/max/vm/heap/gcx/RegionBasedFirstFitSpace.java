@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.heap.gcx.HeapRegionList.RegionListUse.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -34,7 +37,11 @@ import com.sun.max.unsafe.*;
  *
  * @author Laurent Daynes
  */
-public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSpace {
+public class RegionBasedFirstFitSpace extends Sweepable implements ResizableSpace {
+    /**
+     * Region available for allocation.
+     */
+    private final HeapRegionList allocatingRegions;
 
 
     /**
@@ -43,6 +50,12 @@ public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSp
     private Size minReclaimableSpace;
 
     public RegionBasedFirstFitSpace() {
+        allocatingRegions = OWNERSHIP.createList();
+    }
+
+    @HOSTED_ONLY
+    public void hostInitialize() {
+        //smallObjectAllocator.hostInitialize();
     }
 
     @Override
@@ -81,6 +94,12 @@ public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSp
     public Size shrinkAfterGC(Size delta) {
         // TODO
         return Size.zero();
+    }
+
+    @Override
+    public void verify(AfterMarkSweepVerifier verifier) {
+        // TODO Auto-generated method stub
+
     }
 
 }

@@ -83,7 +83,15 @@ public final class RegionTable {
         return addr.minus(regionBaseAddress).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
     }
 
-    public HeapRegionInfo addressToRegion(Address addr) {
+    public HeapRegionInfo addressToRegionInfo(Address addr) {
+        if (!isInHeapRegion(addr)) {
+            return null;
+        }
         return HeapRegionInfo.toHeapRegionInfo(regionAddress(addressToRegionID(addr)));
+    }
+
+    public int toRegionID(HeapRegionInfo regionInfo) {
+        final int regionID = Reference.fromJava(regionInfo).toOrigin().minus(table()).dividedBy(regionInfoSize).toInt();
+        return regionID;
     }
 }
