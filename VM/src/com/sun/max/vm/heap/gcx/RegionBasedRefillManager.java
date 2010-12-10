@@ -28,8 +28,8 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Region-based refill manager for linear space allocator.
- * The manager refills the allocator using region that may be partially
- * free. Free space in the region is organized as list of {@link HeapFreeChunk},
+ * The manager refills the allocator using regions that may be partially
+ * free. Free space in a region is organized as a list of {@link HeapFreeChunk},
  * the head of which is stored in the {@link HeapRegionInfo#firstFreeChunkIndex}
  * obtained from the {@link RegionTable}.
  *
@@ -58,13 +58,13 @@ public abstract class RegionBasedRefillManager extends LinearSpaceAllocator.Refi
     @Override
     Address allocate(Size size) {
         // TODO Auto-generated method stub
-        return null;
+        return Address.zero();
     }
 
     @Override
     Address allocateTLAB(Size size) {
         // TODO Auto-generated method stub
-        return null;
+        return Address.zero();
     }
 
     @Override
@@ -87,6 +87,8 @@ public abstract class RegionBasedRefillManager extends LinearSpaceAllocator.Refi
         }
         // Needs another region.
         HeapRegionInfo regionInfo = getNextAllocatingRegion();
-        return null;
+        // todo
+
+        return Address.zero();
     }
 }
