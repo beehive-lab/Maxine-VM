@@ -18,9 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.vm.cps.jit;
+
 /**
- * Fast template-based JIT (Just-In-Time compiler).
- * 
- * @author Laurent Daynes
+ * An exception thrown during translation by the JIT.
+ *
+ * @author Doug Simon
  */
-package com.sun.max.vm.jit;
+public class TranslationException extends RuntimeException {
+    public TranslationException() {
+    }
+    public TranslationException(String message) {
+        super(message);
+    }
+    public TranslationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    public TranslationException(Throwable cause) {
+        super(cause);
+    }
+}
