@@ -37,9 +37,8 @@ import com.sun.max.vm.runtime.*;
  */
 public abstract class RegionBasedRefillManager extends LinearSpaceAllocator.RefillManager {
 
-
     /**
-     * Region used by the small object allocator.
+     * Region currently used by the small object allocator.
      */
     private int currentRegion;
     private Address nextFreeChunkInRegion;
@@ -82,6 +81,7 @@ public abstract class RegionBasedRefillManager extends LinearSpaceAllocator.Refi
         }
         Address result = nextFreeChunkInRegion;
         if (!result.isZero()) {
+            // Get the next free chunk within the region.
             nextFreeChunkInRegion = HeapFreeChunk.getFreeChunkNext(nextFreeChunkInRegion);
             return result;
         }

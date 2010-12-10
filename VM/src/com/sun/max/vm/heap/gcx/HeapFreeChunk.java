@@ -182,6 +182,12 @@ public class HeapFreeChunk {
         }
     }
 
+    /**
+     * Find the first chunk in a list of chunks that can accommodate the requested number of bytes.
+     * @param head a pointer to a HeapFreeChunk
+     * @param size size in bytes
+     * @return a chunk of size greater or equal to {code size}, null otherwise.
+     */
     public static Pointer firstFit(Pointer head, Size size) {
         return fromHeapFreeChunk(toHeapFreeChunk(head.getWord().asAddress()).firstFit(size)).asPointer();
     }
