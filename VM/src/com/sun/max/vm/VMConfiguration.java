@@ -49,14 +49,14 @@ public final class VMConfiguration {
 
     public final BuildLevel buildLevel;
 
-    @HOSTED_ONLY public final VMPackage referencePackage;
-    @HOSTED_ONLY public final VMPackage layoutPackage;
-    @HOSTED_ONLY public final VMPackage heapPackage;
-    @HOSTED_ONLY public final VMPackage monitorPackage;
-    @HOSTED_ONLY public final VMPackage optCompilerPackage;
-    @HOSTED_ONLY public final VMPackage jitCompilerPackage;
-    @HOSTED_ONLY public final VMPackage compilationPackage;
-    @HOSTED_ONLY public final VMPackage runPackage;
+    @HOSTED_ONLY public final BootImagePackage referencePackage;
+    @HOSTED_ONLY public final BootImagePackage layoutPackage;
+    @HOSTED_ONLY public final BootImagePackage heapPackage;
+    @HOSTED_ONLY public final BootImagePackage monitorPackage;
+    @HOSTED_ONLY public final BootImagePackage optCompilerPackage;
+    @HOSTED_ONLY public final BootImagePackage jitCompilerPackage;
+    @HOSTED_ONLY public final BootImagePackage compilationPackage;
+    @HOSTED_ONLY public final BootImagePackage runPackage;
 
     private ArrayList<VMScheme> vmSchemes = new ArrayList<VMScheme>();
     private boolean areSchemesLoadedAndInstantiated = false;
@@ -72,14 +72,14 @@ public final class VMConfiguration {
 
     public VMConfiguration(BuildLevel buildLevel,
                            Platform platform,
-                           VMPackage referencePackage,
-                           VMPackage layoutPackage,
-                           VMPackage heapPackage,
-                           VMPackage monitorPackage,
-                           VMPackage optCompilerPackage,
-                           VMPackage jitCompilerPackage,
-                           VMPackage compilationPackage,
-                           VMPackage runPackage) {
+                           BootImagePackage referencePackage,
+                           BootImagePackage layoutPackage,
+                           BootImagePackage heapPackage,
+                           BootImagePackage monitorPackage,
+                           BootImagePackage optCompilerPackage,
+                           BootImagePackage jitCompilerPackage,
+                           BootImagePackage compilationPackage,
+                           BootImagePackage runPackage) {
         assert optCompilerPackage != null;
         this.buildLevel = buildLevel;
         this.referencePackage = referencePackage;
@@ -242,13 +242,13 @@ public final class VMConfiguration {
      * @return {@code true} if the specified package is part of this VM in this configuration
      */
     @HOSTED_ONLY
-    public boolean isMaxineVMPackage(BootImagePackage pkg) {
+    public boolean isMaxineBootImagePackage(BootImagePackage pkg) {
         if (pkg == null) {
             return false;
         }
         if (pkg instanceof BootImagePackage) {
-            final BootImagePackage vmPackage = (BootImagePackage) pkg;
-            return vmPackage.isPartOfMaxineVM(this);
+            final BootImagePackage bootImagePackage = pkg;
+            return bootImagePackage.isPartOfMaxineVM(this);
         }
         return false;
     }

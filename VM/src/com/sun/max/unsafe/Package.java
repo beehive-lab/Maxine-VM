@@ -20,6 +20,7 @@
  */
 package com.sun.max.unsafe;
 
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
 /**
@@ -27,7 +28,7 @@ import com.sun.max.vm.*;
  *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         super();
     }

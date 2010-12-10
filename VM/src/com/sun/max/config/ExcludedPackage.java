@@ -18,24 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.cps.cir.transform;
+package com.sun.max.config;
 
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.cps.cir.*;
 
 /**
- * @see MaxPackage
+ * Denotes a package that, although in a tree that is otherwise included (by recursion) is excluded.
  *
- * @author Bernd Mathiske
+ * @author Mick Jordan
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
+public class ExcludedPackage extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.compiler() instanceof CirGeneratorScheme;
+        return false;
     }
+
 }

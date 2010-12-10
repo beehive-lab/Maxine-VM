@@ -18,23 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.cps.tir.pipeline;
-
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
+package com.sun.max.vm.cps.jit;
 
 /**
- * @see MaxPackage
+ * An exception thrown during translation by the JIT.
  *
- * @author Michael Bebenita
+ * @author Doug Simon
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
+public class TranslationException extends RuntimeException {
+    public TranslationException() {
     }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.compiler() != null;
+    public TranslationException(String message) {
+        super(message);
+    }
+    public TranslationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    public TranslationException(Throwable cause) {
+        super(cause);
     }
 }

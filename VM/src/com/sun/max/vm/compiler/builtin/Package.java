@@ -20,14 +20,14 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
-import com.sun.max.vm.*;
+import com.sun.max.config.*;
 
 /**
  * This cannot be deleted as it is explicitly instantiated during builtin bootstrap.
  *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         super();
     }
