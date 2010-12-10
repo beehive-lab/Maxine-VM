@@ -29,7 +29,14 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
-
+/**
+ * An allocator that allocates space linearly by atomically increasing a pointer to a contiguous chunks of memory.
+ * The allocator is associated with a refill manager that takes care of refilling the allocator with this one runs out of space,
+ * and servicing requires for objects larger than what the allocator can handle.
+ *
+ *
+ * @author Laurent Daynes
+ */
 public class LinearSpaceAllocator {
 
     /**
@@ -296,6 +303,7 @@ public class LinearSpaceAllocator {
         HeapFreeChunk.setFreeChunkNext(cell, Address.zero());
         return cell;
     }
+
     void makeParsable() {
         Pointer cell = setTopToLimit();
         Pointer hardLimit = hardLimit().asPointer();

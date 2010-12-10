@@ -29,6 +29,8 @@ import com.sun.cri.ci.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.snippet.Snippet.DoubleRemainder;
+import com.sun.max.vm.compiler.snippet.Snippet.FloatRemainder;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -125,30 +127,31 @@ public class C1XRuntimeCalls {
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Debug)
     public static void runtimeDebug() {
         verifyRefMaps();
+        throw FatalError.unexpected("Debug");
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmethicLrem)
     public static long runtimeArithmethicLrem(long a, long b) {
         verifyRefMaps();
-        return a % b;
+        throw FatalError.unexpected("Compiler should directly translate LREM");
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLdiv)
     public static long runtimeArithmeticLdiv(long a, long b) {
         verifyRefMaps();
-        return a / b;
+        throw FatalError.unexpected("Compiler should directly translate LDIV");
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticFrem)
     public static float runtimeArithmeticFrem(float v1, float v2) {
         verifyRefMaps();
-        return v1 % v2;
+        return FloatRemainder.floatRemainder(v1, v2);
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticDrem)
     public static double runtimeArithmeticDrem(double v1, double v2) {
         verifyRefMaps();
-        return v1 % v2;
+        return DoubleRemainder.doubleRemainder(v1, v2);
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticCos)

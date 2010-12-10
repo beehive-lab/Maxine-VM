@@ -209,6 +209,7 @@ public class Util {
     }
 
     public static void warning(String string) {
+        TTY.println("WARNING: " + string);
     }
 
     public static int safeToInt(long l) {

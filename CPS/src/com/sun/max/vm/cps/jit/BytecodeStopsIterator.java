@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.jit;
 
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.jit.*;
 
 /**
  * An iterator over a map from bytecode positions to {@linkplain StopType stops}. The context of the bytecode positions

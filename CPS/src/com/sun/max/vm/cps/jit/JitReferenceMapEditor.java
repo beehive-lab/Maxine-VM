@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.jit;
 
-import java.util.Arrays;
+import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
@@ -31,7 +31,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.stack.*;
 

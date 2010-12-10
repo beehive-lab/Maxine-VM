@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.c1x.C1XCompilation.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 
 import java.util.*;
@@ -156,11 +155,11 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public GlobalStub emit(XirTemplate template, RiRuntime runtime) {
-        C1XCompilation compilation = setCurrent(new C1XCompilation(compiler, null, -1));
+        C1XCompilation compilation = new C1XCompilation(compiler, null, -1);
         try {
             return emit(template, compilation);
         } finally {
-            setCurrent(null);
+            compilation.close();
         }
     }
 

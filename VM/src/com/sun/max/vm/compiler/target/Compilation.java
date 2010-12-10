@@ -73,6 +73,7 @@ public class Compilation implements Future<TargetMethod> {
     public final CompilationScheme compilationScheme;
     public final RuntimeCompilerScheme compiler;
     public final ClassMethodActor classMethodActor;
+    public final Compilation parent;
     @INSPECTED
     public final Object previousTargetState;
     public Thread compilingThread;
@@ -87,14 +88,20 @@ public class Compilation implements Future<TargetMethod> {
     public Compilation(CompilationScheme compilationScheme,
                        RuntimeCompilerScheme compiler,
                        ClassMethodActor classMethodActor,
-                       Object previousTargetState,
-                       Thread compilingThread) {
-
+                       Object previousTargetState, Thread compilingThread) {
+        this.parent = COMPILATION.get();
         this.compilationScheme = compilationScheme;
         this.compiler = compiler;
         this.classMethodActor = classMethodActor;
         this.previousTargetState = previousTargetState;
         this.compilingThread = compilingThread;
+
+        for (Compilation scope = parent; scope != null; scope = scope.parent) {
+            if (scope.classMethodActor.equals(classMethodActor)) {
+                FatalError.unexpected("Recursive compilation of " + classMethodActor);
+            }
+        }
+        COMPILATION.set(this);
     }
 
     /**
@@ -175,7 +182,7 @@ public class Compilation implements Future<TargetMethod> {
             Inspect.notifyCompilationStart(classMethodActor);
 
             methodString = logBeforeCompilation(compiler);
-            if (!MaxineVM.isHosted() && StackReferenceMapPreparer.VerifyRefMaps) {
+            if (!MaxineVM.isHosted()) {
                 StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
             }
 
@@ -185,12 +192,6 @@ public class Compilation implements Future<TargetMethod> {
             if (TIME_COMPILATION.getValue()) {
                 startCompile = System.currentTimeMillis();
             }
-
-            // Check for recursive compilation
-            if (COMPILATION.get() != null) {
-                FatalError.unexpected("Compilation of " + classMethodActor + " while compiling " + COMPILATION.get().classMethodActor);
-            }
-            COMPILATION.set(this);
 
             // attempt the compilation
             targetMethod = compiler.compile(classMethodActor);
@@ -225,7 +226,7 @@ public class Compilation implements Future<TargetMethod> {
                 classMethodActor.notifyAll();
             }
 
-            COMPILATION.set((Compilation) null);
+            COMPILATION.set(parent);
 
             // notify any compilation observers
             observeAfterCompilation(observers, compiler, targetMethod);

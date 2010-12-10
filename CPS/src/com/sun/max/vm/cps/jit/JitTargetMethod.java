@@ -36,7 +36,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
