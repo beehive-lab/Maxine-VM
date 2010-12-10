@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.gcx.ms;
+package com.sun.max.vm.heap.gcx.mse;
 
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
@@ -39,15 +39,13 @@ import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A simple mark-sweep collector. Only used for testing / debugging
- * marking and sweeping algorithms.
- * Implements TLAB over a linked list of free chunk provided by an object space manager.
+ * Region-based Mark Sweep + Evacuation-based defragmentation Heap Scheme.
+ * Used for testing region-based support.
  *
- * @see FreeHeapSpaceManager.
  *
  * @author Laurent Daynes
  */
-public class MSHeapScheme extends HeapSchemeWithTLAB {
+public class MSEHeapScheme extends HeapSchemeWithTLAB {
     /**
      * Number of heap words covered by a single mark.
      */
@@ -55,11 +53,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     static final VMBooleanXXOption doImpreciseSweepOption =
         register(new VMBooleanXXOption("-XX:+", "ImpreciseSweep", "Use an imprecise sweeping phase"),
-                        MaxineVM.Phase.PRISTINE);
-
-    // In progress.
-    static final VMBooleanXXOption useLargeObjectSpaceOption =
-        register(new VMBooleanXXOption("-XX:+", "UseLOS", "Use a large object space"),
                         MaxineVM.Phase.PRISTINE);
 
    /**
@@ -81,7 +74,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     }
 
     /**
-     * A marking algorithm for the MSHeapScheme.
+     * Marking algorithm used to trace the heap.
      */
     final TricolorHeapMarker heapMarker;
 
@@ -93,7 +86,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     final FreeHeapSpaceManager objectSpace;
 
     /**
-     * Space where large object are allocated from if {@link MSHeapScheme#useLargeObjectSpaceOption} is true.
+     * Space where large object are allocated from if {@link MSEHeapScheme#useLargeObjectSpaceOption} is true.
      * Implements the {@link Sweepable} interface to be notified by a sweeper of
      * free space.
      */
@@ -106,7 +99,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     final AfterMarkSweepVerifier afterGCVerifier;
 
     @HOSTED_ONLY
-    public MSHeapScheme() {
+    public MSEHeapScheme() {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
         objectSpace = new FreeHeapSpaceManager();
         largeObjectSpace = new LargeObjectSpace();

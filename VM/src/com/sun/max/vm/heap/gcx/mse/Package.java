@@ -18,27 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap.gcx.mse;
 
 import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 
 /**
- * New Heap management infrastructure.
+ * Simple Mark-Sweep. Just for testing marking algorithm.
  * @see MaxPackage
  *
  * @author Laurent Daynes
  */
 public class Package extends VMPackage {
     public Package() {
-        super();
+        registerScheme(HeapScheme.class, MSEHeapScheme.class);
     }
 
     @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {RegionRange.class};
-    }
-    @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.heapPackage.isSubPackageOf(this);
+        return vmConfiguration.heapPackage.equals(this);
     }
 }

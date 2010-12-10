@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -39,30 +41,64 @@ import com.sun.max.vm.type.*;
  *
  * @author Laurent Daynes
  */
-public class HeapRegionManager {
+public final class HeapRegionManager {
     /**
-     * Backing storage for the space managed by the region manager.
-     * Provides interface to commit/uncommit space to regions.
+     * The single instance of the heap region manager.
      */
-    private ContiguousHeapSpace backingStorage;
+    static final HeapRegionManager theHeapRegionManager = new HeapRegionManager();
 
-    private RegionTable regionTable;
+    /**
+     * Region allocator used by the heap manager.
+     */
+    private final FixedSizeRegionAllocator regionAllocator;
 
+    FixedSizeRegionAllocator regionAllocator() {
+        return regionAllocator;
+    }
     /**
      * Heap account serving the needs of the heap region manager.
      */
     private HeapAccount<HeapRegionManager> bootHeapAccount;
 
     /**
-     * Total number of regions.
+     * Total number of unreserved regions.
      */
-    private int totalNumRegions;
+    private int unreserved;
+
+    // Region Management interface private to Heap Account.
+    // May want to revisit how the two interacts to better control
+    // use of these sensitive operations.
 
     /**
-     * Backing storage for the heap account lists (see {@link HeapAccount#allocated and HeapAccount#committed}).
+     * Reserve exactly the number of regions requested, or fail.
+     * @param numRegions number of region requested
+     * @return true if the number of regions requested was reserved
      */
-    private int [] heapAccountListStorage;
+    boolean reserveOrFail(int numRegions) {
+        if (numRegions > unreserved) {
+            return false;
+        }
+        unreserved -= numRegions;
+        return true;
+    }
 
+    /**
+     * Release reserved regions (i.e., "unreserved" them).
+     *
+     * @param numRegions
+     */
+    void release(int numRegions) {
+        FatalError.check((unreserved + numRegions) <= regionAllocator.capacity(), "invalid request");
+        unreserved += numRegions;
+    }
+
+    boolean contains(Address address) {
+        return regionAllocator.contains(address);
+    }
+
+    boolean isValidRegionID(int regionID) {
+        return regionAllocator.isValidRegionId(regionID);
+    }
 
     // One way to make this a throw away object is to allocate it in some far region that
     // we free afterward. An alternative is to make it the heap manager's heap.
@@ -101,8 +137,8 @@ public class HeapRegionManager {
     BootstrapAllocator bootstrapAllocator;
 
 
-    HeapRegionManager() {
-        backingStorage = new ContiguousHeapSpace();
+    private HeapRegionManager() {
+        regionAllocator = new FixedSizeRegionAllocator("Heap Backing Storage");
         bootstrapAllocator = new BootstrapAllocator();
     }
 
@@ -121,14 +157,12 @@ public class HeapRegionManager {
      */
     public void initialize(Address reservedSpace, Size reservedSpaceSize, Class<HeapRegionInfo> regionInfoClass) {
         // Initialize region constants (size and log constants).
-        HeapRegionInfo.initializeConstants();
+        HeapRegionConstants.initializeConstants();
         // Adjust reserved space to region boundaries.
-        final Address endOfHeapSpace = reservedSpace.plus(reservedSpaceSize).roundedDownBy(HeapRegionInfo.regionSizeInBytes);
-        final Address startOfHeapSpace = reservedSpace.roundedUpBy(HeapRegionInfo.regionSizeInBytes);
+        final Address endOfHeapSpace = reservedSpace.plus(reservedSpaceSize).roundedDownBy(regionSizeInBytes);
+        final Address startOfHeapSpace = reservedSpace.roundedUpBy(regionSizeInBytes);
         final Size heapSpaceSize = endOfHeapSpace.minus(endOfHeapSpace).asSize();
-        final int numRegions = heapSpaceSize.unsignedShiftedRight(HeapRegionInfo.log2RegionSizeInBytes).toInt();
-
-        backingStorage.setReserved(startOfHeapSpace, heapSpaceSize);
+        final int numRegions = heapSpaceSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
 
         // Estimate conservatively what the heap manager needs initially. This is to commit
         // enough memory to get started.
@@ -136,26 +170,38 @@ public class HeapRegionManager {
 
         // 1. The region info table:
         Size initialSize = tupleSize(regionInfoClass).plus(tupleSize(RegionTable.class));
-        // 2. The backing storage for the accounts' region lists
-        initialSize = initialSize.plus(Layout.getArraySize(Kind.INT, numRegions * 2));
+        // 2. The backing storage for the heap region lists
+        initialSize = initialSize.plus(Layout.getArraySize(Kind.INT, numRegions * 2)).times(2);
+
         // Round this to an integral number of regions.
-        initialSize = initialSize.roundedUpBy(HeapRegionInfo.regionSizeInBytes);
+        initialSize = initialSize.roundedUpBy(regionSizeInBytes);
+        final int initialNumRegions = initialSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+
+        bootstrapAllocator.initialize(startOfHeapSpace, startOfHeapSpace.plus(initialSize));
 
         // Commit space and initialize the bootstrap allocator
-        backingStorage.growCommittedSpace(initialSize);
-        bootstrapAllocator.initialize(startOfHeapSpace, backingStorage.committedEnd().asPointer());
+        regionAllocator.initialize(startOfHeapSpace, heapSpaceSize, Size.fromInt(regionSizeInBytes), initialNumRegions);
+
+
         // FIXME: Here, ideally, we should have some mechanism to makes the standard allocation mechanism
         // tapping directly on the bootstrap linear allocator over the start of heap space.
+        // Unclear how to do that while the heap scheme is not initialized yet.
+        // If we do, this code could migrate to the RegionTable class
+        // Where we'd do the allocation of the region info in the constructor!
 
         // The region manager lays its data out at the beginning of the heap space as follows:
 
-        regionTable = bootstrapAllocator.createTuple(RegionTable.class);
+        final RegionTable regionTable = bootstrapAllocator.createTuple(RegionTable.class);
         for (int i = 0; i < numRegions; i++) {
             bootstrapAllocator.createTuple(regionInfoClass);
         }
-        regionTable.initialize(numRegions);
-        // Allocate the backing storage for account allocation lists.
-        heapAccountListStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
+        RegionTable.initialize(regionTable, regionInfoClass, startOfHeapSpace, numRegions);
+        // Allocate the backing storage for the region list.
+        int [] listStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
+        HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, listStorage);
+        listStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
+        HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, listStorage);
+
         // Ready to open heap accounts now.
     }
 
@@ -166,16 +212,61 @@ public class HeapRegionManager {
      * @return
      */
     public <Owner> HeapAccount<Owner> openHeapAccount(Owner owner) {
-        Size initialReserve = Size.zero();
         // Problem starts here: where should we allocate this ? We don't want this to be
         // on the heap account itself as we don't want references from heap management to
         // leak to other heaps.
-        HeapAccount<Owner> account = new HeapAccount<Owner>(owner, initialReserve);
+        HeapAccount<Owner> account = new HeapAccount<Owner>(owner, 0);
         return account;
     }
 
     public <Owner> void close(HeapAccount<Owner> account) {
         // TODO
+    }
+
+    /**
+     * Request a number of contiguous regions.
+     * @param numRegions
+     * @return the identifier of the first region of the contiguous range allocated or {@link HeapRegionConstants#INVALID_REGION_ID} if the
+     * request cannot be satisfied.
+     */
+    int allocate(int numRegions) {
+        return regionAllocator.allocate(numRegions);
+    }
+
+    /**
+     * Request a number of regions. The allocated regions are added at the head or tail of the list depending on the value
+     * specified in the append parameter. The allocate does a best effort to provides contiguous regions.
+     *
+     * @param list list where the allocated regions are recorded
+     * @param numRegions number of regions requested
+     * @param append Append the allocated region to the list if true, otherwise, prepend it.
+     * @param exact if true, fail if the number of requested regions cannot be satisfied, otherwise allocate
+     * as many regions as possible
+     * @return the number of regions allocated
+     */
+    int allocate(HeapRegionList list, int numRegions, boolean append, boolean exact) {
+
+        return 0;
+    }
+
+    /**
+     * Free contiguous regions.
+     * @param firstRegionId identifier of the first region
+     * @param numRegions
+     */
+    void free(int firstRegionId, int numRegions) {
+        // TODO: error handling
+        regionAllocator.free(firstRegionId, numRegions);
+    }
+
+    void commit(int firstRegionId, int numRegions) {
+        // TODO: error handling
+        regionAllocator.commit(firstRegionId, numRegions);
+    }
+
+    void uncommit(int firstRegionId, int numRegions) {
+        // TODO: error handling
+        regionAllocator.uncommit(firstRegionId, numRegions);
     }
 
 }
