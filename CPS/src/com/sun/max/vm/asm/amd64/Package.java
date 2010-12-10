@@ -22,6 +22,7 @@ package com.sun.max.vm.asm.amd64;
 
 import static com.sun.max.platform.Platform.*;
 
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -31,7 +32,7 @@ import com.sun.max.vm.compiler.*;
  *
  * @author Doug Simon
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return CPSCompiler.Static.compiler() != null && platform().isa == ISA.AMD64;

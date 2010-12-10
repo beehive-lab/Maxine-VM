@@ -32,7 +32,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 
 /**
- * Describes a package in the Maxine VM, providing programmatic package information manipulation, which is
+ * Describes a package in the Maxine VM boot image, providing programmatic package information manipulation, which is
  * lacking in {@link java.lang.Package}.
  *
  * @author Bernd Mathiske
@@ -225,6 +225,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
             final Class packageClass = Class.forName(name);
             return (BootImagePackage) packageClass.newInstance();
         } catch (ClassNotFoundException e) {
+        } catch (NoClassDefFoundError e) {
         } catch (InstantiationException e) {
         } catch (IllegalAccessException e) {
         }
@@ -327,10 +328,10 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
     /**
      * Finds all sub-packages in the class path for a given set of root packages.
      *
-     * We maintain a global map of all the packages discovered. Duplicates may arise in the processing from
-     * different subsystems referencing the same package, possibly including different subsets of the classes
-     * in the package. The first occurrence of a package is the canonical representative and duplicates have their
-     * relevant state merged into it.
+     * We maintain a global map of all the packages discovered. Duplicates may arise in the processing from different
+     * subsystems referencing the same package, possibly including different subsets of the classes in the package. The
+     * first occurrence of a package is the canonical representative and duplicates have their relevant state merged
+     * into it.
      *
      * @param classpath the class path to search for packages
      * @param roots array of subclass of {@code BootImagePackage} that define search start and match
@@ -350,30 +351,29 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
             RootPackageInfo info = rootInfos.get(rootIndex++);
             for (String pkgName : info.pkgNames) {
                 BootImagePackage pkg = BootImagePackage.fromName(pkgName);
-                if (pkgName.equals("com.sun.max.vm.actor")) {
-                    System.console();
-                }
                 if (pkg == null) {
-                    String parentPkgName = getPackageName(pkgName);
-                    while (parentPkgName.length() != 0) {
-                        BootImagePackage parent = pkgMap.get(parentPkgName);
-                        if (parent != null) {
-                            pkg = parent.others.get(pkgName);
-                            if (pkg == null && parent.recursive) {
+                    // No explicit Package class provided, so we will create one.
+                    // Locate the closest parent in the tree that has a Package instance.
+                    // N.B. One is guaranteed to exist, if only at the root.
+                    // First check in case we are the root!
+                    pkg = pkgMap.get(pkgName);
+                    if (pkg == null) {
+                        String parentPkgName = getPackageName(pkgName);
+                        while (parentPkgName.length() != 0) {
+                            BootImagePackage parent = pkgMap.get(parentPkgName);
+                            if (parent != null) {
                                 pkg = parent.cloneAs(pkgName);
                                 break;
                             }
+                            parentPkgName = getPackageName(parentPkgName);
                         }
-                        parentPkgName = getPackageName(parentPkgName);
                     }
-                    if (pkg == null) {
-                        // ProgramWarning.message("WARNING: missing Package class in package: " + pkgName);
-                        continue;
-                    }
+                    assert pkg != null;
                 }
 
                 add(pkg, pkgMap);
                 for (final BootImagePackage otherPkg : pkg.others.values()) {
+                    // Ad any redirects and, for recursive packages outside this tree, add them as a new root.
                     add(otherPkg, pkgMap);
                     if (!otherPkg.name().startsWith(info.root.name()) && otherPkg.recursive) {
                         rootInfos.add(new RootPackageInfo(classpath, otherPkg));

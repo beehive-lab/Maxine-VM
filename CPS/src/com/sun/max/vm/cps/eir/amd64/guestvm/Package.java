@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.eir.amd64.guestvm;
 
 import static com.sun.max.platform.Platform.*;
 
+import com.sun.max.config.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -29,11 +30,9 @@ import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 
 /**
- * @see MaxPackage
- *
  * @author Mick Jordan
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         super();
         registerScheme(EirABIsScheme.class, GuestVMAMD64EirABIs.class);

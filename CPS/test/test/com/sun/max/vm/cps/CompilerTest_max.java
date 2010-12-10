@@ -50,8 +50,8 @@ public abstract class CompilerTest_max<Method_Type extends IrMethod> extends Com
 //        compilePackages(CompilerTestSetup.javaPrototype().basePackages());
 //    }
 //
-//    public void test_vmPackages() {
-//        compilePackages(CompilerTestSetup.javaPrototype().vmPackages());
+//    public void test_BootImagePackages() {
+//        compilePackages(CompilerTestSetup.javaPrototype().BootImagePackages());
 //    }
 //
 //    public void test_asmPackages() {

@@ -18,9 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.vm.cps.ir.igv;
+
+import com.sun.max.config.*;
+
 /**
- * Fast template-based JIT (Just-In-Time compiler).
- * 
- * @author Laurent Daynes
+ * Not included in the boot image.
+ *
+ * @author Mick Jordan
+ *
  */
-package com.sun.max.vm.jit;
+public class Package extends ExcludedPackage {
+
+}

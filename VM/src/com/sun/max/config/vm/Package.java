@@ -26,13 +26,16 @@ import com.sun.max.config.*;
  * {@code com.sun.max.vm.*} packages to include in boot image.
  * We could simplify this to {@code com.sun.max.vm.**} but for a few
  * sub-packages that are not to be included.
- * 
+ *
  *
  * @author Mick Jordan
  */
 public class Package extends BootImagePackage {
     public Package() {
         super(
+            "com.sun.max.atomic.*",
+            "com.sun.max.memory.*",
+            "com.sun.max.platform.*",
             "com.sun.max.vm.*",
             "com.sun.max.vm.actor.**",
             "com.sun.max.vm.bytecode.**",

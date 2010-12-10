@@ -34,6 +34,7 @@ import com.sun.max.vm.compiler.builtin.SpecialBuiltin.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.transform.CirDepthFirstTraversal.*;
+import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.template.*;

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.layout.hom;
 
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.layout.*;
 
@@ -28,7 +29,7 @@ import com.sun.max.vm.layout.*;
  *
  * @author Doug Simon
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         registerScheme(LayoutScheme.class, HomLayoutScheme.class);
     }

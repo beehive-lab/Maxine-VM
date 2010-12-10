@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
 /**
@@ -28,7 +29,7 @@ import com.sun.max.vm.*;
  *
  * @author Laurent Daynes
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         super();
     }
