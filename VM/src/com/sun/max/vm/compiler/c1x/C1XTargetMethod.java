@@ -328,7 +328,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         boolean hasInlinedMethods = false;
 
         for (CiTargetMethod.Call site : ciTargetMethod.directCalls) {
-            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
+            int refmapIndex = index * totalRefMapSize;
+            hasInlinedMethods |= initStopPosition(index, refmapIndex, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
 
             RiMethod riMethod = site.method;
             if (riMethod != null) {
@@ -348,7 +349,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
 
         for (CiTargetMethod.Call site : ciTargetMethod.indirectCalls) {
-            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
+            int refmapIndex = index * totalRefMapSize;
+            hasInlinedMethods |= initStopPosition(index, refmapIndex, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
             if (site.symbol != null) {
                 stopPositions[index] |= StopPositions.NATIVE_FUNCTION_CALL;
             }
@@ -356,7 +358,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
 
         for (CiTargetMethod.Safepoint site : ciTargetMethod.safepoints) {
-            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
+            int refmapIndex = index * totalRefMapSize;
+            hasInlinedMethods |= initStopPosition(index, refmapIndex, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
             index++;
         }
 
@@ -373,6 +376,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             int frameRefMapBytes;
             if (debugInfo.hasStackRefMap()) {
                 frameRefMapBytes = debugInfo.frameRefMap.copyTo(referenceMaps, refmapIndex, -1);
+                assert new CiBitMap(referenceMaps, refmapIndex, frameReferenceMapSize()).equals(debugInfo.frameRefMap);
             } else {
                 frameRefMapBytes = 0;
             }
@@ -380,6 +384,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             if (debugInfo.hasRegisterRefMap()) {
                 int regRefMapSize = registerReferenceMapSize();
                 debugInfo.registerRefMap.copyTo(referenceMaps, refmapIndex + frameRefMapBytes, regRefMapSize);
+                assert new CiBitMap(referenceMaps, refmapIndex + frameRefMapBytes, regRefMapSize).equals(debugInfo.registerRefMap);
             }
             return debugInfo.codePos != null && debugInfo.codePos.caller != null;
         }
@@ -436,9 +441,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             for (; index < debugInfos.length; index++) {
                 // there is source information here
                 CiDebugInfo debugInfo = debugInfos[index];
-                if (debugInfo != null && debugInfo.codePos != null) {
-                    encodeSourcePos(index, sourceInfoData, debugInfo.codePos, inlinedMethodMap, codePosMap, debugInfos.length, inlinedMethodList);
-                }
+                CiCodePos codePos = debugInfo != null ? debugInfo.codePos : null;
+                encodeSourcePos(index, sourceInfoData, codePos, inlinedMethodMap, codePosMap, debugInfos.length, inlinedMethodList);
             }
 
             for (CiCodePos codePos : extraList) {
@@ -476,6 +480,13 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         // the index into the sourceMethods array, the bytecode index, and the index of the caller method
         // (if this entry is an inlined method)
         int start = index * 3;
+
+        if (curPos == null) {
+            sourceInfoData[start] = -1;
+            sourceInfoData[start + 1] = -1;
+            sourceInfoData[start + 2] = -1;
+            return;
+        }
 
         ClassMethodActor cma = (ClassMethodActor) curPos.method;
         Integer methodIndex = inlinedMethodMap.get(cma);
@@ -632,6 +643,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
+    @HOSTED_ONLY
     private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, RiMethod method) {
         if (method != null) {
             return (ClassMethodActor) method;
@@ -846,7 +858,11 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
                 return null;
             }
             int start = index * 3;
-            ClassMethodActor sourceMethod = sourceMethods[sourceInfo[start]];
+            int sourceMethodIndex = sourceInfo[start];
+            if (sourceMethodIndex < 0) {
+                return null;
+            }
+            ClassMethodActor sourceMethod = sourceMethods[sourceMethodIndex];
             int bci = sourceInfo[start + 1];
             int parentIndex = sourceInfo[start + 2];
             final BytecodeLocation parent = decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, parentIndex);
