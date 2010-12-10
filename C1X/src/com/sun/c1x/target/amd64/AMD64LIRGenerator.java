@@ -246,7 +246,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             CiValue divisor = load(x.y());          // divisor can be in any (other) register
 
             // idiv and irem use rdx in their implementation so the
-            // register allocator must not assign to an interval that overlaps
+            // register allocator must not assign it to an interval that overlaps
             // this division instruction.
             CiRegisterValue tmp = RDX_I;
 

@@ -119,7 +119,7 @@ public final class JDK_java_lang_Throwable {
                 continue;
             }
             final TargetMethod targetMethod = stackFrame.targetMethod();
-            if (targetMethod == null || targetMethod.classMethodActor() == null) {
+            if (targetMethod == null) {
                 // native frame or stub frame without a class method actor
                 continue;
             } else if (targetMethod.is(TrapStub)) {
@@ -127,6 +127,9 @@ public final class JDK_java_lang_Throwable {
                 elements.clear();
                 inTrappedFrame = true;
                 elidingConstructors = false;
+                continue;
+            } else if (targetMethod.classMethodActor() == null) {
+                // stub frame without a class method actor
                 continue;
             } else if (elidingConstructors) {
                 final ClassMethodActor methodActor = targetMethod.classMethodActor();

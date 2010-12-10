@@ -302,10 +302,10 @@ public class MaxineTesterConfiguration {
         imageConfig("msjitjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit", "-test-callee-jit");
         imageConfig("mscpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
 
-        c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.jni.");
-        c1xTest("opt1", "-C1X:OptLevel=1", "^jtt");
-        c1xTest("opt2", "-C1X:OptLevel=2", "^jtt");
-        c1xTest("opt3", "-C1X:OptLevel=3", "^jtt");
+        c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt1", "-C1X:OptLevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt2", "-C1X:OptLevel=2", "^jtt", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt3", "-C1X:OptLevel=3", "^jtt", "^com.sun.c1x", "^com.sun.cri");
     }
 
     private static void output(Class javaClass, Expectation... results) {

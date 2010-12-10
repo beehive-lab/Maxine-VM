@@ -127,18 +127,19 @@ public class C1XRuntimeCalls {
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Debug)
     public static void runtimeDebug() {
         verifyRefMaps();
+        throw FatalError.unexpected("Debug");
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmethicLrem)
     public static long runtimeArithmethicLrem(long a, long b) {
         verifyRefMaps();
-        return a % b;
+        throw FatalError.unexpected("Compiler should directly translate LREM");
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLdiv)
     public static long runtimeArithmeticLdiv(long a, long b) {
         verifyRefMaps();
-        return a / b;
+        throw FatalError.unexpected("Compiler should directly translate LDIV");
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticFrem)
