@@ -599,7 +599,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     public void visitConvert(Convert x) {
         CiValue input = load(x.value());
         CiVariable result = newVariable(x.kind);
-
         // arguments of lirConvert
         GlobalStub globalStub = null;
         switch (x.opcode) {
@@ -608,7 +607,14 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             case Bytecodes.D2I: globalStub = stubFor(GlobalStub.Id.d2i); break;
             case Bytecodes.D2L: globalStub = stubFor(GlobalStub.Id.d2l); break;
         }
-        lir.convert(x.opcode, input, result, globalStub);
+        if (globalStub != null) {
+            // Force result to be rax to match global stubs expectation.
+            CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
+            lir.convert(x.opcode, input, stubResult, globalStub);
+            lir.move(stubResult, result);
+        } else {
+            lir.convert(x.opcode, input, result, globalStub);
+        }
         setResult(x, result);
     }
 
