@@ -1586,7 +1586,7 @@ public final class GraphBuilder {
         if (forcedInline) {
             for (IRScope scope = scope().caller; scope != null; scope = scope.caller) {
                 if (scope.method.equals(target)) {
-                    throw new CiBailout("Cannot recursively inline method that is force-inlined");
+                    throw new CiBailout("Cannot recursively inline method that is force-inlined: " + target);
                 }
             }
             C1XMetrics.InlineForcedMethods++;
@@ -2409,6 +2409,25 @@ public final class GraphBuilder {
         RiMethod nativeMethod = scope().method;
         CiKind returnKind = sig.returnKind();
         pushReturn(returnKind, append(new NativeCall(nativeMethod, sig, nativeFunctionAddress, args, null)));
+
+        // Sign extend or zero the upper bits of a return value smaller than an int to
+        // preserve the invariant that all such values are represented by an int
+        // in the VM. We cannot rely on the native C compiler doing this for us.
+        switch (sig.returnKind()) {
+            case Boolean:
+            case Byte: {
+                genConvert(I2B, CiKind.Int, CiKind.Byte);
+                break;
+            }
+            case Short: {
+                genConvert(I2S, CiKind.Int, CiKind.Short);
+                break;
+            }
+            case Char: {
+                genConvert(I2C, CiKind.Int, CiKind.Char);
+                break;
+            }
+        }
     }
 
     private void genLoadPC() {

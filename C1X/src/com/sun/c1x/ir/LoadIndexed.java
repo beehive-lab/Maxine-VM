@@ -63,7 +63,7 @@ public final class LoadIndexed extends AccessIndexed {
     @Override
     public RiType exactType() {
         RiType declared = declaredType();
-        return declared != null ? declared.exactType() : null;
+        return declared != null && declared.isResolved() ? declared.exactType() : null;
     }
 
     @Override
