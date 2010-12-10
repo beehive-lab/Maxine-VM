@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.jtrun;
 
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
 /**
@@ -27,7 +28,7 @@ import com.sun.max.vm.*;
  *
  * @author Ben L. Titzer
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         super();
     }

@@ -18,17 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.run;
+package com.sun.max.vm.cps.ir.igv;
 
-import com.sun.max.vm.*;
+import com.sun.max.config.*;
 
 /**
- * @see MaxPackage
- * 
- * @author Bernd Mathiske
+ * Not included in the boot image.
+ *
+ * @author Mick Jordan
+ *
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
+public class Package extends ExcludedPackage {
+
 }

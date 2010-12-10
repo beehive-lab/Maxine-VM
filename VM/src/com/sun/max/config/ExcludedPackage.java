@@ -18,14 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.bytecode.graft;
+package com.sun.max.config;
 
 import com.sun.max.vm.*;
 
 /**
- * @see MaxPackage
- * 
- * @author Doug Simon
+ * Denotes a package that, although in a tree that is otherwise included (by recursion) is excluded.
+ *
+ * @author Mick Jordan
  */
-public class Package extends VMPackage {
+public class ExcludedPackage extends BootImagePackage {
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return false;
+    }
+
 }

@@ -92,7 +92,7 @@ public final class JavaPrototype extends Prototype {
     private List<BootImagePackage> getPackages(BootImagePackage... rootPackages) {
         final List<BootImagePackage> packages = new LinkedList<BootImagePackage>();
         for (BootImagePackage maxPackage : BootImagePackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath(), rootPackages)) {
-            if (vmConfig().isMaxineVMPackage(maxPackage)) {
+            if (vmConfig().isMaxineBootImagePackage(maxPackage)) {
                 packages.add(maxPackage);
             }
         }
@@ -199,9 +199,9 @@ public final class JavaPrototype extends Prototype {
         for (BootImagePackage maxPackage : candidateBootImagePackages) {
             // VMConfigPackage subclasses may contain SUBSTITUTIONS
             if (maxPackage instanceof BootImagePackage) {
-                BootImagePackage vmPackage = (BootImagePackage) maxPackage;
-                if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
-                    String[] classes = vmPackage.listClasses(packageLoader.classpath);
+                BootImagePackage bootImagePackage = (BootImagePackage) maxPackage;
+                if (bootImagePackage.isPartOfMaxineVM(vmConfiguration) && bootImagePackage.containsMethodSubstitutions()) {
+                    String[] classes = bootImagePackage.listClasses(packageLoader.classpath);
                     for (String cn : classes) {
                         try {
                             Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
@@ -278,7 +278,7 @@ public final class JavaPrototype extends Prototype {
         }
 
         // TODO remove new com.sun.max.vm.Package() once com.sun.max.config..vm.Package is in effect
-        candidateBootImagePackages = getPackages(new com.sun.max.vm.Package(), new com.sun.max.config.Package());
+        candidateBootImagePackages = getPackages(new com.sun.max.config.Package());
 
         MaxineVM.registerBootImagePackages(candidateBootImagePackages);
 
