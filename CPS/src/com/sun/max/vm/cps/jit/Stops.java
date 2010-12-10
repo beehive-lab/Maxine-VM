@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.jit;
+package com.sun.max.vm.cps.jit;
 
 import static com.sun.max.vm.compiler.target.StopType.*;
 
@@ -28,8 +28,9 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.jit.Stop.*;
+import com.sun.max.vm.cps.jit.Stop.TemplateDirectCall;
+import com.sun.max.vm.cps.jit.Stop.TemplateIndirectCall;
+import com.sun.max.vm.cps.jit.Stop.TemplateSafepoint;
 
 /**
  * Represents the {@link StopType stop} related information pertaining to a method compiled by a

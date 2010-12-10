@@ -29,7 +29,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
 
