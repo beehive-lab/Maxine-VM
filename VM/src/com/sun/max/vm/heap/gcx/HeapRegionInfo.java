@@ -31,11 +31,13 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 /**
  * Descriptor of heap region.
+ * The information recorded is carefully crafted so that a zero-filled HeapRegionInfo
+ * instance represents the state of a free region, not allocated to any heap account.
+ * This avoids costly initialization of the {@link RegionTable} entries at startup.
  *
  * @author Laurent Daynes
  */
 public class HeapRegionInfo {
-
 
     HeapRegionInfo() {
         // Not a class one can allocate. Allocation is the responsibility of the region table.
@@ -67,6 +69,8 @@ public class HeapRegionInfo {
      */
     short liveData;
 
+    int flags;
+
     public final int liveInWords() {
         return liveData;
     }
@@ -77,6 +81,15 @@ public class HeapRegionInfo {
 
     public final int freeSpaceInWords() {
         return freeSpace;
+    }
+
+    /**
+     *
+     * @return first free chunk
+     */
+    Address firstFreeChunk() {
+
+        return Address.zero();
     }
 
     @INTRINSIC(UNSAFE_CAST)
