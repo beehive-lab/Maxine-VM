@@ -20,27 +20,52 @@
  */
 
 package com.sun.max.vm.heap.gcx;
-
+import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
  * A doubly linked list of regions implemented as an array of int region identifiers.
- * Used for region owner ship list, wherein a list can only belong to one ownership list at a time.
+ * Used for region ownership list, wherein a list can only belong to one owner at a time.
  * This allows to share the backing storage for all the list.
- *
  *
  * @author Laurent Daynes
  */
-public class HeapRegionList {
+public final class HeapRegionList {
+
+    public enum RegionListUse {
+        /***
+         * List used by HeapAccount users.
+         */
+        OWNERSHIP,
+        /**
+         * List used by HeapAccount.
+         */
+        ACCOUNTING;
+
+        HeapRegionList createList() {
+            Pointer base = Reference.fromJava(listsStorage[ordinal()]).toOrigin().plus(Layout.arrayLayout().getElementOffsetInCell(0));
+            return new HeapRegionList(base);
+        }
+    }
+
+    private static final int [][] listsStorage = new int[RegionListUse.values().length][];
+
+    static void initializeListStorage(RegionListUse use, int [] storage) {
+        listsStorage[use.ordinal()] = storage;
+    }
+
+
     /**
      * The value denoting the null element. Used as a list terminator.
-     * Set once, to a value that cannot be
      */
-    private static final int nullElement = -1;
+    private static final int nullElement = INVALID_REGION_ID;
+
      /**
       * Pointer to raw storage of the list.
       */
@@ -54,6 +79,7 @@ public class HeapRegionList {
 
     private int head;
     private int tail;
+    private int size;
 
     @INLINE
     private void checkNonNullElem(int elem) {
@@ -115,17 +141,33 @@ public class HeapRegionList {
     }
 
     void clear() {
+        size = 0;
         tail = nullElement;
         head = nullElement;
     }
 
-    HeapRegionList(Pointer backingStorage, Size length) {
+    private HeapRegionList(Pointer backingStorage) {
         listStorage = backingStorage;
         clear();
     }
 
+    public int size() {
+        return size;
+    }
+
     public boolean isEmpty() {
-        return head == nullElement;
+        return size == 0;
+    }
+
+    boolean contains(int elem) {
+        int cursor = head;
+        while (cursor != nullElement) {
+            if (cursor == elem) {
+                return true;
+            }
+            cursor = next(cursor);
+        }
+        return false;
     }
 
     /**
@@ -137,11 +179,13 @@ public class HeapRegionList {
             head = elem;
             tail = elem;
             clear(elem);
+            size = 1;
         } else {
             // Add to tail
             setNext(tail, elem);
             init(elem, nullElement, tail);
             tail = elem;
+            size++;
         }
     }
 
@@ -150,10 +194,12 @@ public class HeapRegionList {
             head = elem;
             tail = elem;
             clear(elem);
+            size = 1;
         } else {
             // Insert at head
             setPrev(head, elem);
             init(elem, head, nullElement);
+            size++;
         }
     }
 
@@ -165,6 +211,7 @@ public class HeapRegionList {
             init(newElem, elem, nextElem);
             setNext(elem, newElem);
             setPrev(nextElem, newElem);
+            size++;
         }
     }
 
@@ -174,6 +221,9 @@ public class HeapRegionList {
      */
     void remove(int elem) {
         FatalError.check(elem != nullElement, "Must be a valid list element");
+        if (MaxineVM.isDebug()) {
+            FatalError.check(!contains(elem), "element must be in list");
+        }
         int nextElem = next(elem);
         int prevElem = prev(elem);
         if (nextElem == nullElement) {

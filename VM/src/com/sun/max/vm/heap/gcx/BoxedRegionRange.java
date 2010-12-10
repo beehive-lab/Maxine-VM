@@ -20,26 +20,38 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 
 /**
- * New Heap management infrastructure.
- * @see MaxPackage
+ * Boxed version of RegionRange.
  *
  * @author Laurent Daynes
  */
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
+@HOSTED_ONLY
+public final class BoxedRegionRange extends RegionRange implements Boxed {
+    private long nativeWord;
+
+    private BoxedRegionRange(long value) {
+        nativeWord = value;
     }
 
     @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {RegionRange.class};
+    public long value() {
+        return nativeWord;
     }
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.heapPackage.isSubPackageOf(this);
+
+    public static BoxedRegionRange from(int regionID, int numRegions) {
+        long encodedRange = regionID;
+        encodedRange = (encodedRange << REGION_ID_WIDTH) | numRegions;
+        return new BoxedRegionRange(encodedRange);
+    }
+
+    protected static BoxedRegionRange fromLong(long value) {
+        return new BoxedRegionRange(value);
+    }
+
+    protected static BoxedRegionRange fromInt(int value) {
+        return new BoxedRegionRange(value);
     }
 }

@@ -53,6 +53,8 @@ public class C1XCompilation {
 
     private boolean hasExceptionHandlers;
 
+    private final C1XCompilation parent;
+
     /**
      * @see #setNotTypesafe()
      * @see #isTypesafe()
@@ -87,6 +89,8 @@ public class C1XCompilation {
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
     public C1XCompilation(C1XCompiler compiler, RiMethod method, int osrBCI) {
+        this.parent = currentCompilation.get();
+        currentCompilation.set(this);
         this.compiler = compiler;
         this.target = compiler.target;
         this.runtime = compiler.runtime;
@@ -102,6 +106,10 @@ public class C1XCompilation {
             cfgPrinter.printCompilation(method);
         }
         this.cfgPrinter = cfgPrinter;
+    }
+
+    public void close() {
+        currentCompilation.set(parent);
     }
 
     public IR hir() {
@@ -273,8 +281,6 @@ public class C1XCompilation {
     public CiResult compile() {
         CiTargetMethod targetMethod;
         try {
-            setCurrent(this);
-
             emitHIR();
             emitLIR();
             targetMethod = emitCode();
@@ -288,7 +294,6 @@ public class C1XCompilation {
             return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
         } finally {
             flushCfgPrinterToFile();
-            setCurrent(null);
         }
 
         return new CiResult(targetMethod, null, stats);
@@ -383,9 +388,9 @@ public class C1XCompilation {
         return compilation;
     }
 
-    public static C1XCompilation setCurrent(C1XCompilation compilation) {
-        assert compilation == null || currentCompilation.get() == null : "cannot have more than one current compilation per thread";
-        currentCompilation.set(compilation);
-        return compilation;
-    }
+//    public static C1XCompilation setCurrent(C1XCompilation compilation) {
+//        assert compilation == null || currentCompilation.get() == null : "cannot have more than one current compilation per thread";
+//        currentCompilation.set(compilation);
+//        return compilation;
+//    }
 }

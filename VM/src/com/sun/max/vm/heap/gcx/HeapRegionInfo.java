@@ -21,57 +21,23 @@
 package com.sun.max.vm.heap.gcx;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
-
 /**
  * Descriptor of heap region.
+ * The information recorded is carefully crafted so that a zero-filled HeapRegionInfo
+ * instance represents the state of a free region, not allocated to any heap account.
+ * This avoids costly initialization of the {@link RegionTable} entries at startup.
  *
  * @author Laurent Daynes
  */
 public class HeapRegionInfo {
-    public static final VMSizeOption regionSizeOption = register(new VMSizeOption("-XX:HeapRegionSize", Size.K.times(256), "Heap Region Size"), MaxineVM.Phase.PRISTINE);
-
-    @CONSTANT_WHEN_NOT_ZERO
-    static int regionSizeInBytes;
-    @CONSTANT_WHEN_NOT_ZERO
-    static int regionSizeInWords;
-    @CONSTANT_WHEN_NOT_ZERO
-    static int log2RegionSizeInBytes;
-    @CONSTANT_WHEN_NOT_ZERO
-    static int log2RegionSizeInWords;
-
-    @CONSTANT_WHEN_NOT_ZERO
-    static int regionAlignmentMask;
-
-    static void initializeConstants() {
-        // TODO: this is where it would be interesting to use annotation to ask the boot image
-        // generator to keep track of methods that depends on the values below and force a
-        // re-compilation of these methods at startup (or opportunistically).
-
-        regionSizeInBytes = regionSizeOption.getValue().toInt();
-        log2RegionSizeInBytes = Integer.numberOfTrailingZeros(regionSizeInBytes);
-        FatalError.check(regionSizeInBytes == (1 << log2RegionSizeInBytes), "Heap region size must be a power of 2");
-        regionSizeInWords = regionSizeInBytes >> Word.widthValue().log2numberOfBytes;
-        log2RegionSizeInWords = log2RegionSizeInBytes + Word.widthValue().log2numberOfBytes;
-        regionAlignmentMask = regionSizeInBytes - 1;
-    }
-
-    static boolean isAligned(Address address) {
-        return address.isAligned(regionSizeInBytes);
-    }
-
-    static Address regionStart(Address address) {
-        return address.and(regionAlignmentMask);
-    }
 
     HeapRegionInfo() {
         // Not a class one can allocate. Allocation is the responsibility of the region table.
@@ -85,6 +51,7 @@ public class HeapRegionInfo {
 
     /**
      * Index, in number of minimum object size relative to the beginning of a region to the first free chunk of the region.
+     *
      */
     short firstFreeChunkIndex;
     /**
@@ -102,14 +69,27 @@ public class HeapRegionInfo {
      */
     short liveData;
 
-    public int liveInWords() {
+    int flags;
+
+    public final int liveInWords() {
         return liveData;
     }
-    public int darkMatterInWords() {
+
+    public final int darkMatterInWords() {
         return regionSizeInWords - (liveData + freeSpace);
     }
-    public int freeSpaceInWords() {
+
+    public final int freeSpaceInWords() {
         return freeSpace;
+    }
+
+    /**
+     *
+     * @return first free chunk
+     */
+    Address firstFreeChunk() {
+
+        return Address.zero();
     }
 
     @INTRINSIC(UNSAFE_CAST)
@@ -119,4 +99,5 @@ public class HeapRegionInfo {
     static HeapRegionInfo toHeapRegionInfo(Pointer regionInfoPointer) {
         return asHeapRegionInfo(Reference.fromOrigin(Layout.cellToOrigin(regionInfoPointer)).toJava());
     }
+
 }

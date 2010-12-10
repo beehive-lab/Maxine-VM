@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,28 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.c1x.lir;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 
 /**
- * New Heap management infrastructure.
- * @see MaxPackage
+ * LIR instruction used in translating {@link Bytecodes#LSB} and {@link Bytecodes#MSB}.
  *
- * @author Laurent Daynes
+ * @author Doug Simon
  */
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
+public class LIRSignificantBit extends LIRInstruction {
+
+    public LIRSignificantBit(LIROpcode opcode, CiValue operand, CiValue result) {
+        super(opcode, result, null, false, 1, 0, operand);
     }
 
     @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {RegionRange.class};
-    }
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.heapPackage.isSubPackageOf(this);
+    public void emitCode(LIRAssembler masm) {
+        masm.emitSignificantBitOp(code == LIROpcode.Msb,  operand(0), result());
     }
 }

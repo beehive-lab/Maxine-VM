@@ -24,7 +24,6 @@ import junit.framework.*;
 
 import com.sun.max.ide.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.jit.*;
 
 /**
  * Tests {@link BytecodeStopsIterator}.

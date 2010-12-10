@@ -341,12 +341,12 @@ public class LIRList {
         append(new LIROp3(LIROpcode.Lrem, left, right, tmp, res, info));
     }
 
-    public void lsb(CiValue left, CiValue dst) {
-        append(new LIROp1(LIROpcode.Lsb, left, dst));
+    public void lsb(CiValue src, CiValue dst) {
+        append(new LIRSignificantBit(LIROpcode.Lsb, src, dst));
     }
 
-    public void msb(CiValue left, CiValue dst) {
-        append(new LIROp1(LIROpcode.Msb, left, dst));
+    public void msb(CiValue src, CiValue dst) {
+        append(new LIRSignificantBit(LIROpcode.Msb, src, dst));
     }
 
     public void wdiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {

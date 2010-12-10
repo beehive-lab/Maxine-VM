@@ -44,7 +44,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Laurent Daynes.
  */
-public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace {
+public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
     private static final VMIntOption largeObjectsMinSizeOption =
         register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
@@ -763,5 +763,11 @@ public class FreeHeapSpaceManager extends HeapSweeper implements ResizableSpace 
     public Size totalCapacity() {
         return committedHeapSpace.size();
 
+    }
+
+    @Override
+    public void verify(AfterMarkSweepVerifier verifier) {
+        committedHeapSpace.walkCommittedSpace(verifier);
+        verifyUsage(verifier.freeChunksByteCount, verifier.darkMatterByteCount, verifier.liveDataByteCount);
     }
 }
