@@ -39,8 +39,6 @@ public enum LIROpcode {
         Pause,
         RuntimeCall,
         Membar,
-        MembarAcquire,
-        MembarRelease,
     EndOp0,
     BeginOp1,
         NullCheck,

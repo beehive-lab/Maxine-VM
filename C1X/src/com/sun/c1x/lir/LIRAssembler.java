@@ -310,15 +310,6 @@ public abstract class LIRAssembler {
             case OsrEntry:
                 emitOsrEntry();
                 break;
-            case Membar:
-                emitMembar();
-                break;
-            case MembarAcquire:
-                emitMembarAcquire();
-                break;
-            case MembarRelease:
-                emitMembarRelease();
-                break;
             case ReadPC:
                 emitReadPC(op.result());
                 break;
@@ -518,11 +509,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitCallAlignment(LIROpcode code);
 
-    protected abstract void emitMembarRelease();
-
-    protected abstract void emitMembarAcquire();
-
-    protected abstract void emitMembar();
+    protected abstract void emitMemoryBarriers(int barriers);
 
     protected abstract void emitOsrEntry();
 

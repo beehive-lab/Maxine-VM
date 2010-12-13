@@ -364,7 +364,9 @@ public final class Files {
                 if (!entry.isDirectory()) {
                     final File destFile = new File(destDir, entry.getName());
                     Trace.line(2, "  inflating: " + entry.getName() + " ...");
-                    Streams.copy(zipFile.getInputStream(entry), new FileOutputStream(destFile));
+                    FileOutputStream os = new FileOutputStream(destFile);
+                    Streams.copy(zipFile.getInputStream(entry), os);
+                    os.close();
                 }
             }
             zipFile.close();
