@@ -446,12 +446,14 @@ public class Bytecodes {
      *
      * <pre>
      * Format: { u1 opcode;   // MEMBAR
-     *           u2 barrier;  // 1=LOAD_LOAD, 2=LOAD_STORE, 3=STORE_LOAD, 4=STORE_STORE, 5=MEMOP_STORE, 6=ALL
+     *           u2 barriers;  // mask of constants defined in {@link MemoryBarriers}
      *         }
      *
      * Operand Stack:
      *     ... => ...
      * </pre>
+     * 
+     * @see MemoryBarriers
      */
     public static final int MEMBAR               = 240;
     
@@ -593,8 +595,6 @@ public class Bytecodes {
     public static final int MEMBAR_LOAD_STORE  = MEMBAR   | LOAD_STORE << 8;
     public static final int MEMBAR_STORE_LOAD  = MEMBAR   | STORE_LOAD << 8;
     public static final int MEMBAR_STORE_STORE = MEMBAR   | STORE_STORE << 8;
-    public static final int MEMBAR_MEMOP_STORE = MEMBAR   | MEMOP_STORE << 8;
-    public static final int MEMBAR_FENCE       = MEMBAR   | FENCE << 8;
 
     /**
      * Links a native function.
@@ -735,9 +735,21 @@ public class Bytecodes {
          */
         public static final int STORE_STORE = 0x0008;
 
-        public static final int MEMOP_STORE = STORE_STORE | LOAD_STORE;
-        public static final int FENCE = LOAD_LOAD | LOAD_STORE | STORE_STORE | STORE_LOAD;
+        private static void appendFlag(StringBuilder sb, boolean flag, String string) {
+            if (flag) {
+                sb.append(string);
+            }
+        }
 
+        public static String barriersString(int barriers) {
+            StringBuilder sb = new StringBuilder();
+            appendFlag(sb, (barriers & LOAD_LOAD) != 0, "LOAD_LOAD ");
+            appendFlag(sb, (barriers & LOAD_STORE) != 0, "LOAD_STORE ");
+            appendFlag(sb, (barriers & STORE_LOAD) != 0, "STORE_LOAD ");
+            appendFlag(sb, (barriers & STORE_STORE) != 0, "STORE_STORE ");
+            return sb.toString().trim();
+        }
+        
         /**
          * Ensures all preceding loads complete before any subsequent loads.
          */
@@ -767,19 +779,14 @@ public class Bytecodes {
         }
 
         /**
-         * Ensures all preceding stores and loads complete before any subsequent stores.
+         * Executes one or more memory barriers.
+         * 
+         * @param barriers a mask of the constants defined in this class
          */
-        @INTRINSIC(MEMBAR_MEMOP_STORE)
-        public static void memopStore() {
+        public static void apply(int barriers) {
+            // TODO Auto-generated method stub
+            
         }
-
-        /**
-         * Ensures all preceding stores and loads complete before any subsequent stores and loads.
-         */
-        @INTRINSIC(MEMBAR_FENCE)
-        public static void fence() {
-        }
-
     }
 
     public static final int ILLEGAL = 255;
@@ -1153,10 +1160,8 @@ public class Bytecodes {
         def(JNIOP_LINK          , "jniop_link"        );
         def(JNIOP_N2J           , "jniop_n2j"         );
         
-        def(MEMBAR_FENCE        , "membar_fence"      );
         def(MEMBAR_LOAD_LOAD    , "membar_load_load"  );
         def(MEMBAR_LOAD_STORE   , "membar_load_store" );
-        def(MEMBAR_MEMOP_STORE  , "membar_memop_store");
         def(MEMBAR_STORE_LOAD   , "membar_store_load" );
         def(MEMBAR_STORE_STORE  , "membar_store_store");
         

@@ -26,6 +26,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -80,12 +81,12 @@ public class C1XRuntimeCalls {
         Throw.raise(throwable);
     }
 
+    @HOSTED_ONLY
     private static boolean checkCompatible(CiRuntimeCall call, ClassMethodActor classMethodActor) {
         assert classMethodActor.resultKind().ciKind == call.resultKind;
         for (int i = 0; i < call.arguments.length; i++) {
             assert classMethodActor.getParameterKinds()[i].ciKind == call.arguments[i];
         }
-
         return true;
     }
 

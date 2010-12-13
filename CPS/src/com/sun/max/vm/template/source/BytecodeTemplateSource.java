@@ -2611,16 +2611,6 @@ public class BytecodeTemplateSource {
         MemoryBarriers.storeLoad();
     }
 
-    @BYTECODE_TEMPLATE(MEMBAR_MEMOP_STORE)
-    public static void membar_memop_store() {
-        MemoryBarriers.memopStore();
-    }
-
-    @BYTECODE_TEMPLATE(MEMBAR_FENCE)
-    public static void membar_fence() {
-        MemoryBarriers.fence();
-    }
-
     @BYTECODE_TEMPLATE(SAFEPOINT)
     public static void safepoint() {
         Safepoint.safepoint();

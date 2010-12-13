@@ -1139,6 +1139,10 @@ public class IRChecker extends ValueVisitor {
     public void visitMonitorAddress(MonitorAddress i) {
     }
 
+    @Override
+    public void visitMemoryBarrier(MemoryBarrier i) {
+    }
+
     private void assertKind(Value i, CiKind kind) {
         assertNonNull(i, "Value should not be null");
         if (!Util.archKindsEqual(i.kind, kind)) {

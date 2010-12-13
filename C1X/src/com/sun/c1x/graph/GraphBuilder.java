@@ -46,6 +46,7 @@ import com.sun.cri.ri.RiType.Representation;
  * numbering, inlining, constant folding, strength reduction, etc.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public final class GraphBuilder {
 
@@ -2231,7 +2232,7 @@ public final class GraphBuilder {
                 case PWRITE         : genStorePointer(PWRITE    | (s.readCPI() << 8)); break;
                 case PSET           : genStorePointer(PSET      | (s.readCPI() << 8)); break;
                 case PCMPSWP        : getCompareAndSwap(PCMPSWP | (s.readCPI() << 8)); break;
-                case MEMBAR         : genMemoryBarrier(MEMBAR   | (s.readCPI() << 8)); break;
+                case MEMBAR         : genMemoryBarrier(s.readCPI()); break;
 
                 case WRETURN        : genReturn(wpop()); break;
                 case READ_PC        : genLoadPC(); break;
@@ -2598,10 +2599,11 @@ public final class GraphBuilder {
     }
 
 
-    private void genMemoryBarrier(int opcode) {
-        // TODO: Implement this!
-        System.out.println("Memory barrier: " + Bytecodes.nameOf(opcode));
-        System.out.println(curState.immutableCopy(bci()));
+    private void genMemoryBarrier(int barriers) {
+        int explicitMemoryBarriers = barriers & ~compilation.target.arch.implicitMemoryBarriers;
+        if (explicitMemoryBarriers != 0) {
+            append(new MemoryBarrier(explicitMemoryBarriers));
+        }
     }
 
     private void genArrayLength() {

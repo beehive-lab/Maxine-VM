@@ -21,6 +21,7 @@
 package com.sun.c1x.gen;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 
@@ -55,6 +56,78 @@ import com.sun.cri.xir.*;
  * @author Doug Simon
  */
 public abstract class LIRGenerator extends ValueVisitor {
+
+    /**
+     * Helper class for inserting memory barriers as necessary to implement the Java Memory Model
+     * with respect to volatile field accesses.
+     *
+     * Comment copied from templateTable_i486.cpp in HotSpot.
+     * <pre>
+     * Volatile variables demand their effects be made known to all CPU's in
+     * order.  Store buffers on most chips allow reads & writes to reorder; the
+     * JMM's ReadAfterWrite.java test fails in -Xint mode without some kind of
+     * memory barrier (i.e., it's not sufficient that the interpreter does not
+     * reorder volatile references, the hardware also must not reorder them).
+     *
+     * According to the new Java Memory Model (JMM):
+     * (1) All volatiles are serialized wrt to each other.
+     * ALSO reads & writes act as acquire & release, so:
+     * (2) A read cannot let unrelated NON-volatile memory refs that happen after
+     * the read float up to before the read.  It's OK for non-volatile memory refs
+     * that happen before the volatile read to float down below it.
+     * (3) Similarly, a volatile write cannot let unrelated NON-volatile memory refs
+     * that happen BEFORE the write float down to after the write.  It's OK for
+     * non-volatile memory refs that happen after the volatile write to float up
+     * before it.
+     *
+     * We only put in barriers around volatile refs (they are expensive), not
+     * _between_ memory refs (which would require us to track the flavor of the
+     * previous memory refs).  Requirements (2) and (3) require some barriers
+     * before volatile stores and after volatile loads.  These nearly cover
+     * requirement (1) but miss the volatile-store-volatile-load case.  This final
+     * case is placed after volatile-stores although it could just as well go
+     * before volatile-loads.
+     * </pre>
+     */
+    class VolatileMemoryAccess {
+        /**
+         * Inserts any necessary memory barriers before a volatile write as required by the JMM.
+         */
+        void preVolatileWrite() {
+            int barriers = compilation.target.arch.requiredBarriers(LOAD_STORE | STORE_STORE);
+            if (compilation.target.isMP && barriers != 0) {
+                lir.membar(barriers);
+            }
+        }
+
+        /**
+         * Inserts any necessary memory barriers after a volatile write as required by the JMM.
+         */
+        void postVolatileWrite() {
+            int barriers = compilation.target.arch.requiredBarriers(STORE_LOAD | STORE_STORE);
+            if (compilation.target.isMP && barriers != 0) {
+                lir.membar(barriers);
+            }
+        }
+
+        /**
+         * Inserts any necessary memory barriers before a volatile read as required by the JMM.
+         */
+        void preVolatileRead() {
+            // no-op
+        }
+
+        /**
+         * Inserts any necessary memory barriers after a volatile read as required by the JMM.
+         */
+        void postVolatileRead() {
+            // Ensure field's data is loaded before any subsequent loads or stores.
+            int barriers = compilation.target.arch.requiredBarriers(LOAD_LOAD | LOAD_STORE);
+            if (compilation.target.isMP && barriers != 0) {
+                lir.membar(barriers);
+            }
+        }
+    }
 
     /**
      * Forces the result of a given instruction to be available in a given register,
@@ -120,6 +193,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private List<CiConstant> constants;
     private List<CiVariable> variablesForConstants;
     protected LIRList lir;
+    final VolatileMemoryAccess vma;
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
@@ -129,6 +203,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         this.is32 = compilation.target.arch.is32bit();
         this.is64 = compilation.target.arch.is64bit();
         this.isTwoOperand = compilation.target.arch.twoOperandMode();
+        this.vma = new VolatileMemoryAccess();
 
         constants = new ArrayList<CiConstant>();
         variablesForConstants = new ArrayList<CiVariable>();
@@ -615,6 +690,13 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
+    public void visitMemoryBarrier(MemoryBarrier x) {
+        if (x.barriers != 0) {
+            lir.membar(x.barriers);
+        }
+    }
+
+    @Override
     public void visitUnsafeCast(UnsafeCast i) {
         assert !i.redundant : "redundant UnsafeCasts must be eliminated by the front end";
         CiValue src = load(i.value());
@@ -639,8 +721,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirSnippet snippet = x.isStatic() ? xir.genGetStatic(site(x), receiver, field) : xir.genGetField(site(x), receiver, field);
         emitXir(snippet, x, info, null, true);
 
-        if (x.isVolatile() && compilation.target.isMP) {
-            lir.membarAcquire();
+        if (x.isVolatile()) {
+            vma.postVolatileRead();
         }
     }
 
@@ -899,35 +981,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.move(src.result(), reg);
     }
 
-
-    /**
-     * Comment copied from templateTable_i486.cpp in HotSpot.
-     *
-     * Volatile variables demand their effects be made known to all CPU's in
-     * order.  Store buffers on most chips allow reads & writes to reorder; the
-     * JMM's ReadAfterWrite.java test fails in -Xint mode without some kind of
-     * memory barrier (i.e., it's not sufficient that the interpreter does not
-     * reorder volatile references, the hardware also must not reorder them).
-     *
-     * According to the new Java Memory Model (JMM):
-     * (1) All volatiles are serialized wrt to each other.
-     * ALSO reads & writes act as acquire & release, so:
-     * (2) A read cannot let unrelated NON-volatile memory refs that happen after
-     * the read float up to before the read.  It's OK for non-volatile memory refs
-     * that happen before the volatile read to float down below it.
-     * (3) Similarly, a volatile write cannot let unrelated NON-volatile memory refs
-     * that happen BEFORE the write float down to after the write.  It's OK for
-     * non-volatile memory refs that happen after the volatile write to float up
-     * before it.
-     *
-     * We only put in barriers around volatile refs (they are expensive), not
-     * _between_ memory refs (which would require us to track the flavor of the
-     * previous memory refs).  Requirements (2) and (3) require some barriers
-     * before volatile stores and after volatile loads.  These nearly cover
-     * requirement (1) but miss the volatile-store-volatile-load case.  This final
-     * case is placed after volatile-stores although it could just as well go
-     * before volatile-loads.
-     */
     @Override
     public void visitStoreField(StoreField x) {
         RiField field = x.field();
@@ -938,8 +991,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             info = stateFor(x, x.stateBefore());
         }
 
-        if (x.isVolatile() && compilation.target.isMP) {
-            lir.membarRelease();
+        if (x.isVolatile()) {
+            vma.preVolatileWrite();
         }
 
         XirArgument receiver = toXirArgument(x.object());
@@ -947,8 +1000,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirSnippet snippet = x.isStatic() ? xir.genPutStatic(site(x), receiver, field, value) : xir.genPutField(site(x), receiver, field, value);
         emitXir(snippet, x, info, null, true);
 
-        if (x.isVolatile() && compilation.target.isMP) {
-            lir.membar();
+        if (x.isVolatile()) {
+            vma.postVolatileWrite();
         }
     }
 
@@ -1030,12 +1083,12 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         CiValue reg = createResultVariable(x);
 
-        if (x.isVolatile() && compilation.target.isMP) {
-            lir.membarAcquire();
+        if (x.isVolatile()) {
+            vma.preVolatileRead();
         }
         genGetObjectUnsafe(reg, src.result(), off.result(), kind, x.isVolatile());
-        if (x.isVolatile() && compilation.target.isMP) {
-            lir.membar();
+        if (x.isVolatile()) {
+            vma.postVolatileRead();
         }
     }
 
@@ -1129,10 +1182,13 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         setNoResult(x);
 
-        if (x.isVolatile() && compilation.target.isMP) {
-            lir.membarRelease();
+        if (x.isVolatile()) {
+            vma.preVolatileWrite();
         }
         genPutObjectUnsafe(src.result(), off.result(), data.result(), kind, x.isVolatile());
+        if (x.isVolatile()) {
+            vma.postVolatileWrite();
+        }
     }
 
     @Override

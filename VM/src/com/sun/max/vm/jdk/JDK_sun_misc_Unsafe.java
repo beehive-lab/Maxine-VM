@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -29,6 +31,7 @@ import java.security.*;
 import sun.misc.*;
 import sun.reflect.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -819,6 +822,32 @@ final class JDK_sun_misc_Unsafe {
     }
 
     /**
+     * Inserts any necessary memory barriers before a volatile read as required by the JMM.
+     */
+    @INLINE
+    private static void preVolatileRead() {
+        // no-op
+    }
+
+    /**
+     * Inserts any necessary memory barriers after a volatile read as required by the JMM.
+     */
+    @INTRINSIC(MEMBAR | ((LOAD_LOAD | LOAD_STORE) << 8))
+    private static native void postVolatileRead();
+
+    /**
+     * Inserts any necessary memory barriers before a volatile read as required by the JMM.
+     */
+    @INTRINSIC(MEMBAR | ((LOAD_STORE | STORE_STORE) << 8))
+    private static native void preVolatileWrite();
+
+    /**
+     * Inserts any necessary memory barriers after a volatile read as required by the JMM.
+     */
+    @INTRINSIC(MEMBAR | ((STORE_LOAD | STORE_STORE) << 8))
+    private static native void postVolatileWrite();
+
+    /**
      * Reads a volatile object field from an object at the specified offset.
      * @see Unsafe#getObjectVolatile(Object, long)
      * @param object the object containing the field
@@ -827,7 +856,10 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public Object getObjectVolatile(Object object, long offset) {
-        return getObject(object, offset);
+        preVolatileRead();
+        Object value = getObject(object, offset);
+        postVolatileRead();
+        return value;
     }
 
     /**
@@ -839,7 +871,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void putObjectVolatile(Object object, long offset, Object value) {
+        preVolatileWrite();
         putObject(object, offset, value);
+        postVolatileWrite();
     }
 
     /**
@@ -851,7 +885,10 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public int getIntVolatile(Object object, long offset) {
-        return getInt(object, offset);
+        preVolatileRead();
+        int value = getInt(object, offset);
+        postVolatileRead();
+        return value;
     }
 
     /**
@@ -863,7 +900,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void putIntVolatile(Object object, long offset, int value) {
+        preVolatileWrite();
         putInt(object, offset, value);
+        postVolatileWrite();
     }
 
     /**
@@ -875,7 +914,10 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public boolean getBooleanVolatile(Object object, long offset) {
-        return getBoolean(object, offset);
+        preVolatileRead();
+        boolean value = getBoolean(object, offset);
+        postVolatileRead();
+        return value;
     }
 
     /**
@@ -887,7 +929,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void putBooleanVolatile(Object object, long offset, boolean value) {
+        preVolatileWrite();
         putBoolean(object, offset, value);
+        postVolatileWrite();
     }
 
     /**
@@ -899,7 +943,10 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public byte getByteVolatile(Object object, long offset) {
-        return getByte(object, offset);
+        preVolatileRead();
+        byte value = getByte(object, offset);
+        postVolatileRead();
+        return value;
     }
 
     /**
@@ -911,7 +958,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void putByteVolatile(Object object, long offset, byte value) {
+        preVolatileWrite();
         putByte(object, offset, value);
+        postVolatileWrite();
     }
 
     /**
@@ -923,7 +972,10 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public short getShortVolatile(Object object, long offset) {
-        return getShort(object, offset);
+        preVolatileRead();
+        short value = getShort(object, offset);
+        postVolatileRead();
+        return value;
     }
 
     /**
@@ -935,7 +987,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void putShortVolatile(Object object, long offset, short value) {
+        preVolatileWrite();
         putShort(object, offset, value);
+        postVolatileWrite();
     }
 
     /**
@@ -947,7 +1001,10 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public char getCharVolatile(Object object, long offset) {
-        return getChar(object, offset);
+        preVolatileRead();
+        char value = getChar(object, offset);
+        postVolatileRead();
+        return value;
     }
 
     /**
@@ -959,7 +1016,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void putCharVolatile(Object object, long offset, char value) {
+        preVolatileWrite();
         putChar(object, offset, value);
+        postVolatileWrite();
     }
 
     /**
@@ -971,7 +1030,10 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public long getLongVolatile(Object object, long offset) {
-        return getLong(object, offset);
+        preVolatileRead();
+        long value = getLong(object, offset);
+        postVolatileRead();
+        return value;
     }
 
     /**
@@ -983,7 +1045,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void putLongVolatile(Object object, long offset, long value) {
+        preVolatileWrite();
         putLong(object, offset, value);
+        postVolatileWrite();
     }
 
     /**
@@ -995,7 +1059,10 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public float getFloatVolatile(Object object, long offset) {
-        return getFloat(object, offset);
+        preVolatileRead();
+        float value = getFloat(object, offset);
+        postVolatileRead();
+        return value;
     }
 
     /**
@@ -1007,7 +1074,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void putFloatVolatile(Object object, long offset, float value) {
+        preVolatileWrite();
         putFloat(object, offset, value);
+        postVolatileWrite();
     }
 
     /**
@@ -1019,7 +1088,10 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public double getDoubleVolatile(Object object, long offset) {
-        return getDouble(object, offset);
+        preVolatileRead();
+        double value = getDouble(object, offset);
+        postVolatileRead();
+        return value;
     }
 
     /**
@@ -1031,7 +1103,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void putDoubleVolatile(Object object, long offset, double value) {
+        preVolatileWrite();
         putDouble(object, offset, value);
+        postVolatileWrite();
     }
 
     /**
