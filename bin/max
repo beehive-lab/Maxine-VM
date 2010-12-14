@@ -1544,10 +1544,10 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-image-configs=opt-c1x3,jtt-cpscps,jtt-mscpscps -fail-fast"
+gate_presets="-image-configs=jtt-cpscps,jtt-mscpscps -fail-fast"
 if [ "$MAXINE_OS" == "linux" ]; then
     # MSHeapScheme does not yet work on Linux
-    gate_presets="-image-configs=opt-c1x3,jtt-cpscps -fail-fast"
+    gate_presets="-image-configs=jtt-cpscps -fail-fast"
 fi 
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
