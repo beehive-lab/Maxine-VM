@@ -715,7 +715,8 @@ public final class ClassfileReader {
         return annotations;
     }
 
-    private static final Class BYTECODE_TEMPLATE = Classes.forName("com.sun.max.vm.template.BYTECODE_TEMPLATE");
+    // TODO avoid explicit class name of optional package
+    private static final Class BYTECODE_TEMPLATE = Classes.forName("com.sun.max.vm.cps.template.BYTECODE_TEMPLATE");
 
     protected MethodActor[] readMethods(boolean isInterface) {
         final int numberOfMethods = classfileStream.readUnsigned2();

@@ -55,7 +55,8 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
             if (compilerPackage == null) {
                 return false;
             }
-            return compilerPackage.isSubPackageOf(maxPackage);
+//            return compilerPackage.isSubPackageOf(maxPackage);
+            return maxPackage.name().startsWith("com.sun.max.vm.cps");
         }
 
         /**

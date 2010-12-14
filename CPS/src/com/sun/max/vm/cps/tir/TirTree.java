@@ -24,10 +24,10 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.lang.*;
+import com.sun.max.vm.cps.hotpath.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.tir.pipeline.*;
 import com.sun.max.vm.cps.tir.target.*;
-import com.sun.max.vm.hotpath.*;
 
 public class TirTree extends AbstractIrMethod {
     public static class Profile {

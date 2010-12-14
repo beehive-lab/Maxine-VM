@@ -29,9 +29,9 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.cps.template.source.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.template.source.*;
 
 /**
  * Playing with Stack manipulation routines for a template generator that can be used either by a simple JIT or an interpreter.

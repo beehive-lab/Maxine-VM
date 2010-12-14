@@ -373,7 +373,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
 
                 add(pkg, pkgMap);
                 for (final BootImagePackage otherPkg : pkg.others.values()) {
-                    // Ad any redirects and, for recursive packages outside this tree, add them as a new root.
+                    // Add any redirects and, for recursive packages outside this tree, add them as a new root.
                     add(otherPkg, pkgMap);
                     if (!otherPkg.name().startsWith(info.root.name()) && otherPkg.recursive) {
                         rootInfos.add(new RootPackageInfo(classpath, otherPkg));
