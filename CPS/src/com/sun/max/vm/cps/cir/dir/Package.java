@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.cps.cir.dir;
 
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.cir.*;
@@ -30,7 +31,7 @@ import com.sun.max.vm.cps.dir.*;
  *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
     }
 

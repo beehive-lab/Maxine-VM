@@ -30,8 +30,8 @@ import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.jit.amd64.*;
+import com.sun.max.vm.cps.template.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.template.*;
 
 /**
  * Test setup for JIT tests on AMD64.

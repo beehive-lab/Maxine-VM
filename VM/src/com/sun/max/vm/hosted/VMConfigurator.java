@@ -66,7 +66,7 @@ public final class VMConfigurator {
     public final Option<String> runScheme = schemeOption("run", RunScheme.class, "Specifies the run scheme for the target.",
             VMConfigurator.defaultRunScheme());
 
-    private Option<String> schemeOption(String name, Class schemeClass, String help, VMPackage def) {
+    private Option<String> schemeOption(String name, Class schemeClass, String help, BootImagePackage def) {
         String p = def.name();
         return options.newOption(name, p, new PackageOptionType(getPackageName(schemeClass)), OptionSet.Syntax.REQUIRES_EQUALS, help);
     }
@@ -111,10 +111,10 @@ public final class VMConfigurator {
     /**
      * Gets the package providing the default {@link VMConfiguration#optCompilerScheme()}.
      */
-    public static VMPackage defaultOptCompilerScheme() {
+    public static BootImagePackage defaultOptCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
+                return (BootImagePackage) BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             default:
                 throw FatalError.unexpected(platform().isa.toString());
         }
@@ -123,10 +123,10 @@ public final class VMConfigurator {
     /**
      * Gets the package providing the default {@link VMConfiguration#jitCompilerScheme()}.
      */
-    public static VMPackage defaultJitCompilerScheme() {
+    public static BootImagePackage defaultJitCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
+                return (BootImagePackage) BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
             default:
                 throw FatalError.unimplemented();
         }
@@ -135,14 +135,14 @@ public final class VMConfigurator {
     /**
      * Gets the package providing the default {@link CompilationScheme}.
      */
-    public static VMPackage defaultCompilationScheme() {
+    public static BootImagePackage defaultCompilationScheme() {
         return new com.sun.max.vm.compiler.adaptive.Package();
     }
 
     /**
      * Gets the package providing the default {@link TargetABIsScheme}.
      */
-    public static VMPackage defaultTargetABIsScheme() {
+    public static BootImagePackage defaultTargetABIsScheme() {
         switch (platform().isa) {
             case AMD64:
                 return new com.sun.max.vm.compiler.target.amd64.Package();
@@ -154,21 +154,21 @@ public final class VMConfigurator {
     /**
      * Gets the package providing the default {@link HeapScheme}.
      */
-    public static VMPackage defaultHeapScheme() {
+    public static BootImagePackage defaultHeapScheme() {
         return new com.sun.max.vm.heap.sequential.semiSpace.Package();
     }
 
     /**
      * Gets the package providing the default {@link ReferenceScheme}.
      */
-    public static VMPackage defaultReferenceScheme() {
+    public static BootImagePackage defaultReferenceScheme() {
         return new com.sun.max.vm.reference.direct.Package();
     }
 
     /**
      * Gets the package providing the default {@link LayoutScheme}.
      */
-    public static VMPackage defaultLayoutScheme() {
+    public static BootImagePackage defaultLayoutScheme() {
         if (platform().isa.category == Category.RISC) {
             // On SPARC, the HOM layout enables more optimized code for accessing array elements
             // smaller than a word as there is no need to perform address arithmetic to skip
@@ -184,14 +184,14 @@ public final class VMConfigurator {
     /**
      * Gets the package providing the default {@link RunScheme}.
      */
-    public static VMPackage defaultRunScheme() {
+    public static BootImagePackage defaultRunScheme() {
         return new com.sun.max.vm.run.java.Package();
     }
 
     /**
      * Gets the package providing the default {@link MonitorScheme}.
      */
-    public static VMPackage defaultMonitorScheme() {
+    public static BootImagePackage defaultMonitorScheme() {
         return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
     }
 
@@ -215,7 +215,7 @@ public final class VMConfigurator {
      * Creates and {@linkplain MaxineVM#set(MaxineVM) installs} a VM using all the defaults
      * except for a supplied compiler scheme implementation and build level.
      */
-    public static void installStandard(BuildLevel buildLevel, VMPackage optPackage) {
+    public static void installStandard(BuildLevel buildLevel, BootImagePackage optPackage) {
         VMConfigurator vmConfigurator = new VMConfigurator(null);
         vmConfigurator.buildLevel.setValue(buildLevel);
         vmConfigurator.optScheme.setValue(optPackage.name());
@@ -224,16 +224,16 @@ public final class VMConfigurator {
     }
 
     /**
-     * Cast the value of an option to a {@code VMPackage}.
+     * Cast the value of an option to a {@code BootImagePackage}.
      * @param option the option which contains the value
-     * @return the option's value casted to a {@code VMPackage}
+     * @return the option's value casted to a {@code BootImagePackage}
      */
-    private static VMPackage vm(Option<String> option) {
+    private static BootImagePackage vm(Option<String> option) {
         String value = option.getValue();
         if (value == null) {
             return null;
         }
-        return (VMPackage) BootImagePackage.fromName(value);
+        return (BootImagePackage) BootImagePackage.fromName(value);
     }
 
     /**

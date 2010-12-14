@@ -416,14 +416,14 @@ public class BootImage {
             CPU(CPU.class),
             ISA(ISA.class),
             OS(OS.class),
-            REFERENCE(VMPackage.class),
-            LAYOUT(VMPackage.class),
-            HEAP(VMPackage.class),
-            MONITOR(VMPackage.class),
-            OPT(VMPackage.class),
-            JIT(VMPackage.class),
-            COMPILATION(VMPackage.class),
-            RUN(VMPackage.class);
+            REFERENCE(BootImagePackage.class),
+            LAYOUT(BootImagePackage.class),
+            HEAP(BootImagePackage.class),
+            MONITOR(BootImagePackage.class),
+            OPT(BootImagePackage.class),
+            JIT(BootImagePackage.class),
+            COMPILATION(BootImagePackage.class),
+            RUN(BootImagePackage.class);
 
             Key(Class valueType) {
                 this.valueType = valueType;
@@ -449,8 +449,8 @@ public class BootImage {
             return OS.valueOf(values.get(Key.OS));
         }
 
-        public VMPackage vmPackage(Key key) {
-            return (VMPackage) BootImagePackage.fromName(values.get(key));
+        public BootImagePackage BootImagePackage(Key key) {
+            return (BootImagePackage) BootImagePackage.fromName(values.get(key));
         }
 
         private StringInfo(InputStream inputStream, int offset, Endianness endian) throws IOException, Utf8Exception {
@@ -499,8 +499,8 @@ public class BootImage {
                     }
                     BootImageException.check(match, "No " + key.valueType.getName() + " constant matches " + value);
                 } else {
-                    assert key.valueType == VMPackage.class;
-                    BootImageException.check(BootImagePackage.fromName(value) instanceof VMPackage, "not a VM package: " + value);
+                    assert key.valueType == BootImagePackage.class;
+                    BootImageException.check(BootImagePackage.fromName(value) instanceof BootImagePackage, "not a VM package: " + value);
                 }
             }
         }
@@ -621,14 +621,14 @@ public class BootImage {
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,
-                                                      stringInfo.vmPackage(Key.REFERENCE),
-                                                      stringInfo.vmPackage(Key.LAYOUT),
-                                                      stringInfo.vmPackage(Key.HEAP),
-                                                      stringInfo.vmPackage(Key.MONITOR),
-                                                      stringInfo.vmPackage(Key.OPT),
-                                                      stringInfo.vmPackage(Key.JIT),
-                                                      stringInfo.vmPackage(Key.COMPILATION),
-                                                      stringInfo.vmPackage(Key.RUN));
+                                                      stringInfo.BootImagePackage(Key.REFERENCE),
+                                                      stringInfo.BootImagePackage(Key.LAYOUT),
+                                                      stringInfo.BootImagePackage(Key.HEAP),
+                                                      stringInfo.BootImagePackage(Key.MONITOR),
+                                                      stringInfo.BootImagePackage(Key.OPT),
+                                                      stringInfo.BootImagePackage(Key.JIT),
+                                                      stringInfo.BootImagePackage(Key.COMPILATION),
+                                                      stringInfo.BootImagePackage(Key.RUN));
 
                 fileInputStream.skip(header.heapSize + header.codeSize);
                 int trailerOffset = codeOffset() + header.codeSize;

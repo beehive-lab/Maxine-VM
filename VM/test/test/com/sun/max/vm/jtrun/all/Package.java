@@ -23,6 +23,7 @@
  */
 package test.com.sun.max.vm.jtrun.all;
 
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.run.*;
 
@@ -31,7 +32,7 @@ import com.sun.max.vm.run.*;
  *
  * @author Ben L. Titzer
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         super();
         registerScheme(RunScheme.class, JTRunScheme.class);

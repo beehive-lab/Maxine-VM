@@ -35,8 +35,8 @@ import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.transform.CirDepthFirstTraversal.DefaultBlockSet;
 import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.cps.template.*;
 import com.sun.max.vm.runtime.VMRegister.Role;
-import com.sun.max.vm.template.*;
 
 /**
  * Tests the CIR for a {@linkplain BYTECODE_TEMPLATE bytecode template} to ensure it does not write to a Java stack or

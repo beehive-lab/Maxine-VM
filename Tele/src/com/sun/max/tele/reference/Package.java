@@ -20,14 +20,11 @@
  */
 package com.sun.max.tele.reference;
 
-import com.sun.max.vm.*;
+import com.sun.max.config.*;
 
 /**
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
+public class Package extends BootImagePackage {
 
 }
