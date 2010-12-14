@@ -585,6 +585,15 @@ public abstract class FrameState {
         return toString(this);
     }
 
+    public CiCodePos toCodePos() {
+        FrameState caller = callerState();
+        CiCodePos callerCodePos = null;
+        if (caller != null) {
+            callerCodePos = caller.toCodePos();
+        }
+        return new CiCodePos(callerCodePos, scope.method, bci);
+    }
+
     /**
      * Creates a new {@code MutableFrameState} corresponding to inlining the specified method into this point in this frame state.
      * @param scope the IRScope representing the inlined method

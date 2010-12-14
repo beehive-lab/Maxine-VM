@@ -1407,7 +1407,7 @@ public class MaxineTester {
             out().println("   lucky: non-deterministic test passed (ignore)");
             for (Class mainClass : testList) {
 
-                if (imageDir.getName().equals("mscpscps") && mscpscpsSkippedTests.contains(mainClass)) {
+                if (imageDir.getName().equals("jtt-mscpscps") && mscpscpsSkippedTests.contains(mainClass)) {
                     out().println("*** Skipping too slow test: " + mainClass.getName());
                     continue;
                 }
