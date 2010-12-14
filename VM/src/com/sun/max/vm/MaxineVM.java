@@ -326,9 +326,6 @@ public final class MaxineVM {
             return value;
         }
 
-        if (javaClass.getName().equals("com.sun.max.vm.cps.tir.pipeline.TirInstructionAdapter")) {
-            System.console();
-        }
         boolean result;
         final String pkgName = getPackageName(javaClass);
 
@@ -348,6 +345,7 @@ public final class MaxineVM {
         } else {
 
             // Indirect part of definition, cover all the possible cases
+
             if (javaClass.isArray()) {
                 final Class< ? > componentClass = javaClass.getComponentType();
                 result = isHostedOnly(componentClass);
