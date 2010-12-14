@@ -754,29 +754,25 @@ public class Bytecodes {
          * Ensures all preceding loads complete before any subsequent loads.
          */
         @INTRINSIC(MEMBAR_LOAD_LOAD)
-        public static void loadLoad() {
-        }
+        public static native void loadLoad();
 
         /**
          * Ensures all preceding loads complete before any subsequent stores.
          */
         @INTRINSIC(MEMBAR_LOAD_STORE)
-        public static void loadStore() {
-        }
+        public static native void loadStore();
 
         /**
          * Ensures all preceding stores complete before any subsequent loads.
          */
         @INTRINSIC(MEMBAR_STORE_LOAD)
-        public static void storeLoad() {
-        }
-
+        public static native void storeLoad();
+        
         /**
          * Ensures all preceding stores complete before any subsequent stores.
          */
         @INTRINSIC(MEMBAR_STORE_STORE)
-        public static void storeStore() {
-        }
+        public static native void storeStore();
 
         /**
          * Executes one or more memory barriers.
