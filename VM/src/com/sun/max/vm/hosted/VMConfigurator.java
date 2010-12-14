@@ -195,14 +195,6 @@ public final class VMConfigurator {
         return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
     }
 
-    public static void installStandardJit(BuildLevel buildLevel) {
-        installStandard(buildLevel);
-//        VMConfigurator vmConfigurator = new VMConfigurator(null);
-//        vmConfigurator.buildLevel.setValue(buildLevel);
-//        vmConfigurator.jitScheme.setValue(defaultJitCompilerScheme());
-//        vmConfigurator.create(true);
-    }
-
     /**
      * Creates and {@linkplain MaxineVM#set(MaxineVM) installs} a VM using all the defaults
      * except for a supplied build level.

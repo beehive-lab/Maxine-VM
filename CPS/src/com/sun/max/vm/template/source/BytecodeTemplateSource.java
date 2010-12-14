@@ -26,16 +26,18 @@ import static com.sun.max.vm.template.BytecodeTemplate.*;
 import static com.sun.max.vm.template.source.NoninlineTemplateRuntime.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateMultiReferenceArray;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreatePrimitiveArray;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateReferenceArray;
+import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.SelectInterfaceMethod;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClass;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
-import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
@@ -2591,24 +2593,33 @@ public class BytecodeTemplateSource {
         JitStackFrameOperation.pokeInt(0, value2.mostSignificantBitSet());
     }
 
+    @INTRINSIC(Bytecodes.MEMBAR_LOAD_LOAD)
+    public static native void loadLoad();
+    @INTRINSIC(Bytecodes.MEMBAR_LOAD_STORE)
+    public static native void loadStore();
+    @INTRINSIC(Bytecodes.MEMBAR_STORE_LOAD)
+    public static native void storeLoad();
+    @INTRINSIC(Bytecodes.MEMBAR_STORE_STORE)
+    public static native void storeStore();
+
     @BYTECODE_TEMPLATE(MEMBAR_LOAD_LOAD)
     public static void membar_load_load() {
-        MemoryBarriers.loadLoad();
+        loadLoad();
     }
 
     @BYTECODE_TEMPLATE(MEMBAR_LOAD_STORE)
     public static void membar_load_store() {
-        MemoryBarriers.loadStore();
+        loadStore();
     }
 
     @BYTECODE_TEMPLATE(MEMBAR_STORE_STORE)
     public static void membar_store_store() {
-        MemoryBarriers.loadStore();
+        loadStore();
     }
 
     @BYTECODE_TEMPLATE(MEMBAR_STORE_LOAD)
     public static void membar_store_load() {
-        MemoryBarriers.storeLoad();
+        storeLoad();
     }
 
     @BYTECODE_TEMPLATE(SAFEPOINT)
