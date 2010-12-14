@@ -219,7 +219,7 @@ static void checkImage(void) {
     log_println("image.checkImage");
 #endif
     if ((theHeader->isBigEndian != 0) != word_BIG_ENDIAN) {
-        log_exit(3, "image has wrong endianess - expected: %s, found: %s", endiannessToString(word_BIG_ENDIAN), endiannessToString(theHeader->isBigEndian));
+        log_exit(3, "image has wrong endianness - expected: %s, found: %s", endiannessToString(word_BIG_ENDIAN), endiannessToString(theHeader->isBigEndian));
     }
     if (theHeader->identification != (jint) IMAGE_IDENTIFICATION) {
         log_exit(2, "not a valid Maxine VM boot image file");
@@ -391,10 +391,13 @@ static void relocate(int fd) {
 #if log_LOADER
     log_println("image.relocate [relocation map: %d bytes]", theHeader->relocationDataSize);
 #endif
-relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
+    relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
 
 #if !MEMORY_IMAGE
     free(relocationData);
+#endif
+#if log_LOADER
+    log_println("image.relocate: done");
 #endif
 }
 

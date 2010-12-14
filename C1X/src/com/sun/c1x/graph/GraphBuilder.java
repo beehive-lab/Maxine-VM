@@ -2253,6 +2253,10 @@ public final class GraphBuilder {
                 case PAUSE          : genPause(); break;
                 case LSB            : // fall through
                 case MSB            : genSignificantBit(opcode);break;
+                case SAFEPOINT: {
+                    Util.warning("Ignoring SAFEPOINT builtin\n" + CiUtil.indent(curState.immutableCopy(bci()).toCodePos().toString(), "  "));
+                    break;
+                }
 
                 case BREAKPOINT:
                     throw new CiBailout("concurrent setting of breakpoint");

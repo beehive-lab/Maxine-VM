@@ -114,7 +114,7 @@ public final class VMConfigurator {
     public static VMPackage defaultOptCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
+                return new com.sun.max.vm.compiler.c1x.Package();
             default:
                 throw FatalError.unexpected(platform().isa.toString());
         }

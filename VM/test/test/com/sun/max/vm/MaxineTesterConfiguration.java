@@ -247,25 +247,25 @@ public class MaxineTesterConfiguration {
         auto("test_count_bits(test.com.sun.max.vm.cps.sparc.SPARCTranslatorTest_regressions)", FAIL_ALL);
 
         imageConfig("java", "-run=java");
-        imageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
-        imageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
-        imageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
-        imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("cpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
-        imageConfig("c1xc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=1");
+        imageConfig("jtt-cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        imageConfig("jtt-cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
+        imageConfig("jtt-jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
+        imageConfig("jtt-jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
+        imageConfig("jtt-cpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
+        imageConfig("jtt-c1xc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=1");
 
         String c1xPackage = "com.sun.max.vm.compiler.c1x";
         String c1xClass = c1xPackage + ".C1XCompilerScheme";
 
-        jtLoadConfig("cpscps", "-caller=cps", "-callee=cps");
-        jtLoadConfig("cpsjit", "-caller=cps", "-callee=jit");
-        jtLoadConfig("cpsc1x", "-caller=cps", "-callee=" + c1xClass);
-        jtLoadConfig("jitcps", "-caller=jit", "-callee=cps");
-        jtLoadConfig("jitjit", "-caller=jit", "-callee=jit");
-        jtLoadConfig("jitc1x", "-caller=jit", "-callee=" + c1xClass);
-        jtLoadConfig("c1xcps", "-caller=" + c1xClass, "-callee=cps");
-        jtLoadConfig("c1xc1x", "-caller=" + c1xClass, "-callee=jit");
-        jtLoadConfig("c1xjit", "-caller=" + c1xClass, "-callee=" + c1xClass);
+        jtLoadConfig("jtt-cpscps", "-caller=cps", "-callee=cps");
+        jtLoadConfig("jtt-cpsjit", "-caller=cps", "-callee=jit");
+        jtLoadConfig("jtt-cpsc1x", "-caller=cps", "-callee=" + c1xClass);
+        jtLoadConfig("jtt-jitcps", "-caller=jit", "-callee=cps");
+        jtLoadConfig("jtt-jitjit", "-caller=jit", "-callee=jit");
+        jtLoadConfig("jtt-jitc1x", "-caller=jit", "-callee=" + c1xClass);
+        jtLoadConfig("jtt-c1xcps", "-caller=" + c1xClass, "-callee=cps");
+        jtLoadConfig("jtt-c1xc1x", "-caller=" + c1xClass, "-callee=jit");
+        jtLoadConfig("jtt-c1xjit", "-caller=" + c1xClass, "-callee=" + c1xClass);
 
         maxvmConfig("std");
         maxvmConfig("jit", "-Xjit");
@@ -282,10 +282,10 @@ public class MaxineTesterConfiguration {
         imageConfig("jit-c1x2",  "-jit=" + c1xPackage, "--C1X:OptLevel=2");
         imageConfig("jit-c1x3",  "-jit=" + c1xPackage, "--C1X:OptLevel=3");
 
-        imageConfig("opt-c1x0",  "-opt=c1x", "--C1X:OptLevel=0", "--XX:+FailOverC1X");
-        imageConfig("opt-c1x1",  "-opt=c1x", "--C1X:OptLevel=1", "--XX:+FailOverC1X");
-        imageConfig("opt-c1x2",  "-opt=c1x", "--C1X:OptLevel=2", "--XX:+FailOverC1X");
-        imageConfig("opt-c1x3",  "-opt=c1x", "--C1X:OptLevel=3", "--XX:+FailOverC1X", "-jit=c1x");
+        imageConfig("opt-c1x0",  "-opt=c1x", "--C1X:OptLevel=0");
+        imageConfig("opt-c1x1",  "-opt=c1x", "--C1X:OptLevel=1");
+        imageConfig("opt-c1x2",  "-opt=c1x", "--C1X:OptLevel=2");
+        imageConfig("opt-c1x3",  "-opt=c1x", "--C1X:OptLevel=3");
 
         imageConfig("c1x0",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=0");
         imageConfig("c1x1",  "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=1");
@@ -296,11 +296,11 @@ public class MaxineTesterConfiguration {
         imageConfig("ms",         "-run=java", "-heap=gcx.ms");
         imageConfig("msd",        "-run=java", "-heap=gcx.ms", "-build=DEBUG");
 
-        imageConfig("mscpscps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
-        imageConfig("mscpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-jit");
-        imageConfig("msjitcps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit");
-        imageConfig("msjitjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("mscpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
+        imageConfig("jtt-mscpscps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
+        imageConfig("jtt-mscpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-jit");
+        imageConfig("jtt-msjitcps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit");
+        imageConfig("jtt-msjitjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit", "-test-callee-jit");
+        imageConfig("jtt-mscpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
 
         c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt1", "-C1X:OptLevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
@@ -397,9 +397,9 @@ public class MaxineTesterConfiguration {
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.platform();
         if (platform.cpu == CPU.SPARCV9) {
-            return "cpscps,cpsjit,jitcps,jitjit";
+            return "jtt-cpscps,jtt-cpsjit,jtt-jitcps,jtt-jitjit";
         }
-        return "cpsc1x,cpscps,jitcps,cpsjit,jitjit";
+        return "jtt-cpsc1x,jtt-cpscps,jtt-jitcps,jtt-cpsjit,jtt-jitjit";
     }
 
     public static boolean isSupported(String config) {
