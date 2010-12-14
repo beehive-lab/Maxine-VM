@@ -33,12 +33,7 @@ import com.sun.max.vm.compiler.*;
 
 public class Package extends BootImagePackage {
     public Package() {
-        super("com.sun.max.vm.cps.**",
-                  "com.sun.max.vm.hotpath.**",
-                  "com.sun.max.vm.jit.*",
-                  "com.sun.max.vm.template.*",
-                  "com.sun.max.vm.template.source.*"
-                  );
+        super("com.sun.max.vm.cps.**");
     }
 
     @Override

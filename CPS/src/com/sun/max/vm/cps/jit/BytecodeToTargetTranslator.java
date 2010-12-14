@@ -21,7 +21,7 @@
 package com.sun.max.vm.cps.jit;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
-import static com.sun.max.vm.template.BytecodeTemplate.*;
+import static com.sun.max.vm.cps.template.BytecodeTemplate.*;
 
 import java.util.*;
 
@@ -49,17 +49,17 @@ import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForWr
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveVirtualMethod;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.hotpath.*;
 import com.sun.max.vm.cps.jit.Stop.BackwardBranchBytecodeSafepoint;
 import com.sun.max.vm.cps.jit.Stop.BytecodeDirectCall;
 import com.sun.max.vm.cps.jit.Stops.StopsBuilder;
 import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.cps.template.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.VMRegister.Role;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
 /**

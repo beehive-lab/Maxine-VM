@@ -21,8 +21,8 @@
 package com.sun.max.vm.cps.tir.pipeline;
 
 import com.sun.max.vm.cps.collect.*;
+import com.sun.max.vm.cps.hotpath.state.*;
 import com.sun.max.vm.cps.tir.*;
-import com.sun.max.vm.hotpath.state.*;
 
 /**
  * Implements a dead code elimination pipeline filter. It maintains liveness information as it visits instructions
