@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.target.sparc;
 
+import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
 
 import com.sun.cri.ci.*;
@@ -75,8 +76,15 @@ public class SPARC extends CiArchitecture {
         i0, i1, i2, i3, i4, i5, i6, i7
     };
 
-    protected SPARC(String name, int wordSize, CiRegister[] registers) {
-        super(name, wordSize, ByteOrder.BigEndian, registers, 0, i7.encoding + 1, 0);
+    protected SPARC(int wordSize, CiRegister[] registers) {
+        super("SPARC",
+              wordSize,
+              ByteOrder.BigEndian,
+              registers,
+              LOAD_LOAD | LOAD_STORE | STORE_STORE,
+              0,
+              i7.encoding + 1,
+              0);
     }
 
     @Override

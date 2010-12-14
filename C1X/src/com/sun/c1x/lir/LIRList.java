@@ -95,20 +95,8 @@ public class LIRList {
         append(new LIRCall(LIROpcode.NativeCall, symbol, result, arguments, info, marks, false, null));
     }
 
-    public void membar(LIROpcode opcode) {
-        append(new LIROp0(LIROpcode.Membar));
-    }
-
-    public void membar() {
-        append(new LIROp0(LIROpcode.Membar));
-    }
-
-    public void membarAcquire() {
-        append(new LIROp0(LIROpcode.MembarAcquire));
-    }
-
-    public void membarRelease() {
-        append(new LIROp0(LIROpcode.MembarRelease));
+    public void membar(int barriers) {
+        append(new LIRMemoryBarrier(barriers));
     }
 
     public void stdEntry(CiValue receiver) {

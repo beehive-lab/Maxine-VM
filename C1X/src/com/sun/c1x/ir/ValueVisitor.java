@@ -56,6 +56,8 @@ public abstract class ValueVisitor {
     public abstract void visitLocal(Local i);
     public abstract void visitLogicOp(LogicOp i);
     public abstract void visitLookupSwitch(LookupSwitch i);
+    public abstract void visitMemoryBarrier(MemoryBarrier memoryBarrier);
+    public abstract void visitMonitorAddress(MonitorAddress monitorAddress);
     public abstract void visitMonitorEnter(MonitorEnter i);
     public abstract void visitMonitorExit(MonitorExit i);
     public abstract void visitNativeCall(NativeCall i);
@@ -87,5 +89,4 @@ public abstract class ValueVisitor {
     public abstract void visitUnsafePutObject(UnsafePutObject i);
     public abstract void visitUnsafePutRaw(UnsafePutRaw i);
     public abstract void visitUnsignedCompareOp(UnsignedCompareOp i);
-    public abstract void visitMonitorAddress(MonitorAddress monitorAddress);
 }

@@ -1423,21 +1423,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitMembar() {
-        // QQQ sparc TSO uses this,
-        masm.membar(AMD64Assembler.MembarMaskBits.StoreLoad.mask());
-    }
-
-    @Override
-    protected void emitMembarAcquire() {
-        // No x86 machines currently require load fences
-        // lir(). loadFence();
-    }
-
-    @Override
-    protected void emitMembarRelease() {
-        // No x86 machines currently require store fences
-        // lir(). storeFence();
+    protected void emitMemoryBarriers(int barriers) {
+        masm.membar(barriers);
     }
 
     @Override

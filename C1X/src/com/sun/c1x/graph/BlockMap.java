@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.BlockBegin.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -120,8 +119,8 @@ import com.sun.cri.ri.*;
  */
 public class BlockMap {
 
-    private static final BlockBegin[] NONE = new BlockBegin[0];
-    private static final List<BlockBegin> NONE_LIST = Util.uncheckedCast(Collections.EMPTY_LIST);
+    private static final BlockBegin[] NONE = {};
+    private static final List<BlockBegin> NONE_LIST = Collections.emptyList();
 
     /**
      * The {@code ExceptionMap} class is used internally to track exception handlers
@@ -160,7 +159,7 @@ public class BlockMap {
             }
         }
 
-        Iterable<BlockBegin> getHandlers(BlockBegin block) {
+        Collection<BlockBegin> getHandlers(BlockBegin block) {
             // lookup handlers for the basic block
             HashSet<BlockBegin> set = handlerMap.get(block.blockID);
             return set == null ? NONE_LIST : set;
@@ -186,15 +185,20 @@ public class BlockMap {
 
     /** The bytecodes for the associated method. */
     private final byte[] code;
+
     /**
      * Every {@link BlockBegin} node created by {@link BlockMap#build} has an entry in this
      * array at the corresponding bytecode index. Length is same as {@link BlockMap#code}.
      */
     private final BlockBegin[] blockMap;
+
     /**
-     * TBD.
+     * A bit map covering the locals with a bit set for each local that is
+     * stored to within a loop. This may be conservative depending on the value
+     * of the {@code computeStoresInLoops} parameters of {@link #build(boolean)}.
      */
     private final CiBitMap storesInLoops;
+
     /**
      * Every bytecode instruction that has zero, one or more successor nodes (e.g. {@link Bytecodes#GOTO} has one) has
      * an entry in this array at the corresponding bytecode index. The value is another array of {@code BlockBegin} nodes,
@@ -202,12 +206,20 @@ public class BlockMap {
      * blocks. Length is same as {@link BlockMap#code}.
      */
     private BlockBegin[][] successorMap;
+
     /** List of {@code BlockBegin} nodes that are inside loops. */
     private ArrayList<BlockBegin> loopBlocks;
     private ExceptionMap exceptionMap;
+
+    /**
+     * The first block number allocated for the blocks within this block map.
+     */
     private final int firstBlock;
-    /** Used for initial block ID (count up) and post-order number (count down). */
-    private int blockNum; //
+
+    /**
+     * Used for initial block ID (count up) and post-order number (count down).
+     */
+    private int blockNum;
 
     /**
      * Creates a new BlockMap instance from bytecode of the given method .
@@ -277,7 +289,7 @@ public class BlockMap {
      * array of blocks if there are no handlers that cover any potentially trapping
      * instruction in the specified block
      */
-    public Iterable<BlockBegin> getHandlers(BlockBegin block) {
+    public Collection<BlockBegin> getHandlers(BlockBegin block) {
         if (exceptionMap == null) {
             return NONE_LIST;
         }
@@ -638,5 +650,42 @@ public class BlockMap {
 
     void succ1(int bci, int s1) {
         successorMap[bci] = new BlockBegin[] {make(s1)};
+    }
+
+    private static StringBuilder append(StringBuilder sb, BlockBegin block) {
+        return sb.append('B').append(block.blockID).append('@').append(block.bci());
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int bci = 0; bci < blockMap.length; ++bci) {
+            BlockBegin block = blockMap[bci];
+            if (block != null) {
+                append(sb, block);
+                if (loopBlocks != null && loopBlocks.contains(block)) {
+                    sb.append("{loop-header}");
+                }
+                if (successorMap != null) {
+                    BlockBegin[] succs = successorMap[bci];
+                    if (succs != null && succs.length > 0) {
+                        sb.append(" ->");
+                        for (BlockBegin succ : succs) {
+                            append(sb.append(' '), succ);
+                        }
+                    }
+                }
+                Collection<BlockBegin> handlers = getHandlers(block);
+                if (!handlers.isEmpty()) {
+                    sb.append(" xhandlers{");
+                    for (BlockBegin h : handlers) {
+                        append(sb, h).append(' ');
+                    }
+                    sb.append('}');
+                }
+                sb.append(String.format("%n"));
+            }
+        }
+        return sb.toString();
     }
 }

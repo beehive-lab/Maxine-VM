@@ -875,7 +875,11 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         } else if (sourceInfoObject instanceof char[]) {
             // no inlined methods; just recover the bytecode index
             char[] array = (char[]) sourceInfoObject;
-            return new BytecodeLocation(classMethodActor, array[index]);
+            char sourceMethodIndex = array[index];
+            if (sourceMethodIndex < 0 || classMethodActor == null) {
+                return null;
+            }
+            return new BytecodeLocation(classMethodActor, sourceMethodIndex);
         } else {
             return null;
         }

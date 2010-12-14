@@ -27,7 +27,6 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -1853,8 +1852,9 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case ICMP:                   stackCall(CompareInts.BUILTIN); break;
             case WCMP:                   stackCall(CompareWords.BUILTIN); break;
 
+            case Bytecodes.MEMBAR:       membar(operand); break;
+
             case Bytecodes.PCMPSWP:
-            case Bytecodes.MEMBAR:
             case Bytecodes.PGET:
             case Bytecodes.PSET:
             case Bytecodes.PREAD:
@@ -1918,12 +1918,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                     case PCMPSWP_INT_I:          stackCall(CompareAndSwapIntAtIntOffset.BUILTIN); break;
                     case PCMPSWP_WORD_I:         stackCall(CompareAndSwapWordAtIntOffset.BUILTIN); break;
                     case PCMPSWP_REFERENCE_I:    stackCall(CompareAndSwapReferenceAtIntOffset.BUILTIN); break;
-                    case MEMBAR_LOAD_LOAD:       membar(MemoryBarriers.LOAD_LOAD); break;
-                    case MEMBAR_LOAD_STORE:      membar(MemoryBarriers.LOAD_STORE); break;
-                    case MEMBAR_STORE_LOAD:      membar(MemoryBarriers.STORE_STORE); break;
-                    case MEMBAR_STORE_STORE:     membar(MemoryBarriers.STORE_STORE); break;
-                    case MEMBAR_MEMOP_STORE:     membar(MemoryBarriers.MEMOP_STORE); break;
-                    case MEMBAR_FENCE:           membar(MemoryBarriers.FENCE); break;
                     default:                     throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
                 }
                 break;

@@ -435,12 +435,7 @@ public enum BytecodeTemplate {
     MEMBAR_LOAD_LOAD,
     MEMBAR_LOAD_STORE,
     MEMBAR_STORE_LOAD,
-    MEMBAR_STORE_STORE,
-    MEMBAR_MEMOP_STORE,
-    MEMBAR_FENCE;
-
-
-
+    MEMBAR_STORE_STORE;
 
     public static final EnumMap<KindEnum, BytecodeTemplate> PUTSTATICS = makeKindMap(Bytecodes.PUTSTATIC);
     public static final EnumMap<KindEnum, BytecodeTemplate> GETSTATICS = makeKindMap(Bytecodes.GETSTATIC);

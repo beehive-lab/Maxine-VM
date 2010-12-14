@@ -26,6 +26,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -560,6 +561,16 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
+    public void visitMemoryBarrier(MemoryBarrier i) {
+        out.print(MemoryBarriers.barriersString(i.barriers));
+    }
+
+    @Override
+    public void visitMonitorAddress(MonitorAddress i) {
+        out.print("monitor_address (").print(i.monitor()).print(")");
+    }
+
+    @Override
     public void visitMonitorEnter(MonitorEnter monitorenter) {
         out.print("enter monitor[").print(monitorenter.lockNumber).print("](").print(monitorenter.object()).print(')');
     }
@@ -805,10 +816,5 @@ public class InstructionPrinter extends ValueVisitor {
     @Override
     public void visitBreakpointTrap(BreakpointTrap i) {
         out.print("breakpoint_trap");
-    }
-
-    @Override
-    public void visitMonitorAddress(MonitorAddress i) {
-        out.print("monitor_address (").print(i.monitor()).print(")");
     }
 }
