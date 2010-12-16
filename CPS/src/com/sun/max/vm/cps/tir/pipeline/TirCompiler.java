@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.tir.pipeline;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.util.*;
 
 import com.sun.max.program.*;
@@ -72,7 +74,7 @@ public class TirCompiler {
 
         targetTree.setGenerated(eirMethod, targetMethod);
 
-        if (DISSASSEMBLE) {
+        if (isHosted() && DISSASSEMBLE) {
             Visualizer.print(dirTranslator.method());
             Trace.stream().println(eirMethod.traceToString());
             targetMethod.disassemble(System.out);

@@ -732,7 +732,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirArgument index = toXirArgument(x.index());
         XirArgument length = toXirArgument(x.length());
         XirSnippet snippet = xir.genArrayLoad(site(x), array, index, length, x.elementKind(), null);
-        emitXir(snippet, x, stateFor(x), null, true);
+        emitXir(snippet, x, maybeStateFor(x), null, true);
     }
 
     protected GlobalStub stubFor(CiRuntimeCall runtimeCall) {

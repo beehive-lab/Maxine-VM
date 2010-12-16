@@ -110,4 +110,8 @@ public final class ArithmeticOp extends Op2 {
     public boolean needsZeroCheck() {
         return !checkFlag(Flag.NoZeroCheck);
     }
+
+    public void eliminateZeroCheck() {
+        clearRuntimeCheck(Flag.NoZeroCheck);
+    }
 }

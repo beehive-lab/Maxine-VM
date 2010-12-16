@@ -20,20 +20,16 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.runtime.VMRegister.*;
+
 import java.security.*;
 
 import sun.reflect.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -41,6 +37,7 @@ import com.sun.max.vm.type.*;
  *
  */
 @METHOD_SUBSTITUTIONS(Reflection.class)
+public
 final class JDK_sun_reflect_Reflection {
 
     private JDK_sun_reflect_Reflection() {
@@ -50,76 +47,28 @@ final class JDK_sun_reflect_Reflection {
      * This class implements a closure that records the method actor at a particular
      * position in the stack.
      */
-    static class Context extends RawStackFrameVisitor {
-        MethodActor methodActorResult;
-        Pointer framePointerResult;
+    static class Context extends SourceFrameVisitor {
+        MethodActor method;
+        long frameId;
         int realFramesToSkip;
 
         Context(int realFramesToSkip) {
             this.realFramesToSkip = realFramesToSkip;
         }
-
         @Override
-        public boolean visitFrame(Cursor current, Cursor callee) {
-            if (current.isTopFrame()) {
-                // skip 'getCallerMethod()'
-                return true;
-            }
-            TargetMethod targetMethod = current.targetMethod();
-            if (targetMethod instanceof Adapter) {
-                // adapter frame
-                return true;
-            }
-            if (targetMethod == null) {
-                // native frame
-                realFramesToSkip--; // TODO: find out whether this is according to getCallerClass' intended "spec"
-                return true;
-            }
+        public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
             // according to sun.reflect.Reflection, getCallerClass() should ignore java.lang.reflect.Method.invoke
-            if (targetMethod.classMethodActor().equals(ClassRegistry.Method_invoke)) {
+            if (method.equals(ClassRegistry.Method_invoke)) {
                 return true;
             }
-
-            BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(current.ip(), false);
-            if (bytecodeLocation == null) {
-                if (realFramesToSkip == 0) {
-                    methodActorResult = targetMethod.classMethodActor();
-                    framePointerResult = current.fp();
-                    return false;
-                }
-                realFramesToSkip--;
-            } else {
-                while (bytecodeLocation != null) {
-                    final MethodActor classMethodActor = bytecodeLocation.classMethodActor.original();
-                    if (!classMethodActor.holder().isGenerated()) {
-                        if (realFramesToSkip == 0) {
-                            methodActorResult = classMethodActor;
-                            framePointerResult = current.fp();
-                            return false;
-                        }
-                        realFramesToSkip--;
-                    }
-                    bytecodeLocation = bytecodeLocation.parent();
-                }
+            if (realFramesToSkip == 0) {
+                this.method = method;
+                this.frameId = frameId;
+                return false;
             }
+            realFramesToSkip--;
             return true;
         }
-    }
-
-    /**
-     * Get the method actor at a specified place in the stack.
-     *
-     * @param realFramesToSkip the number of frames to skip
-     * @return a reference to the method actor corresponding to the method on the stack at the specified position
-     */
-    @NEVER_INLINE
-    private static MethodActor getCallerMethod(int realFramesToSkip) {
-        final Context context = new Context(realFramesToSkip);
-        new VmStackFrameWalker(VmThread.current().tla()).inspect(VMRegister.getInstructionPointer(),
-                                                       VMRegister.getCpuStackPointer(),
-                                                       VMRegister.getCpuFramePointer(),
-                                                       context);
-        return context.methodActorResult;
     }
 
     /**
@@ -131,10 +80,7 @@ final class JDK_sun_reflect_Reflection {
      */
     static Context getCallerContext(int realFramesToSkip) {
         final Context context = new Context(realFramesToSkip);
-        new VmStackFrameWalker(VmThread.current().tla()).inspect(VMRegister.getInstructionPointer(),
-                                                       VMRegister.getCpuStackPointer(),
-                                                       VMRegister.getCpuFramePointer(),
-                                                       context);
+        context.walk(null, getInstructionPointer(), getCpuStackPointer(), getCpuFramePointer());
         return context;
     }
 
@@ -146,11 +92,13 @@ final class JDK_sun_reflect_Reflection {
      * @return the class of the caller at the specified stack depth
      */
     @SUBSTITUTE
-    private static Class getCallerClass(int realFramesToSkip) {
+    public static Class getCallerClass(int realFramesToSkip) {
         if (realFramesToSkip < 0) {
             return null;
         }
-        return getCallerMethod(realFramesToSkip).holder().toJava();
+        final Context context = new Context(realFramesToSkip);
+        context.walk(null, getInstructionPointer(), getCpuStackPointer(), getCpuFramePointer());
+        return context.method.holder().toJava();
     }
 
     /**

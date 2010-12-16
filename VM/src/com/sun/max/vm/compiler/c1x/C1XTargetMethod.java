@@ -111,8 +111,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         init(ciTargetMethod);
 
-        if (printTargetMethods.getValue() != null) {
-            if (classMethodActor.format("%H.%n").contains(printTargetMethods.getValue())) {
+        if (PrintTargetMethods != null) {
+            if (classMethodActor.format("%H.%n").contains(PrintTargetMethods)) {
                 Log.println(traceToString());
             }
         }
@@ -122,8 +122,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         init(ciTargetMethod);
 
-        if (printTargetMethods.getValue() != null) {
-            if (stubName.contains(printTargetMethods.getValue())) {
+        if (PrintTargetMethods != null) {
+            if (stubName.contains(PrintTargetMethods)) {
                 Log.println(traceToString());
             }
         }
@@ -831,8 +831,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean implicitExceptionPoint) {
-        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
+    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
+        if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
             ip = ip.minus(1);
         }
 

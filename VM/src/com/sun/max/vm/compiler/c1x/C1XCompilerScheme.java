@@ -108,6 +108,14 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                 }
             }
         }
+        if (phase == Phase.TERMINATING) {
+            if (C1XOptions.PrintMetrics) {
+                C1XMetrics.print();
+            }
+            if (C1XOptions.PrintTimers) {
+                C1XTimers.print();
+            }
+        }
     }
 
     public C1XCompiler compiler() {

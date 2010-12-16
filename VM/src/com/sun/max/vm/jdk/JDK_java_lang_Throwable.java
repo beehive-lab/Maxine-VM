@@ -21,7 +21,6 @@
 package com.sun.max.vm.jdk;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
-import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
 import java.util.*;
 
@@ -30,20 +29,78 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Substitutions for {@link java.lang.Throwable} that collect the stack trace.
+ * Substitutions for {@link Throwable} that collect the stack trace.
  *
  * @author Ben L. Titzer
  * @author Laurent Daynes
+ * @author Doug Simon
  */
 @METHOD_SUBSTITUTIONS(Throwable.class)
 public final class JDK_java_lang_Throwable {
+
+    /**
+     * Source frame visitor for building a stack trace.
+     */
+    static final class StackTraceVisitor extends SourceFrameVisitor {
+        /**
+         * The class of the exception for which the stack trace is being constructed.
+         * This is used to elide the chain of constructors calls for this class and its super classes.
+         * If this value is {@code null}, then the stack trace is not for an exception and no eliding is performed.
+         */
+        ClassActor exceptionClass;
+
+        /**
+         * The maximum number of elements in the returned array or {@link Integer#MAX_VALUE} if the complete
+         * sequence of stack trace elements for {@code stackFrames} is required.
+         */
+        final int maxDepth;
+
+        final ArrayList<StackTraceElement> trace = new ArrayList<StackTraceElement>(20);
+
+        StackTraceVisitor(ClassActor exceptionClass, int maxDepth) {
+            this.exceptionClass = exceptionClass;
+            this.maxDepth = maxDepth;
+        }
+
+        @Override
+        public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
+            if (trapped) {
+                trace.clear();
+                exceptionClass = null;
+            }
+            if (exceptionClass != null) {
+                if (method.holder() == exceptionClass && method.isInstanceInitializer()) {
+                    // This will initiate filling the stack trace.
+                    exceptionClass = null;
+                }
+                return true;
+            }
+            final ClassActor holder = method.holder();
+            int sourceLineNumber;
+            if (method.isNative()) {
+                sourceLineNumber = -2;
+            } else {
+                if (holder.isReflectionStub()) {
+                    // ignore reflective invocation stubs
+                    return true;
+                }
+                sourceLineNumber = bci >= 0 ? method.sourceLineNumber(bci) : -1;
+            }
+            final String sourceFileName = holder.sourceFileName;
+            StackTraceElement ste = new StackTraceElement(holder.name.toString(), method.name.toString(), sourceFileName, sourceLineNumber);
+            trace.add(ste);
+            return trace.size() < maxDepth;
+        }
+
+        StackTraceElement[] trace() {
+            return trace.toArray(new StackTraceElement[trace.size()]);
+        }
+    }
 
     private JDK_java_lang_Throwable() {
     }
@@ -84,25 +141,19 @@ public final class JDK_java_lang_Throwable {
         }
         final ClassActor throwableActor = ClassActor.fromJava(throwable.getClass());
         // use the stack walker to collect the frames
-        final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().tla());
-        final Pointer instructionPointer = VMRegister.getInstructionPointer();
-        final Pointer cpuStackPointer = VMRegister.getCpuStackPointer();
-        final Pointer cpuFramePointer = VMRegister.getCpuFramePointer();
-
-        final List<StackFrame> stackFrames = stackFrameWalker.frames(null, instructionPointer, cpuStackPointer, cpuFramePointer);
-        StackTraceElement[] stackTrace = asStackTrace(stackFrames, throwableActor, Integer.MAX_VALUE);
+        final StackFrameWalker sfw = new VmStackFrameWalker(VmThread.current().tla());
+        final Pointer ip = VMRegister.getInstructionPointer();
+        final Pointer sp = VMRegister.getCpuStackPointer();
+        final Pointer fp = VMRegister.getCpuFramePointer();
+        StackTraceElement[] stackTrace = getStackTrace(sfw, ip, sp, fp, throwableActor, Integer.MAX_VALUE);
         JDK_java_lang_Throwable thisThrowable = asThis(throwable);
         thisThrowable.stackTrace = stackTrace;
         return throwable;
     }
 
     /**
-     * Converts a list of real stack frames to an array of application-visible stack trace elements. The returned array
-     * of stack trace elements is suitable for an exception {@linkplain Throwable#getStackTrace() stack trace} or as
-     * part of the value returned by {@link Thread#getAllStackTraces()}.
+     * Gets a stack trace for a given stack.
      *
-     * @param stackFrames a list of stack frames {@linkplain StackFrameWalker#frames(List, Pointer, Pointer, Pointer)
-     *            gathered} during a walk of a thread's stack
      * @param exceptionClass the class of the exception for which the stack trace is being constructed.
      *            This is used to elide the chain of constructors calls for this class and its super classes.
      *            If this value is {@code null}, then the stack trace is not for an exception and no eliding is performed.
@@ -110,83 +161,15 @@ public final class JDK_java_lang_Throwable {
      *            sequence of stack trace elements for {@code stackFrames} is required
      * @return an array of stack trace elements derived from {@code stackFrames} of length
      */
-    public static StackTraceElement[] asStackTrace(List<StackFrame> stackFrames, ClassActor exceptionClass, int maxDepth) {
-        boolean inTrappedFrame = false;
-        boolean elidingConstructors = exceptionClass != null;
-        List<StackTraceElement> elements = new ArrayList<StackTraceElement>();
-        for (StackFrame stackFrame : stackFrames) {
-            if (stackFrame instanceof AdapterStackFrame) {
-                continue;
-            }
-            final TargetMethod targetMethod = stackFrame.targetMethod();
-            if (targetMethod == null) {
-                // native frame or stub frame without a class method actor
-                continue;
-            } else if (targetMethod.is(TrapStub)) {
-                // Reset the stack trace. We want the trace to start from the trapped frame
-                elements.clear();
-                inTrappedFrame = true;
-                elidingConstructors = false;
-                continue;
-            } else if (targetMethod.classMethodActor() == null) {
-                // stub frame without a class method actor
-                continue;
-            } else if (elidingConstructors) {
-                final ClassMethodActor methodActor = targetMethod.classMethodActor();
-                if (methodActor.holder() == exceptionClass && methodActor.isInstanceInitializer()) {
-                    // This will initiate filling the stack trace.
-                    elidingConstructors = false;
-                }
-                continue;
-            }
-            addStackTraceElements(elements, targetMethod, stackFrame, inTrappedFrame);
-            if (inTrappedFrame) {
-                inTrappedFrame = false;
-                elidingConstructors = false;
-            }
-
-            if (elements.size() >= maxDepth) {
-                break;
-            }
+    public static StackTraceElement[] getStackTrace(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp, final ClassActor exceptionClass, final int maxDepth) {
+        if (maxDepth <= 0) {
+            return new StackTraceElement[0];
         }
-
-        if (elements.size() > maxDepth) {
-            elements = elements.subList(0, maxDepth + 1);
-        }
-        return (StackTraceElement[]) elements.toArray(new StackTraceElement[elements.size()]);
+        StackTraceVisitor stv = new StackTraceVisitor(exceptionClass, maxDepth);
+        stv.walk(walker, ip, sp, fp);
+        return stv.trace();
     }
 
-    private static void addStackTraceElements(List<StackTraceElement> elements, TargetMethod targetMethod, StackFrame stackFrame, boolean inTrappedFrame) {
-        BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(stackFrame.ip, inTrappedFrame);
-        if (bytecodeLocation == null) {
-            addStackTraceElement(elements, targetMethod.classMethodActor().original(), -1, stackFrame.ip.minus(targetMethod.codeStart()).toInt());
-        } else {
-            while (bytecodeLocation != null) {
-                final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor.original();
-                if (classMethodActor.isApplicationVisible() || classMethodActor.isNative()) {
-                    addStackTraceElement(elements, classMethodActor, bytecodeLocation.sourceLineNumber(), -1);
-                }
-                bytecodeLocation = bytecodeLocation.parent();
-            }
-        }
-    }
-
-    /**
-     * Adds a stack trace element to the specified result.
-     *
-     * @param result a list of stack trace elements that will represent the final result
-     * @param classMethodActor the class method actor on the stack
-     * @param sourceLineNumber the source line number
-     * @param targetMethodOffset the instruction pointer offset within the target method. This value is ignored if {@code sourceLineNumber >= 0}
-     */
-    private static void addStackTraceElement(final List<StackTraceElement> result, final ClassMethodActor classMethodActor, int sourceLineNumber, int targetMethodOffset) {
-        if (classMethodActor.isNative()) {
-            sourceLineNumber = -2;
-        }
-        final ClassActor holder = classMethodActor.holder();
-        final String sourceFileName = sourceLineNumber < 0 && targetMethodOffset >= 0 ? holder.sourceFileName + "@" + targetMethodOffset : holder.sourceFileName;
-        result.add(new StackTraceElement(holder.name.toString(), classMethodActor.name.toString(), sourceFileName, sourceLineNumber));
-    }
 
     /**
      * Gets the depth of the stack trace, in the number of stack trace elements.

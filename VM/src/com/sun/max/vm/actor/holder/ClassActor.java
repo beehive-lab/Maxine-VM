@@ -350,8 +350,8 @@ public abstract class ClassActor extends Actor implements RiType {
         return isInterface(flags());
     }
 
-    public final boolean isGenerated() {
-        return isGenerated(flags());
+    public final boolean isReflectionStub() {
+        return isReflectionStub(flags());
     }
 
     public final boolean isRemote() {
@@ -1126,7 +1126,7 @@ public abstract class ClassActor extends Actor implements RiType {
 
     @Override
     public final boolean isAccessibleBy(ClassActor accessor) {
-        if (isPublic() || isInSameRuntimePackageAs(accessor) || accessor.isGenerated()) {
+        if (isPublic() || isInSameRuntimePackageAs(accessor) || accessor.isReflectionStub()) {
             return true;
         }
         return false;
@@ -1279,7 +1279,7 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     private void verify() {
-        if (isGenerated() || !ClassVerifier.shouldBeVerified(classLoader, isRemote())) {
+        if (isReflectionStub() || !ClassVerifier.shouldBeVerified(classLoader, isRemote())) {
             // generated stubs do not necessarily pass the verifier, even if they work as intended
         } else {
             Verifier.verifierFor(this).verify();

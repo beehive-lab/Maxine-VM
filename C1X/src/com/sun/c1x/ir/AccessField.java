@@ -58,7 +58,7 @@ public abstract class AccessField extends StateSplit {
         initFlag(Flag.IsLoaded, isLoaded);
         initFlag(Flag.IsStatic, isStatic);
         if (isLoaded && object != null && object.isNonNull()) {
-            redundantNullCheck();
+            eliminateNullCheck();
         }
         assert object != null : "every field access must reference some object";
     }
@@ -105,11 +105,10 @@ public abstract class AccessField extends StateSplit {
     }
 
     @Override
-    public boolean internalClearNullCheck() {
+    public void runtimeCheckCleared() {
         if (isLoaded()) {
-            stateBefore = null;
+            clearState();
         }
-        return true;
     }
 
     /**

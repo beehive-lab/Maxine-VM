@@ -40,7 +40,7 @@ public final class MonitorEnter extends AccessMonitor {
     public MonitorEnter(Value object, Value lockAddress, int lockNumber, FrameState stateBefore) {
         super(object, lockAddress, stateBefore, lockNumber);
         if (object.isNonNull()) {
-            redundantNullCheck();
+            eliminateNullCheck();
         }
     }
 

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.target;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -455,27 +457,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return stopIndex;
     }
 
-    /**
-     * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
-     * location in the returned sequence is the one at the closest position less or equal to the position denoted by
-     * {@code instructionPointer}.
-     *
-     * @param instructionPointer a pointer to an instruction within this method
-     * @param implicitExceptionPoint {@code true} if this instruction pointer corresponds to an implicit exception point
-     * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
-     *         no bytecode location can be determined for {@code instructionPointer}.
-     */
     @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
-        if (implicitExceptionPoint) {
-            // CPS target methods don't have Java frame descriptors at implicit throw points.
-            return null;
+    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
+        if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
+            ip = ip.minus(1);
         }
-        if (Platform.platform().isa.offsetToReturnPC == 0) {
-            instructionPointer = instructionPointer.minus(1);
-        }
-
-        return getJavaFrameDescriptorFor(instructionPointer);
+        return getJavaFrameDescriptorFor(ip);
     }
 
     @Override

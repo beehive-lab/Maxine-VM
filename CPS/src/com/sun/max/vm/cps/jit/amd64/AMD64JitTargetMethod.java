@@ -326,7 +326,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             callerSP = callerSP.plus(stackAmountInBytes);
         }
 
-        stackFrameWalker.advance(callerIP, callerSP, callerFP);
+        stackFrameWalker.advance(callerIP, callerSP, callerFP, true);
     }
 
     /**

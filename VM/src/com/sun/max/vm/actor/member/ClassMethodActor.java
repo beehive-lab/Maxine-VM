@@ -298,7 +298,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     }
                 }
 
-                if (verifier != null && codeAttribute != null && !compilee.holder().isGenerated()) {
+                if (verifier != null && codeAttribute != null && !compilee.holder().isReflectionStub()) {
                     if (MaxineVM.isHosted()) {
                         try {
                             codeAttribute = verifier.verify(compilee, codeAttribute);
@@ -396,7 +396,7 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     @HOSTED_ONLY
     private void validateInlineAnnotation(ClassMethodActor compilee) {
-        if (!compilee.holder().isGenerated()) {
+        if (!compilee.holder().isReflectionStub()) {
             try {
                 InliningAnnotationsValidator.apply(compilee);
             } catch (LinkageError linkageError) {
