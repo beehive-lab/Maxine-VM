@@ -25,7 +25,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -87,16 +86,14 @@ public final class Preprocessor {
             return null;
         }
 
-        // Only the CPS compiler (and derived JIT compiler) need this.
-        if (CPSCompiler.Static.compiler() != null) {
+        if (ExceptionDispatchingPreprocessor.REQUIRED) {
             if (codeAttribute.exceptionHandlerTable().length != 0) {
                 codeAttribute = new ExceptionDispatchingPreprocessor(constantPoolEditor(), codeAttribute).codeAttribute();
                 reason = reason + " dispatching";
             }
         }
 
-        // Only the CPS compiler (and derived JIT compiler) need this.
-        if (CPSCompiler.Static.compiler() != null) {
+        if (SynchronizedMethodPreprocessor.REQUIRED) {
             if (classMethodActor.isSynchronized()) {
                 codeAttribute = new SynchronizedMethodPreprocessor(constantPoolEditor(), classMethodActor, codeAttribute).codeAttribute();
                 reason = reason + " synchronizedMethod";

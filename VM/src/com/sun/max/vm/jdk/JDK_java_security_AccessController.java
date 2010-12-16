@@ -55,7 +55,7 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static <T> T doPrivileged(PrivilegedAction<T> action) {
-        final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
+        final JDK_sun_reflect_Reflection.Context context = JDK_sun_reflect_Reflection.getCallerContext(1);
         final VmThread current = VmThread.current();
         current.pushPrivilegedElement(context.method.holder(), context.frameId, null);
         try {
@@ -76,7 +76,7 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static <T> T doPrivileged(PrivilegedAction<T> action, AccessControlContext accessControlContext) {
-        final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
+        final JDK_sun_reflect_Reflection.Context context = JDK_sun_reflect_Reflection.getCallerContext(1);
         final VmThread current = VmThread.current();
         current.pushPrivilegedElement(context.method.holder(), context.frameId, accessControlContext);
         try {
@@ -97,7 +97,7 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static <T> T doPrivileged(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
-        final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
+        final JDK_sun_reflect_Reflection.Context context = JDK_sun_reflect_Reflection.getCallerContext(1);
         final VmThread current = VmThread.current();
         current.pushPrivilegedElement(context.method.holder(), context.frameId, null);
         try {
@@ -121,7 +121,7 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static <T> T doPrivileged(PrivilegedExceptionAction<T> action, AccessControlContext accessControlContext) throws PrivilegedActionException {
-        final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
+        final JDK_sun_reflect_Reflection.Context context = JDK_sun_reflect_Reflection.getCallerContext(1);
         final VmThread current = VmThread.current();
         current.pushPrivilegedElement(context.method.holder(), context.frameId, accessControlContext);
         try {

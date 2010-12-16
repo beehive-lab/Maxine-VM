@@ -24,6 +24,7 @@ import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.config.*;
+import com.sun.max.ide.*;
 import com.sun.max.lang.ISA.Category;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -126,7 +127,9 @@ public final class VMConfigurator {
     public static VMPackage defaultJitCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
+                VMPackage def = (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
+                assert def != null : "need to modify class path to include " + JavaProject.findWorkspaceDirectory() + "/CPS/bin";
+                return def;
             default:
                 throw FatalError.unimplemented();
         }
