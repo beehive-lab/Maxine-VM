@@ -75,12 +75,17 @@ public class MixedFrames {
         }
 
         int count = 0;
+        int prefix = 0;
         while (true) {
             Class callerClass = Reflection.getCallerClass(count);
             if (callerClass == null) {
                 break;
             }
-            System.out.println(count + ": " + callerClass);
+            // Filter frames until stack trace construction in Maxine omits all the necessary system frames.
+            if (callerClass.getName().startsWith(MixedFrames.class.getName())) {
+                System.out.println(prefix + ": " + callerClass);
+                prefix++;
+            }
             count++;
         }
     }

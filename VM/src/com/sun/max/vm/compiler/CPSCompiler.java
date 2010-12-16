@@ -64,6 +64,7 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
             compilerPackage = BootImagePackage.fromClass(compiler.getClass());
         }
 
+        @FOLD
         public static CPSCompiler compiler() {
             return compiler;
         }

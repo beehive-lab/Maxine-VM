@@ -80,6 +80,10 @@ public final class JDK_java_lang_Throwable {
                 }
                 return true;
             }
+
+            // Undo effect of method substitution
+            method = method.original();
+
             final ClassActor holder = method.holder();
             int sourceLineNumber;
             if (method.isNative()) {

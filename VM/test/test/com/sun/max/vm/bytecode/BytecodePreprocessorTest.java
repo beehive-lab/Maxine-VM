@@ -27,6 +27,7 @@ import test.com.sun.max.vm.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
@@ -67,6 +68,8 @@ public class BytecodePreprocessorTest extends VmTestCase {
     }
 
     private void assertProcessedCodeIsDifferent(String methodName) {
+        ExceptionDispatchingPreprocessor.REQUIRED = true;
+        SynchronizedMethodPreprocessor.REQUIRED = true;
         final ClassMethodActor classMethodActor = ClassMethodActor.fromJava(Classes.getDeclaredMethod(getClass(), methodName, int.class));
         final CodeAttribute originalCodeAttribute = classMethodActor.originalCodeAttribute(true);
         assertFalse(Arrays.equals(originalCodeAttribute.code(), classMethodActor.compilee().codeAttribute().code()));

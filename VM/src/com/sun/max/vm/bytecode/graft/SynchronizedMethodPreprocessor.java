@@ -28,6 +28,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -35,6 +36,11 @@ import com.sun.max.vm.type.*;
  * @author Doug Simon
  */
 public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
+
+    /**
+     * Specifies whether the current runtime requires this preprocessing.
+     */
+    public static boolean REQUIRED = CPSCompiler.Static.compiler() != null;
 
     public SynchronizedMethodPreprocessor(ConstantPoolEditor constantPoolEditor, MethodActor classMethodActor, CodeAttribute codeAttribute) {
         super(constantPoolEditor, 0, codeAttribute.maxStack, codeAttribute.maxLocals);
