@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.jit;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -120,11 +122,11 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     }
 
     @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
-        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
-            instructionPointer = instructionPointer.minus(1);
+    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
+        if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
+            ip = ip.minus(1);
         }
-        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
+        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(ip.asPointer()));
     }
 
     @Override

@@ -166,7 +166,7 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
                 className,
                 ClassfileReader.JAVA_1_5_VERSION,
                 (char) 0,
-                Modifier.PUBLIC | Actor.GENERATED,
+                Modifier.PUBLIC | Actor.REFLECTION_STUB,
                 ClassActor.fromJava(superClass),
                 new InterfaceActor[0],
                 new FieldActor[0],

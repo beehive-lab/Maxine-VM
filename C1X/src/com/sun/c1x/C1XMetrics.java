@@ -49,7 +49,8 @@ public class C1XMetrics {
     public static int NullCheckIdsAssigned;
     public static int ZeroChecksRedundant;
     public static int DivideSpecialChecksRedundant;
-    public static int StoreChecksRedundant;
+    public static int StoreCheckEliminations;
+    public static int BoundsChecksElminations;
     public static int ConditionalEliminations;
     public static int BlocksMerged;
     public static int BlocksSkipped;

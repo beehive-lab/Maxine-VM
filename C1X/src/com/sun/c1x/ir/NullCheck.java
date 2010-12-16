@@ -44,7 +44,7 @@ public final class NullCheck extends StateSplit {
         this.object = obj;
         setFlag(Flag.NonNull);
         if (object.isNonNull()) {
-            redundantNullCheck();
+            eliminateNullCheck();
         }
     }
 
@@ -110,8 +110,7 @@ public final class NullCheck extends StateSplit {
     }
 
     @Override
-    public boolean internalClearNullCheck() {
-        stateBefore = null;
-        return true;
+    public void runtimeCheckCleared() {
+        clearState();
     }
 }

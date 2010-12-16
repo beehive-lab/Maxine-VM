@@ -40,12 +40,12 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -140,8 +140,10 @@ public final class JniFunctionsSource {
         } catch (Utf8Exception utf8Exception) {
             throw new ClassNotFoundException();
         }
-        ClassMethodActor caller = VmStackFrameWalker.getCallerClassMethodActor();
-        ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : caller.holder().classLoader;
+        // Skip frames for 'getCallerClass' and 'FindClass'
+        int realFramesToSkip = 2;
+        ClassActor caller = ClassActor.fromJava(JDK_sun_reflect_Reflection.getCallerClass(realFramesToSkip));
+        ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : caller.classLoader;
         final Class javaClass = findClass(classLoader, className);
         MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
         return JniHandles.createLocalHandle(javaClass);

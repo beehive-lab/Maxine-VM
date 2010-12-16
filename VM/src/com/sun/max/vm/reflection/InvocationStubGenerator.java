@@ -209,7 +209,7 @@ public class InvocationStubGenerator<T> {
                     stubClassName,
                     ClassfileReader.JAVA_1_5_VERSION,
                     (char) 0,
-                    Modifier.PUBLIC | Actor.GENERATED,
+                    Modifier.PUBLIC | Actor.REFLECTION_STUB,
                     superClassActor,
                     interfaceActors,
                     fieldActors,

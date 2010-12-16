@@ -53,9 +53,9 @@ public final class Invoke extends StateSplit {
         this.target = target;
         if (isStatic) {
             setFlag(Flag.IsStatic);
-            redundantNullCheck();
+            eliminateNullCheck();
         } else if (args[0].isNonNull()) {
-            redundantNullCheck();
+            eliminateNullCheck();
         }
     }
 
@@ -107,11 +107,6 @@ public final class Invoke extends StateSplit {
      */
     @Override
     public boolean canTrap() {
-        return true;
-    }
-
-    @Override
-    public boolean internalClearNullCheck() {
         return true;
     }
 

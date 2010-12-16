@@ -212,14 +212,13 @@ public class ThreadManagement {
         }
 
         @Override
-        public void doThread(VmThread vmThread, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+        public void doThread(VmThread vmThread, Pointer ip, Pointer sp, Pointer fp) {
             Thread thread = vmThread.javaThread();
-            if (instructionPointer.isZero()) {
+            if (ip.isZero()) {
                 traces[threads.indexOf(thread)] = new StackTraceElement[0];
             } else {
-                final List<StackFrame> frameList = new ArrayList<StackFrame>();
-                new VmStackFrameWalker(vmThread.tla()).frames(frameList, instructionPointer, stackPointer, framePointer);
-                traces[threads.indexOf(thread)] = JDK_java_lang_Throwable.asStackTrace(frameList, null, maxDepth);
+                VmStackFrameWalker sfw = new VmStackFrameWalker(vmThread.tla());
+                traces[threads.indexOf(thread)] = JDK_java_lang_Throwable.getStackTrace(sfw, ip, sp, fp, null, maxDepth);
             }
         }
     }

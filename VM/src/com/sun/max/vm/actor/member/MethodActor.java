@@ -170,10 +170,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return isNeverInline(flags());
     }
 
-    public final boolean isApplicationVisible() {
-        return !(isNative() || holder().isGenerated());
-    }
-
     /**
      * @return whether this method was generated merely to provide an entry in a vtable slot that would otherwise be
      *         empty.

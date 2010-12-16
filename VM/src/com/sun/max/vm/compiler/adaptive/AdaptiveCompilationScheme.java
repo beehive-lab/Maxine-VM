@@ -213,8 +213,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 classMethodActor.targetState = null;
                 String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
                 Log.println(errorMessage);
+                t.printStackTrace(Log.out);
                 if (compilation.compiler != optCompiler && FailOverCompilation) {
-                    t.printStackTrace(Log.out);
                     Log.println("Retrying with " + optCompiler + "...");
                     retrying = true;
                 } else {

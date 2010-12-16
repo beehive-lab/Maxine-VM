@@ -36,13 +36,13 @@ public abstract class AccessArray extends StateSplit {
      * Creates a new AccessArray instruction.
      * @param kind the type of the result of this instruction
      * @param array the instruction that produces the array object value
-     * @param newFrameState the lock stack
+     * @param stateBefore the frame state before the instruction
      */
-    public AccessArray(CiKind kind, Value array, FrameState newFrameState) {
-        super(kind, newFrameState);
+    public AccessArray(CiKind kind, Value array, FrameState stateBefore) {
+        super(kind, stateBefore);
         this.array = array;
         if (array.isNonNull()) {
-            redundantNullCheck();
+            eliminateNullCheck();
         }
     }
 
@@ -55,32 +55,13 @@ public abstract class AccessArray extends StateSplit {
     }
 
     /**
-     * Clears the state associated with a null check.
-     * @return {@code true} always
+     * Clears the state if this instruction can (no longer) trap.
      */
     @Override
-    public boolean internalClearNullCheck() {
-        if (!needsNullCheck() && !needsBoundsCheck()) {
-            stateBefore = null;
+    public void runtimeCheckCleared() {
+        if (!canTrap()) {
+            clearState();
         }
-        return true;
-    }
-
-    /**
-     * Checks whether this instruction needs a bounds check.
-     * @return {@code true} if a bounds check is needed
-     */
-    public boolean needsBoundsCheck() {
-        return !checkFlag(Flag.NoBoundsCheck);
-    }
-
-    /**
-     * Checks whether this instruction can cause a trap.
-     * @return {@code true} if this instruction can cause a trap
-     */
-    @Override
-    public boolean canTrap() {
-        return needsNullCheck() || needsBoundsCheck();
     }
 
     /**

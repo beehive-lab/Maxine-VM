@@ -20,6 +20,8 @@
  */
 package test.output;
 
+import sun.reflect.*;
+
 /**
  * Performs a number of recursive calls that go in and out of native code
  * until a fixed recursion level is reached. Then the stack frame trace
@@ -41,12 +43,18 @@ public class MixedFrames {
     private int i;
     private Object o;
 
-    private native void nativeUpdateFields(int recursion, int i, Object o);
+    native void nativeUpdateFields(int recursion, int i, Object o);
+
+    static class OtherClass {
+        static void updateFields(MixedFrames mf, int recursion, int i) {
+            mf.nativeUpdateFields(recursion, i, mf);
+        }
+    }
 
     private void testNative(int recursion) {
         final int intValue = 42;
         if (recursion > 0) {
-            nativeUpdateFields(recursion - 1, intValue, this);
+            OtherClass.updateFields(this, recursion - 1, intValue);
             return;
         }
         if (i != intValue) {
@@ -55,6 +63,7 @@ public class MixedFrames {
         if (o != this) {
             System.out.println(o + " != " + this);
         }
+
         Throwable throwable = new Throwable();
         System.out.println("Trace of mixed frame stack:");
         for (StackTraceElement e : throwable.getStackTrace()) {
@@ -63,6 +72,16 @@ public class MixedFrames {
             if (frame.startsWith(MixedFrames.class.getName())) {
                 System.out.println("\tat " + e);
             }
+        }
+
+        int count = 0;
+        while (true) {
+            Class callerClass = Reflection.getCallerClass(count);
+            if (callerClass == null) {
+                break;
+            }
+            System.out.println(count + ": " + callerClass);
+            count++;
         }
     }
 }

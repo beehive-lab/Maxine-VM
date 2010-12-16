@@ -62,7 +62,7 @@ public abstract class Actor {
 
     // VM-internal flags for classes:
     public static final int INNER_CLASS =       0x00100000;
-    public static final int GENERATED =         0x00400000;
+    public static final int REFLECTION_STUB =   0x00400000;
     public static final int FINALIZER =         0x00800000;
     public static final int SPECIAL_REFERENCE = 0x01000000;
     public static final int REMOTE =            0x02000000;
@@ -358,8 +358,8 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isGenerated(int flags) {
-        return (flags & GENERATED) != 0;
+    public static boolean isReflectionStub(int flags) {
+        return (flags & REFLECTION_STUB) != 0;
     }
 
     @INLINE
@@ -527,7 +527,7 @@ public abstract class Actor {
         appendFlag(sb, isConstantWhenNotZero(flags), "constantWhenNotZero ");
         appendFlag(sb, isInnerClass(flags), "innerClass ");
         appendFlag(sb, isTemplate(flags), "template ");
-        appendFlag(sb, isGenerated(flags), "generated ");
+        appendFlag(sb, isReflectionStub(flags), "generated ");
         appendFlag(sb, isClassInitializer(flags), "<clinit> ");
         appendFlag(sb, isInstanceInitializer(flags), "<init> ");
         appendFlag(sb, isCFunction(flags), "c_function ");

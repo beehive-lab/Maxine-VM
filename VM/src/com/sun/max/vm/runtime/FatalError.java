@@ -171,7 +171,7 @@ public final class FatalError extends Error {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, dumpStackOfNonCurrentThread);
         }
 
-        if (vmThread == null || trappedInNative || Throw.scanStackOnFatalError.getValue()) {
+        if (vmThread == null || trappedInNative || Throw.ScanStackOnFatalError) {
             final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.load(currentTLA());
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }

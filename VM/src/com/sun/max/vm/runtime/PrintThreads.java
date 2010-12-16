@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.runtime;
 
-import java.util.*;
-
 import sun.misc.*;
 
 import com.sun.max.unsafe.*;
@@ -63,17 +61,12 @@ public class PrintThreads extends VmOperation implements SignalHandler {
             Thread thread = vmThread.javaThread();
             Log.println(thread);
             if (!ip.isZero()) {
-                final List<StackFrame> frameList = new ArrayList<StackFrame>();
-                new VmStackFrameWalker(vmThread.tla()).frames(frameList, ip, sp, fp);
-                printStackTrace(frameList);
+                VmStackFrameWalker sfw = new VmStackFrameWalker(vmThread.tla());
+                StackTraceElement[] trace = JDK_java_lang_Throwable.getStackTrace(sfw, ip, sp, fp, null, Integer.MAX_VALUE);
+                for (StackTraceElement e : trace) {
+                    Log.println("\tat " + e);
+                }
             }
-        }
-    }
-
-    protected void printStackTrace(final List<StackFrame> frameList) {
-        StackTraceElement[] trace = JDK_java_lang_Throwable.asStackTrace(frameList, null, Integer.MAX_VALUE);
-        for (StackTraceElement e : trace) {
-            Log.println("\tat " + e);
         }
     }
 
