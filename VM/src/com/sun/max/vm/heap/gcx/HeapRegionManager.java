@@ -23,6 +23,7 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
@@ -41,7 +42,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Laurent Daynes
  */
-public final class HeapRegionManager {
+public final class HeapRegionManager implements HeapAccountOwner {
     /**
      * The single instance of the heap region manager.
      */
@@ -60,21 +61,27 @@ public final class HeapRegionManager {
      */
     private HeapAccount<HeapRegionManager> bootHeapAccount;
 
+    public HeapAccount<HeapRegionManager> heapAccount() {
+        return bootHeapAccount;
+    }
+
     /**
      * Total number of unreserved regions.
      */
     private int unreserved;
 
-    // Region Management interface private to Heap Account.
+    // Region reservation management interface. Should be private to heap account.
     // May want to revisit how the two interacts to better control
-    // use of these sensitive operations.
+    // use of these sensitive operations (ideally, the transfer of unreserved to a
+    // heap account region should be atomic.
 
     /**
-     * Reserve exactly the number of regions requested, or fail.
+     * Reserve the specified number of regions.
+     *
      * @param numRegions number of region requested
      * @return true if the number of regions requested was reserved
      */
-    boolean reserveOrFail(int numRegions) {
+    boolean reserve(int numRegions) {
         if (numRegions > unreserved) {
             return false;
         }
@@ -92,8 +99,12 @@ public final class HeapRegionManager {
         unreserved += numRegions;
     }
 
-    boolean contains(Address address) {
+    public boolean contains(Address address) {
         return regionAllocator.contains(address);
+    }
+
+    public MemoryRegion bounds() {
+        return regionAllocator.bounds();
     }
 
     boolean isValidRegionID(int regionID) {
@@ -140,16 +151,26 @@ public final class HeapRegionManager {
     private HeapRegionManager() {
         regionAllocator = new FixedSizeRegionAllocator("Heap Backing Storage");
         bootstrapAllocator = new BootstrapAllocator();
+        bootHeapAccount = new HeapAccount<HeapRegionManager>(this);
     }
 
     private Size tupleSize(Class tupleClass) {
         return ClassActor.fromJava(tupleClass).dynamicTupleSize();
     }
 
+    public static HeapRegionManager theHeapRegionManager() {
+        return theHeapRegionManager;
+    }
+
     /**
      * Initialize the region manager with the supplied space.
      * As many regions as possible are carved out from this space, while preserving alignment constraints.
      * The region size is obtained from the HeapRegionInfo class.
+     *
+     * TODO: currently, footprint of the region manager is taxed-off the "reservedSpaceSize", which is the max heap size.
+     * We should not do that, in order for our heap size to be comparable to another VM heap size which doesn't count this
+     * but just the application heap. The fact that we also allocate the VM data structure, code, etc. make
+     * this even more difficult.
      *
      * @param reservedSpace address to the first byte of the virtual memory reserved for the heap space
      * @param reservedSpaceSize size in byte of the heap space
@@ -159,11 +180,14 @@ public final class HeapRegionManager {
         // Initialize region constants (size and log constants).
         HeapRegionConstants.initializeConstants();
         // Adjust reserved space to region boundaries.
-        final Address endOfHeapSpace = reservedSpace.plus(reservedSpaceSize).roundedDownBy(regionSizeInBytes);
-        final Address startOfHeapSpace = reservedSpace.roundedUpBy(regionSizeInBytes);
-        final Size heapSpaceSize = endOfHeapSpace.minus(endOfHeapSpace).asSize();
-        final int numRegions = heapSpaceSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+        final Address endOfManagedSpace = reservedSpace.plus(reservedSpaceSize).roundedDownBy(regionSizeInBytes);
+        final Address startOfManagedSpace = reservedSpace.roundedUpBy(regionSizeInBytes);
+        final Size managedSpaceSize = endOfManagedSpace.minus(endOfManagedSpace).asSize();
+        final int numRegions = managedSpaceSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
 
+        // FIXME: have we committed the space that is going to be used by the boot allocator ?
+
+        unreserved = numRegions;
         // Estimate conservatively what the heap manager needs initially. This is to commit
         // enough memory to get started.
         // FIXME: initial size should be made to correspond to some notion of initial heap.
@@ -177,10 +201,10 @@ public final class HeapRegionManager {
         initialSize = initialSize.roundedUpBy(regionSizeInBytes);
         final int initialNumRegions = initialSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
 
-        bootstrapAllocator.initialize(startOfHeapSpace, startOfHeapSpace.plus(initialSize));
+        bootstrapAllocator.initialize(startOfManagedSpace, startOfManagedSpace.plus(initialSize));
 
         // Commit space and initialize the bootstrap allocator
-        regionAllocator.initialize(startOfHeapSpace, heapSpaceSize, Size.fromInt(regionSizeInBytes), initialNumRegions);
+        regionAllocator.initialize(startOfManagedSpace, managedSpaceSize, Size.fromInt(regionSizeInBytes), initialNumRegions);
 
 
         // FIXME: Here, ideally, we should have some mechanism to makes the standard allocation mechanism
@@ -195,32 +219,21 @@ public final class HeapRegionManager {
         for (int i = 0; i < numRegions; i++) {
             bootstrapAllocator.createTuple(regionInfoClass);
         }
-        RegionTable.initialize(regionTable, regionInfoClass, startOfHeapSpace, numRegions);
+        RegionTable.initialize(regionTable, regionInfoClass, startOfManagedSpace, numRegions);
         // Allocate the backing storage for the region list.
         int [] listStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
         HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, listStorage);
         listStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
         HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, listStorage);
 
-        // Ready to open heap accounts now.
-    }
+        FatalError.check(bootstrapAllocator.end.roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(initialSize)), "");
 
-    /**
-     * Opening a heap account for the specified owner.
-     * @param <Owner>
-     * @param owner
-     * @return
-     */
-    public <Owner> HeapAccount<Owner> openHeapAccount(Owner owner) {
-        // Problem starts here: where should we allocate this ? We don't want this to be
-        // on the heap account itself as we don't want references from heap management to
-        // leak to other heaps.
-        HeapAccount<Owner> account = new HeapAccount<Owner>(owner, 0);
-        return account;
-    }
-
-    public <Owner> void close(HeapAccount<Owner> account) {
-        // TODO
+        // Ready to open bootstrap heap accounts now.
+        // Start with opening the boot heap account to set the records straight after bootstrap.
+        // FIXME: initialSize may not be the reserve we want here. Need to adjust that to the desired "immortal" size.
+        bootHeapAccount.open(initialNumRegions);
+        // Allocate the region after the fact. This will straightened the data structures for the boot heap account and the region allocator.
+        bootHeapAccount.allocate();
     }
 
     /**

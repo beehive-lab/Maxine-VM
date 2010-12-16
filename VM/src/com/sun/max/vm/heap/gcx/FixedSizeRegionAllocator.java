@@ -448,4 +448,8 @@ public class FixedSizeRegionAllocator {
         }
         return false;
     }
+
+    MemoryRegion bounds() {
+        return backingStorage;
+    }
 }

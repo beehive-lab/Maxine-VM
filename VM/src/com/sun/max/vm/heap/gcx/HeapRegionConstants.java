@@ -68,4 +68,13 @@ public final class HeapRegionConstants {
         return address.and(regionAlignmentMask);
     }
 
+    /**
+     * Compute the number of regions needed to hold the number of bytes.
+     * @param sizeInBytes size in bytes
+     * @return a number of regions.
+     */
+    static int numberOfRegions(Size sizeInBytes) {
+        return sizeInBytes.roundedUpBy(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+    }
+
 }

@@ -42,6 +42,12 @@ public abstract class Sweepable {
         register(new VMBooleanXXOption("-XX:-", "TraceSweep", "Trace heap sweep operations. Do nothing for PRODUCT images"),
                         MaxineVM.Phase.PRISTINE);
 
+    static final VMIntOption freeChunkMinSizeOption =
+        register(new VMIntOption("-XX:FreeChunkMinSize=", 256,
+                        "Minimum size of contiguous space considered for space reclamation." +
+                        "Below this size, the space is ignored (dark matter)"),
+                        MaxineVM.Phase.PRISTINE);
+
     /**
      * Invoked when doing precise sweeping on the first black object following the pointer last returned by this method.
      * @param liveObject a pointer to a live cell in the heap

@@ -295,6 +295,7 @@ public class MaxineTesterConfiguration {
         // Alternate GC configs
         imageConfig("ms",         "-run=java", "-heap=gcx.ms");
         imageConfig("msd",        "-run=java", "-heap=gcx.ms", "-build=DEBUG");
+        imageConfig("msc1x",      "-run=java", "-heap=gcx.ms", "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=1");
 
         imageConfig("mscpscps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
         imageConfig("mscpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-jit");

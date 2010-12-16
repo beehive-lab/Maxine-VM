@@ -49,12 +49,6 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
 
-    private static final VMIntOption freeChunkMinSizeOption =
-        register(new VMIntOption("-XX:FreeChunkMinSize=", 256,
-                        "Minimum size of contiguous space considered for space reclamation." +
-                        "Below this size, the space is ignored (dark matter)"),
-                        MaxineVM.Phase.PRISTINE);
-
     private static boolean TraceSweep = false;
     private static boolean TraceTLAB = false;
 
@@ -87,13 +81,13 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
         @Override
         @INLINE(override = true)
-        boolean shouldRefill(Size spaceLeft) {
+        boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
             return spaceLeft.lessThan(refillThreshold);
         }
 
         @Override
         @INLINE(override = true)
-        Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
+        Address refill(LinearSpaceAllocator allocator, Pointer startOfSpaceLeft, Size spaceLeft) {
             return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
         }
     }

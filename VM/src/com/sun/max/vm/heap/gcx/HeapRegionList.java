@@ -113,11 +113,11 @@ public final class HeapRegionList {
         return nextFieldPointer(elem).plus(fieldNumberOfBytes);
     }
 
-    private int next(int elem) {
+    int next(int elem) {
         return listStorage.getInt(nextFieldIndex(elem));
     }
 
-    private int prev(int elem) {
+    int prev(int elem) {
         return listStorage.getInt(prevFieldIndex(elem));
     }
 
@@ -153,6 +153,14 @@ public final class HeapRegionList {
 
     public int size() {
         return size;
+    }
+
+    public int head() {
+        return head;
+    }
+
+    public int tail() {
+        return tail;
     }
 
     public boolean isEmpty() {
@@ -268,6 +276,5 @@ public final class HeapRegionList {
         }
         head = list.head;
     }
-
 }
 

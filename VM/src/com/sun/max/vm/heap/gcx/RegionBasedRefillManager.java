@@ -33,6 +33,7 @@ import com.sun.max.vm.runtime.*;
  * the head of which is stored in the {@link HeapRegionInfo#firstFreeChunkIndex}
  * obtained from the {@link RegionTable}.
  *
+ *
  * @author Laurent Daynes
  */
 public abstract class RegionBasedRefillManager extends LinearSpaceAllocator.RefillManager {
@@ -53,7 +54,7 @@ public abstract class RegionBasedRefillManager extends LinearSpaceAllocator.Refi
 
     /**
      * Request cannot be satisfied with allocator and refill manager doesn't want to refill.
-     * Allocate to large object space or to overflow allocator.
+     * Allocate to large to overflow allocator.
      */
     @Override
     Address allocate(Size size) {
@@ -68,12 +69,12 @@ public abstract class RegionBasedRefillManager extends LinearSpaceAllocator.Refi
     }
 
     @Override
-    boolean shouldRefill(Size spaceLeft) {
+    boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
         return spaceLeft.lessThan(refillThreshold);
     }
 
     @Override
-    Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
+    Address refill(LinearSpaceAllocator allocator, Pointer startOfSpaceLeft, Size spaceLeft) {
         FatalError.check(spaceLeft.lessThan(refillThreshold), "Should not refill before threshold is reached");
         // First, make the space left parsable, then change of allocating regions.
         if (spaceLeft.greaterThan(0)) {

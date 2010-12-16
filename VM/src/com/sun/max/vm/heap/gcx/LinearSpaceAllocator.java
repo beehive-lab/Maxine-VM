@@ -42,18 +42,32 @@ public class LinearSpaceAllocator {
     /**
      * Space allocator capable of refilling the linear space allocator with contiguous regions, or
      * to handle allocation requests that the linear space allocator cannot handle.
-     *
      */
     abstract static class RefillManager {
+        /**
+         * Called directly by the allocator if it cannot handle the specified size,
+         * either because the object is deemed too large for this allocator, or because there isn't enough
+         * space left to satisfy request and the refill manager rejected the refill.
+         *
+         * @param size number of bytes requested
+         * @return the address to a contiguous region of the requested size
+         */
         abstract Address allocate(Size size);
+        /**
+         * Called directly by the allocator if the manager rejected the refill request for a TLAB.
+         * @param size
+         * @return
+         */
         abstract Address allocateTLAB(Size size);
 
         /**
          * Tell whether the amount of space left warrants a refill.
-         * @param spaceLeft
+         * @param requestedSpace initial space requested
+         * @param spaceLeft space left in the allocator requesting refill
+         *
          * @return
          */
-        abstract boolean shouldRefill(Size spaceLeft);
+        abstract boolean shouldRefill(Size requestedSpace, Size spaceLeft);
 
         /**
          * Dispose of the contiguous space left in the allocator and return a new chunk of memory to refill it.
@@ -62,7 +76,7 @@ public class LinearSpaceAllocator {
          * @param spaceLeft size, in bytes, of the space left
          * @return
          */
-        abstract Address refill(Pointer startOfSpaceLeft, Size spaceLeft);
+        abstract Address refill(LinearSpaceAllocator allocator, Pointer startOfSpaceLeft, Size spaceLeft);
     }
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -210,17 +224,20 @@ public class LinearSpaceAllocator {
                 // Lost the race
                 cell = start;
             }
-            if (refillManager.shouldRefill(hardLimit.minus(cell).asSize())) {
-                  // Don't refill, waste would be too high. Allocate from the bin table.
+            if (!refillManager.shouldRefill(size, hardLimit.minus(cell).asSize())) {
+                // Don't refill, waste would be too high. Allocate from the bin table.
                 Address result = forTLAB ? refillManager.allocateTLAB(size) : refillManager.allocate(size);
                 return result.asPointer();
             }
             // Refill. First, fill up the allocator to bring everyone to refill synchronization.
             Pointer startOfSpaceLeft = setTopToLimit();
 
-            Address chunk = refillManager.refill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
-            refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
-            // Fall-off to return zero.
+            Address chunk = refillManager.refill(this, startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
+            if (!chunk.isZero()) {
+                // Won race to get a next chunk to refill the allocator.
+                refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
+            }
+            // Fall-off to return to the non-blocking allocation loop.
         }
         // There was a race for refilling the allocator. Just return to
         // the non-blocking allocation loop.

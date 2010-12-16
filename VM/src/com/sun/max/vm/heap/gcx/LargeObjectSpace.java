@@ -49,8 +49,8 @@ import com.sun.max.vm.runtime.*;
  * Splitting will mess this order when entering a split-off chunk to another free list. Split-off chunks
  * are entered at the head of the list and re-used first.
  *
- * Allocation form the very large object list is performed in best-fit, address ordered fashion.
- * Given that no chunks can enter the list between two GC which re-organize the list in address order anyway,
+ * Allocation from the very large object list is performed in best-fit, address ordered fashion.
+ * Given that no chunks can enter the list between two GCs and that a GC re-organizes the list in address order anyway,
  * this simply means that allocation follows a first fit search.
  *
  * The configuration of the large object space is currently hard-wired with block size being 2K, minimum object

@@ -28,68 +28,39 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
-/**
- * A region-based space supporting the sweeping interface.
- * The space is made of an number of possibly non-contiguous
- * fixed-size regions. Each region maintains a list of free chunks
- * of minimum size, and occupancy statistics.
- * Both the list and the occupancy statistics are filled during sweeping.
- * Free chunks are organized in address order; regions with free space are organized in
- * address order as well.
- *
- * Allocation is performed on a first-fit basis.
- *
- * @author Laurent Daynes
- */
-public class RegionBasedFirstFitSpace extends Sweepable implements ResizableSpace {
-    /**
-     * Regions available for allocation.
-     * Ordered from low to high addresses.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    private HeapRegionList allocatingRegions;
-    /**
-     * Small object allocator.
-     */
-    private final LinearSpaceAllocator smallObjectAllocator;
 
-    /**
-     * Minimum size to be considered reclaimable.
-     */
-    private Size minReclaimableSpace;
-
+public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwner, ApplicationHeap {
     /* For simplicity at the moment. Should be able to allocated this in GC's own heap (i.e., the bootstrap allocator).
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
-    RegionBasedFirstFitSpace regionProvider() {
+    @CONSTANT_WHEN_NOT_ZERO
+    private static int NEXT_FREE_CHUNK_OFFSET;
+
+    final HeapAccount<FirstFitApplicationHeap> heapAccount;
+    final LinearSpaceAllocator smallObjectSpace;
+    final LargeObjectSpace largeObjectSpace;
+    final HeapRegionListIterable regionsIterable;
+
+    private Size minReclaimableSpace;
+    private HeapRegionList allocatingRegions;
+    private HeapRegionList fullRegions;
+
+    /*
+     * The lock on which refill and region allocation to object spaces synchronize on.
+     */
+    private Object heapLock() {
         return this;
     }
 
-    public Pointer allocate(Size size) {
-        return smallObjectAllocator.allocateCleared(size);
-    }
-
-    public Pointer allocateTLAB(Size size) {
-        return smallObjectAllocator.allocateTLAB(size);
-    }
-
-    public boolean contains(Address address) {
-        return false;
-    }
-
-    public boolean canSatisfyAllocation(Size size) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public void makeParsable() {
-        smallObjectAllocator.makeParsable();
+    private void outOfMemory() {
+        throw outOfMemoryError;
     }
 
     /**
-     * Refill Manager for the small object allocator.
+     * Refill Manager for the small object space.
      */
     class RefillManager extends LinearSpaceAllocator.RefillManager {
         private Size refillThreshold;
@@ -118,9 +89,36 @@ public class RegionBasedFirstFitSpace extends Sweepable implements ResizableSpac
                                 "invalid address of first free chunk");
             }
         }
+
+        Address nextFreeChunkList(Size minSpace) {
+            int gcCount = 0;
+            // No more free chunk in this region.
+            theRegionTable().regionInfo(currentRegion).setFull();
+            do {
+                currentRegion = allocatingRegions.next(currentRegion);
+                if (currentRegion != INVALID_REGION_ID) {
+                    final HeapRegionInfo regionInfo = theRegionTable().regionInfo(currentRegion);
+                    final Address result = regionInfo.firstFreeBytes();
+                    regionInfo.setAllocating();
+                    return result;
+                }
+
+                if (MaxineVM.isDebug() && Heap.traceGC()) {
+                    gcCount++;
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.unlock(lockDisabledSafepoints);
+                    if (gcCount > 5) {
+                        FatalError.unexpected("Suspiscious repeating GC calls detected");
+                    }
+                }
+            } while(Heap.collectGarbage(minSpace));
+            // Not enough freed memory.
+            throw outOfMemoryError;
+        }
+
         /**
          * Request cannot be satisfied with allocator and refill manager doesn't want to refill.
-         * Allocate to large to overflow allocator.
+         * Allocate to large or overflow allocator.
          */
         @Override
         Address allocate(Size size) {
@@ -143,6 +141,10 @@ public class RegionBasedFirstFitSpace extends Sweepable implements ResizableSpac
                             requestedSpace.lessThan(HeapFreeChunk.getFreechunkSize(nextFreeChunkInRegion)));
         }
 
+        /**
+         * Refill the linear space allocator. Note that this one already guarantees that only one
+         * thread can enter this method.
+         */
         @Override
         Address refill(LinearSpaceAllocator allocator, Pointer startOfSpaceLeft, Size spaceLeft) {
             FatalError.check(spaceLeft.lessThan(refillThreshold), "Should not refill before threshold is reached");
@@ -151,9 +153,9 @@ public class RegionBasedFirstFitSpace extends Sweepable implements ResizableSpac
                 wastedSpace = wastedSpace.plus(spaceLeft);
                 HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
             }
-            synchronized (regionProvider()) {
-                Address result = nextFreeChunkInRegion;
-                if (result.isZero()) {
+            Address result = nextFreeChunkInRegion;
+            if (result.isZero()) {
+                synchronized (heapLock()) {
                     int gcCount = 0;
                     // No more free chunk in this region.
                     theRegionTable().regionInfo(currentRegion).setFull();
@@ -176,60 +178,119 @@ public class RegionBasedFirstFitSpace extends Sweepable implements ResizableSpac
                         }
                     } while(Heap.collectGarbage(spaceLeft.plus(Word.size())));
                     // Not enough freed memory.
-                    throw RegionBasedFirstFitSpace.outOfMemoryError;
+                    outOfMemory();
                 }
-                nextFreeChunkInRegion = HeapFreeChunk.getFreeChunkNext(result);
-                FatalError.check(HeapFreeChunk.getFreechunkSize(result).greaterThan(spaceLeft), "Should not refill with chunk no larger than wastage");
-                return result;
             }
+            nextFreeChunkInRegion = HeapFreeChunk.getFreeChunkNext(result);
+            FatalError.check(HeapFreeChunk.getFreechunkSize(result).greaterThan(spaceLeft), "Should not refill with chunk no larger than wastage");
+            return result;
         }
     }
 
-    public RegionBasedFirstFitSpace() {
-        smallObjectAllocator = new LinearSpaceAllocator(null);
+    public FirstFitApplicationHeap() {
+        heapAccount = new HeapAccount<FirstFitApplicationHeap>(this);
+        smallObjectSpace = new LinearSpaceAllocator(new RefillManager());
+        largeObjectSpace = new LargeObjectSpace();
+        regionsIterable = new HeapRegionListIterable();
+    }
+
+    public HeapAccount<FirstFitApplicationHeap> heapAccount() {
+        return heapAccount;
+    }
+
+    public void initialize(Size minSize, Size maxSize) {
+        if (!heapAccount.open(numberOfRegions(maxSize))) {
+            FatalError.unexpected("Failed to create application heap");
+        }
+        allocatingRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
+        fullRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
+        heapAccount.allocate(numberOfRegions(minSize), allocatingRegions, true);
+        minReclaimableSpace = Size.fromInt(Sweepable.freeChunkMinSizeOption.getValue());
     }
 
     @HOSTED_ONLY
     public void hostInitialize() {
-        //smallObjectAllocator.hostInitialize();
+        NEXT_FREE_CHUNK_OFFSET = ClassRegistry.findField(RefillManager.class, "nextFreeChunkInRegion").offset();
+        smallObjectSpace.hostInitialize();
+    }
+
+    @Override
+    public Pointer allocate(Size size) {
+        return smallObjectSpace.allocateCleared(size);
+    }
+
+    @Override
+    public Pointer allocateTLAB(Size size) {
+        return smallObjectSpace.allocateTLAB(size);
+    }
+
+    @Override
+    public boolean contains(Address address) {
+        return RegionTable.theRegionTable().regionInfo(address).owner() == this;
+    }
+
+    @Override
+    public boolean canSatisfyAllocation(Size size) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Size totalSpace() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Size freeSpace() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Size usedSpace() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void makeParsable() {
+        smallObjectSpace.makeParsable();
+    }
+
+    public void mark(TricolorHeapMarker heapMarker) {
+        heapMarker.markAll(regionsIterable, HeapRegionConstants.log2RegionSizeInBytes);
+    }
+
+    @Override
+    public Pointer processLiveObject(Pointer liveObject) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void processDeadSpace(Address freeChunk, Size size) {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
     public Size beginSweep(boolean precise) {
+        // make all region empty again.
+
         return minReclaimableSpace;
     }
 
     @Override
     public Size endSweep() {
-        return Size.zero();
-    }
-
-    @Override
-    public void processDeadSpace(Address freeChunk, Size size) {
-    }
-
-    @Override
-    public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
-        // TODO
-        return Pointer.zero();
-    }
-
-    @Override
-    public Pointer processLiveObject(Pointer liveObject) {
-        // TODO
-        return Pointer.zero();
-    }
-
-    @Override
-    public Size growAfterGC(Size delta) {
-        // TODO
-        return Size.zero();
-    }
-
-    @Override
-    public Size shrinkAfterGC(Size delta) {
-        // TODO
-        return Size.zero();
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
@@ -238,4 +299,16 @@ public class RegionBasedFirstFitSpace extends Sweepable implements ResizableSpac
 
     }
 
+    public Size sweep(TricolorHeapMarker heapMarker, boolean doImpreciseSweep) {
+        // TODO: what about large object space ?
+        Size minReclaimableSpace = beginSweep(doImpreciseSweep);
+
+        if (doImpreciseSweep) {
+            heapMarker.impreciseSweep(this, minReclaimableSpace);
+        } else {
+            heapMarker.sweep(this);
+        }
+
+        return endSweep();
+    }
 }
