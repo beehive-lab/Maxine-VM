@@ -46,10 +46,6 @@ public class MutableFrameState extends FrameState {
         super(irScope, bci, maxLocals, maxStack);
     }
 
-    public MutableFrameState(IRScope irScope, int bci) {
-        super(irScope, bci);
-    }
-
     /**
      * Replace the local variables in this frame state with the local variables from the specified frame state. This is
      * used in inlining.

@@ -197,7 +197,7 @@ public abstract class LIRAssembler {
             if (disasm.length() != 0) {
                 TTY.println(disasm);
             } else {
-                TTY.println("Code [+%d]: %d bytes", lastDecodeStart, currentBytes);
+                TTY.println("Code [+%d]: %d bytes", lastDecodeStart, currentBytes.length);
                 Util.printBytes(lastDecodeStart, currentBytes, C1XOptions.PrintAssemblyBytesPerLine);
             }
         }
