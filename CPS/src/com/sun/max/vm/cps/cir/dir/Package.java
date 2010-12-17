@@ -23,8 +23,6 @@ package com.sun.max.vm.cps.cir.dir;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.cps.cir.*;
-import com.sun.max.vm.cps.dir.*;
 
 /**
  * @see MaxPackage
@@ -37,7 +35,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.compiler() instanceof CirGeneratorScheme &&
-               CPSCompiler.Static.compiler() instanceof DirGeneratorScheme;
+        return CPSCompiler.Static.isCompiler(vmConfiguration);
     }
 }

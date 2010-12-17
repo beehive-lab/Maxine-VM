@@ -18,28 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
- */
-package test.com.sun.max.vm.jtrun.all;
+package com.sun.max.vm.run.java.jtrun.some;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.run.*;
+import test.com.sun.max.vm.jtrun.some.*;
 
-/**
- * @see MaxPackage
- *
- * @author Ben L. Titzer
- */
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-        registerScheme(RunScheme.class, JTRunScheme.class);
+import com.sun.max.vm.run.java.jtrun.*;
+
+import com.sun.max.annotate.*;
+
+public class JTRunScheme extends JTAbstractRunScheme {
+
+    @HOSTED_ONLY
+    public JTRunScheme() {
     }
 
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.runPackage.equals(this);
+    @HOSTED_ONLY
+    public Class<?>[] getClassList() {
+        return JTConfig.testClasses.testClasses;
+    }
+
+    @Override
+    public void runTests() {
+        JTRuns.runTests(testStart, testEnd);
+        JTUtil.printReport();
     }
 }

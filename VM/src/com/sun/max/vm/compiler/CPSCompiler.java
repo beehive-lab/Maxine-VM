@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler;
 
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 
@@ -41,7 +42,7 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
 
         @HOSTED_ONLY
         public static void setCompiler(CPSCompiler c) {
-            assert compiler == null;
+            assert compiler == null || compiler.getClass() == c.getClass();
             compiler = c;
             compilerPackage = BootImagePackage.fromClass(compiler.getClass());
         }
@@ -51,12 +52,16 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
         }
 
         @HOSTED_ONLY
-        public static boolean isCompilerPackage(BootImagePackage maxPackage) {
-            if (compilerPackage == null) {
-                return false;
-            }
-//            return compilerPackage.isSubPackageOf(maxPackage);
-            return maxPackage.name().startsWith("com.sun.max.vm.cps");
+        public static boolean isCompiler(VMConfiguration vmConfiguration) {
+            final boolean result =
+                vmConfiguration.optCompilerPackage.name().startsWith("com.sun.max.vm.cps") ||
+                vmConfiguration.jitCompilerPackage.name().startsWith("com.sun.max.vm.cps");
+            return result;
+        }
+
+        @HOSTED_ONLY
+        public static boolean isCompilerPackage(VMConfiguration vmConfiguration, BootImagePackage cpsPackage) {
+            return isCompiler(vmConfiguration);
         }
 
         /**

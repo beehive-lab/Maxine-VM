@@ -108,6 +108,9 @@ public final class JavaTypeDescriptor {
         @HOSTED_ONLY
         WordTypeDescriptor(String name, Class javaClass) {
             super(name);
+            if (name.contains("heap/gcx/RegionRange")) {
+                System.console();
+            }
             this.javaClass = Boxed.class.isAssignableFrom(javaClass) ? javaClass.getName() : javaClass;
         }
 

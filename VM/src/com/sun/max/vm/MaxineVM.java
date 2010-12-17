@@ -76,13 +76,16 @@ public final class MaxineVM {
      * The set of packages denoting classes for which {@link #isBootImageClass(String)} will return true.
      */
     @HOSTED_ONLY
-    private static final Set<String> BOOT_IMAGE_CODE_BASE_PACKAGES = new HashSet<String>();
+    private static final Map<String, BootImagePackage> BOOT_IMAGE_CODE_BASE_PACKAGES = new HashMap<String, BootImagePackage>();
 
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
 
     @HOSTED_ONLY
     private static final Set<String> KEEP_CLINIT_CLASSES = new HashSet<String>();
+
+    @HOSTED_ONLY
+    private static final String[] TEST_PACKAGES = {"test.", "jtt."};
 
     private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message.") {
         @Override
@@ -189,11 +192,8 @@ public final class MaxineVM {
      */
     @HOSTED_ONLY
     public static void registerBootImagePackages(List<BootImagePackage> packages) {
-        BOOT_IMAGE_CODE_BASE_PACKAGES.add("java.lang"); // special case
-        BOOT_IMAGE_CODE_BASE_PACKAGES.add("$INVOKE_STUB$");  // special case
         for (BootImagePackage pkg : packages) {
-            BOOT_IMAGE_CODE_BASE_PACKAGES.add(pkg.name());
-            BOOT_IMAGE_CODE_BASE_PACKAGES.add("test." + pkg.name());
+            BOOT_IMAGE_CODE_BASE_PACKAGES.put(pkg.name(), pkg);
         }
     }
 
@@ -299,7 +299,6 @@ public final class MaxineVM {
      * <p>
      * A <i>direct hosted-only class</i> is defined as a class that is:
      * <ul>
-     * <li>is a primitive type
      * <li>or annotated with {@link HOSTED_ONLY}
      * <li>or in a package that ends with {@code ".hosted"}
      * <li>or annotated with {@link PLATFORM} that does not match the target platform
@@ -312,7 +311,6 @@ public final class MaxineVM {
      * <li>or a subclass of a hosted-only class
      * <li>or a nested class in a hosted-only class
      * <li>or an array of {@code T} where {@code T} is a hosted-only class
-     * <li>or is in a package that is not in the {@link #BOOT_IMAGE_CODE_BASE_PACKAGES} set
      * </ul>
      *
      * @param javaClass the class to check
@@ -326,15 +324,16 @@ public final class MaxineVM {
             return value;
         }
 
-        boolean result;
+        boolean result = false; // default assumption
         final String pkgName = getPackageName(javaClass);
+
+        if (pkgName.startsWith("test")) {
+            System.console();
+        }
 
         // Direct part of definition
 
-        if (pkgName.length() == 0) {
-            // covers all primitive types, arrays of primitive types
-            result = false;
-        } else if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
+        if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
             result = true;
         } else if (pkgName.endsWith(".hosted")) {
             // May want to replace this 'magic' interpretation of ".hosted"
@@ -350,18 +349,13 @@ public final class MaxineVM {
                 final Class< ? > componentClass = javaClass.getComponentType();
                 result = isHostedOnly(componentClass);
             } else {
-                // the last few cases are not mutually exclusive
                 final Class superClass = javaClass.getSuperclass();
                 if (superClass != null && isHostedOnly(superClass)) {
                     result = true;
                 } else {
                     final Class< ? > enclosingClass = getEnclosingClass(javaClass);
-                    if (enclosingClass != null) {
-                        result = isHostedOnly(enclosingClass);
-                    } else {
-                        // Finally, any class whose package is not in BOOT_IMAGE_CODE_BASE_PACKAGES
-                        // is considered HOSTED_ONLY
-                        result = !BOOT_IMAGE_CODE_BASE_PACKAGES.contains(pkgName);
+                    if (enclosingClass != null && isHostedOnly(enclosingClass)) {
+                        result = true;
                     }
                 }
             }
@@ -407,10 +401,17 @@ public final class MaxineVM {
     }
 
     /**
-     * Determines if a given class name denotes a class that is (potentially) part of the boot image.
+     * Determines if a given class name denotes a class that is specified as part of the boot image.
+     * This cannot be based solely on the package name as the package may enumerate
+     * a specific set of classes.
      */
     public static boolean isBootImageClass(String className) {
-        return BOOT_IMAGE_CODE_BASE_PACKAGES.contains(getPackageName(className));
+        BootImagePackage pkg = BOOT_IMAGE_CODE_BASE_PACKAGES.get(getPackageName(className));
+        if (pkg != null) {
+            // check for explicit class
+            return pkg.isBootImageClass(className);
+        }
+        return false;
     }
 
     public static void setExitCode(int code) {

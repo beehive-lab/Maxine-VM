@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.jtrun.some;
+package com.sun.max.vm.run.java.jtrun;
 
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
@@ -32,12 +32,10 @@ import com.sun.max.vm.run.*;
 public class Package extends BootImagePackage {
     public Package() {
         super();
-        registerScheme(RunScheme.class, JTRunScheme.class);
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.runPackage.equals(this);
+        return JTAbstractRunScheme.class.isAssignableFrom(vmConfiguration.schemeClass(RunScheme.class));
     }
 }
-

@@ -22,7 +22,7 @@
  * Sub packages of test.bench should contain micro-benchmarks that measure aspects of the VM and JDK platform.
  * Each micro-benchmark should be written to use the framework in {@link test.bench.util.RunBench}, following the
  * style of one of the existing micro-benchmarks. The intent is that the micro-benchmarks can be run stand-alone or
- * under the standard {@link test.com.sun.max.vm.jtrun.JTAbstractRunScheme test framework}.
+ * under the standard {@link com.sun.max.vm.run.java.jtrun.JTAbstractRunScheme test framework}.
  *
  * @author Mick Jordan
  */

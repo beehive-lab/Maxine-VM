@@ -21,10 +21,10 @@
 package com.sun.max.vm.cps.dir.eir.amd64;
 
 import com.sun.max.config.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.cps.dir.*;
-import com.sun.max.vm.cps.eir.amd64.*;
 
 /**
  * @see MaxPackage
@@ -37,7 +37,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.compiler() instanceof DirGeneratorScheme &&
-               CPSCompiler.Static.compiler() instanceof AMD64EirGeneratorScheme;
+        return CPSCompiler.Static.isCompiler(vmConfiguration) && Platform.platform().isa == ISA.AMD64;
     }
 }

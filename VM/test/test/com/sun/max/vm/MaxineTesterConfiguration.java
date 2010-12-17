@@ -247,12 +247,12 @@ public class MaxineTesterConfiguration {
         auto("test_count_bits(test.com.sun.max.vm.cps.sparc.SPARCTranslatorTest_regressions)", FAIL_ALL);
 
         imageConfig("java", "-run=java");
-        imageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
-        imageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
-        imageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
-        imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("cpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
-        imageConfig("c1xc1x", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=1");
+        imageConfig("cpscps", "-run=com.sun.max.vm.run.java.jtrun.all", "-native-tests");
+        imageConfig("cpsjit", "-run=com.sun.max.vm.run.java.jtrun.all", "-native-tests", "-test-callee-jit");
+        imageConfig("jitcps", "-run=com.sun.max.vm.run.java.jtrun.all", "-native-tests", "-test-caller-jit");
+        imageConfig("jitjit", "-run=com.sun.max.vm.run.java.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
+        imageConfig("cpsc1x", "-run=com.sun.max.vm.run.java.jtrun.all", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
+        imageConfig("c1xc1x", "-run=com.sun.max.vm.run.java.jtrun.all", "-native-tests", "-opt=c1x", "-jit=c1x", "--C1X:OptLevel=1");
 
         String c1xPackage = "com.sun.max.vm.compiler.c1x";
         String c1xClass = c1xPackage + ".C1XCompilerScheme";
@@ -296,11 +296,11 @@ public class MaxineTesterConfiguration {
         imageConfig("ms",         "-run=java", "-heap=gcx.ms");
         imageConfig("msd",        "-run=java", "-heap=gcx.ms", "-build=DEBUG");
 
-        imageConfig("mscpscps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
-        imageConfig("mscpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-jit");
-        imageConfig("msjitcps", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit");
-        imageConfig("msjitjit", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("mscpsc1x", "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
+        imageConfig("mscpscps", "-run=com.sun.max.vm.run.java.jtrun.all", "-heap=gcx.ms", "-native-tests");
+        imageConfig("mscpsjit", "-run=com.sun.max.vm.run.java.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-jit");
+        imageConfig("msjitcps", "-run=com.sun.max.vm.run.java.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit");
+        imageConfig("msjitjit", "-run=com.sun.max.vm.run.java.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-jit", "-test-callee-jit");
+        imageConfig("mscpsc1x", "-run=com.sun.max.vm.run.java.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-c1x", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
 
         c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt1", "-C1X:OptLevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");

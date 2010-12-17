@@ -22,7 +22,6 @@ package com.sun.max.config.cps;
 
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
 
 /**
  * Redirect for CPS compiler.
@@ -38,7 +37,9 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.isCompilerPackage(this);
+        // The Package class in com.sun.max.vm.cps handles CPS inclusion.
+        // I.e. this is not cloned.
+        return false;
     }
 
 }

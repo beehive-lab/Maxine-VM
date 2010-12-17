@@ -35,39 +35,26 @@ import com.sun.max.vm.type.*;
 public class Package extends BootImagePackage {
     private static final String[] packages = {
         "java.lang.*",
-        "java.lang.annotation.Annotation",
-        "java.lang.management.GarbageCollectorMXBean",
         "java.lang.reflect.*",
         "java.lang.ref.*",
         "java.io.*",
-        "java.net.URLClassLoader$7",
         "java.nio.*",
         "java.nio.charset.*",
-        "java.nio.charset.spi.CharsetProvider",
         "java.security.ProtectionDomain",
         "java.security.DomainCombiner",
         "java.security.PrivilegedAction",
-        "java.sql.DriverManager",
         "java.util.*",
         "java.util.zip.*",
         "java.util.jar.*",
         "java.util.regex.*",
-        "java.util.concurrent.Future",
         "java.util.concurrent.atomic.*",
-        "java.util.concurrent.locks.ReentrantLock",
         "sun.misc.Version",
         "sun.misc.SharedSecrets",
         "sun.misc.VM",
         "sun.misc.Cleaner",
         "sun.reflect.Reflection",
-        "sun.reflect.annotation.AnnotationType",
-        "sun.nio.ch.DirectBuffer",
         "sun.nio.cs.*",
-        "sun.security.action.GetPropertyAction",
-        "sun.util.calendar.CalendarSystem",
-        "sun.util.LocaleServiceProviderPool$LocalizedObjectGetter",
-        "com.sun.management.GarbageCollectorMXBean",
-        "org.xml.sax.ErrorHandler"
+        "sun.security.action.GetPropertyAction"
     };
 
     private static boolean customised;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,23 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.jtrun;
-
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
+package com.sun.max.vm.run.java.jtrun;
 
 /**
- * @see MaxPackage
+ * The {@code JavaTesterConfig} class contains configuration information about the JavaTester tests,
+ * including the list of the classes and the class that contains the generated test runs.
  *
  * @author Ben L. Titzer
  */
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
+public class JTClasses {
+
+    public final Class[] testClasses;
+    public final Class<?> testRunClass;
+
+    public JTClasses(Class[] testClasses, Class testRunClass) {
+        this.testClasses = testClasses;
+        this.testRunClass = testRunClass;
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.runScheme() instanceof JTAbstractRunScheme;
+    public int getTestCount() {
+        return testClasses.length;
+    }
+
+    public String getTestName(int testNum) {
+        return testClasses[testNum].getName();
     }
 }

@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.jtrun;
+package com.sun.max.vm.run.java.jtrun;
 
 import com.sun.max.vm.Log;
 
