@@ -31,7 +31,12 @@ import com.sun.cri.ci.*;
  */
 public abstract class StateSplit extends Instruction {
 
-    protected FrameState stateBefore;
+    /**
+     * Sentinel denoting an explicitly cleared state.
+     */
+    private static final FrameState CLEARED_STATE = new MutableFrameState(null, -5, 0, 0);
+
+    private FrameState stateBefore;
 
     /**
      * Creates a new state split with the specified value type.
@@ -40,6 +45,23 @@ public abstract class StateSplit extends Instruction {
     public StateSplit(CiKind kind, FrameState stateBefore) {
         super(kind);
         this.stateBefore = stateBefore;
+    }
+
+    /**
+     * Determines if the state for this instruction has explicitly
+     * been cleared (as opposed to never initialized). Once explicitly
+     * cleared, an instruction must not have it state (re)set.
+     */
+    public boolean isStateCleared() {
+        return stateBefore == CLEARED_STATE;
+    }
+
+    /**
+     * Clears the state for this instruction. Once explicitly
+     * cleared, an instruction must not have it state (re)set.
+     */
+    protected void clearState() {
+        stateBefore = CLEARED_STATE;
     }
 
     /**
@@ -58,6 +80,6 @@ public abstract class StateSplit extends Instruction {
      */
     @Override
     public final FrameState stateBefore() {
-        return stateBefore;
+        return stateBefore == CLEARED_STATE ? null : stateBefore;
     }
 }

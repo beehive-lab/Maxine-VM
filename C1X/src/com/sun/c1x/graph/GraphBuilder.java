@@ -1329,6 +1329,12 @@ public final class GraphBuilder {
         append(new LookupSwitch(ipop(), list, keys, stateBefore, isBackwards));
     }
 
+    /**
+     * Determines whether the length of an array should be extracted out as a separate instruction
+     * before an array indexing instruction. This exposes it to CSE.
+     * @param array
+     * @return
+     */
     private boolean cseArrayLength(Value array) {
         // checks whether an array length access should be generated for CSE
         if (C1XOptions.OptCSEArrayLength) {
@@ -1410,7 +1416,9 @@ public final class GraphBuilder {
 
         if (x instanceof StateSplit) {
             StateSplit stateSplit = (StateSplit) x;
-            stateSplit.setStateBefore(curState.immutableCopy(bci));
+            if (!stateSplit.isStateCleared()) {
+                stateSplit.setStateBefore(curState.immutableCopy(bci));
+            }
         }
 
         if (x.canTrap()) {
@@ -2253,6 +2261,10 @@ public final class GraphBuilder {
                 case PAUSE          : genPause(); break;
                 case LSB            : // fall through
                 case MSB            : genSignificantBit(opcode);break;
+                case SAFEPOINT: {
+                    Util.warning("Ignoring SAFEPOINT builtin\n" + CiUtil.indent(curState.immutableCopy(bci()).toCodePos().toString(), "  "));
+                    break;
+                }
 
                 case BREAKPOINT:
                     throw new CiBailout("concurrent setting of breakpoint");

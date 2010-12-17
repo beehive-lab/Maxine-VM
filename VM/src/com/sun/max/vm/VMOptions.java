@@ -42,6 +42,7 @@ import com.sun.max.vm.VMOption.Category;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * VM options handling.
@@ -69,6 +70,10 @@ public final class VMOptions {
         }
     };
 
+    /**
+     * A VM option of the form {@code "-XX:name=value"} that updates a {@code String} field when
+     * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
+     */
     public static final class StringFieldOption extends VMStringOption {
 
         public final Field field;
@@ -94,6 +99,10 @@ public final class VMOptions {
         }
     }
 
+    /**
+     * A VM option of the form {@code "-XX:name=value"} that updates a {@code float} field when
+     * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
+     */
     public static final class FloatFieldOption extends VMFloatOption {
 
         public final Field field;
@@ -119,6 +128,10 @@ public final class VMOptions {
         }
     }
 
+    /**
+     * A VM option of the form {@code "-XX:name=value"} that updates an {@code int} field when
+     * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
+     */
     public static final class IntFieldOption extends VMIntOption {
 
         public final Field field;
@@ -144,6 +157,10 @@ public final class VMOptions {
         }
     }
 
+    /**
+     * A VM option of the form {@code "-XX:name=value"} that updates a {@code Size} field when
+     * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
+     */
     public static final class SizeFieldOption extends VMSizeOption {
 
         public final Field field;
@@ -180,6 +197,10 @@ public final class VMOptions {
         }
     }
 
+    /**
+     * A VM option of the form {@code "-XX:[+|-]name=value"} that updates a {@code boolean} field when
+     * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
+     */
     public static final class BooleanFieldOption extends VMBooleanXXOption {
 
         public final Field field;
@@ -198,6 +219,35 @@ public final class VMOptions {
                 } else {
                     FieldActor fieldActor = FieldActor.fromJava(field);
                     Reference.fromJava(fieldActor.holder().staticTuple()).writeBoolean(fieldActor.offset(), getValue());
+                }
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * A VM option of the form {@code "-name"} or {@code "-Xname"} that updates a {@code boolean} field when
+     * the option is {@linkplain VMOption#parseValue(Pointer) parsed}.
+     */
+    public static final class SimpleBooleanFieldOption extends VMOption {
+
+        public final Field field;
+
+        SimpleBooleanFieldOption(String prefix, String help, Field field) {
+            super(prefix + " ", help);
+            this.field = field;
+        }
+
+        @Override
+        public boolean parseValue(Pointer optionValue) {
+            boolean result = super.parseValue(optionValue);
+            if (result) {
+                if (MaxineVM.isHosted()) {
+                    setFieldValue(field, isPresent());
+                } else {
+                    FieldActor fieldActor = FieldActor.fromJava(field);
+                    Reference.fromJava(fieldActor.holder().staticTuple()).writeBoolean(fieldActor.offset(), isPresent());
                 }
                 return true;
             }
@@ -506,7 +556,19 @@ public final class VMOptions {
             VMOption option;
             if (fieldType == boolean.class) {
                 boolean defaultValue = field.getBoolean(null);
-                option = new BooleanFieldOption(prefix + (defaultValue ? '+' : '-'), name, help, field);
+                Category c = Category.from(prefix);
+                switch (c) {
+                    case STANDARD:
+                    case NON_STANDARD:
+                        option = new SimpleBooleanFieldOption(prefix + name, help, field);
+                        break;
+                    case C1X_SPECIFIC:
+                    case IMPLEMENTATION_SPECIFIC:
+                        option = new BooleanFieldOption(prefix + (defaultValue ? '+' : '-'), name, help, field);
+                        break;
+                    default:
+                        throw FatalError.unexpected(c.toString());
+                }
                 register(option, phase);
             } else if (fieldType == int.class) {
                 int defaultValue = field.getInt(null);

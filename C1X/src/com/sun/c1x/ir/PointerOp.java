@@ -66,7 +66,7 @@ public abstract class PointerOp extends StateSplit {
         this.isVolatile = isVolatile;
         this.isPrefetch = false;
         if (pointer.isNonNull()) {
-            redundantNullCheck();
+            eliminateNullCheck();
         }
     }
 
@@ -87,9 +87,8 @@ public abstract class PointerOp extends StateSplit {
     }
 
     @Override
-    public boolean internalClearNullCheck() {
-        stateBefore = null;
-        return true;
+    public void runtimeCheckCleared() {
+        clearState();
     }
 
     /**

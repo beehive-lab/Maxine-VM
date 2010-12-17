@@ -20,15 +20,9 @@
  */
 package demo;
 
-import java.util.*;
-
 import sun.misc.*;
 
-import com.sun.c1x.debug.*;
-import com.sun.c1x.util.*;
-import com.sun.cri.ci.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * Demonstrates use of the {@link PrintThreads} VM operation
@@ -47,21 +41,11 @@ public class PrintThreadsDemo {
     static final int NUMBER_OF_THREADS = 1;
 
     public static void main(String[] args) throws InterruptedException {
-        final boolean includeDebugInfoStack = System.getProperty("includeDebugInfoStack") != null;
         Signal.handle(new Signal("HUP"), new PrintThreads(false) {
             @Override
             protected void doIt() {
                 super.doIt();
                 internalFormat = !internalFormat;
-            }
-            @Override
-            protected void printStackTrace(List<StackFrame> frameList) {
-                super.printStackTrace(frameList);
-                if (includeDebugInfoStack) {
-                    TTY.println("Debug info stack:");
-                    CiDebugInfo[] infos = StackFrameWalker.extractDebugInfoStack(frameList);
-                    Util.printDebugInfoStack(infos, "    ");
-                }
             }
         });
 

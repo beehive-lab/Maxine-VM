@@ -24,6 +24,7 @@ import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.config.*;
+import com.sun.max.ide.*;
 import com.sun.max.lang.ISA.Category;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -114,7 +115,7 @@ public final class VMConfigurator {
     public static BootImagePackage defaultOptCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (BootImagePackage) BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
+                return new com.sun.max.vm.compiler.c1x.Package();
             default:
                 throw FatalError.unexpected(platform().isa.toString());
         }
@@ -126,8 +127,10 @@ public final class VMConfigurator {
     public static BootImagePackage defaultJitCompilerScheme() {
         switch (platform().isa) {
             case AMD64:
-                return (BootImagePackage) BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
-            default:
+                BootImagePackage def = BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
+                assert def != null : "need to modify class path to include " + JavaProject.findWorkspaceDirectory() + "/CPS/bin";
+                return def;
+           default:
                 throw FatalError.unimplemented();
         }
     }
@@ -193,14 +196,6 @@ public final class VMConfigurator {
      */
     public static BootImagePackage defaultMonitorScheme() {
         return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
-    }
-
-    public static void installStandardJit(BuildLevel buildLevel) {
-        installStandard(buildLevel);
-//        VMConfigurator vmConfigurator = new VMConfigurator(null);
-//        vmConfigurator.buildLevel.setValue(buildLevel);
-//        vmConfigurator.jitScheme.setValue(defaultJitCompilerScheme());
-//        vmConfigurator.create(true);
     }
 
     /**

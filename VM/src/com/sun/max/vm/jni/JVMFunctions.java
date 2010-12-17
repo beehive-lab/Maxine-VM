@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.jni;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -53,21 +56,36 @@ public class JVMFunctions {
         throw FatalError.unimplemented();
     }
 
-    public static Class[] GetClassContext() {
-        // Use the stack walker to collect the frames:
-        final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().tla());
-        final List<StackFrame> stackFrames = stackFrameWalker.frames(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
+    static class ClassContext extends SourceFrameVisitor {
+        boolean skippingUntilNativeMethod;
+        ArrayList<Class> classes = new ArrayList<Class>(20);
 
-        // Collect method actors corresponding to frames:
-        // N.B. In GuestVM there are no native frames, or JNI calls on the stack that need to be ignored, but we do not want a zero length result from the native frame at the base of the stack!
-        final List<ClassMethodActor> methodActors = StackFrameWalker.extractClassMethodActors(stackFrames, false, false, false, Platform.platform().os != OS.GUESTVM);
-
-        // Append the class of each method to the array:
-        final List<Class> result = new ArrayList<Class>();
-        for (ClassMethodActor methodActor : methodActors) {
-            result.add(methodActor.holder().javaClass());
+        @Override
+        public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
+            if (!skippingUntilNativeMethod) {
+                if (method.holder().isReflectionStub() || method.isNative()) {
+                    // ignore reflection stubs and native methods (according to JVM_GetClassContext in HotSpot)
+                } else {
+                    classes.add(method.holder().toJava());
+                }
+            } else {
+                if (method.isNative()) {
+                    skippingUntilNativeMethod = false;
+                }
+            }
+            return true;
         }
-        return result.toArray(new Class[result.size()]);
+    }
+
+    public static Class[] GetClassContext() {
+        ClassContext classContext = new ClassContext();
+
+        // In GuestVM there are no native frames, or JNI calls on the stack that need to be ignored
+        classContext.skippingUntilNativeMethod = platform().os != OS.GUESTVM;
+
+        classContext.walk(null, getInstructionPointer(), getCpuStackPointer(), getCpuFramePointer());
+        ArrayList<Class> classes = classContext.classes;
+        return classContext.classes.toArray(new Class[classes.size()]);
     }
 
     static final CriticalMethod javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke",
@@ -78,7 +96,7 @@ public class JVMFunctions {
         @Override
         public boolean visitFrame(Cursor current, Cursor callee) {
             TargetMethod targetMethod = current.targetMethod();
-            if (current.isTopFrame() || targetMethod == null || targetMethod instanceof Adapter || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
+            if (current.isTopFrame() || targetMethod == null || !targetMethod.isCompiled() || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
                 return true;
             }
             final ClassLoader cl = targetMethod.classMethodActor().holder().classLoader;

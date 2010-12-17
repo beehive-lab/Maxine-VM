@@ -39,18 +39,28 @@ public final class ArrayLength extends AccessArray {
      */
     public ArrayLength(Value array, FrameState newFrameState) {
         super(CiKind.Int, array, newFrameState);
-        setFlag(Flag.NoBoundsCheck);
         if (array.isNonNull()) {
-            redundantNullCheck();
+            eliminateNullCheck();
         }
     }
 
     /**
-     * Gets the object representing an explicit null check for this instruction.
-     * @return the explicit null check object
+     * Clears the state associated with a null check.
      */
-    public NullCheck explicitNullCheck() {
-        return null;
+    @Override
+    public void runtimeCheckCleared() {
+        if (!needsNullCheck()) {
+            clearState();
+        }
+    }
+
+    /**
+     * Checks whether this instruction can cause a trap.
+     * @return {@code true} if this instruction can cause a trap
+     */
+    @Override
+    public boolean canTrap() {
+        return needsNullCheck();
     }
 
     /**

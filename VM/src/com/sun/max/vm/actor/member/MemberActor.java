@@ -121,7 +121,7 @@ public abstract class MemberActor extends Actor {
 
     @Override
     public boolean isAccessibleBy(ClassActor accessor) {
-        if (accessor == null || holder() == accessor || isPublic() || accessor.isGenerated()) {
+        if (accessor == null || holder() == accessor || isPublic() || accessor.isReflectionStub()) {
             return true;
         }
         if (isPrivate()) {
