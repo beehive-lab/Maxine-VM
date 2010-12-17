@@ -289,7 +289,7 @@ public final class Throw {
                 Log.print(" [");
                 Log.print(codeStart);
                 Log.print("+");
-                Log.print(pointer.minus(codeStart).toInt());
+                Log.print(potentialCodePointer.minus(codeStart).toInt());
                 Log.println("]");
 
             }
