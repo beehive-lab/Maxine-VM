@@ -223,27 +223,17 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return safepointLabels;
     }
 
-    private final List<EirSafepoint> safepoints = new LinkedList<EirSafepoint>();
+    private final List<EirInfopoint> safepoints = new LinkedList<EirInfopoint>();
 
-    List<EirSafepoint> safepoints() {
+    List<EirInfopoint> safepoints() {
         return safepoints;
     }
 
-    public void addSafepoint(EirSafepoint eirSafepoint) {
+    public void addSafepoint(EirInfopoint eirInfopoint) {
         final Label label = new Label();
         assembler.bindLabel(label);
         safepointLabels.add(label);
-        safepoints.add(eirSafepoint);
-    }
-
-    private final List<EirGuardpoint> guardpoints = new LinkedList<EirGuardpoint>();
-
-    List<EirGuardpoint> guardpoints() {
-        return guardpoints;
-    }
-
-    public void addGuardpoint(EirGuardpoint guardpoint) {
-        guardpoints.add(guardpoint);
+        safepoints.add(eirInfopoint);
     }
 
     private void appendTargetJavaFrameDescriptors(Iterable<? extends EirStop> stops, List<TargetJavaFrameDescriptor> descriptors) {
@@ -255,11 +245,10 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     }
 
     private List<TargetJavaFrameDescriptor> getTargetJavaFrameDescriptors() {
-        final List<TargetJavaFrameDescriptor> descriptors = new ArrayList<TargetJavaFrameDescriptor>(directCalls.size() + indirectCalls.size() + safepoints.size() + guardpoints.size());
+        final List<TargetJavaFrameDescriptor> descriptors = new ArrayList<TargetJavaFrameDescriptor>(directCalls.size() + indirectCalls.size() + safepoints.size());
         appendTargetJavaFrameDescriptors(directCalls, descriptors);
         appendTargetJavaFrameDescriptors(indirectCalls, descriptors);
         appendTargetJavaFrameDescriptors(safepoints, descriptors);
-        appendTargetJavaFrameDescriptors(guardpoints, descriptors);
         return descriptors;
     }
 
@@ -289,7 +278,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
             }
         }
         for (Label label : safepointLabels) {
-            if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
+            if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND/* || !isSafepoint(code, label.position())*/) {
                 if (MaxineVM.isHosted()) {
                     Platform platform = Platform.platform();
                     disassemble(System.out, code, platform.isa, platform.wordWidth(), startAddress.toLong(), InlineDataDecoder.createFrom(inlineDataRecorder), null);
@@ -315,14 +304,4 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     protected abstract void setStartAddress(Address address);
 
     protected abstract void fixLabel(Label label, Address address);
-
-    private Label markerLabel = new Label();
-
-    public Label markerLabel() {
-        return markerLabel;
-    }
-
-    public void setMarker() {
-        assembler.bindLabel(markerLabel);
-    }
 }

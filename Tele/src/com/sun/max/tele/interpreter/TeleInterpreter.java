@@ -1329,7 +1329,6 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
             case MOV_F2I:                machine.skipBytes(2); push(IntValue.from(Float.floatToRawIntBits(pop().asFloat()))); break;
             case MOV_L2D:                machine.skipBytes(2); push(DoubleValue.from(Double.longBitsToDouble(pop().asLong()))); break;
             case MOV_D2L:                machine.skipBytes(2); push(LongValue.from(Double.doubleToRawLongBits(pop().asDouble()))); break;
-            case SAFEPOINT:              machine.skipBytes(2); break;
             case PAUSE:                  machine.skipBytes(2); break;
             case FLUSHW:                 machine.skipBytes(2); break;
             case LSB:                    machine.skipBytes(2); push(minus1IfWordWidth(Long.numberOfTrailingZeros((pop().asLong())))); break;

@@ -1004,7 +1004,6 @@ public abstract class BytecodeToTargetTranslator {
 
 
                 case Bytecodes.WRETURN            : emitReturn(WRETURN); break;
-                case Bytecodes.SAFEPOINT          : emit(SAFEPOINT); skip(2); break;
                 case Bytecodes.PAUSE              : emit(PAUSE); skip(2); break;
                 case Bytecodes.LSB                : emit(LSB); skip(2); break;
                 case Bytecodes.MSB                : emit(MSB); skip(2); break;
@@ -1013,7 +1012,7 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.WRITEREG           : emit(WRITEREGS.get(Role.VALUES.get(readU2()))); break;
 
                 case Bytecodes.ADD_SP             :
-                case Bytecodes.READ_PC            :
+                case Bytecodes.INFOPOINT          :
                 case Bytecodes.FLUSHW             :
                 case Bytecodes.ALLOCA             :
                 case Bytecodes.ALLOCSTKVAR        :

@@ -23,6 +23,7 @@ package com.sun.max.vm.cps.ir.interpreter;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.eir.*;
@@ -65,9 +66,11 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
         final List<EirJavaFrameDescriptor> descriptors = new ArrayList<EirJavaFrameDescriptor>();
         for (EirBlock block : method.blocks()) {
             for (EirInstruction instruction : block.instructions()) {
-                if (instruction instanceof EirGuardpoint) {
-                    final EirGuardpoint guardpoint = (EirGuardpoint) instruction;
-                    descriptors.add(guardpoint.javaFrameDescriptor());
+                if (instruction instanceof EirInfopoint) {
+                    final EirInfopoint guardpoint = (EirInfopoint) instruction;
+                    if (guardpoint.opcode == Bytecodes.INFO) {
+                        descriptors.add(guardpoint.javaFrameDescriptor());
+                    }
                 }
             }
         }

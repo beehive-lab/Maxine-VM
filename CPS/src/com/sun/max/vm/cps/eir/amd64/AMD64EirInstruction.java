@@ -23,8 +23,8 @@ package com.sun.max.vm.cps.eir.amd64;
 import static com.sun.max.asm.x86.Scale.*;
 import static com.sun.max.vm.cps.eir.EirLocationCategory.*;
 
+import com.sun.max.asm.Assembler.Directives;
 import com.sun.max.asm.*;
-import com.sun.max.asm.Assembler.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -32,10 +32,9 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.asm.amd64.*;
-import com.sun.max.vm.collect.*;
 import com.sun.max.vm.cps.eir.*;
-import com.sun.max.vm.cps.eir.EirStackSlot.*;
-import com.sun.max.vm.cps.eir.amd64.AMD64EirTargetEmitter.*;
+import com.sun.max.vm.cps.eir.EirStackSlot.Purpose;
+import com.sun.max.vm.cps.eir.amd64.AMD64EirTargetEmitter.StackAddress;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -432,20 +431,6 @@ public interface AMD64EirInstruction {
                     EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                     boolean isNativeFunctionCall, EirMethodGeneration methodGeneration) {
             super(block, abi, result, resultLocation, function, M_G_L_S, arguments, argumentLocations, isNativeFunctionCall, methodGeneration);
-        }
-
-        @Override
-        public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
-            AMD64EirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
-            if (arguments != null) {
-                for (EirOperand argument : arguments) {
-                    if (argument.kind().isReference && argument.location() instanceof EirStackSlot) {
-                        final EirStackSlot stackSlot = (EirStackSlot) argument.location();
-                        final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
-                        map.set(stackSlotBitIndex);
-                    }
-                }
-            }
         }
 
         // Direct calls currently are always 5 bytes long: 1 byte for the call opcode,
@@ -2156,30 +2141,6 @@ public interface AMD64EirInstruction {
         @Override
         public void emit(AMD64EirTargetEmitter emitter) {
             emit(emitter, target(), next());
-        }
-
-        @Override
-        public void acceptVisitor(AMD64EirInstructionVisitor visitor) {
-            visitor.visit(this);
-        }
-    }
-
-    /**
-     * Assigns the approximate current program counter into the destination register.
-     *
-     * @author Bernd Mathiske
-     */
-    public static class LEA_PC extends AMD64EirUnaryOperation {
-
-        public LEA_PC(EirBlock block, EirValue destination) {
-            super(block, destination, EirOperand.Effect.DEFINITION, G);
-        }
-
-        @Override
-        public void emit(AMD64EirTargetEmitter emitter) {
-            final Label label = new Label();
-            emitter.assembler().bindLabel(label);
-            emitter.assembler().rip_lea(operandGeneralRegister().as64(), label);
         }
 
         @Override

@@ -524,13 +524,6 @@ public abstract class TargetMethod extends MemoryRegion {
         return StopPositions.get(stopPositions, stopIndex);
     }
 
-//    /**
-//     * Determines if a given address denotes a call to a native function from this target method.
-//     */
-//    public final boolean isNativeCall(Pointer pc) {
-//        return StopPositions.isNativeFunctionCallPosition(stopPositions, targetCodePositionFor(pc));
-//    }
-
     /**
      * Gets the target code position for a machine code instruction address.
      *

@@ -31,6 +31,7 @@ import sun.reflect.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -83,7 +84,7 @@ public class JVMFunctions {
         // In GuestVM there are no native frames, or JNI calls on the stack that need to be ignored
         classContext.skippingUntilNativeMethod = platform().os != OS.GUESTVM;
 
-        classContext.walk(null, getInstructionPointer(), getCpuStackPointer(), getCpuFramePointer());
+        classContext.walk(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         ArrayList<Class> classes = classContext.classes;
         return classContext.classes.toArray(new Class[classes.size()]);
     }
@@ -110,7 +111,7 @@ public class JVMFunctions {
 
     public static ClassLoader LatestUserDefinedLoader() {
         LatestUserDefinedLoaderVisitor visitor = new LatestUserDefinedLoaderVisitor();
-        new VmStackFrameWalker(VmThread.current().tla()).inspect(VMRegister.getInstructionPointer(),
+        new VmStackFrameWalker(VmThread.current().tla()).inspect(Pointer.fromLong(here()),
             VMRegister.getCpuStackPointer(),
             VMRegister.getCpuFramePointer(),
             visitor);

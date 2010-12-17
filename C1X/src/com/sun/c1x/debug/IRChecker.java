@@ -1027,7 +1027,7 @@ public class IRChecker extends ValueVisitor {
     }
 
     @Override
-    public void visitLoadPC(LoadPC i) {
+    public void visitInfopoint(Infopoint i) {
     }
 
     private void checkPointerOpOffsetOrIndex(Value value) {

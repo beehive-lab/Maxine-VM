@@ -343,7 +343,7 @@ public final class DataPrototype extends Prototype {
                     final Pointer address = origin.plus(fieldActor.offset());
                     final int index = address.toInt() / alignment;
                     try {
-                        assert !referenceMap.isSet(index);
+                        assert !referenceMap.isSet(index) : fieldActor;
                         referenceMap.set(index);
                     } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                         throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
@@ -882,12 +882,11 @@ public final class DataPrototype extends Prototype {
 
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (classActor instanceof ReferenceClassActor) {
-                final DynamicHub dynamicHub = classActor.dynamicHub();
+                DynamicHub dynamicHub = classActor.dynamicHub();
+                StaticHub staticHub = classActor.staticHub();
 
-                for (int i = 0; i < dynamicHub.vTableLength(); i++) {
-                    final int vTableIndex = Hub.vTableStartIndex() + i;
-                    dynamicHub.setWord(vTableIndex, dynamicHub.getWord(vTableIndex).asAddress().plus(delta));
-                }
+                adjustVTableAddresses(delta, dynamicHub);
+                adjustVTableAddresses(delta, staticHub);
 
                 for (InterfaceActor interfaceActor : classActor.getAllInterfaceActors()) {
                     final int interfaceITableIndex = dynamicHub.getITableIndex(interfaceActor.id);
@@ -902,6 +901,14 @@ public final class DataPrototype extends Prototype {
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             targetMethod.setStart(targetMethod.start().plus(delta));
             targetMethod.setCodeStart(targetMethod.codeStart().plus(delta));
+        }
+    }
+
+    private void adjustVTableAddresses(int delta, final Hub hub) {
+        Word[] words = hub.expansion.words;
+        for (int i = 0; i < hub.vTableLength(); i++) {
+            final int vTableIndex = Hub.vTableStartIndex() + i;
+            words[vTableIndex] = words[vTableIndex].asAddress().plus(delta);
         }
     }
 
@@ -1055,18 +1062,25 @@ public final class DataPrototype extends Prototype {
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             if (classActor instanceof ReferenceClassActor) {
                 final DynamicHub dynamicHub = classActor.dynamicHub();
-                final Address hubCell = objectToCell.get(dynamicHub);
+                final StaticHub staticHub = classActor.staticHub();
+                final Address dynamicHubCell = objectToCell.get(dynamicHub);
+                final Address staticHubCell = objectToCell.get(staticHub);
 
                 for (int i = 0; i < dynamicHub.vTableLength(); i++) {
                     final int vTableIndex = Hub.vTableStartIndex() + i;
-                    setRelocationFlag(hubCell.plus(wordArrayLayout.getElementOffsetInCell(vTableIndex)));
+                    setRelocationFlag(dynamicHubCell.plus(wordArrayLayout.getElementOffsetInCell(vTableIndex)));
+                }
+
+                for (int i = 0; i < staticHub.vTableLength(); i++) {
+                    final int vTableIndex = Hub.vTableStartIndex() + i;
+                    setRelocationFlag(staticHubCell.plus(wordArrayLayout.getElementOffsetInCell(vTableIndex)));
                 }
 
                 for (InterfaceActor interfaceActor : classActor.getAllInterfaceActors()) {
                     final int interfaceITableIndex = dynamicHub.getITableIndex(interfaceActor.id);
                     for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                         final int iTableIndex = interfaceITableIndex + interfaceMethodActor.iIndexInInterface();
-                        setRelocationFlag(hubCell.plus(wordArrayLayout.getElementOffsetInCell(iTableIndex)));
+                        setRelocationFlag(dynamicHubCell.plus(wordArrayLayout.getElementOffsetInCell(iTableIndex)));
                     }
                 }
             }

@@ -323,11 +323,7 @@ public abstract class EirMethodGeneration {
 
     public abstract EirInstruction createAssignment(EirBlock eirBlock, Kind kind, EirValue destination, EirValue source);
 
-    public abstract EirSafepoint createSafepoint(EirBlock eirBlock);
-
-    public EirGuardpoint createGuardpoint(EirBlock eirBlock) {
-        return new EirGuardpoint(eirBlock);
-    }
+    public abstract EirInfopoint createInfopoint(EirBlock eirBlock, int opcode, EirValue destination);
 
     // Used when one wants generated code to perform a jump at the end of
     // the generated code region instead of a return instruction. This is most

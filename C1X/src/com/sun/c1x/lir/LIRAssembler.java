@@ -197,7 +197,7 @@ public abstract class LIRAssembler {
             if (disasm.length() != 0) {
                 TTY.println(disasm);
             } else {
-                TTY.println("Code [+%d]: %d bytes", lastDecodeStart, currentBytes);
+                TTY.println("Code [+%d]: %d bytes", lastDecodeStart, currentBytes.length);
                 Util.printBytes(lastDecodeStart, currentBytes, C1XOptions.PrintAssemblyBytesPerLine);
             }
         }
@@ -310,8 +310,11 @@ public abstract class LIRAssembler {
             case OsrEntry:
                 emitOsrEntry();
                 break;
-            case ReadPC:
-                emitReadPC(op.result());
+            case Here:
+                emitHere(op.result(), op.info, false);
+                break;
+            case Info:
+                emitHere(op.result(), op.info, true);
                 break;
             case Pause:
                 emitPause();
@@ -457,7 +460,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitNegate(LIRNegate negate);
 
-    protected abstract void emitReadPC(CiValue dst);
+    protected abstract void emitHere(CiValue dst, LIRDebugInfo info, boolean infoOnly);
 
     protected abstract void emitMonitorAddress(int monitor, CiValue dst);
 

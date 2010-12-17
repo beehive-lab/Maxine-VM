@@ -192,7 +192,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             addStackReferenceMaps(emitter.safepoints(), stackSlotWidth, bitMap);
         }
         bitMap.setSize(regReferenceMapSize);
-        for (EirSafepoint safepoint : emitter.safepoints()) {
+        for (EirInfopoint safepoint : emitter.safepoints()) {
             safepoint.addRegisterReferenceMap(bitMap);
             bitMap.next();
         }

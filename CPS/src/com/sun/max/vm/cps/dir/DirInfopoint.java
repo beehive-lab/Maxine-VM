@@ -20,44 +20,49 @@
  */
 package com.sun.max.vm.cps.dir;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.vm.cps.dir.transform.*;
 
 /**
- * Safepoint instruction with Java frame descriptor.
+ * An instruction location with Java frame descriptor.
  *
  * @author Bernd Mathiske
  */
-public final class DirSafepoint extends DirInstruction {
+public final class DirInfopoint extends DirInstruction {
 
-    private final DirJavaFrameDescriptor javaFrameDescriptor;
+    public final DirJavaFrameDescriptor javaFrameDescriptor;
+    public final int opcode;
+    public final DirVariable destination;
 
     public DirJavaFrameDescriptor javaFrameDescriptor() {
         return javaFrameDescriptor;
     }
 
-    public DirSafepoint(DirJavaFrameDescriptor javaFrameDescriptor) {
+    public DirInfopoint(DirVariable dst, DirJavaFrameDescriptor javaFrameDescriptor, int opcode) {
+        this.destination = dst;
         this.javaFrameDescriptor = javaFrameDescriptor;
+        this.opcode = opcode;
     }
 
     @Override
     public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
-        if (other instanceof DirSafepoint) {
-            final DirSafepoint dirSafepoint = (DirSafepoint) other;
+        if (other instanceof DirInfopoint) {
+            final DirInfopoint dirInfopoint = (DirInfopoint) other;
             if (javaFrameDescriptor == null) {
-                return dirSafepoint.javaFrameDescriptor == null;
+                return dirInfopoint.javaFrameDescriptor == null;
             }
-            return javaFrameDescriptor.equals(dirSafepoint.javaFrameDescriptor);
+            return javaFrameDescriptor.equals(dirInfopoint.javaFrameDescriptor) && opcode == dirInfopoint.opcode && destination == dirInfopoint.destination;
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return "safepoint " + javaFrameDescriptor;
+        return (destination == null ? "" : destination + " := ") + "infopoint[" + Bytecodes.nameOf(opcode) + "] " + javaFrameDescriptor;
     }
 
     @Override
     public void acceptVisitor(DirVisitor visitor) {
-        visitor.visitSafepoint(this);
+        visitor.visitInfopoint(this);
     }
 }

@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.tir.pipeline;
 
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -286,8 +287,8 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         emitInstruction(dirSwitch);
 
         // Capture state.
-        final DirGuardpoint dirGuardpoint = new DirGuardpoint(tirStateToJavaFrameDescriptor(guard.state()));
-        emitInstruction(dirGuardpoint);
+        final DirInfopoint guardpoint = new DirInfopoint(null, tirStateToJavaFrameDescriptor(guard.state()), Bytecodes.INFO);
+        emitInstruction(guardpoint);
 
         // Assign guard constant to the bail-out guard variable.
         final DirAssign dirAssignment = new DirAssign(bailoutGuard, createConstant(guard));
@@ -421,7 +422,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
                         FatalError.unimplemented();
                     }
 
-                    public void visitSafepoint(DirSafepoint safepoint) {
+                    public void visitInfopoint(DirInfopoint safepoint) {
                         FatalError.unimplemented();
                     }
 
@@ -430,10 +431,6 @@ public class TirToDirTranslator extends TirPipelineFilter  {
                     }
 
                     public void visitThrow(DirThrow dirThrow) {
-                        FatalError.unimplemented();
-                    }
-
-                    public void visitGuardpoint(DirGuardpoint guardpoint) {
                         FatalError.unimplemented();
                     }
 

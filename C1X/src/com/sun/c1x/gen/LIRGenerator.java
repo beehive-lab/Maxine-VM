@@ -670,9 +670,16 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitLoadPC(LoadPC x) {
-        CiValue result = createResultVariable(x);
-        lir.readPC(result);
+    public void visitInfopoint(Infopoint x) {
+        LIRDebugInfo info = stateFor(x);
+        if (x.opcode == SAFEPOINT) {
+            emitXir(xir.genSafepoint(site(x)), x, info, null, false);
+            return;
+        }
+        assert x.opcode == HERE || x.opcode == INFO;
+        CiValue result = x.kind.isVoid() ? CiValue.IllegalValue : createResultVariable(x);
+        LIROpcode opcode = x.opcode == HERE ? LIROpcode.Here : LIROpcode.Info;
+        lir.infopoint(opcode, result, info);
     }
 
     @Override

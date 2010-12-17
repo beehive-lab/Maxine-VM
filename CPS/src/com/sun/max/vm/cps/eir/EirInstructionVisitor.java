@@ -32,9 +32,7 @@ public interface EirInstructionVisitor {
     void visit(EirTry instruction);
     void visit(EirCatch instruction);
     void visit(EirAssignment instruction);
-    void visit(EirSafepoint instruction);
+    void visit(EirInfopoint instruction);
     void visit(EirBreakpoint breakpoint);
-    void visit(EirGuardpoint guardpoint);
     void visit(EirFiller filler);
-    void visit(EirMarker marker);
 }

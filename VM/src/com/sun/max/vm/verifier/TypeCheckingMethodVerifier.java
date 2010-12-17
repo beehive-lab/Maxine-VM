@@ -1992,8 +1992,15 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     }
                     break;
                 }
+                case INFOPOINT: {
+                    opcode = INFOPOINT | ((operand & ~0xff) << 8);
+                    if (opcode == HERE) {
+                        frame.push(LONG);
+                    }
+                    break;
+                }
+
                 case WRETURN            : performReturn(WORD); break;
-                case SAFEPOINT          : break;
                 case PAUSE              : break;
                 case MEMBAR             : break;
                 case BREAKPOINT_TRAP    : break;
@@ -2003,7 +2010,6 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case ALLOCA             : frame.pop(INTEGER); frame.push(WORD); break;
                 case ALLOCSTKVAR        : performAllocStkVar(); break;
 
-                case READ_PC            : frame.push(WORD); break;
                 case READREG            : frame.push(WORD); break;
                 case WRITEREG           : frame.pop(WORD); break;
 

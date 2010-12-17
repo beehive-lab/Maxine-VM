@@ -21,6 +21,7 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -251,7 +252,7 @@ public final class FatalError extends Error {
         Log.printThread(vmThread, false);
         Log.println(" ------");
         if (!trappedInNative && tla == currentTLA()) {
-            Throw.stackDump(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
+            Throw.stackDump(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         } else {
             Throw.stackDump(null, tla);
         }

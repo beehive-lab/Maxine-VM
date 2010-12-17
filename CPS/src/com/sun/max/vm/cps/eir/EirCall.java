@@ -24,6 +24,8 @@ import java.lang.reflect.*;
 
 import com.sun.max.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.collect.*;
 
 /**
  * @author Bernd Mathiske
@@ -143,4 +145,17 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
         visitor.visit(this);
     }
 
+    @Override
+    public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
+        super.addFrameReferenceMap(stackSlotWidth, map);
+        if (arguments != null) {
+            for (EirOperand argument : arguments) {
+                if (argument.kind().isReference && argument.location() instanceof EirStackSlot) {
+                    final EirStackSlot stackSlot = (EirStackSlot) argument.location();
+                    final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
+                    map.set(stackSlotBitIndex);
+                }
+            }
+        }
+    }
 }

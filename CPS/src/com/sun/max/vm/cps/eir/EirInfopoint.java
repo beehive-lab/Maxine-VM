@@ -18,36 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.cps.eir.amd64;
+package com.sun.max.vm.cps.eir;
 
-import com.sun.max.asm.amd64.*;
-import com.sun.max.lang.*;
+import static com.sun.max.vm.cps.eir.EirLocationCategory.*;
+
+import java.lang.reflect.*;
+
+import com.sun.cri.bytecode.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.cps.eir.*;
 
 /**
  * @author Bernd Mathiske
  */
-public final class AMD64EirSafepoint extends EirSafepoint<EirInstructionVisitor, AMD64EirTargetEmitter> {
+public abstract class EirInfopoint<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter>
+                      extends EirStop<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 
-    public AMD64EirSafepoint(EirBlock block) {
+    public final int opcode;
+
+    public final EirOperand operand;
+
+    public EirInfopoint(EirBlock block, int opcode, EirValue destination) {
         super(block);
+        this.opcode = opcode;
+        if (opcode == Bytecodes.HERE) {
+            assert destination != null;
+            this.operand = new EirOperand(this, EirOperand.Effect.DEFINITION, G);
+            this.operand.setEirValue(destination);
+        } else {
+            assert destination == null;
+            this.operand = null;
+        }
     }
 
-    @Override
-    public void emit(AMD64EirTargetEmitter emitter) {
-        emitter.addSafepoint(this);
-        final AMD64EirRegister.General r = (AMD64EirRegister.General) emitter.abi().safepointLatchRegister();
-        final AMD64GeneralRegister64 register = r.as64();
-        emitter.assembler().mov(register, register.indirect());
-    }
-
-    @Override
-    public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
-        AMD64EirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
-    }
-
-    @Override
     public void addRegisterReferenceMap(ByteArrayBitMap map) {
         for (EirVariable variable : liveVariables()) {
             if (variable.location().category() == EirLocationCategory.INTEGER_REGISTER) {
@@ -59,4 +61,27 @@ public final class AMD64EirSafepoint extends EirSafepoint<EirInstructionVisitor,
         }
     }
 
+    @Override
+    public void acceptVisitor(EirInstructionVisitor visitor) throws InvocationTargetException {
+        visitor.visit(this);
+    }
+    public EirOperand operand() {
+        return operand;
+    }
+
+    public EirLocation operandLocation() {
+        return operand.location();
+    }
+
+    @Override
+    public void visitOperands(EirOperand.Procedure visitor) {
+        if (operand != null) {
+            visitor.run(operand);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "-" + Bytecodes.nameOf(opcode) + " " + (operand == null ? "" : operand + " ") + javaFrameDescriptor();
+    }
 }

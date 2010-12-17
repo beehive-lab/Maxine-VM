@@ -328,10 +328,6 @@ public class AMD64EirInstructionAdapter extends EirInstructionAdapter implements
         visitConditionalBranch(instruction);
     }
 
-    public void visit(LEA_PC instruction) {
-        visitUnaryOperation(instruction);
-    }
-
     public void visit(LEA_STACK_ADDRESS instruction) {
         visitBinaryOperation(instruction);
     }

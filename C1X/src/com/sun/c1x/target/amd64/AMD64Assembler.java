@@ -261,6 +261,15 @@ public class AMD64Assembler extends AbstractAssembler {
                 emitByte(0x04 | regenc);
                 emitByte(scale.log2 << 6 | indexenc | 0x05);
                 emitInt(disp);
+            } else if (base == CiRegister.InstructionRelative) {
+                // Adjust disp which is currently relative to the start of the instruction
+                int instrStart = codeBuffer.mark();
+                assert instrStart >= 0;
+                int instrSize = (codeBuffer.position() - instrStart) + 5;
+                disp = disp - instrSize;
+                // [00 000 101] disp32
+                emitByte(0x05 | regenc);
+                emitInt(disp);
             } else if (addr == CiAddress.Placeholder) {
                 // [00 000 101] disp32
                 emitByte(0x05 | regenc);

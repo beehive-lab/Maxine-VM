@@ -20,9 +20,6 @@
  */
 package com.sun.max.vm.cps.eir.amd64;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
-import com.sun.max.vm.collect.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.type.*;
 
@@ -30,21 +27,6 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  */
 public abstract class AMD64EirGenerator extends EirGenerator<AMD64EirGeneratorScheme> {
-
-    public static void addFrameReferenceMap(PoolSet<EirVariable> liveVariables, WordWidth stackSlotWidth, ByteArrayBitMap map) {
-        for (EirVariable variable : liveVariables) {
-            if (variable.kind().isReference) {
-                EirLocation location = variable.location();
-                if (location.category() == EirLocationCategory.STACK_SLOT) {
-                    final EirStackSlot stackSlot = (EirStackSlot) location;
-                    if (stackSlot.purpose != EirStackSlot.Purpose.PARAMETER) {
-                        final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
-                        map.set(stackSlotBitIndex);
-                    }
-                }
-            }
-        }
-    }
 
     private final EirLocation eirCatchParameterLocation = eirABIsScheme().javaABI.getResultLocation(Kind.REFERENCE);
 

@@ -813,7 +813,7 @@ public final class GraphBuilder {
     void genNewMultiArray(int cpi) {
         RiType type = constantPool().lookupType(cpi, MULTIANEWARRAY);
         FrameState stateBefore = null; //curState.immutableCopy(bci());
-        int rank = stream().readUByte(stream().currentBCI() + 3);
+        int rank = stream().readUByte(bci() + 3);
         Value[] dims = new Value[rank];
         for (int i = rank - 1; i >= 0; i--) {
             dims[i] = ipop();
@@ -2243,7 +2243,7 @@ public final class GraphBuilder {
                 case MEMBAR         : genMemoryBarrier(s.readCPI()); break;
 
                 case WRETURN        : genReturn(wpop()); break;
-                case READ_PC        : genLoadPC(); break;
+                case INFOPOINT      : genInfopoint(INFOPOINT | (s.readUByte(bci() + 1) << 16), s.readUByte(bci() + 2) != 0); break;
                 case JNICALL        : genNativeCall(s.readCPI()); break;
                 case JNIOP          : genJniOp(s.readCPI()); break;
                 case ALLOCA         : genStackAllocate(); break;
@@ -2261,10 +2261,6 @@ public final class GraphBuilder {
                 case PAUSE          : genPause(); break;
                 case LSB            : // fall through
                 case MSB            : genSignificantBit(opcode);break;
-                case SAFEPOINT: {
-                    Util.warning("Ignoring SAFEPOINT builtin\n" + CiUtil.indent(curState.immutableCopy(bci()).toCodePos().toString(), "  "));
-                    break;
-                }
 
                 case BREAKPOINT:
                     throw new CiBailout("concurrent setting of breakpoint");
@@ -2443,8 +2439,13 @@ public final class GraphBuilder {
         }
     }
 
-    private void genLoadPC() {
-        wpush(append(new LoadPC()));
+    private void genInfopoint(int opcode, boolean inclFrame) {
+        // TODO: create slimmer frame state if inclFrame is false
+        FrameState state = curState.immutableCopy(bci());
+        Value result = append(new Infopoint(opcode, state));
+        if (!result.kind.isVoid()) {
+            push(result.kind, result);
+        }
     }
 
     private void genLoadRegister(int registerId) {

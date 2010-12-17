@@ -44,7 +44,5 @@ public interface DirVisitor {
 
     void visitThrow(DirThrow dirThrow);
 
-    void visitSafepoint(DirSafepoint safepoint);
-
-    void visitGuardpoint(DirGuardpoint guardpoint);
+    void visitInfopoint(DirInfopoint safepoint);
 }
