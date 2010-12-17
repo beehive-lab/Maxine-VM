@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.jtrun.some;
+package test.com.sun.max.vm.jtrun.all;
 
 import test.com.sun.max.vm.jtrun.*;
+import test.com.sun.max.vm.jtrun.all.*;
 
 import com.sun.max.vm.run.java.jtrun.*;
 
-/**
- * The {@codeJTConfig} class contains generated code which contains the class list
- * for a generated JavaTesterRuns class.
- *
- * @author Ben L. Titzer
- */
-public class JTConfig {
+import com.sun.max.annotate.*;
 
-// GENERATED TEST CLASS LIST
-    private static final Class<?>[] classList = {
-    };
-// END GENERATED TEST CLASS LIST
+public class JTRunScheme extends JTAbstractRunScheme {
 
-    public static final JTClasses testClasses = new JTClasses(classList, JTRuns.class);
+    @HOSTED_ONLY
+    public JTRunScheme() {
+    }
 
+    @Override
+    @HOSTED_ONLY
+    public Class<?>[] getClassList() {
+        return JTConfig.testClasses.testClasses;
+    }
+
+    @Override
+    public void runTests() {
+        JTRuns.runTests(testStart, testEnd);
+        JTUtil.printReport();
+    }
 }
