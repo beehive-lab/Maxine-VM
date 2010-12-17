@@ -23,13 +23,10 @@ package com.sun.max.vm.actor.holder;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
@@ -39,8 +36,20 @@ import com.sun.max.vm.layout.*;
  */
 public final class DynamicHub extends Hub {
 
-    DynamicHub(Size tupleSize, SpecificLayout specificLayout, ClassActor classActor, int[] superClassActorIds, Iterable<InterfaceActor> allInterfaceActors, int vTableLength, TupleReferenceMap referenceMap) {
-        super(tupleSize, specificLayout, classActor, superClassActorIds, allInterfaceActors, vTableLength, referenceMap);
+    DynamicHub(Size tupleSize,
+               SpecificLayout specificLayout,
+               ClassActor classActor,
+               int[] superClassActorIds,
+               Iterable<InterfaceActor> allInterfaceActors,
+               int vTableLength,
+               TupleReferenceMap referenceMap) {
+        super(tupleSize,
+              specificLayout,
+              classActor,
+              superClassActorIds,
+              allInterfaceActors,
+              vTableLength,
+              referenceMap);
     }
 
     private void initializeMTable(int[] superClassActorIds, Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup, int[] iToV) {
@@ -91,37 +100,6 @@ public final class DynamicHub extends Hub {
         return hub;
     }
 
-    void initializeVTable(VirtualMethodActor[] allVirtualMethodActors) {
-        boolean compilerCreatesTargetMethods = compilerCreatesTargetMethods();
-        for (int i = 0; i < allVirtualMethodActors.length; i++) {
-            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
-            final int vTableIndex = firstWordIndex() + i;
-            assert virtualMethodActor.vTableIndex() == vTableIndex;
-            assert getWord(vTableIndex).isZero();
-            Address vTableEntry;
-
-            if (compilerCreatesTargetMethods) {
-                vTableEntry = checkCompiled(virtualMethodActor);
-                if (vTableEntry.isZero()) {
-                    vTableEntry = vm().stubs.virtualTrampoline(vTableIndex);
-                }
-            } else {
-                vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
-            }
-            setWord(vTableIndex, vTableEntry);
-        }
-    }
-
-    private Address checkCompiled(VirtualMethodActor virtualMethodActor) {
-        if (!MaxineVM.isHosted()) {
-            final TargetMethod current = virtualMethodActor.currentTargetMethod();
-            if (current != null) {
-                return current.getEntryPoint(CallEntryPoint.VTABLE_ENTRY_POINT).asAddress();
-            }
-        }
-        return Address.zero();
-    }
-
     /**
      * Ensures all the vtable entries in this hub are resolved to compiled methods, not trampolines.
      */
@@ -159,20 +137,6 @@ public final class DynamicHub extends Hub {
                 }
             }
         }
-    }
-
-    /**
-     * Determines whether or not the currently configured compiler compiles all the way down to target methods.
-     *
-     * TODO: Remove this once the notion of a compiler not being able to compile to target methods is obsolete.
-     */
-    @FOLD
-    private static boolean compilerCreatesTargetMethods() {
-        if (!isHosted()) {
-            return true;
-        }
-        CPSCompiler compiler = CPSCompiler.Static.compiler();
-        return compiler == null || compiler.compiledType() != null;
     }
 
     @Override

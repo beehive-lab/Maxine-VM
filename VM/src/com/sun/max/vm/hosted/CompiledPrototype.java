@@ -739,15 +739,20 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "linkVTableEntries");
     }
 
-    private void linkVTable(ClassActor classActor) {
-        final DynamicHub dynamicHub = classActor.dynamicHub();
-        for (int vTableIndex = Hub.vTableStartIndex(); vTableIndex < Hub.vTableStartIndex() + dynamicHub.vTableLength(); vTableIndex++) {
+    private void linkVTable(ClassActor classActor, Hub hub) {
+        Word[] words = hub.expansion.words;
+        for (int vTableIndex = Hub.vTableStartIndex(); vTableIndex < Hub.vTableStartIndex() + hub.vTableLength(); vTableIndex++) {
             final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
             final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
             if (targetMethod != null) {
-                dynamicHub.setWord(vTableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
+                words[vTableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
             }
         }
+    }
+
+    private void linkVTable(ClassActor classActor) {
+        linkVTable(classActor, classActor.dynamicHub());
+        linkVTable(ClassRegistry.OBJECT, classActor.staticHub());
     }
 
     private void linkITableEntries() {
@@ -772,6 +777,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkITable(ClassActor classActor, final IntHashMap<InterfaceActor> serialToInterfaceActor) {
         final DynamicHub hub = classActor.dynamicHub();
+        Word[] words = hub.expansion.words;
         for (int mTableIndex = hub.mTableStartIndex; mTableIndex < hub.mTableStartIndex + hub.mTableLength; mTableIndex++) {
             final int interfaceITableIndex = hub.getInt(mTableIndex);
             if (interfaceITableIndex > 0) {
@@ -784,7 +790,7 @@ public class CompiledPrototype extends Prototype {
                         final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
                         final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
                         if (targetMethod != null) {
-                            hub.setWord(methodITableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
+                            words[methodITableIndex] = VTABLE_ENTRY_POINT.in(targetMethod);
                         }
                     }
                 }
