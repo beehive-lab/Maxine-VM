@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.jtrun.some;
 
+import test.com.sun.max.vm.jtrun.*;
+
 import com.sun.max.vm.run.java.jtrun.*;
 
 import com.sun.max.annotate.*;

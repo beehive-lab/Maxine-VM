@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,29 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.run.java.jtrun;
+package test.com.sun.max.vm.jtrun.some;
 
-/**
- * The {@code JavaTesterConfig} class contains configuration information about the JavaTester tests,
- * including the list of the classes and the class that contains the generated test runs.
- *
- * @author Ben L. Titzer
- */
-public class JTClasses {
+import test.com.sun.max.vm.jtrun.*;
+import test.com.sun.max.vm.jtrun.some.*;
 
-    public final Class[] testClasses;
-    public final Class<?> testRunClass;
+import com.sun.max.vm.run.java.jtrun.*;
 
-    public JTClasses(Class[] testClasses, Class testRunClass) {
-        this.testClasses = testClasses;
-        this.testRunClass = testRunClass;
+import com.sun.max.annotate.*;
+
+public class JTRunScheme extends JTAbstractRunScheme {
+
+    @HOSTED_ONLY
+    public JTRunScheme() {
     }
 
-    public int getTestCount() {
-        return testClasses.length;
+    @Override
+    @HOSTED_ONLY
+    public Class<?>[] getClassList() {
+        return JTConfig.testClasses.testClasses;
     }
 
-    public String getTestName(int testNum) {
-        return testClasses[testNum].getName();
+    @Override
+    public void runTests() {
+        JTRuns.runTests(testStart, testEnd);
+        JTUtil.printReport();
     }
 }
