@@ -219,9 +219,6 @@ public final class VMRegister {
     @INTRINSIC(WRITEREG | (LATCH << 8))
     public static native void setSafepointLatchRegister(Word value);
 
-    @INTRINSIC(HERE)
-    public static native long here();
-
     @INLINE
     @INTRINSIC(WRITEREG | (LINK << 8))
     public static native void setCallAddressRegister(Word value);

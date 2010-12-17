@@ -862,6 +862,12 @@ public class Bytecodes {
          */
         @INTRINSIC(MEMBAR_STORE_STORE)
         public static native void storeStore();
+
+        /**
+         * Ensures all preceding stores and loads complete before any subsequent stores.
+         */
+        @INTRINSIC(MEMBAR | ((LOAD_STORE | STORE_STORE) << 8))
+        public static native void memopStore();
     }
 
     public static final int ILLEGAL = 255;
