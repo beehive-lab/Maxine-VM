@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.bir;
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.cps.cir.*;
 
 /**
  * @see MaxPackage
