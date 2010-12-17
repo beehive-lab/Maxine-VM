@@ -285,7 +285,14 @@ public abstract class ClassActor extends Actor implements RiType {
                 assignHolderToLocalMethodActors();
                 if (isReferenceClassActor() || isInterface()) {
                     final Size dynamicTupleSize = layoutFields(specificLayout);
-                    final BitSet superClassActorSerials = getSuperClassActorSerials();
+                    HashSet<Integer> idSet = new HashSet<Integer>(7);
+                    gatherSuperClassActorIds(idSet);
+                    int[] superClassActorIds = new int[idSet.size()];
+                    int i = 0;
+                    for (Integer n : idSet) {
+                        superClassActorIds[i++] = n;
+                    }
+
                     TupleReferenceMap dynamicReferenceMap;
                     int vTableLength;
 
@@ -298,9 +305,9 @@ public abstract class ClassActor extends Actor implements RiType {
                         vTableLength = 0;
                     }
 
-                    final DynamicHub dHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorSerials, allInterfaceActors, vTableLength, dynamicReferenceMap);
+                    final DynamicHub dHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorIds, allInterfaceActors, vTableLength, dynamicReferenceMap);
                     ClassActor.this.iToV = new int[dHub.iTableLength];
-                    ClassActor.this.dynamicHub = dHub.expand(superClassActorSerials, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
+                    ClassActor.this.dynamicHub = dHub.expand(superClassActorIds, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
 
                     if (isReferenceClassActor()) {
                         dynamicHub.initializeVTable(allVirtualMethodActors);
@@ -1261,21 +1268,27 @@ public abstract class ClassActor extends Actor implements RiType {
         return toJava().getAnnotation(annotationClass);
     }
 
-    protected BitSet getSuperClassActorSerials() {
-        final BitSet result = new BitSet();
-        result.set(id);
+    /**
+     * Gets the complete closure of class ids for this class. This includes this class's
+     * id, all of its super classes' ids and the transitive closure of
+     * interface ids implemented or extended by this class.
+     *
+     * @param set a set used to collect up the ids. This will be created if {@code null}.
+     * @see ClassID
+     */
+    protected void gatherSuperClassActorIds(HashSet<Integer> set) {
+        set.add(isInterface() ? -id : id);
         if (superClassActor != null) {
-            result.or(superClassActor.getSuperClassActorSerials());
+            superClassActor.gatherSuperClassActorIds(set);
         }
         for (InterfaceActor interfaceActor : localInterfaceActors()) {
-            result.or(interfaceActor.getSuperClassActorSerials());
+            interfaceActor.gatherSuperClassActorIds(set);
         }
         if (MaxineVM.isHosted()) {
             if (kind.isWord) {
-                result.clear(ClassRegistry.OBJECT.id);
+                set.remove(ClassRegistry.OBJECT.id);
             }
         }
-        return result;
     }
 
     private void verify() {
