@@ -115,31 +115,29 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
     }
 
     @Override
-    protected BitSet getSuperClassActorSerials() {
-        final BitSet result = super.getSuperClassActorSerials();
+    protected void gatherSuperClassActorIds(HashSet<Integer> set) {
+        super.gatherSuperClassActorIds(set);
         final int numberOfDimensions = numberOfDimensions();
         final ClassActor elementClassActor = elementClassActor();
-        result.set(id);
+        set.add(id);
         ClassActor superClassActor = elementClassActor.superClassActor;
         while (superClassActor != null) {
-            result.set(superClassActor.makeID(numberOfDimensions));
+            set.add(superClassActor.makeID(numberOfDimensions));
             superClassActor = superClassActor.superClassActor;
         }
         for (InterfaceActor interfaceActor : elementClassActor.getAllInterfaceActors()) {
-            result.set(interfaceActor.makeID(numberOfDimensions));
+            set.add(interfaceActor.makeID(numberOfDimensions));
         }
 
         if (!elementClassActor.isPrimitiveClassActor()) {
-            result.set(ClassRegistry.OBJECT.makeID(numberOfDimensions));
+            set.add(ClassRegistry.OBJECT.makeID(numberOfDimensions));
         }
 
         for (int dimensions = 1; dimensions < numberOfDimensions; ++dimensions) {
-            result.set(ClassRegistry.OBJECT.makeID(dimensions));
-            result.set(ClassRegistry.CLONEABLE.makeID(dimensions));
-            result.set(ClassRegistry.SERIALIZABLE.makeID(dimensions));
+            set.add(ClassRegistry.OBJECT.makeID(dimensions));
+            set.add(ClassRegistry.CLONEABLE.makeID(dimensions));
+            set.add(ClassRegistry.SERIALIZABLE.makeID(dimensions));
         }
-
-        return result;
     }
 
     public ArrayClassActor forDimension(int dimension) {

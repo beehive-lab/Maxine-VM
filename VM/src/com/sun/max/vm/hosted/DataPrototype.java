@@ -343,7 +343,7 @@ public final class DataPrototype extends Prototype {
                     final Pointer address = origin.plus(fieldActor.offset());
                     final int index = address.toInt() / alignment;
                     try {
-                        assert !referenceMap.isSet(index);
+                        assert !referenceMap.isSet(index) : fieldActor;
                         referenceMap.set(index);
                     } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                         throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
