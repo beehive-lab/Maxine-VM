@@ -62,11 +62,11 @@
  * in each of the these sub-packages use the redirection constructor to include other packages in different
  * parts of the package namespace. In general, those other packages do not contain {@code Package}
  * classes as the system creates them automatically as needed. The only reason to have a {@code Package}
- * class in a redirected sub-package is to override the default behavior of the parent. For example, platform-specfic
+ * class in a redirected sub-package is to override the default behavior of the parent. For example, platform-specific
  * packages must have a definition for the method
  * {@link com.sun.max.config.BootImagePackage#isPartOfMaxineVM(com.sun.max.vm.VMConfiguration)}.
  * <p>
- * Package discovery proceeds by iterating over the roots in order and. for each root,
+ * Package discovery proceeds by iterating over the roots in order and, for each root,
  * scanning every element of the given class path looking for packages that are sub-packages
  * of the root (or the root itself). The class path scan handles both file system directories and jar files.
  * A global map of discovered packages is maintained across the entire process
@@ -88,18 +88,42 @@
  * as roots always contain a {@code Package} instance. The discovered instance is then cloned and
  * its name set appropriately. Other state is reset to the default values. Note that, if you subclass
  * {@link com.sun.max.config.BootImagePackage} and add additional state it is your responsibility to decide
- * whether the state should be reset or not after a clone (and you must override the {@link Object#clone} method.
+ * whether the state should be reset or not after a clone (and you must override the {@link Object#clone} method).
  * The fact that the nearest parent is used for the clone ensures that any overridden methods
  * in a {@code Package} class in an interior node carries forward to all child nodes. So, for example,
  * platform-specific configuration in a sub-tree works as expected.
  * <p>
  * Once the package is discovered, it added to the global map. If the package contains references to other packages
- * then each of these is also added to the map. Furthernore, any of these that refer to packages outside of this tree
+ * then each of these is also added to the map. Furthermore, any of these that refer to packages outside of this tree
  * and are tagged as recursive are added as new roots to be processed later.
  * <p>
  * Once all the roots are processed the set of packages contained in the global map is returned as the result.
  * <h2>Constructors</h2>
+ * Note that all constructors are {@code protected} to ensure that they are only invoked from {@code Package} classes.
+ * <ul>
+ * <li>{@code Package()}: this is typically only used in packages that need to override
+ * {@link com.sun.max.config.BootImagePackage#isPartOfMaxineVM}, and causes all of the classes
+ * in the package containing the {@Code Package} class to be candidates for inclusion. Nested packages are not included unless
+ * some parent package was specified as recursive.
+ * <li>{@code Package(String name, boolean recursive)}: this is the simplest form of redirection, designating a single
+ * root, {@code name}, and specifying via {@code recursive}, whether nested packages should be included (recursively).
+ * <li>{@code Package(String name...)}: this is the most general form of constructor. {@code name} may designate a single (non-recursive) package,
+ * using {@code a.b.c.*}, a (recursive) package tree using {@code a.b.c.**} or a single class using {@code a.b.c.D}. In the latter case, several
+ * specifications may denote different classes from the package and the end result is the union of them all. Note that it is not possible, by design,
+ * to exclude a class. However,  it is possible to exclude the classes of a package within an tree that is otherwise destined to be included by recursive inclusion.
+ * This is achieve by inheriting from {@link com.sun.max.config.ExcludedPackage}, which simply defines
+ * {@link com.sun.max.config.BootImagePackage#isPartOfMaxineVM} to return {@code false}.
+ * <p>
  *
- * @author Mick Jordan
+ *<h2>Scheme packages</h2>
+ * Packages that contain scheme definitions must always contain a {@code Package} class and
+ * override {@link com.sun.max.config.BootImagePackage#isPartOfMaxineVM}
+ * since schemes are configurable. The logic for deciding whether the package is to be included is limited to testing the
+ * instance or name of the {@link com.sun.max.config.BootImagePackage} that has been configured, or testing whether the
+ * scheme class itself is assignable to the scheme class defined by the package under test. In particular the scheme instance
+ * cannot be used since the schemes are no instantiated until after the configuration analysis is complete.
+ * <p>
+ * The constructor for the {@code Package} class must also register the scheme class using the
+ * {@link com.sun.max.config.BootImagePackage#registerScheme(Class, Class)} method.
  */
 package com.sun.max.config;

@@ -74,7 +74,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
      * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}
      * and, if {@code recursive == true}, all its sub-packages.
      */
-    public BootImagePackage(String pkgName, boolean recursive) {
+    protected BootImagePackage(String pkgName, boolean recursive) {
         this.name = pkgName == null ? getClass().getPackage().getName() : pkgName;
         this.recursive = recursive;
     }
@@ -198,6 +198,17 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
         };
         classSearch.run(classpath, name.replace('.', '/'));
         return classNames.toArray(new String[classNames.size()]);
+    }
+
+    /**
+     * Check whether the given class should be in the boot image.
+     * @return
+     */
+    public boolean isBootImageClass(String name) {
+        if (classes == null) {
+            return true;
+        }
+        return classes.contains(name);
     }
 
     /**
@@ -337,7 +348,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
      * @param roots array of subclass of {@code BootImagePackage} that define search start and match
      * @return list of packages in the closure denoted by {@code roots}
      */
-    public static List<BootImagePackage> getTransitiveSubPackages(Classpath classpath, final BootImagePackage[] roots) {
+    public static List<BootImagePackage> getTransitiveSubPackages(Classpath classpath, final BootImagePackage... roots) {
         final Map<String, BootImagePackage> pkgMap = new TreeMap<String, BootImagePackage>();
 
         final ArrayList<RootPackageInfo> rootInfos = new ArrayList<RootPackageInfo>(roots.length);
@@ -384,10 +395,6 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
         }
 
         return Arrays.asList(pkgMap.values().toArray(new BootImagePackage[pkgMap.size()]));
-    }
-
-    public List<BootImagePackage> getTransitiveSubPackages(Classpath classpath) {
-        return getTransitiveSubPackages(classpath, new BootImagePackage[] {this});
     }
 
     private Map<Class<? extends VMScheme>, Class<? extends VMScheme>> schemeTypeToImplementation;

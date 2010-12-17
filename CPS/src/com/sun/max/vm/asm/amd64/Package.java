@@ -35,6 +35,6 @@ import com.sun.max.vm.compiler.*;
 public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.compiler() != null && platform().isa == ISA.AMD64;
+        return CPSCompiler.Static.isCompiler(vmConfiguration) && platform().isa == ISA.AMD64;
     }
 }

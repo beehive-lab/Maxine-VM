@@ -18,8 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- *
- * @author Ben L. Titzer
- */
-package test.com.sun.max.vm.jtrun;
+package com.sun.max.vm.run.java.jtrun.all;
+
+import test.com.sun.max.vm.jtrun.all.*;
+
+import com.sun.max.vm.run.java.jtrun.*;
+
+import com.sun.max.annotate.*;
+
+public class JTRunScheme extends JTAbstractRunScheme {
+
+    @HOSTED_ONLY
+    public JTRunScheme() {
+    }
+
+    @Override
+    @HOSTED_ONLY
+    public Class<?>[] getClassList() {
+        return JTConfig.testClasses.testClasses;
+    }
+
+    @Override
+    public void runTests() {
+        JTRuns.runTests(testStart, testEnd);
+        JTUtil.printReport();
+    }
+}

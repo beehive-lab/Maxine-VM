@@ -24,6 +24,8 @@ import junit.framework.*;
 
 import org.junit.runner.*;
 
+import test.com.sun.max.vm.*;
+
 /**
  * @author Athul Acharya
  */
@@ -39,6 +41,6 @@ public final class AllTests {
     public static Test suite() {
         final TestSuite suite = new TestSuite(AllTests.class.getPackage().getName());
         suite.addTestSuite(TypeDescriptorTest.class);
-        return suite;
+        return new VmTestSetup(suite);
     }
 }

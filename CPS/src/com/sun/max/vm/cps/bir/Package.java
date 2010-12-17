@@ -37,6 +37,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.compiler() instanceof CirGeneratorScheme;
+        return CPSCompiler.Static.isCompiler(vmConfiguration);
     }
 }

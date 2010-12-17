@@ -24,7 +24,6 @@ import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.*;
-import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -263,6 +262,10 @@ public abstract class TypeDescriptor extends Descriptor {
                 return true;
             }
 
+            if (javaClass.getName().startsWith("jtt")) {
+                System.console();
+            }
+
             if (MaxineVM.isHostedOnly(javaClass)) {
                 return false;
             }
@@ -271,7 +274,7 @@ public abstract class TypeDescriptor extends Descriptor {
                 return false;
             }
 
-            if (MaxineVM.vm().config.isMaxineBootImagePackage(BootImagePackage.fromClass(javaClass))) {
+            if (MaxineVM.isBootImageClass(javaClass.getName())) {
                 return true;
             }
 

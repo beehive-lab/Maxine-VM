@@ -35,6 +35,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.compiler() != null;
+        return CPSCompiler.Static.isCompiler(vmConfiguration);
     }
 }
