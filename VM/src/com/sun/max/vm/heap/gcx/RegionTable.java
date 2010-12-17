@@ -118,33 +118,4 @@ public final class RegionTable {
     HeapRegionInfo prev(HeapRegionInfo regionInfo) {
         return HeapRegionInfo.toHeapRegionInfo(Reference.fromJava(regionInfo).toOrigin().minus(regionInfoSize));
     }
-
-    final class IterableRegionTableRange implements Iterable<HeapRegionInfo>, Iterator<HeapRegionInfo> {
-        private HeapRegionInfo last;
-        private HeapRegionInfo current;
-
-        IterableRegionTableRange() {
-            current = null;
-            last = null;
-        }
-
-        public IterableRegionTableRange reset(int firstRegionID, int numRegions) {
-            current = regionInfo(firstRegionID);
-            last = regionInfo(firstRegionID + numRegions - 1);
-            return this;
-        }
-        public Iterator<HeapRegionInfo> iterator() { return this; }
-        public boolean hasNext() {
-            return current != last;
-        }
-
-        public HeapRegionInfo next() {
-            current = theRegionTable.next(current);
-            return current;
-        }
-
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
 }

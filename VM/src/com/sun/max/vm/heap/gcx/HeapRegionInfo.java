@@ -122,10 +122,9 @@ public class HeapRegionInfo {
      */
     short firstFreeChunkIndex;
     /**
-     * Number of fragments not holding live data (i.e., dark-matter + free space).
-     * TODO: better define this base on actual use of this field!
+     * Number of free chunks.
      */
-    short numFragments;
+    short numFreeChunks;
     /**
      * Space available for allocation. This excludes dark matter than cannot be used
      * for allocation.
@@ -149,8 +148,11 @@ public class HeapRegionInfo {
         return regionSizeInWords - (liveData + freeSpace);
     }
 
-    public final int freeSpaceInWords() {
+    public final int freeWords() {
         return freeSpace;
+    }
+    public final int numFreeChunks() {
+        return numFreeChunks;
     }
 
     /**
@@ -206,5 +208,13 @@ public class HeapRegionInfo {
     }
     HeapRegionInfo prev() {
         return RegionTable.theRegionTable().prev(this);
+    }
+
+    int toRegionID() {
+        return RegionTable.theRegionTable().regionID(this);
+    }
+
+    static HeapRegionInfo fromRegionID(int regionID) {
+        return RegionTable.theRegionTable().regionInfo(regionID);
     }
 }

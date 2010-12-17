@@ -52,7 +52,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
     private static boolean TraceSweep = false;
     private static boolean TraceTLAB = false;
 
-    class LinearSpaceRefillManager extends LinearSpaceAllocator.RefillManager {
+    class LinearSpaceRefillManager extends MultiChunkTLABAllocator.RefillManager {
         /**
          * Size linear space allocated managed by this refill manager are refilled with.
          */
@@ -99,7 +99,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
     private boolean useTLABBin;
 
-    private final LinearSpaceAllocator smallObjectAllocator;
+    private final MultiChunkTLABAllocator smallObjectAllocator;
 
 
     /**
@@ -622,7 +622,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
             freeChunkBins[i] = new FreeSpaceList(i);
         }
         tlabFreeSpaceList = freeChunkBins[0];
-        smallObjectAllocator = new LinearSpaceAllocator(new LinearSpaceRefillManager());
+        smallObjectAllocator = new MultiChunkTLABAllocator(new LinearSpaceRefillManager());
     }
 
     @HOSTED_ONLY
