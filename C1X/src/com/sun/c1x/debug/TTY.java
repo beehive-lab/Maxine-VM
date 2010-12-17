@@ -224,11 +224,11 @@ public class TTY {
     }
 
     public static void print(String format, Object... args) {
-        out().print(String.format(format, args));
+        out().printf(format, args);
     }
 
     public static void println(String format, Object... args) {
-        out().println(String.format(format, args));
+        out().printf(format + "%n", args);
     }
 
     public static void fillTo(int i) {

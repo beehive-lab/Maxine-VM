@@ -361,13 +361,14 @@ public abstract class LIRInstruction {
      * @param st the LogStream to print into.
      */
     public final void printOn(LogStream st) {
-        if (id != -1) {
-            st.printf("%4d ", id);
-        } else {
-            st.print("     ");
+        if (st != LogStream.SINK) {
+            if (id != -1) {
+                st.printf("%4d ", id);
+            } else {
+                st.print("     ");
+            }
+            st.print(toString());
         }
-
-        st.print(toString());
     }
 
     public boolean verify() {
