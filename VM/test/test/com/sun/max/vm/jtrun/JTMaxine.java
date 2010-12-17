@@ -31,7 +31,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.run.java.jtrun.*;
 
 /**
  * The {@code JTMaxine} class implements a main program for running the generated Java tester tests

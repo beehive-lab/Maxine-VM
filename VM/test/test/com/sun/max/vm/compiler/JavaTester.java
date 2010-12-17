@@ -25,8 +25,6 @@ import java.util.*;
 
 import test.com.sun.max.vm.jtrun.*;
 
-import com.sun.max.vm.run.java.jtrun.*;
-
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
 import com.sun.max.profile.*;
