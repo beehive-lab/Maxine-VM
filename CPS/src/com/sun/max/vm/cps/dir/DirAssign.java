@@ -33,7 +33,6 @@ public class DirAssign extends DirInstruction {
     private final DirValue source;
 
     public DirAssign(DirVariable destination, DirValue source) {
-        super();
         this.destination = destination;
         this.source = source;
     }

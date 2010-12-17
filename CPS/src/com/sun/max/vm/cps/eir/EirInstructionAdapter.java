@@ -57,11 +57,7 @@ public abstract class EirInstructionAdapter implements EirInstructionVisitor {
         visitInstruction((EirInstruction) instruction);
     }
 
-    public void visit(EirSafepoint instruction) {
-        visitInstruction(instruction);
-    }
-
-    public void visit(EirGuardpoint instruction) {
+    public void visit(EirInfopoint instruction) {
         visitInstruction(instruction);
     }
 
@@ -72,9 +68,4 @@ public abstract class EirInstructionAdapter implements EirInstructionVisitor {
     public void visit(EirFiller instruction) {
         visitInstruction(instruction);
     }
-
-    public void visit(EirMarker instruction) {
-        visitInstruction(instruction);
-    }
-
 }

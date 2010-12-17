@@ -100,6 +100,21 @@ public abstract class FrameState {
     }
 
     /**
+     * Creates a {@code FrameState} for the given scope without any stack or local variables.
+     *
+     * @param irScope the inlining context of the method
+     * @param bci the bytecode index of the frame state
+     */
+    public FrameState(IRScope irScope, int bci) {
+        this.scope = irScope;
+        this.bci = bci;
+        this.values = null;
+        this.maxLocals = 0;
+        C1XMetrics.FrameStatesCreated++;
+        C1XMetrics.FrameStateValuesCreated += this.values.length;
+    }
+
+    /**
      * Copies the contents of this frame state so that further updates to either stack aren't reflected in the other.
      * @param bci the bytecode index of the copy
      * @param withLocals indicates whether to copy the local state

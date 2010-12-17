@@ -666,10 +666,6 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
         conditionalBranch(instruction, cpu.test(ZF));
     }
 
-    public void visit(LEA_PC instruction) {
-        cpu.write(instruction.operand().location(), new WordValue(Address.fromLong(cpu.currentInstructionAddress().index())));
-    }
-
     public void visit(LEA_STACK_ADDRESS instruction) {
         final int sourceOffset = cpu.offset(instruction.sourceOperand().location().asStackSlot());
         cpu.write(instruction.destinationOperand().location(), new WordValue(cpu.readFramePointer().plus(sourceOffset)));

@@ -21,6 +21,7 @@
 
 package com.sun.max.vm.cps.tir;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.transform.*;
@@ -54,8 +55,10 @@ public class DirTree extends DirMethod {
             }
 
             @Override
-            public void visitGuardpoint(DirGuardpoint dirGuardpoint) {
-                Console.println(indent + "GUARDPOINT: \n" + dirGuardpoint.javaFrameDescriptor().toMultiLineString());
+            public void visitInfopoint(DirInfopoint infopoint) {
+                if (infopoint.opcode == Bytecodes.INFO) {
+                    Console.println(indent + "GUARDPOINT: \n" + infopoint.javaFrameDescriptor().toMultiLineString());
+                }
             }
         };
 

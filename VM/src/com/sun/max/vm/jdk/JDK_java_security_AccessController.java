@@ -28,6 +28,7 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
@@ -137,7 +138,7 @@ final class JDK_java_security_AccessController {
      * This class implements a closure that analyzes protection domains on the call stack.
      * It is based on the HotSpot implementation.
      */
-    private static class Context extends SourceFrameVisitor {
+    static class Context extends SourceFrameVisitor {
 
         boolean skipping = true;
         final List<ProtectionDomain> protectionDomains = new LinkedList<ProtectionDomain>();
@@ -188,7 +189,7 @@ final class JDK_java_security_AccessController {
     @NEVER_INLINE
     private static Context getContext() {
         final Context context = new Context();
-        context.walk(null, getInstructionPointer(), getCpuStackPointer(), getCpuFramePointer());
+        context.walk(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         return context;
     }
 
@@ -210,7 +211,7 @@ final class JDK_java_security_AccessController {
     @SUBSTITUTE
     public static AccessControlContext getStackAccessControlContext() {
         final Context context = new Context();
-        context.walk(null, getInstructionPointer(), getCpuStackPointer(), getCpuFramePointer());
+        context.walk(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         ProtectionDomain[] protectionDomains = null;
         if (context.protectionDomains.isEmpty()) {
             if (context.isPrivileged && context.privilegedContext == null) {

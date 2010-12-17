@@ -22,6 +22,7 @@ package com.sun.c1x.target.amd64;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
+import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.cri.ci.CiValue.*;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
@@ -93,13 +94,13 @@ public class AMD64LIRAssembler extends LIRAssembler {
         masm.ret(0);
     }
 
-    /**
-     * Emits an instruction which assigns the address of the immediately succeeding instruction into {@code dst}.
-     * This satisfies the requirements for correctly translating the {@link LoadPC} HIR instruction.
-     */
     @Override
-    protected void emitReadPC(CiValue dst) {
-        masm.leaq(dst.asRegister(), CiAddress.Placeholder);
+    protected void emitHere(CiValue dst, LIRDebugInfo info, boolean infoOnly) {
+        masm.recordSafepoint(codePos(), info);
+        if (!infoOnly) {
+            masm.codeBuffer.mark();
+            masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+        }
     }
 
     @Override

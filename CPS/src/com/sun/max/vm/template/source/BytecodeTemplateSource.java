@@ -2622,11 +2622,6 @@ public class BytecodeTemplateSource {
         storeLoad();
     }
 
-    @BYTECODE_TEMPLATE(SAFEPOINT)
-    public static void safepoint() {
-        Safepoint.safepoint();
-    }
-
     @BYTECODE_TEMPLATE(PAUSE)
     public static void pause() {
         SpecialBuiltin.pause();

@@ -20,29 +20,36 @@
  */
 package com.sun.c1x.ir;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+
+import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
- * Pushes a value to the stack representing the
- * current execution address. The exact address pushed is platform dependent as the
- * mechanism for obtaining this address is platform dependent. For example on SPARC,
- * this may be translated to {@code rd %pc %o1} which sets the address
- * of {@code %pc} prior to execution of the instruction into {@code %o1}.
- * On x86, the RIP-relative instruction {@code lea rax 0}
- * loads the address of the instruction immediately
- * following the {@code lea} instruction into register {@code rax}. Either of these
- * satisfies the requirements of the VM purpose for which this instruction
- * exists which is to initiate a stack walk from the current execution location.
+ * Records debug info at the current code location.
  *
  * @author Doug Simon
  */
-public final class LoadPC extends Instruction {
+public final class Infopoint extends Instruction {
+
+    public final FrameState state;
 
     /**
-     * Creates a new LoadPC instance.
+     * {@link Bytecodes#HERE}, {@link Bytecodes#INFO} or {@link Bytecodes#SAFEPOINT}.
      */
-    public LoadPC() {
-        super(CiKind.Word);
+    public final int opcode;
+
+    /**
+     * Creates a new Infopoint instance.
+     * @param state the debug info at this instruction
+     */
+    public Infopoint(int opcode, FrameState state) {
+        super(opcode == HERE ? CiKind.Long : CiKind.Void);
+        assert opcode == HERE || opcode == INFO || opcode == SAFEPOINT : Bytecodes.nameOf(opcode);
+        this.opcode = opcode;
+        this.state = state;
+        setFlag(Flag.LiveSideEffect); // ensure this instruction is not eliminated
     }
 
     /**
@@ -51,6 +58,11 @@ public final class LoadPC extends Instruction {
      */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitLoadPC(this);
+        v.visitInfopoint(this);
+    }
+
+    @Override
+    public FrameState stateBefore() {
+        return state;
     }
 }

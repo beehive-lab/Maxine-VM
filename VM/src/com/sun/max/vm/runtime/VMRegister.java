@@ -219,11 +219,8 @@ public final class VMRegister {
     @INTRINSIC(WRITEREG | (LATCH << 8))
     public static native void setSafepointLatchRegister(Word value);
 
-    @INLINE
-    @INTRINSIC(READ_PC)
-    public static Pointer getInstructionPointer() {
-        return SpecialBuiltin.getInstructionPointer();
-    }
+    @INTRINSIC(HERE)
+    public static native long here();
 
     @INLINE
     @INTRINSIC(WRITEREG | (LINK << 8))

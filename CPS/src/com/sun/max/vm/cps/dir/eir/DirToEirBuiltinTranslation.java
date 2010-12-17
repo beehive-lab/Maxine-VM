@@ -35,8 +35,8 @@ import com.sun.max.vm.value.*;
  */
 public abstract class DirToEirBuiltinTranslation extends BuiltinAdapter<DirValue> {
 
-    private final DirToEirInstructionTranslation instructionTranslation;
-    private final DirJavaFrameDescriptor javaFrameDescriptor;
+    protected final DirToEirInstructionTranslation instructionTranslation;
+    protected final DirJavaFrameDescriptor javaFrameDescriptor;
 
     protected DirToEirInstructionTranslation instructionTranslation() {
         return instructionTranslation;
@@ -121,12 +121,6 @@ public abstract class DirToEirBuiltinTranslation extends BuiltinAdapter<DirValue
         if (!methodTranslation().isTemplate()) {
             instruction.setEirJavaFrameDescriptor(methodTranslation().dirToEirJavaFrameDescriptor(javaFrameDescriptor, instruction));
         }
-    }
-
-    @Override
-    public final void visitMarker(Marker builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 0;
-        addInstruction(new EirMarker(eirBlock()));
     }
 
     @Override

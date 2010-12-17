@@ -84,7 +84,6 @@ public interface AMD64EirInstructionVisitor extends EirInstructionVisitor {
     void visit(JLE instruction);
     void visit(JNZ instruction);
     void visit(JZ instruction);
-    void visit(LEA_PC instruction);
     void visit(LEA_STACK_ADDRESS instruction);
     void visit(LFENCE instruction);
     void visit(MFENCE instruction);

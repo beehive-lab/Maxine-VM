@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.thread;
 
+import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.thread.VmThread.*;
 
 import java.lang.reflect.*;
@@ -439,9 +440,9 @@ public class VmThreadLocal {
     @NEVER_INLINE
     public static long prepareCurrentStackReferenceMap() {
         return VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentTLA(),
-                                                                                VMRegister.getInstructionPointer(),
-                                                                                VMRegister.getAbiStackPointer(),
-                                                                                VMRegister.getAbiFramePointer(), true);
+                                                                                Pointer.fromLong(here()),
+                                                                                getAbiStackPointer(),
+                                                                                getAbiFramePointer(), true);
     }
 
     /**

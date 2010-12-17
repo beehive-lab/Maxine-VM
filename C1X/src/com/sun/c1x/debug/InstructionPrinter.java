@@ -734,8 +734,8 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
-    public void visitLoadPC(LoadPC i) {
-        out.print("load_pc");
+    public void visitInfopoint(Infopoint i) {
+        out.print(Bytecodes.nameOf(i.opcode));
     }
 
     @Override

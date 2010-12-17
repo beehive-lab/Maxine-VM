@@ -36,7 +36,7 @@ import com.sun.max.vm.cps.cir.snippet.*;
 import com.sun.max.vm.cps.cir.variable.*;
 import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.dir.*;
-import com.sun.max.vm.cps.dir.DirTraceObserver.*;
+import com.sun.max.vm.cps.dir.DirTraceObserver.Transformation;
 import com.sun.max.vm.cps.dir.transform.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.type.*;
@@ -443,11 +443,12 @@ class CirToDirMethodTranslation {
         }
     };
 
-    private final CallGenerator<CirBuiltin> safepointGenerator = new CallGenerator<CirBuiltin>() {
+    private final CallGenerator<CirBuiltin> infopointGenerator = new CallGenerator<CirBuiltin>() {
         @Override
         protected DirInstruction createCallInstruction(DirVariable result, CirBuiltin cirBuiltin, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
             assert javaFrameDescriptor != null;
-            return new DirSafepoint(javaFrameDescriptor);
+            int opcode = arguments[0].value().asInt();
+            return new DirInfopoint(result, javaFrameDescriptor, opcode);
         }
     };
 
@@ -529,8 +530,8 @@ class CirToDirMethodTranslation {
         } else if (cirProcedure instanceof CirBuiltin) {
             final CirBuiltin cirBuiltin = (CirBuiltin) cirProcedure;
             final DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor(cirCall.javaFrameDescriptor());
-            if (cirBuiltin.builtin == SafepointBuiltin.BUILTIN) {
-                safepointGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
+            if (cirBuiltin.builtin == InfopointBuiltin.BUILTIN) {
+                infopointGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             } else {
                 if (cirBuiltin.builtin == MakeStackVariable.BUILTIN) {
                     usesMakeStackVariable = true;

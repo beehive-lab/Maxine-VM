@@ -411,7 +411,6 @@ public enum BytecodeTemplate {
     MOV_D2L,
 
     WRETURN,
-    SAFEPOINT,
     PAUSE,
     LSB,
     MSB,

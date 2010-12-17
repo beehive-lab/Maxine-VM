@@ -49,7 +49,7 @@ public abstract class ValueVisitor {
     public abstract void visitInvoke(Invoke i);
     public abstract void visitLoadField(LoadField i);
     public abstract void visitLoadIndexed(LoadIndexed i);
-    public abstract void visitLoadPC(LoadPC i);
+    public abstract void visitInfopoint(Infopoint i);
     public abstract void visitLoadPointer(LoadPointer i);
     public abstract void visitLoadStackAddress(AllocateStackVariable i);
     public abstract void visitLoadRegister(LoadRegister i);

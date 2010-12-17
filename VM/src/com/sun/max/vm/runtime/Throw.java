@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.runtime.VMRegister.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -186,12 +188,12 @@ public final class Throw {
             }
         }
         Safepoint.disable();
-        raise(throwable, VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer());
+        raise(throwable, getCpuStackPointer(), getCpuFramePointer(), Pointer.fromLong(here()));
     }
     // Checkstyle: resume
 
     public static void stackDumpWithException(Object throwable) {
-        stackDump("Throwing " + throwable + ";", VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
+        stackDump("Throwing " + throwable + ";", Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
     }
 
     /**
@@ -260,7 +262,7 @@ public final class Throw {
         if (message != null) {
             Log.println(message);
         }
-        VmThread.current().stackDumpStackFrameWalker().inspect(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), stackFrameDumper);
+        VmThread.current().stackDumpStackFrameWalker().inspect(Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer(), stackFrameDumper);
     }
 
     /**

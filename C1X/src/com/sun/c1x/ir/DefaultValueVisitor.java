@@ -54,12 +54,12 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitIf(If i) { visit(i); }
     @Override public void visitIfInstanceOf(IfInstanceOf i) { visit(i); }
     @Override public void visitIfOp(IfOp i) { visit(i); }
+    @Override public void visitInfopoint(Infopoint i) { visit(i); }
     @Override public void visitInstanceOf(InstanceOf i) { visit(i); }
     @Override public void visitIntrinsic(Intrinsic i) { visit(i); }
     @Override public void visitInvoke(Invoke i) { visit(i); }
     @Override public void visitLoadField(LoadField i) { visit(i); }
     @Override public void visitLoadIndexed(LoadIndexed i) { visit(i); }
-    @Override public void visitLoadPC(LoadPC i) { visit(i); }
     @Override public void visitLoadPointer(LoadPointer i) { visit(i); }
     @Override public void visitLoadRegister(LoadRegister i) { visit(i); }
     @Override public void visitLoadStackAddress(AllocateStackVariable i) { visit(i); }

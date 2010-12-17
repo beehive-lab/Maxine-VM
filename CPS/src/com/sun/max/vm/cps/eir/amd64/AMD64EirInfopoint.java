@@ -18,43 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.vm.cps.eir.amd64;
 
-package com.sun.max.vm.cps.eir;
-
-import java.lang.reflect.*;
-
-import com.sun.max.lang.*;
-import com.sun.max.vm.collect.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.cri.bytecode.*;
+import com.sun.max.asm.*;
+import com.sun.max.asm.amd64.*;
+import com.sun.max.vm.cps.eir.*;
 
 /**
- * @author Michael Bebenita
+ * @author Bernd Mathiske
  */
-public final class EirGuardpoint<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter>
-                      extends EirStop<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
+public final class AMD64EirInfopoint extends EirInfopoint<EirInstructionVisitor, AMD64EirTargetEmitter> {
 
-    public EirGuardpoint(EirBlock block) {
-        super(block);
+    public AMD64EirInfopoint(EirBlock block, int opcode, EirValue destination) {
+        super(block, opcode, destination);
     }
 
     @Override
-    public String toString() {
-        return super.toString() + " " + javaFrameDescriptor();
+    public void emit(AMD64EirTargetEmitter emitter) {
+        emitter.addSafepoint(this);
+        if (opcode == Bytecodes.SAFEPOINT) {
+            final AMD64EirRegister.General r = (AMD64EirRegister.General) emitter.abi().safepointLatchRegister();
+            final AMD64GeneralRegister64 register = r.as64();
+            emitter.assembler().mov(register, register.indirect());
+        } else if (opcode == Bytecodes.HERE) {
+            final Label label = new Label();
+            emitter.assembler().bindLabel(label);
+            emitter.assembler().rip_lea(operandGeneralRegister().as64(), label);
+        }
     }
 
-    @Override
-    public void acceptVisitor(EirInstructionVisitor_Type visitor) throws InvocationTargetException {
-        visitor.visit(this);
-    }
-
-    @Override
-    public void emit(EirTargetEmitter_Type emitter) {
-        emitter.addGuardpoint(this);
-    }
-
-    @Override
-    public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
-        FatalError.unimplemented();
+    public AMD64EirRegister.General operandGeneralRegister() {
+        return (AMD64EirRegister.General) operandLocation();
     }
 
 }

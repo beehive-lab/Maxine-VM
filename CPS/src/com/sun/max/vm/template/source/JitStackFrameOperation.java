@@ -261,28 +261,24 @@ public final class JitStackFrameOperation {
     @INLINE
     public static void directCallFloat() {
         final float result = SpecialBuiltin.callFloat();
-        SpecialBuiltin.mark();
         pushFloat(result);
     }
 
     @INLINE
     public static void directCallLong() {
         final long result = SpecialBuiltin.callLong();
-        SpecialBuiltin.mark();
         pushLong(result);
     }
 
     @INLINE
     public static void directCallDouble() {
         final double result = SpecialBuiltin.callDouble();
-        SpecialBuiltin.mark();
         pushDouble(result);
     }
 
     @INLINE
     public static void directCallWord() {
         final Word result = SpecialBuiltin.callWord();
-        SpecialBuiltin.mark();
         pushWord(result);
     }
 
@@ -294,28 +290,24 @@ public final class JitStackFrameOperation {
     @INLINE
     public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint) {
         final float result = SpecialBuiltin.callFloat(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
-        SpecialBuiltin.mark();
         pushFloat(result);
     }
 
     @INLINE
     public static void indirectCallLong(Address address, CallEntryPoint callEntryPoint) {
         final long result = SpecialBuiltin.callLong(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
-        SpecialBuiltin.mark();
         pushLong(result);
     }
 
     @INLINE
     public static void indirectCallDouble(Address address, CallEntryPoint callEntryPoint) {
         final double result = SpecialBuiltin.callDouble(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
-        SpecialBuiltin.mark();
         pushDouble(result);
     }
 
     @INLINE
     public static void indirectCallWord(Address address, CallEntryPoint callEntryPoint) {
         final Word result = SpecialBuiltin.callWord(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
-        SpecialBuiltin.mark();
         pushWord(result);
     }
 
@@ -327,7 +319,6 @@ public final class JitStackFrameOperation {
     @INLINE
     public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint, Object receiver) {
         final float result = SpecialBuiltin.callFloat(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
-        SpecialBuiltin.mark();
         pushFloat(result);
     }
 

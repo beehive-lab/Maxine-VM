@@ -20,18 +20,17 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
-import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.*;
 
 /**
  * @author Bernd Mathiske
  */
-public final class SafepointBuiltin extends SpecialBuiltin {
+public final class InfopointBuiltin extends SpecialBuiltin {
 
-    public static final SafepointBuiltin BUILTIN = new SafepointBuiltin();
+    public static final InfopointBuiltin BUILTIN = new InfopointBuiltin();
 
-    protected SafepointBuiltin() {
+    protected InfopointBuiltin() {
         super(null);
     }
 
@@ -43,11 +42,11 @@ public final class SafepointBuiltin extends SpecialBuiltin {
     @Override
     public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
         assert arguments.length == 0;
-        visitor.visitSafepoint(this, result, arguments);
+        visitor.visitInfopoint(this, result, arguments);
     }
 
-    @BUILTIN(value = SafepointBuiltin.class)
-    @INTRINSIC(Bytecodes.SAFEPOINT)
-    public static void safepointBuiltin() {
+    @BUILTIN(value = InfopointBuiltin.class)
+    public static long infopointBuiltin(int opcode) {
+        return 0L;
     }
 }

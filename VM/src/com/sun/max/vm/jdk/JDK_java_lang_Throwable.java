@@ -21,6 +21,7 @@
 package com.sun.max.vm.jdk;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
 
 import java.util.*;
 
@@ -146,7 +147,7 @@ public final class JDK_java_lang_Throwable {
         final ClassActor throwableActor = ClassActor.fromJava(throwable.getClass());
         // use the stack walker to collect the frames
         final StackFrameWalker sfw = new VmStackFrameWalker(VmThread.current().tla());
-        final Pointer ip = VMRegister.getInstructionPointer();
+        final Pointer ip = Pointer.fromLong(here());
         final Pointer sp = VMRegister.getCpuStackPointer();
         final Pointer fp = VMRegister.getCpuFramePointer();
         StackTraceElement[] stackTrace = getStackTrace(sfw, ip, sp, fp, throwableActor, Integer.MAX_VALUE);

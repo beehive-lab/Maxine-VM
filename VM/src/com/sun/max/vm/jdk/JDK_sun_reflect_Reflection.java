@@ -27,6 +27,7 @@ import java.security.*;
 import sun.reflect.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.stack.*;
@@ -48,7 +49,6 @@ final class JDK_sun_reflect_Reflection {
      * position in the stack.
      */
     static class Context extends SourceFrameVisitor {
-        boolean skipping = true;
         MethodActor method;
         long frameId;
         int realFramesToSkip;
@@ -58,13 +58,6 @@ final class JDK_sun_reflect_Reflection {
         }
         @Override
         public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
-            if (skipping) {
-                if (method.holder().equals(ClassActor.fromJava(JDK_sun_reflect_Reflection.class)) &&
-                    method.name.string.equals("getContext")) {
-                    skipping = false;
-                }
-                return true;
-            }
             // according to sun.reflect.Reflection, getCallerClass() should ignore java.lang.reflect.Method.invoke
             if (method.equals(ClassRegistry.Method_invoke)) {
                 return true;
@@ -87,7 +80,8 @@ final class JDK_sun_reflect_Reflection {
      * @return the Context object corresponding to the specified place in the stack
      */
     static Context getCallerContext(int realFramesToSkip) {
-        final Context context = getContext(realFramesToSkip);
+        final Context context = new Context(realFramesToSkip);
+        context.walk(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         assert context.method != null : "realFramesToSkip is too high: " + realFramesToSkip;
         return context;
     }
@@ -104,17 +98,12 @@ final class JDK_sun_reflect_Reflection {
         if (realFramesToSkip < 0) {
             return null;
         }
-        final Context context = getContext(realFramesToSkip);
+        final Context context = new Context(realFramesToSkip);
+        context.walk(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         if (context.method == null) {
             return null;
         }
         return context.method.holder().toJava();
-    }
-
-    private static Context getContext(int realFramesToSkip) {
-        final Context context = new Context(realFramesToSkip);
-        context.walk(null, getInstructionPointer(), getCpuStackPointer(), getCpuFramePointer());
-        return context;
     }
 
     /**
