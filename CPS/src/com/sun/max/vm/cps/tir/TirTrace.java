@@ -24,9 +24,9 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.cps.hotpath.compiler.*;
+import com.sun.max.vm.cps.hotpath.state.*;
 import com.sun.max.vm.cps.tir.pipeline.*;
-import com.sun.max.vm.hotpath.compiler.*;
-import com.sun.max.vm.hotpath.state.*;
 
 public class TirTrace {
     private TirTree tree;

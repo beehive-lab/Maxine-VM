@@ -33,30 +33,40 @@ import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
 
 /**
- * The configuration of a VM, which includes the schemes, safepoint mechanism, etc.
+ * The configuration of a VM is defined by:
+ * <ul>
+ * <li> a {@link BuildLevel}
+ * <li> a set of {@link BootImagePackage boot-image packages} that will be in the boot image
+ * <li> a specfic subset of the boot-image packages that implement the {@link VMScheme} VM schemes.
+ * </ul>
+ * This information is all known at the time the instance is constructed.
  *
  * @author Bernd Mathiske
  * @author Ben L. Titzer
  * @author Doug Simon
+ * @author Mick Jordan
  */
 public final class VMConfiguration {
 
     public final BuildLevel buildLevel;
 
-    @HOSTED_ONLY public final VMPackage referencePackage;
-    @HOSTED_ONLY public final VMPackage layoutPackage;
-    @HOSTED_ONLY public final VMPackage heapPackage;
-    @HOSTED_ONLY public final VMPackage monitorPackage;
-    @HOSTED_ONLY public final VMPackage optCompilerPackage;
-    @HOSTED_ONLY public final VMPackage jitCompilerPackage;
-    @HOSTED_ONLY public final VMPackage compilationPackage;
-    @HOSTED_ONLY public final VMPackage runPackage;
+    @HOSTED_ONLY public final BootImagePackage referencePackage;
+    @HOSTED_ONLY public final BootImagePackage layoutPackage;
+    @HOSTED_ONLY public final BootImagePackage heapPackage;
+    @HOSTED_ONLY public final BootImagePackage monitorPackage;
+    @HOSTED_ONLY public final BootImagePackage optCompilerPackage;
+    @HOSTED_ONLY public final BootImagePackage jitCompilerPackage;
+    @HOSTED_ONLY public final BootImagePackage compilationPackage;
+    @HOSTED_ONLY public final BootImagePackage runPackage;
+    @HOSTED_ONLY public final List<BootImagePackage> bootImagePackages;
+    @HOSTED_ONLY private final Set<BootImagePackage> schemePackages = new HashSet<BootImagePackage>();
 
     private ArrayList<VMScheme> vmSchemes = new ArrayList<VMScheme>();
     private boolean areSchemesLoadedAndInstantiated = false;
@@ -72,14 +82,14 @@ public final class VMConfiguration {
 
     public VMConfiguration(BuildLevel buildLevel,
                            Platform platform,
-                           VMPackage referencePackage,
-                           VMPackage layoutPackage,
-                           VMPackage heapPackage,
-                           VMPackage monitorPackage,
-                           VMPackage optCompilerPackage,
-                           VMPackage jitCompilerPackage,
-                           VMPackage compilationPackage,
-                           VMPackage runPackage) {
+                           BootImagePackage referencePackage,
+                           BootImagePackage layoutPackage,
+                           BootImagePackage heapPackage,
+                           BootImagePackage monitorPackage,
+                           BootImagePackage optCompilerPackage,
+                           BootImagePackage jitCompilerPackage,
+                           BootImagePackage compilationPackage,
+                           BootImagePackage runPackage) {
         assert optCompilerPackage != null;
         this.buildLevel = buildLevel;
         this.referencePackage = referencePackage;
@@ -90,6 +100,44 @@ public final class VMConfiguration {
         this.jitCompilerPackage = jitCompilerPackage == null ? optCompilerPackage : jitCompilerPackage;
         this.compilationPackage = compilationPackage;
         this.runPackage = runPackage;
+        /**
+         * We now gather all the packages that might be part of the VM boot image by scanning the class
+         * path from the well-defined root ({@code com.sun.max.config}) and looking for {@code Package} classes,
+         * instantiating them, and in the process possibly following new roots.
+         * We then ask each package if it should be included in the image in this configuration by
+         * invoking the {@code isPartOfMaxineVM} method. That method may, particularly if it is
+         * in a scheme instance, need to ask questions about the configuration we are constructing.
+         * Valid questions concern the values (names) of the scheme packages and the classes
+         * registered as the scheme implementations. Since the schemes have not be instantiated
+         * at this stage, the scheme instances cannot be used. I.e., one must use {@link Class#isAssignableFrom}
+         * rather than {@code instanceof}. The method {@link #schemeClass} is used to get the
+         * actual scheme class for a given scheme. We can assert that a scheme package will return true to
+         * {@code isPartOfMaxineVM}.
+         */
+        addSchemePackage(referencePackage);
+        addSchemePackage(layoutPackage);
+        addSchemePackage(heapPackage);
+        addSchemePackage(monitorPackage);
+        addSchemePackage(optCompilerPackage);
+        addSchemePackage(jitCompilerPackage);
+        addSchemePackage(compilationPackage);
+        addSchemePackage(runPackage);
+
+        bootImagePackages = new ArrayList<BootImagePackage>();
+        for (BootImagePackage pkg : BootImagePackage.getTransitiveSubPackages(
+                        HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath(),
+                        new com.sun.max.config.Package())) {
+            if (pkg.isPartOfMaxineVM(this)) {
+                bootImagePackages.add(pkg);
+            }
+        }
+        MaxineVM.registerBootImagePackages(bootImagePackages);
+    }
+
+    private void addSchemePackage(BootImagePackage pkg) {
+        if (pkg != null) {
+            schemePackages.add(pkg);
+        }
     }
 
     @INLINE public ReferenceScheme       referenceScheme()   { return referenceScheme;   }
@@ -116,6 +164,26 @@ public final class VMConfiguration {
 
     public List<VMScheme> vmSchemes() {
         return vmSchemes;
+    }
+
+    /**
+     * Returns the actual scheme class that implements a given scheme (class) in this configuration.
+     * It is analogous to getting the scheme package but allows assignability checks
+     * within {@link BootImagePackage#isPartOfMaxineVM(VMConfiguration) before
+     * the schemes are instantiated.
+     * @param <S>
+     * @param schemeType the scheme class being searched for
+     * @return the actual scheme class in this configuration or null if not found
+     */
+    @HOSTED_ONLY
+    public <S extends VMScheme> Class<? extends S> schemeClass(Class<S> schemeType) {
+        for (BootImagePackage pkg : schemePackages) {
+            final Class<? extends S> result = pkg.schemeTypeToImplementation(schemeType);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
     }
 
     @HOSTED_ONLY
@@ -237,19 +305,4 @@ public final class VMConfiguration {
         return buildLevel == BuildLevel.DEBUG;
     }
 
-    /**
-     * Determines if a given package is considered part of the VM under this VM configuration.
-     * @return {@code true} if the specified package is part of this VM in this configuration
-     */
-    @HOSTED_ONLY
-    public boolean isMaxineVMPackage(BootImagePackage pkg) {
-        if (pkg == null) {
-            return false;
-        }
-        if (pkg instanceof BootImagePackage) {
-            final BootImagePackage vmPackage = (BootImagePackage) pkg;
-            return vmPackage.isPartOfMaxineVM(this);
-        }
-        return false;
-    }
 }

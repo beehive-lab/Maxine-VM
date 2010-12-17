@@ -40,7 +40,9 @@ public class Package extends BootImagePackage {
             return new String[] {
                 "com.sun.max.asm.*",
                 "com.sun.max.asm.x86.*",
-                "com.sun.max.asm.amd64.*"
+                "com.sun.max.asm.amd64.*",
+                "com.sun.max.vm.asm.*",
+                "com.sun.max.vm.asm.amd64.*"
             };
         }
         throw FatalError.unimplemented();
@@ -52,6 +54,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.compiler() != null;
+        return CPSCompiler.Static.isCompiler(vmConfiguration);
     }
 }

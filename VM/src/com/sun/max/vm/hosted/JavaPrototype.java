@@ -66,7 +66,6 @@ public final class JavaPrototype extends Prototype {
 
     private static JavaPrototype theJavaPrototype;
     private final Set<BootImagePackage> loadedBootImagePackages = new HashSet<BootImagePackage>();
-    private List<BootImagePackage> candidateBootImagePackages;
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
     private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
     private final Map<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
@@ -81,22 +80,6 @@ public final class JavaPrototype extends Prototype {
      */
     public static JavaPrototype javaPrototype() {
         return theJavaPrototype;
-    }
-
-    /**
-     * Gets all packages in the specified root package that extend the specified package class.
-     *
-     * @param rootPackage the root package which defines the package class to match and in which to begin the search
-     * @return a sequence of the packages that match the criteria
-     */
-    private List<BootImagePackage> getPackages(BootImagePackage... rootPackages) {
-        final List<BootImagePackage> packages = new LinkedList<BootImagePackage>();
-        for (BootImagePackage maxPackage : BootImagePackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath(), rootPackages)) {
-            if (vmConfig().isMaxineVMPackage(maxPackage)) {
-                packages.add(maxPackage);
-            }
-        }
-        return packages;
     }
 
     /**
@@ -176,7 +159,7 @@ public final class JavaPrototype extends Prototype {
         if (value != null) {
             for (String s : value.split("\\s+")) {
                 if (s.charAt(0) == '^') {
-                    packageLoader.load(new BootImagePackage(s.substring(1), false), true);
+                    packageLoader.load(new BootImagePackage(s.substring(1), false) {}, true);
                 } else {
                     loadClass(s);
                 }
@@ -196,12 +179,11 @@ public final class JavaPrototype extends Prototype {
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
     private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
-        for (BootImagePackage maxPackage : candidateBootImagePackages) {
-            // VMConfigPackage subclasses may contain SUBSTITUTIONS
+        for (BootImagePackage maxPackage : vmConfiguration.bootImagePackages) {
             if (maxPackage instanceof BootImagePackage) {
-                BootImagePackage vmPackage = (BootImagePackage) maxPackage;
-                if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
-                    String[] classes = vmPackage.listClasses(packageLoader.classpath);
+                BootImagePackage bootImagePackage = (BootImagePackage) maxPackage;
+                if (bootImagePackage.isPartOfMaxineVM(vmConfiguration) && bootImagePackage.containsMethodSubstitutions()) {
+                    String[] classes = bootImagePackage.listClasses(packageLoader.classpath);
                     for (String cn : classes) {
                         try {
                             Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
@@ -277,14 +259,6 @@ public final class JavaPrototype extends Prototype {
             out.println("==================================================================");
         }
 
-        // TODO remove new com.sun.max.vm.Package() once com.sun.max.config..vm.Package is in effect
-        candidateBootImagePackages = getPackages(new com.sun.max.vm.Package(), new com.sun.max.config.Package());
-
-        MaxineVM.registerBootImagePackages(candidateBootImagePackages);
-
-        // moved to after getPackages to ensure that there is no actual loading until the configuration has been generated
-        // to make sure that the configuration tweaks, e.g. whether to keep <clinit>, are processed before the class is loaded.
-
         loadVMConfigurationPackages();
 
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
@@ -295,7 +269,7 @@ public final class JavaPrototype extends Prototype {
 
         if (complete) {
 
-            for (BootImagePackage maxPackage : candidateBootImagePackages) {
+            for (BootImagePackage maxPackage : config.bootImagePackages) {
                 loadBootImagePackage(maxPackage);
             }
 
@@ -308,17 +282,6 @@ public final class JavaPrototype extends Prototype {
         } else {
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
         }
-    }
-
-    /**
-     * Returns the a priori list of packages that are potentially included in the image.
-     * This may be modified by configuration restrictions or explicit exclusions.
-     * This method can support the latter in allowing pattern matching in generating the
-     * set of exclusions required by {@link BootImagePackage#excludes()}.
-     * @return
-     */
-    public List<BootImagePackage> getCandidateBootImagePackages() {
-        return candidateBootImagePackages;
     }
 
     /**

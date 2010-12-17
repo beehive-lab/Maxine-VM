@@ -23,8 +23,8 @@ package com.sun.max.vm.cps.tir;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.cps.hotpath.compiler.*;
 import com.sun.max.vm.cps.tir.pipeline.*;
-import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 

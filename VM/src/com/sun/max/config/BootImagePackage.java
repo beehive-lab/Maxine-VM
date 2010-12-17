@@ -32,7 +32,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 
 /**
- * Describes a package in the Maxine VM, providing programmatic package information manipulation, which is
+ * Describes a package in the Maxine VM boot image, providing programmatic package information manipulation, which is
  * lacking in {@link java.lang.Package}.
  *
  * @author Bernd Mathiske
@@ -74,7 +74,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
      * Creates an object denoting the package whose name is {@code this.getClass().getPackage().getName()}
      * and, if {@code recursive == true}, all its sub-packages.
      */
-    public BootImagePackage(String pkgName, boolean recursive) {
+    protected BootImagePackage(String pkgName, boolean recursive) {
         this.name = pkgName == null ? getClass().getPackage().getName() : pkgName;
         this.recursive = recursive;
     }
@@ -201,6 +201,17 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
     }
 
     /**
+     * Check whether the given class should be in the boot image.
+     * @return
+     */
+    public boolean isBootImageClass(String name) {
+        if (classes == null) {
+            return true;
+        }
+        return classes.contains(name);
+    }
+
+    /**
      * Last chance for special setup for this instance.
      * Call just before loading any classes.
      */
@@ -225,6 +236,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
             final Class packageClass = Class.forName(name);
             return (BootImagePackage) packageClass.newInstance();
         } catch (ClassNotFoundException e) {
+        } catch (NoClassDefFoundError e) {
         } catch (InstantiationException e) {
         } catch (IllegalAccessException e) {
         }
@@ -314,10 +326,7 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
             if (oldPkg == null) {
                 // new
             } else {
-                // merge into oldPkg, checking consistency
-                if (pkg.recursive != oldPkg.recursive) {
-                    throw ProgramError.unexpected("multiple package specs for: " + pkg.name + " disagree on recursion");
-                }
+                // merge into oldPkg
                 oldPkg.others.putAll(pkg.others);
                 if (pkg.classes != null) {
                     oldPkg.initClasses();
@@ -330,16 +339,16 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
     /**
      * Finds all sub-packages in the class path for a given set of root packages.
      *
-     * We maintain a global map of all the packages discovered. Duplicates may arise in the processing from
-     * different subsystems referencing the same package, possibly including different subsets of the classes
-     * in the package. The first occurrence of a package is the canonical representative and duplicates have their
-     * relevant state merged into it.
+     * We maintain a global map of all the packages discovered. Duplicates may arise in the processing from different
+     * subsystems referencing the same package, possibly including different subsets of the classes in the package. The
+     * first occurrence of a package is the canonical representative and duplicates have their relevant state merged
+     * into it.
      *
      * @param classpath the class path to search for packages
      * @param roots array of subclass of {@code BootImagePackage} that define search start and match
      * @return list of packages in the closure denoted by {@code roots}
      */
-    public static List<BootImagePackage> getTransitiveSubPackages(Classpath classpath, final BootImagePackage[] roots) {
+    public static List<BootImagePackage> getTransitiveSubPackages(Classpath classpath, final BootImagePackage... roots) {
         final Map<String, BootImagePackage> pkgMap = new TreeMap<String, BootImagePackage>();
 
         final ArrayList<RootPackageInfo> rootInfos = new ArrayList<RootPackageInfo>(roots.length);
@@ -354,25 +363,28 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
             for (String pkgName : info.pkgNames) {
                 BootImagePackage pkg = BootImagePackage.fromName(pkgName);
                 if (pkg == null) {
-                    String parentPkgName = getPackageName(pkgName);
-                    while (parentPkgName.length() != 0) {
-                        BootImagePackage parent = pkgMap.get(parentPkgName);
-                        if (parent != null) {
-                            pkg = parent.others.get(pkgName);
-                            if (pkg == null && parent.recursive) {
-                                pkg = parent.cloneAs(pkgName);
-                            }
-                        }
-                        parentPkgName = getPackageName(parentPkgName);
-                    }
+                    // No explicit Package class provided, so we will create one.
+                    // Locate the closest parent in the tree that has a Package instance.
+                    // N.B. One is guaranteed to exist, if only at the root.
+                    // First check in case we are the root!
+                    pkg = pkgMap.get(pkgName);
                     if (pkg == null) {
-                        // ProgramWarning.message("WARNING: missing Package class in package: " + pkgName);
-                        continue;
+                        String parentPkgName = getPackageName(pkgName);
+                        while (parentPkgName.length() != 0) {
+                            BootImagePackage parent = pkgMap.get(parentPkgName);
+                            if (parent != null) {
+                                pkg = parent.cloneAs(pkgName);
+                                break;
+                            }
+                            parentPkgName = getPackageName(parentPkgName);
+                        }
                     }
+                    assert pkg != null;
                 }
 
                 add(pkg, pkgMap);
                 for (final BootImagePackage otherPkg : pkg.others.values()) {
+                    // Add any redirects and, for recursive packages outside this tree, add them as a new root.
                     add(otherPkg, pkgMap);
                     if (!otherPkg.name().startsWith(info.root.name()) && otherPkg.recursive) {
                         rootInfos.add(new RootPackageInfo(classpath, otherPkg));
@@ -383,10 +395,6 @@ public class BootImagePackage implements Comparable<BootImagePackage>, Cloneable
         }
 
         return Arrays.asList(pkgMap.values().toArray(new BootImagePackage[pkgMap.size()]));
-    }
-
-    public List<BootImagePackage> getTransitiveSubPackages(Classpath classpath) {
-        return getTransitiveSubPackages(classpath, new BootImagePackage[] {this});
     }
 
     private Map<Class<? extends VMScheme>, Class<? extends VMScheme>> schemeTypeToImplementation;

@@ -44,10 +44,10 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
          * Gets the package providing the platform specific CPS compiler.
          */
         @HOSTED_ONLY
-        public static VMPackage defaultCPSCompilerPackage() {
+        public static BootImagePackage defaultCPSCompilerPackage() {
             switch (platform().isa) {
                 case AMD64:
-                    return (VMPackage) BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
+                    return BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
                 default:
                     throw FatalError.unexpected(platform().isa.toString());
             }
@@ -59,7 +59,7 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
 
         @HOSTED_ONLY
         public static void setCompiler(CPSCompiler c) {
-            assert compiler == null;
+            assert compiler == null || compiler.getClass() == c.getClass();
             compiler = c;
             compilerPackage = BootImagePackage.fromClass(compiler.getClass());
         }
@@ -70,11 +70,16 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
         }
 
         @HOSTED_ONLY
-        public static boolean isCompilerPackage(BootImagePackage maxPackage) {
-            if (compilerPackage == null) {
-                return false;
-            }
-            return compilerPackage.isSubPackageOf(maxPackage);
+        public static boolean isCompiler(VMConfiguration vmConfiguration) {
+            final boolean result =
+                vmConfiguration.optCompilerPackage.name().startsWith("com.sun.max.vm.cps") ||
+                vmConfiguration.jitCompilerPackage.name().startsWith("com.sun.max.vm.cps");
+            return result;
+        }
+
+        @HOSTED_ONLY
+        public static boolean isCompilerPackage(VMConfiguration vmConfiguration, BootImagePackage cpsPackage) {
+            return isCompiler(vmConfiguration);
         }
 
         /**

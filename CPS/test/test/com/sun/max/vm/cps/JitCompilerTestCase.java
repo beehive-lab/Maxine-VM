@@ -38,9 +38,9 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.cps.template.*;
+import com.sun.max.vm.cps.template.source.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.template.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
