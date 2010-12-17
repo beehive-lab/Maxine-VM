@@ -75,6 +75,7 @@ public final class ClassRegistry {
     public static final TupleClassActor THREAD = createClass(Thread.class);
     public static final InterfaceActor CLONEABLE = createClass(Cloneable.class);
     public static final InterfaceActor SERIALIZABLE = createClass(Serializable.class);
+    public static final HybridClassActor STATIC_HUB = createClass(StaticHub.class);
 
     public static final PrimitiveClassActor VOID = createPrimitiveClass(Kind.VOID);
     public static final PrimitiveClassActor BYTE = createPrimitiveClass(Kind.BYTE);

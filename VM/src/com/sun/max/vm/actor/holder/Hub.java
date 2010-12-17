@@ -20,11 +20,17 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.Category;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
@@ -192,14 +198,15 @@ public abstract class Hub extends Hybrid {
 
     /**
      * Static Hub.
+     * @param vTableLength TODO
      */
-    protected Hub(Size tupleSize, ClassActor classActor, TupleReferenceMap referenceMap) {
+    protected Hub(Size tupleSize, ClassActor classActor, TupleReferenceMap referenceMap, int vTableLength) {
         this.tupleSize = tupleSize;
         this.componentHub = null;
         this.specificLayout = Layout.tupleLayout();
         this.layoutCategory = Layout.Category.TUPLE;
         this.classActor = classActor;
-        this.iTableStartIndex = firstWordIndex(); // the vTable is unused in static hubs
+        this.iTableStartIndex = firstWordIndex() + vTableLength;
         this.iTableLength = 1;
         this.mTableStartIndex = firstIntIndex();
         this.mTableLength = 1;
@@ -211,7 +218,13 @@ public abstract class Hub extends Hybrid {
     /**
      * Dynamic Hub.
      */
-    protected Hub(Size tupleSize, SpecificLayout specificLayout, ClassActor classActor, int[] superClassActorIds, Iterable<InterfaceActor> allInterfaceActors, int vTableLength, TupleReferenceMap referenceMap) {
+    protected Hub(Size tupleSize,
+                  SpecificLayout specificLayout,
+                  ClassActor classActor,
+                  int[] superClassActorIds,
+                  Iterable<InterfaceActor> allInterfaceActors,
+                  int vTableLength,
+                  TupleReferenceMap referenceMap) {
         this.tupleSize = tupleSize;
         this.specificLayout = specificLayout;
         this.layoutCategory = specificLayout.category();
@@ -235,6 +248,51 @@ public abstract class Hub extends Hybrid {
 
     protected final Hub expand() {
         return (Hub) expand(computeLength(referenceMapStartIndex, referenceMapLength));
+    }
+
+    static Address checkCompiled(VirtualMethodActor virtualMethodActor) {
+        if (!MaxineVM.isHosted()) {
+            final TargetMethod current = virtualMethodActor.currentTargetMethod();
+            if (current != null) {
+                return current.getEntryPoint(CallEntryPoint.VTABLE_ENTRY_POINT).asAddress();
+            }
+        }
+        return Address.zero();
+    }
+
+    /**
+     * Determines whether or not the currently configured compiler compiles all the way down to target methods.
+     *
+     * TODO: Remove this once the notion of a compiler not being able to compile to target methods is obsolete.
+     */
+    @FOLD
+    static boolean compilerCreatesTargetMethods() {
+        if (!isHosted()) {
+            return true;
+        }
+        CPSCompiler compiler = CPSCompiler.Static.compiler();
+        return compiler == null || compiler.compiledType() != null;
+    }
+
+    void initializeVTable(VirtualMethodActor[] allVirtualMethodActors) {
+        boolean compilerCreatesTargetMethods = compilerCreatesTargetMethods();
+        for (int i = 0; i < allVirtualMethodActors.length; i++) {
+            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
+            final int vTableIndex = firstWordIndex() + i;
+            assert virtualMethodActor.vTableIndex() == vTableIndex;
+            assert getWord(vTableIndex).isZero();
+            Address vTableEntry;
+
+            if (compilerCreatesTargetMethods) {
+                vTableEntry = checkCompiled(virtualMethodActor);
+                if (vTableEntry.isZero()) {
+                    vTableEntry = vm().stubs.virtualTrampoline(vTableIndex);
+                }
+            } else {
+                vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
+            }
+            setWord(vTableIndex, vTableEntry);
+        }
     }
 
     /**

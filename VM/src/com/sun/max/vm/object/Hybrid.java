@@ -53,26 +53,24 @@ public abstract class Hybrid {
      * @author Bernd Mathiske
      */
     @HOSTED_ONLY
-    private static class Expansion {
-        final Hybrid hybrid;
-        final Word[] words;
-        final int[] ints;
+    public static class Expansion {
+        public final Hybrid hybrid;
+        public final Word[] words;
+        public final int[] ints;
 
         Expansion(Hybrid hybrid, int length) {
             this.hybrid = hybrid;
             this.words = new Word[length];
             this.ints = new int[(length * Word.size()) / Ints.SIZE];
+            Arrays.fill(this.words, Address.zero());
         }
     }
 
-    /**
-     * A map that stores the association between a hybrid and its expansion.
-     */
-    @HOSTED_ONLY
-    private static final Map<Hybrid, Expansion> hybridToExpansion = Collections.synchronizedMap(new IdentityHashMap<Hybrid, Expansion>());
-
     protected Hybrid() {
     }
+
+    @HOSTED_ONLY
+    public Expansion expansion;
 
     /**
      * Expand the given initial hybrid object with fields to a fully fledged hybrid with array features and space.
@@ -82,8 +80,8 @@ public abstract class Hybrid {
      */
     public final Hybrid expand(int length) {
         if (MaxineVM.isHosted()) {
-            final Expansion oldValue = hybridToExpansion.put(this, new Expansion(this, length));
-            assert oldValue == null;
+            assert expansion == null;
+            expansion = new Expansion(this, length);
             return this;
         }
         return Heap.expandHybrid(this, length);
@@ -102,7 +100,7 @@ public abstract class Hybrid {
     @INLINE
     public final int length() {
         if (MaxineVM.isHosted()) {
-            return hybridToExpansion.get(this).words.length;
+            return expansion.words.length;
         }
         return ArrayAccess.readArrayLength(this);
     }
@@ -112,15 +110,15 @@ public abstract class Hybrid {
      * @param wordIndex the index into the word array at the end of this hybrid
      * @param value the value to write into the word array
      */
-    @INLINE
     public final void setWord(int wordIndex, Word value) {
-        if (MaxineVM.isHosted()) {
-            assert wordIndex >= firstWordIndex();
-            final Expansion expansion = hybridToExpansion.get(this);
-            WordArray.set(expansion.words, wordIndex, value);
-        } else {
-            ArrayAccess.setWord(this, wordIndex, value);
-        }
+        assert wordIndex >= firstWordIndex();
+        expansion.words[wordIndex] = value;
+    }
+
+    @LOCAL_SUBSTITUTION
+    @INLINE
+    public final void setWord_(int wordIndex, Word value) {
+        ArrayAccess.setWord(this, wordIndex, value);
     }
 
     /**
@@ -128,13 +126,14 @@ public abstract class Hybrid {
      * @param wordIndex the index into the word array at the end of this hybrid
      * @return the value of the array at the specified index
      */
-    @INLINE
     public final Word getWord(int wordIndex) {
-        if (MaxineVM.isHosted()) {
-            assert wordIndex >= firstWordIndex();
-            final Expansion expansion = hybridToExpansion.get(this);
-            return WordArray.get(expansion.words, wordIndex);
-        }
+        assert wordIndex >= firstWordIndex();
+        return expansion.words[wordIndex];
+    }
+
+    @LOCAL_SUBSTITUTION
+    @INLINE
+    public final Word getWord_(int wordIndex) {
         return ArrayAccess.getWord(this, wordIndex);
     }
 
@@ -143,15 +142,15 @@ public abstract class Hybrid {
      * @param intIndex the index into the array portion at the end of this hybrid
      * @param value the new value to write into the array portion
      */
-    @INLINE
     public final void setInt(int intIndex, int value) {
-        if (MaxineVM.isHosted()) {
-            assert intIndex >= firstIntIndex();
-            final Expansion expansion = hybridToExpansion.get(this);
-            expansion.ints[intIndex] = value;
-        } else {
-            ArrayAccess.setInt(this, intIndex, value);
-        }
+        assert intIndex >= firstIntIndex();
+        expansion.ints[intIndex] = value;
+    }
+
+    @LOCAL_SUBSTITUTION
+    @INLINE
+    public final void setInt_(int intIndex, int value) {
+        ArrayAccess.setInt(this, intIndex, value);
     }
 
     /**
@@ -159,13 +158,14 @@ public abstract class Hybrid {
      * @param intIndex the index into the array portion at the end of this hybrid
      * @return the value of the array at the specified index
      */
-    @INLINE
     public final int getInt(int intIndex) {
-        if (MaxineVM.isHosted()) {
-            assert intIndex >= firstIntIndex();
-            final Expansion expansion = hybridToExpansion.get(this);
-            return expansion.ints[intIndex];
-        }
+        assert intIndex >= firstIntIndex();
+        return expansion.ints[intIndex];
+    }
+
+    @LOCAL_SUBSTITUTION
+    @INLINE
+    public final int getInt_(int intIndex) {
         return ArrayAccess.getInt(this, intIndex);
     }
 }

@@ -273,12 +273,6 @@ public abstract class ClassActor extends Actor implements RiType {
 
         new Deferrable(DEFERRABLE_QUEUE_1) {
             public void run() {
-                final Size staticTupleSize = Layout.tupleLayout().layoutFields(NO_SUPER_CLASS_ACTOR, localStaticFieldActors);
-                final TupleReferenceMap staticReferenceMap = new TupleReferenceMap(localStaticFieldActors);
-                final StaticHub sHub = new StaticHub(staticTupleSize, ClassActor.this, staticReferenceMap);
-                ClassActor.this.staticHub = sHub.expand(staticReferenceMap, getRootClassActorId());
-                ClassActor.this.staticTuple = ClassActor.create(ClassActor.this);
-
                 final HashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
                 List<VirtualMethodActor> virtualMethodActors = gatherVirtualMethodActors(allInterfaceActors, methodLookup);
                 ClassActor.this.allVirtualMethodActors = virtualMethodActors.toArray(new VirtualMethodActor[virtualMethodActors.size()]);
@@ -305,7 +299,14 @@ public abstract class ClassActor extends Actor implements RiType {
                         vTableLength = 0;
                     }
 
-                    final DynamicHub dHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorIds, allInterfaceActors, vTableLength, dynamicReferenceMap);
+                    final DynamicHub dHub = new DynamicHub(
+                                    dynamicTupleSize,
+                                    specificLayout,
+                                    ClassActor.this,
+                                    superClassActorIds,
+                                    allInterfaceActors,
+                                    vTableLength,
+                                    dynamicReferenceMap);
                     ClassActor.this.iToV = new int[dHub.iTableLength];
                     ClassActor.this.dynamicHub = dHub.expand(superClassActorIds, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
 
@@ -314,6 +315,13 @@ public abstract class ClassActor extends Actor implements RiType {
                         dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
                     }
                 }
+
+                final Size staticTupleSize = Layout.tupleLayout().layoutFields(NO_SUPER_CLASS_ACTOR, localStaticFieldActors);
+                final TupleReferenceMap staticReferenceMap = new TupleReferenceMap(localStaticFieldActors);
+                final StaticHub sHub = new StaticHub(staticTupleSize, ClassActor.this, staticReferenceMap, OBJECT.allVirtualMethodActors().length);
+                ClassActor.this.staticHub = sHub.expand(staticReferenceMap, getRootClassActorId());
+                staticHub.initializeVTable(OBJECT.allVirtualMethodActors());
+                ClassActor.this.staticTuple = ClassActor.create(ClassActor.this);
             }
         };
     }
