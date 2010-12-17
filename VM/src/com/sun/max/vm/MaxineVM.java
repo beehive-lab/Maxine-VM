@@ -76,13 +76,16 @@ public final class MaxineVM {
      * The set of packages denoting classes for which {@link #isBootImageClass(String)} will return true.
      */
     @HOSTED_ONLY
-    private static final Set<String> BOOT_IMAGE_CODE_BASE_PACKAGES = new HashSet<String>();
+    private static final Map<String, BootImagePackage> BOOT_IMAGE_CODE_BASE_PACKAGES = new HashMap<String, BootImagePackage>();
 
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
 
     @HOSTED_ONLY
     private static final Set<String> KEEP_CLINIT_CLASSES = new HashSet<String>();
+
+    @HOSTED_ONLY
+    private static final String[] TEST_PACKAGES = {"test.", "jtt."};
 
     private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message.") {
         @Override
@@ -189,9 +192,8 @@ public final class MaxineVM {
      */
     @HOSTED_ONLY
     public static void registerBootImagePackages(List<BootImagePackage> packages) {
-        for (BootImagePackage maxPackage : packages) {
-            BOOT_IMAGE_CODE_BASE_PACKAGES.add(maxPackage.name());
-            BOOT_IMAGE_CODE_BASE_PACKAGES.add("test." + maxPackage.name());
+        for (BootImagePackage pkg : packages) {
+            BOOT_IMAGE_CODE_BASE_PACKAGES.put(pkg.name(), pkg);
         }
     }
 
@@ -293,67 +295,84 @@ public final class MaxineVM {
     }
 
     /**
-     * Determines if a given class exists only for hosted execution and should not be part
-     * of a generated target image.
+     * Determines if a given class exists only for hosted execution and should not be part of a generated target image.
+     * <p>
+     * A <i>direct hosted-only class</i> is defined as a class that is:
+     * <ul>
+     * <li>or annotated with {@link HOSTED_ONLY}
+     * <li>or in a package that ends with {@code ".hosted"}
+     * <li>or annotated with {@link PLATFORM} that does not match the target platform
+     * <li>
+     * </ul>
+     * <p>
+     * A <i>hosted-only</i> class is defined as:
+     * <ul>
+     * <li>a direct hosted-only class
+     * <li>or a subclass of a hosted-only class
+     * <li>or a nested class in a hosted-only class
+     * <li>or an array of {@code T} where {@code T} is a hosted-only class
+     * </ul>
      *
      * @param javaClass the class to check
-     * @return {@code true} if the class is only valid while bootstrapping
+     * @return {@code true} if the class is hosted-only
      */
     @HOSTED_ONLY
-    public static boolean isHostedOnly(Class<?> javaClass) {
+    public static boolean isHostedOnly(Class< ? > javaClass) {
+        // We keep a cache of what we know
         final Boolean value = HOSTED_CLASSES.get(javaClass);
         if (value != null) {
             return value;
         }
 
+        boolean result = false; // default assumption
+        final String pkgName = getPackageName(javaClass);
+
+        if (pkgName.startsWith("test")) {
+            System.console();
+        }
+
+        // Direct part of definition
+
         if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
-            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
-            return true;
-        }
+            result = true;
+        } else if (pkgName.endsWith(".hosted")) {
+            // May want to replace this 'magic' interpretation of ".hosted"
+            // with a sentinel class (e.g. HOSTED_ONLY_PACKAGE).
+            result = true;
+        } else if (!Platform.platform().isAcceptedBy(javaClass.getAnnotation(PLATFORM.class))) {
+            result = true;
+        } else {
 
-        // May want to replace this 'magic' interpretation of ".hosted"
-        // with a sentinel class (e.g. HOSTED_ONLY_PACKAGE).
-        if (getPackageName(javaClass).endsWith(".hosted")) {
-            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
-            return true;
-        }
+            // Indirect part of definition, cover all the possible cases
 
-        Class superclass = javaClass.getSuperclass();
-        if (superclass != null && isHostedOnly(superclass)) {
-            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
-            return true;
-        }
-
-        if (!Platform.platform().isAcceptedBy(javaClass.getAnnotation(PLATFORM.class))) {
-            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
-            return true;
-        }
-
-        final BootImagePackage pkg = BootImagePackage.fromClass(javaClass);
-        if (pkg != null) {
-            if (pkg.getClass().getSuperclass() == BootImagePackage.class) {
-                final boolean isTestPackage = pkg.name().startsWith("test.com.sun.max.");
-                HOSTED_CLASSES.put(javaClass, !isTestPackage);
-                return !isTestPackage;
-            } else if (pkg.getClass().getAnnotation(HOSTED_ONLY.class) != null) {
-                HOSTED_CLASSES.put(javaClass, true);
-                return true;
+            if (javaClass.isArray()) {
+                final Class< ? > componentClass = javaClass.getComponentType();
+                result = isHostedOnly(componentClass);
+            } else {
+                final Class superClass = javaClass.getSuperclass();
+                if (superClass != null && isHostedOnly(superClass)) {
+                    result = true;
+                } else {
+                    final Class< ? > enclosingClass = getEnclosingClass(javaClass);
+                    if (enclosingClass != null && isHostedOnly(enclosingClass)) {
+                        result = true;
+                    }
+                }
             }
-
         }
+        HOSTED_CLASSES.put(javaClass, result);
+        //Trace.line(1, "setHostedOnly: " + javaClass.getName() + " " + result);
+        return result;
+    }
 
+    private static Class<?> getEnclosingClass(Class<?> javaClass) {
         try {
-            final Class<?> enclosingClass = javaClass.getEnclosingClass();
-            if (enclosingClass != null) {
-                final boolean result = isHostedOnly(enclosingClass);
-                HOSTED_CLASSES.put(javaClass, result);
-                return result;
-            }
+            final Class< ? > enclosingClass = javaClass.getEnclosingClass();
+            return enclosingClass;
         } catch (LinkageError linkageError) {
             ProgramWarning.message("Error trying to get the enclosing class for " + javaClass + ": " + linkageError);
         }
-        HOSTED_CLASSES.put(javaClass, Boolean.FALSE);
-        return false;
+        return null;
     }
 
     public static boolean isPrimordial() {
@@ -382,10 +401,17 @@ public final class MaxineVM {
     }
 
     /**
-     * Determines if a given class name denotes a class that is (potentially) part of the boot image.
+     * Determines if a given class name denotes a class that is specified as part of the boot image.
+     * This cannot be based solely on the package name as the package may enumerate
+     * a specific set of classes.
      */
     public static boolean isBootImageClass(String className) {
-        return BOOT_IMAGE_CODE_BASE_PACKAGES.contains(getPackageName(className));
+        BootImagePackage pkg = BOOT_IMAGE_CODE_BASE_PACKAGES.get(getPackageName(className));
+        if (pkg != null) {
+            // check for explicit class
+            return pkg.isBootImageClass(className);
+        }
+        return false;
     }
 
     public static void setExitCode(int code) {

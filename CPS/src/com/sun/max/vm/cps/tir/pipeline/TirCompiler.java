@@ -30,11 +30,11 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
+import com.sun.max.vm.cps.hotpath.*;
+import com.sun.max.vm.cps.hotpath.compiler.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.cps.tir.target.*;
-import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.hotpath.compiler.*;
 
 public class TirCompiler {
     static final boolean BACKEND = false;

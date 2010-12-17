@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.max.vm.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.compiler.*;
 
 /**
@@ -29,7 +29,7 @@ import com.sun.max.vm.compiler.*;
  *
  * @author Ben L. Titzer
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
     }

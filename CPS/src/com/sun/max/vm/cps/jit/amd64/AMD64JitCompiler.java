@@ -31,10 +31,10 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.cps.template.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.amd64.*;
-import com.sun.max.vm.template.*;
 import com.sun.max.vm.thread.*;
 
 /**

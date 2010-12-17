@@ -23,7 +23,7 @@ package com.sun.max.vm.cps.jit.amd64;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.template.*;
+import com.sun.max.vm.cps.template.*;
 
 /**
  * Implementation of template-based target generator for AMD64.

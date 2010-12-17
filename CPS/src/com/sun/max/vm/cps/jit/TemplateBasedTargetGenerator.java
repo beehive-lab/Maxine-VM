@@ -29,8 +29,8 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.template.*;
-import com.sun.max.vm.template.source.*;
+import com.sun.max.vm.cps.template.*;
+import com.sun.max.vm.cps.template.source.*;
 
 /**
  * Target code generator based on template. The code generator uses a simple bytecode to target translator that produces code by merely
