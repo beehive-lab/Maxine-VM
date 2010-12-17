@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.thread.VmThread.*;

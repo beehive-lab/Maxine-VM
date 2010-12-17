@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.cps.template.source;
 
+import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveArrayClass.*;
 import static com.sun.max.vm.cps.template.BytecodeTemplate.*;
@@ -2592,15 +2593,6 @@ public class BytecodeTemplateSource {
         Word value2 = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.pokeInt(0, value2.mostSignificantBitSet());
     }
-
-    @INTRINSIC(Bytecodes.MEMBAR_LOAD_LOAD)
-    public static native void loadLoad();
-    @INTRINSIC(Bytecodes.MEMBAR_LOAD_STORE)
-    public static native void loadStore();
-    @INTRINSIC(Bytecodes.MEMBAR_STORE_LOAD)
-    public static native void storeLoad();
-    @INTRINSIC(Bytecodes.MEMBAR_STORE_STORE)
-    public static native void storeStore();
 
     @BYTECODE_TEMPLATE(MEMBAR_LOAD_LOAD)
     public static void membar_load_load() {

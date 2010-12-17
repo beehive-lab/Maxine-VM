@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.snippet;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.vm.runtime.VmOperation.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
@@ -28,7 +28,6 @@ import static com.sun.max.vm.stack.JavaFrameAnchor.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -134,9 +133,6 @@ public abstract class NativeStubSnippet extends Snippet {
                 MUTATOR_STATE.store(etla, THREAD_IN_NATIVE);
             }
         }
-
-        @INTRINSIC(MEMBAR | ((LOAD_STORE | STORE_STORE) << 8))
-        private static native void memopStore();
 
         public static final NativeCallPrologue SNIPPET = new NativeCallPrologue();
     }
