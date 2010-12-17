@@ -19,40 +19,13 @@
  * Company, Ltd.
  */
 package com.sun.max.vm.heap.gcx;
-import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
-import java.util.*;
 
-/**
- * Generic iterator over a heap region list.
- * @author Laurent Daynes
- */
-public abstract class HeapRegionListIterable<T> implements Iterable<T>, Iterator<T> {
-    HeapRegionList regionList;
-    int cursor = INVALID_REGION_ID;
-
-    HeapRegionListIterable() {
+public final class HeapRegionInfoIterable extends HeapRegionListIterable<HeapRegionInfo> {
+    HeapRegionInfoIterable() {
     }
 
-    void initialize(HeapRegionList regionList) {
-        this.regionList = regionList;
+    @Override
+    public HeapRegionInfo next() {
+        return RegionTable.theRegionTable().regionInfo(cursor++);
     }
-
-    void reset() {
-        cursor = regionList.head();
-    }
-
-    public Iterator<T> iterator() {
-        return this;
-    }
-
-    public boolean hasNext() {
-        return cursor != INVALID_REGION_ID;
-    }
-
-    public abstract T next();
-
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
-
 }

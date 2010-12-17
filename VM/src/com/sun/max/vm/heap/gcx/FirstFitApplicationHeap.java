@@ -28,26 +28,49 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
 
-
+/**
+ * A region-based, non-generational, mark-sweep heap.
+ * Currently, for testing region-based GC mechanism (tracing, sweeping, region allocation, large object handling).
+ *
+ *
+ *
+ * TODO: rename FirstFitMarkSweepHeap.
+ * @author Laurent Daynes
+ */
 public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwner, ApplicationHeap {
     /* For simplicity at the moment. Should be able to allocated this in GC's own heap (i.e., the bootstrap allocator).
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private static int NEXT_FREE_CHUNK_OFFSET;
-
     final HeapAccount<FirstFitApplicationHeap> heapAccount;
-    final LinearSpaceAllocator smallObjectSpace;
-    final LargeObjectSpace largeObjectSpace;
-    final HeapRegionListIterable regionsIterable;
+    final MultiChunkTLABAllocator smallObjectAllocator;
+    final LinearSpaceAllocator overflowAllocator;
+    final LargeObjectSpace largeObjectAllocator;
+
+    /**
+     * Support for iterating over contiguous region ranges from a list.
+     */
+    final HeapRegionRangeIterable regionsRangeIterable;
+
+    /**
+     * Support for iterating over region info of regions from a list.
+     */
+    final HeapRegionInfoIterable regionInfoIterable;
 
     private Size minReclaimableSpace;
+
+    /**
+     * List of region with space available for allocation.
+     * Used to refill the small object allocator and the overflow allocator.
+     */
     private HeapRegionList allocatingRegions;
+    /**
+     * List of region with no space available for allocation.
+     */
     private HeapRegionList fullRegions;
 
+    private int overflowRegionID;
     /*
      * The lock on which refill and region allocation to object spaces synchronize on.
      */
@@ -59,10 +82,88 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
         throw outOfMemoryError;
     }
 
+    private void overflowAllocatorRefill(int regionId, Address chunkStart, Size chunkSize) {
+        // Change the overflow allocator's region.
+        if (overflowRegionID != INVALID_REGION_ID) {
+            fullRegions.append(overflowRegionID);
+        }
+        allocatingRegions.remove(regionId);
+        overflowRegionID = regionId;
+        overflowAllocator.refill(chunkStart, chunkSize);
+        HeapRegionInfo.fromRegionID(regionId).setAllocating();
+    }
+
+    /**
+     * Refill the overflow allocator.
+     * @param size
+     * @return address to a chunk of the requested size, or zero if none requested.
+     */
+    Address overflowRefillOrAllocate(Size size) {
+        final int minFreeWords = size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        int firstFitRegion = INVALID_REGION_ID;
+        int regionWithLargestSingleChunk = INVALID_REGION_ID;
+        int numFreeWords = 0;
+        regionInfoIterable.initialize(allocatingRegions);
+        regionInfoIterable.reset();
+        for (HeapRegionInfo regionInfo : regionInfoIterable) {
+            if (regionInfo.isEmpty()) {
+                int regionId = regionInfo.toRegionID();
+                final Address result = regionInfo.regionStart();
+                final Size spaceLeft = Size.fromUnsignedInt(HeapRegionConstants.regionSizeInBytes).minus(size);
+                // Refill allocator with the rest.
+                overflowAllocatorRefill(regionId, result.plus(size), spaceLeft);
+                return result;
+            }
+            if (regionInfo.freeWords() > numFreeWords && regionInfo.numFreeChunks() == 1) {
+                regionWithLargestSingleChunk = regionInfo.toRegionID();
+            } else if (firstFitRegion == INVALID_REGION_ID && regionInfo.freeWords() > minFreeWords) {
+                firstFitRegion = regionInfo.toRegionID();
+            }
+        }
+        if (regionWithLargestSingleChunk != INVALID_REGION_ID) {
+            final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(regionWithLargestSingleChunk);
+            Address result = regionInfo.firstFreeBytes();
+            Size spaceLeft = HeapFreeChunk.getFreechunkSize(result).minus(size);
+            overflowAllocatorRefill(regionWithLargestSingleChunk, result.plus(size), spaceLeft);
+            return result;
+        }
+
+        // Allocate without refilling.
+        return Address.zero();
+    }
+
+    class OverflowRefillManager extends LinearSpaceAllocator.RefillManager {
+
+        @Override
+        Address allocate(Size size) {
+            return null;
+        }
+
+        @Override
+        boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
+            // Always refill overflow allocator
+            return true;
+        }
+
+        @Override
+        Address refill(LinearSpaceAllocator allocator, Pointer startOfSpaceLeft, Size spaceLeft) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+    }
+    /**
+     * Handle allocation requests that cannot be addressed by the small object space.
+     * Handle only object request, not TLABs.
+     * @param size
+     * @return
+     */
+    private Address overflowAllocation(Size size) {
+        return overflowAllocator.allocateCleared(size);
+    }
     /**
      * Refill Manager for the small object space.
      */
-    class RefillManager extends LinearSpaceAllocator.RefillManager {
+    class RefillManager extends MultiChunkTLABAllocator.RefillManager {
         private Size refillThreshold;
         private Address nextFreeChunkInRegion;
         private int currentRegion;
@@ -122,8 +223,7 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
          */
         @Override
         Address allocate(Size size) {
-            // TODO Auto-generated method stub
-            return Address.zero();
+            return overflowAllocation(size);
         }
 
         @Override
@@ -189,9 +289,13 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
 
     public FirstFitApplicationHeap() {
         heapAccount = new HeapAccount<FirstFitApplicationHeap>(this);
-        smallObjectSpace = new LinearSpaceAllocator(new RefillManager());
-        largeObjectSpace = new LargeObjectSpace();
-        regionsIterable = new HeapRegionListIterable();
+        final RefillManager refillManager = new RefillManager();
+        smallObjectAllocator = new MultiChunkTLABAllocator(refillManager);
+        overflowAllocator = new MultiChunkTLABAllocator(refillManager);
+
+        largeObjectAllocator = new LargeObjectSpace();
+        regionsRangeIterable = new HeapRegionRangeIterable();
+        regionInfoIterable = new HeapRegionInfoIterable();
     }
 
     public HeapAccount<FirstFitApplicationHeap> heapAccount() {
@@ -206,22 +310,32 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
         fullRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         heapAccount.allocate(numberOfRegions(minSize), allocatingRegions, true);
         minReclaimableSpace = Size.fromInt(Sweepable.freeChunkMinSizeOption.getValue());
+
+        //smallObjectSpace.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minReclaimableSpace);
+        // Set the iterable to the allocating regions. This is the default. Any exception to this should
+        // reset to the allocating region list when done.
+        regionsRangeIterable.initialize(allocatingRegions);
     }
 
     @HOSTED_ONLY
     public void hostInitialize() {
-        NEXT_FREE_CHUNK_OFFSET = ClassRegistry.findField(RefillManager.class, "nextFreeChunkInRegion").offset();
-        smallObjectSpace.hostInitialize();
+        smallObjectAllocator.hostInitialize();
     }
 
+    /**
+     * Entry point for direct allocation by HeapScheme using this heap.
+     */
     @Override
     public Pointer allocate(Size size) {
-        return smallObjectSpace.allocateCleared(size);
+        return smallObjectAllocator.allocateCleared(size);
     }
 
+    /**
+     * Entry point for direct TLAB allocation by HeapScheme using this heap.
+     */
     @Override
     public Pointer allocateTLAB(Size size) {
-        return smallObjectSpace.allocateTLAB(size);
+        return smallObjectAllocator.allocateTLAB(size);
     }
 
     @Override
@@ -255,11 +369,14 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
 
     @Override
     public void makeParsable() {
-        smallObjectSpace.makeParsable();
+        smallObjectAllocator.makeParsable();
     }
 
     public void mark(TricolorHeapMarker heapMarker) {
-        heapMarker.markAll(regionsIterable, HeapRegionConstants.log2RegionSizeInBytes);
+        // All regions must be in the full list, sorted
+        regionsRangeIterable.initialize(fullRegions);
+        regionsRangeIterable.reset();
+        heapMarker.markAll(regionsRangeIterable, HeapRegionConstants.log2RegionSizeInBytes);
     }
 
     @Override
@@ -312,3 +429,4 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
         return endSweep();
     }
 }
+
