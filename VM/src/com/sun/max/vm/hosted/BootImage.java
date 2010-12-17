@@ -449,8 +449,8 @@ public class BootImage {
             return OS.valueOf(values.get(Key.OS));
         }
 
-        public BootImagePackage BootImagePackage(Key key) {
-            return (BootImagePackage) BootImagePackage.fromName(values.get(key));
+        public BootImagePackage bootImagePackage(Key key) {
+            return BootImagePackage.fromName(values.get(key));
         }
 
         private StringInfo(InputStream inputStream, int offset, Endianness endian) throws IOException, Utf8Exception {
@@ -621,14 +621,14 @@ public class BootImage {
                 Platform.set(platform);
                 vmConfiguration = new VMConfiguration(stringInfo.buildLevel(),
                                                       platform,
-                                                      stringInfo.BootImagePackage(Key.REFERENCE),
-                                                      stringInfo.BootImagePackage(Key.LAYOUT),
-                                                      stringInfo.BootImagePackage(Key.HEAP),
-                                                      stringInfo.BootImagePackage(Key.MONITOR),
-                                                      stringInfo.BootImagePackage(Key.OPT),
-                                                      stringInfo.BootImagePackage(Key.JIT),
-                                                      stringInfo.BootImagePackage(Key.COMPILATION),
-                                                      stringInfo.BootImagePackage(Key.RUN));
+                                                      stringInfo.bootImagePackage(Key.REFERENCE),
+                                                      stringInfo.bootImagePackage(Key.LAYOUT),
+                                                      stringInfo.bootImagePackage(Key.HEAP),
+                                                      stringInfo.bootImagePackage(Key.MONITOR),
+                                                      stringInfo.bootImagePackage(Key.OPT),
+                                                      stringInfo.bootImagePackage(Key.JIT),
+                                                      stringInfo.bootImagePackage(Key.COMPILATION),
+                                                      stringInfo.bootImagePackage(Key.RUN));
 
                 fileInputStream.skip(header.heapSize + header.codeSize);
                 int trailerOffset = codeOffset() + header.codeSize;

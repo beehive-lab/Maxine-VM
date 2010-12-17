@@ -130,7 +130,7 @@ public final class VMConfigurator {
                 BootImagePackage def = BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
                 assert def != null : "need to modify class path to include " + JavaProject.findWorkspaceDirectory() + "/CPS/bin";
                 return def;
-           default:
+            default:
                 throw FatalError.unimplemented();
         }
     }
