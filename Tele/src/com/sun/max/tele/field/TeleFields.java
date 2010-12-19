@@ -47,6 +47,7 @@ import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
@@ -213,6 +214,8 @@ public class TeleFields extends AbstractTeleVMHolder {
         if (!sourceFile.exists()) {
             TeleWarning.message("Source file does not exist: " + sourceFile.getAbsolutePath());
         }
+        VMConfigurator configurator = new VMConfigurator(null);
+        configurator.create(true);
 
         final Runnable runnable = new Runnable() {
             public void run() {
