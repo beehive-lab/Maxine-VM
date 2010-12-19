@@ -44,7 +44,7 @@ import com.sun.max.vm.run.*;
  * <ul>
  * <li> a {@link BuildLevel}
  * <li> a set of {@link BootImagePackage boot-image packages} that will be in the boot image
- * <li> a specfic subset of the boot-image packages that implement the {@link VMScheme} VM schemes.
+ * <li> a specific subset of the boot-image packages that implement the {@link VMScheme} VM schemes.
  * </ul>
  * This information is all known at the time the instance is constructed.
  *
