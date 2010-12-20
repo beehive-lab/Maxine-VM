@@ -86,14 +86,18 @@ public final class Preprocessor {
             return null;
         }
 
-        if (codeAttribute.exceptionHandlerTable().length != 0) {
-            codeAttribute = new ExceptionDispatchingPreprocessor(constantPoolEditor(), codeAttribute).codeAttribute();
-            reason = reason + " dispatching";
+        if (ExceptionDispatchingPreprocessor.REQUIRED) {
+            if (codeAttribute.exceptionHandlerTable().length != 0) {
+                codeAttribute = new ExceptionDispatchingPreprocessor(constantPoolEditor(), codeAttribute).codeAttribute();
+                reason = reason + " dispatching";
+            }
         }
 
-        if (classMethodActor.isSynchronized()) {
-            codeAttribute = new SynchronizedMethodPreprocessor(constantPoolEditor(), classMethodActor, codeAttribute).codeAttribute();
-            reason = reason + " synchronizedMethod";
+        if (SynchronizedMethodPreprocessor.REQUIRED) {
+            if (classMethodActor.isSynchronized()) {
+                codeAttribute = new SynchronizedMethodPreprocessor(constantPoolEditor(), classMethodActor, codeAttribute).codeAttribute();
+                reason = reason + " synchronizedMethod";
+            }
         }
 
         if (codeAttribute != originalCodeAttribute) {

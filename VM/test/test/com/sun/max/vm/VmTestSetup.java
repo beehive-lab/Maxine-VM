@@ -56,8 +56,10 @@ public class VmTestSetup extends TestSetup {
 
     protected void chainedSetUp() {
         Trace.on(1);
-        initializeVM();
-        JavaPrototype.initialize(false);
+        if (JavaPrototype.javaPrototype() == null) {
+            initializeVM();
+            JavaPrototype.initialize(false);
+        }
     }
 
     /**

@@ -70,14 +70,11 @@ public final class NativeCall extends StateSplit {
     }
 
     /**
-     * Native functions can never trap. Or, more accurately, if they do, there
-     * is no safe way to recover and the VM terminates.
-     *
-     * @return {@code false}
+     * The native function may call back into the VM which may call method that can trap.
      */
     @Override
     public boolean canTrap() {
-        return false;
+        return true;
     }
 
     /**

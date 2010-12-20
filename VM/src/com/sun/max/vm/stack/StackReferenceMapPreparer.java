@@ -20,7 +20,9 @@
  */
 package com.sun.max.vm.stack;
 
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -699,7 +701,7 @@ public final class StackReferenceMapPreparer {
 
     private void verifyReferenceMaps(VmThread current) {
         initRefMapFields(current.tla());
-        current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), this);
+        current.stackDumpStackFrameWalker().verifyReferenceMap(Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer(), this);
     }
 
 }

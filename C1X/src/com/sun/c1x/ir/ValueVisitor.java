@@ -49,13 +49,15 @@ public abstract class ValueVisitor {
     public abstract void visitInvoke(Invoke i);
     public abstract void visitLoadField(LoadField i);
     public abstract void visitLoadIndexed(LoadIndexed i);
-    public abstract void visitLoadPC(LoadPC i);
+    public abstract void visitInfopoint(Infopoint i);
     public abstract void visitLoadPointer(LoadPointer i);
     public abstract void visitLoadStackAddress(AllocateStackVariable i);
     public abstract void visitLoadRegister(LoadRegister i);
     public abstract void visitLocal(Local i);
     public abstract void visitLogicOp(LogicOp i);
     public abstract void visitLookupSwitch(LookupSwitch i);
+    public abstract void visitMemoryBarrier(MemoryBarrier memoryBarrier);
+    public abstract void visitMonitorAddress(MonitorAddress monitorAddress);
     public abstract void visitMonitorEnter(MonitorEnter i);
     public abstract void visitMonitorExit(MonitorExit i);
     public abstract void visitNativeCall(NativeCall i);
@@ -87,5 +89,4 @@ public abstract class ValueVisitor {
     public abstract void visitUnsafePutObject(UnsafePutObject i);
     public abstract void visitUnsafePutRaw(UnsafePutRaw i);
     public abstract void visitUnsignedCompareOp(UnsignedCompareOp i);
-    public abstract void visitMonitorAddress(MonitorAddress monitorAddress);
 }

@@ -22,8 +22,6 @@ package com.sun.max.vm.compiler.target;
 
 import java.util.*;
 
-import com.sun.max.vm.runtime.FatalError;
-
 /**
  * Categorization of stops. Stops are target code positions for which the locations of object references are precisely known.
  *
@@ -66,7 +64,7 @@ public enum StopType {
     },
 
     /**
-     * A safepoint is a position at which the GC can stop a thread. The locations of object references on both the stack
+     * A safepoint is a position at which a thread. The locations of object references on both the stack
      * and in the registers are precisely known at a safepoint.
      */
     SAFEPOINT {
@@ -78,22 +76,6 @@ public enum StopType {
         @Override
         public int numberOfStopPositions(TargetMethod targetMethod) {
             return targetMethod.numberOfSafepoints();
-        }
-    },
-
-    /**
-     * A guardpoint is a position at which a trace can exit. The locations of object references on both the stack
-     * and in the registers are precisely known at a guardpoint.
-     */
-    GUARDPOINT {
-        @Override
-        public int stopPositionIndex(TargetMethod targetMethod, int n) {
-            return targetMethod.numberOfDirectCalls() + targetMethod.numberOfIndirectCalls() + targetMethod.numberOfSafepoints() + n;
-        }
-
-        @Override
-        public int numberOfStopPositions(TargetMethod targetMethod) {
-            throw FatalError.unimplemented();
         }
     };
 

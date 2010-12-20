@@ -1871,7 +1871,6 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case WCMP:                   frame.pop(WORD); frame.pop(WORD); break;
 
                 case PCMPSWP:
-                case MEMBAR:
                 case PGET:
                 case PSET:
                 case PREAD:
@@ -1935,13 +1934,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                         case PCMPSWP_INT_I:          pointerCompareAndSwap(INTEGER, true); break;
                         case PCMPSWP_WORD_I:         pointerCompareAndSwap(WORD, true); break;
                         case PCMPSWP_REFERENCE_I:    pointerCompareAndSwap(VM_REFERENCE, true); break;
-                        case MEMBAR_LOAD_LOAD:
-                        case MEMBAR_LOAD_STORE:
-                        case MEMBAR_STORE_LOAD:
-                        case MEMBAR_STORE_STORE:
-                        case MEMBAR_MEMOP_STORE:
-                        case MEMBAR_FENCE:           break;
-                        default:                     verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
+                            default:                     verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
                     }
                     break;
                 }
@@ -1999,9 +1992,17 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     }
                     break;
                 }
+                case INFOPOINT: {
+                    opcode = INFOPOINT | ((operand & ~0xff) << 8);
+                    if (opcode == HERE) {
+                        frame.push(LONG);
+                    }
+                    break;
+                }
+
                 case WRETURN            : performReturn(WORD); break;
-                case SAFEPOINT          : break;
                 case PAUSE              : break;
+                case MEMBAR             : break;
                 case BREAKPOINT_TRAP    : break;
                 case FLUSHW             : break;
                 case LSB                : performConversion(WORD, INTEGER); break;
@@ -2009,7 +2010,6 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case ALLOCA             : frame.pop(INTEGER); frame.push(WORD); break;
                 case ALLOCSTKVAR        : performAllocStkVar(); break;
 
-                case READ_PC            : frame.push(WORD); break;
                 case READREG            : frame.push(WORD); break;
                 case WRITEREG           : frame.pop(WORD); break;
 

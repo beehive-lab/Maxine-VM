@@ -20,10 +20,14 @@
  */
 package com.sun.max.vm.compiler;
 
+import static com.sun.max.platform.Platform.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * The interface implemented by the legacy CPS compiler.
@@ -35,27 +39,47 @@ import com.sun.max.vm.compiler.snippet.*;
 public interface CPSCompiler extends RuntimeCompilerScheme {
 
     public static class Static {
+
+        /**
+         * Gets the package providing the platform specific CPS compiler.
+         */
+        @HOSTED_ONLY
+        public static BootImagePackage defaultCPSCompilerPackage() {
+            switch (platform().isa) {
+                case AMD64:
+                    return BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
+                default:
+                    throw FatalError.unexpected(platform().isa.toString());
+            }
+        }
+
         private static CPSCompiler compiler;
         @HOSTED_ONLY
         private static BootImagePackage compilerPackage;
 
         @HOSTED_ONLY
         public static void setCompiler(CPSCompiler c) {
-            assert compiler == null;
+            assert compiler == null || compiler.getClass() == c.getClass();
             compiler = c;
             compilerPackage = BootImagePackage.fromClass(compiler.getClass());
         }
 
+        @FOLD
         public static CPSCompiler compiler() {
             return compiler;
         }
 
         @HOSTED_ONLY
-        public static boolean isCompilerPackage(BootImagePackage maxPackage) {
-            if (compilerPackage == null) {
-                return false;
-            }
-            return compilerPackage.isSubPackageOf(maxPackage);
+        public static boolean isCompiler(VMConfiguration vmConfiguration) {
+            final boolean result =
+                vmConfiguration.optCompilerPackage.name().startsWith("com.sun.max.vm.cps") ||
+                vmConfiguration.jitCompilerPackage.name().startsWith("com.sun.max.vm.cps");
+            return result;
+        }
+
+        @HOSTED_ONLY
+        public static boolean isCompilerPackage(VMConfiguration vmConfiguration, BootImagePackage cpsPackage) {
+            return isCompiler(vmConfiguration);
         }
 
         /**

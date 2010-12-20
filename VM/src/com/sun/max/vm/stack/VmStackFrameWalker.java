@@ -22,14 +22,9 @@ package com.sun.max.vm.stack;
 
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.util.*;
-
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -83,15 +78,5 @@ public final class VmStackFrameWalker extends StackFrameWalker {
 
     public void setIsDumpingFatalStackTrace(boolean flag) {
         dumpingFatalStackTrace = flag;
-    }
-
-    @INLINE
-    public static ClassMethodActor getCallerClassMethodActor() {
-        // TODO: a full stack walk is not necessary here.
-        LinkedList<StackFrame> frames = new LinkedList<StackFrame>();
-        new VmStackFrameWalker(VmThread.current().tla()).frames(frames, VMRegister.getInstructionPointer(),
-                                                       VMRegister.getCpuStackPointer(),
-                                                       VMRegister.getCpuFramePointer());
-        return getCallerClassMethodActor(frames, false);
     }
 }

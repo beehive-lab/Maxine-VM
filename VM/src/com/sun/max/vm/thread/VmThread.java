@@ -1280,7 +1280,7 @@ public class VmThread {
         }
     }
 
-    public void pushPrivilegedElement(ClassActor classActor, Pointer frameId, AccessControlContext context) {
+    public void pushPrivilegedElement(ClassActor classActor, long frameId, AccessControlContext context) {
         privilegedStackTop = new PrivilegedElement(classActor, frameId, context, privilegedStackTop);
     }
 
@@ -1295,10 +1295,10 @@ public class VmThread {
     public static class PrivilegedElement {
         private PrivilegedElement next;
         public ClassActor classActor;
-        public Pointer frameId;
+        public long frameId;
         public AccessControlContext context;
 
-        PrivilegedElement(ClassActor classActor, Pointer frameId, AccessControlContext context, PrivilegedElement next) {
+        PrivilegedElement(ClassActor classActor, long frameId, AccessControlContext context, PrivilegedElement next) {
             this.classActor = classActor;
             this.frameId = frameId;
             this.context = context;

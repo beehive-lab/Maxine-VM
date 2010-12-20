@@ -338,21 +338,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     }
 
     /**
-     * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
-     * location in the returned sequence is the one at the closest position less or equal to the position denoted by
-     * {@code instructionPointer}.
-     *
-     * @param instructionPointer a pointer to an instruction within this method
-     * @param implicitExceptionPoint {@code true} if the instruction pointer corresponds to an implicit exception point
-     * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
-     *         no bytecode location can be determined for {@code instructionPointer}.
-     * @see TargetMethod#getBytecodeLocationFor(Pointer, boolean)
-     */
-    protected final BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
-        return targetMethod().getBytecodeLocationFor(instructionPointer, implicitExceptionPoint);
-    }
-
-    /**
      * Gets the name of the source variable corresponding to a stack slot, if any.
      *
      * @param slot a stack slot

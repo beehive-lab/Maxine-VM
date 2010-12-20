@@ -1629,18 +1629,36 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case ALLOCA:
                 case PAUSE:
-                case SAFEPOINT:
                 case FLUSHW:
                 case BREAKPOINT_TRAP: {
                     skip2();
                     break;
+                }
+                case INFOPOINT: {
+                    opcode |= readUnsigned1() << 16;
+                    skip1();
+                    switch (opcode) {
+                        case INFO:
+                        case SAFEPOINT: {
+                            break;
+                        }
+                        case HERE: {
+                            pushCategory2();
+                            break;
+                        }
+                        default: {
+                            FatalError.unexpected("Unknown INFOPOINT bytcode");
+                        }
+                    }
+                    break;
+
                 }
                 case WRITEREG: {
                     skip2();
                     popCategory1();
                     break;
                 }
-                case READ_PC:
+                case HERE:
                 case READREG: {
                     skip2();
                     pushCategory1();

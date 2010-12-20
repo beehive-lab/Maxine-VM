@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.cps.dir.eir;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.snippet.*;
@@ -238,16 +239,14 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
         assign(destination.kind(), destination, source);
     }
 
-    public final void visitSafepoint(DirSafepoint dirSafepoint) {
-        final EirSafepoint instruction = methodTranslation.createSafepoint(eirBlock());
+    public final void visitInfopoint(DirInfopoint dirInfopoint) {
+        final EirValue destination = dirInfopoint.opcode == Bytecodes.HERE ? createEirVariable(Kind.LONG) : null;
+        final EirInfopoint instruction = methodTranslation.createInfopoint(eirBlock(), dirInfopoint.opcode, destination);
         addInstruction(instruction);
-        instruction.setEirJavaFrameDescriptor(methodTranslation.dirToEirJavaFrameDescriptor(dirSafepoint.javaFrameDescriptor(), instruction));
+        instruction.setEirJavaFrameDescriptor(methodTranslation.dirToEirJavaFrameDescriptor(dirInfopoint.javaFrameDescriptor(), instruction));
+        if (dirInfopoint.opcode == Bytecodes.HERE) {
+            final EirValue result = dirToEirValue(dirInfopoint.destination);
+            assign(Kind.LONG, result, destination);
+        }
     }
-
-    public final void visitGuardpoint(DirGuardpoint dirGuardpoint) {
-        final EirGuardpoint instruction = methodTranslation.createGuardpoint(eirBlock());
-        addInstruction(instruction);
-        instruction.setEirJavaFrameDescriptor(methodTranslation.dirToEirJavaFrameDescriptor(dirGuardpoint.javaFrameDescriptor(), instruction));
-    }
-
 }

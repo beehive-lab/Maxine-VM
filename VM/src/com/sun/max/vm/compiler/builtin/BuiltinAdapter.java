@@ -23,13 +23,151 @@ package com.sun.max.vm.compiler.builtin;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
-import com.sun.max.vm.compiler.builtin.IEEE754Builtin.*;
-import com.sun.max.vm.compiler.builtin.JavaBuiltin.*;
-import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.*;
-import com.sun.max.vm.compiler.builtin.SpecialBuiltin.*;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.DividedByAddress;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.DividedByInt;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.GreaterEqual;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.GreaterThan;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.LessEqual;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.LessThan;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.RemainderByAddress;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.RemainderByInt;
+import com.sun.max.vm.compiler.builtin.IEEE754Builtin.ConvertDoubleToInt;
+import com.sun.max.vm.compiler.builtin.IEEE754Builtin.ConvertDoubleToLong;
+import com.sun.max.vm.compiler.builtin.IEEE754Builtin.ConvertFloatToInt;
+import com.sun.max.vm.compiler.builtin.IEEE754Builtin.ConvertFloatToLong;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertByteToInt;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertCharToInt;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertDoubleToFloat;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertFloatToDouble;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertIntToByte;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertIntToChar;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertIntToDouble;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertIntToFloat;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertIntToLong;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertIntToShort;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertLongToDouble;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertLongToFloat;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertLongToInt;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.ConvertShortToInt;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.DoubleCompareG;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.DoubleCompareL;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.DoubleDivided;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.DoubleMinus;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.DoubleNegated;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.DoublePlus;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.DoubleRemainder;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.DoubleTimes;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.FloatCompareG;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.FloatCompareL;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.FloatDivided;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.FloatMinus;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.FloatNegated;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.FloatPlus;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.FloatRemainder;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.FloatTimes;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntAnd;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntDivided;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntMinus;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntNegated;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntNot;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntOr;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntPlus;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntRemainder;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntShiftedLeft;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntSignedShiftedRight;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntTimes;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntUnsignedShiftedRight;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.IntXor;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongAnd;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongCompare;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongDivided;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongMinus;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongNegated;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongNot;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongOr;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongPlus;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongRemainder;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongShiftedLeft;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongSignedShiftedRight;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongTimes;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongUnsignedShiftedRight;
+import com.sun.max.vm.compiler.builtin.JavaBuiltin.LongXor;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapInt;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapIntAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapReference;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapReferenceAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapWord;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapWordAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetByte;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetChar;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetDouble;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetFloat;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetInt;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetLong;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetReference;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetShort;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetWord;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadByte;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadByteAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadChar;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadCharAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadDouble;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadDoubleAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadFloat;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadFloatAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadInt;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadIntAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadLong;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadLongAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadReference;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadReferenceAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadShort;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadShortAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadWord;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadWordAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetByte;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetDouble;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetFloat;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetInt;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetLong;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetReference;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetShort;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetWord;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteByte;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteByteAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteDouble;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteDoubleAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteFloat;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteFloatAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteInt;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteIntAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteLong;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteLongAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteReference;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteReferenceAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteShort;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteShortAtIntOffset;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWord;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWordAtIntOffset;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AboveEqual;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AboveThan;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AdjustJitStack;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BarMemory;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BelowEqual;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BelowThan;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.Call;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.CompareInts;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.CompareWords;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.DoubleToLong;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.FloatToInt;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.FlushRegisterWindows;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.GetIntegerRegister;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.IntToFloat;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.LeastSignificantBit;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.LongToDouble;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.MostSignificantBit;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.Pause;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.SetIntegerRegister;
 
 public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
 
@@ -607,10 +745,6 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    public void visitGetInstructionPointer(GetInstructionPointer builtin, IR_Type result, IR_Type[] arguments) {
-        visitGetInstructionPointer(builtin, result, arguments);
-    }
-
     public void visitPause(Pause builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
@@ -655,7 +789,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    public void visitSafepoint(SafepointBuiltin builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitInfopoint(InfopointBuiltin builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
@@ -694,9 +828,5 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
 
     public void visitConvertFloatToDouble(ConvertFloatToDouble builtin, IR_Type result, IR_Type[] arguments) {
         visitBuiltin(builtin, result, arguments);
-    }
-
-    public void visitMarker(Marker builtin, IR_Type result, IR_Type[] arguments) {
-        visitSpecialBuiltin(builtin, result, arguments);
     }
 }

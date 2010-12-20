@@ -95,20 +95,8 @@ public class LIRList {
         append(new LIRCall(LIROpcode.NativeCall, symbol, result, arguments, info, marks, false, null));
     }
 
-    public void membar(LIROpcode opcode) {
-        append(new LIROp0(LIROpcode.Membar));
-    }
-
-    public void membar() {
-        append(new LIROp0(LIROpcode.Membar));
-    }
-
-    public void membarAcquire() {
-        append(new LIROp0(LIROpcode.MembarAcquire));
-    }
-
-    public void membarRelease() {
-        append(new LIROp0(LIROpcode.MembarRelease));
+    public void membar(int barriers) {
+        append(new LIRMemoryBarrier(barriers));
     }
 
     public void stdEntry(CiValue receiver) {
@@ -169,8 +157,8 @@ public class LIRList {
         append(new LIRMonitorAddress(dst, monitor));
     }
 
-    public void readPC(CiValue dst) {
-        append(new LIROp0(LIROpcode.ReadPC, dst));
+    public void infopoint(LIROpcode opcode, CiValue dst, LIRDebugInfo info) {
+        append(new LIROp0(opcode, dst, info));
     }
 
     public void alloca(StackBlock stackBlock, CiValue dst) {

@@ -24,11 +24,11 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.cps.hotpath.*;
+import com.sun.max.vm.cps.hotpath.compiler.*;
+import com.sun.max.vm.cps.hotpath.compiler.Console.*;
+import com.sun.max.vm.cps.hotpath.state.*;
 import com.sun.max.vm.cps.tir.*;
-import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.hotpath.compiler.*;
-import com.sun.max.vm.hotpath.compiler.Console.*;
-import com.sun.max.vm.hotpath.state.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 

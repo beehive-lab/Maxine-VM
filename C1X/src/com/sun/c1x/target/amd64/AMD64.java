@@ -20,11 +20,12 @@
  */
 package com.sun.c1x.target.amd64;
 
+import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.cri.ci.CiKind.*;
 import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiRegister.*;
+import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 /**
  * Represents the AMD64 architecture.
@@ -91,7 +92,14 @@ public class AMD64 extends CiArchitecture {
     public static final CiRegisterValue RSP = rsp.asValue(Word);
 
     public AMD64() {
-        super("AMD64", 8, ByteOrder.LittleEndian, allRegisters, 1, r15.encoding + 1, 8);
+        super("AMD64",
+              8,
+              ByteOrder.LittleEndian,
+              allRegisters,
+              LOAD_STORE | STORE_STORE,
+              1,
+              r15.encoding + 1,
+              8);
     }
 
     @Override

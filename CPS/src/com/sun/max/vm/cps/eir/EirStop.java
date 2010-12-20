@@ -44,7 +44,20 @@ public abstract class EirStop<EirInstructionVisitor_Type extends EirInstructionV
         super(block);
     }
 
-    public abstract void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map);
+    public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
+        for (EirVariable variable : liveVariables()) {
+            if (variable.kind().isReference) {
+                EirLocation location = variable.location();
+                if (location.category() == EirLocationCategory.STACK_SLOT) {
+                    final EirStackSlot stackSlot = (EirStackSlot) location;
+                    if (stackSlot.purpose != EirStackSlot.Purpose.PARAMETER) {
+                        final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
+                        map.set(stackSlotBitIndex);
+                    }
+                }
+            }
+        }
+    }
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {

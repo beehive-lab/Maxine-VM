@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
@@ -60,8 +61,12 @@ import com.sun.max.vm.stack.StackFrameWalker.Cursor;
  */
 public abstract class TargetMethod extends MemoryRegion {
 
-    public static final VMStringOption printTargetMethods = VMOptions.register(new VMStringOption("-XX:PrintTargetMethods=", false, null,
-        "Print compiled target methods whose fully qualified name contains <value>."), MaxineVM.Phase.STARTING);
+    protected static String PrintTargetMethods;
+    static {
+        VMOptions.addFieldOption("-XX:", "PrintTargetMethods", "Print compiled target methods whose fully qualified name contains <value>.");
+    }
+
+    static final boolean COMPILED = true;
 
     /**
      * Categorization of target methods.
@@ -71,42 +76,53 @@ public abstract class TargetMethod extends MemoryRegion {
         /**
          * A compiled method.
          */
-        Standard,
+        Standard(COMPILED),
 
         /**
          * A compiled {@link BytecodeTemplate}.
          */
-        JitTemplate,
+        JitTemplate(COMPILED),
 
         /**
          * Trampoline for virtual method dispatch (i.e. translation of {@link Bytecodes#INVOKEVIRTUAL}).
          */
-        VirtualTrampoline,
+        VirtualTrampoline(!COMPILED),
 
         /**
          * Trampoline for interface method dispatch (i.e. translation of {@link Bytecodes#INVOKEINTERFACE}).
          */
-        InterfaceTrampoline,
+        InterfaceTrampoline(!COMPILED),
 
         /**
          * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or {@link Bytecodes#INVOKESTATIC}).
          */
-        StaticTrampoline,
+        StaticTrampoline(!COMPILED),
 
         /**
          * A {@linkplain com.sun.c1x.globalstub.GlobalStub global stub}.
          */
-        GlobalStub,
+        GlobalStub(!COMPILED),
 
         /**
          * An {@linkplain Adapter adapter}.
          */
-        Adapter,
+        Adapter(!COMPILED),
 
         /**
          * The trap stub.
          */
-        TrapStub;
+        TrapStub(!COMPILED);
+
+        /**
+         * Determines if a target method of this flavor represents compiled code.
+         * A target method has a non-null {@link TargetMethod#classMethodActor})
+         * iff is it compiled.
+         */
+        public final boolean compiled;
+
+        Flavor(boolean compiled) {
+            this.compiled = compiled;
+        }
     }
 
     public final Flavor flavor;
@@ -119,7 +135,16 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Determines if this method is trampoline.
+     * Determines if this target method represents compiled code.
+     * A target method has a non-null {@link TargetMethod#classMethodActor})
+     * iff is it compiled.
+     */
+    public final boolean isCompiled() {
+        return flavor.compiled;
+    }
+
+    /**
+     * Determines if this method is a trampoline.
      */
     public final boolean isTrampoline() {
         return this.flavor == VirtualTrampoline || this.flavor == InterfaceTrampoline || flavor == StaticTrampoline;
@@ -130,9 +155,9 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * The stop positions are encoded in the lower 31 bits of each element.
-     * The high bit indicates whether the stop is a call that returns a Reference.
      *
      * @see #stopPositions()
+     * @see StopPositions
      */
     @INSPECTED
     protected int[] stopPositions;
@@ -167,6 +192,7 @@ public abstract class TargetMethod extends MemoryRegion {
         this.callEntryPoint = callEntryPoint;
         this.flavor = flavor;
         setRegionName(description);
+        assert isCompiled() == (classMethodActor != null);
     }
 
     public TargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
@@ -179,6 +205,7 @@ public abstract class TargetMethod extends MemoryRegion {
         } else {
             flavor = Standard;
         }
+        assert isCompiled() == (classMethodActor != null);
     }
 
     public int registerRestoreEpilogueOffset() {
@@ -200,12 +227,12 @@ public abstract class TargetMethod extends MemoryRegion {
      * location in the returned sequence is the one at the closest position less or equal to the position denoted by
      * {@code instructionPointer}.
      *
-     * @param instructionPointer a pointer to an instruction within this method
-     * @param implicitExceptionPoint {@code true} if the instruction pointer corresponds to an implicit exception point
+     * @param ip a pointer to an instruction within this method
+     * @param ipIsReturnAddress
      * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
-    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
+    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
         return null;
     }
 
@@ -564,17 +591,25 @@ public abstract class TargetMethod extends MemoryRegion {
         // Direct calls come first, followed by indirect calls and safepoints in the stopPositions array.
 
         // Check for matching safepoints first
-        for (int i = numberOfDirectCalls() + numberOfIndirectCalls(); i < numberOfStopPositions(); i++) {
+        int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
+        for (int i = numberOfCalls; i < numberOfStopPositions(); i++) {
             if (stopPosition(i) == targetCodePosition) {
+                return i;
+            }
+        }
+
+        // Check for native calls
+        for (int i = 0; i < numberOfCalls; i++) {
+            if (stopPosition(i) == targetCodePosition && StopPositions.isNativeFunctionCall(stopPositions, i)) {
                 return i;
             }
         }
 
         // Since this is not a safepoint, it must be a call.
         final int adjustedTargetCodePosition;
-        if (Platform.platform().isa.offsetToReturnPC == 0) {
+        if (platform().isa.offsetToReturnPC == 0) {
             // targetCodePostion is the instruction after the call (which might be another call).
-            // We need the find the call at which we actually stopped.
+            // We need to the find the call at which we actually stopped.
             adjustedTargetCodePosition = targetCodePosition - 1;
         } else {
             adjustedTargetCodePosition = targetCodePosition;
@@ -594,7 +629,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
         // It is not enough that we find the first matching position, since there might be a direct as well as an indirect call before the instruction pointer
         // so we find the closest one. This can be avoided if we sort the stopPositions array first, but the runtime cost of this is unknown.
-        for (int i = numberOfDirectCalls() + numberOfIndirectCalls() - 1; i >= numberOfDirectCalls(); i--) {
+        for (int i = numberOfCalls - 1; i >= numberOfDirectCalls(); i--) {
             final int indirectCallPosition = stopPosition(i);
             if (indirectCallPosition <= adjustedTargetCodePosition && (stopIndexWithClosestPosition < 0 || indirectCallPosition > stopPosition(stopIndexWithClosestPosition))) {
                 stopIndexWithClosestPosition = i;
@@ -633,6 +668,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param out where to print the disassembly
      * @param targetMethod the target method whose code is to be disassembled
      */
+    @HOSTED_ONLY
     public void disassemble(OutputStream out) {
         final Platform platform = Platform.platform();
         final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(encodedInlineDataDescriptors());
@@ -644,7 +680,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (string.startsWith("call ")) {
 
                     final Pointer instructionPointer = startAddress.plus(disassembledObject.startPosition());
-                    final BytecodeLocation bytecodeLocation = getBytecodeLocationFor(instructionPointer, false);
+                    final BytecodeLocation bytecodeLocation = getBytecodeLocationFor(instructionPointer, true);
                     if (bytecodeLocation != null) {
                         final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                         if (methodRef != null) {
@@ -652,7 +688,7 @@ public abstract class TargetMethod extends MemoryRegion {
                             string += " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
                         }
                     }
-                    if (StopPositions.isNativeFunctionCallPosition(stopPositions(),  disassembledObject.startPosition())) {
+                    if (StopPositions.isNativeFunctionCallPosition(stopPositions(), disassembledObject.startPosition())) {
                         string += " <native function call>";
                     }
                 }

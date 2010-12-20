@@ -52,18 +52,19 @@ public class LogStream {
     /**
      * Null output stream that simply swallows any output sent to it.
      */
-    public static final LogStream SINK = new LogStream(new OutputStream() {
-        @Override
-        public void write(int b) throws IOException {
-        }
-    });
+    public static final LogStream SINK = new LogStream();
+
+    private LogStream() {
+        this.ps = null;
+        this.lineBuffer = null;
+    }
 
     /**
      * The output stream to which this log stream writes.
      */
     private final PrintStream ps;
 
-    private final StringBuilder lineBuffer = new StringBuilder(100);
+    private final StringBuilder lineBuffer;
     private int indentationLevel;
     private char indentation = ' ';
     private boolean indentationDisabled;
@@ -80,6 +81,7 @@ public class LogStream {
      */
     public LogStream(OutputStream os) {
         ps = os instanceof PrintStream ? (PrintStream) os : new PrintStream(os);
+        lineBuffer = new StringBuilder(100);
     }
 
     /**
@@ -89,6 +91,7 @@ public class LogStream {
      */
     public LogStream(LogStream log) {
         ps = log.ps;
+        lineBuffer = new StringBuilder(100);
     }
 
     /**
@@ -96,22 +99,26 @@ public class LogStream {
      * current {@linkplain #indentationLevel()} level.
      */
     private void indent() {
-        if (!indentationDisabled && indentationLevel != 0) {
-            while (lineBuffer.length() < indentationLevel) {
-                lineBuffer.append(indentation);
+        if (ps != null) {
+            if (!indentationDisabled && indentationLevel != 0) {
+                while (lineBuffer.length() < indentationLevel) {
+                    lineBuffer.append(indentation);
+                }
             }
         }
     }
 
     private LogStream flushLine(boolean withNewline) {
-        if (withNewline) {
-            lineBuffer.append(LINE_SEPARATOR);
-        } else {
-            assert lineBuffer.indexOf(LINE_SEPARATOR, lineBuffer.length() - LINE_SEPARATOR.length()) != -1;
+        if (ps != null) {
+            if (withNewline) {
+                lineBuffer.append(LINE_SEPARATOR);
+            } else {
+                assert lineBuffer.indexOf(LINE_SEPARATOR, lineBuffer.length() - LINE_SEPARATOR.length()) != -1;
+            }
+            ps.print(lineBuffer.toString());
+            ps.flush();
+            lineBuffer.setLength(0);
         }
-        ps.print(lineBuffer.toString());
-        ps.flush();
-        lineBuffer.setLength(0);
         return this;
     }
 
@@ -120,10 +127,12 @@ public class LogStream {
      * and then flushing the underlying output stream.
      */
     public void flush() {
-        if (lineBuffer.length() != 0) {
-            flushLine(true);
+        if (ps != null) {
+            if (lineBuffer.length() != 0) {
+                flushLine(true);
+            }
+            ps.flush();
         }
-        ps.flush();
     }
 
     /**
@@ -132,7 +141,8 @@ public class LogStream {
      * @return the current column position of this log stream
      */
     public int position() {
-        return lineBuffer.length();
+        return lineBuffer == null ? 0 : lineBuffer.length();
+
     }
 
     /**
@@ -187,9 +197,11 @@ public class LogStream {
      * @param filler the character used to pad the stream
      */
     public LogStream fillTo(int position, char filler) {
-        indent();
-        while (lineBuffer.length() < position) {
-            lineBuffer.append(filler);
+        if (ps != null) {
+            indent();
+            while (lineBuffer.length() < position) {
+                lineBuffer.append(filler);
+            }
         }
         return this;
     }
@@ -201,8 +213,10 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream print(boolean b) {
-        indent();
-        lineBuffer.append(b);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(b);
+        }
         return this;
     }
 
@@ -213,9 +227,12 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream println(boolean b) {
-        indent();
-        lineBuffer.append(b);
-        return flushLine(true);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(b);
+            return flushLine(true);
+        }
+        return this;
     }
 
     /**
@@ -225,11 +242,13 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream print(char c) {
-        indent();
-        lineBuffer.append(c);
-        if (c == '\n') {
-            if (lineBuffer.indexOf(LINE_SEPARATOR, lineBuffer.length() - LINE_SEPARATOR.length()) != -1) {
-                flushLine(false);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(c);
+            if (c == '\n') {
+                if (lineBuffer.indexOf(LINE_SEPARATOR, lineBuffer.length() - LINE_SEPARATOR.length()) != -1) {
+                    flushLine(false);
+                }
             }
         }
         return this;
@@ -242,9 +261,11 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream println(char c) {
-        indent();
-        lineBuffer.append(c);
-        flushLine(true);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(c);
+            flushLine(true);
+        }
         return this;
     }
 
@@ -255,8 +276,10 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream print(int i) {
-        indent();
-        lineBuffer.append(i);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(i);
+        }
         return this;
     }
 
@@ -267,9 +290,12 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream println(int i) {
-        indent();
-        lineBuffer.append(i);
-        return flushLine(true);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(i);
+            return flushLine(true);
+        }
+        return this;
     }
 
     /**
@@ -279,8 +305,10 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream print(float f) {
-        indent();
-        lineBuffer.append(f);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(f);
+        }
         return this;
     }
 
@@ -291,9 +319,12 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream println(float f) {
-        indent();
-        lineBuffer.append(f);
-        return flushLine(true);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(f);
+            return flushLine(true);
+        }
+        return this;
     }
 
     /**
@@ -303,8 +334,10 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream print(long l) {
-        indent();
-        lineBuffer.append(l);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(l);
+        }
         return this;
     }
 
@@ -315,9 +348,12 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream println(long l) {
-        indent();
-        lineBuffer.append(l);
-        return flushLine(true);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(l);
+            return flushLine(true);
+        }
+        return this;
     }
 
     /**
@@ -327,8 +363,10 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream print(double d) {
-        indent();
-        lineBuffer.append(d);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(d);
+        }
         return this;
     }
 
@@ -339,9 +377,12 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream println(double d) {
-        indent();
-        lineBuffer.append(d);
-        return flushLine(true);
+        if (ps != null) {
+            indent();
+            lineBuffer.append(d);
+            return flushLine(true);
+        }
+        return this;
     }
 
     /**
@@ -353,24 +394,26 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream print(String s) {
-        if (s == null) {
-            indent();
-            lineBuffer.append(s);
-            return this;
-        }
+        if (ps != null) {
+            if (s == null) {
+                indent();
+                lineBuffer.append(s);
+                return this;
+            }
 
-        int index = 0;
-        int next = s.indexOf(LINE_SEPARATOR, index);
-        while (index < s.length()) {
-            indent();
-            if (next > index) {
-                lineBuffer.append(s.substring(index, next));
-                flushLine(true);
-                index = next + LINE_SEPARATOR.length();
-                next = s.indexOf(LINE_SEPARATOR, index);
-            } else {
-                lineBuffer.append(s.substring(index));
-                break;
+            int index = 0;
+            int next = s.indexOf(LINE_SEPARATOR, index);
+            while (index < s.length()) {
+                indent();
+                if (next > index) {
+                    lineBuffer.append(s.substring(index, next));
+                    flushLine(true);
+                    index = next + LINE_SEPARATOR.length();
+                    next = s.indexOf(LINE_SEPARATOR, index);
+                } else {
+                    lineBuffer.append(s.substring(index));
+                    break;
+                }
             }
         }
         return this;
@@ -383,8 +426,10 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream println(String s) {
-        print(s);
-        flushLine(true);
+        if (ps != null) {
+            print(s);
+            flushLine(true);
+        }
         return this;
     }
 
@@ -396,7 +441,9 @@ public class LogStream {
      * @return this {@link LogStream} instance
      */
     public LogStream printf(String format, Object... args) {
-        print(String.format(format, args));
+        if (ps != null) {
+            print(String.format(format, args));
+        }
         return this;
     }
 
@@ -407,8 +454,10 @@ public class LogStream {
      * @return this {@code LogStream} instance
      */
     public LogStream print(Value value) {
-        indent();
-        lineBuffer.append(Util.valueString(value));
+        if (ps != null) {
+            indent();
+            lineBuffer.append(Util.valueString(value));
+        }
         return this;
     }
 
@@ -420,8 +469,10 @@ public class LogStream {
      * @return this {@code LogStream} instance
      */
     public LogStream println(Value value) {
-        print(value);
-        flushLine(true);
+        if (ps != null) {
+            print(value);
+            flushLine(true);
+        }
         return this;
     }
 
@@ -431,8 +482,10 @@ public class LogStream {
      * @return this {@code LogStream} instance
      */
     public LogStream println() {
-        indent();
-        flushLine(true);
+        if (ps != null) {
+            indent();
+            flushLine(true);
+        }
         return this;
     }
 }

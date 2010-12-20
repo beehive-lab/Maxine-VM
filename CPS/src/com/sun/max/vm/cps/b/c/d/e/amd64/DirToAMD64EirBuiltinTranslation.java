@@ -1308,15 +1308,6 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitGetInstructionPointer(GetInstructionPointer builtin, DirValue dirResult, DirValue[] dirArguments) {
-        final EirValue result = dirToEirValue(dirResult);
-
-        final EirVariable destination = createEirVariable(Kind.LONG);
-        addInstruction(new LEA_PC(eirBlock(), destination));
-        assign(Kind.LONG, result, destination);
-    }
-
-    @Override
     public void visitPause(Pause builtin, DirValue result, DirValue[] arguments) {
         addInstruction(new PAUSE(eirBlock()));
     }

@@ -301,12 +301,14 @@ public interface HeapScheme extends VMScheme {
     boolean supportsTagging();
 
     /**
-     * Collection of methods (the public ones) to be called by all implementations when
-     * specified events occur; these supports certain Inspector services.
+     * A collection of methods that support certain inspection services.
+     * The public methods are to be called by all implementations when
+     * the specified events occur.
      *
      * @author Michael Van De Vanter
      */
     public static final class Inspect {
+
         /**
          * Announces that a GC is about to begin.  It does almost nothing, but it
          * must be called by GC implementations for certain Inspector services to work.
@@ -352,6 +354,7 @@ public interface HeapScheme extends VMScheme {
          * @see HeapScheme#increaseMemory(Size)
          */
         public static void notifyIncreaseMemoryRequested(Size size) {
+            InspectableHeapInfo.notifyIncreaseMemoryRequested(size);
             inspectableIncreaseMemoryRequested(size);
         }
 
@@ -366,6 +369,7 @@ public interface HeapScheme extends VMScheme {
          * @see HeapScheme#decreaseMemory(Size)
          */
         public static void notifyDecreaseMemoryRequested(Size size) {
+            InspectableHeapInfo.notifyDecreaseMemoryRequested(size);
             inspectableDecreaseMemoryRequested(size);
         }
 

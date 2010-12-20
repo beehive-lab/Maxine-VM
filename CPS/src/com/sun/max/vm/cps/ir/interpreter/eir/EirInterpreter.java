@@ -449,13 +449,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     public void visit(EirFiller filler) {
     }
 
-    public void visit(EirMarker marker) {
-    }
-
-    public void visit(EirSafepoint safepoint) {
-    }
-
-    public void visit(EirGuardpoint guardpoint) {
+    public void visit(EirInfopoint safepoint) {
     }
 
     public void visit(EirBreakpoint breakpoint) {

@@ -20,21 +20,22 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64.target;
 
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 
 /**
- * @see MaxPackage
+ * Must be present as explicitly instantiated.
  *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         registerScheme(RuntimeCompilerScheme.class, AMD64CPSCompiler.class);
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return CPSCompiler.Static.isCompilerPackage(this);
+        return CPSCompiler.Static.isCompilerPackage(vmConfiguration, this);
     }
 }

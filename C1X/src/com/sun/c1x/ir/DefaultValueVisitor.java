@@ -54,18 +54,20 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitIf(If i) { visit(i); }
     @Override public void visitIfInstanceOf(IfInstanceOf i) { visit(i); }
     @Override public void visitIfOp(IfOp i) { visit(i); }
+    @Override public void visitInfopoint(Infopoint i) { visit(i); }
     @Override public void visitInstanceOf(InstanceOf i) { visit(i); }
     @Override public void visitIntrinsic(Intrinsic i) { visit(i); }
     @Override public void visitInvoke(Invoke i) { visit(i); }
     @Override public void visitLoadField(LoadField i) { visit(i); }
     @Override public void visitLoadIndexed(LoadIndexed i) { visit(i); }
-    @Override public void visitLoadPC(LoadPC i) { visit(i); }
     @Override public void visitLoadPointer(LoadPointer i) { visit(i); }
     @Override public void visitLoadRegister(LoadRegister i) { visit(i); }
     @Override public void visitLoadStackAddress(AllocateStackVariable i) { visit(i); }
     @Override public void visitLocal(Local i) { visit(i); }
     @Override public void visitLogicOp(LogicOp i) { visit(i); }
     @Override public void visitLookupSwitch(LookupSwitch i) { visit(i); }
+    @Override public void visitMemoryBarrier(MemoryBarrier i) { visit(i); }
+    @Override public void visitMonitorAddress(MonitorAddress i) { visit(i); }
     @Override public void visitMonitorEnter(MonitorEnter i) { visit(i); }
     @Override public void visitMonitorExit(MonitorExit i) { visit(i); }
     @Override public void visitNativeCall(NativeCall i) { visit(i); }
@@ -97,7 +99,6 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitUnsafePutObject(UnsafePutObject i) { visit(i); }
     @Override public void visitUnsafePutRaw(UnsafePutRaw i) { visit(i); }
     @Override public void visitUnsignedCompareOp(UnsignedCompareOp i) { visit(i); }
-    @Override public void visitMonitorAddress(MonitorAddress i) { visit(i); }
    // Checkstyle: resume
 
 

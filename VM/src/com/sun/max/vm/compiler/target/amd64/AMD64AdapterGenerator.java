@@ -73,7 +73,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             StackFrameWalker stackFrameWalker = current.stackFrameWalker();
             final Pointer callerIP = stackFrameWalker.readWord(current.sp(), 0).asPointer();
             Pointer callerSP = current.sp().plus(Word.size()); // skip RIP
-            stackFrameWalker.advance(callerIP, callerSP, current.fp());
+            stackFrameWalker.advance(callerIP, callerSP, current.fp(), true);
             return true;
         }
         return false;
@@ -149,7 +149,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
                 Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
                 Pointer callerFP = rbpSaved ? stackFrameWalker.readWord(ripPointer, -Word.size() * 2).asPointer() : current.fp();
-                stackFrameWalker.advance(callerIP, callerSP, callerFP);
+                stackFrameWalker.advance(callerIP, callerSP, callerFP, true);
             }
 
             @Override
@@ -519,7 +519,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
                 Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
                 Pointer callerFP = cursor.fp();
-                stackFrameWalker.advance(callerIP, callerSP, callerFP);
+                stackFrameWalker.advance(callerIP, callerSP, callerFP, true);
             }
 
             @Override

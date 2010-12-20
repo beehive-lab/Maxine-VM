@@ -400,7 +400,7 @@ public abstract class JavaOperator extends CirOperator {
         }
     }
 
-    public static final JavaOperator SAFEPOINT_OP = new JavaBuiltinOperator(SafepointBuiltin.BUILTIN);
+    public static final JavaOperator INFOPOINT_OP = new JavaBuiltinOperator(InfopointBuiltin.BUILTIN);
     public static final JavaOperator LINK_OP = new JavaSnippetOperator(LinkNativeMethod.SNIPPET);
     public static final JavaOperator J2N_OP = new JavaSnippetOperator(NativeCallPrologue.SNIPPET);
     public static final JavaOperator N2J_OP = new JavaSnippetOperator(NativeCallEpilogue.SNIPPET);

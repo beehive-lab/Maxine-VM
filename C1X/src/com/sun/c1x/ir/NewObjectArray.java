@@ -66,6 +66,11 @@ public final class NewObjectArray extends NewArray {
         return elementClass.arrayOf();
     }
 
+    @Override
+    public RiType declaredType() {
+        return exactType();
+    }
+
     /**
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept

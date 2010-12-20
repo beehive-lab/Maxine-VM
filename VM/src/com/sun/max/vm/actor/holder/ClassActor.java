@@ -273,19 +273,20 @@ public abstract class ClassActor extends Actor implements RiType {
 
         new Deferrable(DEFERRABLE_QUEUE_1) {
             public void run() {
-                final Size staticTupleSize = Layout.tupleLayout().layoutFields(NO_SUPER_CLASS_ACTOR, localStaticFieldActors);
-                final TupleReferenceMap staticReferenceMap = new TupleReferenceMap(localStaticFieldActors);
-                final StaticHub sHub = new StaticHub(staticTupleSize, ClassActor.this, staticReferenceMap);
-                ClassActor.this.staticHub = sHub.expand(staticReferenceMap, getRootClassActorId());
-                ClassActor.this.staticTuple = ClassActor.create(ClassActor.this);
-
                 final HashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
                 List<VirtualMethodActor> virtualMethodActors = gatherVirtualMethodActors(allInterfaceActors, methodLookup);
                 ClassActor.this.allVirtualMethodActors = virtualMethodActors.toArray(new VirtualMethodActor[virtualMethodActors.size()]);
                 assignHolderToLocalMethodActors();
                 if (isReferenceClassActor() || isInterface()) {
                     final Size dynamicTupleSize = layoutFields(specificLayout);
-                    final BitSet superClassActorSerials = getSuperClassActorSerials();
+                    HashSet<Integer> idSet = new HashSet<Integer>(7);
+                    gatherSuperClassActorIds(idSet);
+                    int[] superClassActorIds = new int[idSet.size()];
+                    int i = 0;
+                    for (Integer n : idSet) {
+                        superClassActorIds[i++] = n;
+                    }
+
                     TupleReferenceMap dynamicReferenceMap;
                     int vTableLength;
 
@@ -298,15 +299,29 @@ public abstract class ClassActor extends Actor implements RiType {
                         vTableLength = 0;
                     }
 
-                    final DynamicHub dHub = new DynamicHub(dynamicTupleSize, specificLayout, ClassActor.this, superClassActorSerials, allInterfaceActors, vTableLength, dynamicReferenceMap);
+                    final DynamicHub dHub = new DynamicHub(
+                                    dynamicTupleSize,
+                                    specificLayout,
+                                    ClassActor.this,
+                                    superClassActorIds,
+                                    allInterfaceActors,
+                                    vTableLength,
+                                    dynamicReferenceMap);
                     ClassActor.this.iToV = new int[dHub.iTableLength];
-                    ClassActor.this.dynamicHub = dHub.expand(superClassActorSerials, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
+                    ClassActor.this.dynamicHub = dHub.expand(superClassActorIds, allInterfaceActors, methodLookup, iToV, dynamicReferenceMap);
 
                     if (isReferenceClassActor()) {
                         dynamicHub.initializeVTable(allVirtualMethodActors);
                         dynamicHub.initializeITable(getAllInterfaceActors(), methodLookup);
                     }
                 }
+
+                final Size staticTupleSize = Layout.tupleLayout().layoutFields(NO_SUPER_CLASS_ACTOR, localStaticFieldActors);
+                final TupleReferenceMap staticReferenceMap = new TupleReferenceMap(localStaticFieldActors);
+                final StaticHub sHub = new StaticHub(staticTupleSize, ClassActor.this, staticReferenceMap, OBJECT.allVirtualMethodActors().length);
+                ClassActor.this.staticHub = sHub.expand(staticReferenceMap, getRootClassActorId());
+                staticHub.initializeVTable(OBJECT.allVirtualMethodActors());
+                ClassActor.this.staticTuple = ClassActor.create(ClassActor.this);
             }
         };
     }
@@ -350,8 +365,8 @@ public abstract class ClassActor extends Actor implements RiType {
         return isInterface(flags());
     }
 
-    public final boolean isGenerated() {
-        return isGenerated(flags());
+    public final boolean isReflectionStub() {
+        return isReflectionStub(flags());
     }
 
     public final boolean isRemote() {
@@ -1126,7 +1141,7 @@ public abstract class ClassActor extends Actor implements RiType {
 
     @Override
     public final boolean isAccessibleBy(ClassActor accessor) {
-        if (isPublic() || isInSameRuntimePackageAs(accessor) || accessor.isGenerated()) {
+        if (isPublic() || isInSameRuntimePackageAs(accessor) || accessor.isReflectionStub()) {
             return true;
         }
         return false;
@@ -1261,25 +1276,31 @@ public abstract class ClassActor extends Actor implements RiType {
         return toJava().getAnnotation(annotationClass);
     }
 
-    protected BitSet getSuperClassActorSerials() {
-        final BitSet result = new BitSet();
-        result.set(id);
+    /**
+     * Gets the complete closure of class ids for this class. This includes this class's
+     * id, all of its super classes' ids and the transitive closure of
+     * interface ids implemented or extended by this class.
+     *
+     * @param set a set used to collect up the ids. This will be created if {@code null}.
+     * @see ClassID
+     */
+    protected void gatherSuperClassActorIds(HashSet<Integer> set) {
+        set.add(isInterface() ? -id : id);
         if (superClassActor != null) {
-            result.or(superClassActor.getSuperClassActorSerials());
+            superClassActor.gatherSuperClassActorIds(set);
         }
         for (InterfaceActor interfaceActor : localInterfaceActors()) {
-            result.or(interfaceActor.getSuperClassActorSerials());
+            interfaceActor.gatherSuperClassActorIds(set);
         }
         if (MaxineVM.isHosted()) {
             if (kind.isWord) {
-                result.clear(ClassRegistry.OBJECT.id);
+                set.remove(ClassRegistry.OBJECT.id);
             }
         }
-        return result;
     }
 
     private void verify() {
-        if (isGenerated() || !ClassVerifier.shouldBeVerified(classLoader, isRemote())) {
+        if (isReflectionStub() || !ClassVerifier.shouldBeVerified(classLoader, isRemote())) {
             // generated stubs do not necessarily pass the verifier, even if they work as intended
         } else {
             Verifier.verifierFor(this).verify();

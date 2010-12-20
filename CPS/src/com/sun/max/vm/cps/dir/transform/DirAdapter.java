@@ -66,12 +66,7 @@ public class DirAdapter implements DirVisitor {
         visitInstruction(dirThrow);
     }
 
-    public void visitSafepoint(DirSafepoint dirSafepoint) {
-        visitInstruction(dirSafepoint);
+    public void visitInfopoint(DirInfopoint dirInfopoint) {
+        visitInstruction(dirInfopoint);
     }
-
-    public void visitGuardpoint(DirGuardpoint dirGuardpoint) {
-        visitInstruction(dirGuardpoint);
-    }
-
 }

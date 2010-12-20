@@ -27,9 +27,8 @@ import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VMRegister.*;
+import com.sun.max.vm.runtime.VMRegister.Role;
 
 /**
  * @author Bernd Mathiske
@@ -111,28 +110,6 @@ public abstract class SpecialBuiltin extends Builtin {
         }
 
         public static final AdjustJitStack BUILTIN = new AdjustJitStack();
-    }
-
-    /**
-     * Gets the current value of the instruction pointer on the current thread.
-     *
-     * @return the address of the first instruction generated for this builtin
-     */
-    @BUILTIN(GetInstructionPointer.class)
-    public static native Pointer getInstructionPointer();
-
-    /**
-     * @see SpecialBuiltin#getInstructionPointer()
-     */
-    public static class GetInstructionPointer extends SpecialBuiltin {
-
-        @Override
-        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 0;
-            visitor.visitGetInstructionPointer(this, result, arguments);
-        }
-
-        public static final GetInstructionPointer BUILTIN = new GetInstructionPointer();
     }
 
     /**
@@ -528,27 +505,4 @@ public abstract class SpecialBuiltin extends Builtin {
 
         public static final DoubleToLong BUILTIN = new DoubleToLong();
     }
-
-    /**
-     * Marks the current position in a {@link TargetMethod}.
-     */
-    @BUILTIN(Marker.class)
-    public static native void mark();
-
-    public static class Marker extends SpecialBuiltin {
-
-        @Override
-        public boolean hasSideEffects() {
-            return false;
-        }
-
-        @Override
-        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 0;
-            visitor.visitMarker(this, result, arguments);
-        }
-
-        public static final Marker BUILTIN = new Marker();
-    }
-
 }
