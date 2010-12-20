@@ -48,7 +48,9 @@ public abstract class TeleMethodActor extends TeleMemberActor implements MethodP
         // Cannot use member index as it may be different in local ClassActor
         Utf8Constant name = getTeleName().utf8Constant();
         SignatureDescriptor signature = (SignatureDescriptor) getTeleDescriptor().descriptor();
-        MethodActor methodActor = getTeleHolder().classActor().findLocalMethodActor(name, signature);
+        ClassActor classActor = getTeleHolder().classActor();
+        MethodActor methodActor = classActor.findLocalMethodActor(name, signature);
+        assert methodActor != null : "Could not find " + name + signature + " in " + classActor;
         assert getName().equals(methodActor.name.string);
         return methodActor;
     }
