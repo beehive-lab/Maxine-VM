@@ -36,7 +36,10 @@ import com.sun.max.vm.runtime.*;
  */
 public class MultiChunkTLABAllocator extends LinearSpaceAllocator {
     abstract static class RefillManager extends LinearSpaceAllocator.RefillManager {
-        abstract Address allocateTLAB(Size size);
+        /**
+         * Minimum amount of space a TLAB chunk should be allocated.
+         */        private Size tlabMinChunkSize;
+        abstract Address allocateTLAB(Size tlabSize);
     }
 
     /**
@@ -48,7 +51,8 @@ public class MultiChunkTLABAllocator extends LinearSpaceAllocator {
         super(refillManager);
     }
 
-    void setTLABMinChunkSize(Size tlabMinChunkSize) {
+    void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size headroom, Size tlabMinChunkSize) {
+        super.initialize(initialChunk, initialChunkSize, sizeLimit, headroom);
         this.tlabMinChunkSize = tlabMinChunkSize;
     }
 
@@ -69,13 +73,10 @@ public class MultiChunkTLABAllocator extends LinearSpaceAllocator {
                 // Fall off to allocation by the refill manager.
             } else {
                 spaceNeeded = tlabSize.minus(size);
-                // Format as a chunk. This will also avoid complication if the refill manager raises a GC.
                 HeapFreeChunk.setFreeChunkSize(firstChunk, size);
                 HeapFreeChunk.setFreeChunkNext(firstChunk, Address.zero());
-                if (spaceNeeded.greaterEqual(tlabMinChunkSize)) {
-                    Address nextChunk = ((RefillManager) refillManager).allocateTLAB(spaceNeeded);
-                    HeapFreeChunk.setFreeChunkNext(firstChunk, nextChunk);
-                }
+                // Don't try allocate an additional chunk to fill up to the requested size.
+                // This might raises a GC that would invalidate the first chunk just constructed.
                 return firstChunk;
             }
             return ((RefillManager) refillManager).allocateTLAB(spaceNeeded).asPointer();

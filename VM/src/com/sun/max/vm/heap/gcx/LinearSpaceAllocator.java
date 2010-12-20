@@ -131,10 +131,10 @@ public class LinearSpaceAllocator {
 
     @HOSTED_ONLY
     public void hostInitialize() {
-        TOP_OFFSET = ClassRegistry.findField(MultiChunkTLABAllocator.class, "top").offset();
+        TOP_OFFSET = ClassRegistry.findField(LinearSpaceAllocator.class, "top").offset();
     }
 
-    void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size headroom, Size minTLABSize) {
+    void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size headroom) {
         this.sizeLimit = sizeLimit;
         this.headroom = headroom;
         if (initialChunk.isZero()) {
@@ -192,7 +192,7 @@ public class LinearSpaceAllocator {
     }
 
     @INLINE
-    boolean isLarge(Size size) {
+    final boolean isLarge(Size size) {
         return size.greaterThan(sizeLimit);
     }
 

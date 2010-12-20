@@ -20,12 +20,23 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-public final class HeapRegionInfoIterable extends HeapRegionListIterable<HeapRegionInfo> {
+import java.util.*;
+
+public final class HeapRegionInfoIterable extends HeapRegionListIterable  implements Iterable<HeapRegionInfo>, Iterator<HeapRegionInfo> {
     HeapRegionInfoIterable() {
+    }
+
+    public Iterator<HeapRegionInfo> iterator() {
+        return this;
     }
 
     @Override
     public HeapRegionInfo next() {
         return RegionTable.theRegionTable().regionInfo(cursor++);
     }
+
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
+
 }

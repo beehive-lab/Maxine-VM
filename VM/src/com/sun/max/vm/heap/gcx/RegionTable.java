@@ -21,8 +21,6 @@
 package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 
-import java.util.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;

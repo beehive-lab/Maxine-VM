@@ -644,10 +644,15 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         TraceSweep = MaxineVM.isDebug() ? traceSweepingOption.getValue() : false;
         TraceTLAB = heapScheme instanceof HeapSchemeWithTLAB && HeapSchemeWithTLAB.traceTLAB();
 
+        // Refill TLAB on TLAB overflow if less than this:
+        Size tlabRefillThreshold = Size.fromInt(Word.widthValue().numberOfBytes * 64);
+        // Minimum acceptable size for a TLAB chunk.
+        Size minTlabChunkSize = tlabRefillThreshold;
+
         // Dumb refill policy. Doesn't matter in the long term as we'll switch to a first fit linear allocator with overflow allocator on the side.
         LinearSpaceRefillManager refillManager = (LinearSpaceRefillManager) smallObjectAllocator.refillManager();
-        refillManager.setRefillPolicy(minLargeObjectSize, Size.fromInt(Word.widthValue().numberOfBytes * 64));
-        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minReclaimableSpace);
+        refillManager.setRefillPolicy(minLargeObjectSize, tlabRefillThreshold);
+        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minTlabChunkSize);
         useTLABBin = false;
     }
 

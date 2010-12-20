@@ -20,13 +20,12 @@
  */
 package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
-import java.util.*;
 
 /**
  * Generic iterator over a heap region list.
  * @author Laurent Daynes
  */
-public abstract class HeapRegionListIterable<T> implements Iterable<T>, Iterator<T> {
+public abstract class HeapRegionListIterable {
     HeapRegionList regionList;
     int cursor = INVALID_REGION_ID;
 
@@ -41,18 +40,8 @@ public abstract class HeapRegionListIterable<T> implements Iterable<T>, Iterator
         cursor = regionList.head();
     }
 
-    public Iterator<T> iterator() {
-        return this;
-    }
-
     public boolean hasNext() {
         return cursor != INVALID_REGION_ID;
-    }
-
-    public abstract T next();
-
-    public void remove() {
-        throw new UnsupportedOperationException();
     }
 
 }
