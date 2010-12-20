@@ -20,11 +20,10 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-public final class HeapRegionRangeIterable extends HeapRegionListIterable<RegionRange> {
+public final class HeapRegionRangeIterable extends HeapRegionListIterable {
     HeapRegionRangeIterable() {
     }
 
-    @Override
     public RegionRange next() {
         final int firstRegion = cursor;
 

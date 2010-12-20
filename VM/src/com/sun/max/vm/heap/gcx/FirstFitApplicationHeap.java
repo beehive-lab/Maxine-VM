@@ -136,7 +136,7 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
 
         @Override
         Address allocate(Size size) {
-            return null;
+            return Address.zero();
         }
 
         @Override
@@ -148,7 +148,7 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
         @Override
         Address refill(LinearSpaceAllocator allocator, Pointer startOfSpaceLeft, Size spaceLeft) {
             // TODO Auto-generated method stub
-            return null;
+            return Address.zero();
         }
     }
     /**
@@ -352,19 +352,19 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
     @Override
     public Size totalSpace() {
         // TODO Auto-generated method stub
-        return null;
+        return Size.zero();
     }
 
     @Override
     public Size freeSpace() {
         // TODO Auto-generated method stub
-        return null;
+        return Size.zero();
     }
 
     @Override
     public Size usedSpace() {
         // TODO Auto-generated method stub
-        return null;
+        return Size.zero();
     }
 
     @Override
@@ -382,13 +382,13 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
     @Override
     public Pointer processLiveObject(Pointer liveObject) {
         // TODO Auto-generated method stub
-        return null;
+        return Pointer.zero();
     }
 
     @Override
     public Pointer processLargeGap(Pointer leftLiveObject, Pointer rightLiveObject) {
         // TODO Auto-generated method stub
-        return null;
+        return Pointer.zero();
     }
 
     @Override
@@ -407,7 +407,7 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
     @Override
     public Size endSweep() {
         // TODO Auto-generated method stub
-        return null;
+        return Size.zero();
     }
 
     @Override

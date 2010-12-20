@@ -1052,9 +1052,9 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             FatalError.unimplemented();
         }
 
-        public void visitGreyObjects(Iterable<RegionRange> regions, int log2RegionToBitmapWord) {
-            // TODO: revisit this
-            for (RegionRange regionRange : regions) {
+        public void visitGreyObjects(HeapRegionRangeIterable regions, int log2RegionToBitmapWord) {
+            while (regions.hasNext()) {
+                final RegionRange regionRange = regions.next();
                 final int firstRegion = regionRange.firstRegion();
                 final int rangeLeftmostWordIndex = firstRegion << log2RegionToBitmapWord;
                 final int rangeRightmostBitmapWordIndex = (firstRegion + regionRange.numRegions()) << log2RegionToBitmapWord;
@@ -1741,7 +1741,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param regions an ordered list of region ranges
      * @param log2RegionSizeInBytes the power of 2 of the size of the regions
      */
-    void visitAllGreyObjects(Iterable<RegionRange> regions, int log2RegionSizeInBytes) {
+    void visitAllGreyObjects(HeapRegionRangeIterable regions, int log2RegionSizeInBytes) {
         forwardScanState.rightmost = rootCellVisitor.rightmost;
         forwardScanState.finger = rootCellVisitor.leftmost;
         forwardScanState.numMarkinkgStackOverflow = 0;
@@ -1962,7 +1962,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param heapRegions
      * @param log2RegionSize
      */
-    public void markAll(Iterable<RegionRange> heapRegions, int log2RegionSize) {
+    public void markAll(HeapRegionRangeIterable heapRegions, int log2RegionSize) {
         traceGCTimes = Heap.traceGCTime();
         if (traceGCTimes) {
             recoveryScanTimer.reset();
