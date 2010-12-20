@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import static com.sun.max.vm.stack.amd64.AMD64OptStackWalking.*;
 
 import java.io.*;
@@ -47,7 +48,6 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
@@ -754,7 +754,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
                     while (b != 0) {
                         if ((b & 1) != 0) {
                             int offset = csa.offsetOf(reg);
-                            if (Heap.traceRootScanning()) {
+                            if (traceStackRootScanning()) {
                                 Log.print("    register: ");
                                 Log.println(csa.registers[reg].name);
                             }

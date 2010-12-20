@@ -77,7 +77,9 @@ public final class Throw {
         }
 
         public static void dumpFrame(String prefix, TargetMethod targetMethod, Pointer ip, boolean isTopFrame) {
-            Log.print(prefix);
+            if (prefix != null) {
+                Log.print(prefix);
+            }
             if (targetMethod != null) {
                 final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
