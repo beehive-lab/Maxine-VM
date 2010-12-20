@@ -1544,10 +1544,10 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-image-configs=cpscps,mscpscps -fail-fast"
+gate_presets="-image-configs=jtt-cpscps,jtt-mscpscps -fail-fast"
 if [ "$MAXINE_OS" == "linux" ]; then
     # MSHeapScheme does not yet work on Linux
-    gate_presets="-image-configs=cpscps -fail-fast"
+    gate_presets="-image-configs=jtt-cpscps -fail-fast"
 fi 
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
@@ -1571,7 +1571,7 @@ function run_gate() {
 #=======================================
 
 msgate_usage="[options]"
-msgate_presets="-image-configs=mscpscps -fail-fast -tests=output:GC+WeakReference"
+msgate_presets="-image-configs=jtt-mscpscps -fail-fast -tests=output:GC+WeakReference"
 
 msgate_help="run the GC tests using the MS heap scheme"
 

@@ -21,7 +21,7 @@
 package com.sun.max.vm.cps.ir.interpreter;
 
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.hotpath.state.*;
+import com.sun.max.vm.cps.hotpath.state.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 

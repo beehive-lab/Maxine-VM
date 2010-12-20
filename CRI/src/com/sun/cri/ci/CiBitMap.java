@@ -436,6 +436,65 @@ public final class CiBitMap {
         return extra[index];
     }
 
+    private static boolean allZeros(int start, long[] arr) {
+        for (int i = start; i < arr.length; i++) {
+            if (arr[i] != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Compares this object against the specified object.
+     * The result is {@code true} if and only if {@code obj} is
+     * not {@code null} and is a {@codCiBitMap} object that has
+     * exactly the same set of bits set to {@code true} as this bit
+     * set.
+     *
+     * @param   obj   the object to compare with.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof CiBitMap) {
+            CiBitMap bm = (CiBitMap) obj;
+            if (bm.low == low) {
+                if (bm.extra == null) {
+                    if (extra == null) {
+                        // Common case
+                        return true;
+                    }
+                    return allZeros(0, extra);
+                }
+                if (extra == null) {
+                    return allZeros(0, bm.extra);
+                }
+                // both 'extra' array non null:
+                int i = 0;
+                int length = Math.min(extra.length, bm.extra.length);
+                while (i < length) {
+                    if (extra[i] != bm.extra[i]) {
+                        return false;
+                    }
+                    i++;
+                }
+                if (extra.length > bm.extra.length) {
+                    return allZeros(length, extra);
+                }
+                if (extra.length < bm.extra.length) {
+                    return allZeros(length, bm.extra);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) low ^ size;
+    }
+    
     /**
      * Returns a string representation of this bit map
      * that is the same as the string returned by {@link BitSet#toString()}
@@ -580,7 +639,7 @@ public final class CiBitMap {
             if (i >= 8) {
                 int wordIndex = (i - 8) / 8;
                 word = extra[wordIndex];
-                byteInWord = i & 0x3;
+                byteInWord = i & 0x7;
             } else {
                 byteInWord = i;
             }

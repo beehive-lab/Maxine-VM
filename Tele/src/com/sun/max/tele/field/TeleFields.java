@@ -47,6 +47,7 @@ import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
@@ -135,6 +136,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_dynamicHeapMemoryRegions = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "dynamicHeapMemoryRegions", MemoryRegion[].class);
     public final TeleStaticLongFieldAccess InspectableHeapInfo_gcCompletedCounter = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "gcCompletedCounter");
     public final TeleStaticLongFieldAccess InspectableHeapInfo_gcStartedCounter = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "gcStartedCounter");
+    public final TeleStaticLongFieldAccess InspectableHeapInfo_recentHeapSizeRequest = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "recentHeapSizeRequest");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationNewCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationNewCell");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationOldCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationOldCell");
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_rootTableMemoryRegion = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "rootTableMemoryRegion", RootTableMemoryRegion.class);
@@ -213,6 +215,8 @@ public class TeleFields extends AbstractTeleVMHolder {
         if (!sourceFile.exists()) {
             TeleWarning.message("Source file does not exist: " + sourceFile.getAbsolutePath());
         }
+        VMConfigurator configurator = new VMConfigurator(null);
+        configurator.create(true);
 
         final Runnable runnable = new Runnable() {
             public void run() {

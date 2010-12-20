@@ -702,7 +702,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         private String toolTipText(StackTraceElement stackTraceElement) {
             String s = stackTraceElement.toString();
             final int openParen = s.indexOf('(');
-            s = Classes.getSimpleName(stackTraceElement.getClassName()) + "." + stackTraceElement.getMethodName() + s.substring(openParen);
+            String methodName = stackTraceElement.getMethodName().replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+            s = Classes.getSimpleName(stackTraceElement.getClassName()) + "." + methodName + s.substring(openParen);
             final String text = s;
             return text;
         }

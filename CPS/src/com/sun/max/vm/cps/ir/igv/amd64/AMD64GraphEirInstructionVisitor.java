@@ -109,7 +109,7 @@ public class AMD64GraphEirInstructionVisitor extends AMD64EirInstructionAdapter 
     }
 
     @Override
-    public void visit(EirSafepoint safepoint) {
+    public void visit(EirInfopoint safepoint) {
         super.visit(safepoint);
         this.node.getProperties().setProperty("name", "safepoint");
         this.node.getProperties().setProperty("dump_spec", safepoint.toString());

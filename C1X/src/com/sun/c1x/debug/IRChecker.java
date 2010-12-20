@@ -1027,7 +1027,7 @@ public class IRChecker extends ValueVisitor {
     }
 
     @Override
-    public void visitLoadPC(LoadPC i) {
+    public void visitInfopoint(Infopoint i) {
     }
 
     private void checkPointerOpOffsetOrIndex(Value value) {
@@ -1137,6 +1137,10 @@ public class IRChecker extends ValueVisitor {
 
     @Override
     public void visitMonitorAddress(MonitorAddress i) {
+    }
+
+    @Override
+    public void visitMemoryBarrier(MemoryBarrier i) {
     }
 
     private void assertKind(Value i, CiKind kind) {

@@ -220,12 +220,6 @@ public final class VMRegister {
     public static native void setSafepointLatchRegister(Word value);
 
     @INLINE
-    @INTRINSIC(READ_PC)
-    public static Pointer getInstructionPointer() {
-        return SpecialBuiltin.getInstructionPointer();
-    }
-
-    @INLINE
     @INTRINSIC(WRITEREG | (LINK << 8))
     public static native void setCallAddressRegister(Word value);
 }

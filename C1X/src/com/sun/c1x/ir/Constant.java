@@ -20,7 +20,10 @@
  */
 package com.sun.c1x.ir;
 
+import static com.sun.c1x.C1XCompilation.*;
+
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code Constant} instruction represents a constant such as an integer value,
@@ -136,5 +139,25 @@ public final class Constant extends Instruction {
     @Override
     public boolean valueEqual(Instruction i) {
         return i instanceof Constant && ((Constant) i).value.equivalent(this.value);
+    }
+
+    @Override
+    public RiType declaredType() {
+        RiRuntime runtime = compilation().runtime;
+        if (kind.isPrimitive()) {
+            runtime.getRiType(kind.toJavaClass());
+        }
+        if (kind.isObject()) {
+            Object object = asConstant().asObject();
+            if (object != null) {
+                return runtime.getRiType(object.getClass());
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public RiType exactType() {
+        return declaredType();
     }
 }

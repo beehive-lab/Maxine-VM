@@ -105,10 +105,9 @@ public class Intrinsics extends IntrinsifierClient {
             // Checkstyle: stop
             case READREG            :
             case WRITEREG           :
-            case SAFEPOINT          :
+            case INFOPOINT          :
             case PAUSE              :
             case ADD_SP             :
-            case READ_PC            :
             case FLUSHW             :
             case ALLOCA             :
             case ALLOCSTKVAR        :

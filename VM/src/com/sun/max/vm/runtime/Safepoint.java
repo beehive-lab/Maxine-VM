@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
@@ -28,12 +29,12 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -166,10 +167,8 @@ public abstract class Safepoint {
     /**
      * Emits a safepoint at the call site.
      */
-    @INLINE
-    public static void safepoint() {
-        SafepointBuiltin.safepointBuiltin();
-    }
+    @INTRINSIC(SAFEPOINT)
+    public static native void safepoint();
 
     @HOSTED_ONLY
     protected abstract byte[] createCode();

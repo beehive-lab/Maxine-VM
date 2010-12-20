@@ -412,6 +412,7 @@ public final class BlockBegin extends Instruction {
                 // if a liveness map is available, use it to invalidate dead locals
                 CiBitMap[] livenessMap = newState.scope().method.livenessMap();
                 if (livenessMap != null && bci() >= 0) {
+                    assert bci() < livenessMap.length;
                     CiBitMap liveness = livenessMap[bci()];
                     if (liveness != null) {
                         invalidateDeadLocals(newState, liveness);

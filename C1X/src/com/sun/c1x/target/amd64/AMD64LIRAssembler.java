@@ -22,6 +22,7 @@ package com.sun.c1x.target.amd64;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
+import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.cri.ci.CiValue.*;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
@@ -93,13 +94,13 @@ public class AMD64LIRAssembler extends LIRAssembler {
         masm.ret(0);
     }
 
-    /**
-     * Emits an instruction which assigns the address of the immediately succeeding instruction into {@code dst}.
-     * This satisfies the requirements for correctly translating the {@link LoadPC} HIR instruction.
-     */
     @Override
-    protected void emitReadPC(CiValue dst) {
-        masm.leaq(dst.asRegister(), CiAddress.Placeholder);
+    protected void emitHere(CiValue dst, LIRDebugInfo info, boolean infoOnly) {
+        masm.recordSafepoint(codePos(), info);
+        if (!infoOnly) {
+            masm.codeBuffer.mark();
+            masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+        }
     }
 
     @Override
@@ -214,6 +215,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Char    :
             case Short   :
             case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
+            case Jsr     : masm.movl(frameMap.toStackAddress(slot), c.asJsr()); break;
             case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
             case Object  : masm.movoop(frameMap.toStackAddress(slot), CiConstant.forObject(c.asObject())); break;
             case Long    : masm.movptr(frameMap.toStackAddress(slot), c.asLong()); break;
@@ -1423,21 +1425,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitMembar() {
-        // QQQ sparc TSO uses this,
-        masm.membar(AMD64Assembler.MembarMaskBits.StoreLoad.mask());
-    }
-
-    @Override
-    protected void emitMembarAcquire() {
-        // No x86 machines currently require load fences
-        // lir(). loadFence();
-    }
-
-    @Override
-    protected void emitMembarRelease() {
-        // No x86 machines currently require store fences
-        // lir(). storeFence();
+    protected void emitMemoryBarriers(int barriers) {
+        masm.membar(barriers);
     }
 
     @Override

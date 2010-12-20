@@ -189,7 +189,7 @@ public class AMD64OptStackWalking {
             // Propagate RBP unchanged as OPT methods do not touch this register.
             callerFP = current.fp();
         }
-        stackFrameWalker.advance(callerIP, callerSP, callerFP);
+        stackFrameWalker.advance(callerIP, callerSP, callerFP, !targetMethod.is(TrapStub));
     }
 
     @HOSTED_ONLY

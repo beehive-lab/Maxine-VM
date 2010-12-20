@@ -45,11 +45,11 @@ import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.jit.Stop.BackwardBranchBytecodeSafepoint;
 import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.cps.template.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
-import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 

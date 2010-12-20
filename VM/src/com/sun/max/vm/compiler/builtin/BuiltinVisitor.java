@@ -177,7 +177,6 @@ public interface BuiltinVisitor<IR_Type> {
     void visitCompareAndSwapReferenceAtIntOffset(CompareAndSwapReferenceAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitCompareAndSwapReference(CompareAndSwapReference builtin, IR_Type result, IR_Type[] arguments);
 
-    void visitGetInstructionPointer(GetInstructionPointer builtin, IR_Type result, IR_Type[] arguments);
     void visitGetIntegerRegister(GetIntegerRegister builtin, IR_Type result, IR_Type[] arguments);
     void visitSetIntegerRegister(SetIntegerRegister builtin, IR_Type result, IR_Type[] arguments);
     void visitAdjustJitStack(AdjustJitStack builtin, IR_Type result, IR_Type[] arguments);
@@ -197,7 +196,7 @@ public interface BuiltinVisitor<IR_Type> {
     void visitMakeStackVariable(MakeStackVariable builtin, IR_Type result, IR_Type[] arguments);
     void visitStackAllocate(StackAllocate builtin, IR_Type result, IR_Type[] arguments);
 
-    void visitSafepoint(SafepointBuiltin builtin, IR_Type result, IR_Type[] arguments);
+    void visitInfopoint(InfopointBuiltin builtin, IR_Type result, IR_Type[] arguments);
 
     void visitFlushRegisterWindows(FlushRegisterWindows builtin, IR_Type result, IR_Type[] arguments);
 
@@ -205,6 +204,4 @@ public interface BuiltinVisitor<IR_Type> {
     void visitFloatToInt(FloatToInt builtin, IR_Type result, IR_Type[] arguments);
     void visitLongToDouble(LongToDouble builtin, IR_Type result, IR_Type[] arguments);
     void visitDoubleToLong(DoubleToLong builtin, IR_Type result, IR_Type[] arguments);
-
-    void visitMarker(Marker builtin, IR_Type result, IR_Type[] arguments);
 }

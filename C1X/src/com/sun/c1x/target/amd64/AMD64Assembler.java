@@ -21,6 +21,7 @@
 package com.sun.c1x.target.amd64;
 
 import static com.sun.c1x.target.amd64.AMD64.*;
+import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
@@ -259,6 +260,15 @@ public class AMD64Assembler extends AbstractAssembler {
                 assert index != rsp : "illegal addressing mode";
                 emitByte(0x04 | regenc);
                 emitByte(scale.log2 << 6 | indexenc | 0x05);
+                emitInt(disp);
+            } else if (base == CiRegister.InstructionRelative) {
+                // Adjust disp which is currently relative to the start of the instruction
+                int instrStart = codeBuffer.mark();
+                assert instrStart >= 0;
+                int instrSize = (codeBuffer.position() - instrStart) + 5;
+                disp = disp - instrSize;
+                // [00 000 101] disp32
+                emitByte(0x05 | regenc);
                 emitInt(disp);
             } else if (addr == CiAddress.Placeholder) {
                 // [00 000 101] disp32
@@ -2891,23 +2901,13 @@ public class AMD64Assembler extends AbstractAssembler {
 
     }
 
-    enum MembarMaskBits {
-
-        LoadLoad, StoreLoad, LoadStore, StoreStore;
-
-        public int mask() {
-            return 1 << this.ordinal();
-        }
-    }
-
-    // Serializes memory and blows flags
-    public final void membar(int orderConstraint) {
+    public final void membar(int barriers) {
         if (target.isMP) {
             // We only have to handle StoreLoad
-            if ((orderConstraint & MembarMaskBits.StoreLoad.mask()) != 0) {
+            if ((barriers & STORE_LOAD) != 0) {
                 // All usable chips support "locked" instructions which suffice
                 // as barriers, and are much faster than the alternative of
-                // using cpuid instruction. We use here a locked add [esp],0.
+                // using cpuid instruction. We use here a locked add [rsp],0.
                 // This is conveniently otherwise a no-op except for blowing
                 // flags.
                 // Any change to this code may need to revisit other places in

@@ -86,12 +86,12 @@ public class C1XCompiler extends CiCompiler {
         try {
             result = compilation.compile();
         } finally {
+            filter.remove();
+            compilation.close();
             if (C1XOptions.PrintCompilation && !TTY.isSuppressed()) {
                 long time = (System.nanoTime() - startTime) / 1000000;
                 TTY.println((time) + "ms");
             }
-            filter.remove();
-            compilation.close();
         }
 
         return result;

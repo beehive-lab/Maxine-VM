@@ -26,6 +26,13 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 
 /**
+ * Management of unique integer identifiers for {@link ClassActor}s.
+ *
+ * Every class in the system is assigned a globally unique identifier. This
+ * identifier is used in the implementation of interface dispatch, type
+ * tests and also serves as the opaque {@code jclass} handle to a
+ * class in JNI code.
+ *
  * @author Bernd Mathiske
  */
 public final class ClassID {
@@ -33,6 +40,7 @@ public final class ClassID {
     private ClassID() {
     }
 
+    // TODO: Should be a weak reference list to allow class unloading
     private static List<ClassActor> idToClassActor = new ArrayList<ClassActor>();
 
     private static BitSet usedIDs = new BitSet();

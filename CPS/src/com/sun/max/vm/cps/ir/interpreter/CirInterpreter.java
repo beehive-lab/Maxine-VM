@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.ir.interpreter;
 
 import java.lang.reflect.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -71,7 +72,15 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
             }
         }
         try {
-            return cirBuiltin.fold(cirOptimizer, cirArguments);
+            CirCall result = cirBuiltin.fold(cirOptimizer, cirArguments);
+            if (builtin == InfopointBuiltin.BUILTIN) {
+                assert result.arguments().length == 1;
+                int opcode = cirArguments[0].value().asInt();
+                if (opcode != Bytecodes.HERE) {
+                    result.setArguments(CirCall.NO_ARGUMENTS);
+                }
+            }
+            return result;
         } catch (CirFoldingException cirFoldingException) {
             return CirFoldable.Static.createExceptionCall(cirFoldingException.getCause(), cirArguments);
         }

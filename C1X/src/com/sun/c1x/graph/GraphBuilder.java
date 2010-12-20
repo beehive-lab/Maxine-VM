@@ -46,6 +46,7 @@ import com.sun.cri.ri.RiType.Representation;
  * numbering, inlining, constant folding, strength reduction, etc.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public final class GraphBuilder {
 
@@ -812,7 +813,7 @@ public final class GraphBuilder {
     void genNewMultiArray(int cpi) {
         RiType type = constantPool().lookupType(cpi, MULTIANEWARRAY);
         FrameState stateBefore = null; //curState.immutableCopy(bci());
-        int rank = stream().readUByte(stream().currentBCI() + 3);
+        int rank = stream().readUByte(bci() + 3);
         Value[] dims = new Value[rank];
         for (int i = rank - 1; i >= 0; i--) {
             dims[i] = ipop();
@@ -1328,6 +1329,12 @@ public final class GraphBuilder {
         append(new LookupSwitch(ipop(), list, keys, stateBefore, isBackwards));
     }
 
+    /**
+     * Determines whether the length of an array should be extracted out as a separate instruction
+     * before an array indexing instruction. This exposes it to CSE.
+     * @param array
+     * @return
+     */
     private boolean cseArrayLength(Value array) {
         // checks whether an array length access should be generated for CSE
         if (C1XOptions.OptCSEArrayLength) {
@@ -1409,7 +1416,9 @@ public final class GraphBuilder {
 
         if (x instanceof StateSplit) {
             StateSplit stateSplit = (StateSplit) x;
-            stateSplit.setStateBefore(curState.immutableCopy(bci));
+            if (!stateSplit.isStateCleared()) {
+                stateSplit.setStateBefore(curState.immutableCopy(bci));
+            }
         }
 
         if (x.canTrap()) {
@@ -2231,10 +2240,10 @@ public final class GraphBuilder {
                 case PWRITE         : genStorePointer(PWRITE    | (s.readCPI() << 8)); break;
                 case PSET           : genStorePointer(PSET      | (s.readCPI() << 8)); break;
                 case PCMPSWP        : getCompareAndSwap(PCMPSWP | (s.readCPI() << 8)); break;
-                case MEMBAR         : genMemoryBarrier(MEMBAR   | (s.readCPI() << 8)); break;
+                case MEMBAR         : genMemoryBarrier(s.readCPI()); break;
 
                 case WRETURN        : genReturn(wpop()); break;
-                case READ_PC        : genLoadPC(); break;
+                case INFOPOINT      : genInfopoint(INFOPOINT | (s.readUByte(bci() + 1) << 16), s.readUByte(bci() + 2) != 0); break;
                 case JNICALL        : genNativeCall(s.readCPI()); break;
                 case JNIOP          : genJniOp(s.readCPI()); break;
                 case ALLOCA         : genStackAllocate(); break;
@@ -2430,8 +2439,13 @@ public final class GraphBuilder {
         }
     }
 
-    private void genLoadPC() {
-        wpush(append(new LoadPC()));
+    private void genInfopoint(int opcode, boolean inclFrame) {
+        // TODO: create slimmer frame state if inclFrame is false
+        FrameState state = curState.immutableCopy(bci());
+        Value result = append(new Infopoint(opcode, state));
+        if (!result.kind.isVoid()) {
+            push(result.kind, result);
+        }
     }
 
     private void genLoadRegister(int registerId) {
@@ -2598,10 +2612,11 @@ public final class GraphBuilder {
     }
 
 
-    private void genMemoryBarrier(int opcode) {
-        // TODO: Implement this!
-        System.out.println("Memory barrier: " + Bytecodes.nameOf(opcode));
-        System.out.println(curState.immutableCopy(bci()));
+    private void genMemoryBarrier(int barriers) {
+        int explicitMemoryBarriers = barriers & ~compilation.target.arch.implicitMemoryBarriers;
+        if (explicitMemoryBarriers != 0) {
+            append(new MemoryBarrier(explicitMemoryBarriers));
+        }
     }
 
     private void genArrayLength() {

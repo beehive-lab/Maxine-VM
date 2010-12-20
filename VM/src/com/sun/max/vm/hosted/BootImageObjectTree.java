@@ -275,7 +275,12 @@ public final class BootImageObjectTree {
             final Object object = objectPoolIndices[i];
             final int address = allocationMap.get(object).toInt();
             final long size = ObjectAccess.size(object).toLong();
-            final String toString = object.toString();
+            String toString;
+            try {
+                toString = object.toString();
+            } catch (Exception e) {
+                toString = "<error calling toString()>: " + e.toString();
+            }
 
             dataOutputStream.writeInt(classPool.get(object.getClass()));
             dataOutputStream.writeInt(address);

@@ -23,15 +23,16 @@ package com.sun.max.vm.cps.ir.interpreter;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
+import com.sun.max.vm.cps.hotpath.compiler.*;
+import com.sun.max.vm.cps.hotpath.compiler.Console.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.amd64.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.cps.tir.target.*;
-import com.sun.max.vm.hotpath.compiler.*;
-import com.sun.max.vm.hotpath.compiler.Console.Color;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.value.*;
@@ -65,9 +66,11 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
         final List<EirJavaFrameDescriptor> descriptors = new ArrayList<EirJavaFrameDescriptor>();
         for (EirBlock block : method.blocks()) {
             for (EirInstruction instruction : block.instructions()) {
-                if (instruction instanceof EirGuardpoint) {
-                    final EirGuardpoint guardpoint = (EirGuardpoint) instruction;
-                    descriptors.add(guardpoint.javaFrameDescriptor());
+                if (instruction instanceof EirInfopoint) {
+                    final EirInfopoint guardpoint = (EirInfopoint) instruction;
+                    if (guardpoint.opcode == Bytecodes.INFO) {
+                        descriptors.add(guardpoint.javaFrameDescriptor());
+                    }
                 }
             }
         }

@@ -44,7 +44,7 @@ public class JITTest_compileBootImage extends JitCompilerTestCase {
         final LinkedList<TargetMethod> toDo = new LinkedList<TargetMethod>();
         final RuntimeCompilerScheme jit = vm().config.jitCompilerScheme();
 
-        final ClassActor classActor = ClassActor.fromJava(com.sun.max.vm.run.jitTest.JitTest.class);
+        final ClassActor classActor = ClassActor.fromJava(com.sun.max.vm.cps.run.jitTest.JitTest.class);
 
         for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
             toDo.add(jit.compile(virtualMethodActor));

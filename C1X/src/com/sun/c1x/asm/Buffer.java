@@ -34,6 +34,7 @@ public final class Buffer {
 
     private byte[] data;
     private int position;
+    private int mark = -1;
 
     private final ByteOrder byteOrder;
 
@@ -85,6 +86,17 @@ public final class Buffer {
 
     private boolean isShort(int s) {
         return s == (s & 0xFFFF);
+    }
+
+    /**
+     * Places a bookmark at the {@linkplain #position() current position}.
+     *
+     * @return the previously placed bookmark or {@code -1} if there was no bookmark
+     */
+    public int mark() {
+        int mark = this.mark;
+        this.mark = position;
+        return mark;
     }
 
     private void ensureSize(int length) {

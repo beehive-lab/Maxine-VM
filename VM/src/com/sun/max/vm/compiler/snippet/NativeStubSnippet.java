@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.snippet;
 
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.vm.runtime.VmOperation.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.stack.JavaFrameAnchor.*;
@@ -102,7 +104,7 @@ public abstract class NativeStubSnippet extends Snippet {
         public static void nativeCallPrologue() {
             Pointer etla = ETLA.load(currentTLA());
             Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-            Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), getInstructionPointer(), previousAnchor);
+            Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), Pointer.fromLong(here()), previousAnchor);
 
             nativeCallPrologue0(etla, anchor);
         }
@@ -126,7 +128,7 @@ public abstract class NativeStubSnippet extends Snippet {
             if (UseCASBasedThreadFreezing) {
                 MUTATOR_STATE.store(etla, THREAD_IN_NATIVE);
             } else {
-                MemoryBarriers.memopStore();
+                memopStore();
                 // The following store must be last:
                 MUTATOR_STATE.store(etla, THREAD_IN_NATIVE);
             }
@@ -221,7 +223,7 @@ public abstract class NativeStubSnippet extends Snippet {
         public static void nativeCallPrologueForC() {
             Pointer etla = ETLA.load(currentTLA());
             Pointer previousAnchor = LAST_JAVA_FRAME_ANCHOR.load(etla);
-            Pointer anchor = JavaFrameAnchor.create(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), previousAnchor);
+            Pointer anchor = JavaFrameAnchor.create(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), Pointer.fromLong(here()), previousAnchor);
             LAST_JAVA_FRAME_ANCHOR.store(etla, anchor);
         }
 

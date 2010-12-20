@@ -21,7 +21,7 @@
 package com.sun.max.vm.cps.jit;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
-import static com.sun.max.vm.template.BytecodeTemplate.*;
+import static com.sun.max.vm.cps.template.BytecodeTemplate.*;
 
 import java.util.*;
 
@@ -49,17 +49,17 @@ import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForWr
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveVirtualMethod;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.hotpath.*;
 import com.sun.max.vm.cps.jit.Stop.BackwardBranchBytecodeSafepoint;
 import com.sun.max.vm.cps.jit.Stop.BytecodeDirectCall;
 import com.sun.max.vm.cps.jit.Stops.StopsBuilder;
 import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.cps.template.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.VMRegister.Role;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -915,8 +915,8 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.WREM               : emit(WREM); skip(2); break;
                 case Bytecodes.WREMI              : emit(WREMI); skip(2); break;
 
-                case Bytecodes.PCMPSWP:
                 case Bytecodes.MEMBAR:
+                case Bytecodes.PCMPSWP:
                 case Bytecodes.PGET:
                 case Bytecodes.PSET:
                 case Bytecodes.PREAD:
@@ -991,8 +991,6 @@ public abstract class BytecodeToTargetTranslator {
                         case Bytecodes.MEMBAR_LOAD_STORE  : emit(MEMBAR_LOAD_STORE); break;
                         case Bytecodes.MEMBAR_STORE_LOAD  : emit(MEMBAR_STORE_LOAD); break;
                         case Bytecodes.MEMBAR_STORE_STORE : emit(MEMBAR_STORE_STORE); break;
-                        case Bytecodes.MEMBAR_MEMOP_STORE : emit(MEMBAR_MEMOP_STORE); break;
-                        case Bytecodes.MEMBAR_FENCE         : emit(MEMBAR_FENCE); break;
 
                         default                           : throw new InternalError("Unsupported opcode" + errorSuffix());
                     }
@@ -1006,7 +1004,6 @@ public abstract class BytecodeToTargetTranslator {
 
 
                 case Bytecodes.WRETURN            : emitReturn(WRETURN); break;
-                case Bytecodes.SAFEPOINT          : emit(SAFEPOINT); skip(2); break;
                 case Bytecodes.PAUSE              : emit(PAUSE); skip(2); break;
                 case Bytecodes.LSB                : emit(LSB); skip(2); break;
                 case Bytecodes.MSB                : emit(MSB); skip(2); break;
@@ -1015,7 +1012,7 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.WRITEREG           : emit(WRITEREGS.get(Role.VALUES.get(readU2()))); break;
 
                 case Bytecodes.ADD_SP             :
-                case Bytecodes.READ_PC            :
+                case Bytecodes.INFOPOINT          :
                 case Bytecodes.FLUSHW             :
                 case Bytecodes.ALLOCA             :
                 case Bytecodes.ALLOCSTKVAR        :
