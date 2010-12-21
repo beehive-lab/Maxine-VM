@@ -362,6 +362,9 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         try {
             final int defaultTargetBytecodePosition = opcodePosition + defaultTargetOffset;
             if (numberOfCases == 0) {
+                // Pop the key
+                TargetMethod code = getCode(BytecodeTemplate.POP);
+                emitAndRecordStops(code);
                 // Skip completely if default target is next instruction.
                 // Lookup switches are aligned on 4 bytes and have a minimum of 12 bytes.
                 final int nextBytecodePosition = (opcodePosition & 3) + 12;
