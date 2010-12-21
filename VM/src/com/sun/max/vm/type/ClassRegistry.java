@@ -214,7 +214,7 @@ public final class ClassRegistry {
         if (fieldActor == null) {
             fieldActor = classActor.findLocalStaticFieldActor(name);
         }
-        assert fieldActor != null;
+        assert fieldActor != null : "Could not find field '" + name + "' in " + declaringClass;
         return fieldActor;
     }
 
@@ -267,7 +267,7 @@ public final class ClassRegistry {
         } else {
             methodActor = MethodActor.fromJava(Classes.getDeclaredMethod(declaringClass, name, parameterTypes));
         }
-        ProgramError.check(methodActor != null, "Could not find " + name + ".(" + Utils.toString(parameterTypes, ", ") + ") in " + declaringClass);
+        assert methodActor != null : "Could not find method " + name + "(" + Utils.toString(parameterTypes, ", ") + ") in " + declaringClass;
         if (methodActor instanceof ClassMethodActor) {
             // Some of these methods are called during VM startup
             // so they are compiled in the image.
