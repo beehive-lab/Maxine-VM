@@ -825,10 +825,9 @@ public class Canonicalizer extends DefaultValueVisitor {
         if (i.targetClass().isResolved()) {
             Value o = i.object();
             RiType exact = o.exactType();
-            if (exact != null && exact.isResolved()) {
+            if (exact != null && exact.isResolved() && o.isNonNull()) {
                 setIntConstant(exact.isSubtypeOf(i.targetClass()) ? 1 : 0);
-            }
-            if (o.isConstant()) {
+            } else if (o.isConstant()) {
                 final Object obj = o.asConstant().asObject();
                 if (obj == null) {
                     // instanceof of null is false
