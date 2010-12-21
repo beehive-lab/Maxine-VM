@@ -138,7 +138,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         return stackFrameLayout;
     }
 
-    public void fillInMaps(int[] bytecodeToTargetCodePositionMap) {
+    public void fillInMaps() {
         if (traceStackRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Finalizing JIT reference maps for ");
