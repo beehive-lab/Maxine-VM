@@ -57,6 +57,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
     protected TabbedInspector(Inspection inspection, final String settingsClientName) {
         super(inspection);
         tabbedPane = new JTabbedPane();
+        tabbedPane.setOpaque(true);
         if (settingsClientName != null) {
             saveSettingsListener = createGeometrySettingsClient(this, settingsClientName + "Geometry");
         } else {
