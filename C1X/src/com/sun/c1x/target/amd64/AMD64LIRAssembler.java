@@ -217,7 +217,6 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Short   :
             case Jsr     :
             case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
-            case Jsr     : masm.movl(frameMap.toStackAddress(slot), c.asJsr()); break;
             case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
             case Object  : masm.movoop(frameMap.toStackAddress(slot), CiConstant.forObject(c.asObject())); break;
             case Long    : masm.movptr(frameMap.toStackAddress(slot), c.asLong()); break;
