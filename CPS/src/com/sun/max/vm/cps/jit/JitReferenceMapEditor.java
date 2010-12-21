@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.jit;
 
+import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
+
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
@@ -31,7 +33,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.stack.*;
 
 public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, ReferenceSlotVisitor {
@@ -138,7 +139,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     }
 
     public void fillInMaps(int[] bytecodeToTargetCodePositionMap) {
-        if (Heap.traceRootScanning()) {
+        if (traceStackRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Finalizing JIT reference maps for ");
             Log.printMethod(classMethodActor(), true);
@@ -149,7 +150,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         interpreter.finalizeFrames(this);
         interpreter.interpretReferenceSlots(this, this, bytecodeStopsIterator);
 
-        if (Heap.traceRootScanning()) {
+        if (traceStackRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
             bytecodeStopsIterator.reset();
             final CodeAttribute codeAttribute = targetMethod.classMethodActor().codeAttribute();
