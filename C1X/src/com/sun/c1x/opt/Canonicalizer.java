@@ -553,27 +553,39 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
         if (C1XOptions.CanonicalizeArrayStoreChecks && i.elementKind() == CiKind.Object) {
             if (value.isNullConstant()) {
-                clearStoreCheck(i);
+                i.eliminateStoreCheck();
             } else {
-                RiType exactType = Value.exactType(array, runtime);
-                if (exactType != null && runtime.getRiType(Object[].class).equals(exactType)) {
-                    // the exact type of the array is Object[] => no check is necessary
-                    clearStoreCheck(i);
-                } else {
-                    RiType declaredType = value.declaredType();
-                    if (declaredType != null && declaredType.isResolved() && declaredType.isSubtypeOf(exactType)) {
-                        // the value being stored has a known type
-                        clearStoreCheck(i);
+                RiType exactType = array.exactType();
+                if (exactType != null) {
+                    if (runtime.getRiType(Object[].class).equals(exactType)) {
+                        // the exact type of the array is Object[] => no check is necessary
+                        i.eliminateStoreCheck();
+                    } else {
+                        RiType declaredType = value.declaredType();
+                        if (declaredType != null && declaredType.isResolved() && declaredType.isSubtypeOf(exactType.componentType())) {
+                            // the value being stored has a known type
+                            i.eliminateStoreCheck();
+                        }
                     }
                 }
-
+            }
+        }
+        if (i.index().isConstant() && i.length() != null && i.length().isConstant()) {
+            int index = i.index().asConstant().asInt();
+            if (index >= 0 && index < i.length().asConstant().asInt()) {
+                i.eliminateBoundsCheck();
             }
         }
     }
 
-    private void clearStoreCheck(StoreIndexed i) {
-        i.setFlag(Value.Flag.NoStoreCheck);
-        C1XMetrics.StoreChecksRedundant++;
+    @Override
+    public void visitLoadIndexed(LoadIndexed i) {
+        if (i.index().isConstant() && i.length() != null && i.length().isConstant()) {
+            int index = i.index().asConstant().asInt();
+            if (index >= 0 && index < i.length().asConstant().asInt()) {
+                i.eliminateBoundsCheck();
+            }
+        }
     }
 
     @Override

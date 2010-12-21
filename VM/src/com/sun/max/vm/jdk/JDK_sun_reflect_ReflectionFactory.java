@@ -79,6 +79,7 @@ public class JDK_sun_reflect_ReflectionFactory {
      * @param methodActor the method actor for which to create a method stub
      * @return the method stub for the specified method acto
      */
+    @HOSTED_ONLY
     public static ClassActor createPrePopulatedConstructorStub(MethodActor methodActor) {
         if (MaxineVM.isHosted()) {
             ConstructorAccessor stub = prePopulatedConstructorStubs.get(methodActor);

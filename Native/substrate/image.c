@@ -162,32 +162,45 @@ static struct image_StringInfo theStringInfoStruct;
  * @param fd a file descriptor  opened on the boot image file currently positioned at the start of the StringInfo section
  */
 static void readStringInfo(int fd) {
-    char **p;
     char *s;
-    char *stringInfoData;
-#if !MEMORY_IMAGE
+    int keyValueCount = 0;
+    char *keyValueData;
     int n;
-    stringInfoData = malloc(theHeader->stringDataSize);
-    if (stringInfoData == NULL) {
+#if !MEMORY_IMAGE
+    n = read(fd, &keyValueCount, 4);
+    if (n != 4) {
+        log_exit(2, "could not read string info key/value count");
+    }
+    int keyValueDataSize = theHeader->stringDataSize - 4;
+    keyValueData = malloc(keyValueDataSize);
+    if (keyValueData == NULL) {
         log_exit(1, "could not allocate string info");
     }
 
-    n = read(fd, stringInfoData, theHeader->stringDataSize);
-    if (n != theHeader->stringDataSize) {
+    n = read(fd, keyValueData, keyValueDataSize);
+    if (n != keyValueDataSize) {
         log_exit(2, "could not read string info");
     }
 #else
-    stringInfoData = ((char *) &maxvm_image_start + sizeof(struct image_Header));
+    keyValueCount = *((int *) &maxvm_image_start + sizeof(struct image_Header));
+    keyValueData = ((char *) &maxvm_image_start + sizeof(struct image_Header) + 4);
 #endif
 #if log_LOADER
-    log_println("image.readStringInfo @ 0x%x", stringInfoData);
+    log_println("image.readStringInfo @ 0x%x [count = %d]", keyValueData, keyValueCount);
 #endif
     theStringInfo = &theStringInfoStruct;
-    p = (char **) theStringInfo;
-    s = stringInfoData;
-    while (p < (char **) &theStringInfo[1]) {
-        *p++ = s;
+    theStringInfo->count = keyValueCount;
+    theStringInfo->values = malloc(keyValueCount * sizeof(struct image_KeyValue));
+    s = keyValueData;
+    for (n = 0; n < keyValueCount; n++) {
+        image_KeyValue kv = (image_KeyValue) &(theStringInfo->values[n]);
+        kv->key = s;
         s = nextString(s);
+        kv->value = s;
+        s = nextString(s);
+#if log_LOADER
+        log_println("    %s: %s", kv->key, kv->value);
+#endif
     }
 }
 
@@ -206,7 +219,7 @@ static void checkImage(void) {
     log_println("image.checkImage");
 #endif
     if ((theHeader->isBigEndian != 0) != word_BIG_ENDIAN) {
-        log_exit(3, "image has wrong endianess - expected: %s, found: %s", endiannessToString(word_BIG_ENDIAN), endiannessToString(theHeader->isBigEndian));
+        log_exit(3, "image has wrong endianness - expected: %s, found: %s", endiannessToString(word_BIG_ENDIAN), endiannessToString(theHeader->isBigEndian));
     }
     if (theHeader->identification != (jint) IMAGE_IDENTIFICATION) {
         log_exit(2, "not a valid Maxine VM boot image file");
@@ -378,10 +391,13 @@ static void relocate(int fd) {
 #if log_LOADER
     log_println("image.relocate [relocation map: %d bytes]", theHeader->relocationDataSize);
 #endif
-relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
+    relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
 
 #if !MEMORY_IMAGE
     free(relocationData);
+#endif
+#if log_LOADER
+    log_println("image.relocate: done");
 #endif
 }
 

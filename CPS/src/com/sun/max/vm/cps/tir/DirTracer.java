@@ -34,7 +34,7 @@ import com.sun.max.vm.cps.cir.dir.*;
 import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.transform.*;
-import com.sun.max.vm.hotpath.compiler.*;
+import com.sun.max.vm.cps.hotpath.compiler.*;
 import com.sun.max.vm.type.*;
 
 public class DirTracer {

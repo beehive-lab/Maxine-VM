@@ -30,14 +30,14 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.cps.hotpath.*;
+import com.sun.max.vm.cps.hotpath.compiler.*;
+import com.sun.max.vm.cps.hotpath.compiler.Console.*;
+import com.sun.max.vm.cps.hotpath.state.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.cps.tir.TirInstruction.*;
 import com.sun.max.vm.cps.tir.pipeline.*;
-import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.hotpath.compiler.*;
-import com.sun.max.vm.hotpath.compiler.Console.*;
-import com.sun.max.vm.hotpath.state.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -47,7 +47,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
     private Mapping<TirInstruction, Value> variantValues = new IdentityHashMapping<TirInstruction, Value>();
     private Mapping<TirTreeCall, BirState> callResults = new IdentityHashMapping<TirTreeCall, BirState>();
 
-    private static ClassMethodActor createTupleOrHybridMethodActor = ClassMethodActor.findStatic(CreateTupleOrHybrid.class, "createTupleOrHybrid");
+    private static ClassMethodActor createTupleOrHybridMethodActor = CreateTupleOrHybrid.SNIPPET.executable;
 
     private Evaluator evaluator = new Evaluator();
     private BirState executionState;

@@ -22,19 +22,19 @@ package com.sun.max.vm.cps.target.amd64;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.*;
-import com.sun.max.asm.*;
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
- * @see MaxPackage
  *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return platform().isa == ISA.AMD64;
+        return CPSCompiler.Static.isCompiler(vmConfiguration) && platform().isa == ISA.AMD64;
     }
 }

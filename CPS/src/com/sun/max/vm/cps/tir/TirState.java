@@ -20,9 +20,9 @@
  */
 package com.sun.max.vm.cps.tir;
 
+import com.sun.max.vm.cps.hotpath.*;
+import com.sun.max.vm.cps.hotpath.state.*;
 import com.sun.max.vm.cps.tir.TirInstruction.*;
-import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.hotpath.state.*;
 import com.sun.max.vm.type.*;
 
 public class TirState extends State<TirInstruction> {

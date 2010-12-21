@@ -23,10 +23,10 @@ package com.sun.max.tele.debug;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.cri.ci.*;
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Encapsulates the values of the state registers for a tele native thread.
@@ -72,7 +72,7 @@ public final class TeleStateRegisters extends TeleRegisters {
         if (platform().isa == ISA.AMD64) {
             return new CiRegister[] {AMD64.RIP, AMD64.FLAGS};
         }
-        throw FatalError.unimplemented();
+        throw TeleError.unimplemented();
     }
 
     public TeleStateRegisters(TeleVM teleVM, TeleRegisterSet teleRegisterSet) {
@@ -81,7 +81,7 @@ public final class TeleStateRegisters extends TeleRegisters {
             instructionPointerRegister = AMD64.RIP;
             flagsRegister = AMD64.FLAGS;
         } else {
-            throw FatalError.unimplemented();
+            throw TeleError.unimplemented();
         }
     }
 
@@ -118,6 +118,6 @@ public final class TeleStateRegisters extends TeleRegisters {
         if (platform().isa == ISA.AMD64) {
             return AMD64.flagsToString(flags);
         }
-        throw FatalError.unimplemented();
+        throw TeleError.unimplemented();
     }
 }

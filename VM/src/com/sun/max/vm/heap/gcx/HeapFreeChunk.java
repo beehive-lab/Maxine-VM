@@ -28,11 +28,11 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A chunk of free space in the heap.
@@ -60,8 +60,8 @@ public class HeapFreeChunk {
     protected static final int SIZE_INDEX;
 
     static {
-        NEXT_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("next")).offset() >> Word.widthValue().log2numberOfBytes;
-        SIZE_INDEX = HEAP_FREE_CHUNK_HUB.classActor.findFieldActor(SymbolTable.makeSymbol("size")).offset() >> Word.widthValue().log2numberOfBytes;
+        NEXT_INDEX = ClassRegistry.findField(HeapFreeChunk.class, "next").offset() >> Word.widthValue().log2numberOfBytes;
+        SIZE_INDEX = ClassRegistry.findField(HeapFreeChunk.class, "size").offset() >> Word.widthValue().log2numberOfBytes;
     }
 
     private static final long HEAP_FREE_CHUNK_MARKER = 0xdadadadadadadadaL;
@@ -182,6 +182,12 @@ public class HeapFreeChunk {
         }
     }
 
+    /**
+     * Find the first chunk in a list of chunks that can accommodate the requested number of bytes.
+     * @param head a pointer to a HeapFreeChunk
+     * @param size size in bytes
+     * @return a chunk of size greater or equal to {code size}, null otherwise.
+     */
     public static Pointer firstFit(Pointer head, Size size) {
         return fromHeapFreeChunk(toHeapFreeChunk(head.getWord().asAddress()).firstFit(size)).asPointer();
     }

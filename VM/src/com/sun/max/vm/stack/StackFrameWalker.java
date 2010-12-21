@@ -21,21 +21,20 @@
 package com.sun.max.vm.stack;
 
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
-import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologueForC;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
@@ -71,11 +70,12 @@ public abstract class StackFrameWalker {
      */
     public final class Cursor {
 
-        private TargetMethod targetMethod;
-        private Pointer ip = Pointer.zero();
-        private Pointer sp = Pointer.zero();
-        private Pointer fp = Pointer.zero();
-        private boolean isTopFrame = false;
+        TargetMethod targetMethod;
+        Pointer ip = Pointer.zero();
+        Pointer sp = Pointer.zero();
+        Pointer fp = Pointer.zero();
+        boolean isTopFrame = false;
+        boolean ipIsReturnAddress;
 
         private Cursor() {
         }
@@ -87,30 +87,28 @@ public abstract class StackFrameWalker {
          * @param ip the new instruction pointer
          * @param sp the new stack pointer
          * @param fp the new frame pointer
+         * @param ipIsReturnAddress
          */
-        public void advance(Pointer ip, Pointer sp, Pointer fp) {
-            setFields(null, ip, sp, fp, false);
+        public Cursor advance(Pointer ip, Pointer sp, Pointer fp, boolean ipIsReturnAddress) {
+            return setFields(null, ip, sp, fp, false, ipIsReturnAddress);
         }
 
         void reset() {
-            setFields(null, Pointer.zero(), Pointer.zero(), Pointer.zero(), false);
+            setFields(null, Pointer.zero(), Pointer.zero(), Pointer.zero(), false, false);
         }
 
         private void copyFrom(Cursor other) {
-            setFields(other.targetMethod, other.ip, other.sp, other.fp, other.isTopFrame);
+            setFields(other.targetMethod, other.ip, other.sp, other.fp, other.isTopFrame, other.ipIsReturnAddress);
         }
 
-        private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame) {
+        private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame, boolean ipIsReturnAddress) {
             this.targetMethod = targetMethod;
             this.ip = ip;
             this.sp = sp;
             this.fp = fp;
             this.isTopFrame = isTopFrame;
+            this.ipIsReturnAddress = ipIsReturnAddress;
             return this;
-        }
-
-        private Cursor copy() {
-            return new Cursor().setFields(targetMethod, ip, sp, fp, isTopFrame);
         }
 
         /**
@@ -161,6 +159,22 @@ public abstract class StackFrameWalker {
         }
 
         /**
+         * Determines if {@link #ip()} denotes an instruction address that may
+         * not be precisely correlated with a position for which debug info is available.
+         * This is the case if the address is the return address read from a callee
+         * frame except for the case where the callee is the {@linkplain Stubs#trapStub() trap stub}
+         * or a native/C function. In the case of the former, the address is that
+         * of the instruction causing the trap. In the case of the latter,
+         * the address is that of the call to the native/C function.
+         *
+         * @return {@code true} if {@link #ip()} is the return address derived from
+         * a {@linkplain Stubs#trapStub() non-trap-stub}, non-native-function callee
+         */
+        public boolean ipIsReturnAddress() {
+            return ipIsReturnAddress;
+        }
+
+        /**
          * Get the callee kind of this method, which determines if there is register state in this frame
          * and where it is stored.
          * @return the callee kind of this method
@@ -169,10 +183,10 @@ public abstract class StackFrameWalker {
             if (targetMethod == null) {
                 return CalleeKind.NATIVE;
             }
-            if (Trap.trapStub.targetMethod() == targetMethod) {
+            if (targetMethod.is(TrapStub)) {
                 return CalleeKind.TRAP_STUB;
             }
-            if (targetMethod.classMethodActor != null && targetMethod.classMethodActor.isTrampoline()) {
+            if (targetMethod.isTrampoline()) {
                 return CalleeKind.TRAMPOLINE;
             }
             if (targetMethod.isCalleeSaved()) {
@@ -235,7 +249,6 @@ public abstract class StackFrameWalker {
     private Purpose purpose = null;
     private Pointer currentAnchor;
     private StackFrame calleeStackFrame;
-    private Pointer trapState;
 
     /**
      * Walks a thread's stack.
@@ -262,7 +275,6 @@ public abstract class StackFrameWalker {
         current.fp = fp;
         current.isTopFrame = true;
 
-        this.trapState = Pointer.zero();
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
@@ -297,11 +309,6 @@ public abstract class StackFrameWalker {
                 if (!walkFrame(current, callee, targetMethod, purpose, context)) {
                     break;
                 }
-
-                // clear the trap state if we didn't just walk over the trap stub
-                if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
-                    trapState = Pointer.zero();
-                }
             } else {
                 // did not find target method => in native code
                 if (purpose == INSPECTING) {
@@ -330,22 +337,22 @@ public abstract class StackFrameWalker {
                     }
 
                     ClassMethodActor lastJavaCalleeMethodActor = calleeMethod.classMethodActor();
-                    if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
-                        if (lastJavaCalleeMethodActor.isTrapStub()) {
-                            Pointer anchor = nextNativeStubAnchor();
-                            if (!anchor.isZero()) {
-                                // This can only occur in the inspector and implies that execution is in
-                                // Trap.trapStub() as a result a trap or signal while execution was in
-                                // native code.
-                                advanceFrameInNative(anchor, purpose);
-                            } else {
-                                // This can only occur in the inspector and implies that execution is in the platform specific
-                                // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
-                                // particular, the return instruction pointer slot has not been updated with the instruction
-                                // pointer at which the fault occurred.
-                                break;
-                            }
-                        } else if (!advanceVmEntryPointFrame(calleeMethod)) {
+                    if (calleeMethod.is(TrapStub)) {
+                        Pointer anchor = nextNativeStubAnchor();
+                        if (!anchor.isZero()) {
+                            // This can only occur in the Inspector and implies that execution is in
+                            // the trap stub as a result a trap or signal while execution was in
+                            // native code.
+                            advanceFrameInNative(anchor, purpose);
+                        } else {
+                            // This can only occur in the inspector and implies that execution is in the platform specific
+                            // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
+                            // particular, the return instruction pointer slot has not been updated with the instruction
+                            // pointer at which the fault occurred.
+                            break;
+                        }
+                    } else if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
+                        if (!advanceVmEntryPointFrame(calleeMethod)) {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor == null) {
@@ -431,7 +438,7 @@ public abstract class StackFrameWalker {
     private void checkVmEntrypointCaller(TargetMethod lastJavaCallee, final TargetMethod targetMethod) {
         if (lastJavaCallee != null && lastJavaCallee.classMethodActor() != null) {
             final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
-            if (classMethodActor.isVmEntryPoint() && !classMethodActor.isTrapStub()) {
+            if (classMethodActor.isVmEntryPoint()) {
                 Log.print("Caller of VM entry point (@VM_ENTRY_POINT annotated method) \"");
                 Log.print(lastJavaCallee.regionName());
                 Log.print("\" is not native code: ");
@@ -462,7 +469,7 @@ public abstract class StackFrameWalker {
             final Word lastJavaCallerFramePointer = readWord(anchor, JavaFrameAnchor.FP.offset);
             advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer.asPointer(), true),
                     lastJavaCallerStackPointer,
-                    lastJavaCallerFramePointer);
+                    lastJavaCallerFramePointer, false);
             return true;
         }
         return false;
@@ -478,9 +485,11 @@ public abstract class StackFrameWalker {
         if (lastJavaCallerInstructionPointer.isZero()) {
             FatalError.check(!lastJavaCallerInstructionPointer.isZero(), "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
         }
-        advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer, purpose != INSPECTING && purpose != RAW_INSPECTING),
-            readWord(anchor, JavaFrameAnchor.SP.offset),
-            readWord(anchor, JavaFrameAnchor.FP.offset));
+        Pointer ip = getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer, purpose != INSPECTING && purpose != RAW_INSPECTING);
+        if (ip.isZero()) {
+            ip = lastJavaCallerInstructionPointer;
+        }
+        advance(ip, readWord(anchor, JavaFrameAnchor.SP.offset), readWord(anchor, JavaFrameAnchor.FP.offset), false);
     }
 
     /**
@@ -543,18 +552,11 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Gets an address corresponding to a native function call in a {@linkplain NativeStubGenerator native stub}.
-     * If the native function call is found, then the address returned is actually one byte past the start of the
-     * call instruction. This makes it consistent with walking up through a call in general where the instruction
-     * pointer obtained for a caller's frame is actually the return address which is always greater than the
-     * address of the call instruction itself.
+     * Gets the address corresponding to a native function call in a {@linkplain NativeStubGenerator native stub}.
      *
-     * @param ip the instruction pointer in a native stub as saved by {@link NativeCallPrologue} or
-     *            {@link NativeCallPrologueForC}
-     * @param fatalIfNotFound specifies whether a {@linkplain FatalError fatal error} should be raised if the native
-     *            stub has no native call just after {@code ip}.
-     *            If this value is false and the search fails, then {@code ip} is returned.
-     * @return the address of the second byte of the native function call after {@code instructionPointer} or zero if no such call exists
+     * @param ip the instruction pointer saved by {@link NativeCallPrologue} or {@link NativeCallPrologueForC}
+     * @param fatalIfNotFound specifies whether a fatal error should be raised if a native call cannot be found
+     * @return the address of the native function call derived from {@code ip} or zero if no such call exists
      */
     private Pointer getNativeFunctionCallInstructionPointerInNativeStub(Pointer ip, boolean fatalIfNotFound) {
         final TargetMethod nativeStubTargetMethod = targetMethodFor(ip);
@@ -576,7 +578,7 @@ public abstract class StackFrameWalker {
                     Log.print(nativeFunctionCallPosition + 1);
                     Log.println(']');
                 }
-                return nativeFunctionCall.plus(1);
+                return nativeFunctionCall;
             }
         }
         if (fatalIfNotFound) {
@@ -593,7 +595,7 @@ public abstract class StackFrameWalker {
             }
             throw FatalError.unexpected("Could not find native function call in native stub");
         }
-        return ip;
+        return Pointer.zero();
     }
 
     /**
@@ -667,7 +669,6 @@ public abstract class StackFrameWalker {
 
         current.reset();
         callee.reset();
-        trapState = Pointer.zero();
         purpose = null;
         defaultStackUnwindingContext.stackPointer = Pointer.zero();
         defaultStackUnwindingContext.throwable = null;
@@ -691,32 +692,12 @@ public abstract class StackFrameWalker {
         return !current.sp.isZero();
     }
 
-    public final void advance(Word ip, Word sp, Word fp) {
+    public final Cursor advance(Word ip, Word sp, Word fp, boolean ipIsReturnAddress) {
         if (!(current.targetMethod instanceof Adapter)) {
             // Adapter frames are never of interest when visiting the frame of a caller
             callee.copyFrom(current);
         }
-        current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer());
-    }
-
-    /**
-     * Records the trap state when walking a trap frame. This information can be subsequently {@linkplain #trapState()
-     * accessed} when walking the frame in which the trap occurred.
-     *
-     * @param trapState the state pertinent to a trap
-     */
-    public void setTrapState(Pointer trapState) {
-        this.trapState = trapState;
-    }
-
-    /**
-     * Gets the state stored in the trap frame just below the frame currently being walked (i.e. the frame in which the
-     * trap occurred).
-     *
-     * @return {@link Pointer#zero()} if the current frame is not a frame in which a trap occurred
-     */
-    public Pointer trapState() {
-        return trapState;
+        return current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer(), ipIsReturnAddress);
     }
 
     /**
@@ -743,117 +724,6 @@ public abstract class StackFrameWalker {
         };
         inspect(ip, sp, fp, visitor);
         return frames;
-    }
-
-    /**
-     * Extracts a sequence of class method actors from a sequence of stack frames. It accepts a number of options that
-     * indicate whether to include the top frame, adapter frames, native frames, and other frames that should not be
-     * application visible.
-     *
-     * @param stackFrames an iterable list of stack frames
-     * @param topFrame true if this method should include the ClassMethodActor of the top frame
-     * @param adapterFrames true if adapter frames should be reported
-     * @param invisibleFrames true if application invisible frames should be reported
-     * @param ignoreUntilNativeFrame true if all frames before the first native frame are to be ignored
-     * @return a sequence of class method actors representing the call stack
-     */
-    public static List<ClassMethodActor> extractClassMethodActors(Iterable<StackFrame> stackFrames, boolean topFrame, boolean adapterFrames, boolean invisibleFrames, boolean ignoreUntilNativeFrame) {
-        final LinkedList<ClassMethodActor> result = new LinkedList<ClassMethodActor>();
-        boolean top = true;
-        boolean seenNativeFrame = false;
-        for (StackFrame stackFrame : stackFrames) {
-            if (top) {
-                top = false;
-                if (!topFrame) {
-                    continue;
-                }
-            }
-            if (stackFrame instanceof AdapterStackFrame && !adapterFrames) {
-                continue;
-            }
-            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.ip);
-            if (targetMethod == null) {
-                // native frame
-                if (ignoreUntilNativeFrame && !seenNativeFrame) {
-                    result.clear();
-                    seenNativeFrame = true;
-                }
-                continue;
-            }
-            BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(stackFrame.ip, false);
-            if (bytecodeLocation == null) {
-                if (targetMethod.classMethodActor() != null) {
-                    appendClassMethodActor(result, targetMethod.classMethodActor(), invisibleFrames);
-                }
-            } else {
-                appendCallers(result, bytecodeLocation, invisibleFrames);
-            }
-        }
-        return result;
-    }
-
-    public static ClassMethodActor getCallerClassMethodActor(Iterable<StackFrame> stackFrames, boolean invisibleFrames) {
-        boolean top = true;
-        for (StackFrame stackFrame : stackFrames) {
-            if (top) {
-                top = false;
-                continue;
-            }
-            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.ip);
-            if (targetMethod == null) {
-                // ignore native frame
-                continue;
-            }
-            BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(stackFrame.ip, false);
-            if (bytecodeLocation == null) {
-                if (targetMethod.classMethodActor() != null) {
-                    return targetMethod.classMethodActor();
-                }
-            } else {
-                return bytecodeLocation.classMethodActor;
-            }
-        }
-        return null;
-    }
-
-    private static void appendCallers(List<ClassMethodActor> result, BytecodeLocation bytecodeLocation, boolean invisibleFrames) {
-        // this recursive method appends inlined bytecode locations to the frame list (i.e. parent first)
-        if (bytecodeLocation.parent() != null) {
-            appendCallers(result, bytecodeLocation.parent(), invisibleFrames);
-        }
-        appendClassMethodActor(result, bytecodeLocation.classMethodActor, invisibleFrames);
-    }
-
-    private static void appendClassMethodActor(final List<ClassMethodActor> result, final ClassMethodActor classMethodActor, boolean invisibleFrames) {
-        if (classMethodActor.isApplicationVisible() || invisibleFrames) {
-            result.add(classMethodActor);
-        }
-    }
-
-    /**
-     * Extracts a list of {@link CiDebugInfo} objects from a list of real stack frames.
-     *
-     * @param stackFrames a list of stack frames {@linkplain StackFrameWalker#frames(List, Pointer, Pointer, Pointer)
-     *            gathered} during a walk of a thread's stack
-     * @return an array of {@link CiDebugInfo} objects derived from {@code stackFrames}
-     */
-    public static CiDebugInfo[] extractDebugInfoStack(List<StackFrame> stackFrames) {
-        List<CiDebugInfo> elements = new ArrayList<CiDebugInfo>();
-        for (StackFrame stackFrame : stackFrames) {
-            if (stackFrame instanceof AdapterStackFrame) {
-                continue;
-            }
-            final TargetMethod targetMethod = stackFrame.targetMethod();
-            if (targetMethod == null || targetMethod.classMethodActor() == null) {
-                // native frame or stub frame without a class method actor
-                continue;
-            }
-            CiDebugInfo info = targetMethod.getDebugInfo(stackFrame.ip, false);
-            if (info != null) {
-                elements.add(info);
-            }
-        }
-        return (CiDebugInfo[]) elements.toArray(new CiDebugInfo[elements.size()]);
     }
 
     public abstract Word readWord(Address address, int offset);

@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import static com.sun.max.vm.heap.gcx.HeapRegionList.RegionListUse.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -30,11 +33,15 @@ import com.sun.max.unsafe.*;
  * Both the list and the occupancy statistics are filled during sweeping.
  * Free chunks are organized in address order; regions with free space are organized in
  * address order as well.
- * Allocation is performed on a first-fit basis.s
+ * Allocation is performed on a first-fit basis.
  *
  * @author Laurent Daynes
  */
-public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSpace {
+public class RegionBasedFirstFitSpace extends Sweepable implements ResizableSpace {
+    /**
+     * Region available for allocation.
+     */
+    private final HeapRegionList allocatingRegions;
 
 
     /**
@@ -42,11 +49,13 @@ public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSp
      */
     private Size minReclaimableSpace;
 
-    RegionIDList allocatingRegions;
-    RegionIDList fullRegions;
-    RegionIDList candidatesRegions;
-
     public RegionBasedFirstFitSpace() {
+        allocatingRegions = OWNERSHIP.createList();
+    }
+
+    @HOSTED_ONLY
+    public void hostInitialize() {
+        //smallObjectAllocator.hostInitialize();
     }
 
     @Override
@@ -85,6 +94,12 @@ public class RegionBasedFirstFitSpace extends HeapSweeper implements ResizableSp
     public Size shrinkAfterGC(Size delta) {
         // TODO
         return Size.zero();
+    }
+
+    @Override
+    public void verify(AfterMarkSweepVerifier verifier) {
+        // TODO Auto-generated method stub
+
     }
 
 }

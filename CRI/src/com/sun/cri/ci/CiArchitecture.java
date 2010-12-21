@@ -22,6 +22,7 @@ package com.sun.cri.ci;
 
 import java.util.*;
 
+import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 
@@ -59,21 +60,6 @@ public abstract class CiArchitecture {
     public final String name;
 
     /**
-     * The name of the platform associated with this architecture (e.g. "X86" or "SPARC").
-     */
-    public final String platform;
-
-    /**
-     * The offset of the lower half of a word in bytes.
-     */
-    public final int lowWordOffset;
-
-    /**
-     * The offset of the upper half of a word in bytes.
-     */
-    public final int highWordOffset;
-
-    /**
      * Array of all available registers on this architecture. The index of each register in this
      * array is equal to its {@linkplain CiRegister#number number}.
      */
@@ -90,10 +76,30 @@ public abstract class CiArchitecture {
     public final ByteOrder byteOrder;
 
     /**
+     * Mask of the barrier constants defined in {@link MemoryBarriers} denoting the barriers that
+     * are not required to be explicitly inserted under this architecture.
+     */
+    public final int implicitMemoryBarriers;
+    
+    /**
+     * Determines the barriers in a given barrier mask that are explicitly required on this architecture.
+     * 
+     * @param barriers a mask of the barrier constants defined in {@link MemoryBarriers}
+     * @return the value of {@code barriers} minus the barriers unnecessary on this architecture
+     */
+    public final int requiredBarriers(int barriers) {
+        return barriers & ~implicitMemoryBarriers;
+    }
+    
+    /**
      * Offset in bytes from the beginning of a call instruction to the displacement.
      */
     public final int machineCodeCallDisplacementOffset;
 
+    /**
+     * The size of the return address pushed to the stack by a call instruction.
+     * A value of 0 denotes that call linkage uses registers instead (e.g. SPARC).
+     */
     public final int returnAddressSize;
 
     private final EnumMap<RegisterFlag, CiRegister[]> registersByTypeAndEncoding;
@@ -114,28 +120,20 @@ public abstract class CiArchitecture {
 
     protected CiArchitecture(String name,
                     int wordSize,
-                    String backend,
                     ByteOrder byteOrder,
                     CiRegister[] registers,
+                    int implicitMemoryBarriers,
                     int nativeCallDisplacementOffset,
                     int registerReferenceMapBitCount,
                     int returnAddressSize) {
         this.name = name;
         this.registers = registers;
         this.wordSize = wordSize;
-        this.platform = backend;
         this.byteOrder = byteOrder;
+        this.implicitMemoryBarriers = implicitMemoryBarriers;
         this.machineCodeCallDisplacementOffset = nativeCallDisplacementOffset;
         this.registerReferenceMapBitCount = registerReferenceMapBitCount;
         this.returnAddressSize = returnAddressSize;
-
-        if (byteOrder == ByteOrder.LittleEndian) {
-            this.lowWordOffset = 0;
-            this.highWordOffset = wordSize;
-        } else {
-            this.lowWordOffset = wordSize;
-            this.highWordOffset = 0;
-        }
 
         registersByName = new HashMap<String, CiRegister>(registers.length);
         for (CiRegister register : registers) {

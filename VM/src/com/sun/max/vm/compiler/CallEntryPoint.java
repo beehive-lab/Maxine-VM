@@ -34,10 +34,10 @@ import com.sun.max.vm.jni.*;
  * {@linkplain #offset() offset} relative to a target method's
  * {@linkplain TargetMethod#codeStart() first instruction}.
  * <p>
- * Each {@linkplain TargetMethod target method} has associated a fixed call entry point.
- * Stack walkers and linkers can use this call entry point to determine if an activation
- * frame for a target method is an adapter frame, and to determine what entry point to
- * use for statically linked calls.
+ * Each {@linkplain TargetMethod target method} has a {@linkplain TargetMethod#callEntryPoint fixed} call entry point.
+ * This is the entry point used for non-native, non-slow-path-runtime calls made by the target method.
+ * Stack walkers and linkers also use this call entry point to determine if an activation
+ * frame for a target method is an adapter frame.
  *
  * @author Laurent Daynes
  */

@@ -20,21 +20,22 @@
  */
 package test.com.sun.max.vm.jtrun;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.run.*;
 
 /**
  * @see MaxPackage
  *
  * @author Ben L. Titzer
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         super();
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.runScheme() instanceof JTAbstractRunScheme;
+        return JTAbstractRunScheme.class.isAssignableFrom(vmConfiguration.schemeClass(RunScheme.class));
     }
 }

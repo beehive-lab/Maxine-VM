@@ -20,15 +20,15 @@
  */
 package com.sun.max.vm.cps.ir.interpreter;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 
 /**
- * @see MaxPackage
- * 
- * @author Bernd Mathiske
+ * Not included in boot image.
+ *
+ * @author Mick Jordan
+ *
  */
-public class Package extends MaxPackage {
-    public Package() {
-        super();
-    }
+
+public class Package extends ExcludedPackage {
+
 }

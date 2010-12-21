@@ -22,6 +22,7 @@ package com.sun.max.vm.cps.tir.pipeline;
 
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -30,12 +31,12 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.transform.*;
+import com.sun.max.vm.cps.hotpath.*;
+import com.sun.max.vm.cps.hotpath.state.*;
 import com.sun.max.vm.cps.ir.IrBlock.*;
 import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.cps.tir.TirInstruction.*;
 import com.sun.max.vm.cps.tir.pipeline.TirToDirTranslator.VariableAllocator.*;
-import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.hotpath.state.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -286,8 +287,8 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         emitInstruction(dirSwitch);
 
         // Capture state.
-        final DirGuardpoint dirGuardpoint = new DirGuardpoint(tirStateToJavaFrameDescriptor(guard.state()));
-        emitInstruction(dirGuardpoint);
+        final DirInfopoint guardpoint = new DirInfopoint(null, tirStateToJavaFrameDescriptor(guard.state()), Bytecodes.INFO);
+        emitInstruction(guardpoint);
 
         // Assign guard constant to the bail-out guard variable.
         final DirAssign dirAssignment = new DirAssign(bailoutGuard, createConstant(guard));
@@ -421,7 +422,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
                         FatalError.unimplemented();
                     }
 
-                    public void visitSafepoint(DirSafepoint safepoint) {
+                    public void visitInfopoint(DirInfopoint safepoint) {
                         FatalError.unimplemented();
                     }
 
@@ -430,10 +431,6 @@ public class TirToDirTranslator extends TirPipelineFilter  {
                     }
 
                     public void visitThrow(DirThrow dirThrow) {
-                        FatalError.unimplemented();
-                    }
-
-                    public void visitGuardpoint(DirGuardpoint guardpoint) {
                         FatalError.unimplemented();
                     }
 

@@ -75,7 +75,7 @@ public abstract class DirValueVisitor implements DirVisitor {
         visitUse(dirThrow.throwable());
     }
 
-    public void visitSafepoint(DirSafepoint dirSafepoint) {
+    public void visitInfopoint(DirInfopoint dirSafepoint) {
         for (DirValue value : dirSafepoint.javaFrameDescriptor().locals) {
             visitUse(value);
         }

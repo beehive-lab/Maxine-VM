@@ -35,7 +35,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
@@ -103,18 +102,6 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public boolean isDeclaredNeverInline() {
         return compilee().isNeverInline();
-    }
-
-    public boolean isDeclaredInline(BootstrapCompilerScheme compilerScheme) {
-        if (compilee().isInline()) {
-            if (MaxineVM.isHosted()) {
-                if (compilee().isInlineAfterSnippetsAreCompiled()) {
-                    return compilerScheme.areSnippetsCompiled();
-                }
-            }
-            return true;
-        }
-        return false;
     }
 
     @INLINE
@@ -264,8 +251,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     return compilee;
                 }
 
-                //if (!isHiddenToReflection()) {
-                if (!isMiranda()) { // allows constructor substitution
+                if (!isMiranda()) {
                     final boolean isConstructor = isInitializer();
                     final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
                     if (substitute != null) {
@@ -312,7 +298,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     }
                 }
 
-                if (verifier != null && codeAttribute != null && !compilee.holder().isGenerated()) {
+                if (verifier != null && codeAttribute != null && !compilee.holder().isReflectionStub()) {
                     if (MaxineVM.isHosted()) {
                         try {
                             codeAttribute = verifier.verify(compilee, codeAttribute);
@@ -410,7 +396,7 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     @HOSTED_ONLY
     private void validateInlineAnnotation(ClassMethodActor compilee) {
-        if (!compilee.holder().isGenerated()) {
+        if (!compilee.holder().isReflectionStub()) {
             try {
                 InliningAnnotationsValidator.apply(compilee);
             } catch (LinkageError linkageError) {
@@ -451,5 +437,10 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public int targetMethodCount() {
         return TargetState.targetMethodCount(targetState);
+    }
+
+    @Override
+    public boolean hasCompiledCode() {
+        return targetMethodCount() > 0;
     }
 }

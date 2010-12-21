@@ -20,9 +20,9 @@
  */
 package com.sun.max.tele.field;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -34,7 +34,7 @@ public class TeleStaticFieldAccess extends TeleFieldAccess {
 
     protected TeleStaticFieldAccess(Class holder, String name, Kind kind) {
         super(holder, name, kind);
-        ProgramError.check(fieldActor().isStatic());
+        TeleError.check(fieldActor().isStatic());
     }
 
     /**

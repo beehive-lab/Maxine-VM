@@ -56,8 +56,10 @@ public class VmTestSetup extends TestSetup {
 
     protected void chainedSetUp() {
         Trace.on(1);
-        initializeVM();
-        JavaPrototype.initialize(false);
+        if (JavaPrototype.javaPrototype() == null) {
+            initializeVM();
+            JavaPrototype.initialize(false);
+        }
     }
 
     /**
@@ -88,7 +90,7 @@ public class VmTestSetup extends TestSetup {
         vmConfig().initializeSchemes(Phase.TERMINATING);
         if (false) {
             // Re-enable this when it proves useful. Otherwise, it just clutters the workspace with unwanted files.
-            ClassfileReader.writeClassfilesToJar(new File(JavaProject.findVcsProjectDirectory(), "loaded-classes.jar"));
+            ClassfileReader.writeClassfilesToJar(new File(JavaProject.findWorkspaceDirectory(), "loaded-classes.jar"));
         }
     }
 }

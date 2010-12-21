@@ -26,10 +26,9 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.amd64.*;
+import com.sun.max.vm.cps.target.*;
 
 /**
  * C functions that we implement behave almost like native functions.
@@ -41,13 +40,6 @@ import com.sun.max.vm.cps.eir.amd64.*;
  */
 public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
 
-    private final PoolSet<AMD64EirRegister> callerSavedRegisters = PoolSet.of(AMD64EirRegister.General.pool(), RAX, RCX, RDX, RSI, RDI, R8, R9, R10);
-
-    @Override
-    public PoolSet<AMD64EirRegister> callerSavedRegisters() {
-        return callerSavedRegisters;
-    }
-
     /**
      * Creates an ABI for a VM entry point or VM exit point.
      * @param isVmEntryPoint {@code true} if this is an ABI for methods called from C/native code, {@code false} if it
@@ -57,7 +49,11 @@ public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
      * @see VM_ENTRY_POINT
      */
     public UnixAMD64EirCFunctionABI(boolean isVmEntryPoint) {
-        calleeSavedRegisters = Arrays.asList(new AMD64EirRegister[] {RBX, RBP, R12, R13, R14, R15});
+        if (isVmEntryPoint) {
+            calleeSavedRegisters = Arrays.asList(new AMD64EirRegister[] {RBX, RBP, R12, R13, R14, R15});
+        } else {
+            calleeSavedRegisters = Collections.emptyList();
+        }
         // Native target ABI uses different entry point.
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = targetABI();
         final CallEntryPoint callEntryPoint = isVmEntryPoint ? CallEntryPoint.C_ENTRY_POINT : CallEntryPoint.OPTIMIZED_ENTRY_POINT;

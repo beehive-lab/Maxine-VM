@@ -20,22 +20,21 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.*;
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -78,12 +77,11 @@ public abstract class Safepoint {
     }
 
     @HOSTED_ONLY
-    public static Safepoint create(VMConfiguration vmConfiguration) {
+    public static Safepoint create() {
         try {
             final String isa = platform().isa.name();
-            final Class<?> safepointClass = Class.forName(MaxPackage.fromClass(Safepoint.class).subPackage(isa.toLowerCase()).name() + "." + isa + Safepoint.class.getSimpleName());
-            final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
-            return (Safepoint) constructor.newInstance(vmConfiguration);
+            final Class<?> safepointClass = Class.forName(getPackageName(Safepoint.class) + "." + isa.toLowerCase() + "." + isa + Safepoint.class.getSimpleName());
+            return (Safepoint) safepointClass.newInstance();
         } catch (Exception exception) {
             exception.printStackTrace();
             throw ProgramError.unexpected("could not create safepoint: " + exception);
@@ -169,10 +167,8 @@ public abstract class Safepoint {
     /**
      * Emits a safepoint at the call site.
      */
-    @INLINE
-    public static void safepoint() {
-        SafepointBuiltin.safepointBuiltin();
-    }
+    @INTRINSIC(SAFEPOINT)
+    public static native void safepoint();
 
     @HOSTED_ONLY
     protected abstract byte[] createCode();

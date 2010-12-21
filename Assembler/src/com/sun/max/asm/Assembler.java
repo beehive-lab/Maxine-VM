@@ -100,18 +100,18 @@ public abstract class Assembler {
          *                current address that is divisible by this value. Note that this computed address will be the
          *                current address if the current address is already aligned by {@code alignment}
          */
-        private void alignIfSpaceLeftSmallerThan(int alignment, int requiredSpace) {
+        private void alignIfSpaceLeftSmallerThan(int alignment, int requiredSpace, int alignmentStart) {
             final int startPosition = currentPosition();
 
             // We avoid sign problems with '%' below by masking off the sign bit:
-            final long unsignedAddend = (baseAddress() + startPosition) & Long.MAX_VALUE;
+            final long unsignedAddend = (baseAddress() + startPosition + alignmentStart) & Long.MAX_VALUE;
 
             final int misalignmentSize = (int) (unsignedAddend % alignment);
             final int padSize = misalignmentSize > 0 ? (alignment - misalignmentSize) : 0;
             for (int i = 0; i < padSize; i++) {
                 emitByte(padByte);
             }
-            new AlignmentPadding(Assembler.this, startPosition, currentPosition(), alignment, requiredSpace, padByte) {
+            new AlignmentPadding(Assembler.this, startPosition, currentPosition(), alignment, alignmentStart, requiredSpace, padByte) {
                 public boolean isCode() {
                     return isValidCode;
                 }
@@ -119,7 +119,7 @@ public abstract class Assembler {
         }
 
         public void align(int alignment) {
-            alignIfSpaceLeftSmallerThan(alignment, alignment);
+            alignIfSpaceLeftSmallerThan(alignment, alignment, 0);
         }
 
         /**
@@ -138,8 +138,18 @@ public abstract class Assembler {
             if (alignment < requiredSpace) {
                 return false;
             }
-            alignIfSpaceLeftSmallerThan(alignment, requiredSpace);
+            alignIfSpaceLeftSmallerThan(alignment, requiredSpace, 0);
             return true;
+        }
+
+        /**
+         *  Inserts as many {@linkplain #padByte pad bytes} as necessary to ensure that the nth byte within the next assembled object starts
+         *   at an address aligned by a given number.
+         * @param alignment
+         * @param alignmentStart where the alignment should start within the next assembled object.
+         */
+        public void alignAfter(int alignment, int alignmentStart) {
+            alignIfSpaceLeftSmallerThan(alignment, alignment, alignmentStart);
         }
 
         public void inlineByte(byte byteValue) {
@@ -239,7 +249,7 @@ public abstract class Assembler {
 
     protected abstract void emitLong(long longValue);
 
-    protected void emitByteArray(byte[] byteArrayValue, int off, int len) {
+    public void emitByteArray(byte[] byteArrayValue, int off, int len) {
         stream.write(byteArrayValue, off, len);
     }
 

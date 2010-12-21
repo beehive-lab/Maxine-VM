@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.jit;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.*;
@@ -36,7 +38,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
@@ -121,11 +122,11 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     }
 
     @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
-        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
-            instructionPointer = instructionPointer.minus(1);
+    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
+        if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
+            ip = ip.minus(1);
         }
-        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
+        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(ip.asPointer()));
     }
 
     @Override
@@ -216,7 +217,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             byte[] referenceMaps,
             byte[] scalarLiteralBytes,
             Object[] referenceLiterals,
-            Object codeOrCodeBuffer,
+            byte[] codeBuffer,
             byte[] encodedInlineDataDescriptors,
             ByteArrayBitMap isDirectRuntimeCall,
             int[] bytecodeToTargetCodePositionMap,
@@ -235,10 +236,10 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
                 referenceMaps,
                 scalarLiteralBytes,
                 referenceLiterals,
-                codeOrCodeBuffer,
+                codeBuffer,
                 encodedInlineDataDescriptors,
                 jitStackFrameLayout.frameSize(),
-                jitStackFrameLayout.frameReferenceMapSize(), abi.registerConfig
+                jitStackFrameLayout.frameReferenceMapSize()
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;

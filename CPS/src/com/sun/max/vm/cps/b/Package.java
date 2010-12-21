@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.b;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 
@@ -29,14 +29,13 @@ import com.sun.max.vm.compiler.*;
  *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
-        super();
-        registerScheme(BootstrapCompilerScheme.class, BCompiler.class);
+        registerScheme(RuntimeCompilerScheme.class, BCompiler.class);
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.bootCompilerPackage.isSubPackageOf(this);
+        return CPSCompiler.Static.isCompilerPackage(vmConfiguration, this);
     }
 }

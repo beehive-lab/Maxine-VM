@@ -20,29 +20,22 @@
  */
 package com.sun.max.vm.cps.cir;
 
-import java.util.*;
-
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * @see MaxPackage
  *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         super();
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.bootCompilerScheme() instanceof CirGeneratorScheme;
-    }
-
-    @Override
-    public Set<MaxPackage> prerequisites() {
-        final MaxPackage p = new com.sun.max.vm.compiler.builtin.Package();
-        return Collections.singleton(p);
+        return CPSCompiler.Static.isCompiler(vmConfiguration);
     }
 }

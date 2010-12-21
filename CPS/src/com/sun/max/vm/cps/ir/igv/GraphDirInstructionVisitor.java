@@ -191,8 +191,8 @@ class GraphDirInstructionVisitor extends DirAdapter {
      * @param dirSafepoint the safepoint node for which the properties are set
      */
     @Override
-    public void visitSafepoint(DirSafepoint dirSafepoint) {
-        super.visitSafepoint(dirSafepoint);
+    public void visitInfopoint(DirInfopoint dirSafepoint) {
+        super.visitInfopoint(dirSafepoint);
         final GraphWriter.Node node = graph.getNode(dirSafepoint.serial());
         node.getProperties().setProperty("name", "safepoint");
         node.getProperties().setProperty("dump_spec", dirSafepoint.toString());

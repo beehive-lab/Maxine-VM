@@ -27,9 +27,11 @@ import java.util.List;
 
 import javax.swing.*;
 
-import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.ins.InspectorKeyBindings.*;
+import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
+import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
+import com.sun.max.ins.InspectorKeyBindings.KeyBindingMap;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.bytecode.*;
@@ -162,7 +164,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
                 if (keyBindingMap != null) {
                     setKeyBindingMap(keyBindingMap);
                 } else {
-                    ProgramWarning.message("Unknown key bindings name ignored: " + keyBindingsName);
+                    InspectorWarning.message("Unknown key bindings name ignored: " + keyBindingsName);
                 }
             }
 
@@ -188,7 +190,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
             }
 
         } catch (Option.Error optionError) {
-            ProgramWarning.message(optionError.getMessage());
+            InspectorWarning.message(optionError);
         }
 
     }

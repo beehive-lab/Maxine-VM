@@ -87,14 +87,14 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     /**
      * Space where objects are allocated from by default.
-     * Implements the {@link HeapSweeper} interface to be notified by a sweeper of
+     * Implements the {@link Sweepable} interface to be notified by a sweeper of
      * free space.
      */
     final FreeHeapSpaceManager objectSpace;
 
     /**
      * Space where large object are allocated from if {@link MSHeapScheme#useLargeObjectSpaceOption} is true.
-     * Implements the {@link HeapSweeper} interface to be notified by a sweeper of
+     * Implements the {@link Sweepable} interface to be notified by a sweeper of
      * free space.
      */
     final LargeObjectSpace largeObjectSpace;
@@ -204,7 +204,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
 
     @Override
     public int reservedVirtualSpaceSize() {
-        // 2^30 Kb = 1 TB of reserved space.
+        // 2^30 Kb = 1 TB of reserved virtual space.
         // This will be truncated as soon as we taxed what we need at initialization time.
         return Size.G.toInt();
     }

@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.cps.cir.operator;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import com.sun.max.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
@@ -31,9 +29,13 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.LinkNativeMethod;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallEpilogue;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallEpilogueForC;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologueForC;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.cps.b.c.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
@@ -293,7 +295,7 @@ public abstract class JavaOperator extends CirOperator {
             visitor.visit(this);
         }
 
-        public void toLCir(Lowerable op, CirCall call, BootstrapCompilerScheme compilerScheme) {
+        public void toLCir(Lowerable op, CirCall call, CPSCompiler compilerScheme) {
             call.setProcedure(cirBuiltin);
         }
 
@@ -341,7 +343,7 @@ public abstract class JavaOperator extends CirOperator {
             visitor.visit(this);
         }
 
-        public void toLCir(Lowerable op, CirCall call, BootstrapCompilerScheme compilerScheme) {
+        public void toLCir(Lowerable op, CirCall call, CPSCompiler compilerScheme) {
             call.setProcedure(snippet);
         }
 
@@ -361,11 +363,11 @@ public abstract class JavaOperator extends CirOperator {
         private final Builtin builtin;
         private final Snippet snippet;
         private JavaBuiltinOrSnippetOperator(Builtin builtin, Snippet snippet) {
-            super(vmConfig().bootCompilerScheme().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL_STOP);
+            super(CPSCompiler.Static.compiler().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL_STOP);
             this.builtin = builtin;
             this.snippet = snippet;
         }
-        public void toLCir(Lowerable op, CirCall call, BootstrapCompilerScheme compilerScheme) {
+        public void toLCir(Lowerable op, CirCall call, CPSCompiler compilerScheme) {
             if (compilerScheme.isBuiltinImplemented(builtin)) {
                 call.setProcedure(CirBuiltin.get(builtin));
             } else {
@@ -398,7 +400,7 @@ public abstract class JavaOperator extends CirOperator {
         }
     }
 
-    public static final JavaOperator SAFEPOINT_OP = new JavaBuiltinOperator(SafepointBuiltin.BUILTIN);
+    public static final JavaOperator INFOPOINT_OP = new JavaBuiltinOperator(InfopointBuiltin.BUILTIN);
     public static final JavaOperator LINK_OP = new JavaSnippetOperator(LinkNativeMethod.SNIPPET);
     public static final JavaOperator J2N_OP = new JavaSnippetOperator(NativeCallPrologue.SNIPPET);
     public static final JavaOperator N2J_OP = new JavaSnippetOperator(NativeCallEpilogue.SNIPPET);

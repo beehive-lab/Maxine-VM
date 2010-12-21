@@ -1057,4 +1057,50 @@ public abstract class BytecodeAssembler {
             }
         });
     }
+
+    public void caload() {
+        emitOpcode(CALOAD);
+        decStack();
+    }
+
+    public void castore() {
+        emitOpcode(CASTORE);
+        adjustStack(-3);
+    }
+
+    public void dup2() {
+        emitOpcode(DUP2);
+        adjustStack(2);
+    }
+
+    public void i2c() {
+        emitOpcode(I2C);
+    }
+
+    public void iinc(int index, int cnst) {
+        emitOpcode(IINC);
+        // UNSAFE for wide instructions - wide is currently not supported anyway
+        emitCPIndex1(index);
+        emitByte(cnst);
+    }
+
+    public void isub() {
+        emitOpcode(ISUB);
+        decStack();
+    }
+
+    public static final int T_BOOLEAN   = 4;
+    public static final int T_CHAR      = 5;
+    public static final int T_FLOAT     = 6;
+    public static final int T_DOUBLE    = 7;
+    public static final int T_BYTE      = 8;
+    public static final int T_SHORT     = 9;
+    public static final int T_INT       = 10;
+    public static final int T_LONG      = 11;
+
+    public void newarray(int type) {
+        emitOpcode(NEWARRAY);
+        emitByte(type);
+    }
+
 }

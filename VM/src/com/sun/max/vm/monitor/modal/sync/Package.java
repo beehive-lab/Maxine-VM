@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 
 /**
@@ -28,7 +28,7 @@ import com.sun.max.vm.*;
  *
  * @author Simon Wilkinson
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
 
     public Package() {
         super();

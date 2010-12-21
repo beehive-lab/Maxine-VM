@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import static com.sun.c1x.ir.Value.Flag.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.opt.*;
 import com.sun.cri.ci.*;
@@ -37,12 +39,14 @@ public abstract class Value {
      */
     public enum Flag {
         NonNull,            // this value is non-null
+
         NoNullCheck,        // does not require null check
         NoStoreCheck,       // does not require store check
         NoBoundsCheck,      // does not require bounds check
+        NoZeroCheck,        // divide or modulus cannot cause exception
+
         NoReadBarrier,      // does not require read barrier
         NoWriteBarrier,     // does not require write barrier
-        NoZeroCheck,        // divide or modulus cannot cause exception
         NoDivSpecialCase,   // divide or modulus cannot be special case of MIN_INT / -1
         DirectCompare,
         IsLoaded,           // field or method is resolved and class is loaded and initialized
@@ -149,15 +153,26 @@ public abstract class Value {
     }
 
     /**
-     * Clear any internal state related to null checks, because a null check
-     * for this instruction is redundant. The state cleared may depend
-     * on the type of this instruction
+     * Eliminates a given runtime check for this instruction.
+     *
+     * @param flag the flag representing the (elimination of the) runtime check
      */
-    public final void redundantNullCheck() {
-        if (clearNullCheck()) {
-            C1XMetrics.NullChecksRedundant++;
+    public final void clearRuntimeCheck(Flag flag) {
+        if (!checkFlag(flag)) {
+            setFlag(flag);
+            runtimeCheckCleared();
+            if (flag == NoNullCheck) {
+                C1XMetrics.NullCheckEliminations++;
+            } else if (flag == NoBoundsCheck) {
+                C1XMetrics.BoundsChecksElminations++;
+            } else if (flag == NoStoreCheck) {
+                C1XMetrics.StoreCheckEliminations++;
+            } else {
+                throw new InternalError("Unknown runtime check: " + flag);
+            }
         }
     }
+
 
     /**
      * Clear any internal state related to null checks, because a null check
@@ -165,26 +180,14 @@ public abstract class Value {
      * on the type of this instruction
      */
     public final void eliminateNullCheck() {
-        if (clearNullCheck()) {
-            C1XMetrics.NullCheckEliminations++;
-        }
-    }
-
-    private boolean clearNullCheck() {
-        if (!checkFlag(Flag.NoNullCheck)) {
-            setFlag(Flag.NoNullCheck);
-            return internalClearNullCheck();
-        }
-        return false;
+        clearRuntimeCheck(NoNullCheck);
     }
 
     /**
-     * Clears any internal state associated with null checks.
-     * @return {@code true} if this instruction had any state that was changed
+     * Notifies this instruction that a runtime check has been
+     * eliminated or made redundant.
      */
-    protected boolean internalClearNullCheck() {
-        // most instructions don't care about clearing of their null checks
-        return false;
+    protected void runtimeCheckCleared() {
     }
 
     /**
@@ -378,23 +381,6 @@ public abstract class Value {
      * @param v the visitor to accept
      */
     public abstract void accept(ValueVisitor v);
-
-    /**
-     * Utility method for computing the exact type of the specified value. Handles object constants by
-     * querying the supplied {@link RiRuntime} instance.
-     * @param value the value to get the exact type of
-     * @param runtime the runtime interface to query in the case of an object constant
-     * @return the exact type of the value if it can be computed; {@code null} otherwise
-     */
-    public static RiType exactType(Value value, RiRuntime runtime) {
-        if (value.isConstant() && value.kind == CiKind.Object) {
-            Object obj = value.asConstant().asObject();
-            if (obj != null) {
-                return runtime.getRiType(obj.getClass());
-            }
-        }
-        return value.exactType();
-    }
 
     /**
      * This method returns a unique identification number for this value. The number returned is unique

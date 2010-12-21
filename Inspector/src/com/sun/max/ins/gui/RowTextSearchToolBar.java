@@ -28,7 +28,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.util.*;
 
 /**
  * A toolbar containing controls for identifying rows that match a regexp pattern
@@ -52,7 +52,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
     private class SearchTextListener implements DocumentListener {
         public void changedUpdate(DocumentEvent e) {
             // This should never be called
-            ProgramError.unexpected();
+            InspectorError.unexpected();
         }
 
         public void insertUpdate(DocumentEvent event) {

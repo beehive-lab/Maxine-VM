@@ -21,14 +21,14 @@
 package test.com.sun.max.vm.cps.eir.amd64;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import junit.framework.*;
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.*;
@@ -45,7 +45,7 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     }
 
     public static AMD64EirGeneratorScheme eirGeneratorScheme() {
-        return (AMD64EirGeneratorScheme) vmConfig().bootCompilerScheme();
+        return (AMD64EirGeneratorScheme) CPSCompiler.Static.compiler();
     }
 
     public static AMD64EirGenerator eirGenerator() {

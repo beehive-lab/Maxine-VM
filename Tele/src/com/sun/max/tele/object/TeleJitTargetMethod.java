@@ -27,11 +27,11 @@ import com.sun.max.tele.method.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.LocalVariableTable.*;
+import com.sun.max.vm.classfile.LocalVariableTable.Entry;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 
 /**
  * Canonical surrogate for a Jit compilation of a Java {@link ClassMethod} in the VM.
@@ -75,7 +75,7 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
             if (bytecodePosition < bytecodeToTargetCodePositionMap.length &&
                             position == bytecodeToTargetCodePositionMap[bytecodePosition]) {
                 // This is the start of the machine code block implementing the next bytecode
-                bytecodeLocations[position] = getBytecodeLocationFor(instruction.address.asPointer(), true);
+                bytecodeLocations[position] = targetMethod().getBytecodeLocationFor(instruction.address.asPointer(), false);
                 do {
                     ++bytecodeIndex;
                 } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length &&

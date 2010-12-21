@@ -64,10 +64,11 @@ public abstract class CompiledStackFrame extends StackFrame {
     @Override
     public String toString() {
         ClassMethodActor classMethodActor = targetMethod.classMethodActor();
+        String offset = "[+" + targetMethod.targetCodePositionFor(ip) + "]";
         if (classMethodActor != null) {
-            return classMethodActor.format("%H.%n(%p)@") + ip.toHexString();
+            return classMethodActor.format("%H.%n(%p)@") + ip.toHexString() + offset;
         }
-        return targetMethod.regionName() + "@" + ip.toHexString();
+        return targetMethod.regionName() + "@" + ip.toHexString() + offset;
     }
 
 }

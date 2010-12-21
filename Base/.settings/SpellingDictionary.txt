@@ -13,8 +13,10 @@ David
 Daynes
 De
 Doug
+Foo
 Hannes
 Hiroshi
+Javadoc
 Jordan
 Karthik
 Kotselidis
@@ -28,6 +30,7 @@ Maxine
 Michael
 Mick
 Microsystems
+Miranda
 Paul
 Seidl
 Simon
@@ -46,9 +49,11 @@ affordance
 affordances
 allocatable
 appendable
+arg
 bailed
 bailout
 beltway
+builtins
 bytecode
 bytecodes
 callback
@@ -65,6 +70,7 @@ classpath
 clipboard
 com
 compaction
+configurability
 deactivate
 deactivated
 deactivates
@@ -84,6 +90,7 @@ epilogue
 finalizer
 finalizers
 floatable
+foo
 generational
 growable
 hashcode
@@ -91,6 +98,8 @@ hexadecimal
 hotspot
 iconic
 iconified
+idiom
+idiomatic
 iff
 initialize
 initialized
@@ -103,6 +112,10 @@ inspectable
 inspectee
 instanceof
 int
+intrinsification
+intrinsified
+intrinsify
+intrinsifying
 invokeinterface
 invokespecial
 invokestatic
@@ -184,6 +197,7 @@ trampolines
 transferable
 transferables
 unboxed
+unboxing
 uncomment
 uncompiled
 undock
@@ -197,8 +211,5 @@ viewport
 vm
 watchpoint
 watchpoints
-intrinsified
-builtins
-intrinsification
-intrinsifying
-intrinsify
+wattage
+wrt

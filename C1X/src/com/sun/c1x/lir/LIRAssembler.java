@@ -192,9 +192,14 @@ public abstract class LIRAssembler {
 
     private void printAssembly(AbstractAssembler asm) {
         byte[] currentBytes = asm.codeBuffer.getData(lastDecodeStart, asm.codeBuffer.position());
-        Util.printBytes("Code Part", currentBytes, C1XOptions.PrintAssemblyBytesPerLine);
         if (currentBytes.length > 0) {
-            TTY.println(compilation.runtime.disassemble(currentBytes));
+            String disasm = compilation.runtime.disassemble(currentBytes, lastDecodeStart);
+            if (disasm.length() != 0) {
+                TTY.println(disasm);
+            } else {
+                TTY.println("Code [+%d]: %d bytes", lastDecodeStart, currentBytes.length);
+                Util.printBytes(lastDecodeStart, currentBytes, C1XOptions.PrintAssemblyBytesPerLine);
+            }
         }
         lastDecodeStart = asm.codeBuffer.position();
     }
@@ -223,7 +228,9 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case DirectCall:
                 emitCallAlignment(op.code);
-                if (op.marks != null) {
+                // fall through
+            case ConstDirectCall:
+               if (op.marks != null) {
                     op.marks.put(XirMark.CALLSITE, asm.recordMark(null, new Mark[0]));
                 }
                 emitDirectCall(op.target, op.info);
@@ -303,17 +310,11 @@ public abstract class LIRAssembler {
             case OsrEntry:
                 emitOsrEntry();
                 break;
-            case Membar:
-                emitMembar();
+            case Here:
+                emitHere(op.result(), op.info, false);
                 break;
-            case MembarAcquire:
-                emitMembarAcquire();
-                break;
-            case MembarRelease:
-                emitMembarRelease();
-                break;
-            case ReadPC:
-                emitReadPC(op.result());
+            case Info:
+                emitHere(op.result(), op.info, true);
                 break;
             case Pause:
                 emitPause();
@@ -459,7 +460,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitNegate(LIRNegate negate);
 
-    protected abstract void emitReadPC(CiValue dst);
+    protected abstract void emitHere(CiValue dst, LIRDebugInfo info, boolean infoOnly);
 
     protected abstract void emitMonitorAddress(int monitor, CiValue dst);
 
@@ -511,11 +512,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitCallAlignment(LIROpcode code);
 
-    protected abstract void emitMembarRelease();
-
-    protected abstract void emitMembarAcquire();
-
-    protected abstract void emitMembar();
+    protected abstract void emitMemoryBarriers(int barriers);
 
     protected abstract void emitOsrEntry();
 

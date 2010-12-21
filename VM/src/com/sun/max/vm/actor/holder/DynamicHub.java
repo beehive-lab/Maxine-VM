@@ -20,17 +20,13 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
-import java.util.*;
-
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
@@ -40,11 +36,23 @@ import com.sun.max.vm.layout.*;
  */
 public final class DynamicHub extends Hub {
 
-    DynamicHub(Size tupleSize, SpecificLayout specificLayout, ClassActor classActor, BitSet superClassActorSerials, Iterable<InterfaceActor> allInterfaceActors, int vTableLength, TupleReferenceMap referenceMap) {
-        super(tupleSize, specificLayout, classActor, superClassActorSerials, allInterfaceActors, vTableLength, referenceMap);
+    DynamicHub(Size tupleSize,
+               SpecificLayout specificLayout,
+               ClassActor classActor,
+               int[] superClassActorIds,
+               Iterable<InterfaceActor> allInterfaceActors,
+               int vTableLength,
+               TupleReferenceMap referenceMap) {
+        super(tupleSize,
+              specificLayout,
+              classActor,
+              superClassActorIds,
+              allInterfaceActors,
+              vTableLength,
+              referenceMap);
     }
 
-    private void initializeMTable(BitSet superClassActorSerials, Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup, int[] iToV) {
+    private void initializeMTable(int[] superClassActorIds, Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup, int[] iToV) {
         // The first word of the iTable is where all unused mTable entries point:
         int iTableIndex = iTableStartIndex;
         // We set it to zero so it does not match any class actor's serial (they start at 1):
@@ -70,54 +78,26 @@ public final class DynamicHub extends Hub {
                     iTableIndex++;
                 }
             }
-            superClassActorSerials.clear(interfaceActor.id);
         }
-        for (int serial = superClassActorSerials.nextSetBit(0); serial >= 0; serial = superClassActorSerials.nextSetBit(serial + 1)) {
-            final int mTableIndex = getMTableIndex(serial);
-            setInt(mTableIndex, iTableIndex);
-            assert getWord(iTableIndex).isZero();
-            setWord(iTableIndex, Address.fromInt(serial));
-            iTableIndex++;
+        for (int id : superClassActorIds) {
+            if (id >= 0) {
+                final int mTableIndex = getMTableIndex(id);
+                setInt(mTableIndex, iTableIndex);
+                assert getWord(iTableIndex).isZero();
+                setWord(iTableIndex, Address.fromInt(id));
+                iTableIndex++;
+            } else {
+                // ignore interface ids
+            }
         }
     }
 
-    DynamicHub expand(BitSet superClassActorSerials, Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup, int[] iToV, TupleReferenceMap referenceMap) {
+    DynamicHub expand(int[] superClassActorIds, Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup, int[] iToV, TupleReferenceMap referenceMap) {
         final DynamicHub hub = (DynamicHub) expand();
         assert hub.mTableLength > 0;
         referenceMap.copyIntoHub(hub);
-        hub.initializeMTable(superClassActorSerials, allInterfaceActors, methodLookup, iToV);
+        hub.initializeMTable(superClassActorIds, allInterfaceActors, methodLookup, iToV);
         return hub;
-    }
-
-    void initializeVTable(VirtualMethodActor[] allVirtualMethodActors) {
-        boolean compilerCreatesTargetMethods = compilerCreatesTargetMethods();
-        for (int i = 0; i < allVirtualMethodActors.length; i++) {
-            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
-            final int vTableIndex = firstWordIndex() + i;
-            assert virtualMethodActor.vTableIndex() == vTableIndex;
-            assert getWord(vTableIndex).isZero();
-            Address vTableEntry;
-
-            if (compilerCreatesTargetMethods) {
-                vTableEntry = checkCompiled(virtualMethodActor);
-                if (vTableEntry.isZero()) {
-                    vTableEntry = vmConfig().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
-                }
-            } else {
-                vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
-            }
-            setWord(vTableIndex, vTableEntry);
-        }
-    }
-
-    private Address checkCompiled(VirtualMethodActor virtualMethodActor) {
-        if (!MaxineVM.isHosted()) {
-            final TargetMethod current = virtualMethodActor.currentTargetMethod();
-            if (current != null) {
-                return current.getEntryPoint(CallEntryPoint.VTABLE_ENTRY_POINT).asAddress();
-            }
-        }
-        return Address.zero();
     }
 
     /**
@@ -148,7 +128,7 @@ public final class DynamicHub extends Hub {
                     if (compilerCreatesTargetMethods) {
                         iTableEntry = checkCompiled(virtualMethodActor);
                         if (iTableEntry.isZero()) {
-                            iTableEntry = vmConfig().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
+                            iTableEntry = vm().stubs.interfaceTrampoline(iIndex);
                         }
                     } else {
                         iTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
@@ -157,16 +137,6 @@ public final class DynamicHub extends Hub {
                 }
             }
         }
-    }
-
-    /**
-     * Determines whether or not the currently configured compiler compiles all the way down to target methods.
-     *
-     * TODO: Remove this once the notion of a compiler not being able to compile to target methods is obsolete.
-     */
-    @FOLD
-    private static boolean compilerCreatesTargetMethods() {
-        return !MaxineVM.isHosted() || vmConfig().bootCompilerScheme().compiledType() != null;
     }
 
     @Override

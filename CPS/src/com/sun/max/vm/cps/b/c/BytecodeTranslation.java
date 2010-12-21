@@ -27,7 +27,6 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.max.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -113,7 +112,6 @@ import com.sun.max.vm.compiler.builtin.SpecialBuiltin.CompareWords;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.DoubleToLong;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.FloatToInt;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.FlushRegisterWindows;
-import com.sun.max.vm.compiler.builtin.SpecialBuiltin.GetInstructionPointer;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.GetIntegerRegister;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.IntToFloat;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.LeastSignificantBit;
@@ -1216,7 +1214,8 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void prologue() {
         if (blockState.birBlock().hasSafepoint()) {
-            callAndPush(JavaOperator.SAFEPOINT_OP);
+            CirValue[] regularArguments = {CirConstant.fromInt(Bytecodes.SAFEPOINT)};
+            call(JavaOperator.INFOPOINT_OP, regularArguments, new CirContinuation());
         }
     }
 
@@ -1853,8 +1852,9 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case ICMP:                   stackCall(CompareInts.BUILTIN); break;
             case WCMP:                   stackCall(CompareWords.BUILTIN); break;
 
+            case Bytecodes.MEMBAR:       membar(operand); break;
+
             case Bytecodes.PCMPSWP:
-            case Bytecodes.MEMBAR:
             case Bytecodes.PGET:
             case Bytecodes.PSET:
             case Bytecodes.PREAD:
@@ -1918,12 +1918,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                     case PCMPSWP_INT_I:          stackCall(CompareAndSwapIntAtIntOffset.BUILTIN); break;
                     case PCMPSWP_WORD_I:         stackCall(CompareAndSwapWordAtIntOffset.BUILTIN); break;
                     case PCMPSWP_REFERENCE_I:    stackCall(CompareAndSwapReferenceAtIntOffset.BUILTIN); break;
-                    case MEMBAR_LOAD_LOAD:       membar(MemoryBarriers.LOAD_LOAD); break;
-                    case MEMBAR_LOAD_STORE:      membar(MemoryBarriers.LOAD_STORE); break;
-                    case MEMBAR_STORE_LOAD:      membar(MemoryBarriers.STORE_STORE); break;
-                    case MEMBAR_STORE_STORE:     membar(MemoryBarriers.STORE_STORE); break;
-                    case MEMBAR_MEMOP_STORE:     membar(MemoryBarriers.MEMOP_STORE); break;
-                    case MEMBAR_FENCE:           membar(MemoryBarriers.FENCE); break;
                     default:                     throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
                 }
                 break;
@@ -1964,19 +1958,42 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                     case LINK: callAndPush(JavaOperator.LINK_OP, CirConstant.fromObject(classMethodActor)); break;
                     case J2N:  callAndPush(classMethodActor.isCFunction() ? JavaOperator.J2NC_OP : JavaOperator.J2N_OP); break;
                     case N2J:  callAndPush(classMethodActor.isCFunction() ? JavaOperator.N2JC_OP : JavaOperator.N2J_OP); break;
+                    default:          throw verifyError("Unsupported JNIOP operand: " + operand);
                 }
                 break;
             }
 
+            case INFOPOINT: {
+                opcode = INFOPOINT | ((operand & ~0xff) << 8);
+                switch (opcode) {
+                    case SAFEPOINT:
+                    case INFO:
+                    case HERE:
+                        CirRoutine cirRoutine = JavaOperator.INFOPOINT_OP;
+                        CirValue[] regularArguments = { CirConstant.fromInt(opcode)};
+                        final Kind resultKind = opcode == HERE ? Kind.LONG : Kind.VOID;
+                        if (resultKind == Kind.VOID) {
+                            final CirContinuation continuation = new CirContinuation();
+                            call(cirRoutine, regularArguments, continuation);
+                        } else {
+                            final CirVariable result = methodTranslation.variableFactory().createTemporary(resultKind);
+                            final CirContinuation continuation = new CirContinuation(result);
+                            call(cirRoutine, regularArguments, continuation);
+                            push(result);
+                        }
+                        break;
+                    default:          throw verifyError("Unsupported INFOPOINT opcode: " + Bytecodes.nameOf(opcode));
+
+                }
+                break;
+            }
 
             case READREG:                readreg(Role.VALUES.get(operand)); break;
             case WRITEREG:               writereg(Role.VALUES.get(operand)); break;
             case ALLOCA:                 stackCall(StackAllocate.BUILTIN); break;
             case ALLOCSTKVAR:            stackCall(MakeStackVariable.BUILTIN); break;
-            case SAFEPOINT:              stackCall(SafepointBuiltin.BUILTIN); break;
             case PAUSE:                  stackCall(Pause.BUILTIN); break;
             case ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;
-            case READ_PC:                stackCall(GetInstructionPointer.BUILTIN); break;
             case FLUSHW:                 stackCall(FlushRegisterWindows.BUILTIN); break;
             case LSB:                    stackCall(LeastSignificantBit.BUILTIN); break;
             case MSB:                    stackCall(MostSignificantBit.BUILTIN); break;

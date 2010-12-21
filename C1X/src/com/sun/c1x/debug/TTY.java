@@ -20,7 +20,10 @@
  */
 package com.sun.c1x.debug;
 
+import java.io.*;
 import java.util.regex.*;
+
+import com.sun.c1x.util.*;
 
 
 /**
@@ -79,7 +82,22 @@ public class TTY {
         }
     }
 
-    private static final LogStream log = new LogStream(System.out);
+    public static final String C1X_TTY_LOG_FILE_PROPERTY = "c1x.tty.file";
+
+    private static final LogStream log;
+    static {
+        PrintStream out = System.out;
+        String value = System.getProperty(C1X_TTY_LOG_FILE_PROPERTY);
+        if (value != null) {
+            try {
+                out = new PrintStream(new FileOutputStream(value));
+            } catch (FileNotFoundException e) {
+                Util.warning("Could not open log file " + value + ": " + e);
+            }
+        }
+        log = new LogStream(out);
+    }
+
     private static final ThreadLocal<LogStream> out = new ThreadLocal<LogStream>() {
         @Override
         protected LogStream initialValue() {
@@ -205,12 +223,12 @@ public class TTY {
         out().println(f);
     }
 
-    public static void print(String string, Object... args) {
-        out().print(String.format(string, args));
+    public static void print(String format, Object... args) {
+        out().printf(format, args);
     }
 
-    public static void println(String string, Object... args) {
-        out().println(String.format(string, args));
+    public static void println(String format, Object... args) {
+        out().printf(format + "%n", args);
     }
 
     public static void fillTo(int i) {

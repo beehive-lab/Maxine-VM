@@ -50,14 +50,14 @@ public class TestTeleVM {
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         HostedBootClassLoader.setClasspath(classpath);
         Prototype.loadLibrary(TELE_LIBRARY_NAME);
-        final File projectDirectory = JavaProject.findVcsProjectDirectory();
+        final File workspaceDirectory = JavaProject.findWorkspaceDirectory();
         final String vmArguments =
             "-verbose:class " +
             "-classpath " +
-            projectDirectory.toString() + "/bin " +
+            workspaceDirectory.toString() + "Tele/bin " +
             "test.com.sun.max.tele.HelloWorld";
 
-        options.sourcepathOption.setValue(Arrays.asList(JavaProject.getSourcePath(true).toStringArray()));
+        options.sourcepathOption.setValue(Arrays.asList(JavaProject.getSourcePath(TestTeleVM.class, true).toStringArray()));
         options.vmArguments.setValue(vmArguments);
 
         try {

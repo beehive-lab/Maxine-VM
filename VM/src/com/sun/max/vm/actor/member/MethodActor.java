@@ -35,7 +35,6 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -44,7 +43,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reflection.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -60,7 +58,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
      * Extended {@linkplain Bytecodes#isStandard(int) opcode} for an {@linkplain INTRINSIC intrinsic} method.
      * A value of 0 means this method is not an intrinsic method.
      */
-    private final char intrinsic;
+    private final int intrinsic;
 
     public static final MethodActor[] NONE = {};
 
@@ -73,8 +71,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
                        int flags,
                        int intrinsic) {
         super(name, descriptor, flags);
-        assert (char) intrinsic == intrinsic;
-        this.intrinsic = (char) intrinsic;
+        this.intrinsic = intrinsic;
     }
 
     /**
@@ -133,11 +130,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     @INLINE
-    public final boolean isTrapStub() {
-        return Trap.isTrapStub(this);
-    }
-
-    @INLINE
     public final boolean isTemplate() {
         return isTemplate(flags());
     }
@@ -175,30 +167,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     @INLINE
     public final boolean isNeverInline() {
         return isNeverInline(flags());
-    }
-
-    @INLINE
-    public final boolean isStaticTrampoline() {
-        return isStaticTrampoline(flags());
-    }
-
-    @INLINE
-    public final boolean isTrampoline() {
-        return isTrampoline(flags());
-    }
-
-    @INLINE
-    public final boolean isVirtualTrampoline() {
-        return isVirtualTrampoline(flags());
-    }
-
-    @INLINE
-    public final boolean isInterfaceTrampoline() {
-        return isInterfaceTrampoline(flags());
-    }
-
-    public final boolean isApplicationVisible() {
-        return !(isNative() || holder().isGenerated());
     }
 
     /**
@@ -300,7 +268,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toJava(this);
         }
-        Metrics.increment("MethodActor.toJava()");
         final Class<?> javaHolder = holder().toJava();
         final ClassLoader holderClassLoader = javaHolder.getClassLoader();
         final Class[] parameterTypes = descriptor().resolveParameterTypes(holderClassLoader);
@@ -347,10 +314,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     @Override
     public final <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-        final TypeDescriptor annotationTypeDescriptor = JavaTypeDescriptor.forJavaClass(annotationClass);
-        if (MaxineVM.isMaxineClass(annotationTypeDescriptor) && !MaxineVM.isMaxineClass(holder())) {
-            return null;
-        }
         if (isInstanceInitializer()) {
             return toJavaConstructor().getAnnotation(annotationClass);
         }
@@ -528,16 +491,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return MethodID.toMethodActor(MethodID.fromWord(Word.read(stream)));
     }
 
-    @FOLD
-    public static VirtualMethodActor findVirtual(ClassActor classActor, String name) {
-        return classActor.findLocalVirtualMethodActor(name);
-    }
-
-    @FOLD
-    public static StaticMethodActor findStatic(Class javaClass, String name) {
-        return ClassActor.fromJava(javaClass).findLocalStaticMethodActor(name);
-    }
-
     public final int accessFlags() {
         return flags() & JAVA_METHOD_FLAGS;
     }
@@ -602,4 +555,9 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     public RiSignature signature() {
         return descriptor();
     }
+
+    public boolean hasCompiledCode() {
+        return false;
+    }
+
 }

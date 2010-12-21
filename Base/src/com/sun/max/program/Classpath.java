@@ -59,6 +59,14 @@ public class Classpath {
         public abstract File file();
 
         /**
+         * Determines if a given resource can be found under this entry.
+         *
+         * @param path a file path relative to this classpath entry. This values uses the '/' character as the path
+         *            separator regardless of the {@linkplain File#separatorChar default} for the underlying platform.
+         */
+        public abstract boolean contains(String path);
+
+        /**
          * Gets the contents of a file denoted by a given path that is relative to this classpath entry. If the denoted
          * file does not exist under this classpath entry then {@code null} is returned. Any IO exception that occurs
          * when reading is silently ignored.
@@ -115,6 +123,11 @@ public class Classpath {
         public boolean isPlainFile() {
             return true;
         }
+
+        @Override
+        public boolean contains(String path) {
+            return false;
+        }
     }
 
     /**
@@ -150,6 +163,11 @@ public class Classpath {
         public boolean isDirectory() {
             return true;
         }
+
+        @Override
+        public boolean contains(String path) {
+            return new File(directory, File.separatorChar == '/' ? path : path.replace('/', File.separatorChar)).exists();
+        }
     }
 
     /**
@@ -175,6 +193,15 @@ public class Classpath {
                 }
             }
             return zipFile;
+        }
+
+        @Override
+        public boolean contains(String path) {
+            final ZipFile zf = zipFile();
+            if (zf == null) {
+                return false;
+            }
+            return zf.getEntry(path) != null;
         }
 
         @Override
@@ -369,8 +396,7 @@ public class Classpath {
     public ClasspathFile readFile(String className, String extension) {
         final String path = className.replace('.', '/') + extension;
         for (Entry entry : entries()) {
-            ClasspathFile classpathFile = null;
-            classpathFile = entry.readFile(path);
+            ClasspathFile classpathFile = entry.readFile(path);
             if (classpathFile != null) {
                 recordPackage(className, classpathFile);
                 return classpathFile;
@@ -388,7 +414,7 @@ public class Classpath {
     }
 
     /**
-     * Searches for an existing file corresponding to an directory entry in this classpath composed with a given path
+     * Searches for an existing file corresponding to a directory entry in this classpath composed with a given path
      * suffix.
      *
      * @param suffix a file path relative to a directory entry of this classpath

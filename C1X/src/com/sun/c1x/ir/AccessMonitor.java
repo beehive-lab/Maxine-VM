@@ -86,9 +86,4 @@ public abstract class AccessMonitor extends StateSplit {
             lockAddress = closure.apply(lockAddress);
         }
     }
-
-    @Override
-    public boolean internalClearNullCheck() {
-        return true;
-    }
 }

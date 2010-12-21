@@ -22,9 +22,9 @@ package com.sun.max.tele.object;
 
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -48,7 +48,9 @@ public abstract class TeleMethodActor extends TeleMemberActor implements MethodP
         // Cannot use member index as it may be different in local ClassActor
         Utf8Constant name = getTeleName().utf8Constant();
         SignatureDescriptor signature = (SignatureDescriptor) getTeleDescriptor().descriptor();
-        MethodActor methodActor = getTeleHolder().classActor().findLocalMethodActor(name, signature);
+        ClassActor classActor = getTeleHolder().classActor();
+        MethodActor methodActor = classActor.findLocalMethodActor(name, signature);
+        assert methodActor != null : "Could not find " + name + signature + " in " + classActor;
         assert getName().equals(methodActor.name.string);
         return methodActor;
     }
@@ -120,7 +122,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements MethodP
             final com.sun.max.vm.value.Value result = TeleInterpreter.execute(vm(), (ClassMethodActor) methodActor(), realArgs);
             return vm().maxineValueToJDWPValue(result);
         } catch (TeleInterpreterException teleInterpreterException) {
-            ProgramError.unexpected("method interpretation failed", teleInterpreterException);
+            TeleError.unexpected("method interpretation failed", teleInterpreterException);
             return null;
         }
     }

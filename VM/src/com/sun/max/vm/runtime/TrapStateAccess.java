@@ -20,21 +20,20 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
 
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
- * The trap state area is a sub-section of the frame for a call to {@link Trap#trapStub}.
+ * The trap state area is the frame of a call to {@link Stubs#trapStub}.
  * It contains the {@linkplain Trap.Number trap number} and the values of the
  * processor's registers when a trap occurs.
  *
- * There is a single {@linkplain #instance() instance} of this class
+ * There is a single {@linkplain MaxineVM#trapStateAccess instance} of this class
  * for the current platform. This object is used to access and/or modify a given
  * trap state area.
  *
@@ -44,43 +43,47 @@ import com.sun.max.vm.compiler.target.*;
  */
 public abstract class TrapStateAccess {
 
-    /**
-     * Gets the platform specific instance of {@code TrapStateAccess}.
-     */
-    public static TrapStateAccess instance() {
-        return vm().config.trapStateAccess;
-    }
-
     @HOSTED_ONLY
-    public static TrapStateAccess create(VMConfiguration vmConfiguration) {
+    public static TrapStateAccess create() {
         try {
             final String isa = platform().isa.name();
-            final Class<?> trapStateAccessClass = Class.forName(MaxPackage.fromClass(TrapStateAccess.class).subPackage(isa.toLowerCase()).name()
-                                                  + "." + isa + TrapStateAccess.class.getSimpleName());
-            return (TrapStateAccess) trapStateAccessClass.newInstance();
+            final Class<?> c = Class.forName(getPackageName(TrapStateAccess.class) + "." + isa.toLowerCase() + "." + isa + TrapStateAccess.class.getSimpleName());
+            return (TrapStateAccess) c.newInstance();
         } catch (Exception exception) {
             throw FatalError.unexpected("could not create TrapStateAccess", exception);
         }
     }
 
     /**
-     * Reads the value of the instruction pointer saved in a given trap state area.
+     * Gets the program counter denoting instruction causing the trap.
+     * This is also the address to which the trap handler will return
+     * unless the handler unwinds to an exception handler in a method
+     * other than the one that trapped.
      *
      * @param trapState the block of memory holding the trap state
-     * @return the value of the instruction pointer saved in {@code trapState}
      */
-    public abstract Pointer getInstructionPointer(Pointer trapState);
+    public abstract Pointer getPC(Pointer trapState);
 
     /**
-     * Sets the value that will be restored to the instruction pointer when the trap returns.
+     * Updates the address to which the trap handler will return.
      *
      * @param trapState the block of memory holding the trap state
-     * @param value the value to which the instruction pointer in {@code trapState} should be set
      */
-    public abstract void setInstructionPointer(Pointer trapState, Pointer value);
+    public abstract void setPC(Pointer trapState, Pointer value);
 
-    public abstract Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod);
-    public abstract Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod);
+    /**
+     * Gets the value of the stack pointer at the point of the trap.
+     *
+     * @param trapState the block of memory holding the trap state
+     */
+    public abstract Pointer getSP(Pointer trapState);
+
+    /**
+     * Gets the value of the frame pointer at the point of the trap.
+     *
+     * @param trapState the block of memory holding the trap state
+     */
+    public abstract Pointer getFP(Pointer trapState);
 
     /**
      * Gets the value of the safepoint last saved in a given trap state area.

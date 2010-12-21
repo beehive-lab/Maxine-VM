@@ -98,18 +98,19 @@ public abstract class AbstractAssembler {
 
             if (C1XOptions.PrintCodeBytes) {
                 Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
-                Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
+                TTY.println("Code: %d bytes", targetMethod.targetCodeSize());
+                Util.printBytes(0L, targetMethod.targetCode(), 0, targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
             }
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
             String disassembly = runtime.disassemble(targetMethod);
             TTY.println(disassembly);
-            boolean nodis = disassembly == null || disassembly.length() == 0;
+            boolean noDis = disassembly == null || disassembly.length() == 0;
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Safepoint x : targetMethod.safepoints) {
                 TTY.println(x.toString());
-                if (nodis && x.debugInfo != null) {
+                if (noDis && x.debugInfo != null) {
                     TTY.println(CiUtil.indent(x.debugInfo.toString(), "  "));
                 }
             }
@@ -117,7 +118,7 @@ public abstract class AbstractAssembler {
             Util.printSection("Direct Call Sites", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Call x : targetMethod.directCalls) {
                 TTY.println(x.toString());
-                if (nodis && x.debugInfo != null) {
+                if (noDis && x.debugInfo != null) {
                     TTY.println(CiUtil.indent(x.debugInfo.toString(), "  "));
                 }
             }
@@ -125,7 +126,7 @@ public abstract class AbstractAssembler {
             Util.printSection("Indirect Call Sites", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Call x : targetMethod.indirectCalls) {
                 TTY.println(x.toString());
-                if (nodis && x.debugInfo != null) {
+                if (noDis && x.debugInfo != null) {
                     TTY.println(CiUtil.indent(x.debugInfo.toString(), "  "));
                 }
             }

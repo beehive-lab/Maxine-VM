@@ -57,15 +57,15 @@ public interface RiRegisterConfig {
     CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target);
     
     /**
-     * Gets the complete set of registers that are can be used to pass parameters according to a given calling
-     * convention.
+     * Gets the complete set of registers that are can be used to pass parameters
+     * according to a given calling convention.
      * 
      * @param type the type of calling convention
-     * @return the ordered set of registers that may be used to pass parameters in a call conforming to {@code type}.
-     *         {@linkplain CiRegister#isCpu() Integral} registers appear in this array before
-     *         {@linkplain CiRegister#isFpu() floating point} registers.
+     * @param flag specifies whether registers for {@linkplain RegisterFlag#CPU integral} or
+     *             {@linkplain} RegisterFlag#FPU floating point} parameters are being requested
+     * @return the ordered set of registers that may be used to pass parameters in a call conforming to {@code type}
      */
-    CiRegister[] getCallingConventionRegisters(Type type);
+    CiRegister[] getCallingConventionRegisters(Type type, RegisterFlag flag);
     
     /**
      * Gets the set of registers that can be used by the register allocator.
@@ -108,5 +108,5 @@ public interface RiRegisterConfig {
      * @param id the identifier of a runtime-defined register role
      * @return the register playing the role specified by {@code id}
      */
-    CiRegister getRegister(int id);
+    CiRegister getRegisterForRole(int id);
 }

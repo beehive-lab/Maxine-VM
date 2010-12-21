@@ -40,7 +40,7 @@ public final class MonitorExit extends AccessMonitor {
     public MonitorExit(Value object, Value lockAddress, int lockNumber, FrameState stateBefore) {
         super(object, lockAddress, stateBefore, lockNumber);
         if (object.isNonNull()) {
-            redundantNullCheck();
+            eliminateNullCheck();
         }
     }
 

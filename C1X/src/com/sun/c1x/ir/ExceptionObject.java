@@ -30,6 +30,9 @@ import com.sun.cri.ci.*;
  */
 public final class ExceptionObject extends Instruction {
 
+    /**
+     * Debug info is required if safepoints are placed at exception handlers.
+     */
     public final FrameState stateBefore;
 
     /**

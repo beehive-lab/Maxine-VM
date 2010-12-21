@@ -20,9 +20,14 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
+
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -32,7 +37,6 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -40,13 +44,12 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
-import com.sun.max.vm.template.*;
 
 /**
  * A collection of objects that represent the compiled target code
@@ -58,17 +61,103 @@ import com.sun.max.vm.template.*;
  */
 public abstract class TargetMethod extends MemoryRegion {
 
-    public static final VMStringOption printTargetMethods = VMOptions.register(new VMStringOption("-XX:PrintTargetMethods=", false, null,
-        "Print compiled target methods whose fully qualified name contains <value>."), MaxineVM.Phase.STARTING);
+    protected static String PrintTargetMethods;
+    static {
+        VMOptions.addFieldOption("-XX:", "PrintTargetMethods", "Print compiled target methods whose fully qualified name contains <value>.");
+    }
+
+    static final boolean COMPILED = true;
+
+    /**
+     * Categorization of target methods.
+     */
+    public enum Flavor {
+
+        /**
+         * A compiled method.
+         */
+        Standard(COMPILED),
+
+        /**
+         * A compiled {@link BytecodeTemplate}.
+         */
+        JitTemplate(COMPILED),
+
+        /**
+         * Trampoline for virtual method dispatch (i.e. translation of {@link Bytecodes#INVOKEVIRTUAL}).
+         */
+        VirtualTrampoline(!COMPILED),
+
+        /**
+         * Trampoline for interface method dispatch (i.e. translation of {@link Bytecodes#INVOKEINTERFACE}).
+         */
+        InterfaceTrampoline(!COMPILED),
+
+        /**
+         * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or {@link Bytecodes#INVOKESTATIC}).
+         */
+        StaticTrampoline(!COMPILED),
+
+        /**
+         * A {@linkplain com.sun.c1x.globalstub.GlobalStub global stub}.
+         */
+        GlobalStub(!COMPILED),
+
+        /**
+         * An {@linkplain Adapter adapter}.
+         */
+        Adapter(!COMPILED),
+
+        /**
+         * The trap stub.
+         */
+        TrapStub(!COMPILED);
+
+        /**
+         * Determines if a target method of this flavor represents compiled code.
+         * A target method has a non-null {@link TargetMethod#classMethodActor})
+         * iff is it compiled.
+         */
+        public final boolean compiled;
+
+        Flavor(boolean compiled) {
+            this.compiled = compiled;
+        }
+    }
+
+    public final Flavor flavor;
+
+    /**
+     * Determines if this method is of a given flavor.
+     */
+    public final boolean is(Flavor flavor) {
+        return this.flavor == flavor;
+    }
+
+    /**
+     * Determines if this target method represents compiled code.
+     * A target method has a non-null {@link TargetMethod#classMethodActor})
+     * iff is it compiled.
+     */
+    public final boolean isCompiled() {
+        return flavor.compiled;
+    }
+
+    /**
+     * Determines if this method is a trampoline.
+     */
+    public final boolean isTrampoline() {
+        return this.flavor == VirtualTrampoline || this.flavor == InterfaceTrampoline || flavor == StaticTrampoline;
+    }
 
     @INSPECTED
     public final ClassMethodActor classMethodActor;
 
     /**
      * The stop positions are encoded in the lower 31 bits of each element.
-     * The high bit indicates whether the stop is a call that returns a Reference.
      *
      * @see #stopPositions()
+     * @see StopPositions
      */
     @INSPECTED
     protected int[] stopPositions;
@@ -98,16 +187,25 @@ public abstract class TargetMethod extends MemoryRegion {
 
     private int registerRestoreEpilogueOffset = -1;
 
-    public TargetMethod(String description, CallEntryPoint callEntryPoint) {
+    public TargetMethod(Flavor flavor, String description, CallEntryPoint callEntryPoint) {
         this.classMethodActor = null;
         this.callEntryPoint = callEntryPoint;
+        this.flavor = flavor;
         setRegionName(description);
+        assert isCompiled() == (classMethodActor != null);
     }
 
     public TargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
         this.classMethodActor = classMethodActor;
         this.callEntryPoint = callEntryPoint;
         setRegionName(classMethodActor.name.toString());
+
+        if (classMethodActor.isTemplate()) {
+            flavor = JitTemplate;
+        } else {
+            flavor = Standard;
+        }
+        assert isCompiled() == (classMethodActor != null);
     }
 
     public int registerRestoreEpilogueOffset() {
@@ -129,12 +227,12 @@ public abstract class TargetMethod extends MemoryRegion {
      * location in the returned sequence is the one at the closest position less or equal to the position denoted by
      * {@code instructionPointer}.
      *
-     * @param instructionPointer a pointer to an instruction within this method
-     * @param implicitExceptionPoint {@code true} if the instruction pointer corresponds to an implicit exception point
+     * @param ip a pointer to an instruction within this method
+     * @param ipIsReturnAddress
      * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
-    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
+    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
         return null;
     }
 
@@ -240,6 +338,12 @@ public abstract class TargetMethod extends MemoryRegion {
         return frameSize;
     }
 
+    /**
+     * The entry point used for <i>standard</i> calls in this target method to JVM compiled/interpreted code.
+     * Non-standard calls are those to external native code and calls to the runtime inserted by the
+     * compiler. The former type of calls directly use the native address supplied by the {@linkplain DynamicLinker linker}
+     * and the latter always uses {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}.
+     */
     @INSPECTED
     public final CallEntryPoint callEntryPoint;
 
@@ -276,9 +380,9 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param scalarLiterals a byte array encoding the scalar data accessed by this target via code relative offsets
      * @param referenceLiterals an object array encoding the object references accessed by this target via code relative
      *            offsets
-     * @param codeOrCodeBuffer the compiled code, either as a byte array, or as a {@code CodeBuffer} object
+     * @param codeBuffer the buffer containing the compiled code. The compiled code is in the first {@code this.code.length} bytes of {@code codeBuffer}.
      */
-    protected final void setData(byte[] scalarLiterals, Object[] referenceLiterals, Object codeOrCodeBuffer) {
+    protected final void setData(byte[] scalarLiterals, Object[] referenceLiterals, byte[] codeBuffer) {
 
         assert !codeStart.isZero() : "Must call setCodeArrays() first";
 
@@ -293,15 +397,8 @@ public abstract class TargetMethod extends MemoryRegion {
             System.arraycopy(referenceLiterals, 0, this.referenceLiterals, 0, this.referenceLiterals.length);
         }
 
-        // now copy the code (or a code buffer) into the cell for the byte[]
-        if (codeOrCodeBuffer instanceof byte[]) {
-            System.arraycopy(codeOrCodeBuffer, 0, code, 0, code.length);
-        } else if (codeOrCodeBuffer instanceof CodeBuffer) {
-            final CodeBuffer codeBuffer = (CodeBuffer) codeOrCodeBuffer;
-            codeBuffer.copyTo(code);
-        } else {
-            throw ProgramError.unexpected("byte[] or CodeBuffer required in TargetMethod.setGenerated()");
-        }
+        // now copy the code
+        System.arraycopy(codeBuffer, 0, this.code, 0, this.code.length);
     }
 
     public final ClassMethodActor callSiteToCallee(Address callSite) {
@@ -338,8 +435,17 @@ public abstract class TargetMethod extends MemoryRegion {
                 Object currentDirectCallee = directCallees[i];
                 final TargetMethod callee = getTargetMethod(currentDirectCallee);
                 if (callee == null) {
+                    if (MaxineVM.isHosted()) {
+                        assert !classMethodActor.isTemplate() : "template must not have patchable call site";
+                    }
                     linkedAll = false;
-                    fixupCallSite(stopPosition(i), StaticTrampoline.codeStart().plus(offset));
+                    final int pos = stopPosition(i);
+                    final Address callSite = codeStart.plus(pos);
+                    if (!isPatchableCallSite(callSite)) {
+                        FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
+                                        " [0x" + codeStart.toHexString() + "+" + pos + "]");
+                    }
+                    fixupCallSite(pos, vm().stubs.staticTrampoline().codeStart.plus(offset));
                 } else {
                     fixupCallSite(stopPosition(i), callee.codeStart().plus(offset));
                 }
@@ -370,15 +476,6 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
         return false;
-    }
-
-    /**
-     * Gets the address within a frame where the callee saved registers (if any) are saved.
-     *
-     * @param sp the frame pointer of {@code Pointer#zero()} if this method does not have a callee save area
-     */
-    public Pointer getCalleeSaveStart(Pointer sp) {
-        return Pointer.zero();
     }
 
     public boolean isCalleeSaved() {
@@ -494,17 +591,25 @@ public abstract class TargetMethod extends MemoryRegion {
         // Direct calls come first, followed by indirect calls and safepoints in the stopPositions array.
 
         // Check for matching safepoints first
-        for (int i = numberOfDirectCalls() + numberOfIndirectCalls(); i < numberOfStopPositions(); i++) {
+        int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
+        for (int i = numberOfCalls; i < numberOfStopPositions(); i++) {
             if (stopPosition(i) == targetCodePosition) {
+                return i;
+            }
+        }
+
+        // Check for native calls
+        for (int i = 0; i < numberOfCalls; i++) {
+            if (stopPosition(i) == targetCodePosition && StopPositions.isNativeFunctionCall(stopPositions, i)) {
                 return i;
             }
         }
 
         // Since this is not a safepoint, it must be a call.
         final int adjustedTargetCodePosition;
-        if (Platform.platform().isa.offsetToReturnPC == 0) {
+        if (platform().isa.offsetToReturnPC == 0) {
             // targetCodePostion is the instruction after the call (which might be another call).
-            // We need the find the call at which we actually stopped.
+            // We need to the find the call at which we actually stopped.
             adjustedTargetCodePosition = targetCodePosition - 1;
         } else {
             adjustedTargetCodePosition = targetCodePosition;
@@ -524,7 +629,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
         // It is not enough that we find the first matching position, since there might be a direct as well as an indirect call before the instruction pointer
         // so we find the closest one. This can be avoided if we sort the stopPositions array first, but the runtime cost of this is unknown.
-        for (int i = numberOfDirectCalls() + numberOfIndirectCalls() - 1; i >= numberOfDirectCalls(); i--) {
+        for (int i = numberOfCalls - 1; i >= numberOfDirectCalls(); i--) {
             final int indirectCallPosition = stopPosition(i);
             if (indirectCallPosition <= adjustedTargetCodePosition && (stopIndexWithClosestPosition < 0 || indirectCallPosition > stopPosition(stopIndexWithClosestPosition))) {
                 stopIndexWithClosestPosition = i;
@@ -563,6 +668,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param out where to print the disassembly
      * @param targetMethod the target method whose code is to be disassembled
      */
+    @HOSTED_ONLY
     public void disassemble(OutputStream out) {
         final Platform platform = Platform.platform();
         final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(encodedInlineDataDescriptors());
@@ -574,7 +680,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (string.startsWith("call ")) {
 
                     final Pointer instructionPointer = startAddress.plus(disassembledObject.startPosition());
-                    final BytecodeLocation bytecodeLocation = getBytecodeLocationFor(instructionPointer, false);
+                    final BytecodeLocation bytecodeLocation = getBytecodeLocationFor(instructionPointer, true);
                     if (bytecodeLocation != null) {
                         final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                         if (methodRef != null) {
@@ -582,7 +688,7 @@ public abstract class TargetMethod extends MemoryRegion {
                             string += " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
                         }
                     }
-                    if (StopPositions.isNativeFunctionCallPosition(stopPositions(),  disassembledObject.startPosition())) {
+                    if (StopPositions.isNativeFunctionCallPosition(stopPositions(), disassembledObject.startPosition())) {
                         string += " <native function call>";
                     }
                 }
@@ -682,8 +788,8 @@ public abstract class TargetMethod extends MemoryRegion {
      * Modifies the call site at the specified offset to use the new specified entry point.
      * The modification must tolerate the execution of the target method by concurrently running threads.
      *
-     * @param callSite offset to a call site relative to the start of the code of this target method.
-     * @param callEntryPoint entry point the call site should call after patching.
+     * @param callSite offset to a call site relative to the start of the code of this target method
+     * @param callEntryPoint entry point the call site should call after patching
      */
     public abstract void patchCallSite(int callOffset, Address callEntryPoint);
 
@@ -692,8 +798,8 @@ public abstract class TargetMethod extends MemoryRegion {
      * any thread can see it. Thus there isn't any concurrency between modifying the call site and threads
      * trying to run it.
      *
-     * @param callOffset offset to a call site relative to the start of the code of this target method.
-     * @param callEntryPoint entry point the call site should call after fixup.
+     * @param callOffset offset to a call site relative to the start of the code of this target method
+     * @param callEntryPoint entry point the call site should call after fixup
      */
     public abstract void fixupCallSite(int callOffset, Address callEntryPoint);
 
@@ -729,14 +835,6 @@ public abstract class TargetMethod extends MemoryRegion {
      *         code, prologue or epilogue.
      */
     public int bytecodePositionForCallSite(Pointer returnInstructionPointer) {
-        throw FatalError.unimplemented();
-    }
-
-    /**
-     * Creates an duplicate of this target method.
-     * @return a new instance of this target method
-     */
-    public TargetMethod duplicate() {
         throw FatalError.unimplemented();
     }
 
@@ -782,9 +880,28 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
-     * Gets the register config used to compile this method.
+     * Gets the register configuration used to compile this method.
      */
-    public RiRegisterConfig getRegisterConfig() {
-        return null;
+    public final RiRegisterConfig getRegisterConfig() {
+        RegisterConfigs configs = vm().registerConfigs;
+        switch (flavor) {
+            case Adapter:
+                return null;
+            case GlobalStub:
+                return configs.globalStub;
+            case VirtualTrampoline:
+            case StaticTrampoline:
+            case InterfaceTrampoline:
+                return configs.trampoline;
+            case JitTemplate:
+                return configs.jitTemplate;
+            case Standard:
+                assert classMethodActor != null : "cannot determine register configuration for " + this;
+                return configs.getRegisterConfig(classMethodActor);
+            case TrapStub:
+                return configs.trapStub;
+            default:
+                throw FatalError.unexpected(flavor.toString());
+        }
     }
 }

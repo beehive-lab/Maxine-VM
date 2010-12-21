@@ -40,7 +40,6 @@ public final class ResolveClass extends StateSplit {
         this.portion = r;
         this.type = type;
         setFlag(Flag.NonNull);
-        assert stateBefore != null : "resolution must record state";
     }
 
     @Override

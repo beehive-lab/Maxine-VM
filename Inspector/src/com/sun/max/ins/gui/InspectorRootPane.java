@@ -24,8 +24,8 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import com.sun.max.ins.gui.Inspector.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.gui.Inspector.MenuKind;
+import com.sun.max.ins.util.*;
 
 /**
  * A frame suitable for use by an {@linkplain Inspector inspector}.
@@ -78,8 +78,8 @@ final class InspectorRootPane<Inspector_Type extends Inspector> extends JRootPan
         return inspector;
     }
 
-    public InspectorMenu makeMenu(MenuKind menuKind) throws ProgramError {
-        ProgramError.check(menuBar != null);
+    public InspectorMenu makeMenu(MenuKind menuKind) throws InspectorError {
+        InspectorError.check(menuBar != null);
         return menuBar.makeMenu(menuKind);
     }
 

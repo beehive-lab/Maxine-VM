@@ -21,7 +21,6 @@
 package com.sun.max.vm.stack;
 
 import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -85,12 +84,12 @@ public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
     }
 
     private static int getJitSlotSize() {
-        final int stackFrameAlignment = vmConfig().targetABIsScheme().jitABI.stackFrameAlignment;
+        final int stackFrameAlignment = target().stackAlignment;
         return Ints.roundUnsignedUpByPowerOfTwo(stackFrameAlignment, Word.size());
     }
 
     private static int getJitStackBias() {
-        return vmConfig().targetABIsScheme().jitABI.stackBias;
+        return target().stackBias;
     }
 
     protected JitStackFrameLayout(ClassMethodActor classMethodActor) {

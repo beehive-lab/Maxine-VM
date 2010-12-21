@@ -25,9 +25,9 @@ import java.nio.*;
 import java.util.*;
 
 import com.sun.max.program.*;
-import com.sun.max.tele.channel.TeleChannelDataIOProtocol;
-import com.sun.max.tele.channel.TeleChannelProtocol;
+import com.sun.max.tele.channel.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.util.*;
 
 /**
  * An adaptor that provides implementations of the methods in {@link TeleChannelProtocol} that cannot be
@@ -93,7 +93,7 @@ public abstract class TeleChannelDataIOProtocolAdaptor extends TeleChannelDataIO
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            ProgramError.unexpected(getClass().getName() + ".gatherThreads unexpected error: ", ex);
+            TeleError.unexpected(getClass().getName() + ".gatherThreads unexpected error: ", ex);
         } finally {
             if (iis != null) {
                 try {

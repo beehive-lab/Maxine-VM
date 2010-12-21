@@ -21,8 +21,10 @@
 package com.sun.max.vm.cps.jit.amd64;
 
 import static com.sun.max.asm.x86.Scale.*;
-import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.bytecode.BranchCondition.*;
+
+import java.io.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -33,23 +35,21 @@ import com.sun.max.asm.InlineDataDescriptor.LookupTable32;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.jit.Stop.BackwardBranchBytecodeSafepoint;
-import com.sun.max.vm.jit.*;
+import com.sun.max.vm.cps.jit.Stop.BackwardBranchBytecodeSafepoint;
+import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.cps.template.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
-import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -117,56 +117,27 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         codeBuffer.emitCodeFrom(asm);
     }
 
-    //////////////////////////// CLEAN THIS UP WHEN EXPERIMENTS DONE /////////////////////////////////////////////
-    // Remove the following as well as all references to it once we're done with these statistics.
-    // Numbers already show that TrimNops == true is the best option.
-
-    private static boolean TrimNops = true;
-    private static boolean PrintNopsStats = false;
-    static {
-        VMOptions.addFieldOption("-XX:", "TrimNops", BytecodeToAMD64TargetTranslator.class, "Trim as many nops as possible");
-        VMOptions.addFieldOption("-XX:", "PrintNopsStats", BytecodeToAMD64TargetTranslator.class, "Print nops");
-    }
-
-    private int extraNopsCount = 0;
-    private int alignmentAvoidedCount = 0;
-    public void printExtraNopsStatistics() {
-        if (PrintNopsStats) {
-            final int originalSize = codeBuffer.currentPosition() - extraNopsCount;
-            final int inflation = (10000 * extraNopsCount) / originalSize;
-            final int a = inflation / 100;
-            final int b = inflation % 100;
-            Log.println(extraNopsCount + " (+ " + a + "." + b + " %, total = " + originalSize + " ) extra nops for " + classMethodActor.qualifiedName() +
-                            " avoided = " + alignmentAvoidedCount);
-        }
-    }
-    //////////////////////////// END OF CLEAN UP SECTION ////////////////////////////////////
-
     @Override
-    protected void alignTemplateWithPatchableSite(TargetMethod template) {
+    protected void alignDirectBytecodeCall(TargetMethod template, ClassMethodActor callee) {
         final int alignment = WordWidth.BITS_64.numberOfBytes - 1;
-        final int numDirecCalls = template.numberOfDirectCalls();
-        FatalError.check(numDirecCalls > 0, "Template must have at least one patchable site");
-        int numBytesNeeded = 0;
-        if (TrimNops && numDirecCalls == 1) {
-            // Don't need to align to 8-byte boundaries. It is enough to ensure that the single call
-            // fits within a cache line (currently conservatively assumed to be 8 bytes).
-            final int callSitePosition = codeBuffer.currentPosition() + template.stopPosition(0);
-            final int endOfCallSite = callSitePosition + (AMD64EirInstruction.CALL.DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
-            final int roundDownMask = ~alignment;
-            if ((callSitePosition & roundDownMask) == (endOfCallSite & roundDownMask)) {
-                alignmentAvoidedCount++;
-                // No need for any alignment.
-                return;
-            }
-            numBytesNeeded = WordWidth.BITS_64.numberOfBytes - (callSitePosition & alignment);
-        } else {
-            // Otherwise, force the whole template to be 8-byte aligned.
-            numBytesNeeded = WordWidth.BITS_64.numberOfBytes - (codeBuffer.currentPosition() & alignment);
+        if ((codeBuffer.currentPosition() & alignment) == 0) {
+            // don't bother. CodeBuffer is already aligned.
+            return;
         }
+        if (template.getTargetMethod(callee) != null) {
+            return;
+        }
+        final int callSitePosition = codeBuffer.currentPosition() + template.stopPosition(0);
+        final int roundDownMask = ~alignment;
+        final int endOfCallSite = callSitePosition + (AMD64EirInstruction.CALL.DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
+        if ((callSitePosition & roundDownMask) == (endOfCallSite & roundDownMask)) {
+            // No need for any alignment.
+            return;
+        }
+        // Only one call site. Don't need to align the template to a 8-byte boundaries. It is enough to ensure that the single call
+        // fits within a cache line (currently conservatively assumed to be 8 bytes).
         final byte nop = (byte) 0x90;
-        extraNopsCount += numBytesNeeded;
-
+        int numBytesNeeded = WordWidth.BITS_64.numberOfBytes - (callSitePosition & alignment);
         // Emit nop instructions to align up to next Word boundary.
         while (numBytesNeeded > 0) {
             codeBuffer.emit(nop);
@@ -295,7 +266,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 // Note that the safepoint takes place once the stack frame is in the same state as that of the target bytecode.
                 // The reference maps of the target should be used when at this safepoint.
                 final int stopPosition = codeBuffer.currentPosition();
-                codeBuffer.emit(vmConfig().safepoint.code);
+                codeBuffer.emit(vm().safepoint.code);
                 emitSafepoint(new BackwardBranchBytecodeSafepoint(stopPosition, opcodeBci));
             }
             // Compute relative offset.
@@ -466,7 +437,10 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     public Adapter emitPrologue() {
         Adapter adapter = null;
         if (adapterGenerator != null) {
-            adapter = adapterGenerator.adapt(classMethodActor, asm);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(13);
+            adapter = adapterGenerator.adapt(classMethodActor, baos);
+            byte[] prologue = baos.toByteArray();
+            asm.emitByteArray(prologue, 0, prologue.length);
         }
 
         // method entry point: setup a regular frame
@@ -490,7 +464,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
          * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
          */
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        TARGET_ABI = Utils.cast(type, vmConfig().targetABIsScheme().jitABI);
+        TARGET_ABI = Utils.cast(type, TargetABIsScheme.INSTANCE.jitABI);
         // Initialization of the few hand-crafted templates
         final byte rel8 = 0;
         final int rel32 = 0;

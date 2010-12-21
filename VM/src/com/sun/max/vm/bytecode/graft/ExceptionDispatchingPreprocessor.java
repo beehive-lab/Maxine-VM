@@ -26,6 +26,7 @@ import com.sun.max.io.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * Implements exception dispatching as synthesized bytecode.
@@ -89,6 +90,11 @@ import com.sun.max.vm.classfile.constant.*;
  * @author Bernd Mathiske
  */
 public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
+
+    /**
+     * Specifies whether the current runtime requires this preprocessing.
+     */
+    public static boolean REQUIRED = CPSCompiler.Static.compiler() != null;
 
     private final SeekableByteArrayOutputStream codeStream;
     private final CodeAttribute result;

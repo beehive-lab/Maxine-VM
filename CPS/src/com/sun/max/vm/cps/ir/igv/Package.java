@@ -20,20 +20,14 @@
  */
 package com.sun.max.vm.cps.ir.igv;
 
-import com.sun.max.vm.*;
+import com.sun.max.config.*;
 
 /**
- * @see VMPackage
+ * Not included in the boot image.
  *
- * @author Thomas Wuerthinger
+ * @author Mick Jordan
+ *
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
+public class Package extends ExcludedPackage {
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return true;
-    }
 }

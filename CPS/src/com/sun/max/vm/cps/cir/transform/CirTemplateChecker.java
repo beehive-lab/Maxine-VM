@@ -30,13 +30,13 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.builtin.SpecialBuiltin.*;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.GetIntegerRegister;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
-import com.sun.max.vm.cps.cir.transform.CirDepthFirstTraversal.*;
-import com.sun.max.vm.jit.*;
-import com.sun.max.vm.runtime.VMRegister.*;
-import com.sun.max.vm.template.*;
+import com.sun.max.vm.cps.cir.transform.CirDepthFirstTraversal.DefaultBlockSet;
+import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.cps.template.*;
+import com.sun.max.vm.runtime.VMRegister.Role;
 
 /**
  * Tests the CIR for a {@linkplain BYTECODE_TEMPLATE bytecode template} to ensure it does not write to a Java stack or

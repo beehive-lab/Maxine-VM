@@ -21,7 +21,7 @@
 package com.sun.max.vm.cps.jit;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
-import static com.sun.max.vm.template.BytecodeTemplate.*;
+import static com.sun.max.vm.cps.template.BytecodeTemplate.*;
 
 import java.util.*;
 
@@ -39,18 +39,27 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClassForNew;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForReading;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForWriting;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInterfaceMethod;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveSpecialMethod;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForReading;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForWriting;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveVirtualMethod;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.hotpath.*;
+import com.sun.max.vm.cps.jit.Stop.BackwardBranchBytecodeSafepoint;
+import com.sun.max.vm.cps.jit.Stop.BytecodeDirectCall;
+import com.sun.max.vm.cps.jit.Stops.StopsBuilder;
+import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.cps.template.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.jit.*;
-import com.sun.max.vm.jit.Stop.*;
-import com.sun.max.vm.jit.Stops.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
-import com.sun.max.vm.runtime.VMRegister.*;
+import com.sun.max.vm.runtime.VMRegister.Role;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -295,9 +304,9 @@ public abstract class BytecodeToTargetTranslator {
      * @param template the compiled code to emit
      */
     protected void emitAndRecordStops(TargetMethod template) {
-        if (template.numberOfDirectCalls() > 0) {
-            alignTemplateWithPatchableSite(template);
-        }
+//        if (template.numberOfDirectCalls() > 0) {
+//            alignTemplateWithPatchableSite(template);
+//        }
         stops.add(template, codeBuffer.currentPosition(), opcodeBci);
         codeBuffer.emit(template);
     }
@@ -317,7 +326,7 @@ public abstract class BytecodeToTargetTranslator {
         assert template.numberOfSafepoints() == 0;
         assert template.numberOfStopPositions() == 1;
         assert template.referenceMaps() == null || Bytes.areClear(template.referenceMaps());
-        alignTemplateWithPatchableSite(template);
+        alignDirectBytecodeCall(template, callee);
         int stopPosition = codeBuffer.currentPosition() + template.stopPosition(0);
         stops.add(new BytecodeDirectCall(stopPosition, opcodeBci, callee));
     }
@@ -433,7 +442,7 @@ public abstract class BytecodeToTargetTranslator {
 
     protected abstract void fixLookupSwitch(LookupSwitch lookupSwitch);
 
-    protected abstract void alignTemplateWithPatchableSite(TargetMethod template);
+    protected abstract void alignDirectBytecodeCall(TargetMethod template, ClassMethodActor callee);
 
     public void setGenerated(
             TargetMethod targetMethod,
@@ -441,7 +450,7 @@ public abstract class BytecodeToTargetTranslator {
             byte[] compressedJavaFrameDescriptors,
             byte[] scalarLiteralBytes,
             Object[] referenceLiterals,
-            Object codeOrCodeBuffer,
+            byte[] codeBuffer,
             TargetABI abi) {
 
         JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
@@ -457,7 +466,7 @@ public abstract class BytecodeToTargetTranslator {
             stops.referenceMaps,
             scalarLiteralBytes,
             referenceLiterals,
-            codeOrCodeBuffer,
+            codeBuffer,
             inlineDataRecorder.encodedDescriptors(),
             stops.isDirectCallToRuntime,
             bytecodeToTargetCodePositionMap,
@@ -906,8 +915,8 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.WREM               : emit(WREM); skip(2); break;
                 case Bytecodes.WREMI              : emit(WREMI); skip(2); break;
 
-                case Bytecodes.PCMPSWP:
                 case Bytecodes.MEMBAR:
+                case Bytecodes.PCMPSWP:
                 case Bytecodes.PGET:
                 case Bytecodes.PSET:
                 case Bytecodes.PREAD:
@@ -982,8 +991,6 @@ public abstract class BytecodeToTargetTranslator {
                         case Bytecodes.MEMBAR_LOAD_STORE  : emit(MEMBAR_LOAD_STORE); break;
                         case Bytecodes.MEMBAR_STORE_LOAD  : emit(MEMBAR_STORE_LOAD); break;
                         case Bytecodes.MEMBAR_STORE_STORE : emit(MEMBAR_STORE_STORE); break;
-                        case Bytecodes.MEMBAR_MEMOP_STORE : emit(MEMBAR_MEMOP_STORE); break;
-                        case Bytecodes.MEMBAR_FENCE         : emit(MEMBAR_FENCE); break;
 
                         default                           : throw new InternalError("Unsupported opcode" + errorSuffix());
                     }
@@ -997,7 +1004,6 @@ public abstract class BytecodeToTargetTranslator {
 
 
                 case Bytecodes.WRETURN            : emitReturn(WRETURN); break;
-                case Bytecodes.SAFEPOINT          : emit(SAFEPOINT); skip(2); break;
                 case Bytecodes.PAUSE              : emit(PAUSE); skip(2); break;
                 case Bytecodes.LSB                : emit(LSB); skip(2); break;
                 case Bytecodes.MSB                : emit(MSB); skip(2); break;
@@ -1006,7 +1012,7 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.WRITEREG           : emit(WRITEREGS.get(Role.VALUES.get(readU2()))); break;
 
                 case Bytecodes.ADD_SP             :
-                case Bytecodes.READ_PC            :
+                case Bytecodes.INFOPOINT          :
                 case Bytecodes.FLUSHW             :
                 case Bytecodes.ALLOCA             :
                 case Bytecodes.ALLOCSTKVAR        :

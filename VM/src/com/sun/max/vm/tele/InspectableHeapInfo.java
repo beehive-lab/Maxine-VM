@@ -33,7 +33,16 @@ import com.sun.max.vm.heap.*;
  * Active only when VM is being inspected.
  * <br>
  * Dynamic object allocation is to be avoided.
+ * <br>
+ * The methods in this with names inspectable* are intended to act as a kind of hook for the Inspector, so that it
+ * can interrupt the VM at certain interesting moments.  This could also be used as a kind of low-wattage event
+ * mechanism.
+ * <br>
+ * The inspectable* methods here are distinct from those with similar or identical names in {@link HeapScheme.Inspect},
+ * which are intended to act as convenient places for a user to set a breakpoint, perhaps from a menu of standard
+ * locations.  The intention is that those locations would not land the user in this class.
  *
+ * @see HeapScheme.Inspect
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  * @author Hannes Payer
@@ -99,6 +108,12 @@ public final class InspectableHeapInfo {
     private static Address recentRelocationNewCell;
 
     /**
+     * Heap size most recently requested.
+     */
+    @INSPECTED
+    private static long recentHeapSizeRequest;
+
+    /**
      * Stores descriptions of memory allocated by the heap in a location that can
      * be inspected easily.
      * <br>
@@ -140,14 +155,21 @@ public final class InspectableHeapInfo {
     }
 
     /**
-     * Records the old and new locations of a just-completed object relocation.
+     * Records that an object has just been relocated.
      *
-     * @param oldCellLocation
-     * @param newCellLocation
+     * @param oldCellLocation the former memory cell of the object
+     * @param newCellLocation the new memory cell of the object
      */
     public static void notifyObjectRelocated(Address oldCellLocation,  Address newCellLocation) {
         recentRelocationOldCell = oldCellLocation;
         recentRelocationNewCell = newCellLocation;
+        inspectableObjectRelocated(oldCellLocation, newCellLocation);
+    }
+
+
+    @INSPECTED
+    @NEVER_INLINE
+    private static void inspectableObjectRelocated(Address oldCellLocation,  Address newCellLocation) {
     }
 
     /**
@@ -179,7 +201,7 @@ public final class InspectableHeapInfo {
      */
     @INSPECTED
     @NEVER_INLINE
-    private static void inspectableGCStarted(long collectionEpoch) {
+    private static void inspectableGCStarted(long gcStartedCounter) {
     }
 
     /**
@@ -211,6 +233,66 @@ public final class InspectableHeapInfo {
      */
     @INSPECTED
     @NEVER_INLINE
-    private static void inspectableGCCompleted(long collectionEpoch) {
+    private static void inspectableGCCompleted(long gcCompletedCounter) {
     }
+
+    /**
+     * Records that an increase of heap size has been requested.
+     *
+     * @param size the desired new heap size.
+     */
+    public static void notifyIncreaseMemoryRequested(Size size) {
+        recentHeapSizeRequest = size.toLong();
+        inspectableIncreaseMemoryRequested(size);
+    }
+
+    /**
+     * An empty method whose purpose is to be interrupted by the Inspector
+     * when it needs to observe a request for heap memory size increase.
+     * <br>
+     * This particular method is intended for internal use by the inspector.
+     * Should a user wish to break at the request,  another, more
+     * convenient inspectable method is provided
+     * <br>
+     * <strong>Important:</strong> The Inspector assumes that this method is loaded
+     * and compiled in the boot image and that it will never be dynamically recompiled.
+     *
+     * @param
+     * @see HeapScheme.Inspect#inspectableGCComplete()
+     */
+    @ INSPECTED
+    @NEVER_INLINE
+    private static void inspectableIncreaseMemoryRequested(Size size) {
+    }
+
+    /**
+     * Records that an decrease of heap size has been requested.
+     *
+     * @param size the desired new heap size.
+     */
+    public static void notifyDecreaseMemoryRequested(Size size) {
+        recentHeapSizeRequest = size.toLong();
+        inspectableDecreaseMemoryRequested(size);
+    }
+
+    /**
+     * An empty method whose purpose is to be interrupted by the Inspector
+     * when it needs to observe a request for heap memory size decrease.
+     * <br>
+     * This particular method is intended for internal use by the inspector.
+     * Should a user wish to break at the request,  another, more
+     * convenient inspectable method is provided
+     * <br>
+     * <strong>Important:</strong> The Inspector assumes that this method is loaded
+     * and compiled in the boot image and that it will never be dynamically recompiled.
+     *
+     * @param size the desired new heap size
+     * @see HeapScheme.Inspect#inspectableGCComplete()
+     */
+    @ INSPECTED
+    @NEVER_INLINE
+    private static void inspectableDecreaseMemoryRequested(Size size) {
+    }
+
+
 }

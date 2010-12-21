@@ -24,15 +24,16 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
+import com.sun.max.config.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -46,6 +47,7 @@ import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
@@ -134,6 +136,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_dynamicHeapMemoryRegions = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "dynamicHeapMemoryRegions", MemoryRegion[].class);
     public final TeleStaticLongFieldAccess InspectableHeapInfo_gcCompletedCounter = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "gcCompletedCounter");
     public final TeleStaticLongFieldAccess InspectableHeapInfo_gcStartedCounter = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "gcStartedCounter");
+    public final TeleStaticLongFieldAccess InspectableHeapInfo_recentHeapSizeRequest = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "recentHeapSizeRequest");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationNewCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationNewCell");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_recentRelocationOldCell = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "recentRelocationOldCell");
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_rootTableMemoryRegion = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "rootTableMemoryRegion", RootTableMemoryRegion.class);
@@ -208,14 +211,15 @@ public class TeleFields extends AbstractTeleVMHolder {
     }
 
     public static <Member_Type extends Member> void updateSource(final Class sourceClass, final Class<Member_Type> memberClass, final InspectedMemberReifier<Member_Type> memberReifier, final boolean inInspector) {
-        final File sourceFile = new File(JavaProject.findSourceDirectory(), sourceClass.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
+        final File sourceFile = new File(JavaProject.findSourceDirectory(TeleFields.class), sourceClass.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
         if (!sourceFile.exists()) {
-            ProgramWarning.message("Source file does not exist: " + sourceFile.getAbsolutePath());
+            TeleWarning.message("Source file does not exist: " + sourceFile.getAbsolutePath());
         }
+        VMConfigurator configurator = new VMConfigurator(null);
+        configurator.create(true);
 
         final Runnable runnable = new Runnable() {
             public void run() {
-                final com.sun.max.Package rootPackage = new com.sun.max.Package();
                 final Classpath classpath = Classpath.fromSystem();
                 final PackageLoader packageLoader = new PackageLoader(ClassLoader.getSystemClassLoader(), classpath);
                 if (inInspector) {
@@ -239,19 +243,30 @@ public class TeleFields extends AbstractTeleVMHolder {
                     }
 
                 });
-                for (MaxPackage maxPackage : rootPackage.getTransitiveSubPackages(classpath)) {
-                    for (Class<?> c : packageLoader.load(maxPackage, false)) {
-                        final AccessibleObject[] members = memberClass.equals(Method.class) ? c.getDeclaredMethods() : (memberClass.equals(Field.class) ? c.getDeclaredFields() : c.getDeclaredConstructors());
-                        for (AccessibleObject member : members) {
-                            if (member.getAnnotation(INSPECTED.class) != null) {
-                                if (!reified.contains(member)) {
-                                    reified.add((Member) member);
-                                }
 
+                new ClassSearch() {
+                    final HashSet<String> seenPackages = new HashSet<String>();
+                    @Override
+                    protected boolean visitClass(boolean isArchiveEntry, String className) {
+                        if (!className.endsWith("package-info")) {
+                            Class c = Classes.forName(className, false, getClass().getClassLoader());
+                            String pkg = Classes.getPackageName(className);
+                            if (seenPackages.add(pkg)) {
+                                Trace.line(1, pkg);
+                            }
+                            final AccessibleObject[] members = memberClass.equals(Method.class) ? c.getDeclaredMethods() : (memberClass.equals(Field.class) ? c.getDeclaredFields() : c.getDeclaredConstructors());
+                            for (AccessibleObject member : members) {
+                                if (member.getAnnotation(INSPECTED.class) != null) {
+                                    if (!reified.contains(member)) {
+                                        reified.add((Member) member);
+                                    }
+
+                                }
                             }
                         }
+                        return true;
                     }
-                }
+                }.run(Classpath.fromSystem(), "com/sun/max");
 
                 for (Member member : reified) {
                     memberReifier.reify(memberClass.cast(member), writer);
@@ -260,15 +275,15 @@ public class TeleFields extends AbstractTeleVMHolder {
                 try {
                     final boolean changed = Files.updateGeneratedContent(sourceFile, charArrayWriter, "    // START GENERATED CONTENT", "    // END GENERATED CONTENT", false);
                     if (changed) {
-                        ProgramWarning.message("The source file " + sourceFile + " was updated" + (inInspector ? ": recompile and restart the inspector" : ""));
+                        TeleWarning.message("The source file " + sourceFile + " was updated" + (inInspector ? ": recompile and restart the inspector" : ""));
                     } else {
                         Trace.line(1, "The source file " + sourceFile + " did not need to be updated.");
                     }
                 } catch (IOException exception) {
                     if (inInspector) {
-                        ProgramWarning.message("Error while verifying that " + sourceFile + " is up to date: " + exception);
+                        TeleWarning.message("Error while verifying that " + sourceFile + " is up to date", exception);
                     } else {
-                        ProgramError.unexpected(exception);
+                        TeleError.unexpected(exception);
                     }
                 }
             }
@@ -332,7 +347,7 @@ public class TeleFields extends AbstractTeleVMHolder {
                         break;
                     }
                     default: {
-                        ProgramError.unexpected("Invalid field kind: " + kind);
+                        TeleError.unexpected("Invalid field kind: " + kind);
                     }
                 }
                 writer.println(";");

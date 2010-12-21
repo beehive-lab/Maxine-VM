@@ -21,14 +21,10 @@
 package com.sun.max.vm.tele;
 
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
-import com.sun.max.asm.sparc.*;
-import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
@@ -39,25 +35,15 @@ public final class TargetBreakpoint {
 
     @HOSTED_ONLY
     public static byte[] createBreakpointCode(ISA isa) {
-        try {
-            switch (isa) {
-                case AMD64:
-                case IA32: {
-                    return new byte[] {(byte) 0xCC};
-                }
-                case SPARC: {
-                    final WordWidth wordWidth = Platform.platform().wordWidth();
-                    final SPARCAssembler assembler = wordWidth == WordWidth.BITS_64 ? new SPARC64Assembler() : new SPARC32Assembler();
-                    assembler.ta(ICCOperand.XCC, GPR.G0, SoftwareTrap.ST_BREAKPOINT.trapNumber());
-                    return assembler.toByteArray();
-                }
-                default: {
-                    FatalError.unimplemented();
-                    break;
-                }
+        switch (isa) {
+            case AMD64:
+            case IA32: {
+                return new byte[] {(byte) 0xCC};
             }
-        } catch (AssemblyException assemblyException) {
-            ProgramError.unexpected();
+            default: {
+                FatalError.unimplemented();
+                break;
+            }
         }
         return null;
     }

@@ -170,11 +170,11 @@ public enum CiKind {
 
     /**
      * Gets the size of this kind in bytes.
-     * @param referenceSize the size of an object reference
+     * 
      * @param wordSize the size of a word in bytes
      * @return the size of this kind in bytes
      */
-    public int sizeInBytes(int referenceSize, int wordSize) {
+    public int sizeInBytes(int wordSize) {
         switch (this) {
             case Boolean: return 1;
             case Byte: return 1;
@@ -184,7 +184,7 @@ public enum CiKind {
             case Long: return 8;
             case Float: return 4;
             case Double: return 8;
-            case Object: return referenceSize;
+            case Object: return wordSize;
             case Jsr: return 4;
             case Word: return wordSize;
             default: return 0;

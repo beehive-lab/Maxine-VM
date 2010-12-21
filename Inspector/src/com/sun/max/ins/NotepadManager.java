@@ -20,8 +20,9 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.program.*;
+import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
+import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
+import com.sun.max.ins.util.*;
 import com.sun.max.program.option.*;
 
 /**
@@ -119,7 +120,7 @@ public final class NotepadManager extends AbstractInspectionHolder {
      * @param notepad the notepad being disposed.
      */
     private void dispose(InspectorNotepad notepad) {
-        ProgramError.unexpected("notepad disposal not yet supported");
+        InspectorError.unimplemented("notepad disposal not yet supported");
         // Remove the associated entry from the current inspection settings
     }
 

@@ -22,25 +22,26 @@ package com.sun.max.vm.cps.eir.amd64.darwin;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.eir.*;
-import com.sun.max.vm.cps.eir.amd64.*;
 
 /**
  * @see MaxPackage
  *
  * @author Doug Simon
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         registerScheme(EirABIsScheme.class, DarwinAMD64EirABIs.class);
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.bootCompilerScheme() instanceof AMD64EirGeneratorScheme &&
+        return CPSCompiler.Static.isCompiler(vmConfiguration) && platform().isa == ISA.AMD64 &&
                platform().os == OS.DARWIN;
     }
 }

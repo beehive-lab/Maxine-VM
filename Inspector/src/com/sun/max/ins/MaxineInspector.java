@@ -22,10 +22,12 @@ package com.sun.max.ins;
 
 import javax.swing.*;
 
+import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.TeleVM.*;
+import com.sun.max.tele.TeleVM.Mode;
+import com.sun.max.tele.TeleVM.Options;
 import com.sun.max.vm.hosted.*;
 
 /**
@@ -70,9 +72,9 @@ public final class MaxineInspector {
                 }
             });
         } catch (BootImageException bootImageException) {
-            ProgramError.unexpected("could not load boot image", bootImageException);
+            InspectorError.unexpected("could not load boot image", bootImageException);
         } catch (Exception exception) {
-            ProgramError.unexpected(tracePrefix + "failed: ", exception);
+            InspectorError.unexpected(tracePrefix + "failed: ", exception);
         }
         Trace.end(TRACE_VALUE, tracePrefix + "Initializing", startTimeMillis);
     }

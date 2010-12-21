@@ -318,7 +318,6 @@ public class Bytecodes {
      * Iff they are same, {@code newValue} is stored into the memory location and the {@code expectedValue} is returned.
      * Otherwise, the actual value is returned.
      * All of the above is performed in one atomic hardware transaction.
-     * 
      * <pre>
      * Format: { u3 opcode;   // PCMPSWP_INT, PCMPSWP_WORD, PCMPSWP_REFERENCE,
      *                        // PCMPSWP_INT_I, PCMPSWP_WORD_I or PCMPSWP_REFERENCE_I
@@ -415,9 +414,75 @@ public class Bytecodes {
      * </pre>
      */
     public static final int UNSAFE_CAST          = 236;
-    public static final int WRETURN              = 237;
-    public static final int SAFEPOINT            = 238;
 
+    public static final int WRETURN              = 237;
+    
+    /**
+     * Record debug info at the current code location.
+     * 
+     * <pre>
+     * Format: { u1 opcode;    // INFOPOINT
+     *           u1 opcode2;   // SAFEPOINT, HERE or HERE_NOP
+     *           u1 inclFrame; // non-zero if the full frame is to be saved 
+     *         }
+     * </pre>
+     * 
+     * @see #SAFEPOINT
+     * @see #HERE
+     * @see #INFO
+     */
+    public static final int INFOPOINT        = 238;
+
+    /**
+     * Record debug info at the current code location
+     * and emit the instruction(s) that enable a thread
+     * to be safely stopped for a VM operation (e.g. a GC).
+     * 
+     * <pre>
+     * Format: { u1 opcode;    // INFOPOINT
+     *           u1 opcode2;   // SAFEPOINT
+     *           u1 inclFrame; // non-zero if the full frame is to be saved
+     *         }
+     *
+     * Operand Stack:
+     *     ... => ...
+     * </pre>
+     */
+    public static final int SAFEPOINT         = INFOPOINT  | 1 << 16;
+
+    /**
+     * Record debug info at the current code location
+     * and push its address to the stack. This is useful (for example)
+     * when initiating a stack walk from the current execution position.
+     * 
+     * <pre>
+     * Format: { u1 opcode;    // INFOPOINT
+     *           u1 opcode2;   // HERE
+     *           u1 inclFrame; // non-zero if the full frame is to be saved 
+     *         }
+     *
+     * Operand Stack:
+     *     ... => ..., value
+     * </pre>
+     */
+    public static final int HERE              = INFOPOINT  | 2 << 16;
+
+    /**
+     * Record debug info at the current code location.
+     * No instructions are emitted.
+     * 
+     * <pre>
+     * Format: { u1 opcode;    // INFOPOINT
+     *           u1 opcode2;   // HERE_NOP
+     *           u1 inclFrame; // non-zero if the full frame is to be saved 
+     *         }
+     *
+     * Operand Stack:
+     *     ... => ...
+     * </pre>
+     */
+    public static final int INFO          = INFOPOINT  | 3 << 16;
+    
     /**
      * Allocates a requested block of memory within the current activation frame.
      * The allocated memory is reclaimed when the method returns.
@@ -446,12 +511,14 @@ public class Bytecodes {
      *
      * <pre>
      * Format: { u1 opcode;   // MEMBAR
-     *           u2 barrier;  // 1=LOAD_LOAD, 2=LOAD_STORE, 3=STORE_LOAD, 4=STORE_STORE, 5=MEMOP_STORE, 6=ALL
+     *           u2 barriers;  // mask of constants defined in {@link MemoryBarriers}
      *         }
      *
      * Operand Stack:
      *     ... => ...
      * </pre>
+     * 
+     * @see MemoryBarriers
      */
     public static final int MEMBAR               = 240;
     
@@ -480,9 +547,8 @@ public class Bytecodes {
     public static final int ALLOCSTKVAR          = 241;
     
     public static final int PAUSE                = 242;
-    public static final int BREAKPOINT_TRAP      = 248;
-    public static final int ADD_SP               = 243;
-    public static final int READ_PC              = 244;
+    public static final int BREAKPOINT_TRAP      = 243;
+    public static final int ADD_SP               = 244;
     public static final int FLUSHW               = 245;
     
     /**
@@ -593,8 +659,6 @@ public class Bytecodes {
     public static final int MEMBAR_LOAD_STORE  = MEMBAR   | LOAD_STORE << 8;
     public static final int MEMBAR_STORE_LOAD  = MEMBAR   | STORE_LOAD << 8;
     public static final int MEMBAR_STORE_STORE = MEMBAR   | STORE_STORE << 8;
-    public static final int MEMBAR_MEMOP_STORE = MEMBAR   | MEMOP_STORE << 8;
-    public static final int MEMBAR_FENCE       = MEMBAR   | FENCE << 8;
 
     /**
      * Links a native function.
@@ -688,6 +752,31 @@ public class Bytecodes {
         @INTRINSIC(UCMP | (BELOW_THAN << 8))
         public static native boolean belowThan(int x, int y);
     }
+    
+    /**
+     * Intrinsic functions for using {@link Bytecodes#INFOPOINT}s.
+     */
+    public static class Infopoints {
+        public static final int WITH_FRAME = 1 << 8;
+
+        @INTRINSIC(SAFEPOINT | WITH_FRAME)
+        public static native void safepoint();
+        
+        @INTRINSIC(SAFEPOINT)
+        public static native void safepointWithoutFrame();
+        
+        @INTRINSIC(HERE)
+        public static native long here();
+
+        @INTRINSIC(HERE | WITH_FRAME)
+        public static native long hereWithFrame();
+
+        @INTRINSIC(INFO | WITH_FRAME)
+        public static native void info();
+        
+        @INTRINSIC(INFO)
+        public static native void infoWithoutFrame();
+    }
 
     /**
      * Constants for memory barriers.
@@ -735,51 +824,50 @@ public class Bytecodes {
          */
         public static final int STORE_STORE = 0x0008;
 
-        public static final int MEMOP_STORE = STORE_STORE | LOAD_STORE;
-        public static final int FENCE = LOAD_LOAD | LOAD_STORE | STORE_STORE | STORE_LOAD;
+        private static void appendFlag(StringBuilder sb, boolean flag, String string) {
+            if (flag) {
+                sb.append(string);
+            }
+        }
 
+        public static String barriersString(int barriers) {
+            StringBuilder sb = new StringBuilder();
+            appendFlag(sb, (barriers & LOAD_LOAD) != 0, "LOAD_LOAD ");
+            appendFlag(sb, (barriers & LOAD_STORE) != 0, "LOAD_STORE ");
+            appendFlag(sb, (barriers & STORE_LOAD) != 0, "STORE_LOAD ");
+            appendFlag(sb, (barriers & STORE_STORE) != 0, "STORE_STORE ");
+            return sb.toString().trim();
+        }
+        
         /**
          * Ensures all preceding loads complete before any subsequent loads.
          */
         @INTRINSIC(MEMBAR_LOAD_LOAD)
-        public static void loadLoad() {
-        }
+        public static native void loadLoad();
 
         /**
          * Ensures all preceding loads complete before any subsequent stores.
          */
         @INTRINSIC(MEMBAR_LOAD_STORE)
-        public static void loadStore() {
-        }
+        public static native void loadStore();
 
         /**
          * Ensures all preceding stores complete before any subsequent loads.
          */
         @INTRINSIC(MEMBAR_STORE_LOAD)
-        public static void storeLoad() {
-        }
-
+        public static native void storeLoad();
+        
         /**
          * Ensures all preceding stores complete before any subsequent stores.
          */
         @INTRINSIC(MEMBAR_STORE_STORE)
-        public static void storeStore() {
-        }
+        public static native void storeStore();
 
         /**
          * Ensures all preceding stores and loads complete before any subsequent stores.
          */
-        @INTRINSIC(MEMBAR_MEMOP_STORE)
-        public static void memopStore() {
-        }
-
-        /**
-         * Ensures all preceding stores and loads complete before any subsequent stores and loads.
-         */
-        @INTRINSIC(MEMBAR_FENCE)
-        public static void fence() {
-        }
-
+        @INTRINSIC(MEMBAR | ((LOAD_STORE | STORE_STORE) << 8))
+        public static native void memopStore();
     }
 
     public static final int ILLEGAL = 255;
@@ -833,7 +921,7 @@ public class Bytecodes {
         static final int EXTENSION = 0x00000020;
 
         /**
-         * Denotes an instruction that can cause an implicit exception.
+         * Denotes an instruction that can cause a trap.
          */
         static final int TRAP        = 0x00000080;
         /**
@@ -1137,14 +1225,13 @@ public class Bytecodes {
         def(WRITEREG            , "writereg"        , "bii"  , EXTENSION);
         def(UNSAFE_CAST         , "unsafe_cast"     , "bii"  , EXTENSION);
         def(WRETURN             , "wreturn"         , "b"    , EXTENSION | TRAP | STOP);
-        def(SAFEPOINT           , "safepoint"       , "bii"  , EXTENSION | TRAP);
         def(ALLOCA              , "alloca"          , "bii"  , EXTENSION);
         def(MEMBAR              , "membar"          , "bii"  , EXTENSION);
         def(ALLOCSTKVAR         , "allocstkvar"     , "bii"  , EXTENSION);
         def(PAUSE               , "pause"           , "bii"  , EXTENSION);
         def(BREAKPOINT_TRAP     , "breakpoint_trap" , "bii"  , EXTENSION);
         def(ADD_SP              , "add_sp"          , "bii"  , EXTENSION);
-        def(READ_PC             , "read_pc"         , "bii"  , EXTENSION);
+        def(INFOPOINT           , "infopoint"       , "bii"  , EXTENSION | TRAP);
         def(FLUSHW              , "flushw"          , "bii"  , EXTENSION);
         def(LSB                 , "lsb"             , "bii"  , EXTENSION);
         def(MSB                 , "msb"             , "bii"  , EXTENSION);
@@ -1153,10 +1240,12 @@ public class Bytecodes {
         def(JNIOP_LINK          , "jniop_link"        );
         def(JNIOP_N2J           , "jniop_n2j"         );
         
-        def(MEMBAR_FENCE        , "membar_fence"      );
+        def(SAFEPOINT           , "safepoint"         );
+        def(HERE                , "here"              );
+        def(INFO                , "info"              );
+        
         def(MEMBAR_LOAD_LOAD    , "membar_load_load"  );
         def(MEMBAR_LOAD_STORE   , "membar_load_store" );
-        def(MEMBAR_MEMOP_STORE  , "membar_memop_store");
         def(MEMBAR_STORE_LOAD   , "membar_store_load" );
         def(MEMBAR_STORE_STORE  , "membar_store_store");
         

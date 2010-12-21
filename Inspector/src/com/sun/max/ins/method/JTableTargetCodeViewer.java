@@ -32,21 +32,20 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.*;
+import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -656,10 +655,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             case ARM:
             case PPC:
             case IA32:
-                FatalError.unimplemented();
+                InspectorError.unimplemented();
                 return null;
         }
-        ProgramError.unknownCase();
+        InspectorError.unknownCase();
         return null;
     }
 
@@ -703,7 +702,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         private String toolTipText(StackTraceElement stackTraceElement) {
             String s = stackTraceElement.toString();
             final int openParen = s.indexOf('(');
-            s = Classes.getSimpleName(stackTraceElement.getClassName()) + "." + stackTraceElement.getMethodName() + s.substring(openParen);
+            String methodName = stackTraceElement.getMethodName().replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+            s = Classes.getSimpleName(stackTraceElement.getClassName()) + "." + methodName + s.substring(openParen);
             final String text = s;
             return text;
         }
@@ -715,12 +715,15 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setBackgroundForRow(this, row);
             if (bytecodeLocation != null) {
                 final StackTraceElement stackTraceElement = bytecodeLocation.toStackTraceElement();
-                setText(String.valueOf(stackTraceElement.getLineNumber()));
                 final StringBuilder stackTrace = new StringBuilder("<html><table cellpadding=\"1%\"><tr><td></td><td>").append(toolTipText(stackTraceElement)).append("</td></tr>");
+                StackTraceElement top = stackTraceElement;
                 for (BytecodeLocation parent = bytecodeLocation.parent(); parent != null; parent = parent.parent()) {
-                    stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parent.toStackTraceElement())).append("</td></tr>");
+                    StackTraceElement parentSTE = parent.toStackTraceElement();
+                    stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parentSTE)).append("</td></tr>");
+                    top = parentSTE;
                 }
                 setToolTipText(stackTrace.append("</table>").toString());
+                setText(String.valueOf(top.getLineNumber()));
             }
             lastBytecodeLocation = bytecodeLocation;
             setBorderForRow(this, row);

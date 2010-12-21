@@ -22,12 +22,12 @@ package com.sun.max.tele.debug;
 
 import java.util.*;
 
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.Safepoint.*;
+import com.sun.max.vm.runtime.Safepoint.State;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.value.*;
 
@@ -141,7 +141,10 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
                     final Word word = dataAccess.readWord(memoryRegion().start(), offset);
                     threadLocalVariables[index].setValue(new WordValue(word));
                 } catch (DataIOError dataIOError) {
-                    ProgramWarning.message("Could not read value of " + vmThreadLocalVariable + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals: " + dataIOError);
+                    final String msg =
+                        "Could not read value of " + vmThreadLocalVariable + " from safepoints-" +
+                        safepointState.name().toLowerCase() + " VM thread locals: ";
+                    TeleWarning.message(msg, dataIOError);
                     threadLocalVariables[index].setValue(VoidValue.VOID);
                 }
             }

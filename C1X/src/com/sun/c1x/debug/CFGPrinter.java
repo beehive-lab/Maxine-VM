@@ -23,6 +23,7 @@ package com.sun.c1x.debug;
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.alloc.Interval.*;
 import com.sun.c1x.graph.*;
@@ -32,6 +33,7 @@ import com.sun.c1x.lir.LIRInstruction.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
 
@@ -336,6 +338,104 @@ public class CFGPrinter {
         return operandFmt.format(value.operand());
     }
 
+    private String stateValueToString(CiValue value, OperandFormatter operandFmt) {
+        if (value == null) {
+            return "-";
+        }
+        return operandFmt.format(value);
+    }
+
+    /**
+     * Formats a given {@linkplain FrameState JVM frame state} as a multi line string.
+     */
+    private String debugInfoToString(CiDebugInfo info, CFGOperandFormatter operandFmt) {
+        if (info == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+
+
+        if (info.hasRegisterRefMap()) {
+            sb.append("reg-ref-map:");
+            C1XCompilation compilation = C1XCompilation.compilation();
+            CiArchitecture arch = compilation == null ? null : compilation.target.arch;
+            for (int reg = info.registerRefMap.nextSetBit(0); reg >= 0; reg = info.registerRefMap.nextSetBit(reg + 1)) {
+                sb.append(' ').append(arch == null ? "reg" + reg : arch.registers[reg]);
+            }
+            sb.append("\n");
+        }
+        if (info.hasStackRefMap()) {
+            sb.append("frame-ref-map:");
+            CiBitMap bm = info.frameRefMap;
+            for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
+                sb.append(' ').append(CiStackSlot.get(CiKind.Object, i));
+            }
+            sb.append("\n");
+        }
+        if (info.codePos != null) {
+            sb.append(stateToString(info.codePos, operandFmt));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Formats a given {@linkplain FrameState JVM frame state} as a multi line string.
+     */
+    private String stateToString(CiCodePos codePos, CFGOperandFormatter operandFmt) {
+        if (codePos == null) {
+            return null;
+        }
+
+        StringBuilder buf = new StringBuilder();
+
+        do {
+            buf.append(CiUtil.toLocation(codePos.method, codePos.bci));
+            buf.append('\n');
+            if (codePos instanceof Frame) {
+                Frame frame = (Frame) codePos;
+                if (frame.numStack > 0) {
+                    int i = 0;
+                    buf.append("stack: ");
+                    while (i < frame.numStack) {
+                        if (i == 0) {
+                            buf.append(' ');
+                        }
+                        CiValue value = frame.getStackValue(i);
+                        buf.append(stateValueToString(value, operandFmt)).append(' ');
+                        i++;
+                    }
+                    buf.append("\n");
+                }
+
+                if (frame.numLocks > 0) {
+                    buf.append("locks: ");
+                    for (int i = 0; i < frame.numLocks; ++i) {
+                        if (i == 0) {
+                            buf.append(' ');
+                        }
+                        CiValue value = frame.getLockValue(i);
+                        buf.append(stateValueToString(value, operandFmt)).append(' ');
+                    }
+                    buf.append("\n");
+                }
+
+                buf.append("locals: ");
+                int i = 0;
+                while (i < frame.numLocals) {
+                    if (i == 0) {
+                        buf.append(' ');
+                    }
+                    CiValue value = frame.getLocalValue(i);
+                    buf.append(stateValueToString(value, operandFmt)).append(' ');
+                    i++;
+                }
+                buf.append("\n");
+            }
+            codePos = codePos.caller;
+        } while (codePos != null);
+        return buf.toString();
+    }
+
     /**
      * Prints the HIR for each instruction in a given block.
      *
@@ -419,7 +519,13 @@ public class CFGPrinter {
                 if (inst.info != null) {
                     int level = out.indentationLevel();
                     out.adjustIndentation(-level);
-                    String state = stateToString(inst.info.state, new CFGOperandFormatter(false));
+                    String state;
+                    if (inst.info.debugInfo != null) {
+                        // Use register-allocator output if available
+                        state = debugInfoToString(inst.info.debugInfo, new CFGOperandFormatter(false));
+                    } else {
+                        state = stateToString(inst.info.state, new CFGOperandFormatter(false));
+                    }
                     if (state != null) {
                         out.print(" st ").print(HOVER_START).print("st").print(HOVER_SEP).print(state).print(HOVER_END).print(COLUMN_END);
                     }

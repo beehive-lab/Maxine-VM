@@ -20,7 +20,12 @@
  */
 package com.sun.max.vm.stack;
 
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import java.util.concurrent.atomic.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -28,7 +33,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.refmaps.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
@@ -68,6 +72,33 @@ import com.sun.max.vm.thread.*;
  * @author Paul Caprioli
  */
 public final class StackReferenceMapPreparer {
+
+    /**
+     * Flag controlling tracing of stack root scanning (SRS).
+     */
+    private static boolean TraceSRS;
+
+    /**
+     * Disables -XX:+TraceStackRootScanning if greater than 0.
+     */
+    private static int TraceSRSSuppressionCount;
+
+    /**
+     * A counter used purely for {@link #TraceSRSSuppressionCount}.
+     */
+    private static AtomicInteger SRSCount = new AtomicInteger();
+
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceSRS", "Trace stack root scanning.");
+        VMOptions.addFieldOption("-XX:", "TraceSRSSuppressionCount", "Disable tracing of the first n stack root scans.");
+    }
+
+    /**
+     * Determines if stack root scanning should be traced.
+     */
+    public static boolean traceStackRootScanning() {
+        return Heap.traceRootScanning() || (TraceSRS && TraceSRSSuppressionCount <= 0);
+    }
 
     public static boolean VerifyRefMaps;
     static {
@@ -141,7 +172,7 @@ public final class StackReferenceMapPreparer {
                 referenceMap.writeByte(refMapByteIndex, (byte) 0);
             }
         }
-        if (Heap.traceRootScanning()) {
+        if (traceStackRootScanning()) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.print("Cleared refmap indexes [");
             Log.print(lowestBitIndex);
@@ -190,7 +221,7 @@ public final class StackReferenceMapPreparer {
             for (int bitIndex = startBit; bitIndex < endBit; bitIndex++) {
                 if (((refMapByte >>> bitIndex) & 1) != 0) {
                     int stackWordIndex = baseIndex + bitIndex;
-                    if (Heap.traceRootScanning()) {
+                    if (traceStackRootScanning()) {
                         Log.print("    Slot: ");
                         printSlot(stackWordIndex, tla, Pointer.zero());
                         Log.println();
@@ -324,10 +355,37 @@ public final class StackReferenceMapPreparer {
         // clear the reference map covering the stack contents
         clearReferenceMapRange(tla, stackPointer, highestStackSlot);
 
-        boolean lockDisabledSafepoints = false;
-        if (Heap.traceRootScanning()) {
-            lockDisabledSafepoints = Log.lock(); // Note: This lock serializes stack reference map preparation
-            Log.print(prepare ? "Preparing" : "Verifying");
+        boolean lockDisabledSafepoints = traceStackRootScanStart(stackPointer, highestStackSlot, vmThread);
+
+        // walk the stack and prepare references for each stack frame
+        StackFrameWalker stackFrameWalker = vmThread.unwindingOrReferenceMapPreparingStackFrameWalker();
+        stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
+
+        traceStackRootScanEnd(lockDisabledSafepoints);
+
+        timer.stop();
+        preparationTime = timer.getLastElapsedTime();
+        return preparationTime;
+    }
+
+    private void traceStackRootScanEnd(boolean lockDisabledSafepoints) {
+        if (traceStackRootScanning()) {
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    private boolean traceStackRootScanStart(Pointer stackPointer, Pointer highestStackSlot, VmThread vmThread) {
+        // Ideally this test and decrement should be atomic but it's ok
+        // for TraceSRSSuppressionCount to be approximate
+        if (TraceSRSSuppressionCount > 0) {
+            TraceSRSSuppressionCount--;
+        }
+        SRSCount.incrementAndGet();
+        if (traceStackRootScanning()) {
+            boolean lockDisabledSafepoints = Log.lock(); // Note: This lock serializes stack reference map preparation
+            Log.print('[');
+            Log.print(SRSCount.get());
+            Log.print(prepare ? "] Preparing" : "] Verifying");
             Log.print(" stack reference map for thread ");
             Log.printThread(vmThread, false);
             Log.println(":");
@@ -348,18 +406,9 @@ public final class StackReferenceMapPreparer {
             Log.println("]");
             Log.print("  Current thread is ");
             Log.printCurrentThread(true);
+            return lockDisabledSafepoints;
         }
-
-        // walk the stack and prepare references for each stack frame
-        StackFrameWalker stackFrameWalker = vmThread.unwindingOrReferenceMapPreparingStackFrameWalker();
-        stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
-
-        if (Heap.traceRootScanning()) {
-            Log.unlock(lockDisabledSafepoints);
-        }
-        timer.stop();
-        preparationTime = timer.getLastElapsedTime();
-        return preparationTime;
+        return false;
     }
 
     private void initRefMapFields(Pointer tla) {
@@ -401,7 +450,7 @@ public final class StackReferenceMapPreparer {
         clearReferenceMapRange(tla, stackPointer, highestSlot.minus(Word.size()));
 
         boolean lockDisabledSafepoints = false;
-        if (Heap.traceRootScanning()) {
+        if (traceStackRootScanning()) {
             lockDisabledSafepoints = Log.lock(); // Note: This lock basically serializes stack reference map preparation
             Log.print("Completing preparation of stack reference map for thread ");
             Log.printThread(vmThread, false);
@@ -431,9 +480,7 @@ public final class StackReferenceMapPreparer {
         stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
         completingReferenceMap = false;
 
-        if (Heap.traceRootScanning()) {
-            Log.unlock(lockDisabledSafepoints);
-        }
+        traceStackRootScanEnd(lockDisabledSafepoints);
         timer.stop();
         preparationTime += timer.getLastElapsedTime();
     }
@@ -458,7 +505,7 @@ public final class StackReferenceMapPreparer {
             // This is a thread that has returned from VmThread.run() but has not
             // yet been terminated via a call to VmThread.detach(). In this state,
             // it has no Java stack frames that need scanning.
-            if (Heap.traceRootScanning()) {
+            if (traceStackRootScanning()) {
                 boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Empty stack reference map for thread ");
                 Log.printThread(VmThread.fromTLA(tla), true);
@@ -484,11 +531,10 @@ public final class StackReferenceMapPreparer {
      * @param trapState the trap state
      */
     public void prepareStackReferenceMapFromTrap(Pointer tla, Pointer trapState) {
-        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-        final Pointer instructionPointer = trapStateAccess.getInstructionPointer(trapState);
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        final Pointer stackPointer = trapStateAccess.getStackPointer(trapState, targetMethod);
-        final Pointer framePointer = trapStateAccess.getFramePointer(trapState, targetMethod);
+        final TrapStateAccess trapStateAccess = vm().trapStateAccess;
+        final Pointer instructionPointer = trapStateAccess.getPC(trapState);
+        final Pointer stackPointer = trapStateAccess.getSP(trapState);
+        final Pointer framePointer = trapStateAccess.getFP(trapState);
         prepareStackReferenceMap(tla, instructionPointer, stackPointer, framePointer, false);
     }
 
@@ -515,7 +561,7 @@ public final class StackReferenceMapPreparer {
 
 
     public void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex, Pointer refmapFramePointer, String label) {
-        if (Heap.traceRootScanning()) {
+        if (traceStackRootScanning()) {
             Log.print(prepare ? "  Preparing" : "  Verifying");
             Log.print(" reference map for ");
             Log.print(label);
@@ -542,7 +588,7 @@ public final class StackReferenceMapPreparer {
      * @param referenceMapLabel a label indicating whether this reference map is for a frame or for the registers
      */
     public void traceReferenceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel) {
-        if (Heap.traceRootScanning()) {
+        if (traceStackRootScanning()) {
             Log.print("    ");
             Log.print(referenceMapLabel);
             Log.print(" map byte index: ");
@@ -564,7 +610,7 @@ public final class StackReferenceMapPreparer {
      * @param referenceMapByte a the reference map byte
      */
     public void traceReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, final byte referenceMapByte) {
-        if (Heap.traceRootScanning()) {
+        if (traceStackRootScanning()) {
             for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
                 if (((referenceMapByte >>> bitIndex) & 1) != 0) {
                     final int slotIndex = baseSlotIndex + bitIndex;
@@ -598,7 +644,7 @@ public final class StackReferenceMapPreparer {
      * @param numBits the number of bits in the reference map
      */
     public void setReferenceMapBits(Cursor cursor, Pointer slotPointer, int refMap, int numBits) {
-        if (Heap.traceRootScanning()) {
+        if (traceStackRootScanning()) {
             boolean lockDisabledSafepoints = Log.lock();
             Log.print("    setReferenceMapBits: sp = ");
             Log.print(cursor.sp());
@@ -633,7 +679,7 @@ public final class StackReferenceMapPreparer {
                 if (((refMap >> i) & 1) == 1) {
                     Reference ref = slotPointer.getReference(i);
                     if (Heap.isValidRef(ref)) {
-                        if (Heap.traceRootScanning()) {
+                        if (traceStackRootScanning()) {
                             printRef(ref, cursor, slotPointer, i, true);
                         }
                     } else {
@@ -677,7 +723,10 @@ public final class StackReferenceMapPreparer {
     @NEVER_INLINE
     private void invalidRef(Reference ref, Cursor cursor, Pointer slotPointer, int slotIndex) {
         printRef(ref, cursor, slotPointer, slotIndex, false);
-        Throw.StackFrameDumper.dumpFrame("invalid ref ### ", cursor.targetMethod(), cursor.ip(), false);
+        Log.print("invalid ref ### [SRSCount: ");
+        Log.print(SRSCount.get());
+        Log.print("] ");
+        Throw.StackFrameDumper.dumpFrame(null, cursor.targetMethod(), cursor.ip(), false);
         throw FatalError.unexpected("invalid ref");
     }
 
@@ -699,8 +748,12 @@ public final class StackReferenceMapPreparer {
     }
 
     private void verifyReferenceMaps(VmThread current) {
-        initRefMapFields(current.tla());
-        current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), this);
+        Pointer tla = current.tla();
+        initRefMapFields(tla);
+        Pointer sp = getCpuStackPointer();
+        Pointer fp = getCpuFramePointer();
+        boolean lockDisabledSafepoints = traceStackRootScanStart(sp, HIGHEST_STACK_SLOT_ADDRESS.load(tla), VmThread.current());
+        current.stackDumpStackFrameWalker().verifyReferenceMap(Pointer.fromLong(here()), sp, fp, this);
+        traceStackRootScanEnd(lockDisabledSafepoints);
     }
-
 }

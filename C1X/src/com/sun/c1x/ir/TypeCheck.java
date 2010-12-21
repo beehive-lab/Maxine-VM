@@ -47,7 +47,6 @@ public abstract class TypeCheck extends StateSplit {
         this.targetClass = targetClass;
         this.targetClassInstruction = targetClassInstruction;
         this.object = object;
-        this.stateBefore = stateBefore;
     }
 
     /**
@@ -80,11 +79,6 @@ public abstract class TypeCheck extends StateSplit {
      */
     @Override
     public boolean canTrap() {
-        return true;
-    }
-
-    @Override
-    public boolean internalClearNullCheck() {
         return true;
     }
 

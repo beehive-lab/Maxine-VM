@@ -21,18 +21,16 @@
 package com.sun.max.vm.cps.jit;
 
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.jit.amd64.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.jit.*;
-import com.sun.max.vm.template.*;
-import com.sun.max.vm.template.source.*;
+import com.sun.max.vm.cps.template.*;
+import com.sun.max.vm.cps.template.source.*;
 
 /**
  * Target code generator based on template. The code generator uses a simple bytecode to target translator that produces code by merely
@@ -93,9 +91,6 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
 
         codeGenerator.emitEpilogue();
 
-        // FIXME: clean this up
-        ((BytecodeToAMD64TargetTranslator) codeGenerator).printExtraNopsStatistics();
-
         // Produce target method
         final Object[] referenceLiterals = codeGenerator.packReferenceLiterals();
         codeGenerator.buildExceptionHandlingInfo();
@@ -114,15 +109,13 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         null, // java frame descriptors
                         null, // no scalar literals ever
                         referenceLiterals,
-                        codeGenerator.codeBuffer,
+                        codeGenerator.codeBuffer.buffer(),
                         codeGenerator.targetABI());
 
         if (!MaxineVM.isHosted()) {
             // at target runtime, each method gets linked individually right after generating it:
             targetMethod.linkDirectCalls(adapter);
         }
-
-        CompilationScheme.Inspect.notifyCompilationComplete(targetMethod);
     }
 }
 

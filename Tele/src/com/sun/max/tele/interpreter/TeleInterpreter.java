@@ -32,6 +32,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -43,7 +44,6 @@ import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -182,7 +182,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                             int bcp = Integer.parseInt(instruction.substring(0, colonIndex));
                             bcpToTrace.put(bcp, instruction);
                         } catch (NumberFormatException numberFormatException) {
-                            ProgramWarning.message("instruction trace does not start with expected '<bcp>:': " + instruction);
+                            TeleWarning.message("instruction trace does not start with expected '<bcp>:': " + instruction);
                         }
                     }
                 }
@@ -1297,7 +1297,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                     case PWRITE_LONG_I:
                     case PWRITE_DOUBLE_I:
                     case PWRITE_WORD_I:
-                    case PWRITE_REFERENCE_I:     throw FatalError.unexpected("Cannot interpret pointer writes remotely");
+                    case PWRITE_REFERENCE_I:     throw TeleError.unexpected("Cannot interpret pointer writes remotely");
                     case PGET_BYTE:              pointerGet(Kind.BYTE); break;
                     case PGET_CHAR:              pointerGet(Kind.CHAR); break;
                     case PGET_SHORT:             pointerGet(Kind.SHORT); break;
@@ -1320,7 +1320,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                     case PCMPSWP_REFERENCE:
                     case PCMPSWP_INT_I:
                     case PCMPSWP_WORD_I:
-                    case PCMPSWP_REFERENCE_I:    throw FatalError.unexpected("Cannot interpret pointer writes remotely");
+                    case PCMPSWP_REFERENCE_I:    throw TeleError.unexpected("Cannot interpret pointer writes remotely");
                     default:                     machine.raiseException(new ClassFormatError("Unsupported bytecode: " + opcode + " [" + Bytecodes.nameOf(opcode) + "]"));
                 }
                 break;
@@ -1329,7 +1329,6 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
             case MOV_F2I:                machine.skipBytes(2); push(IntValue.from(Float.floatToRawIntBits(pop().asFloat()))); break;
             case MOV_L2D:                machine.skipBytes(2); push(DoubleValue.from(Double.longBitsToDouble(pop().asLong()))); break;
             case MOV_D2L:                machine.skipBytes(2); push(LongValue.from(Double.doubleToRawLongBits(pop().asDouble()))); break;
-            case SAFEPOINT:              machine.skipBytes(2); break;
             case PAUSE:                  machine.skipBytes(2); break;
             case FLUSHW:                 machine.skipBytes(2); break;
             case LSB:                    machine.skipBytes(2); push(minus1IfWordWidth(Long.numberOfTrailingZeros((pop().asLong())))); break;

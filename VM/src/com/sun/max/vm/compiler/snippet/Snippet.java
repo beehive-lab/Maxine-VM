@@ -69,10 +69,13 @@ public abstract class Snippet extends Routine {
 
     @HOSTED_ONLY
     public static void register() {
-        for (Snippet snippet : snippets) {
-            final MethodActor  foldingMethodActor = snippet.executable;
-            if (foldingMethodActor != null) {
-                MaxineVM.registerImageInvocationStub(foldingMethodActor);
+        if (CPSCompiler.Static.compiler() != null) {
+            // Only the CPS compiler needs to fold snippets while compiling
+            for (Snippet snippet : snippets) {
+                final MethodActor  foldingMethodActor = snippet.executable;
+                if (foldingMethodActor != null) {
+                    MaxineVM.registerImageInvocationStub(foldingMethodActor);
+                }
             }
         }
     }

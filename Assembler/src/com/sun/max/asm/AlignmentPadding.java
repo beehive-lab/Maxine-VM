@@ -30,10 +30,11 @@ package com.sun.max.asm;
  */
 public abstract class AlignmentPadding extends MutableAssembledObject {
 
-    public AlignmentPadding(Assembler assembler, int startPosition, int endPosition, int alignment, int requiredSpace, byte padByte) {
+    public AlignmentPadding(Assembler assembler, int startPosition, int endPosition, int alignment, int alignmentStart, int requiredSpace, byte padByte) {
         super(assembler, startPosition, endPosition);
         this.alignment = alignment;
         this.padByte = padByte;
+        this.alignmentStart = alignmentStart;
         this.maxMisalignment = alignment - requiredSpace;
         assembler.addAlignmentPadding(this);
     }
@@ -52,6 +53,8 @@ public abstract class AlignmentPadding extends MutableAssembledObject {
      */
     private final int maxMisalignment;
 
+    private final int alignmentStart;
+
     private final byte padByte;
 
     public void updatePadding() {
@@ -63,7 +66,7 @@ public abstract class AlignmentPadding extends MutableAssembledObject {
 
     @Override
     protected void assemble() throws AssemblyException {
-        for (int i = 0; i < size(); i++) {
+        for (int i = alignmentStart; i < size(); i++) {
             assembler().emitByte(padByte);
         }
     }

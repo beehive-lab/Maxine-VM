@@ -20,20 +20,22 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.max.vm.VMOptions.*;
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.ArrayGetSnippet.*;
+import com.sun.max.vm.compiler.snippet.ArrayGetSnippet.ReadLength;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -45,15 +47,24 @@ public final class Throw {
     private Throw() {
     }
 
-    public static VMStringOption traceTheseExceptionsOption = register(new VMStringOption("-XX:TraceTheseExceptions=", false, null,
-        "Report a stack trace for every exception thrown whose class name contains <value> " +
-        "(or does not contain <value> if <value> starts with '!'), " +
-        "regardless of whether the exception is caught or uncaught."), MaxineVM.Phase.PRISTINE);
-    public static VMBooleanXXOption traceExceptionsOption = register(new VMBooleanXXOption("-XX:-TraceExceptions",
-        "Report a stack trace for every exception thrown, regardless of whether the exception is " +
-        "caught or uncaught."), MaxineVM.Phase.PRISTINE);
-    public static VMBooleanXXOption scanStackOnFatalError = register(new VMBooleanXXOption("-XX:-ScanStackOnFatalError",
-        "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
+    private static boolean TraceExceptions;
+    private static boolean TraceExceptionsRaw;
+    private static String TraceTheseExceptions;
+    public static boolean ScanStackOnFatalError;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceExceptions", Throw.class,
+            "Report a stack trace for every exception thrown, regardless of whether the exception is " +
+            "caught or uncaught.", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "TraceExceptionsRaw", Throw.class,
+            "Report a raw stack trace for every exception thrown, regardless of whether the exception is " +
+            "caught or uncaught.", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "TraceTheseExceptions", Throw.class,
+            "Report a stack trace for every exception thrown whose class name contains <value> " +
+            "(or does not contain <value> if <value> starts with '!'), " +
+            "regardless of whether the exception is caught or uncaught.", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "ScanStackOnFatalError", Throw.class,
+            "Perform a raw stack scan when a fatal VM occurs.", Phase.PRISTINE);
+    }
 
     public static class StackFrameDumper extends RawStackFrameVisitor {
         @Override
@@ -66,7 +77,9 @@ public final class Throw {
         }
 
         public static void dumpFrame(String prefix, TargetMethod targetMethod, Pointer ip, boolean isTopFrame) {
-            Log.print(prefix);
+            if (prefix != null) {
+                Log.print(prefix);
+            }
             if (targetMethod != null) {
                 final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
@@ -156,11 +169,14 @@ public final class Throw {
             FatalError.unexpected("exception thrown while raising another exception");
         }
 
-        if (traceExceptionsOption.getValue()) {
-            stackDumpWithException(throwable);
+        if (TraceExceptions) {
             throwable.printStackTrace(Log.out);
-        } else {
-            String filter = traceTheseExceptionsOption.getValue();
+        }
+        if (TraceExceptionsRaw) {
+            stackDumpWithException(throwable);
+        }
+        if (!TraceExceptions && !TraceExceptionsRaw && TraceTheseExceptions != null) {
+            String filter = TraceTheseExceptions;
             if (filter != null) {
                 boolean match = false;
                 if (filter.startsWith("!")) {
@@ -175,12 +191,12 @@ public final class Throw {
             }
         }
         Safepoint.disable();
-        raise(throwable, VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer());
+        raise(throwable, getCpuStackPointer(), getCpuFramePointer(), Pointer.fromLong(here()));
     }
     // Checkstyle: resume
 
     public static void stackDumpWithException(Object throwable) {
-        stackDump("Throwing " + throwable + ";", VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
+        stackDump("Throwing " + throwable + ";", Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
     }
 
     /**
@@ -249,7 +265,7 @@ public final class Throw {
         if (message != null) {
             Log.println(message);
         }
-        VmThread.current().stackDumpStackFrameWalker().inspect(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), stackFrameDumper);
+        VmThread.current().stackDumpStackFrameWalker().inspect(Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer(), stackFrameDumper);
     }
 
     /**
@@ -276,7 +292,7 @@ public final class Throw {
                 Log.print(" [");
                 Log.print(codeStart);
                 Log.print("+");
-                Log.print(pointer.minus(codeStart).toInt());
+                Log.print(potentialCodePointer.minus(codeStart).toInt());
                 Log.println("]");
 
             }

@@ -21,6 +21,7 @@
 package com.sun.c1x.target.amd64;
 
 import static com.sun.c1x.target.amd64.AMD64.*;
+import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
@@ -260,6 +261,15 @@ public class AMD64Assembler extends AbstractAssembler {
                 emitByte(0x04 | regenc);
                 emitByte(scale.log2 << 6 | indexenc | 0x05);
                 emitInt(disp);
+            } else if (base == CiRegister.InstructionRelative) {
+                // Adjust disp which is currently relative to the start of the instruction
+                int instrStart = codeBuffer.mark();
+                assert instrStart >= 0;
+                int instrSize = (codeBuffer.position() - instrStart) + 5;
+                disp = disp - instrSize;
+                // [00 000 101] disp32
+                emitByte(0x05 | regenc);
+                emitInt(disp);
             } else if (addr == CiAddress.Placeholder) {
                 // [00 000 101] disp32
                 emitByte(0x05 | regenc);
@@ -436,29 +446,29 @@ public class AMD64Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void bsfl(CiRegister dst, CiRegister src) {
-        int encode = prefixAndEncode(dst.encoding, src.encoding);
+    public final void bsfq(CiRegister dst, CiRegister src) {
+        int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBC);
         emitByte(0xC0 | encode);
     }
 
-    public final void bsfl(CiRegister dst, CiAddress src) {
-        prefix(src, dst);
+    public final void bsfq(CiRegister dst, CiAddress src) {
+        prefixq(src, dst);
         emitByte(0xBC);
         emitOperand(dst, src);
     }
 
-    public final void bsrl(CiRegister dst, CiRegister src) {
-        int encode = prefixAndEncode(dst.encoding, src.encoding);
+    public final void bsrq(CiRegister dst, CiRegister src) {
+        int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBD);
         emitByte(0xC0 | encode);
     }
 
 
-    public final void bsrl(CiRegister dst, CiAddress src) {
-        prefix(src, dst);
+    public final void bsrq(CiRegister dst, CiAddress src) {
+        prefixq(src, dst);
         emitByte(0xBD);
         emitOperand(dst, src);
     }
@@ -876,6 +886,16 @@ public class AMD64Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
+    public final void enter(int imm16, int imm8) {
+        emitByte(0xC8);
+        emitShort(imm16);
+        emitByte(imm8);
+    }
+
+    public final void leave() {
+        emitByte(0xC9);
+    }
+
     public final void lock() {
         if ((C1XOptions.Atomics & 1) != 0) {
             // Emit either nothing, a NOP, or a NOP: prefix
@@ -1090,8 +1110,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void movq(CiRegister dst, CiAddress src) {
         if (dst.isFpu()) {
-            assert dst.isFpu();
-                emitByte(0xF3);
+            emitByte(0xF3);
             prefixq(src, dst);
             emitByte(0x0F);
             emitByte(0x7E);
@@ -1111,8 +1130,6 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void movq(CiAddress dst, CiRegister src) {
         if (src.isFpu()) {
-            assert src.isFpu();
-
             emitByte(0x66);
             prefixq(dst, src);
             emitByte(0x0F);
@@ -1209,10 +1226,23 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
+    public final void movsxw(CiRegister dst, CiAddress src) { // movsxw
+        prefix(src, dst);
+        emitByte(0x0F);
+        emitByte(0xBF);
+        emitOperand(dst, src);
+    }
+
     public final void movzxd(CiRegister dst, CiRegister src) { // movzxd
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x63);
         emitByte(0xC0 | encode);
+    }
+
+    public final void movzxd(CiRegister dst, CiAddress src) { // movzxd
+        prefix(src, dst);
+        emitByte(0x63);
+        emitOperand(dst, src);
     }
 
     public final void movw(CiAddress dst, int imm16) {
@@ -2357,13 +2387,6 @@ public class AMD64Assembler extends AbstractAssembler {
         emitArith(0x23, 0xC0, dst, src);
     }
 
-    public final void bsfq(CiRegister dst, CiRegister src) {
-        int encode = prefixqAndEncode(dst.encoding, src.encoding);
-        emitByte(0x0F);
-        emitByte(0xBC);
-        emitByte(0xC0 | encode);
-    }
-
     public final void bswapq(CiRegister reg) {
         int encode = prefixqAndEncode(reg.encoding);
         emitByte(0x0F);
@@ -2878,23 +2901,13 @@ public class AMD64Assembler extends AbstractAssembler {
 
     }
 
-    enum MembarMaskBits {
-
-        LoadLoad, StoreLoad, LoadStore, StoreStore;
-
-        public int mask() {
-            return 1 << this.ordinal();
-        }
-    }
-
-    // Serializes memory and blows flags
-    public final void membar(int orderConstraint) {
+    public final void membar(int barriers) {
         if (target.isMP) {
             // We only have to handle StoreLoad
-            if ((orderConstraint & MembarMaskBits.StoreLoad.mask()) != 0) {
+            if ((barriers & STORE_LOAD) != 0) {
                 // All usable chips support "locked" instructions which suffice
                 // as barriers, and are much faster than the alternative of
-                // using cpuid instruction. We use here a locked add [esp],0.
+                // using cpuid instruction. We use here a locked add [rsp],0.
                 // This is conveniently otherwise a no-op except for blowing
                 // flags.
                 // Any change to this code may need to revisit other places in

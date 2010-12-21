@@ -24,6 +24,7 @@ import java.lang.management.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
@@ -93,7 +94,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
             final long sizeAsLong = this.regionSize.toLong();
             this.memoryUsage = new MemoryUsage(-1, sizeAsLong, sizeAsLong, -1);
         } catch (DataIOError dataIOError) {
-            ProgramWarning.message("TeleRuntimeMemoryRegion dataIOError:");
+            TeleWarning.message("TeleRuntimeMemoryRegion dataIOError:", dataIOError);
             dataIOError.printStackTrace();
             // No update; data unreadable for some reason
             // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable

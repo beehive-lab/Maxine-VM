@@ -60,6 +60,15 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
     private final Address[] cachedRoots = new Address[InspectableHeapInfo.MAX_NUMBER_OF_ROOTS];
     private final BitSet usedIndices = new BitSet();
 
+    /**
+     * Queue of pending tele roots to be cleared. Asynchronous unregistration is required
+     * given that roots can be unregistered by a call from {@link MutableTeleReference#finalize()}
+     * on the finalization thread. Clearing the entry in the remote root table requires writing
+     * to the VM which may require acquiring certain locks. All too often acquiring these
+     * locks on the finalizer thread leads to some kind of deadlock.
+     */
+    private final BitSet unregistrationQueue = new BitSet();
+
     TeleRoots(TeleReferenceScheme teleReferenceScheme) {
         super(teleReferenceScheme.vm());
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
@@ -101,12 +110,28 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
     }
 
     /**
-     * Remove a VM location from the VM's Tele root table.
+     * Clears the entries in the VM's Tele root table that were submitted by {@link #unregister(int)}.
+     */
+    public void flushUnregisteredRoots() {
+        synchronized (unregistrationQueue) {
+            for (int index = unregistrationQueue.nextSetBit(0); index >= 0; index = unregistrationQueue.nextSetBit(index + 1)) {
+                WordArray.set(cachedRoots, index, Address.zero());
+                usedIndices.clear(index);
+                teleRootsReference().setWord(0, index, Word.zero());
+            }
+            usedIndices.andNot(unregistrationQueue);
+            unregistrationQueue.clear();
+        }
+    }
+
+    /**
+     * Notifies this object that an entry should be cleared in the VM's Tele root table.
+     * The clearing does not actually occur until {@link #flushUnregisteredRoots()} is called.
      */
     void unregister(int index) {
-        WordArray.set(cachedRoots, index, Address.zero());
-        usedIndices.clear(index);
-        teleRootsReference().setWord(0, index, Word.zero());
+        synchronized (unregistrationQueue) {
+            unregistrationQueue.set(index);
+        }
     }
 
     /**

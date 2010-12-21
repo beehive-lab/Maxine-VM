@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.thread;
 
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
+import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import static com.sun.max.vm.thread.VmThread.*;
 
 import java.lang.reflect.*;
@@ -439,9 +442,9 @@ public class VmThreadLocal {
     @NEVER_INLINE
     public static long prepareCurrentStackReferenceMap() {
         return VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentTLA(),
-                                                                                VMRegister.getInstructionPointer(),
-                                                                                VMRegister.getAbiStackPointer(),
-                                                                                VMRegister.getAbiFramePointer(), true);
+                                                                                Pointer.fromLong(here()),
+                                                                                getAbiStackPointer(),
+                                                                                getAbiFramePointer(), true);
     }
 
     /**
@@ -455,7 +458,7 @@ public class VmThreadLocal {
         Pointer dtla = DTLA.load(tla);
         Pointer ttla = TTLA.load(tla);
 
-        if (Heap.traceRootScanning()) {
+        if (traceStackRootScanning()) {
             Log.println("  Thread locals:");
         }
         int index = 0;
@@ -465,7 +468,7 @@ public class VmThreadLocal {
                 wordPointerIndexVisitor.visit(etla, index);
                 wordPointerIndexVisitor.visit(dtla, index);
                 wordPointerIndexVisitor.visit(ttla, index);
-                if (Heap.traceRootScanning()) {
+                if (traceStackRootScanning()) {
                     traceReferenceThreadLocal(etla, index, " (enabled)");
                     traceReferenceThreadLocal(dtla, index, " (disabled)");
                     traceReferenceThreadLocal(ttla, index, " (triggered)");
@@ -500,9 +503,10 @@ public class VmThreadLocal {
         boolean isVmOperationThread = thread.isVmOperationThread();
 
         // Note: as a side effect, this lock serializes stack reference map scanning
-        boolean lockDisabledSafepoints = Heap.traceRootScanning() && Log.lock();
+        boolean tracing = traceStackRootScanning();
+        boolean lockDisabledSafepoints = tracing && Log.lock();
 
-        if (Heap.traceRootScanning()) {
+        if (tracing) {
             Log.print("Scanning thread locals and stack for thread ");
             Log.printThread(thread, false);
             Log.println(":");
@@ -528,7 +532,7 @@ public class VmThreadLocal {
                 Throw.stackDump("Stack trace for thread:", JavaFrameAnchor.PC.get(anchor), lastJavaCallerStackPointer, JavaFrameAnchor.FP.get(anchor));
                 FatalError.unexpected("Stack reference map does not cover all active slots");
             }
-            if (Heap.traceRootScanning()) {
+            if (tracing) {
                 Log.print("  Highest slot: ");
                 Log.println(highestSlot);
                 Log.print("  Lowest active slot: ");
@@ -538,12 +542,12 @@ public class VmThreadLocal {
             }
             StackReferenceMapPreparer.scanReferenceMapRange(tla, lowestActiveSlot, highestSlot, wordPointerIndexVisitor);
         } else {
-            if (Heap.traceRootScanning()) {
+            if (tracing) {
                 Log.println("No Java stack frames");
             }
         }
 
-        if (Heap.traceRootScanning()) {
+        if (tracing) {
             Log.unlock(lockDisabledSafepoints);
         }
     }

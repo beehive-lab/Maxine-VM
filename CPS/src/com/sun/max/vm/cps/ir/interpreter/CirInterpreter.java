@@ -22,10 +22,11 @@ package com.sun.max.vm.cps.ir.interpreter;
 
 import java.lang.reflect.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.optimize.*;
@@ -71,7 +72,15 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
             }
         }
         try {
-            return cirBuiltin.fold(cirOptimizer, cirArguments);
+            CirCall result = cirBuiltin.fold(cirOptimizer, cirArguments);
+            if (builtin == InfopointBuiltin.BUILTIN) {
+                assert result.arguments().length == 1;
+                int opcode = cirArguments[0].value().asInt();
+                if (opcode != Bytecodes.HERE) {
+                    result.setArguments(CirCall.NO_ARGUMENTS);
+                }
+            }
+            return result;
         } catch (CirFoldingException cirFoldingException) {
             return CirFoldable.Static.createExceptionCall(cirFoldingException.getCause(), cirArguments);
         }
@@ -97,7 +106,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                 try {
                     call = method.fold(cirOptimizer, arguments);
                 } catch (CirFoldingException cirFoldingException) {
-                    ExceptionDispatcher.INTERPRETER_EXCEPTION.set(cirFoldingException.getCause());
+                    CPSAbstractCompiler.INTERPRETER_EXCEPTION.set(cirFoldingException.getCause());
                     call = CirFoldable.Static.createExceptionCall(cirFoldingException.getCause(), arguments);
                 }
             } else if (procedure instanceof CirBuiltin) {
@@ -115,7 +124,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                 if (procedure instanceof CirExceptionContinuationParameter) {
                     assert arguments.length == 1;
                     final CirConstant throwable = (CirConstant) arguments[0];
-                    ExceptionDispatcher.INTERPRETER_EXCEPTION.set(null);
+                    CPSAbstractCompiler.INTERPRETER_EXCEPTION.set(null);
                     throw new InvocationTargetException((Throwable) throwable.value().asObject());
                 }
                 ProgramError.unexpected("call to variable other than continuation parameter: " + procedure);

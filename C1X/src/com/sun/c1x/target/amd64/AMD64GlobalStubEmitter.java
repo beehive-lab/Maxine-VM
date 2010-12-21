@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.c1x.C1XCompilation.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 
 import java.util.*;
@@ -72,7 +71,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void reset(CiKind resultKind, CiKind[] argTypes) {
-        asm = new AMD64MacroAssembler(compiler, compiler.globalStubRegisterConfig);
+        asm = new AMD64MacroAssembler.WithCompiler(compiler, compiler.globalStubRegisterConfig);
         saveSize = 0;
         argsSize = 0;
         argOffsets = new int[argTypes.length];
@@ -156,11 +155,11 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public GlobalStub emit(XirTemplate template, RiRuntime runtime) {
-        C1XCompilation compilation = setCurrent(new C1XCompilation(compiler, null, -1));
+        C1XCompilation compilation = new C1XCompilation(compiler, null, -1);
         try {
             return emit(template, compilation);
         } finally {
-            setCurrent(null);
+            compilation.close();
         }
     }
 
@@ -384,7 +383,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         }
         asm.subq(AMD64.rsp, frameSize());
         asm.setFrameSize(frameSize());
-        int frameToCSA = frameSize() - saveSize;
+        int frameToCSA = 0;
         asm.save(csa, frameToCSA);
         this.savedAllRegisters = true;
     }
@@ -395,7 +394,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
         if (savedAllRegisters) {
             CiCalleeSaveArea csa = compiler.globalStubRegisterConfig.getCalleeSaveArea();
-            int frameToCSA = frameSize() - csa.size;
+            int frameToCSA = 0;
             asm.restore(csa, frameToCSA);
         } else {
             // saved only select registers

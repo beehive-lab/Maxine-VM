@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 
@@ -29,7 +29,7 @@ import com.sun.max.vm.heap.*;
  *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         registerScheme(HeapScheme.class, SemiSpaceHeapScheme.class);
     }

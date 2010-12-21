@@ -22,6 +22,7 @@ package com.sun.c1x.target.amd64;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
+import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.cri.ci.CiValue.*;
 import static java.lang.Double.*;
 import static java.lang.Float.*;
@@ -94,13 +95,13 @@ public class AMD64LIRAssembler extends LIRAssembler {
         masm.ret(0);
     }
 
-    /**
-     * Emits an instruction which assigns the address of the immediately succeeding instruction into {@code dst}.
-     * This satisfies the requirements for correctly translating the {@link LoadPC} HIR instruction.
-     */
     @Override
-    protected void emitReadPC(CiValue dst) {
-        masm.leaq(dst.asRegister(), CiAddress.Placeholder);
+    protected void emitHere(CiValue dst, LIRDebugInfo info, boolean infoOnly) {
+        masm.recordSafepoint(codePos(), info);
+        if (!infoOnly) {
+            masm.codeBuffer.mark();
+            masm.leaq(dst.asRegister(), new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+        }
     }
 
     @Override
@@ -216,6 +217,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
             case Short   :
             case Jsr     :
             case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
+            case Jsr     : masm.movl(frameMap.toStackAddress(slot), c.asJsr()); break;
             case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
             case Object  : masm.movoop(frameMap.toStackAddress(slot), CiConstant.forObject(c.asObject())); break;
             case Long    : masm.movptr(frameMap.toStackAddress(slot), c.asLong()); break;
@@ -1328,24 +1330,25 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitSignificantBitOp(boolean most, CiValue inOpr1, CiValue dst) {
+    protected void emitSignificantBitOp(boolean most, CiValue src, CiValue dst) {
         assert dst.isRegister();
         CiRegister result = dst.asRegister();
-        masm.xorl(result, result);
+        masm.xorq(result, result);
         masm.notq(result);
-        if (inOpr1.isRegister()) {
-            CiRegister value = inOpr1.asRegister();
+        if (src.isRegister()) {
+            CiRegister value = src.asRegister();
+            assert value != result;
             if (most) {
-                masm.bsrl(result, value);
+                masm.bsrq(result, value);
             } else {
-                masm.bsfl(result, value);
+                masm.bsfq(result, value);
             }
         } else {
-            CiAddress laddr = asAddress(inOpr1);
+            CiAddress laddr = asAddress(src);
             if (most) {
-                masm.bsrl(result, laddr);
+                masm.bsrq(result, laddr);
             } else {
-                masm.bsfl(result, laddr);
+                masm.bsfq(result, laddr);
             }
         }
     }
@@ -1426,21 +1429,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitMembar() {
-        // QQQ sparc TSO uses this,
-        masm.membar(AMD64Assembler.MembarMaskBits.StoreLoad.mask());
-    }
-
-    @Override
-    protected void emitMembarAcquire() {
-        // No x86 machines currently require load fences
-        // lir(). loadFence();
-    }
-
-    @Override
-    protected void emitMembarRelease() {
-        // No x86 machines currently require store fences
-        // lir(). storeFence();
+    protected void emitMemoryBarriers(int barriers) {
+        masm.membar(barriers);
     }
 
     @Override
@@ -1769,7 +1759,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     masm.decrementq(AMD64.rsp, frameSize); // does not emit code for frameSize == 0
                     CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
                     if (csa.size != 0) {
-                        int frameToCSA = frameSize - csa.size;
+                        int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         assert frameToCSA >= 0;
                         masm.save(csa, frameToCSA);
                     }
@@ -1781,9 +1771,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
                     if (csa.size != 0) {
                         registerRestoreEpilogueOffset = masm.codeBuffer.position();
-
                         // saved all registers, restore all registers
-                        int frameToCSA = frameSize - csa.size;
+                        int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csa, frameToCSA);
                     }
 

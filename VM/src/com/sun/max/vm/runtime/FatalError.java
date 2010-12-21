@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -157,7 +160,7 @@ public final class FatalError extends Error {
             Log.print("------ Trap State for thread ");
             Log.printThread(vmThread, false);
             Log.println(" ------");
-            TrapStateAccess.instance().logTrapState(trapState);
+            vm().trapStateAccess.logTrapState(trapState);
         }
 
         if (vmThread != null) {
@@ -170,14 +173,14 @@ public final class FatalError extends Error {
             VmThreadMap.ACTIVE.forAllThreadLocals(null, dumpStackOfNonCurrentThread);
         }
 
-        if (vmThread == null || trappedInNative || Throw.scanStackOnFatalError.getValue()) {
+        if (vmThread == null || trappedInNative || Throw.ScanStackOnFatalError) {
             final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.load(currentTLA());
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }
         Log.unlock(lockDisabledSafepoints);
         Address ip = Address.zero();
         if (trappedInNative && !trapState.isZero())  {
-            ip = TrapStateAccess.instance().getInstructionPointer(trapState);
+            ip = vm().trapStateAccess.getPC(trapState);
         }
         exit(trappedInNative, ip);
 
@@ -250,7 +253,7 @@ public final class FatalError extends Error {
         Log.printThread(vmThread, false);
         Log.println(" ------");
         if (!trappedInNative && tla == currentTLA()) {
-            Throw.stackDump(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
+            Throw.stackDump(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         } else {
             Throw.stackDump(null, tla);
         }

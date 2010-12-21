@@ -70,10 +70,7 @@ public class InvocationStubGenerator<T> {
         String className = declaringClass.getName().replace('.', '_');
         String stubName;
         if (methodName == SymbolTable.INIT) {
-            if (forSerialization) {
-                stubName = STUB_PACKAGE_PREFIX + className + "$init$" + serial;
-            }
-            stubName = STUB_PACKAGE_PREFIX + className + "$serialization_init$" + serial;
+            stubName = STUB_PACKAGE_PREFIX + className + (forSerialization ? "$serialization_init$" : "$init$") + serial;
         } else if (methodName == SymbolTable.CLINIT) {
             stubName = STUB_PACKAGE_PREFIX + className + "$clinit$" + serial;
         } else {
@@ -212,7 +209,7 @@ public class InvocationStubGenerator<T> {
                     stubClassName,
                     ClassfileReader.JAVA_1_5_VERSION,
                     (char) 0,
-                    Modifier.PUBLIC | Actor.GENERATED,
+                    Modifier.PUBLIC | Actor.REFLECTION_STUB,
                     superClassActor,
                     interfaceActors,
                     fieldActors,

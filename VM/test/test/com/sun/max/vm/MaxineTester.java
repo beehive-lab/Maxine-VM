@@ -91,6 +91,9 @@ public class MaxineTester {
     private static final Option<List<String>> jtImageConfigsOption = options.newStringListOption("jtt-image-configs",
                     MaxineTesterConfiguration.defaultJavaTesterConfigs(),
                     "The list of JTT boot image configurations to be run.");
+    private static final Option<String> listTestsOption = options.newStringOption("ls", null,
+                    "List the tests in the categories whose name contain the given value. The categories are: " +
+                    "c1x, junit, output, javatester, dacapo2006, dacapobach, specjvm98, specjvm2008");
     private static final Option<List<String>> testsOption = options.newStringListOption("tests", "c1x,junit,output,javatester",
                     "The list of test harnesses to run, which may include C1X tests (c1x), JUnit tests (junit), output tests (output), " +
                     "the JavaTester (javatester), DaCapo-2006 (dacapo2006), DaCapo-bach (dacapobach), SpecJVM98 (specjvm98) " +
@@ -145,6 +148,11 @@ public class MaxineTester {
 
             if (helpOption.getValue()) {
                 options.printHelp(System.out, 80);
+                return;
+            }
+
+            if (listTestsOption.getValue() != null) {
+                listTests(listTestsOption.getValue());
                 return;
             }
 
@@ -226,6 +234,30 @@ public class MaxineTester {
             throwable.printStackTrace(err());
             System.exit(-1);
         }
+    }
+
+    static void listTests(String filter, String name, Iterable<? extends Object> tests) {
+        if (name.toLowerCase().contains(filter.toLowerCase())) {
+            for (Object t : tests) {
+                String s;
+                if (t instanceof Class) {
+                    s = ((Class) t).getName();
+                } else {
+                    s = t.toString();
+                }
+                out().println(s);
+            }
+        }
+    }
+
+    static void listTests(String filter) {
+        listTests(filter, "c1x", MaxineTesterConfiguration.zeeC1XTests.keySet());
+        listTests(filter, "dacapo2006", MaxineTesterConfiguration.zeeDacapo2006Tests);
+        listTests(filter, "dacapobach", MaxineTesterConfiguration.zeeDacapo2006Tests);
+        listTests(filter, "specjvm98", MaxineTesterConfiguration.zeeSpecjvm98Tests);
+        listTests(filter, "specjvm2008", MaxineTesterConfiguration.zeeSpecjvm2008Tests);
+        listTests(filter, "shootout", MaxineTesterConfiguration.zeeShootoutTests);
+        listTests(filter, "output", MaxineTesterConfiguration.zeeOutputTests);
     }
 
     private static Iterable<String> filterTestsBySubstrings(Iterable<String> tests, String[] substrings) {
@@ -461,18 +493,6 @@ public class MaxineTester {
 
         static final String INCLUDE_SLOW_TESTS_PROPERTY = "includeSlowTests";
 
-        private static Set<String> loadFailedTests(File file) {
-            if (file.exists()) {
-                System.out.println("Only running the tests listed in " + file.getAbsolutePath());
-                try {
-                    return new HashSet<String>(Files.readLines(file));
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            }
-            return null;
-        }
-
         /**
          * Runs the JUnit tests in a given class.
          *
@@ -497,7 +517,6 @@ public class MaxineTester {
 
             final boolean includeSlowTests = System.getProperty(INCLUDE_SLOW_TESTS_PROPERTY) != null;
 
-            final Set<String> failedTestNames = loadFailedTests(failedFile);
             final Runner runner = new AllTests(testClass) {
                 @Override
                 public void run(RunNotifier notifier) {
@@ -509,9 +528,7 @@ public class MaxineTester {
                                 System.out.println("Omitted slow test: " + description);
                                 return;
                             }
-                            if (failedTestNames == null || failedTestNames.contains(description.toString())) {
-                                super.run(testCase);
-                            }
+                            super.run(testCase);
                         }
                     };
                     result.addListener(createAdaptingListener(notifier));
@@ -1390,7 +1407,7 @@ public class MaxineTester {
             out().println("   lucky: non-deterministic test passed (ignore)");
             for (Class mainClass : testList) {
 
-                if (imageDir.getName().equals("mscpscps") && mscpscpsSkippedTests.contains(mainClass)) {
+                if (imageDir.getName().equals("jtt-mscpscps") && mscpscpsSkippedTests.contains(mainClass)) {
                     out().println("*** Skipping too slow test: " + mainClass.getName());
                     continue;
                 }

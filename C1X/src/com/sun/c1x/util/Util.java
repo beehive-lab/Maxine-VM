@@ -213,6 +213,7 @@ public class Util {
     }
 
     public static void warning(String string) {
+        TTY.println("WARNING: " + string);
     }
 
     public static int safeToInt(long l) {
@@ -228,10 +229,6 @@ public class Util {
         while (list.size() > length) {
             list.remove(list.size() - 1);
         }
-    }
-
-    public static void printBytes(String name, byte[] array, int bytesPerLine) {
-        printBytes(name, array, array.length, bytesPerLine);
     }
 
     public static void printSection(String name, char sectionCharacter) {
@@ -253,13 +250,38 @@ public class Util {
         TTY.println();
     }
 
-    public static void printBytes(String name, byte[] array, int length, int bytesPerLine) {
+    /**
+     * Prints entries in a byte array as space separated hex values to {@link TTY}.
+     *
+     * @param address an address at which the bytes are located. This is used to print an address prefix per line of output.
+     * @param array the array containing all the bytes to print
+     * @param bytesPerLine the number of values to print per line of output
+     */
+    public static void printBytes(long address, byte[] array, int bytesPerLine) {
+        printBytes(address, array, 0, array.length, bytesPerLine);
+    }
+
+    /**
+     * Prints entries in a byte array as space separated hex values to {@link TTY}.
+     *
+     * @param address an address at which the bytes are located. This is used to print an address prefix per line of output.
+     * @param array the array containing the bytes to print
+     * @param offset the offset in {@code array} of the values to print
+     * @param length the number of values from {@code array} print
+     * @param bytesPerLine the number of values to print per line of output
+     */
+    public static void printBytes(long address, byte[] array, int offset, int length, int bytesPerLine) {
         assert bytesPerLine > 0;
-        TTY.println("%s: %d bytes", name, length);
+        boolean newLine = true;
         for (int i = 0; i < length; i++) {
+            if (newLine) {
+                TTY.print("%08x: ", address + i);
+                newLine = false;
+            }
             TTY.print("%02x ", array[i]);
             if (i % bytesPerLine == bytesPerLine - 1) {
                 TTY.println();
+                newLine = true;
             }
         }
 

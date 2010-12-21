@@ -71,17 +71,7 @@ maxine_dir=""
 make_arg=
 cp_suffix=
 cp_prefix=
-base_ide_dir=shell
 remote=0
-if [ x${MAXINE_IDE} = xINTELLIJ ]; then
-    base_ide_dir=intellij
-fi
-if [ x${MAXINE_IDE} = xNETBEANS ]; then
-    base_ide_dir=netbeans
-fi
-if [ x${MAXINE_IDE} = xECLIPSE ]; then
-    base_ide_dir=eclipse
-fi
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -278,11 +268,10 @@ projects=( \
     CRI:src                       \
     C1X:src                       \
     C0X:src                       \
-    Base:src,test,$base_ide_dir   \
+    Base:src,test                 \
     Assembler:src,test            \
     VM:src,test                   \
     CPS:src,test                  \
-    MaxineC1X:src,test            \
     MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \
@@ -1547,9 +1536,6 @@ function run_test() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester\
         -refvm="${jvm}" "-refvm-args=${jvm_args}" "$@" 2>&1 | tee maxine-tester/console
     result=${PIPESTATUS[0]}
-    logs=test-logs.zip
-    zip -q -r $logs maxine-tester/console `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
-    echo "Test log files are in $logs"
     exit $result
 }
 
@@ -1558,10 +1544,10 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-image-configs=cpscps,mscpscps -fail-fast"
+gate_presets="-image-configs=jtt-cpscps,jtt-mscpscps -fail-fast"
 if [ "$MAXINE_OS" == "linux" ]; then
     # MSHeapScheme does not yet work on Linux
-    gate_presets="-image-configs=cpscps -fail-fast"
+    gate_presets="-image-configs=jtt-cpscps -fail-fast"
 fi 
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
@@ -1585,7 +1571,7 @@ function run_gate() {
 #=======================================
 
 msgate_usage="[options]"
-msgate_presets="-image-configs=mscpscps -fail-fast -tests=output:GC+WeakReference"
+msgate_presets="-image-configs=jtt-mscpscps -fail-fast -tests=output:GC+WeakReference"
 
 msgate_help="run the GC tests using the MS heap scheme"
 

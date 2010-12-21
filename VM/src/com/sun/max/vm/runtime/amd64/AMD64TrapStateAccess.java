@@ -21,37 +21,31 @@
 package com.sun.max.vm.runtime.amd64;
 
 import static com.sun.c1x.target.amd64.AMD64.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.runtime.amd64.AMD64Safepoint.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 
 /**
  * The trap state area on AMD64 contains the {@linkplain Trap.Number trap number} and the values of the
- * processor's registers when a trap occurs. A trap state area is embedded in each trap stub's frame as follows:
+ * processor's registers when a trap occurs. The trap state area is as follows:
  *
  * <pre>
  *   <-- stack grows downward                       higher addresses -->
- * |---- normal trap stub frame ---- | ---- trap state area --- | RIP |==== stack as it was when trap occurred ===>
- *                                   |<---  TRAP_STATE_SIZE --->|<-8->|
+ * | ---- trap state area --- | RIP |==== stack as it was when trap occurred ===>
+ * |<---  TRAP_STATE_SIZE --->|<-8->|
  *
- *                                   ^ trapState
  * </pre>
  * The layout of the trap state area is described by the following C-like struct declaration:
  * <pre>
  * trap_state {
  *     Word generalPurposeRegisters[16];
- *     DoubleWord xmmRegisters[16];
+ *     Word xmmRegisters[16];
  *     Word trapNumber;
  *     Word flagsRegister;
- * }
- *
- * trap_state_with_rip {
- *     trap_state ts;
- *     Word trapInstructionPointer;
  * }
  * </pre>
  *
@@ -63,8 +57,6 @@ import com.sun.max.vm.runtime.*;
  */
 public final class AMD64TrapStateAccess extends TrapStateAccess {
 
-    public static final int TRAP_STATE_SIZE_WITH_RIP;
-    public static final int TRAP_STATE_SIZE_WITHOUT_RIP;
     public static final int TRAP_NUMBER_OFFSET;
     public static final int FLAGS_OFFSET;
 
@@ -83,36 +75,26 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         FLAGS_OFFSET = size;
         size += 8;
 
-        CSA = new CiCalleeSaveArea(size, rsaRegs, 8);
-
-        TRAP_STATE_SIZE_WITHOUT_RIP = CSA.size;
-        TRAP_STATE_SIZE_WITH_RIP = TRAP_STATE_SIZE_WITHOUT_RIP + 8;
-    }
-
-    public static Pointer getTrapStateFromRipPointer(Pointer ripPointer) {
-        return ripPointer.minus(TRAP_STATE_SIZE_WITHOUT_RIP);
+        CSA = new CiCalleeSaveArea(size, 8, rsaRegs);
     }
 
     @Override
-    public Pointer getInstructionPointer(Pointer trapState) {
-        // the instruction pointer is the last word in the register state
-        return trapState.readWord(TRAP_STATE_SIZE_WITHOUT_RIP).asPointer();
+    public Pointer getPC(Pointer trapState) {
+        return trapState.readWord(vm().stubs.trapStub().frameSize()).asPointer();
     }
 
     @Override
-    public void setInstructionPointer(Pointer trapState, Pointer value) {
-        trapState.writeWord(TRAP_STATE_SIZE_WITHOUT_RIP, value);
+    public void setPC(Pointer trapState, Pointer value) {
+        trapState.writeWord(vm().stubs.trapStub().frameSize(), value);
     }
 
     @Override
-    public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
-        // TODO: get the frame pointer register from the ABI
-        return trapState.plus(TRAP_STATE_SIZE_WITH_RIP);
+    public Pointer getSP(Pointer trapState) {
+        return trapState.plus(vm().stubs.trapStub().frameSize() + 8);
     }
 
     @Override
-    public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
-        // TODO: get the frame pointer register from the ABI
+    public Pointer getFP(Pointer trapState) {
         return trapState.readWord(CSA.offsetOf(rbp)).asPointer();
     }
 
@@ -163,7 +145,7 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
             }
         }
         Log.print("  rip=");
-        Log.println(getInstructionPointer(trapState));
+        Log.println(getPC(trapState));
         Log.print("  rflags=");
         final Word flags = rsa.readWord(FLAGS_OFFSET);
         Log.print(flags);

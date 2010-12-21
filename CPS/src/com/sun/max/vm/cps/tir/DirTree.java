@@ -21,12 +21,13 @@
 
 package com.sun.max.vm.cps.tir;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.transform.*;
-import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.hotpath.compiler.*;
-import com.sun.max.vm.hotpath.compiler.Console.*;
+import com.sun.max.vm.cps.hotpath.*;
+import com.sun.max.vm.cps.hotpath.compiler.*;
+import com.sun.max.vm.cps.hotpath.compiler.Console.*;
 
 public class DirTree extends DirMethod {
     private final TirTree tree;
@@ -54,8 +55,10 @@ public class DirTree extends DirMethod {
             }
 
             @Override
-            public void visitGuardpoint(DirGuardpoint dirGuardpoint) {
-                Console.println(indent + "GUARDPOINT: \n" + dirGuardpoint.javaFrameDescriptor().toMultiLineString());
+            public void visitInfopoint(DirInfopoint infopoint) {
+                if (infopoint.opcode == Bytecodes.INFO) {
+                    Console.println(indent + "GUARDPOINT: \n" + infopoint.javaFrameDescriptor().toMultiLineString());
+                }
             }
         };
 

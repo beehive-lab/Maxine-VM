@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.schemes.biased_inflated;
 
-import com.sun.max.*;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
 
@@ -29,7 +29,7 @@ import com.sun.max.vm.monitor.*;
  *
  * @author Simon Wilkinson
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
 
     public Package() {
         super();

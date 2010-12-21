@@ -25,7 +25,10 @@ import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.eir.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
-import com.sun.max.vm.cps.eir.amd64.AMD64EirInstruction.*;
+import com.sun.max.vm.cps.eir.amd64.AMD64EirInstruction.CALL;
+import com.sun.max.vm.cps.eir.amd64.AMD64EirInstruction.JMP;
+import com.sun.max.vm.cps.eir.amd64.AMD64EirInstruction.RET;
+import com.sun.max.vm.cps.eir.amd64.AMD64EirInstruction.RUNTIME_CALL;
 import com.sun.max.vm.type.*;
 
 /**
@@ -86,7 +89,7 @@ public final class DirToAMD64EirMethodTranslation extends DirToEirMethodTranslat
     }
 
     @Override
-    public EirSafepoint createSafepoint(EirBlock eirBlock) {
-        return new AMD64EirSafepoint(eirBlock);
+    public EirInfopoint createInfopoint(EirBlock eirBlock, int opcode, EirValue destination) {
+        return new AMD64EirInfopoint(eirBlock, opcode, destination);
     }
 }

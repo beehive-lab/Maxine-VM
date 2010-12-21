@@ -20,22 +20,12 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
-import static com.sun.max.vm.thread.VmThread.*;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.BytecodeAssembler.Label;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -49,51 +39,7 @@ import com.sun.max.vm.type.*;
  */
 public class ExceptionDispatcher {
 
-    /**
-     * A handle used by the CPS and JIT compiler to retrieve the exception object on entry to an exception handler.
-     */
-    public static final ClassMethodActor safepointAndLoadExceptionObject = ClassMethodActor.fromJava(Classes.getDeclaredMethod(ExceptionDispatcher.class, "safepointAndLoadExceptionObject"));
-
     private final int position;
-
-    /**
-     * Thread local for passing the exception when interpreting with an {@link IrInterpreter}.
-     */
-    @HOSTED_ONLY
-    public static final ThreadLocal<Throwable> INTERPRETER_EXCEPTION = new ThreadLocal<Throwable>() {
-        @Override
-        public void set(Throwable value) {
-            Throwable g = get();
-            assert value == null || g == null;
-            super.set(value);
-        }
-    };
-
-    /**
-     * Executes a safepoint and then gets the Throwable object from the
-     * {@link VmThreadLocal#EXCEPTION_OBJECT} thread local.
-     *
-     * This method is only annotated to be never inlined so that it does something different
-     * if being executed by an {@link IrInterpreter}.
-     */
-    @NEVER_INLINE
-    public static Throwable safepointAndLoadExceptionObject() {
-        if (MaxineVM.isHosted()) {
-            return hostedSafepointAndLoadExceptionObject();
-        }
-        Safepoint.safepoint();
-        Throwable exception = UnsafeCast.asThrowable(EXCEPTION_OBJECT.loadRef(currentTLA()).toJava());
-        EXCEPTION_OBJECT.store3(Reference.zero());
-        FatalError.check(exception != null, "Exception object lost during unwinding");
-        return exception;
-    }
-
-    @HOSTED_ONLY
-    public static Throwable hostedSafepointAndLoadExceptionObject() {
-        Throwable throwable = INTERPRETER_EXCEPTION.get();
-        INTERPRETER_EXCEPTION.set(null);
-        return throwable;
-    }
 
     private boolean isThrowable(BytecodeAssembler assembler, int classConstantIndex) {
         ClassConstant classRef = assembler.constantPool().classAt(classConstantIndex);

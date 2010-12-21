@@ -22,16 +22,16 @@ package com.sun.max.vm.stack.amd64;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.*;
-import com.sun.max.asm.*;
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
-public class Package extends VMPackage {
+public class Package extends BootImagePackage {
     public Package() {
         super();
     }

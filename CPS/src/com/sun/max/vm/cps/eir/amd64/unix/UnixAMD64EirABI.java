@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.cps.eir.amd64.unix;
 
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.cps.eir.amd64.AMD64EirRegister.General.*;
 import static com.sun.max.vm.cps.eir.amd64.AMD64EirRegister.XMM.*;
 
@@ -30,10 +29,10 @@ import com.sun.max.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.EirStackSlot.Purpose;
 import com.sun.max.vm.cps.eir.amd64.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -179,7 +178,7 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
 
     private static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> initTargetABI() {
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        return Utils.cast(type, vmConfig().targetABIsScheme().optimizedJavaABI);
+        return Utils.cast(type, TargetABIsScheme.INSTANCE.optimizedJavaABI);
     }
 
     protected UnixAMD64EirABI() {

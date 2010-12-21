@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * GUI utilities for the VM Inspector.
+ * GUI framework classes and utilities for the VM Inspector.
  *
- * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 package com.sun.max.ins.gui;

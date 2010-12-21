@@ -62,7 +62,7 @@ public abstract class Actor {
 
     // VM-internal flags for classes:
     public static final int INNER_CLASS =       0x00100000;
-    public static final int GENERATED =         0x00400000;
+    public static final int REFLECTION_STUB =   0x00400000;
     public static final int FINALIZER =         0x00800000;
     public static final int SPECIAL_REFERENCE = 0x01000000;
     public static final int REMOTE =            0x02000000;
@@ -88,9 +88,6 @@ public abstract class Actor {
     public static final int NO_SAFEPOINTS =        0x00004000;
     public static final int INLINE_AFTER_SNIPPETS_ARE_COMPILED =
                                                    0x00010000;
-    public static final int STATIC_TRAMPOLINE =    0x00020000;
-    public static final int VIRTUAL_TRAMPOLINE =   0x00040000;
-    public static final int INTERFACE_TRAMPOLINE = 0x00080000;
     public static final int TEMPLATE =             0x00200000;
     public static final int INITIALIZER =          0x00400000;
     public static final int EXTENDED =             0x00800000;
@@ -126,9 +123,6 @@ public abstract class Actor {
         C_FUNCTION |
         VM_ENTRY_POINT |
         LOCAL_SUBSTITUTE |
-        STATIC_TRAMPOLINE |
-        INTERFACE_TRAMPOLINE |
-        VIRTUAL_TRAMPOLINE |
         NO_SAFEPOINTS;
 
     /**
@@ -364,8 +358,8 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isGenerated(int flags) {
-        return (flags & GENERATED) != 0;
+    public static boolean isReflectionStub(int flags) {
+        return (flags & REFLECTION_STUB) != 0;
     }
 
     @INLINE
@@ -447,26 +441,6 @@ public abstract class Actor {
     @INLINE
     public static boolean isNeverInline(int flags) {
         return (flags & NEVER_INLINE) != 0;
-    }
-
-    @INLINE
-    public static boolean isTrampoline(int flags) {
-        return (flags & (STATIC_TRAMPOLINE | VIRTUAL_TRAMPOLINE | INTERFACE_TRAMPOLINE)) != 0;
-    }
-
-    @INLINE
-    public static boolean isStaticTrampoline(int flags) {
-        return (flags & STATIC_TRAMPOLINE) != 0;
-    }
-
-    @INLINE
-    public static boolean isVirtualTrampoline(int flags) {
-        return (flags & VIRTUAL_TRAMPOLINE) != 0;
-    }
-
-    @INLINE
-    public static boolean isInterfaceTrampoline(int flags) {
-        return (flags & INTERFACE_TRAMPOLINE) != 0;
     }
 
     @INLINE
@@ -553,7 +527,7 @@ public abstract class Actor {
         appendFlag(sb, isConstantWhenNotZero(flags), "constantWhenNotZero ");
         appendFlag(sb, isInnerClass(flags), "innerClass ");
         appendFlag(sb, isTemplate(flags), "template ");
-        appendFlag(sb, isGenerated(flags), "generated ");
+        appendFlag(sb, isReflectionStub(flags), "generated ");
         appendFlag(sb, isClassInitializer(flags), "<clinit> ");
         appendFlag(sb, isInstanceInitializer(flags), "<init> ");
         appendFlag(sb, isCFunction(flags), "c_function ");

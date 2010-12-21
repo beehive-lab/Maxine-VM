@@ -20,11 +20,12 @@
  */
 package com.sun.max.vm.cps.target;
 
+import static com.sun.max.platform.Platform.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiDebugInfo.Frame;
-import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.io.*;
@@ -33,12 +34,10 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.TargetABI.RegisterConfig;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.runtime.*;
@@ -85,8 +84,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     @INSPECTED
     protected int frameReferenceMapSize;
-
-    private RegisterConfig registerConfig;
 
     public CPSTargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
         super(classMethodActor, callEntryPoint);
@@ -192,21 +189,21 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return true;
     }
 
-    private void verifyPatchableCallSites() {
-        if (directCallees == null) {
-            return;
-        }
-        for (int i = 0; i < directCallees.length; i++) {
-            final Address callSite = codeStart().plus(stopPosition(i));
-            if (!isPatchableCallSite(callSite)) {
-                FatalError.unexpected(classMethodActor.qualifiedName() +  "Patchable call site should be word-aligned: " + callSite.toHexString());
-            }
-        }
-    }
-
-    public final void setGenerated(int[] catchRangePositions, int[] catchBlockPositions, int[] stopPositions, byte[] compressedJavaFrameDescriptors, Object[] directCallees, int numberOfIndirectCalls,
-                    int numberOfSafepoints, byte[] referenceMaps, byte[] scalarLiterals, Object[] referenceLiterals, Object codeOrCodeBuffer, byte[] encodedInlineDataDescriptors, int frameSize,
-                    int frameReferenceMapSize, RegisterConfig registerConfig) {
+    public final void setGenerated(
+                    int[] catchRangePositions,
+                    int[] catchBlockPositions,
+                    int[] stopPositions,
+                    byte[] compressedJavaFrameDescriptors,
+                    Object[] directCallees,
+                    int numberOfIndirectCalls,
+                    int numberOfSafepoints,
+                    byte[] referenceMaps,
+                    byte[] scalarLiterals,
+                    Object[] referenceLiterals,
+                    byte[] codeBuffer,
+                    byte[] encodedInlineDataDescriptors,
+                    int frameSize,
+                    int frameReferenceMapSize) {
         assert fatalIfNotSorted(catchRangePositions);
         this.catchRangePositions = catchRangePositions;
         this.catchBlockPositions = catchBlockPositions;
@@ -214,41 +211,15 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         this.encodedInlineDataDescriptors = encodedInlineDataDescriptors;
         this.referenceMaps = referenceMaps;
         this.frameReferenceMapSize = frameReferenceMapSize;
-        this.registerConfig = registerConfig;
         super.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         super.setFrameSize(frameSize);
-        super.setData(scalarLiterals, referenceLiterals, codeOrCodeBuffer);
-        verifyPatchableCallSites();
+        super.setData(scalarLiterals, referenceLiterals, codeBuffer);
     }
 
     /**
      * Creates a copy of this target method.
      */
     protected abstract CPSTargetMethod createDuplicate();
-
-    @Override
-    public final TargetMethod duplicate() {
-        final CPSTargetMethod duplicate = createDuplicate();
-        final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
-        Code.allocate(targetBundleLayout, duplicate);
-        duplicate.setGenerated(
-            catchRangePositions(),
-            catchBlockPositions(),
-            stopPositions,
-            compressedJavaFrameDescriptors,
-            directCallees(),
-            numberOfIndirectCalls(),
-            numberOfSafepoints(),
-            referenceMaps(),
-            scalarLiterals(),
-            referenceLiterals(),
-            code(),
-            encodedInlineDataDescriptors,
-            frameSize(),
-            frameReferenceMapSize(), registerConfig
-        );
-        return duplicate;
-    }
 
     /**
      * Gets the size of the reference map covering the registers.
@@ -486,27 +457,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return stopIndex;
     }
 
-    /**
-     * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
-     * location in the returned sequence is the one at the closest position less or equal to the position denoted by
-     * {@code instructionPointer}.
-     *
-     * @param instructionPointer a pointer to an instruction within this method
-     * @param implicitExceptionPoint {@code true} if this instruction pointer corresponds to an implicit exception point
-     * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
-     *         no bytecode location can be determined for {@code instructionPointer}.
-     */
     @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
-        if (implicitExceptionPoint) {
-            // CPS target methods don't have Java frame descriptors at implicit throw points.
-            return null;
+    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
+        if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
+            ip = ip.minus(1);
         }
-        if (Platform.platform().isa.offsetToReturnPC == 0) {
-            instructionPointer = instructionPointer.minus(1);
-        }
-
-        return getJavaFrameDescriptorFor(instructionPointer);
+        return getJavaFrameDescriptorFor(ip);
     }
 
     @Override
@@ -519,11 +475,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      */
     public final byte[] compressedJavaFrameDescriptors() {
         return compressedJavaFrameDescriptors;
-    }
-
-    @Override
-    public RiRegisterConfig getRegisterConfig() {
-        return registerConfig;
     }
 
     @Override

@@ -21,7 +21,6 @@
 package com.sun.max.vm.type;
 
 import com.sun.cri.ci.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.*;
@@ -263,6 +262,10 @@ public abstract class TypeDescriptor extends Descriptor {
                 return true;
             }
 
+            if (javaClass.getName().startsWith("jtt")) {
+                System.console();
+            }
+
             if (MaxineVM.isHostedOnly(javaClass)) {
                 return false;
             }
@@ -271,7 +274,7 @@ public abstract class TypeDescriptor extends Descriptor {
                 return false;
             }
 
-            if (MaxineVM.vm().config.isMaxineVMPackage(MaxPackage.fromClass(javaClass))) {
+            if (MaxineVM.isBootImageClass(javaClass.getName())) {
                 return true;
             }
 

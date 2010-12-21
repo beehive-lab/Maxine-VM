@@ -21,7 +21,6 @@
 
 package test.com.sun.max.vm.cps;
 
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.cps.ir.*;
 
@@ -41,13 +40,6 @@ public abstract class CompilerTest_enumSwitch<Method_Type extends IrMethod> exte
                 break;
             default:
                 break;
-        }
-    }
-
-    public void test_SWITCH_TABLE() {
-        final ClassMethodActor classMethodActor = getEnumSwitchTranslationTableInitializer(CompilerTest_enumSwitch.class, E.class);
-        if (classMethodActor != null) {
-            compileMethod(classMethodActor);
         }
     }
 

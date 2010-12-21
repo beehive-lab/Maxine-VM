@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.allocate;
 
-import com.sun.max.*;
-import com.sun.max.asm.*;
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.cps.eir.*;
@@ -69,7 +69,7 @@ public abstract class EirAllocatorFactory {
         if (factoryClassName == null) {
             final String isa = Platform.platform().isa.name().toLowerCase();
             final String algorithm = System.getProperty(EIR_ALLOCATOR_ALGORITHM_PROPERTY_NAME, DEFAULT_ALGORITHM);
-            final String factoryPackageName = new Package().subPackage(algorithm, isa).name();
+            final String factoryPackageName = Classes.getPackageName(EirAllocator.class) + "." + algorithm + "." + isa;
             factoryClassName = factoryPackageName + ".Factory";
         }
         try {
@@ -107,7 +107,7 @@ public abstract class EirAllocatorFactory {
      * @param allocatorPackage the package to test
      * @return {@code true} if the selected factory is in a sub-package of {@code allocatorPackage}; {@code false} otherwise
      */
-    public static boolean isSelected(MaxPackage allocatorPackage) {
+    public static boolean isSelected(BootImagePackage allocatorPackage) {
         return instance.getClass().getPackage().getName().startsWith(allocatorPackage.name());
     }
 }

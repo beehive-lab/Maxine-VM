@@ -31,11 +31,11 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.value.*;
 
@@ -51,7 +51,7 @@ import com.sun.max.vm.value.*;
  * The closure of {@code Word} types (i.e. all the classes that subclass {@link Word}) is {@linkplain #getSubclasses() discovered}
  * during initialization in a hosted environment. This discovery mechanism relies on the same package based
  * facility used to configure the schemes of a VM. Each package that defines one or more {@code Word} subclasses
- * must also declare a subclass of {@link MaxPackage} named "Package" that overrides {@link MaxPackage#wordSubclasses()}.
+ * must also declare a subclass of {@link BootImagePackage} named "Package" that overrides {@link BootImagePackage#wordSubclasses()}.
  *
  * @see WordValue
  *
@@ -61,11 +61,11 @@ import com.sun.max.vm.value.*;
 public abstract class Word {
 
     /**
-     * The array of all the subclasses of {@link Word} that are accessible on the classpath when
+     * The array of all the subclasses of {@link Word} that are accessible in the VM boot image configuration
      * in hosted mode. This value of this array and {@link #unboxedToBoxedTypes} is constructed
-     * by scanning the classpath for all classes named "Package" that subclasses {@link MaxPackage}.
-     * An instance of each such class is instantiated and its {@link MaxPackage#wordSubclasses()} method
-     * is invoked to obtain the set of classes in the denoted package that subclass {@code Word}.
+     * by scanning the {@link VMConfiguration#bootImagePackages packages (that subclasses {@link BootImagePackage}).
+     * Any instance that overrides the {@link BootImagePackage#wordSubclasses()} method
+     * has it invoked to obtain the set of classes in the denoted package that subclass {@code Word}.
      */
     @HOSTED_ONLY
     private static Class[] classes;
@@ -77,49 +77,34 @@ public abstract class Word {
     private static Map<Class, Class> unboxedToBoxedTypes;
 
     /**
-     * Gets all the classes on the current classpath that subclass {@link Word}.
+     * Gets all the classes VM (boot image) configuration that subclass {@link Word}.
      */
     @HOSTED_ONLY
     public static Class[] getSubclasses() {
         if (classes == null) {
             final Map<Class, Class> map = new HashMap<Class, Class>();
-            final Classpath cp = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath();
-            new ClassSearch() {
-                @Override
-                protected boolean visitClass(String className) {
-                    if (className.endsWith(".Package")) {
+            for (BootImagePackage pkg : VMConfiguration.vmConfig().bootImagePackages) {
+                Class[] wordClasses = pkg.wordSubclasses();
+                if (wordClasses != null) {
+                    for (Class wordClass : wordClasses) {
+                        String wordClassName = wordClass.getName();
+                        assert !Boxed.class.isAssignableFrom(wordClass) : "Boxed types should not be explicitly registered: " + wordClass.getName();
+                        assert Classes.getPackageName(wordClassName).equals(pkg.name()) :
+                            "Word subclass " + wordClass.getName() + " should be registered by " +
+                            Classes.getPackageName(wordClassName) + ".Package not " + pkg + ".Package";
+                        Class unboxedClass = wordClass;
+                        String boxedClassName = Classes.getPackageName(unboxedClass.getName()) + ".Boxed" + unboxedClass.getSimpleName();
                         try {
-                            Class<?> packageClass = Class.forName(className);
-                            if (MaxPackage.class.isAssignableFrom(packageClass)) {
-                                MaxPackage p = (MaxPackage) packageClass.newInstance();
-                                Class[] wordClasses = p.wordSubclasses();
-                                if (wordClasses != null) {
-                                    for (Class wordClass : wordClasses) {
-                                        String wordClassName = wordClass.getName();
-                                        assert !Boxed.class.isAssignableFrom(wordClass) : "Boxed types should not be explicitly registered: " + wordClass.getName();
-                                        assert Classes.getPackageName(wordClassName).equals(p.name()) :
-                                            "Word subclass " + wordClass.getName() + " should be registered by " +
-                                            Classes.getPackageName(wordClassName) + ".Package not " + p + ".Package";
-                                        Class unboxedClass = wordClass;
-                                        String boxedClassName = Classes.getPackageName(unboxedClass.getName()) + ".Boxed" + unboxedClass.getSimpleName();
-                                        try {
-                                            Class boxedClass = Class.forName(boxedClassName, false, Word.class.getClassLoader());
-                                            map.put(unboxedClass, boxedClass);
-                                        } catch (ClassNotFoundException e) {
-                                            // There is no boxed version for this unboxed type
-                                            map.put(unboxedClass, unboxedClass);
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-                            ProgramWarning.message(e.toString());
+                            Class boxedClass = Class.forName(boxedClassName, false, Word.class.getClassLoader());
+                            map.put(unboxedClass, boxedClass);
+                        } catch (ClassNotFoundException e) {
+                            // There is no boxed version for this unboxed type
+                            map.put(unboxedClass, unboxedClass);
                         }
                     }
-                    return true;
                 }
-            }.run(cp);
 
+            }
             HashSet<Class> allClasses = new HashSet<Class>();
             allClasses.addAll(map.keySet());
             allClasses.addAll(map.values());

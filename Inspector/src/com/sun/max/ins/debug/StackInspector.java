@@ -29,10 +29,11 @@ import javax.swing.event.*;
 
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.memory.*;
+import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -72,7 +73,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             try {
                 defaultMaxFramesDisplay = Integer.parseInt(value);
             } catch (NumberFormatException ex) {
-                ProgramError.unexpected(MAX_FRAMES_DISPLAY_PROPERTY + " value " +  value + " not an integer");
+                InspectorError.unexpected(MAX_FRAMES_DISPLAY_PROPERTY + " value " +  value + " not an integer");
             }
         } else {
             defaultMaxFramesDisplay = DEFAULT_MAX_FRAMES_DISPLAY;
@@ -232,7 +233,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 final MaxStackFrame.Error errorStackFrame = (MaxStackFrame.Error) stackFrame;
                 toolTip = errorStackFrame.errorMessage();
             } else {
-                ProgramWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
+                InspectorWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
                 final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
                 if (externalCode != null) {
@@ -500,7 +501,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     protected void refreshView(boolean force) {
-        ProgramError.check(stack != null);
+        InspectorError.check(stack != null);
         if (stack.thread() != null && stack.thread().isLive()) {
             if (force || stack.lastUpdated() == null || vm().state().newerThan(lastUpdatedState)) {
                 final List<MaxStackFrame> frames = stack.frames();

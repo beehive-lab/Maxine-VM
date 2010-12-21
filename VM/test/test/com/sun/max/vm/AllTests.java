@@ -36,7 +36,7 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        return new TestCaseClassSet(new Package(), true).toTestSuite();
+        return new TestCaseClassSet(AllTests.class, true).toTestSuite();
     }
 
 }

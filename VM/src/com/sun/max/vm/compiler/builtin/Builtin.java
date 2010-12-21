@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.builtin;
 
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -29,6 +28,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -114,7 +114,10 @@ public abstract class Builtin extends Routine implements Comparable<Builtin>, St
     }
 
     @HOSTED_ONLY
-    public static void register(BootstrapCompilerScheme compilerScheme) {
+    public static final HashSet<ClassActor> builtinInvocationStubClasses = new HashSet<ClassActor>();
+
+    @HOSTED_ONLY
+    public static void register(CPSCompiler compilerScheme) {
         for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses()) {
             for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
                 registerMethod(classMethodActor);
@@ -124,8 +127,13 @@ public abstract class Builtin extends Routine implements Comparable<Builtin>, St
             }
         }
         for (Builtin builtin : builtins) {
+            // Only the CPS compiler needs to fold builtins while compiling
             if (!builtin.hasSideEffects() && compilerScheme.isBuiltinImplemented(builtin)) {
-                MaxineVM.registerImageInvocationStub(builtin.executable);
+                if (CPSCompiler.Static.compiler() != null) {
+                    InvocationStub stub = builtin.executable.makeInvocationStub();
+                    builtinInvocationStubClasses.add(ClassActor.fromJava(stub.getClass()));
+                    MaxineVM.registerImageInvocationStub(builtin.executable);
+                }
             }
         }
     }

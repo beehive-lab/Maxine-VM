@@ -672,11 +672,6 @@ public class FieldActor extends MemberActor implements RiField {
                     return true;
                 }
                 if (MaxineVM.isHosted()) {
-                    if (MaxineVM.isMaxineClass(holder())) {
-                        // The class initializers of all Maxine classes are run while bootstrapping and
-                        // the values they assign to static final fields are frozen in the boot image.
-                        return true;
-                    }
                     if (JDKInterceptor.hasMutabilityOverride(this)) {
                         return false;
                     }
@@ -698,7 +693,6 @@ public class FieldActor extends MemberActor implements RiField {
         }
 
         if (isConstant(flags())) {
-            assert MaxineVM.isMaxineClass(holder()) : "@CONSTANT applied to field of non-Maxine class: " + this;
             return MaxineVM.isHosted() || !isStatic() || holder.isInitialized();
         }
         return false;

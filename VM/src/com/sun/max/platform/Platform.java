@@ -30,12 +30,10 @@ import java.util.regex.*;
 import com.sun.c1x.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.sparc.*;
 
 /**
  * Platform configuration information. This class maintains a current {@link #platform() platform} context
@@ -159,24 +157,17 @@ public final class Platform {
             return null;
         }
 
-        int wordSize = dataModel.wordWidth.numberOfBytes;
+        assert arch.wordSize == dataModel.wordWidth.numberOfBytes;
         boolean isMP = true;
-        int spillSlotSize = wordSize;
-        int cacheAlignment = wordSize;
-        int heapAlignment = wordSize;
-        int codeAlignment = wordSize;
+        int spillSlotSize = arch.wordSize;
+        int cacheAlignment = dataModel.cacheAlignment;
         boolean inlineObjects = false;
-        int referenceSize = wordSize;
         return new CiTarget(arch,
                         isMP,
                         spillSlotSize,
-                        wordSize,
-                        referenceSize,
                         stackAlignment,
                         pageSize,
                         cacheAlignment,
-                        heapAlignment,
-                        codeAlignment,
                         inlineObjects,
                         false);
     }
@@ -261,7 +252,7 @@ public final class Platform {
         this.pageSize = pageSize;
 
         if (cpu == CPU.SPARCV9 && os == OS.SOLARIS) {
-            this.stackBias = SPARCStackFrameLayout.STACK_BIAS;
+            this.stackBias = 2047;
         } else {
             this.stackBias = 0;
         }

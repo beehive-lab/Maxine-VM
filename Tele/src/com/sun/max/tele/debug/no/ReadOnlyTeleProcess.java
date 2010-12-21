@@ -28,10 +28,10 @@ import java.nio.channels.FileChannel.MapMode;
 import java.util.*;
 
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.Params;
+import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.hosted.BootImage.Header;
@@ -101,12 +101,12 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
 
     @Override
     protected void gatherThreads(List<TeleNativeThread> threads) {
-        ProgramError.unexpected(FAIL_MESSAGE);
+        TeleError.unexpected(FAIL_MESSAGE);
     }
 
     @Override
     protected TeleNativeThread createTeleNativeThread(Params params) {
-        ProgramError.unexpected(FAIL_MESSAGE);
+        TeleError.unexpected(FAIL_MESSAGE);
         return null;
     }
 
@@ -117,28 +117,28 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
 
     @Override
     protected int write0(ByteBuffer buffer, int offset, int length, Address address) {
-        ProgramError.unexpected(FAIL_MESSAGE);
+        TeleError.unexpected(FAIL_MESSAGE);
         return 0;
     }
 
     @Override
     protected void kill() throws OSExecutionRequestException {
-        ProgramError.unexpected(FAIL_MESSAGE);
+        TeleError.unexpected(FAIL_MESSAGE);
     }
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        ProgramError.unexpected(FAIL_MESSAGE);
+        TeleError.unexpected(FAIL_MESSAGE);
     }
 
     @Override
     protected void suspend() throws OSExecutionRequestException {
-        ProgramError.unexpected(FAIL_MESSAGE);
+        TeleError.unexpected(FAIL_MESSAGE);
     }
 
     @Override
     protected ProcessState waitUntilStopped() {
-        ProgramError.unexpected(FAIL_MESSAGE);
+        TeleError.unexpected(FAIL_MESSAGE);
         return ProcessState.UNKNOWN;
     }
 }

@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.cps.ir.interpreter;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.lang.reflect.*;
 
 import com.sun.max.collect.*;
@@ -33,6 +31,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateMultiReferenceArray;
@@ -40,11 +39,11 @@ import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreatePrimitiveArray;
 import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateReferenceArray;
 import com.sun.max.vm.compiler.snippet.Snippet.MakeHolderInitialized;
 import com.sun.max.vm.cps.bir.*;
+import com.sun.max.vm.cps.hotpath.*;
+import com.sun.max.vm.cps.hotpath.AsynchronousProfiler.*;
+import com.sun.max.vm.cps.hotpath.compiler.*;
+import com.sun.max.vm.cps.hotpath.compiler.Console.*;
 import com.sun.max.vm.cps.ir.*;
-import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.hotpath.AsynchronousProfiler.CounterMetric;
-import com.sun.max.vm.hotpath.compiler.*;
-import com.sun.max.vm.hotpath.compiler.Console.Color;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -66,7 +65,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         }
 
         public static BirMethod generateBirMethod(ClassMethodActor classMethodActor) {
-            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) vmConfig().bootCompilerScheme();
+            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) CPSCompiler.Static.compiler();
             final BirMethod birMethod = birCompilerScheme.birGenerator().makeIrMethod(classMethodActor);
             return birMethod;
         }

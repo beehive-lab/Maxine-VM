@@ -30,8 +30,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.sun.c1x.debug.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -39,8 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.jdk.Package;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -58,16 +57,15 @@ import com.sun.max.vm.value.*;
 public final class JavaPrototype extends Prototype {
 
     /**
-     * The name of the system that can be used to specify extra classes and packages to be loaded
-     * into a Java prototype by {@link #loadCoreJavaPackages()}. The value of the property is
+     * The name of the system property that can be used to specify extra classes and packages to be loaded
+     * into a Java prototype by {@link #loadExtraClassesAndPackages()}. The value of the property is
      * parsed as a space separated list of class and package names. Package names are those
      * prefixed by '^'.
      */
     public static final String EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME = "max.image.extraClassesAndPackages";
 
     private static JavaPrototype theJavaPrototype;
-    private final Map<MaxPackage, MaxPackage> excludedMaxPackages = new HashMap<MaxPackage, MaxPackage>();
-    private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
+    private final Set<BootImagePackage> loadedBootImagePackages = new HashSet<BootImagePackage>();
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
     private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
     private final Map<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
@@ -82,22 +80,6 @@ public final class JavaPrototype extends Prototype {
      */
     public static JavaPrototype javaPrototype() {
         return theJavaPrototype;
-    }
-
-    /**
-     * Gets all packages in the specified root package that extend the specified package class.
-     *
-     * @param rootPackage the root package which defines the package class to match and in which to begin the search
-     * @return a sequence of the packages that match the criteria
-     */
-    private List<MaxPackage> getPackages(MaxPackage[] rootPackages) {
-        final List<MaxPackage> packages = new LinkedList<MaxPackage>();
-        for (MaxPackage maxPackage : MaxPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath(), rootPackages)) {
-            if (vmConfig().isMaxineVMPackage(maxPackage)) {
-                packages.add(maxPackage);
-            }
-        }
-        return packages;
     }
 
     /**
@@ -155,126 +137,35 @@ public final class JavaPrototype extends Prototype {
      *
      * @param maxPackage the package to load
      */
-    private void loadPackage(MaxPackage maxPackage) {
-        final MaxPackage excludedBy = excludedMaxPackages.get(maxPackage);
-        if (excludedBy != null) {
-            Trace.line(1, "Excluding " + maxPackage + " (excluded by " + excludedBy + ")");
-            return;
-        }
-
-        for (MaxPackage excludedPackage : maxPackage.excludes()) {
-            if (loadedMaxPackages.contains(excludedPackage)) {
-                ProgramError.unexpected("Package " + excludedPackage + " is excluded by " + maxPackage + ". " +
-                                "Adjust class path to ensure " + maxPackage + " is loaded before " + excludedPackage);
-            }
-            excludedMaxPackages.put(excludedPackage, maxPackage);
-        }
-        packageLoader.load(maxPackage, false);
-        loadedMaxPackages.add(maxPackage);
-    }
-
-    /**
-     * Loads a package into the prototype, building the internal Actor representations of all the classes in the
-     * prototype.
-     *
-     * @param name the name of the package as a string
-     * @param recursive a boolean indicating whether to load all subpackages of the specified package
-     * @return a sequence of all the classes loaded from the specified package (and potentially its subpackages).
-     */
-    public List<Class> loadPackage(String name, boolean recursive) {
-        return packageLoader.load(name, recursive);
+    private void loadBootImagePackage(BootImagePackage maxPackage) {
+        packageLoader.load(maxPackage, true);
+        loadedBootImagePackages.add(maxPackage);
     }
 
     /**
      * Load packages corresponding to VM configurations.
      */
     private void loadVMConfigurationPackages() {
-        for (MaxPackage p : vmConfig().packages()) {
-            loadPackage(p);
-        }
-    }
-
-    /**
-     * Loads a sequence of packages.
-     *
-     * @param packages the packages to load
-     */
-    private void loadPackages(List<MaxPackage> packages) {
-        for (MaxPackage p : packages) {
-            loadPackage(p);
+        for (BootImagePackage p : vmConfig().packages()) {
+            loadBootImagePackage(p);
         }
     }
 
     /**
      * Loads extra packages and classes that are necessary to build a self-sufficient VM image.
      */
-    public void loadCoreJavaPackages() {
-        if (System.getProperty("max.allow.all.core.packages") == null) {
-            // Don't want the static Map fields initialized
-            HostedBootClassLoader.omitClass(java.lang.reflect.Proxy.class);
-
-            HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(File.class.getName() + "$LazyInitialization"));
-            HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(java.util.Calendar.class.getName() + "$CalendarAccessControlContext"));
-
-            // LogManager and FileSystemPreferences have many side effects
-            // that we do not wish to account for before running the target VM.
-            // In particular they install shutdown hooks,
-            // which then end up in the boot image and cause bugs at target runtime.
-            HostedBootClassLoader.omitPackage("java.util.logging", true);
-            HostedBootClassLoader.omitPackage("java.util.prefs", true);
-        }
-
-        loadPackage("java.lang", false);
-        loadPackage("java.lang.reflect", false); // needed to compile and to invoke the main method
-        loadPackage("java.lang.ref", false);
-        loadPackage("java.io", false);
-        loadPackage("java.nio", false);
-        loadPackage("java.nio.charset", false);
-        loadPackage("java.util", false);
-        loadPackage("java.util.zip", false); // needed to load classes from jar/zip files
-        loadPackage("java.util.jar", false); // needed to load classes from jar files
-        loadClass(sun.misc.VM.class);
-
-        // Some of these classes contain field offsets cached in static fields.
-        // These offsets need to be patched with Maxine values.
-        loadPackage("java.util.concurrent.atomic", false);
-
-        // These classes need to be compiled and in the boot image in order to be able to
-        // run the optimizing compiler at run time (amongst other reasons)
-        loadClass(sun.misc.SharedSecrets.class);
-        loadClass(sun.reflect.annotation.AnnotationParser.class);
-        loadClass(sun.reflect.Reflection.class);
-        loadClass(java.util.concurrent.atomic.AtomicLong.class);
-        loadClass(java.security.ProtectionDomain.class);
-        loadClass(java.security.DomainCombiner.class);
-        loadClass(java.security.PrivilegedAction.class);
-
-        // Necessary for Java Run Scheme to initialize the System class:
-        loadClass(sun.misc.Version.class);
-        loadPackage("sun.nio.cs", false);
-
-        // Needed to satisfy the requirement that java.lang.ref.Reference.ReferenceHandler.run()
-        // does not do any allocation (as a result of loading this class) while holding the GC lock.
-        loadClass(sun.misc.Cleaner.class);
-
-        // Necessary for early tracing:
-        loadPackage("java.util.regex", false);
-        loadClass(sun.security.action.GetPropertyAction.class);
-
+    public void loadExtraClassesAndPackages() {
         String value = System.getProperty(EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME);
         if (value != null) {
             for (String s : value.split("\\s+")) {
                 if (s.charAt(0) == '^') {
-                    loadPackage(s.substring(1), false);
+                    packageLoader.load(new BootImagePackage(s.substring(1), false) {}, true);
                 } else {
                     loadClass(s);
                 }
             }
         }
 
-        if (System.getProperty("max.allow.all.core.packages") == null) {
-            HostedBootClassLoader.omitPackage("java.security", false);
-        }
     }
 
     private static List<Class> mainPackageClasses = new ArrayList<Class>();
@@ -287,13 +178,12 @@ public final class JavaPrototype extends Prototype {
     /**
      * Loads all classes annotated with {@link METHOD_SUBSTITUTIONS} and performs the relevant substitutions.
      */
-    private void loadMethodSubstitutions(final VMConfiguration vmConfiguration, List<MaxPackage> packages) {
-        for (MaxPackage maxPackage : packages) {
-            // VMConfigPackage subclasses may contain SUBSTITUTIONS
-            if (maxPackage instanceof VMConfigPackage) {
-                VMConfigPackage vmPackage = (VMConfigPackage) maxPackage;
-                if (vmPackage.isPartOfMaxineVM(vmConfiguration) && vmPackage.containsMethodSubstitutions()) {
-                    String[] classes = packageLoader.listClassesInPackage(vmPackage.name(), false);
+    private void loadMethodSubstitutions(final VMConfiguration vmConfiguration) {
+        for (BootImagePackage maxPackage : vmConfiguration.bootImagePackages) {
+            if (maxPackage instanceof BootImagePackage) {
+                BootImagePackage bootImagePackage = (BootImagePackage) maxPackage;
+                if (bootImagePackage.isPartOfMaxineVM(vmConfiguration) && bootImagePackage.containsMethodSubstitutions()) {
+                    String[] classes = bootImagePackage.listClasses(packageLoader.classpath);
                     for (String cn : classes) {
                         try {
                             Class<?> c = Class.forName(cn, false, Package.class.getClassLoader());
@@ -373,18 +263,17 @@ public final class JavaPrototype extends Prototype {
 
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
 
-        config.bootCompilerScheme().createBuiltins(packageLoader);
-        Builtin.register(config.bootCompilerScheme());
-        config.bootCompilerScheme().createSnippets(packageLoader);
-        Snippet.register();
+        CPSCompiler.Static.initialize(packageLoader);
 
-        final List<MaxPackage> packages = getPackages(new MaxPackage[] {new com.sun.max.Package(), new com.sun.max.vm.Package(), new com.sun.max.asm.Package(), new com.sun.max.ext.Package()});
-
-        loadMethodSubstitutions(config, packages);
+        loadMethodSubstitutions(config);
 
         if (complete) {
 
-            loadPackages(packages);
+            for (BootImagePackage maxPackage : config.bootImagePackages) {
+                loadBootImagePackage(maxPackage);
+            }
+
+            loadExtraClassesAndPackages();
 
             config.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
@@ -608,10 +497,7 @@ public final class JavaPrototype extends Prototype {
             return replace == NULL ? null : replace;
         }
         if (object instanceof Thread || object instanceof ThreadGroup) {
-            if (MaxineVM.isMaxineClass(ClassActor.fromJava(object.getClass()))) {
-                ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
-            }
-            return null;
+            ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
         }
         return object;
     }
