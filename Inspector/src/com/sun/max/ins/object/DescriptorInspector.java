@@ -20,11 +20,11 @@
  */
 package com.sun.max.ins.object;
 
-import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.object.StringPane.*;
+import com.sun.max.ins.gui.*;
+import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.type.*;
 
@@ -36,7 +36,7 @@ import com.sun.max.vm.type.*;
  */
 public class DescriptorInspector extends ObjectInspector {
 
-    private JTabbedPane tabbedPane;
+    private InspectorTabbedPane tabbedPane;
     private ObjectScrollPane fieldsPane;
     private StringPane stringPane;
 
@@ -58,7 +58,7 @@ public class DescriptorInspector extends ObjectInspector {
         final TeleDescriptor teleDescriptor = (TeleDescriptor) teleObject();
         final String name = teleDescriptor.classActorForObjectType().javaSignature(false);
 
-        tabbedPane = new JTabbedPane();
+        tabbedPane = new InspectorTabbedPane(inspection());
 
         fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleDescriptor, instanceViewPreferences);
         tabbedPane.add(name, fieldsPane);

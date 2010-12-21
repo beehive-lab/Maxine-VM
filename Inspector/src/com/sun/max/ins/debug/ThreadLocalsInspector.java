@@ -64,7 +64,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     private final ThreadLocalsViewPreferences viewPreferences;
 
     private MaxThread thread;
-    private JTabbedPane tabbedPane;
+    private InspectorTabbedPane tabbedPane;
 
     private ThreadLocalsInspector(Inspection inspection) {
         super(inspection);
@@ -100,7 +100,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     protected void createView() {
         thread = focus().thread();
-        tabbedPane = new JTabbedPane();
+        tabbedPane = new InspectorTabbedPane(inspection());
         tabbedPane.setOpaque(true);
         if (thread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {

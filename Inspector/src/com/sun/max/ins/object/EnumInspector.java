@@ -20,11 +20,11 @@
  */
 package com.sun.max.ins.object;
 
-import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.object.StringPane.*;
+import com.sun.max.ins.gui.*;
+import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
 
 /**
@@ -35,7 +35,7 @@ import com.sun.max.tele.object.*;
  */
 public class EnumInspector extends ObjectInspector {
 
-    private JTabbedPane tabbedPane;
+    private InspectorTabbedPane tabbedPane;
     private ObjectScrollPane fieldsPane;
     private StringPane stringPane;
 
@@ -57,7 +57,7 @@ public class EnumInspector extends ObjectInspector {
         final TeleEnum teleEnum = (TeleEnum) teleObject();
         final String name = teleEnum.classActorForObjectType().javaSignature(false);
 
-        tabbedPane = new JTabbedPane();
+        tabbedPane = new InspectorTabbedPane(inspection());
 
         fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleEnum, instanceViewPreferences);
         tabbedPane.add(name, fieldsPane);

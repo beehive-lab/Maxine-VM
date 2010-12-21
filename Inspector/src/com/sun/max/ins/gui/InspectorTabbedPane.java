@@ -30,7 +30,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
+public class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
 
     private final Inspection inspection;
     private final String tracePrefix;
@@ -38,7 +38,7 @@ public abstract class InspectorTabbedPane extends JTabbedPane implements Inspect
     /**
      * Creates a new {@link JTabbedPane} specialized for use in the VM Inspector.
      */
-    protected InspectorTabbedPane(Inspection inspection) {
+    public InspectorTabbedPane(Inspection inspection) {
         this.inspection = inspection;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         this.setOpaque(true);
@@ -64,10 +64,26 @@ public abstract class InspectorTabbedPane extends JTabbedPane implements Inspect
         return inspection.actions();
     }
 
+    public InspectorGUI gui() {
+        return inspection.gui();
+    }
+
     /**
      * @return default prefix text for trace messages; identifies the class being traced.
      */
     protected String tracePrefix() {
         return tracePrefix;
+    }
+
+    @Override
+    public void refresh(boolean force) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void redisplay() {
+        // TODO Auto-generated method stub
+
     }
 }
