@@ -43,7 +43,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.heap.*;
@@ -75,10 +74,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     }
 
     // Checkstyle: stop field name check
-
-    public final <IrMethod_Type extends IrMethod> TeleInstanceReferenceFieldAccess IrMethod_classMethodActor(Class<IrMethod_Type> holderType) {
-        return new TeleInstanceReferenceFieldAccess(holderType, "classMethodActor", ClassMethodActor.class);
-    }
 
     // VM fields:
 

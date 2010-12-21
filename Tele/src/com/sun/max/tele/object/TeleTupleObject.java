@@ -32,7 +32,7 @@ import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.cps.ir.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
@@ -86,9 +86,11 @@ public class TeleTupleObject extends TeleObject {
     @Override
     public TeleClassMethodActor getTeleClassMethodActorForObject() {
         final Class<?> javaClass = classActorForObjectType().toJava();
-        if (IrMethod.class.isAssignableFrom(javaClass)) {
-            final Reference classMethodActorReference = vm().teleFields().IrMethod_classMethodActor(javaClass.asSubclass(IrMethod.class)).readReference(reference());
-            return (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
+        if (TargetMethod.class.isAssignableFrom(javaClass)) {
+            final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
+            if (classMethodActorReference != null && !classMethodActorReference.isZero()) {
+                return (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
+            }
         }
         return null;
     }
