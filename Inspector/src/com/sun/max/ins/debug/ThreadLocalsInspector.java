@@ -101,6 +101,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     protected void createView() {
         thread = focus().thread();
         tabbedPane = new JTabbedPane();
+        tabbedPane.setOpaque(true);
         if (thread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
                 final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);

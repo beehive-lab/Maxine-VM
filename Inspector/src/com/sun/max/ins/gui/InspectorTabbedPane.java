@@ -41,6 +41,7 @@ public abstract class InspectorTabbedPane extends JTabbedPane implements Inspect
     protected InspectorTabbedPane(Inspection inspection) {
         this.inspection = inspection;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
+        this.setOpaque(true);
     }
 
     public final Inspection inspection() {
