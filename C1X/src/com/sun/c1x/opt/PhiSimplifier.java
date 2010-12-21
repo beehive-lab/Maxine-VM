@@ -77,6 +77,7 @@ public class PhiSimplifier implements BlockClosure {
             phi.setFlag(Value.Flag.PhiVisited);
             Value phiSubst = null;
             int max = phi.inputCount();
+            boolean cannotSimplify = false;
             for (int i = 0; i < max; i++) {
                 Value oldInstr = phi.inputAt(i);
 
@@ -88,26 +89,32 @@ public class PhiSimplifier implements BlockClosure {
                 }
 
                 // attempt to simplify this operand
-                Value newInstr = simplify(oldInstr);
+                if (!cannotSimplify) {
+                    Value newInstr = simplify(oldInstr);
 
-                if (newInstr == null || newInstr.isIllegal() || newInstr.isDeadPhi()) {
-                    // if the subst instruction is illegal, make the entire phi illegal
-                    phi.makeDead();
-                    phi.clearFlag(Value.Flag.PhiVisited);
-                    return phi;
-                }
-
-                if (newInstr != phi && newInstr != phiSubst) {
-                    if (phiSubst == null) {
-                        phiSubst = newInstr;
-                        continue;
+                    if (newInstr == null || newInstr.isIllegal() || newInstr.isDeadPhi()) {
+                        // if the subst instruction is illegal, make the entire phi illegal
+                        phi.makeDead();
+                        phi.clearFlag(Value.Flag.PhiVisited);
+                        return phi;
                     }
-                    // this phi cannot be simplified
-                    phi.setFlag(Value.Flag.PhiCannotSimplify);
-                    phi.clearFlag(Value.Flag.PhiVisited);
-                    return phi;
+
+                    if (newInstr != phi && newInstr != phiSubst) {
+                        if (phiSubst == null) {
+                            phiSubst = newInstr;
+                            continue;
+                        }
+                        // this phi cannot be simplified
+                        cannotSimplify = true;
+                    }
                 }
             }
+            if (cannotSimplify) {
+                phi.setFlag(Value.Flag.PhiCannotSimplify);
+                phi.clearFlag(Value.Flag.PhiVisited);
+                return phi;
+            }
+
             // successfully simplified the phi
             assert phiSubst != null : "illegal phi function";
             phi.clearFlag(Value.Flag.PhiVisited);
