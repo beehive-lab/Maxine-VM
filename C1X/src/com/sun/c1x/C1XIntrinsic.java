@@ -35,7 +35,7 @@ import com.sun.cri.ri.*;
 public enum C1XIntrinsic {
 
     // java.lang.Object
-    java_lang_Object$init     ("java.lang.Object", "init", "()V"),
+    java_lang_Object$init     ("java.lang.Object", "<init>", "()V"),
     java_lang_Object$hashCode ("java.lang.Object", "hashCode", "()I"),
     java_lang_Object$getClass ("java.lang.Object", "getClass", "()Ljava/lang/Class;"),
     java_lang_Object$clone    ("java.lang.Object", "clone", "()Ljava/lang/Object;"),
@@ -128,7 +128,7 @@ public enum C1XIntrinsic {
     C1XIntrinsic(String className, String methodName, String signature) {
         // Check that enum names are according to convention.
         assert className.equals(name().substring(0, name().indexOf('$')).replace('_', '.'));
-        assert methodName.equals(name().substring(name().indexOf('$') + 1));
+        assert methodName.equals("<init>") || methodName.equals(name().substring(name().indexOf('$') + 1));
         this.methodName = methodName;
         this.className = className;
         this.signature = signature;
@@ -160,7 +160,8 @@ public enum C1XIntrinsic {
             // note that the map uses internal names to make lookup faster
             HashMap<String, C1XIntrinsic> map = intrinsicMap.get(holder.name());
             if (map != null) {
-                return map.get(method.name() + method.signature().asString());
+                C1XIntrinsic result = map.get(method.name() + method.signature().asString());
+                return result;
             }
         }
         return null;

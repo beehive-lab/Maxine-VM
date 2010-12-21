@@ -734,6 +734,8 @@ function run_check() {
                 checkstyle_input=/tmp/checkfiles.txt.$$
 
                 cat $javac_input | \
+                    grep -v 'com/sun/max/asm/amd64/complete/' |\
+                    grep -v 'com/sun/max/asm/ia32/complete/' |\
                     grep -v 'test/bytecode/' |\
                     grep -v 'test/except/' |\
                     grep -v 'test/interactive/' |\

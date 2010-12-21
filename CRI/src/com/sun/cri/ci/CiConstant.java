@@ -180,7 +180,7 @@ public final class CiConstant extends CiValue {
      * @return the int value of this constant
      */
     public int asInt() {
-        if (kind.stackKind().isInt()) {
+        if (kind.stackKind().isInt() || kind.isJsr()) {
             return (int) primitive;
         }
         throw new Error("Constant is not int: " + this);
