@@ -1242,7 +1242,6 @@ public final class GraphBuilder {
     }
 
     void genMonitorEnter(Value x, int bci) {
-        assert curState.locksSize() == curState.totalLocksSize();
         int lockNumber = locksSize();
         MonitorAddress lockAddress = null;
         if (compilation.runtime.sizeOfBasicObjectLock() != 0) {
