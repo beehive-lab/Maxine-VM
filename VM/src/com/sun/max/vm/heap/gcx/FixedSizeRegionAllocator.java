@@ -19,13 +19,12 @@
  * Company, Ltd.
  */
 package com.sun.max.vm.heap.gcx;
-import static com.sun.max.vm.heap.gcx.RegionRange.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+import static com.sun.max.vm.heap.gcx.RegionRange.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
@@ -225,15 +224,6 @@ public class FixedSizeRegionAllocator {
     private final RegionBitSet committed;
 
     /**
-     * Size of the regions.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    private Size regionSize;
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private int log2RegionSize;
-
-    /**
      * Number of regions that are committed.
      */
     private int committedSize;
@@ -257,7 +247,6 @@ public class FixedSizeRegionAllocator {
         backingStorage = new MemoryRegion(name);
         allocated = new RegionBitSet();
         committed = new RegionBitSet();
-        regionSize = Size.zero();
         committedSize = 0;
         numFreeRegions = 0;
     }
@@ -273,22 +262,18 @@ public class FixedSizeRegionAllocator {
      * @param the size of the regions. Must be a multiple of the platform's page size.
      * @param amount of space already allocated from the start of the backing storage space.
      */
-    public void initialize(Address start, Size size, Size regionSize, int preCommitted) {
-        FatalError.check(start.isZero(), "Can only be initialized once");
+    public void initialize(Address start, int numRegions, int numPreCommitted) {
+        FatalError.check(backingStorage.start().isZero(), "Can only be initialized once");
+        numFreeRegions = numRegions;
+
         backingStorage.setStart(start);
-        backingStorage.setSize(size);
-        this.regionSize = regionSize;
-        final int rsize = regionSize.toInt();
-        log2RegionSize = Integer.numberOfTrailingZeros(rsize);
-        FatalError.check((rsize == 1 << log2RegionSize) && (rsize >= Platform.getPageSize()),
-            "Region size must be a power of 2 and an integral number of platform pages");
-        numFreeRegions = size.unsignedShiftedRight(log2RegionSize).toInt();
+        backingStorage.setSize(Size.fromInt(numRegions << log2RegionSizeInBytes));
 
         allocated.initialize(new long[numFreeRegions]);
         committed.initialize(new long[numFreeRegions]);
 
         highestAllocated = INVALID_REGION_ID;
-        residentRegions = preCommitted;
+        residentRegions = numPreCommitted;
         if (residentRegions > 0) {
             allocated.set(0, residentRegions);
             highestAllocated = residentRegions - 1;
@@ -305,7 +290,7 @@ public class FixedSizeRegionAllocator {
      * @return a number of regions
      */
     int capacity() {
-        return backingStorage.size().unsignedShiftedRight(log2RegionSize).toInt();
+        return backingStorage.size().unsignedShiftedRight(log2RegionSizeInBytes).toInt();
     }
 
     boolean isValidRegionId(int regionId) {
@@ -314,7 +299,7 @@ public class FixedSizeRegionAllocator {
 
     private Address validRegionStart(int regionId) {
         assert isValidRegionId(regionId);
-        return backingStorage.start().plus(regionId << log2RegionSize);
+        return backingStorage.start().plus(regionId << log2RegionSizeInBytes);
     }
 
     Address regionStart(int regionId) {
@@ -430,7 +415,7 @@ public class FixedSizeRegionAllocator {
         }
         // FIXME: should we try to avoid calling commitMemmory if the range is already committed ?
         // Should we try to commit only uncommitted sub-range ?
-        final Size size = Size.fromInt(numRegions).shiftedLeft(log2RegionSize);
+        final Size size = Size.fromInt(numRegions).shiftedLeft(log2RegionSizeInBytes);
         if (VirtualMemory.commitMemory(regionStart(firstRegionId), size, VirtualMemory.Type.HEAP)) {
             committed.set(firstRegionId, firstRegionId + numRegions);
             return true;
@@ -440,7 +425,7 @@ public class FixedSizeRegionAllocator {
 
     synchronized boolean uncommit(int firstRegionId, int numRegions) {
         if (isValidCommittedRange(firstRegionId, numRegions)) {
-            final Size size = Size.fromInt(numRegions).shiftedLeft(log2RegionSize);
+            final Size size = Size.fromInt(numRegions).shiftedLeft(log2RegionSizeInBytes);
             if (VirtualMemory.uncommitMemory(regionStart(firstRegionId), size, VirtualMemory.Type.HEAP)) {
                 committed.clear(firstRegionId, firstRegionId + numRegions);
                 return true;

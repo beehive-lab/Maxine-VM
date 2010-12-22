@@ -195,7 +195,9 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
         }
 
-        // From now on, we can allocate. The following does this because of the var-arg arguments.
+        // From now on, we can allocate. The operations below have been postponed up to now because
+        // they perform allocation indirectly (e.g., because of runtime class loading, compilation, or simply, use of var-args).
+        theHeapRegionManager().verifyAfterInitialization();
         InspectableHeapInfo.init(heapBounds);
     }
 

@@ -183,7 +183,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         // Adjust reserved space to region boundaries.
         final Address endOfManagedSpace = reservedSpace.plus(reservedSpaceSize).roundedDownBy(regionSizeInBytes);
         final Address startOfManagedSpace = reservedSpace.roundedUpBy(regionSizeInBytes);
-        final Size managedSpaceSize = endOfManagedSpace.minus(endOfManagedSpace).asSize();
+        final Size managedSpaceSize = endOfManagedSpace.minus(startOfManagedSpace).asSize();
         final int numRegions = managedSpaceSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
 
         // FIXME: have we committed the space that is going to be used by the boot allocator ?
@@ -205,7 +205,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         bootstrapAllocator.initialize(startOfManagedSpace, startOfManagedSpace.plus(initialSize));
 
         // Commit space and initialize the bootstrap allocator
-        regionAllocator.initialize(startOfManagedSpace, managedSpaceSize, Size.fromInt(regionSizeInBytes), initialNumRegions);
+        regionAllocator.initialize(startOfManagedSpace, numRegions, initialNumRegions);
 
 
         // FIXME: Here, ideally, we should have some mechanism to makes the standard allocation mechanism
@@ -283,5 +283,8 @@ public final class HeapRegionManager implements HeapAccountOwner {
         regionAllocator.uncommit(firstRegionId, numRegions);
     }
 
+    public void verifyAfterInitialization() {
+        HeapRegionConstants.validate();
+    }
 }
 
