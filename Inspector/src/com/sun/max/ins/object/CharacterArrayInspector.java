@@ -20,11 +20,11 @@
  */
 package com.sun.max.ins.object;
 
-import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.object.StringPane.*;
+import com.sun.max.ins.gui.*;
+import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
 
 /**
@@ -34,7 +34,7 @@ import com.sun.max.tele.object.*;
  */
 public final class CharacterArrayInspector extends ObjectInspector {
 
-    private JTabbedPane tabbedPane;
+    private InspectorTabbedPane tabbedPane;
     private ObjectScrollPane elementsPane;
     private StringPane stringPane;
 
@@ -57,7 +57,7 @@ public final class CharacterArrayInspector extends ObjectInspector {
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
         final String componentTypeName = teleArrayObject.classActorForObjectType().componentClassActor().javaSignature(false);
 
-        tabbedPane = new JTabbedPane();
+        tabbedPane = new InspectorTabbedPane(inspection());
 
         elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
         tabbedPane.add(componentTypeName + "[" + teleArrayObject.getLength() + "]", elementsPane);

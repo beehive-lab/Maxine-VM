@@ -118,7 +118,7 @@ public final class ClassActorFactory {
                             fieldActors,
                             methodActors) :
             new TupleClassActor(
-                            isWord(typeDescriptor, superClassActor) ? Kind.WORD : Kind.REFERENCE,
+                            typeDescriptor.toKind(),
                             constantPool,
                             classLoader,
                             name,
@@ -136,11 +136,6 @@ public final class ClassActorFactory {
                             outerClass, enclosingMethodInfo);
         ClassRegistry.put(classActor);
         return classActor;
-    }
-
-    @INLINE
-    private static boolean isWord(final TypeDescriptor typeDescriptor, ClassActor superClassActor) {
-        return MaxineVM.isHosted() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.WORD, typeDescriptor, superClassActor);
     }
 
     @INLINE

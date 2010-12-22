@@ -161,8 +161,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     }
 
                     // Read VM memory and update various bits of cached state about the VM state
-                    vm().updateVMCaches();
-                    TeleProcess.this.updateCache();
+                    updateVMCaches(request);
+                    updateCache(request);
+
                     targetBreakpointManager().setActiveAll(false);
 
                     int newlystarted = 0;
@@ -258,6 +259,24 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                 Trace.begin(TRACE_VALUE + 1, tracePrefix() + "notifying completion of request: " + request);
                 request.notifyOfCompletion();
                 Trace.end(TRACE_VALUE + 1, tracePrefix() + "notifying completion of request: " + request);
+            }
+        }
+
+        private void updateCache(TeleEventRequest request) {
+            try {
+                TeleProcess.this.updateCache();
+            } catch (Exception e) {
+                e.printStackTrace();
+                ThrowableDialog.showLater(e, null, tracePrefix() + "Uncaught exception updating cache while processing " + request);
+            }
+        }
+
+        private void updateVMCaches(TeleEventRequest request) {
+            try {
+                vm().updateVMCaches();
+            } catch (Exception e) {
+                e.printStackTrace();
+                ThrowableDialog.showLater(e, null, tracePrefix() + "Uncaught exception updating VM caches while processing " + request);
             }
         }
 

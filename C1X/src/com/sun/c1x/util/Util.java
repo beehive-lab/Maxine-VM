@@ -54,6 +54,10 @@ public class Util {
         throw new Error("should not reach here");
     }
 
+    public static RuntimeException shouldNotReachHere(String msg) {
+        throw new Error("Should not reach here: " + msg);
+    }
+
     public static <T> boolean replaceInList(T a, T b, List<T> list) {
         final int max = list.size();
         for (int i = 0; i < max; i++) {

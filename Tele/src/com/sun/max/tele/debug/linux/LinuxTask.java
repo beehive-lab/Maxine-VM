@@ -22,6 +22,7 @@ package com.sun.max.tele.debug.linux;
 
 import java.io.*;
 import java.nio.*;
+import java.util.concurrent.locks.*;
 
 import com.sun.max.*;
 import com.sun.max.lang.*;
@@ -131,6 +132,30 @@ public final class LinuxTask {
         return tid();
     }
 
+    private static final ReentrantLock processLock = new ReentrantLock();
+
+    static <V> V execute(Function<V> function) {
+        if (!processLock.tryLock()) {
+            throw new DataIOError(Address.zero(), "Failed concurrent attempt by " + Thread.currentThread() + " to access VM");
+        }
+        try {
+            return SingleThread.execute(function);
+        } finally {
+            processLock.unlock();
+        }
+    }
+
+    static <V> V executeWithException(Function<V> function) throws Exception {
+        if (!processLock.tryLock()) {
+            throw new DataIOError(Address.zero(), "Failed concurrent attempt by " + Thread.currentThread() + " to access VM");
+        }
+        try {
+            return SingleThread.executeWithException(function);
+        } finally {
+            processLock.unlock();
+        }
+    }
+
     private static native int nativeCreateChildProcess(long argv, int vmAgentSocketPort);
 
     /**
@@ -142,7 +167,7 @@ public final class LinuxTask {
      *         creating the new process. If a new process was created, it is paused at the call to {@code execve}
      */
     public static LinuxTask createChild(final long argv, final int vmAgentSocketPort) {
-        return SingleThread.execute(new Function<LinuxTask>() {
+        return execute(new Function<LinuxTask>() {
             public LinuxTask call() {
                 final int tgid = nativeCreateChildProcess(argv, vmAgentSocketPort);
                 if (tgid < 0) {
@@ -157,7 +182,7 @@ public final class LinuxTask {
 
     public void detach() throws IOException {
         try {
-            SingleThread.executeWithException(new Function<Void>() {
+            executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
                     if (!nativeDetach(tgid, tid)) {
                         throw new IOException("Ptrace.detach");
@@ -173,7 +198,7 @@ public final class LinuxTask {
     private static native boolean nativeSingleStep(int tgid, int tid);
 
     public boolean singleStep() {
-        return SingleThread.execute(new Function<Boolean>() {
+        return execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
                 return nativeSingleStep(tgid, tid);
             }
@@ -184,7 +209,7 @@ public final class LinuxTask {
 
     public void resume(final boolean allTasks) throws OSExecutionRequestException {
         try {
-            SingleThread.executeWithException(new Function<Void>() {
+            executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
                     if (!nativeResume(tgid, tid, allTasks)) {
                         throw new OSExecutionRequestException("Ptrace.resume");
@@ -220,7 +245,7 @@ public final class LinuxTask {
         if (!allTasks) {
             TeleError.unimplemented();
         }
-        return SingleThread.execute(new Function<ProcessState>() {
+        return execute(new Function<ProcessState>() {
             public ProcessState call() throws Exception {
                 int result = nativeWait(tgid, tid, allTasks);
                 return ProcessState.VALUES[result];
@@ -240,7 +265,7 @@ public final class LinuxTask {
      */
     public void kill() throws OSExecutionRequestException {
         try {
-            SingleThread.executeWithException(new Function<Void>() {
+            executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
                     if (!nativeKill(tgid, tid)) {
                         throw new OSExecutionRequestException("Ptrace.kill");
@@ -279,7 +304,7 @@ public final class LinuxTask {
             return leader().readBytes(src, dst, isDirectByteBuffer, offset, length);
         }
         assert src != 0;
-        return SingleThread.execute(new Function<Integer>() {
+        return execute(new Function<Integer>() {
             public Integer call() throws Exception {
                 final long addr = src;
                 if (addr < 0) {
@@ -316,7 +341,7 @@ public final class LinuxTask {
     private static native int nativeWriteBytes(int tgid, int tid, long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
 
     public int writeBytes(final long dst, final Object src, final boolean isDirectByteBuffer, final int offset, final int length) {
-        return SingleThread.execute(new Function<Integer>() {
+        return execute(new Function<Integer>() {
             public Integer call() throws Exception {
                 return nativeWriteBytes(tgid, tid, dst, src, isDirectByteBuffer, offset, length);
             }
@@ -326,7 +351,7 @@ public final class LinuxTask {
     private static native boolean nativeSetInstructionPointer(int tid, long instructionPointer);
 
     public boolean setInstructionPointer(final long instructionPointer) {
-        return SingleThread.execute(new Function<Boolean>() {
+        return execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
                 return nativeSetInstructionPointer(tid, instructionPointer);
             }
@@ -342,7 +367,7 @@ public final class LinuxTask {
                     final byte[] integerRegisters,
                     final byte[] floatingPointRegisters,
                     final byte[] stateRegisters) {
-        return SingleThread.execute(new Function<Boolean>() {
+        return execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
                 return nativeReadRegisters(tid, integerRegisters, integerRegisters.length,
                                 floatingPointRegisters, floatingPointRegisters.length,
