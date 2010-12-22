@@ -23,6 +23,7 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
@@ -77,4 +78,8 @@ public final class HeapRegionConstants {
         return sizeInBytes.roundedUpBy(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
     }
 
+    static void validate() {
+        FatalError.check((regionSizeInBytes == (1 << log2RegionSizeInBytes)) && ((regionSizeInBytes % Platform.getPageSize()) == 0),
+            "Region size must be a power of 2 and an integral number of platform pages");
+    }
 }
