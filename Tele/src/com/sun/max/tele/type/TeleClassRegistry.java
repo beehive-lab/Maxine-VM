@@ -280,7 +280,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
         final String typeDescriptorString = vm().getString(stringReference);
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
         typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
-        Trace.line(TRACE_VALUE + 1, tracePrefix() + ": adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
+        Trace.line(TRACE_VALUE + 2, tracePrefix() + ": adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
     }
 
     /**
