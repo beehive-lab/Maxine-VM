@@ -73,7 +73,7 @@ public class LinearSpaceAllocator {
          * @param spaceLeft size, in bytes, of the space left
          * @return
          */
-        abstract Address refill(LinearSpaceAllocator allocator, Pointer startOfSpaceLeft, Size spaceLeft);
+        abstract Address refill(Pointer startOfSpaceLeft, Size spaceLeft);
     }
 
     /**
@@ -201,45 +201,47 @@ public class LinearSpaceAllocator {
         return size.greaterThan(sizeLimit);
     }
 
-    synchronized Pointer refillOrAllocate(Size size) {
-        // We're the only thread that can refill the allocator now.
-        // We're still racing with other threads that might try to allocate
-        // what's left in the allocator (and succeed!).
-        if (isLarge(size)) {
-            return refillManager.allocate(size).asPointer();
-        }
-        // We may have raced with another concurrent thread which may have
-        // refilled the allocator.
-        Pointer cell = top.asPointer();
-
-        if (cell.plus(size).greaterThan(end)) {
-            Address hardLimit = hardLimit();
-            if (cell.plus(size).equals(hardLimit)) {
-                // We need to atomically change top
-                Pointer start = setTopToLimit();
-                if (cell.equals(start)) {
-                    return cell;
-                }
-                // Lost the race
-                cell = start;
-            }
-            if (!refillManager.shouldRefill(size, hardLimit.minus(cell).asSize())) {
-                // Don't refill, waste would be too high. Allocate from the bin table.
+    Pointer refillOrAllocate(Size size) {
+        synchronized (refillLock()) {
+            // We're the only thread that can refill the allocator now.
+            // We're still racing with other threads that might try to allocate
+            // what's left in the allocator (and succeed!).
+            if (isLarge(size)) {
                 return refillManager.allocate(size).asPointer();
             }
-            // Refill. First, fill up the allocator to bring everyone to refill synchronization.
-            Pointer startOfSpaceLeft = setTopToLimit();
+            // We may have raced with another concurrent thread which may have
+            // refilled the allocator.
+            Pointer cell = top.asPointer();
 
-            Address chunk = refillManager.refill(this, startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
-            if (!chunk.isZero()) {
-                // Won race to get a next chunk to refill the allocator.
-                refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
+            if (cell.plus(size).greaterThan(end)) {
+                Address hardLimit = hardLimit();
+                if (cell.plus(size).equals(hardLimit)) {
+                    // We need to atomically change top
+                    Pointer start = setTopToLimit();
+                    if (cell.equals(start)) {
+                        return cell;
+                    }
+                    // Lost the race
+                    cell = start;
+                }
+                if (!refillManager.shouldRefill(size, hardLimit.minus(cell).asSize())) {
+                    // Don't refill, waste would be too high. Allocate from the bin table.
+                    return refillManager.allocate(size).asPointer();
+                }
+                // Refill. First, fill up the allocator to bring everyone to refill synchronization.
+                Pointer startOfSpaceLeft = setTopToLimit();
+
+                Address chunk = refillManager.refill(startOfSpaceLeft, hardLimit.minus(startOfSpaceLeft).asSize());
+                if (!chunk.isZero()) {
+                    // Won race to get a next chunk to refill the allocator.
+                    refill(chunk, HeapFreeChunk.getFreechunkSize(chunk));
+                }
+                // Fall-off to return to the non-blocking allocation loop.
             }
-            // Fall-off to return to the non-blocking allocation loop.
+            // There was a race for refilling the allocator. Just return to
+            // the non-blocking allocation loop.
+            return Pointer.zero();
         }
-        // There was a race for refilling the allocator. Just return to
-        // the non-blocking allocation loop.
-        return Pointer.zero();
     }
     /**
      * Allocate a zeroed-out space of the specified size.

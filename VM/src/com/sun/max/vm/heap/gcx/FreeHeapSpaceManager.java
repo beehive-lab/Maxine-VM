@@ -85,7 +85,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
         @Override
         @INLINE(override = true)
-        Address refill(LinearSpaceAllocator allocator, Pointer startOfSpaceLeft, Size spaceLeft) {
+        Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
             return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
         }
 
