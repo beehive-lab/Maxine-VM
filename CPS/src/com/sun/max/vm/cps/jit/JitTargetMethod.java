@@ -185,20 +185,22 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         int bytecodePosition;
         if (targetCodePosition >= targetCodePositionFor(0)) {
             bytecodePosition = -1;
-            for (int i = 0; i != bytecodeToTargetCodePositionMap.length; i++) {
-                if (targetCodePositionFor(i) > targetCodePosition) {
-                    // For now just ensure we are to the left from a bytecode that is too far to the right:
-                    bytecodePosition = i - 1;
-                    break;
+            // Search the map backwards as there may be bytecodes for which
+            // no target code was emitted. The search is for the first bytecode
+            // position that maps to a non-zero target code position less than or
+            // equal to 'targetCodePosition'
+            for (int i = bytecodeToTargetCodePositionMap.length - 1; i >= 0; --i) {
+                int pos = targetCodePositionFor(i);
+                if (pos != 0) {
+                    if (pos <= targetCodePosition) {
+                        // This is the first bytecode that maps to a non-zero target
+                        // code position less than or equal to 'targetCodePosition'
+                        bytecodePosition = i;
+                        break;
+                    }
                 }
             }
             assert bytecodePosition >= 0;
-
-            // We are just left of the leftmost bytecode that is too far right.
-            // Find the start of the bytecode instruction we are in:
-            while (bytecodePosition >= 0 && bytecodeToTargetCodePositionMap[bytecodePosition] == 0) {
-                bytecodePosition--;
-            }
             return bytecodePosition;
         }
         // The instruction pointer denotes a position in the adapter frame code or the prologue
@@ -279,7 +281,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
                     SpecialBuiltin.pause();
                 }
             } else if (result != null) {
-                referenceMapEditor.fillInMaps(bytecodeToTargetCodePositionMap);
+                referenceMapEditor.fillInMaps();
                 this.referenceMapEditor.set(null);
             }
         }

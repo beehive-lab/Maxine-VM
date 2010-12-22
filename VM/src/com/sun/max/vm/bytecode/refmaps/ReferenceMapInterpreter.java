@@ -49,6 +49,12 @@ import com.sun.max.vm.verifier.types.*;
  */
 public abstract class ReferenceMapInterpreter {
 
+    private static String TraceRefMapInterpretationOf;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceRefMapInterpretationOf",
+            "Trace ref map interpretation of methods whose name or declaring class contains <value>.");
+    }
+
     /**
      * Initializes frames for each basic block in the {@linkplain ReferenceMapInterpreterContext#classMethodActor() method}
      * associated with a given interpretation context. The returned frames are encoded in a format unique to a specific
@@ -366,6 +372,12 @@ public abstract class ReferenceMapInterpreter {
      * @param context the interpretation context for a method
      */
     public void finalizeFrames(ReferenceMapInterpreterContext context) {
+        boolean trace = traceRefMapInterpretation(context.classMethodActor());
+        if (trace) {
+            Log.print("Finalizing ref map interpreter frames for ");
+            Log.printMethod(context.classMethodActor(), true);
+        }
+
         assert this.context == null;
         resetInterpreter(context);
 
@@ -387,7 +399,7 @@ public abstract class ReferenceMapInterpreter {
             changed = false;
             for (int blockIndex = 0; blockIndex < numberOfBlocks; ++blockIndex) {
                 if (isFrameInitialized(blockIndex)) {
-                    changed = interpretBlock(blockIndex, null, null) || changed;
+                    changed = interpretBlock(blockIndex, null, null, trace) || changed;
                 }
             }
             ++iterations;
@@ -409,20 +421,39 @@ public abstract class ReferenceMapInterpreter {
      *            in the abstract interpretation state
      */
     public void interpretReferenceSlots(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, BytecodePositionIterator bytecodePositionIterator) {
+        boolean trace = traceRefMapInterpretation(context.classMethodActor());
+        if (trace) {
+            Log.print("Interpreting ref slots for ");
+            Log.printMethod(context.classMethodActor(), true);
+        }
+
         assert this.context == null;
         resetInterpreter(context);
 
         bytecodePositionIterator.reset();
-        for (int bytecodePosition = bytecodePositionIterator.bytecodePosition(); bytecodePosition != -1; bytecodePosition = bytecodePositionIterator.bytecodePosition()) {
-            final int blockIndex = blockIndexFor(bytecodePosition);
+        for (int bci = bytecodePositionIterator.bytecodePosition(); bci != -1; bci = bytecodePositionIterator.bytecodePosition()) {
+            final int blockIndex = blockIndexFor(bci);
             if (!isFrameInitialized(blockIndex)) {
                 bytecodePositionIterator.next();
             } else {
-                interpretBlock(blockIndex, bytecodePositionIterator, visitor);
+                interpretBlock(blockIndex, bytecodePositionIterator, visitor, trace);
             }
         }
 
         this.context = null;
+    }
+
+    /**
+     * Determines if ref map interpretation for a given method should be traced.
+     */
+    private boolean traceRefMapInterpretation(ClassMethodActor method) {
+        if (TraceRefMapInterpretationOf == null) {
+            return false;
+        }
+        if (method.name().contains(TraceRefMapInterpretationOf)) {
+            return true;
+        }
+        return method.holder().name().contains(TraceRefMapInterpretationOf);
     }
 
     abstract boolean isLocalRef(int index);
@@ -592,12 +623,13 @@ public abstract class ReferenceMapInterpreter {
      * Interprets a given basic block.
      *
      * @param blockIndex the index of the block to be interpreted
+     * @param trace TODO
      * @return true if the entry state of a control flow successor of this block was modified as a result of the
      *         interpretation
      */
-    private boolean interpretBlock(int blockIndex, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor) {
+    private boolean interpretBlock(int blockIndex, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor, boolean trace) {
         final int sp = resetAtBlock(blockIndex);
-        return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor);
+        return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, trace);
     }
 
     /**
@@ -616,29 +648,21 @@ public abstract class ReferenceMapInterpreter {
         return changed;
     }
 
-    /**
-     * Interprets a given basic block.
-     *
-     * @param blockIndex the index of the block to be interpreted
-     * @param sp the stack depth upon entry to the block
-     * @return true if the entry state of a control flow successor of this block was modified as a result of the
-     *         interpretation
-     */
-    private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor) {
-        if (MaxineVM.isHosted()) {
-            // This indirection is simply for debugging the interpreter loop.
-            try {
-                return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
-            } catch (Throwable e) {
-                System.err.println("Re-interpreting block after error: ");
-                e.printStackTrace();
-                System.err.println(context);
-                CodeAttributePrinter.print(System.err, codeAttribute);
-                return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, true);
-            }
-        }
-        return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
-    }
+//    private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor, boolean trace) {
+//        if (MaxineVM.isHosted()) {
+//            // This indirection is simply for debugging the interpreter loop.
+//            try {
+//                return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
+//            } catch (Throwable e) {
+//                System.err.println("Re-interpreting block after error: ");
+//                e.printStackTrace();
+//                System.err.println(context);
+//                CodeAttributePrinter.print(System.err, codeAttribute);
+//                return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, true);
+//            }
+//        }
+//        return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, true);
+//    }
 
     @HOSTED_ONLY
     public String[] framesToStrings(ReferenceMapInterpreterContext context) {
@@ -672,6 +696,37 @@ public abstract class ReferenceMapInterpreter {
         return sb.append("}").toString();
     }
 
+    private void logCurrentFrame() {
+        Log.print("  locals[");
+        Log.print(maxLocals());
+        Log.print("] = { ");
+        for (int i = 0; i != maxLocals(); ++i) {
+            if (isLocalRef(i)) {
+                Log.print(i);
+                Log.print(' ');
+            }
+        }
+        Log.print("}, stack[");
+        Log.print(sp);
+        Log.print("] = { ");
+        for (int i = 0; i != sp; ++i) {
+            if (isStackRef(i)) {
+                Log.print(i);
+                Log.print(' ');
+            }
+        }
+        Log.println('}');
+    }
+
+    /**
+     * Interprets a given basic block.
+     *
+     * @param blockIndex the index of the block to be interpreted
+     * @param sp the stack depth upon entry to the block
+     * @param trace TODO
+     * @return true if the entry state of a control flow successor of this block was modified as a result of the
+     *         interpretation
+     */
     @INLINE
     private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor, boolean trace) {
         assert sp >= 0;
@@ -683,6 +738,15 @@ public abstract class ReferenceMapInterpreter {
         boolean changed = false;
 
         int searchBytecodePosition = bytecodePositionIterator == null ? -1 : bytecodePositionIterator.bytecodePosition();
+
+        if (trace) {
+            Log.print("Interpreting block ");
+            Log.print(blockIndex);
+            Log.print(", sp=");
+            Log.print(sp);
+            Log.print(", search bci=");
+            Log.println(searchBytecodePosition);
+        }
 
         while (bytecodePosition != endPosition) {
             opcodeBytecodePosition = bytecodePosition;
@@ -697,9 +761,11 @@ public abstract class ReferenceMapInterpreter {
                 visitReferencesAtCurrentBytecodePosition(visitor, false);
             }
 
-            if (MaxineVM.isHosted() && trace) {
-                System.err.println("  " + currentFrameToString());
-                System.err.println(opcodeBytecodePosition + ":  " + Bytecodes.nameOf(opcode));
+            if (trace) {
+                logCurrentFrame();
+                Log.print(opcodeBytecodePosition);
+                Log.print(":  ");
+                Log.println(Bytecodes.baseNameOf(opcode));
             }
 
             switch (opcode) {

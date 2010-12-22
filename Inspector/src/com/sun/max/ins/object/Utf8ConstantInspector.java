@@ -20,11 +20,11 @@
  */
 package com.sun.max.ins.object;
 
-import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.object.StringPane.*;
+import com.sun.max.ins.gui.*;
+import com.sun.max.ins.object.StringPane.StringSource;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
 
@@ -35,7 +35,7 @@ import com.sun.max.vm.classfile.constant.*;
  */
 class Utf8ConstantInspector extends ObjectInspector {
 
-    private JTabbedPane tabbedPane;
+    private InspectorTabbedPane tabbedPane;
     private ObjectScrollPane fieldsPane;
     private StringPane stringPane;
 
@@ -57,7 +57,7 @@ class Utf8ConstantInspector extends ObjectInspector {
         final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject();
         final String name = teleUtf8Constant.classActorForObjectType().javaSignature(false);
 
-        tabbedPane = new JTabbedPane();
+        tabbedPane = new InspectorTabbedPane(inspection());
 
         fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleUtf8Constant, instanceViewPreferences);
         tabbedPane.add(name, fieldsPane);

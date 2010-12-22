@@ -75,17 +75,32 @@ public final class Inspection implements InspectionHolder {
      * Initializes the UI system to a specified L&F.
      */
     public static void initializeSwing() {
-        final String lookAndFeelName = "javax.swing.plaf.metal.MetalLookAndFeel";
-//      final String lookAndFeelName = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-//      final String lookAndFeelName = "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
-//      final String lookAndFeelName = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
-        Trace.line(TRACE_VALUE, "[Inspection]  setting Look & Feel:  " + lookAndFeelName);
-        try {
-            UIManager.setLookAndFeel(lookAndFeelName);
-        } catch (Exception e) {
-            InspectorError.unexpected("Failed to set L&F:  " + lookAndFeelName, e);
+        // Default L&F
+        String lookAndFeelName = UIManager.getSystemLookAndFeelClassName();
+
+        // Some optional overrides of the platform default
+        lookAndFeelName = "javax.swing.plaf.metal.MetalLookAndFeel";
+//      lookAndFeelName = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+//      lookAndFeelName = "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
+//      lookAndFeelName = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
+
+
+        if (lookAndFeelName.equals("com.apple.laf.AquaLookAndFeel")) {
+            // Here are some experimental attributes to set for OS X
+            // System.setProperty("apple.laf.useScreenMenuBar", "true   ");
         }
-        //System.setProperty("apple.laf.useScreenMenuBar", "true");
+
+        if (lookAndFeelName.equals(UIManager.getSystemLookAndFeelClassName())) {
+            Trace.line(TRACE_VALUE, "[Inspection]  using platform Look & Feel:  " + lookAndFeelName);
+        } else {
+            Trace.line(TRACE_VALUE, "[Inspection]  setting Look & Feel:  " + lookAndFeelName);
+            try {
+                UIManager.setLookAndFeel(lookAndFeelName);
+            } catch (Exception e) {
+                InspectorError.unexpected("Failed to set L&F:  " + lookAndFeelName, e);
+            }
+        }
+
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
     }

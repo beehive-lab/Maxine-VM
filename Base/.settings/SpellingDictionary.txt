@@ -16,6 +16,7 @@ Doug
 Foo
 Hannes
 Hiroshi
+Javadoc
 Jordan
 Karthik
 Kotselidis
@@ -52,6 +53,7 @@ arg
 bailed
 bailout
 beltway
+builtins
 bytecode
 bytecodes
 callback
@@ -68,6 +70,7 @@ classpath
 clipboard
 com
 compaction
+configurability
 deactivate
 deactivated
 deactivates
@@ -109,6 +112,10 @@ inspectable
 inspectee
 instanceof
 int
+intrinsification
+intrinsified
+intrinsify
+intrinsifying
 invokeinterface
 invokespecial
 invokestatic
@@ -204,8 +211,5 @@ viewport
 vm
 watchpoint
 watchpoints
-intrinsified
-builtins
-intrinsification
-intrinsifying
-intrinsify
+wattage
+wrt

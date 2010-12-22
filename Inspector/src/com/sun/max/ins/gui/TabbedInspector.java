@@ -43,7 +43,7 @@ import com.sun.max.ins.InspectionSettings.*;
 public abstract class TabbedInspector<Inspector_Type extends Inspector> extends Inspector implements InspectorContainer<Inspector_Type> {
 
     private final Set<Inspector_Type> inspectors = new HashSet<Inspector_Type>();
-    private final JTabbedPane tabbedPane;
+    private final InspectorTabbedPane tabbedPane;
     private final SaveSettingsListener saveSettingsListener;
 
     protected void addChangeListener(ChangeListener listener) {
@@ -56,7 +56,8 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
 
     protected TabbedInspector(Inspection inspection, final String settingsClientName) {
         super(inspection);
-        tabbedPane = new JTabbedPane();
+        tabbedPane = new InspectorTabbedPane(inspection);
+        tabbedPane.setOpaque(true);
         if (settingsClientName != null) {
             saveSettingsListener = createGeometrySettingsClient(this, settingsClientName + "Geometry");
         } else {
