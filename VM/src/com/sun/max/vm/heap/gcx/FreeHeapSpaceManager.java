@@ -57,6 +57,10 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
          * Size linear space allocated managed by this refill manager are refilled with.
          */
         Size refillSize;
+        /**
+         * Amount of space below which a refill is warranted. Also used as the minimum acceptable size
+         * for a TLAB chunk, when allocation discontinuous TLABs.
+         */
         Size refillThreshold;
 
         LinearSpaceRefillManager() {
@@ -75,12 +79,6 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
         @Override
         @INLINE(override = true)
-        Address allocateTLAB(Size size) {
-            return binAllocateTLAB(size);
-        }
-
-        @Override
-        @INLINE(override = true)
         boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
             return spaceLeft.lessThan(refillThreshold);
         }
@@ -89,6 +87,31 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         @INLINE(override = true)
         Address refill(LinearSpaceAllocator allocator, Pointer startOfSpaceLeft, Size spaceLeft) {
             return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
+        }
+
+        /**
+         * Allocate a TLAB and refill the allocator along the way.
+         * If possible, the remaining space in the allocator is used for the TLAB.
+         * The allocator is refilled only if there is enough space, otherwise it is left full
+         * which will trigger GC on next request.
+         */
+        @Override
+        Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
+            Address firstChunk = Address.zero();
+            if (leftoverSize.greaterThan(0)) {
+                if (leftoverSize.lessThan(refillThreshold)) {
+                    // Don't bother with the left over in the allocator.
+                    HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(leftoverSize));
+                } else {
+                    HeapFreeChunk.format(leftover, leftoverSize);
+                    tlabSize = tlabSize.minus(leftoverSize);
+                    if (tlabSize.lessThan(refillThreshold)) {
+                        return leftover;
+                    }
+                    firstChunk = leftover;
+                }
+            }
+            return binAllocateTLAB(tlabSize, firstChunk);
         }
     }
 
@@ -208,7 +231,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
                     if (spaceLeft.greaterEqual(minReclaimableSpace)) {
                         // Space is allocated at the end of the chunk to avoid reformatting the leftover
                         // if it doesn't change bins.
-                        // FIXME: need to revisit the API to clear distinguish the cases when what's needed is formatted chunks
+                        // FIXME: need to revisit the API to clearly distinguish the cases when what's needed is formatted chunks
                         // (e.g., when allocating for allocators, like TLABs), or when all that is needed is bytes (i.e., for direct object allocation)
                         result = result.plus(spaceLeft);
                         HeapFreeChunk.format(result, size);
@@ -362,13 +385,22 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
      * @param size
      * @return  the address of the first chunks allocated to the TLAB
      */
-    private synchronized Address binAllocateTLAB(Size size) {
+    private synchronized Address binAllocateTLAB(Size size, Address firstChunk) {
         long requiredSpace = size.toLong();
         // First, try to allocate from the TLAB bin.
         if (tlabFreeSpaceList.totalSize > requiredSpace) {
             Address result = tlabFreeSpaceList.allocateChunks(size);
             checkBinFreeSpace();
-            return result;
+            if (firstChunk.isZero()) {
+                return result;
+            }
+            HeapFreeChunk.setFreeChunkNext(firstChunk, result);
+            return firstChunk;
+        }
+        // Here, we can't use firstChunk after any call to allocate as a GC might occur
+        // and invalidate it. Simplest is to put it back in the pool of free space.
+        if (!firstChunk.isZero()) {
+            recordFreeSpace(firstChunk, HeapFreeChunk.getFreechunkSize(firstChunk));
         }
         // In any case, after this call, there will be no more TLAB chunks left.
         // Let future TLAB allocation not use this until filled again by GC.
@@ -410,6 +442,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         useTLABBin = false;
         return initialChunks;
     }
+
 
     synchronized Address binAllocate(Size size) {
         return  binAllocate(binIndex(size), size, true);
@@ -646,13 +679,11 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
         // Refill TLAB on TLAB overflow if less than this:
         Size tlabRefillThreshold = Size.fromInt(Word.widthValue().numberOfBytes * 64);
-        // Minimum acceptable size for a TLAB chunk.
-        Size minTlabChunkSize = tlabRefillThreshold;
 
         // Dumb refill policy. Doesn't matter in the long term as we'll switch to a first fit linear allocator with overflow allocator on the side.
         LinearSpaceRefillManager refillManager = (LinearSpaceRefillManager) smallObjectAllocator.refillManager();
         refillManager.setRefillPolicy(minLargeObjectSize, tlabRefillThreshold);
-        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minTlabChunkSize);
+        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
         useTLABBin = false;
     }
 
@@ -726,7 +757,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
     @INLINE
     public final Pointer allocateTLAB(Size size) {
-        return useTLABBin ? binAllocateTLAB(size).asPointer() : smallObjectAllocator.allocateTLAB(size);
+        return useTLABBin ? binAllocateTLAB(size, Address.zero()).asPointer() : smallObjectAllocator.allocateTLAB(size);
     }
 
     /**
