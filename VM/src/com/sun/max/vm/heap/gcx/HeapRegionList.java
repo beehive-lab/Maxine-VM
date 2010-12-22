@@ -49,7 +49,7 @@ public final class HeapRegionList {
         ACCOUNTING;
 
         HeapRegionList createList() {
-            Pointer base = Reference.fromJava(listsStorage[ordinal()]).toOrigin().plus(Layout.arrayLayout().getElementOffsetInCell(0));
+            Pointer base = Reference.fromJava(listsStorage[ordinal()]).toOrigin().plus(Layout.intArrayLayout().getElementOffsetInCell(0));
             return new HeapRegionList(base);
         }
     }
