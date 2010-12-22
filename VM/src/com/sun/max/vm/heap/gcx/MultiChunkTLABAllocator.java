@@ -22,30 +22,27 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A space allocator that can allocate TLAB formatted as a linked list of discontinuous chunks.
+ * A space allocator that allocates both small objects and TLAB.
+ * The allocator is backed with a single contiguous space and perform atomic bump pointer allocation.
+ * TLAB may be allocated as a linked list of non-contiguous chunk of memory if the space left in
+ * the current chunk backing the allocator is too small. In this case, the allocator delegate allocation
+ * to its refill manager. The refill manager will takes the left over of the space as the first .
+ *
+ * The allocator may be refilled with chunks of memory of various size.
  * TLAB do not have to be allocated as a single contiguous chunk, and the space
  * requested should be treated as a hint, i.e., the returned TLAB may be slightly bigger
- * or smaller if it opportunistically reduce fragmentation of the available space.
+ * or smaller if it opportunistically reduces fragmentation of the available space.
  *
  * @author Laurent Daynes
  */
 public class MultiChunkTLABAllocator extends LinearSpaceAllocator {
     abstract static class RefillManager extends LinearSpaceAllocator.RefillManager {
-        /**
-         * Minimum amount of space a TLAB chunk should be allocated.
-         */        private Size tlabMinChunkSize;
-        abstract Address allocateTLAB(Size tlabSize);
+        abstract Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize);
     }
-
-    /**
-     * Minimum amount of space a TLAB chunk should be allocated.
-     */
-    private Size tlabMinChunkSize;
 
     MultiChunkTLABAllocator(RefillManager refillManager) {
         super(refillManager);
@@ -53,39 +50,18 @@ public class MultiChunkTLABAllocator extends LinearSpaceAllocator {
 
     void initialize(Address initialChunk, Size initialChunkSize, Size sizeLimit, Size headroom, Size tlabMinChunkSize) {
         super.initialize(initialChunk, initialChunkSize, sizeLimit, headroom);
-        this.tlabMinChunkSize = tlabMinChunkSize;
     }
 
-    synchronized Pointer allocateTLABAndRefill(Size tlabSize) {
-        // We may have race with other threads to get here.
-        // First, check that the condition that led us here still holds.
-        Size spaceNeeded = tlabSize;
-        Pointer cell = top.asPointer();
-        if (cell.plus(tlabSize).greaterThan(end)) {
-            Pointer hardLimit = hardLimit().asPointer();
-            Pointer firstChunk = setTopToLimit();
-            Size size = hardLimit.minus(firstChunk).asSize();
-            if (size.lessThan(tlabMinChunkSize)) {
-                // Don't bother with this chunk.
-                if (size.greaterThan(0)) {
-                    HeapSchemeAdaptor.fillWithDeadObject(firstChunk, hardLimit);
-                }
-                // Fall off to allocation by the refill manager.
-            } else {
-                spaceNeeded = tlabSize.minus(size);
-                HeapFreeChunk.setFreeChunkSize(firstChunk, size);
-                HeapFreeChunk.setFreeChunkNext(firstChunk, Address.zero());
-                // Don't try allocate an additional chunk to fill up to the requested size.
-                // This might raises a GC that would invalidate the first chunk just constructed.
-                return firstChunk;
-            }
-            return ((RefillManager) refillManager).allocateTLAB(spaceNeeded).asPointer();
-        }
-        // We've lost the race to refill the allocator. Return zero to indicate
-        // the allocator to retry.
-        return Pointer.zero();
-    }
-
+    /**
+     * Allocate TLAB.
+     * The allocator try to allocate the requested TLAB from its current
+     * continuous chunk of memory, and delegate to its refill manager if it can't.
+     * The refill manager is free to either refill the allocator, or allocated a TLAB
+     * formatted as a linked list of chunk.
+     *
+     * @param tlabSize
+     * @return
+     */
     final Pointer allocateTLAB(Size tlabSize) {
         if (MaxineVM.isDebug()) {
             FatalError.check(tlabSize.isWordAligned(), "Size must be word aligned");
@@ -97,19 +73,29 @@ public class MultiChunkTLABAllocator extends LinearSpaceAllocator {
         Pointer cell;
         Pointer newTop;
         Size chunkSize;
-        Address firstChunk = Address.zero();
         do {
             chunkSize = tlabSize;
             cell = top.asPointer();
             newTop = cell.plus(chunkSize);
             if (newTop.greaterThan(end)) {
-                return allocateTLABAndRefill(tlabSize);
+                synchronized (refillLock()) {
+                    cell = top.asPointer();
+                    if (cell.plus(tlabSize).greaterThan(end)) {
+                        // Bring allocation hand to the limit of the chunk of memory backing the allocator.
+                        // We hold the refill lock so we're guaranteed that chunk will not be replaced while we're doing this.
+                        Pointer startOfLeftover = setTopToLimit();
+                        Size sizeOfLeftover = hardLimit().minus(startOfLeftover).asSize();
+                        cell = ((RefillManager) refillManager).allocateTLAB(tlabSize, startOfLeftover, sizeOfLeftover).asPointer();
+                        FatalError.check(!cell.isZero(), "Refill manager must not return a null TLAB");
+                        return cell;
+                    }
+                    // Otherwise, we lost the race to refill the TLAB. loop back to try again.
+                    newTop = cell.plus(chunkSize);
+                }
             }
         } while (thisAddress.compareAndSwapWord(TOP_OFFSET, cell, newTop) != cell);
-
         // Format as a chunk.
-        HeapFreeChunk.setFreeChunkSize(cell, chunkSize);
-        HeapFreeChunk.setFreeChunkNext(cell, firstChunk);
+        HeapFreeChunk.format(cell, tlabSize);
         return cell;
     }
 }

@@ -24,6 +24,7 @@ import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -34,18 +35,15 @@ import com.sun.max.vm.runtime.*;
  * Currently, for testing region-based GC mechanism (tracing, sweeping, region allocation, large object handling).
  *
  *
- *
- * TODO: rename FirstFitMarkSweepHeap.
  * @author Laurent Daynes
  */
-public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwner, ApplicationHeap {
+public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner, ApplicationHeap {
     /* For simplicity at the moment. Should be able to allocated this in GC's own heap (i.e., the bootstrap allocator).
      */
     private static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
 
-    final HeapAccount<FirstFitApplicationHeap> heapAccount;
+    final HeapAccount<FirstFitMarkSweepHeap> heapAccount;
     final MultiChunkTLABAllocator smallObjectAllocator;
-    final LinearSpaceAllocator overflowAllocator;
     final LargeObjectSpace largeObjectAllocator;
 
     /**
@@ -65,12 +63,12 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
      * Used to refill the small object allocator and the overflow allocator.
      */
     private HeapRegionList allocatingRegions;
+
     /**
      * List of region with no space available for allocation.
      */
     private HeapRegionList fullRegions;
 
-    private int overflowRegionID;
     /*
      * The lock on which refill and region allocation to object spaces synchronize on.
      */
@@ -82,60 +80,68 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
         throw outOfMemoryError;
     }
 
-    private void overflowAllocatorRefill(int regionId, Address chunkStart, Size chunkSize) {
-        // Change the overflow allocator's region.
-        if (overflowRegionID != INVALID_REGION_ID) {
-            fullRegions.append(overflowRegionID);
-        }
-        allocatingRegions.remove(regionId);
-        overflowRegionID = regionId;
-        overflowAllocator.refill(chunkStart, chunkSize);
-        HeapRegionInfo.fromRegionID(regionId).setAllocating();
-    }
+    class OverflowAllocator {
+        private Address top;
+        private Address start;
+        private Address end;
+        private int overflowRegionID;
+        private int overflowRefillCount;
+        /**
+         * Min space to request if triggering GC.
+         */
+        private Size minSpaceAfterGC;
 
+        OverflowAllocator(Size minSpaceAfterGC) {
+            top = Address.zero();
+            start = Address.zero();
+            end = Address.zero();
+            overflowRegionID = INVALID_REGION_ID;
+            overflowRefillCount = 0;
+            this.minSpaceAfterGC = minSpaceAfterGC;
+        }
+
+        private void overflowAllocatorRefill(int regionId, Address chunkStart, Size chunkSize) {
+            // Change the overflow allocator's region.
+            if (overflowRegionID != INVALID_REGION_ID) {
+                // Don't bother with re-using the space.
+                HeapSchemeAdaptor.fillWithDeadObject(top.asPointer(), end.asPointer());
+                fullRegions.append(overflowRegionID);
+            }
+            allocatingRegions.remove(regionId);
+            overflowRegionID = regionId;
+            start = chunkStart;
+            top = chunkStart;
+            end = chunkStart.plus(chunkSize);
+            HeapRegionInfo.fromRegionID(regionId).setAllocating();
+            overflowRefillCount++;
+        }
+
+        Pointer allocate(Size size) {
+            Pointer cell = top.asPointer();
+            if (cell.plus(size).greaterThan(end)) {
+                return overflowRefillOrAllocate(this, size).asPointer();
+            }
+            top = top.plus(size);
+            return cell;
+        }
+
+        Pointer allocateCleared(Size size) {
+            Pointer cell = allocate(size);
+            Memory.clearWords(cell, size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt());
+            return cell;
+        }
+
+    }
     /**
-     * Refill the overflow allocator.
-     * @param size
-     * @return address to a chunk of the requested size, or zero if none requested.
+     * Refill manager for the overflow allocator.
+     * Only refill with a single chunk. Never used for TLAB allocation.
+     *
      */
-    Address overflowRefillOrAllocate(Size size) {
-        final int minFreeWords = size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
-        int firstFitRegion = INVALID_REGION_ID;
-        int regionWithLargestSingleChunk = INVALID_REGION_ID;
-        int numFreeWords = 0;
-        regionInfoIterable.initialize(allocatingRegions);
-        regionInfoIterable.reset();
-        for (HeapRegionInfo regionInfo : regionInfoIterable) {
-            if (regionInfo.isEmpty()) {
-                int regionId = regionInfo.toRegionID();
-                final Address result = regionInfo.regionStart();
-                final Size spaceLeft = Size.fromUnsignedInt(HeapRegionConstants.regionSizeInBytes).minus(size);
-                // Refill allocator with the rest.
-                overflowAllocatorRefill(regionId, result.plus(size), spaceLeft);
-                return result;
-            }
-            if (regionInfo.freeWords() > numFreeWords && regionInfo.numFreeChunks() == 1) {
-                regionWithLargestSingleChunk = regionInfo.toRegionID();
-            } else if (firstFitRegion == INVALID_REGION_ID && regionInfo.freeWords() > minFreeWords) {
-                firstFitRegion = regionInfo.toRegionID();
-            }
-        }
-        if (regionWithLargestSingleChunk != INVALID_REGION_ID) {
-            final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(regionWithLargestSingleChunk);
-            Address result = regionInfo.firstFreeBytes();
-            Size spaceLeft = HeapFreeChunk.getFreechunkSize(result).minus(size);
-            overflowAllocatorRefill(regionWithLargestSingleChunk, result.plus(size), spaceLeft);
-            return result;
-        }
-
-        // Allocate without refilling.
-        return Address.zero();
-    }
-
     class OverflowRefillManager extends LinearSpaceAllocator.RefillManager {
 
         @Override
         Address allocate(Size size) {
+            FatalError.unexpected("Must never call this on the overflow refill manager");
             return Address.zero();
         }
 
@@ -151,70 +157,27 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
             return Address.zero();
         }
     }
-    /**
-     * Handle allocation requests that cannot be addressed by the small object space.
-     * Handle only object request, not TLABs.
-     * @param size
-     * @return
-     */
-    private Address overflowAllocation(Size size) {
-        return overflowAllocator.allocateCleared(size);
-    }
+
     /**
      * Refill Manager for the small object space.
      */
     class RefillManager extends MultiChunkTLABAllocator.RefillManager {
         private Size refillThreshold;
         private Address nextFreeChunkInRegion;
-        private int currentRegion;
+        private OverflowAllocator overflowAllocator;
 
         /**
          * Space wasted on refill. For statistics only.
          */
         private Size wastedSpace;
 
-        RefillManager() {
+        RefillManager(OverflowAllocator overflowAllocator) {
             nextFreeChunkInRegion = Address.zero();
+            this.overflowAllocator = overflowAllocator;
         }
 
         void setRefillPolicy(Size refillThreshold) {
             this.refillThreshold = refillThreshold;
-        }
-
-        void resetAfterCollection() {
-            currentRegion = allocatingRegions.head();
-            final HeapRegionInfo regionInfo = theRegionTable().regionInfo(currentRegion);
-            nextFreeChunkInRegion = regionInfo.firstFreeBytes();
-            if (MaxineVM.isDebug()) {
-                FatalError.check(!nextFreeChunkInRegion.isZero() && theRegionTable().regionID(nextFreeChunkInRegion) == currentRegion,
-                                "invalid address of first free chunk");
-            }
-        }
-
-        Address nextFreeChunkList(Size minSpace) {
-            int gcCount = 0;
-            // No more free chunk in this region.
-            theRegionTable().regionInfo(currentRegion).setFull();
-            do {
-                currentRegion = allocatingRegions.next(currentRegion);
-                if (currentRegion != INVALID_REGION_ID) {
-                    final HeapRegionInfo regionInfo = theRegionTable().regionInfo(currentRegion);
-                    final Address result = regionInfo.firstFreeBytes();
-                    regionInfo.setAllocating();
-                    return result;
-                }
-
-                if (MaxineVM.isDebug() && Heap.traceGC()) {
-                    gcCount++;
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.unlock(lockDisabledSafepoints);
-                    if (gcCount > 5) {
-                        FatalError.unexpected("Suspiscious repeating GC calls detected");
-                    }
-                }
-            } while(Heap.collectGarbage(minSpace));
-            // Not enough freed memory.
-            throw outOfMemoryError;
         }
 
         /**
@@ -223,11 +186,11 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
          */
         @Override
         Address allocate(Size size) {
-            return overflowAllocation(size);
+            return overflowAllocator.allocateCleared(size);
         }
 
         @Override
-        Address allocateTLAB(Size size) {
+        Address allocateTLAB(Size size, Pointer leftover, Size leftoverSize) {
             // TODO Auto-generated method stub
             return Address.zero();
         }
@@ -255,31 +218,11 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
             }
             Address result = nextFreeChunkInRegion;
             if (result.isZero()) {
-                synchronized (heapLock()) {
-                    int gcCount = 0;
-                    // No more free chunk in this region.
-                    theRegionTable().regionInfo(currentRegion).setFull();
-                    do {
-                        currentRegion = allocatingRegions.next(currentRegion);
-                        if (currentRegion != INVALID_REGION_ID) {
-                            final HeapRegionInfo regionInfo = theRegionTable().regionInfo(currentRegion);
-                            result = regionInfo.firstFreeBytes();
-                            regionInfo.setAllocating();
-                            break;
-                        }
-
-                        if (MaxineVM.isDebug() && Heap.traceGC()) {
-                            gcCount++;
-                            final boolean lockDisabledSafepoints = Log.lock();
-                            Log.unlock(lockDisabledSafepoints);
-                            if (gcCount > 5) {
-                                FatalError.unexpected("Suspiscious repeating GC calls detected");
-                            }
-                        }
-                    } while(Heap.collectGarbage(spaceLeft.plus(Word.size())));
-                    // Not enough freed memory.
-                    outOfMemory();
-                }
+                // The space do we ask for a possible GC to free up if running out of space.
+                // This is arbitrary !!!! We should really pass to this refill the size that caused the refill to make sure the refill will satisfy it.
+                Size minSpace = spaceLeft.times(2);
+                result = changeAllocatingRegion(minSpace);
+                FatalError.check(!result.isZero(), "must never return 0");
             }
             nextFreeChunkInRegion = HeapFreeChunk.getFreeChunkNext(result);
             FatalError.check(HeapFreeChunk.getFreechunkSize(result).greaterThan(spaceLeft), "Should not refill with chunk no larger than wastage");
@@ -287,18 +230,99 @@ public class FirstFitApplicationHeap extends Sweepable implements HeapAccountOwn
         }
     }
 
-    public FirstFitApplicationHeap() {
-        heapAccount = new HeapAccount<FirstFitApplicationHeap>(this);
-        final RefillManager refillManager = new RefillManager();
-        smallObjectAllocator = new MultiChunkTLABAllocator(refillManager);
-        overflowAllocator = new MultiChunkTLABAllocator(refillManager);
+    /**
+     * Region currently used for allocation.
+     */
+    private int currentAllocatingRegion;
 
+    Address changeAllocatingRegion(Size minSpace) {
+        synchronized (heapLock()) {
+            int gcCount = 0;
+            // No more free chunk in this region.
+            theRegionTable().regionInfo(currentAllocatingRegion).setFull();
+            do {
+                currentAllocatingRegion = allocatingRegions.next(currentAllocatingRegion);
+                if (currentAllocatingRegion != INVALID_REGION_ID) {
+                    final HeapRegionInfo regionInfo = theRegionTable().regionInfo(currentAllocatingRegion);
+                    final Address result = regionInfo.firstFreeBytes();
+                    regionInfo.setAllocating();
+                    return result;
+                }
+
+                if (MaxineVM.isDebug() && Heap.traceGC()) {
+                    gcCount++;
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.unlock(lockDisabledSafepoints);
+                    if (gcCount > 5) {
+                        FatalError.unexpected("Suspiscious repeating GC calls detected");
+                    }
+                }
+            } while(Heap.collectGarbage(minSpace));
+            // Not enough freed memory.
+            throw outOfMemoryError;
+        }
+    }
+
+    /**
+     * Try to refill the overflow allocator with a single continuous chunk. Runs GC if can't.
+     * @param size
+     * @return address to a chunk of the requested size, or zero if none requested.
+     */
+    Address overflowRefillOrAllocate(OverflowAllocator overflowAllocator, Size size) {
+        final int minFreeWords = size.unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
+        int gcCount = 0;
+        synchronized (heapLock()) {
+            do {
+                int regionWithLargestSingleChunk = INVALID_REGION_ID;
+                int numFreeWords = minFreeWords - 1;
+                regionInfoIterable.initialize(allocatingRegions);
+                regionInfoIterable.reset();
+                for (HeapRegionInfo regionInfo : regionInfoIterable) {
+                    if (regionInfo.isEmpty()) {
+                        int regionId = regionInfo.toRegionID();
+                        final Address result = regionInfo.regionStart();
+                        final Size spaceLeft = Size.fromUnsignedInt(HeapRegionConstants.regionSizeInBytes).minus(size);
+                        // Refill allocator with the rest.
+                        overflowAllocator.overflowAllocatorRefill(regionId, result.plus(size), spaceLeft);
+                        return result;
+                    }
+                    if (regionInfo.freeWords() > numFreeWords && regionInfo.numFreeChunks() == 1) {
+                        regionWithLargestSingleChunk = regionInfo.toRegionID();
+                        numFreeWords = regionInfo.freeWords();
+                    }
+                }
+                if (regionWithLargestSingleChunk != INVALID_REGION_ID) {
+                    final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(regionWithLargestSingleChunk);
+                    Address result = regionInfo.firstFreeBytes();
+                    Size spaceLeft = HeapFreeChunk.getFreechunkSize(result).minus(size);
+                    overflowAllocator.overflowAllocatorRefill(regionWithLargestSingleChunk, result.plus(size), spaceLeft);
+                    return result;
+                }
+
+                if (MaxineVM.isDebug() && Heap.traceGC()) {
+                    gcCount++;
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.unlock(lockDisabledSafepoints);
+                    if (gcCount > 5) {
+                        FatalError.unexpected("Suspiscious repeating GC calls detected");
+                    }
+                }
+            } while(Heap.collectGarbage(size));
+            return Address.zero();
+        }
+    }
+
+    public FirstFitMarkSweepHeap() {
+        heapAccount = new HeapAccount<FirstFitMarkSweepHeap>(this);
+        Size overflowAllocatorMinSpaceAfterGC = Size.fromInt(regionSizeInBytes).dividedBy(2);
+        final RefillManager refillManager = new RefillManager(new OverflowAllocator(overflowAllocatorMinSpaceAfterGC));
+        smallObjectAllocator = new MultiChunkTLABAllocator(refillManager);
         largeObjectAllocator = new LargeObjectSpace();
         regionsRangeIterable = new HeapRegionRangeIterable();
         regionInfoIterable = new HeapRegionInfoIterable();
     }
 
-    public HeapAccount<FirstFitApplicationHeap> heapAccount() {
+    public HeapAccount<FirstFitMarkSweepHeap> heapAccount() {
         return heapAccount;
     }
 

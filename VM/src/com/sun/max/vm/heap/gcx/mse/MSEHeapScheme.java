@@ -82,7 +82,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     /**
      * Space where objects are allocated from by default.
      */
-    final FirstFitApplicationHeap theHeap;
+    final FirstFitMarkSweepHeap theHeap;
 
     private final Collect collect = new Collect();
 
@@ -97,7 +97,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
     @HOSTED_ONLY
     public MSEHeapScheme() {
         heapMarker = new TricolorHeapMarker(WORDS_COVERED_PER_BIT);
-        theHeap = new FirstFitApplicationHeap();
+        theHeap = new FirstFitMarkSweepHeap();
         afterGCVerifier = new AfterMarkSweepVerifier(heapMarker, theHeap);
     }
 

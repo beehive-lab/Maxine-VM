@@ -112,6 +112,11 @@ public class LinearSpaceAllocator {
         this.refillManager = refillManager;
     }
 
+    @INLINE
+    final Object refillLock() {
+        return this;
+    }
+
     void clear() {
         start = Address.zero();
         end = Address.zero();
