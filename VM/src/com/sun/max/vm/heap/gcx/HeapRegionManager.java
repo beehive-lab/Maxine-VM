@@ -158,6 +158,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         return ClassActor.fromJava(tupleClass).dynamicTupleSize();
     }
 
+    @INLINE
     public static HeapRegionManager theHeapRegionManager() {
         return theHeapRegionManager;
     }

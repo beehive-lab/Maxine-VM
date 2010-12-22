@@ -43,7 +43,7 @@ public final class TeleMSHeapScheme extends AbstractTeleVMHolder implements Tele
 
     public Offset gcForwardingPointerOffset() {
         // MS is a non-moving collector. Doesn't do any forwarding.
-        return null;
+        return Offset.zero();
     }
 
     public Pointer getForwardedOrigin(Pointer origin) {
