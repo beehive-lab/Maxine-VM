@@ -52,7 +52,7 @@ public class TeleMethod extends TeleTupleObject {
 
     @Override
     public String maxineRole() {
-        return "Mehod";
+        return "Method";
     }
 
     @Override
