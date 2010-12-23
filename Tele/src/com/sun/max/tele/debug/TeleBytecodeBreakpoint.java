@@ -21,7 +21,6 @@
 package com.sun.max.tele.debug;
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
 import java.util.*;
@@ -687,9 +686,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             final int charsLength = breakpointClassDescriptorsString.length();
             final Reference charArrayReference = vm().teleFields().InspectableCodeInfo_breakpointClassDescriptorCharArray.readReference(vm());
             TeleError.check(charArrayReference != null && !charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
-            final ArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
             for (int index = 0; index < charsLength; index++) {
-                charArrayLayout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));
+                Layout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));
             }
             vm().teleFields().InspectableCodeInfo_breakpointClassDescriptorsCharCount.writeInt(vm(), charsLength);
             vm().teleFields().InspectableCodeInfo_breakpointClassDescriptorsEpoch.writeInt(vm(), ++breakpointClassDescriptorsEpoch);
