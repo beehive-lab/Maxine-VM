@@ -823,14 +823,16 @@ public final class GraphBuilder {
     }
 
     void genGetField(int cpi, RiField field) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        // Must copy the state here, because the field holder must still be on the stack.
+        FrameState stateBefore = curState.immutableCopy(bci());
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
         LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded);
         appendOptimizedLoadField(field.kind(), load);
     }
 
     void genPutField(int cpi, RiField field) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        // Must copy the state here, because the field holder must still be on the stack.
+        FrameState stateBefore = curState.immutableCopy(bci());
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
         Value value = pop(field.kind().stackKind());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded));
@@ -1418,7 +1420,7 @@ public final class GraphBuilder {
 
         if (x instanceof StateSplit) {
             StateSplit stateSplit = (StateSplit) x;
-            if (!stateSplit.isStateCleared()) {
+            if (!stateSplit.isStateCleared() && stateSplit.stateBefore() == null) {
                 stateSplit.setStateBefore(curState.immutableCopy(bci));
             }
         }
