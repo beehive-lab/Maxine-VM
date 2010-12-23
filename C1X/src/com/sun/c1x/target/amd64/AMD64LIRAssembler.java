@@ -1766,6 +1766,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
                     masm.decrementq(AMD64.rsp, frameSize); // does not emit code for frameSize == 0
+                    if (C1XOptions.ZapStackOnMethodEntry) {
+                        final int intSize = 4;
+                        for (int i = 0; i < frameSize / intSize; ++i) {
+                            masm.movl(new CiAddress(CiKind.Int, AMD64.rsp.asValue(), i * intSize), 0xC1C1C1C1);
+                        }
+                    }
                     CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
                     if (csa.size != 0) {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
