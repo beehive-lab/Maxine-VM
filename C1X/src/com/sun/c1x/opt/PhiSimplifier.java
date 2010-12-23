@@ -88,16 +88,17 @@ public class PhiSimplifier implements BlockClosure {
                     return phi;
                 }
 
+                Value newInstr = simplify(oldInstr);
+
+                if (newInstr == null || newInstr.isIllegal() || newInstr.isDeadPhi()) {
+                    // if the subst instruction is illegal, make the entire phi illegal
+                    phi.makeDead();
+                    phi.clearFlag(Value.Flag.PhiVisited);
+                    return phi;
+                }
+
                 // attempt to simplify this operand
                 if (!cannotSimplify) {
-                    Value newInstr = simplify(oldInstr);
-
-                    if (newInstr == null || newInstr.isIllegal() || newInstr.isDeadPhi()) {
-                        // if the subst instruction is illegal, make the entire phi illegal
-                        phi.makeDead();
-                        phi.clearFlag(Value.Flag.PhiVisited);
-                        return phi;
-                    }
 
                     if (newInstr != phi && newInstr != phiSubst) {
                         if (phiSubst == null) {
