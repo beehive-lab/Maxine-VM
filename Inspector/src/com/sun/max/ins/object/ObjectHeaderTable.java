@@ -373,7 +373,14 @@ public final class ObjectHeaderTable extends InspectorTable {
                             InspectorError.unknownCase();
                     }
                 } else {
-                    InspectorError.unknownCase();
+                    final HeaderField finalHeaderField = headerField;
+                    label = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, ObjectHeaderTable.this) {
+
+                        @Override
+                        public Value fetchValue() {
+                            return  WordValue.from(vm().readWord(teleObject.origin().plus(Layout.generalLayout().getOffsetFromOrigin(finalHeaderField))).asPointer());
+                        }
+                    };
                 }
                 label.setOpaque(true);
                 labels[row] = label;
