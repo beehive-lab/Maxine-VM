@@ -22,7 +22,7 @@
  * This package implements an Origin-Header-Mixed (OHM) object layout.
  * <p>
  * Tuples object are packed for minimal space consumption, observing alignment
- * restrictions. They have a 2 word header and are layed out as shown below:
+ * restrictions. They have a 2 word header and are laid out as shown below:
  *
  * <p><blockquote><pre>
  * cell/origin --> +-------------+
@@ -36,7 +36,7 @@
  *                 +-------------+
  * </pre></blockquote></p>
  *
- * Array objects have a 3 word header and are layed out as shown below:
+ * Array objects have a 3 word header and are laid out as shown below:
  *
  * <p><blockquote><pre>
  * cell/origin --> +-------------+
