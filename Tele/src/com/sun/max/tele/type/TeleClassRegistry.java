@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele.type;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.util.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
@@ -35,6 +33,7 @@ import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -149,7 +148,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
             } else {
                 final Reference typeDescriptorToClassActorReference = vm().teleFields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
                 tableReference = vm().teleFields().HashMap_table.readReference(typeDescriptorToClassActorReference);
-                final int length = vmConfig().layoutScheme().arrayLayout.readLength(tableReference);
+                final int length = Layout.readArrayLength(tableReference);
                 for (int i = 0; i < length; i++) {
                     Reference entryReference = vm().readReference(tableReference, i);
                     while (!entryReference.isZero()) {
@@ -280,7 +279,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
         final String typeDescriptorString = vm().getString(stringReference);
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
         typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
-        Trace.line(TRACE_VALUE + 1, tracePrefix() + ": adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
+        Trace.line(TRACE_VALUE + 2, tracePrefix() + ": adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
     }
 
     /**
