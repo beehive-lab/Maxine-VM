@@ -363,10 +363,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     public abstract HeaderField[] headerFields();
 
     /**
-     * The type of a field in the obejct's header.
+     * The type of a field in the obejct's header, calling out specially
+     * the standard ones. Unknown ones are treated as words.
      *
      * @param headerField identifies a header field in the object layout
-     * @return the type of the header field
+     * @return the type of the header field, Word if unknown.
      */
     public final TypeDescriptor headerType(HeaderField headerField) {
         if (headerField == HeaderField.HUB) {
