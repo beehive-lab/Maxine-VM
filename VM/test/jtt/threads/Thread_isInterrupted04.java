@@ -26,6 +26,7 @@ package jtt.threads;
  */
 
 // Interrupted while running, do nothing, just set the flag and continue
+// (tw) This test will exercise deoptimization on HotSpot, because a volatile unloaded field is accessed.
 public class Thread_isInterrupted04 {
 
     public static boolean test(int i) throws InterruptedException {
