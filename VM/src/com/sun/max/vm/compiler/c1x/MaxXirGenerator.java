@@ -126,7 +126,11 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirPair invokeStaticTemplates;
     private XirPair[] newArrayTemplates;
     private XirTemplate[] arrayLoadTemplates;
+    private XirTemplate[] arrayLoadNoBoundsCheckTemplates;
     private XirTemplate[] arrayStoreTemplates;
+    private XirTemplate[] arrayStoreNoBoundsCheckTemplates;
+    private XirTemplate arrayStoreNoStoreCheckTemplate;
+    private XirTemplate arrayStoreNoBoundsOrStoreCheckTemplate;
 
     private DynamicHub[] arrayHubs;
 
@@ -190,6 +194,10 @@ public class MaxXirGenerator implements RiXirGenerator {
         newArrayTemplates = new XirPair[kinds.length];
         arrayLoadTemplates = new XirTemplate[kinds.length];
         arrayStoreTemplates = new XirTemplate[kinds.length];
+        arrayLoadNoBoundsCheckTemplates = new XirTemplate[kinds.length];
+        arrayStoreNoBoundsCheckTemplates = new XirTemplate[kinds.length];
+        arrayStoreNoBoundsOrStoreCheckTemplate = buildArrayStore(CiKind.Object, asm, false, false, true);
+        arrayStoreNoStoreCheckTemplate = buildArrayStore(CiKind.Object, asm, true, false, true);
 
         arrayHubs = new DynamicHub[kinds.length];
 
@@ -215,7 +223,9 @@ public class MaxXirGenerator implements RiXirGenerator {
                 putStaticFieldTemplates[index] = buildPutFieldTemplate(kind, kind == CiKind.Object, true);
                 getStaticFieldTemplates[index] = buildGetFieldTemplate(kind, true);
                 arrayLoadTemplates[index] = buildArrayLoad(kind, asm, true);
+                arrayLoadNoBoundsCheckTemplates[index] = buildArrayLoad(kind, asm, false);
                 arrayStoreTemplates[index] = buildArrayStore(kind, asm, true, kind == CiKind.Object, kind == CiKind.Object);
+                arrayStoreNoBoundsCheckTemplates[index] = buildArrayStore(kind, asm, false, kind == CiKind.Object, kind == CiKind.Object);
                 newArrayTemplates[index] = buildNewArray(kind);
             }
         }
@@ -515,13 +525,35 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType) {
-        XirTemplate template = arrayLoadTemplates[elementKind.ordinal()];
+        XirTemplate template;
+        if (site.requiresBoundsCheck()) {
+            template = arrayLoadTemplates[elementKind.ordinal()];
+        } else {
+            template = arrayLoadNoBoundsCheckTemplates[elementKind.ordinal()];
+        }
         return new XirSnippet(template, array, index);
     }
 
     @Override
     public XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType) {
-        XirTemplate template = arrayStoreTemplates[elementKind.ordinal()];
+        XirTemplate template;
+        if (elementKind.isObject()) {
+            if (site.requiresBoundsCheck() && site.requiresArrayStoreCheck()) {
+                template = arrayStoreTemplates[CiKind.Object.ordinal()];
+            } else if (site.requiresArrayStoreCheck()) {
+                // no bounds check
+                template = arrayStoreNoBoundsCheckTemplates[CiKind.Object.ordinal()];
+            } else if (site.requiresBoundsCheck()) {
+                // no store check
+                template = arrayStoreNoStoreCheckTemplate;
+            } else {
+                template = arrayStoreNoBoundsOrStoreCheckTemplate;
+            }
+        } else if (site.requiresBoundsCheck()) {
+            template = arrayStoreTemplates[elementKind.ordinal()];
+        } else {
+            template = arrayStoreNoBoundsCheckTemplates[elementKind.ordinal()];
+        }
         return new XirSnippet(template, array, index, value);
     }
 
