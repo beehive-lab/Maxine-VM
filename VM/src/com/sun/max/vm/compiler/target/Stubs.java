@@ -244,7 +244,7 @@ public class Stubs {
 
             String stubName = (isInterface ? 'i' : 'v') + "trampoline<" + index + ">";
             Flavor flavor = isInterface ? InterfaceTrampoline : VirtualTrampoline;
-            return new C1XTargetMethod(flavor, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset));
+            return new C1XTargetMethod(flavor, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset, true));
         }
         throw FatalError.unimplemented();
     }
@@ -315,7 +315,7 @@ public class Stubs {
             asm.ret(0);
 
             String stubName = "strampoline";
-            return new C1XTargetMethod(StaticTrampoline, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset));
+            return new C1XTargetMethod(StaticTrampoline, stubName, asm.finishTargetMethod(stubName, runtime(), registerRestoreEpilogueOffset, true));
         }
         throw FatalError.unimplemented();
     }
@@ -394,7 +394,7 @@ public class Stubs {
             asm.emitByte(popfq);
             asm.ret(0);
 
-            return new C1XTargetMethod(Flavor.TrapStub, "trapStub", asm.finishTargetMethod("trapStub", runtime(), -1));
+            return new C1XTargetMethod(Flavor.TrapStub, "trapStub", asm.finishTargetMethod("trapStub", runtime(), -1, true));
         }
         throw FatalError.unimplemented();
     }

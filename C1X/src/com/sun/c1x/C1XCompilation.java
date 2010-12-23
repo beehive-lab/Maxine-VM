@@ -361,7 +361,7 @@ public class C1XCompilation {
             // generate traps at the end of the method
             lirAssembler.emitTraps();
 
-            CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset);
+            CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
 
             if (cfgPrinter() != null) {
                 cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);
