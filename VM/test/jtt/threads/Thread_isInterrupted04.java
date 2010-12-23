@@ -27,6 +27,7 @@ package jtt.threads;
 
 // Interrupted while running, do nothing, just set the flag and continue
 // (tw) This test will exercise deoptimization on HotSpot, because a volatile unloaded field is accessed.
+// (tw) The temporary result variable is needed, because in order to query the isInterrupted flag, the thread must be alive.
 public class Thread_isInterrupted04 {
 
     public static boolean test(int i) throws InterruptedException {
@@ -35,9 +36,11 @@ public class Thread_isInterrupted04 {
         while (!thread.running) {
             Thread.sleep(10);
         }
+        Thread.sleep(100);
         thread.interrupt();
+        boolean result = thread.isInterrupted();
         thread.setStop(true);
-        return thread.isInterrupted();
+        return result;
     }
 
     private static class Thread1 extends java.lang.Thread {
