@@ -165,6 +165,13 @@ public class AMD64LIRAssembler extends LIRAssembler {
         }
     }
 
+    @Override
+    public void emitTraps() {
+        for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
+            masm.int3();
+        }
+    }
+
     private void const2reg(CiRegister dst, float constant) {
         if (constant == 0.0f) {
             masm.xorps(dst, dst);
@@ -1490,8 +1497,9 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case Div:
                     if (inst.kind == CiKind.Int) {
                         arithmeticIdiv(LIROpcode.Idiv, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
+                    } else {
+                        emitArithOp(LIROpcode.Div, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     }
-                    emitArithOp(LIROpcode.Div, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     break;
 
                 case Mul:
@@ -1563,6 +1571,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
                 case PointerLoadDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
+                    boolean canTrap = addressInformation.canTrap;
 
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
@@ -1583,7 +1592,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         src = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(src, result, inst.kind, info, false);
+                    moveOp(src, result, inst.kind, (canTrap) ? info : null, false);
                     break;
                 }
 
@@ -1606,6 +1615,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
                 case PointerStoreDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
+                    boolean canTrap = addressInformation.canTrap;
 
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
@@ -1626,7 +1636,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         dst = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(value, dst, inst.kind, info, false);
+                    moveOp(value, dst, inst.kind, (canTrap) ? info : null, false);
                     break;
                 }
 
