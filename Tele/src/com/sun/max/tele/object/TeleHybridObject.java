@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele.object;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.lang.reflect.*;
 
 import com.sun.max.lang.*;
