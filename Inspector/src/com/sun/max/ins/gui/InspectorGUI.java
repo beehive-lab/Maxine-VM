@@ -143,5 +143,5 @@ public interface InspectorGUI {
      */
     Frame frame();
 
-    JLabel getUnavailableDataTableCellRenderer();
+    InspectorLabel getUnavailableDataTableCellRenderer();
 }
