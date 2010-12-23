@@ -38,7 +38,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Inspector's canonical surrogate for an object implemented as a {@link Hybrid} in the tele VM,
+ * Inspector's canonical surrogate for an object implemented as a {@link Hybrid} in the VM,
  * one of the three kinds of low level Maxine heap implementation objects.
  * A {@link Hybrid} object has both fields, as in a tuple, and array elements; it cannot be expressed
  * as an ordinary Java type.
@@ -50,7 +50,7 @@ import com.sun.max.vm.value.*;
 public abstract class TeleHybridObject extends TeleObject {
 
     protected TeleHybridObject(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference, vmConfig().layoutScheme().hybridLayout);
+        super(teleVM, reference, Layout.hybridLayout());
     }
 
     @Override
@@ -62,7 +62,7 @@ public abstract class TeleHybridObject extends TeleObject {
     public Size objectSize() {
         // A hybrid object is sized as if it were all one big array, even though the memory will
         // be used differently in different parts.
-        return vmConfig().layoutScheme().hybridLayout.getArraySize(readArrayLength());
+        return Layout.hybridLayout().getArraySize(readArrayLength());
     }
 
     @Override
@@ -89,31 +89,31 @@ public abstract class TeleHybridObject extends TeleObject {
     }
 
     /**
-     * @return length of the word array part of this hybrid in the tele VM
+     * @return length of the word array part of this hybrid in the VM
      */
     private int readWordArrayLength() {
-        return vmConfig().layoutScheme().wordArrayLayout.readLength(reference());
+        return Layout.wordArrayLayout().readLength(reference());
     }
 
     /**
-     * @return an element of the word array part of this hybrid in the tele VM
+     * @return an element of the word array part of this hybrid in the VM
      */
     public Word readWord(int wordIndex) {
-        return vmConfig().layoutScheme().wordArrayLayout.getWord(reference(), wordIndex);
+        return Layout.getWord(reference(), wordIndex);
     }
 
     /**
-     * @return length of the int array part of this hybrid in the tele VM
+     * @return length of the int array part of this hybrid in the VM
      */
     public int readArrayLength() {
-        return  vmConfig().layoutScheme().arrayLayout.readLength(reference());
+        return  Layout.readArrayLength(reference());
     }
 
     /**
-     * @return an element of the int array part of this hybrid in the tele VM
+     * @return an element of the int array part of this hybrid in the VM
      */
     public int readArrayInt(int intIndex) {
-        return vmConfig().layoutScheme().intArrayLayout.getInt(reference(), intIndex);
+        return Layout.getInt(reference(), intIndex);
     }
 
     @Override

@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele.object;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -161,7 +159,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     protected TeleObject(TeleVM vm, Reference reference, SpecificLayout specificLayout) {
         super(vm);
         this.reference = (TeleReference) reference;
-        this.layoutScheme = vmConfig().layoutScheme();
+        this.layoutScheme = Layout.layoutScheme();
         this.specificLayout = specificLayout;
         oid = this.reference.makeOID();
         lastValidPointer = Pointer.zero();
@@ -422,7 +420,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      */
     public TeleHub getTeleHub() {
         if (teleHub == null) {
-            final Reference hubReference = vm().wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            final Reference hubReference = vm().wordToReference(Layout.readHubReferenceAsWord(reference));
             teleHub = (TeleHub) heap().makeTeleObject(hubReference);
         }
         return teleHub;
@@ -434,7 +432,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * @return the "misc" word from the header of this object in the VM
      */
     public Word getMiscWord() {
-        return vmConfig().layoutScheme().generalLayout.readMisc(reference);
+        return Layout.readMisc(reference);
     }
 
     /**

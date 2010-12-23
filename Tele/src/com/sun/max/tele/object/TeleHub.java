@@ -20,11 +20,10 @@
  */
 package com.sun.max.tele.object;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -90,7 +89,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return memory offset, relative to object origin, of the start of the vTable.
      */
     public Offset vTableOffset() {
-        return vmConfig().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(vTableStartIndex());
+        return Layout.wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex());
     }
 
     /**
@@ -124,7 +123,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return memory offset, relative to object origin, of the start of the iTable.
      */
     public Offset iTableOffset() {
-        return vmConfig().layoutScheme().wordArrayLayout.getElementOffsetFromOrigin(iTableStartIndex());
+        return Layout.wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex());
     }
 
     /**
@@ -161,7 +160,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return memory offset, relative to object origin, of the start of the mTable.
      */
     public Offset mTableOffset() {
-        return vmConfig().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(mTableStartIndex());
+        return Layout.intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex());
     }
 
     /**
@@ -198,7 +197,7 @@ public abstract class TeleHub extends TeleHybridObject {
      * @return memory offset, relative to object origin, of the start of the reference map.
      */
     public Offset referenceMapOffset() {
-        return vmConfig().layoutScheme().intArrayLayout.getElementOffsetFromOrigin(referenceMapStartIndex());
+        return Layout.intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex());
     }
 
     /**
