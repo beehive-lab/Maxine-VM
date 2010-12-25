@@ -425,18 +425,18 @@ public final class MaxineVM {
     }
 
     /**
-     * Entry point called by the substrate.
+     * VM initialization point called by the substrate.
      *
      * ATTENTION: this signature must match 'VMRunMethod' in "Native/substrate/maxine.c"
      *
-     * VM startup, initialization and exit code reporting routine running in the primordial native thread.
+     * VM startup, initialization and exit code reporting routine running in the VM startup native thread.
      *
      * This must work without having established a valid Java 'Thread' or 'VmThread'. Hence, no JNI callbacks are
      * supported in this routine.
      *
      * Also, there is no heap at first. In this early phase, we cannot allocate any objects.
      *
-     * @return zero if everything works so far or an exit code if something goes wrong
+     * @return 0 indicating initialization succeeded, non-0 if not
      */
     @VM_ENTRY_POINT
     public static int run(Pointer bootHeapRegionStart, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
@@ -448,9 +448,6 @@ public final class MaxineVM {
         Pointer tla = primordialETLA;
 
         Safepoint.setLatchRegister(tla);
-
-        // The primordial thread should never allocate from the heap
-        Heap.disableAllocationForCurrentThread();
 
         // The dynamic linker must be initialized before linking critical native methods
         DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);
@@ -473,11 +470,8 @@ public final class MaxineVM {
         MaxineVM vm = vm();
         vm.phase = Phase.PRISTINE;
 
-        if (VMOptions.parsePristine(argc, argv)) {
-            if (!VMOptions.earlyVMExitRequested()) {
-                VmThread.createAndRunMainThread();
-            }
-        }
+        VMOptions.parsePristine(argc, argv);
+
         return exitCode;
     }
 
