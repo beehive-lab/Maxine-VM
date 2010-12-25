@@ -340,13 +340,13 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
-    Address tlBlock = threadLocalsBlock_createForExistingThread(0);
+    Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
 
-    Address primordial_tla = ETLA_FROM_TLBLOCK(tlBlock);
-    image_write_value(Address, primordialETLAOffset, primordial_tla);
+    Address etla = ETLA_FROM_TLBLOCK(tlBlock);
+    image_write_value(Address, primordialETLAOffset, etla);
 
 #if log_LOADER
-    log_println("primordial TLA: %p", primordial_tla);
+    log_println("primordial TLA: %p", etla);
 #endif
 
 
@@ -359,6 +359,18 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
 #endif
+
+    if (exitCode == 0) {
+        // Initialization succeeded: now run the main Java thread
+        exitCode = (int) (Address) thread_run((void *) tlBlock);
+
+        // The thread-specific data destructor function is not called for the main thread
+        // TODO (dns) this is the behavior seen on Darwin-pthreads - confirm that it is true on other platforms
+        // TODO (dns) should we delete the thread-specific data key (e.g. pthread_key_delete(3))? Can only do so if
+        //      all other threads created by or attached the VM are guaranteed to be dead by now
+        threadLocalsBlock_setCurrent(0);
+        threadLocalsBlock_destroy(tlBlock);
+    }
 
     if (fd > 0) {
         int error = close(fd);

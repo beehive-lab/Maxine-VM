@@ -177,16 +177,16 @@ public class VmThread {
         ReferenceValue systemThreadGroupRef = ReferenceValue.from(systemThreadGroup);
         mainThreadGroup = new ThreadGroup(systemThreadGroup, hostMainThreadGroup.getName());
 
+        mainThread = initVmThread(copyProps(hostMainThread, new Thread(mainThreadGroup, hostMainThread.getName())));
+        vmOperationThread = initVmThread(new VmOperationThread(systemThreadGroup));
+        signalDispatcherThread = initVmThread(new SignalDispatcher(systemThreadGroup));
+
         try {
             referenceHandlerThread = initVmThread(copyProps(hostReferenceHandlerThread, (Thread) ReferenceHandler_init.invokeConstructor(systemThreadGroupRef, ReferenceValue.from(hostReferenceHandlerThread.getName())).asObject()));
             finalizerThread = initVmThread(copyProps(hostFinalizerThread, (Thread) FinalizerThread_init.invokeConstructor(systemThreadGroupRef).asObject()));
         } catch (Exception e) {
             throw FatalError.unexpected("Error initializing VM threads", e);
         }
-
-        mainThread = initVmThread(copyProps(hostMainThread, new Thread(mainThreadGroup, hostMainThread.getName())));
-        vmOperationThread = initVmThread(new VmOperationThread(systemThreadGroup));
-        signalDispatcherThread = initVmThread(new SignalDispatcher(systemThreadGroup));
     }
 
     @HOSTED_ONLY
@@ -322,23 +322,6 @@ public class VmThread {
     protected static native Word nativeThreadCreate(int id, Size stackSize, int priority);
 
     /**
-     * Initializes the VM thread system and starts the main Java thread.
-     */
-    public static void createAndRunMainThread() {
-        final Size requestedStackSize = STACK_SIZE_OPTION.getValue().aligned(platform().pageSize).asSize();
-
-        final Word nativeThread = nativeThreadCreate(mainThread.id, requestedStackSize, Thread.NORM_PRIORITY);
-        if (nativeThread.isZero()) {
-            FatalError.unexpected("Could not start main native thread.");
-        } else {
-            nonJniNativeJoin(nativeThread);
-        }
-        // Drop back to PRIMORDIAL because we are now in the primordial thread
-        MaxineVM vm = vm();
-        vm.phase = MaxineVM.Phase.PRIMORDIAL;
-    }
-
-    /**
      * Gets the current {@linkplain VmThreadLocal TLA}.
      *
      * @return the value of the safepoint {@linkplain Safepoint#latchRegister() latch} register.
@@ -444,6 +427,10 @@ public class VmThread {
                     Pointer stackYellowZone) {
 
         // Disable safepoints:
+        return addPublic(id, daemon, nativeThread, etla, stackEnd, stackYellowZone);
+    }
+
+    public static int addPublic(int id, boolean daemon, Address nativeThread, Pointer etla, Pointer stackEnd, Pointer stackYellowZone) {
         Safepoint.setLatchRegister(DTLA.load(etla));
 
         JNI_ENV.store3(etla, NativeInterfaces.jniEnv());
@@ -562,6 +549,10 @@ public class VmThread {
             // scheme-specific termination
             vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
             VmOperationThread.terminate();
+
+            // Drop back to PRIMORDIAL
+            MaxineVM vm = vm();
+            vm.phase = MaxineVM.Phase.PRIMORDIAL;
         }
 
         JniFunctions.epilogue(anchor, null);

@@ -71,11 +71,10 @@ extern void tla_initialize(int tlaSize);
  * called on the value returned by this function.
  *
  * @param id  > 0: the identifier reserved in the thread map for the thread being started
- *           == 0: the primordial thread
  *            < 0: temporary identifier (derived from the native thread handle) of a thread
  *                 that is being attached to the VM
- * @param init true iff initializing a previously created thread locals block, assert id > 0
- * @param stackSize only set if id > 0 && init == false;
+ * @param tlBlock a previously created thread locals block
+ * @param stackSize ignored if tlBlock != 0
  * @return the thread locals block for the current thread.
  *         If init || id <= 0 this value has been registered as the value
  *         associated with the ThreadLocalsKey for this thread. Otherwise,
@@ -83,7 +82,7 @@ extern void tla_initialize(int tlaSize);
  *         subsequent call with init = true. The destructor
  *         function specified when registering the value is threadLocalsBlock_destroy().
  */
-extern Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize);
+extern Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize);
 
 /**
  * Simplified version of above, when thread already created by native code, i.e. where id <= 0.
