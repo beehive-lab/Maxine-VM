@@ -237,9 +237,9 @@ public class BootImage {
         public final int tlaListHeadOffset;
 
         /**
-         * @see MaxineVM#primordialETLA
+         * @see MaxineVM#exitCode
          */
-        public final int primordialETLAOffset;
+        public final int exitCodeOffset;
 
         /**
          * The size of a TLA.
@@ -302,7 +302,7 @@ public class BootImage {
             reservedVirtualSpaceFieldOffset = endian.readInt(dataInputStream);
             bootRegionMappingConstraint = endian.readInt(dataInputStream);
             tlaListHeadOffset = endian.readInt(dataInputStream);
-            primordialETLAOffset = endian.readInt(dataInputStream);
+            exitCodeOffset = endian.readInt(dataInputStream);
 
             tlaSize = endian.readInt(dataInputStream);
 
@@ -357,7 +357,7 @@ public class BootImage {
             reservedVirtualSpaceFieldOffset = staticFieldPointerOffset(dataPrototype, Heap.class, "reservedVirtualSpace");
             bootRegionMappingConstraint = vmConfiguration.heapScheme().bootRegionMappingConstraint().ordinal();
             tlaListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("tlaListHead").offset();
-            primordialETLAOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialETLA");
+            exitCodeOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "exitCode");
 
             tlaSize = VmThreadLocal.tlaSize().toInt();
 

@@ -155,8 +155,8 @@ public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAd
     }
 
     @Override
-    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long tlaList, long primordialETLA) {
-        return solarisDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, tlaList, primordialETLA);
+    public boolean gatherThreads(Object teleProcessObject, Object threadList, long tlaList) {
+        return solarisDumpThreadAccess.gatherThreads(teleProcessObject, threadList, tlaList);
     }
 
 }
