@@ -163,6 +163,11 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
 
         startGuardZone = ntl->stackRedZone;
         guardZonePages = STACK_YELLOW_ZONE_PAGES + STACK_RED_ZONE_PAGES;
+
+#if os_SOLARIS || os_LINUX
+        /* Need to write to the guard page to fault it in so that the mprotect below works. */
+        *((int *) ntl->stackBase) = 0;
+#endif
     }
 
     tla_store(etla, ETLA, etla);
