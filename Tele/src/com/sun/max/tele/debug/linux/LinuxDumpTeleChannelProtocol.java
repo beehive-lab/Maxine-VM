@@ -137,8 +137,7 @@ public class LinuxDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdap
     }
 
     @Override
-    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long tlaList, long primordialETLA) {
-        return linuxDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, tlaList, primordialETLA);
+    public boolean gatherThreads(Object teleDomainObject, Object threadList, long tlaList) {
+        return linuxDumpThreadAccess.gatherThreads(teleDomainObject, threadList, tlaList);
     }
-
 }

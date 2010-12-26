@@ -107,11 +107,11 @@ public class LinuxNativeTeleChannelProtocol extends UnixNativeTeleChannelProtoco
     }
 
     @Override
-    public boolean gatherThreads(final Object teleDomain, final Object threadSequence, final long tlaList, final long primordialETLA) {
+    public boolean gatherThreads(final Object teleDomain, final Object threadList, final long tlaList) {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws IOException {
-                    nativeGatherThreads(leaderTask.tgid(), teleDomain, threadSequence, tlaList, primordialETLA);
+                    nativeGatherThreads(leaderTask.tgid(), teleDomain, threadList, tlaList);
                     return null;
                 }
             });
@@ -192,7 +192,7 @@ public class LinuxNativeTeleChannelProtocol extends UnixNativeTeleChannelProtoco
         }
     }
 
-    private static native void nativeGatherThreads(long pid, Object teleProcess, Object threadSequence, long tlaList, long primordialETLA);
+    private static native void nativeGatherThreads(long pid, Object teleProcess, Object threadList, long tlaList);
 
 
 }

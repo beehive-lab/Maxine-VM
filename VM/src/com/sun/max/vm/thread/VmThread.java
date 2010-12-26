@@ -427,10 +427,6 @@ public class VmThread {
                     Pointer stackYellowZone) {
 
         // Disable safepoints:
-        return addPublic(id, daemon, nativeThread, etla, stackEnd, stackYellowZone);
-    }
-
-    public static int addPublic(int id, boolean daemon, Address nativeThread, Pointer etla, Pointer stackEnd, Pointer stackYellowZone) {
         Safepoint.setLatchRegister(DTLA.load(etla));
 
         JNI_ENV.store3(etla, NativeInterfaces.jniEnv());
