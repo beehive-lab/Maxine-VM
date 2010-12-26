@@ -39,7 +39,6 @@ import com.sun.max.vm.thread.*;
  * @author Mick Jordan
  *
  */
-
 public abstract class ThreadAccess {
     protected TeleChannelDataIOProtocol protocol;
     private static final int MAXINE_THREAD_ID = 40;
@@ -86,14 +85,14 @@ public abstract class ThreadAccess {
     }
 
     @SuppressWarnings("unchecked")
-    public boolean gatherThreads(Object teleProcessObject, Object threadSeq, long tlaList, long primordialETLA) {
+    public boolean gatherThreads(Object teleProcessObject, Object threadList, long tlaList) {
         final ByteBuffer tla = ByteBuffer.allocate(tlaSize).order(ByteOrder.LITTLE_ENDIAN);
         final ByteBuffer nativeThreadLocals = ByteBuffer.allocate(NATIVE_THREAD_LOCALS_STRUCT_SIZE).order(ByteOrder.LITTLE_ENDIAN);
 
         currentThreadList = new ArrayList<ThreadInfo>();
         gatherOSThreads(currentThreadList);
         for (ThreadInfo threadInfo : currentThreadList) {
-            final boolean found = findThreadLocals(tlaList, primordialETLA, threadInfo.getStackPointer(), tla, nativeThreadLocals);
+            final boolean found = findThreadLocals(tlaList, threadInfo.getStackPointer(), tla, nativeThreadLocals);
             int id = threadInfo.getId();
             if (!found) {
                 /*
@@ -113,7 +112,7 @@ public abstract class ThreadAccess {
                                                 Long.toHexString(t.instructionPointer) + ", sb=" + Long.toHexString(t.stackBase) + ", ss=" + Long.toHexString(t.stackSize) + ", tlb=" +
                                                 Long.toHexString(t.tlb) + ", tlbs=" + t.tlbSize + ", tlas=" + t.tlaSize);
                 TeleProcess teleProcess = (TeleProcess) teleProcessObject;
-                teleProcess.jniGatherThread((List<TeleNativeThread>) threadSeq, t.id, t.localHandle, t.handle, t.state, t.instructionPointer, t.stackBase, t.stackSize, t.tlb, t.tlbSize, t.tlaSize);
+                teleProcess.jniGatherThread((List<TeleNativeThread>) threadList, t.id, t.localHandle, t.handle, t.state, t.instructionPointer, t.stackBase, t.stackSize, t.tlb, t.tlbSize, t.tlaSize);
             } catch (Exception ex) {
                 TeleError.unexpected("invoke failure on jniGatherThread", ex);
             }
@@ -165,7 +164,6 @@ public abstract class ThreadAccess {
      * If such an entry is found, then its contents are copied from the VM to the structs pointed to by 'tlCopy' and 'ntlCopy'.
      *
      * @param tlaList the head of the thread locals list in the VM's address space
-     * @param primordialETLA the primordial thread locals in the VM's address space
      * @param stackPointer the stack pointer to search with
      * @param tlCopy pointer to storage for a set of thread locals into which the found entry
      *        (if any) will be copied from the VM's address space
@@ -173,7 +171,7 @@ public abstract class ThreadAccess {
      *        (if any) will be copied from the VM's address space
      * @return {@code true} if the entry was found, {@code false} otherwise
      */
-    boolean findThreadLocals(long tlaList, long primordialETLA, long stackPointer, ByteBuffer tlCopy, ByteBuffer ntlCopy) {
+    boolean findThreadLocals(long tlaList, long stackPointer, ByteBuffer tlCopy, ByteBuffer ntlCopy) {
         zeroBuffer(tlCopy);
         zeroBuffer(ntlCopy);
         if (tlaList != 0) {
@@ -183,11 +181,6 @@ public abstract class ThreadAccess {
                     return true;
                 }
                 tl = getFromStruct(tlCopy, FORWARD_LINK.offset);
-            }
-        }
-        if (primordialETLA != 0) {
-            if (isThreadLocalsForStackPointer(stackPointer, primordialETLA, tlCopy, ntlCopy)) {
-                return true;
             }
         }
         return false;

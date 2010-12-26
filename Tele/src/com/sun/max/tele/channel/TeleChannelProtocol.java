@@ -21,7 +21,9 @@
 package com.sun.max.tele.channel;
 
 import java.nio.*;
+import java.util.*;
 
+import com.sun.max.tele.channel.agent.TeleNativeThread;
 import com.sun.max.tele.debug.*;
 
 /**
@@ -32,7 +34,6 @@ import com.sun.max.tele.debug.*;
  * implementation will use an adaptor to convert to the methods support by {@link TeleChannelDataIOProtocol}.
  *
  * @author Mick Jordan
- *
  */
 public interface TeleChannelProtocol extends TeleChannelDataIOProtocol {
     /**
@@ -58,12 +59,11 @@ public interface TeleChannelProtocol extends TeleChannelDataIOProtocol {
      * This avoids explicit types so that different versions of the Inspector types can be used on the two sides
      * of the communication channel.
      * @param teleDomain a {@link GuestVMTeleDomain} object
-     * @param threads an {@link AppendableSequence<TeleNativeThread>}
      * @param tlaList address of the thread locals list in the target VM
-     * @param primordialETLA address of the primordial thread locals in the target VM
+     * @param threads a {@link List} of {@link TeleNativeThread} objects
      * @return {@code true} if the gather was successful, {@code false} otherwise.
      */
-    boolean gatherThreads(Object teleDomain, Object threadSequence, long tlaList, long primordialETLA);
+    boolean gatherThreads(Object teleDomain, Object threadList, long tlaList);
 
     /**
      * Wait until the target VM is stopped.
