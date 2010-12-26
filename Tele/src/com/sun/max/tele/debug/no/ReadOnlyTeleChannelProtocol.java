@@ -90,7 +90,7 @@ public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
     }
 
     @Override
-    public int gatherThreads(long tlaList, long primordialETLA) {
+    public int gatherThreads(long tlaList) {
         unexpected();
         return 0;
     }
@@ -192,7 +192,7 @@ public class ReadOnlyTeleChannelProtocol implements TeleChannelProtocol {
     }
 
     @Override
-    public boolean gatherThreads(Object teleDomain, Object threadSequence, long tlaList, long primordialETLA) {
+    public boolean gatherThreads(Object teleDomain, Object threadList, long tlaList) {
         unexpected();
         return false;
     }
