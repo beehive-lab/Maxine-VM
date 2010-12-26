@@ -280,6 +280,7 @@ void* getJMMInterface(int version);
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
 typedef jint (*VMRunMethod)(
+                Address etla,
                 Address bootHeapRegionStart,
                 void *openDynamicLibrary(char *),
                 void *dlsym(void *, const char *),
@@ -343,18 +344,12 @@ int maxine(int argc, char *argv[], char *executablePath) {
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
 
     Address etla = ETLA_FROM_TLBLOCK(tlBlock);
-    image_write_value(Address, primordialETLAOffset, etla);
 
 #if log_LOADER
-    log_println("primordial TLA: %p", etla);
+    log_println("entering Java by calling MaxineVM.run(etla=%p, bootHeapRegionStart=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, argc=%d, argv=%p)",
+                    etla, image_heap(), openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
 #endif
-
-
-#if log_LOADER
-    log_println("entering Java by calling MaxineVM.run(bootHeapRegionStart=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, argc=%d, argv=%p)",
-                    image_heap(), openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
-#endif
-    exitCode = (*method)(image_heap(), openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
+    exitCode = (*method)(etla, image_heap(), openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
@@ -362,7 +357,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     if (exitCode == 0) {
         // Initialization succeeded: now run the main Java thread
-        exitCode = (int) (Address) thread_run((void *) tlBlock);
+        thread_run((void *) tlBlock);
 
         // The thread-specific data destructor function is not called for the main thread
         // TODO (dns) this is the behavior seen on Darwin-pthreads - confirm that it is true on other platforms
@@ -370,6 +365,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
         //      all other threads created by or attached the VM are guaranteed to be dead by now
         threadLocalsBlock_setCurrent(0);
         threadLocalsBlock_destroy(tlBlock);
+
+        exitCode = image_read_value(int, exitCodeOffset);
     }
 
     if (fd > 0) {
