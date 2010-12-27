@@ -50,9 +50,19 @@ import com.sun.max.vm.*;
 public abstract class Prototype {
 
     /**
-     * The default place where native libraries are placed by the make system.
+     * The root of the directory tree where generated files are placed by the build system.
      */
-    private static final String LIBRARY_BUILD_PATH = "Native/generated/" + OS.current().asPackageName() + "/";
+    static final String GENERATED_ROOT = "Native" + File.separator + "generated";
+
+    /**
+     * The root of the (target) OS specific directory tree for generated files.
+     */
+    static final String TARGET_GENERATED_ROOT = GENERATED_ROOT + File.separator + OS.fromName(System.getProperty(Platform.OS_PROPERTY, OS.current().name())).asPackageName();
+
+    /**
+     * The root on the host OS for generated files, specifically the {@link #HOSTED_LIBRARY_NAME hosted library}.
+     */
+    private static final String HOSTED_GENERATED_ROOT =  GENERATED_ROOT + File.separator + OS.current().asPackageName();
 
     /**
      * The name of the default hosted native library.
@@ -76,6 +86,7 @@ public abstract class Prototype {
         if (!isPathHacked) {
             final File workspacePath =  JavaProject.findWorkspaceDirectory();
             final String[] usrPaths = (String[]) WithoutAccessCheck.getStaticField(ClassLoader.class, "usr_paths");
+            final String LIBRARY_BUILD_PATH = name.equals(HOSTED_LIBRARY_NAME) ? HOSTED_GENERATED_ROOT : TARGET_GENERATED_ROOT;
             final String libraryPath = new File(workspacePath, LIBRARY_BUILD_PATH).getPath() + File.pathSeparator + Utils.toString(usrPaths, File.pathSeparator);
             JDKInterceptor.setLibraryPath(libraryPath);
             isPathHacked = true;
