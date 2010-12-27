@@ -341,6 +341,14 @@ public final class FrameMap {
     }
 
     private int offsetToMonitors() {
+        return offsetToCustomArea() + customAreaSize();
+    }
+
+    public int customAreaSize() {
+        return compilation.runtime.getCustomStackAreaSize();
+    }
+
+    public int offsetToCustomArea() {
         return offsetToSpillEnd();
     }
 

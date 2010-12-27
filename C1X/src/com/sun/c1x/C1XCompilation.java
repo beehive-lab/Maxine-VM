@@ -262,6 +262,7 @@ public class C1XCompilation {
         if (assembler == null) {
             assembler = compiler.backend.newAssembler(registerConfig);
             assembler.setFrameSize(frameMap.frameSize());
+            assembler.targetMethod.setCustomStackAreaOffset(frameMap.offsetToCustomArea());
         }
         return assembler;
     }
