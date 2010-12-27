@@ -582,7 +582,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitNegateOp(NegateOp negate) {
-        out.print('-').print(negate);
+        out.print("- ").print(negate.x());
     }
 
     @Override
