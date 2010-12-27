@@ -192,7 +192,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private final JScrollPane scrollPane;
     private final InspectorMainMenuBar menuBar;
     private final InspectorPopupMenu desktopMenu;
-    private final JLabel unavailableDataTableCellRenderer;
+    private final InspectorLabel unavailableDataTableCellRenderer;
 
     /**
      * Location in absolute screen coordinates of the most recent mouse location of interest.
@@ -426,7 +426,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return this;
     }
 
-    public JLabel getUnavailableDataTableCellRenderer() {
+    public InspectorLabel getUnavailableDataTableCellRenderer() {
         return unavailableDataTableCellRenderer;
     }
 
@@ -526,9 +526,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         repaint();
     }
 
-    private final class UnavailableDataTableCellRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
+    private final class UnavailableDataTableCellRenderer extends InspectorLabel implements TableCellRenderer, TextSearchable, Prober {
 
         UnavailableDataTableCellRenderer(Inspection inspection) {
+            super(inspection);
             setText(inspection.nameDisplay().unavailableDataShortText());
             setToolTipText(inspection.nameDisplay().unavailableDataLongText());
         }
@@ -537,6 +538,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             return this;
         }
 
+        @Override
         public String getSearchableText() {
             return null;
         }

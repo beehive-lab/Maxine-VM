@@ -90,6 +90,8 @@ public class C1XOptions {
     public static boolean TraceAssembler                     = ____;
     public static int     TraceBytecodeParserLevel           = 0;
     public static boolean PrintLoopList                      = ____;
+    public static int     MethodEndBreakpointGuards          = 0;
+    public static boolean ZapStackOnMethodEntry              = ____;
 
     /**
      * See {@link Filter#Filter(String, Object)}.

@@ -358,7 +358,10 @@ public class C1XCompilation {
             // generate exception adapters
             lirAssembler.emitExceptionEntries();
 
-            CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset);
+            // generate traps at the end of the method
+            lirAssembler.emitTraps();
+
+            CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
 
             if (cfgPrinter() != null) {
                 cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);

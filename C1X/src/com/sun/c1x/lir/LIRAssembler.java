@@ -94,6 +94,8 @@ public abstract class LIRAssembler {
         return asm.codeBuffer.position();
     }
 
+    public abstract void emitTraps();
+
     public void emitExceptionEntries() {
         if (asm.exceptionInfoList == null) {
             return;

@@ -96,7 +96,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         reset(runtimeCall.resultKind, runtimeCall.arguments);
         emitStandardForward(null, runtimeCall);
         String name = "stub-" + runtimeCall;
-        CiTargetMethod targetMethod = asm.finishTargetMethod(name, runtime, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(name, runtime, registerRestoreEpilogueOffset, true);
         Object stubObject = runtime.registerGlobalStub(targetMethod, name);
         return new GlobalStub(null, runtimeCall.resultKind, stubObject, argsSize, argOffsets, resultOffset);
     }
@@ -126,7 +126,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         }
 
         String name = "stub-" + stub;
-        CiTargetMethod targetMethod = asm.finishTargetMethod(name, runtime, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(name, runtime, registerRestoreEpilogueOffset, true);
         Object stubObject = runtime.registerGlobalStub(targetMethod, name);
         return new GlobalStub(stub, stub.resultKind, stubObject, argsSize, argOffsets, resultOffset);
     }
@@ -235,7 +235,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
         assert template.marks.length == 0 : "marks not supported in global stubs";
         assembler.emitXirInstructions(null, template.fastPath, labels, operands, null);
         epilogue();
-        CiTargetMethod targetMethod = asm.finishTargetMethod(template.name, runtime, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(template.name, runtime, registerRestoreEpilogueOffset, true);
         Object stubObject = runtime.registerGlobalStub(targetMethod, template.name);
         return new GlobalStub(null, template.resultOperand.kind, stubObject, argsSize, argOffsets, resultOffset);
     }

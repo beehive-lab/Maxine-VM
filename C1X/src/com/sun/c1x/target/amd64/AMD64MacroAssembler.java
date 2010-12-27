@@ -556,4 +556,8 @@ public class AMD64MacroAssembler extends AMD64Assembler {
             movq(r, new CiAddress(CiKind.Word, frame, frameToCSA + offset));
         }
     }
+
+    public void int3() {
+        emitByte(0xCC);
+    }
 }

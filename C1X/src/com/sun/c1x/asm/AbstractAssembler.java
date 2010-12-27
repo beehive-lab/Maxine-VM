@@ -63,7 +63,7 @@ public abstract class AbstractAssembler {
         targetMethod.setFrameSize(frameSize);
     }
 
-    public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset) {
+    public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset, boolean isStub) {
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.close(false), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
@@ -90,7 +90,7 @@ public abstract class AbstractAssembler {
             C1XMetrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
         }
 
-        if (C1XOptions.PrintAssembly && !TTY.isSuppressed()) {
+        if (C1XOptions.PrintAssembly && !TTY.isSuppressed() && !isStub) {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Name: " + name);
             TTY.println("Frame size: " + targetMethod.frameSize());

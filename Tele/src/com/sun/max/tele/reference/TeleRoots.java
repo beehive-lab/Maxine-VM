@@ -20,14 +20,11 @@
  */
 package com.sun.max.tele.reference;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.tele.*;
 
 /**
@@ -55,7 +52,6 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
     private final TimedTrace updateTracer;
 
     private final TeleReferenceScheme teleReferenceScheme;
-    private final ArrayLayout wordArrayLayout;
 
     private final Address[] cachedRoots = new Address[InspectableHeapInfo.MAX_NUMBER_OF_ROOTS];
     private final BitSet usedIndices = new BitSet();
@@ -75,7 +71,6 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
         tracer.begin();
 
         this.teleReferenceScheme = teleReferenceScheme;
-        this.wordArrayLayout = vmConfig().layoutScheme().wordArrayLayout;
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(null);
