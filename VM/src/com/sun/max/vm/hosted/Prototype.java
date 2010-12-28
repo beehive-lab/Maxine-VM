@@ -86,8 +86,8 @@ public abstract class Prototype {
         if (!isPathHacked) {
             final File workspacePath =  JavaProject.findWorkspaceDirectory();
             final String[] usrPaths = (String[]) WithoutAccessCheck.getStaticField(ClassLoader.class, "usr_paths");
-            final String LIBRARY_BUILD_PATH = name.equals(HOSTED_LIBRARY_NAME) ? HOSTED_GENERATED_ROOT : TARGET_GENERATED_ROOT;
-            final String libraryPath = new File(workspacePath, LIBRARY_BUILD_PATH).getPath() + File.pathSeparator + Utils.toString(usrPaths, File.pathSeparator);
+            final String maxLibPath = name.equals(HOSTED_LIBRARY_NAME) ? HOSTED_GENERATED_ROOT : TARGET_GENERATED_ROOT;
+            final String libraryPath = new File(workspacePath, maxLibPath).getPath() + File.pathSeparator + Utils.toString(usrPaths, File.pathSeparator);
             JDKInterceptor.setLibraryPath(libraryPath);
             isPathHacked = true;
         }
