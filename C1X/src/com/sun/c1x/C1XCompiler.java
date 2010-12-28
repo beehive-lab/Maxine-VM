@@ -76,7 +76,7 @@ public class C1XCompiler extends CiCompiler {
         long startTime = 0;
         int index = C1XMetrics.CompiledMethods++;
         if (C1XOptions.PrintCompilation) {
-            TTY.print(String.format("Compiling method %4d %-55s %-40s | ", index, method.holder().name(), method.name()));
+            TTY.print(String.format("C1X %4d %-70s %-45s | ", index, method.holder().name(), method.name()));
             startTime = System.nanoTime();
         }
 
@@ -89,8 +89,8 @@ public class C1XCompiler extends CiCompiler {
             filter.remove();
             compilation.close();
             if (C1XOptions.PrintCompilation && !TTY.isSuppressed()) {
-                long time = (System.nanoTime() - startTime) / 1000000;
-                TTY.println((time) + "ms");
+                long time = (System.nanoTime() - startTime) / 100000;
+                TTY.println(String.format("%3d.%dms", time / 10, time % 10));
             }
         }
 
