@@ -182,7 +182,7 @@ static void readStringInfo(int fd) {
         log_exit(2, "could not read string info");
     }
 #else
-    keyValueCount = *((int *) &maxvm_image_start + sizeof(struct image_Header));
+    keyValueCount = *((int *) ((char *) &maxvm_image_start + sizeof(struct image_Header)));
     keyValueData = ((char *) &maxvm_image_start + sizeof(struct image_Header) + 4);
 #endif
 #if log_LOADER
