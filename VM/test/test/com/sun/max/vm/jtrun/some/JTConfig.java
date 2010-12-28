@@ -513,6 +513,7 @@ public class JTConfig {
         jtt.optimize.Fold_Math01.class,
         jtt.optimize.Inline01.class,
         jtt.optimize.Inline02.class,
+        jtt.optimize.LLE_01.class,
         jtt.optimize.List_reorder_bug.class,
         jtt.optimize.NCE_01.class,
         jtt.optimize.NCE_02.class,

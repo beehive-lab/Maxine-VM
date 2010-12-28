@@ -495,7 +495,7 @@ public class LinearScan {
 
                         CiValue fromLocation = interval.location();
                         CiValue toLocation = canonicalSpillOpr(interval);
-                        assert fromLocation.isRegister() : "from operand must be a register";
+                        assert fromLocation.isRegister() : "from operand must be a register but is: " + fromLocation;
                         assert toLocation.isStackSlot() : "to operand must be a stack slot";
 
                         insertionBuffer.move(j, fromLocation, toLocation, null);

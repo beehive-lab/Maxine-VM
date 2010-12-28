@@ -103,6 +103,7 @@ public abstract class BlockEnd extends Instruction {
      * @param newSucc the new successor
      */
     public void substituteSuccessor(BlockBegin oldSucc, BlockBegin newSucc) {
+        assert newSucc != null;
         Util.replaceAllInList(oldSucc, newSucc, successors);
     }
 
