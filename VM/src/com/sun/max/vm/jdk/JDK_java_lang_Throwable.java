@@ -23,13 +23,10 @@ package com.sun.max.vm.jdk;
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 
-import java.util.*;
-
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -43,69 +40,6 @@ import com.sun.max.vm.thread.*;
  */
 @METHOD_SUBSTITUTIONS(Throwable.class)
 public final class JDK_java_lang_Throwable {
-
-    /**
-     * Source frame visitor for building a stack trace.
-     */
-    static final class StackTraceVisitor extends SourceFrameVisitor {
-        /**
-         * The class of the exception for which the stack trace is being constructed.
-         * This is used to elide the chain of constructors calls for this class and its super classes.
-         * If this value is {@code null}, then the stack trace is not for an exception and no eliding is performed.
-         */
-        ClassActor exceptionClass;
-
-        /**
-         * The maximum number of elements in the returned array or {@link Integer#MAX_VALUE} if the complete
-         * sequence of stack trace elements for {@code stackFrames} is required.
-         */
-        final int maxDepth;
-
-        final ArrayList<StackTraceElement> trace = new ArrayList<StackTraceElement>(20);
-
-        StackTraceVisitor(ClassActor exceptionClass, int maxDepth) {
-            this.exceptionClass = exceptionClass;
-            this.maxDepth = maxDepth;
-        }
-
-        @Override
-        public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
-            if (trapped) {
-                trace.clear();
-                exceptionClass = null;
-            }
-            if (exceptionClass != null) {
-                if (method.holder() == exceptionClass && method.isInstanceInitializer()) {
-                    // This will initiate filling the stack trace.
-                    exceptionClass = null;
-                }
-                return true;
-            }
-
-            // Undo effect of method substitution
-            method = method.original();
-
-            final ClassActor holder = method.holder();
-            int sourceLineNumber;
-            if (method.isNative()) {
-                sourceLineNumber = -2;
-            } else {
-                if (holder.isReflectionStub()) {
-                    // ignore reflective invocation stubs
-                    return true;
-                }
-                sourceLineNumber = bci >= 0 ? method.sourceLineNumber(bci) : -1;
-            }
-            final String sourceFileName = holder.sourceFileName;
-            StackTraceElement ste = new StackTraceElement(holder.name.toString(), method.name.toString(), sourceFileName, sourceLineNumber);
-            trace.add(ste);
-            return trace.size() < maxDepth;
-        }
-
-        StackTraceElement[] trace() {
-            return trace.toArray(new StackTraceElement[trace.size()]);
-        }
-    }
 
     private JDK_java_lang_Throwable() {
     }
@@ -170,7 +104,7 @@ public final class JDK_java_lang_Throwable {
         if (maxDepth <= 0) {
             return new StackTraceElement[0];
         }
-        StackTraceVisitor stv = new StackTraceVisitor(exceptionClass, maxDepth);
+        StackTraceVisitor stv = new StackTraceVisitor.Default(exceptionClass, maxDepth);
         stv.walk(walker, ip, sp, fp);
         return stv.trace();
     }
