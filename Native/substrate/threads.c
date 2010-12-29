@@ -543,7 +543,7 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
     if (value == -1) {
         int error = errno;
         if (error != EINTR && error != 0) {
-            log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec);
+            /* log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec); */
         }
     }
     return value;
