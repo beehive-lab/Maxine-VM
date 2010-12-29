@@ -25,7 +25,6 @@ import java.io.*;
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -55,8 +54,7 @@ public final class BootImageGenerator {
     public static final String IMAGE_FILE_NAME = "maxine.vm";
     public static final String STATS_FILE_NAME = "maxine.stats";
 
-    public static final String DEFAULT_VM_DIRECTORY = "Native" + File.separator + "generated" + File.separator +
-        OS.fromName(System.getProperty(Platform.OS_PROPERTY, OS.current().name())).name().toLowerCase();
+    public static final String DEFAULT_VM_DIRECTORY = Prototype.TARGET_GENERATED_ROOT;
 
     private final OptionSet options = new OptionSet();
 
