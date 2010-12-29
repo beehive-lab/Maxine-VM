@@ -122,8 +122,10 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         } else if (registerOrConstant.isRegister()) {
             if (k.isFloat()) {
                 movss(new CiAddress(CiKind.Float, AMD64.RSP, offset), registerOrConstant.asRegister());
-            } else {
+            } else if (k.isDouble()) {
                 movsd(new CiAddress(CiKind.Double, AMD64.RSP, offset), registerOrConstant.asRegister());
+            } else {
+                movq(new CiAddress(CiKind.Word, AMD64.RSP, offset), registerOrConstant.asRegister());
             }
         } else {
             Util.shouldNotReachHere();

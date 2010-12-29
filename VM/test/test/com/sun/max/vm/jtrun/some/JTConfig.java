@@ -174,6 +174,7 @@ public class JTConfig {
         jtt.bytecode.BC_l2d.class,
         jtt.bytecode.BC_l2f.class,
         jtt.bytecode.BC_l2i.class,
+        jtt.bytecode.BC_l2i_2.class,
         jtt.bytecode.BC_ladd.class,
         jtt.bytecode.BC_ladd2.class,
         jtt.bytecode.BC_laload.class,
