@@ -1250,8 +1250,10 @@ public final class GraphBuilder {
             lockAddress = new MonitorAddress(lockNumber);
             append(lockAddress);
         }
-        appendWithoutOptimization(new MonitorEnter(x, lockAddress, lockNumber, null), bci);
+        MonitorEnter monitorEnter = new MonitorEnter(x, lockAddress, lockNumber, null);
+        appendWithoutOptimization(monitorEnter, bci);
         curState.lock(scope(), x, lockNumber + 1);
+        monitorEnter.setStateAfter(curState.immutableCopy(bci));
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
