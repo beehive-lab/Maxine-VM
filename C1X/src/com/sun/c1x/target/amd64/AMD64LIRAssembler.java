@@ -504,6 +504,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
             case L2I:
                 moveRegs(srcRegister, dest.asRegister());
+                masm.andl(dest.asRegister(), 0xFFFFFFFF);
                 break;
 
             case I2B:
