@@ -40,6 +40,7 @@ import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
 import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
@@ -1484,6 +1485,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, CiValue[] operands, Map<XirMark, Mark> marks) {
         LIRDebugInfo info = xir == null ? null : xir.info;
+        LIRDebugInfo infoAfter = xir == null ? null : xir.infoAfter;
 
         for (XirInstruction inst : instructions) {
             switch (inst.op) {
@@ -1672,7 +1674,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         }
                     }
 
-                    masm.directCall(inst.extra, info);
+                    RuntimeCallInformation runtimeCallInformation = (RuntimeCallInformation) inst.extra;
+                    masm.directCall(runtimeCallInformation.target, (runtimeCallInformation.useInfoAfter) ? infoAfter : info);
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.registerConfig.getReturnRegister(inst.result.kind);
