@@ -26,9 +26,7 @@ import static java.lang.reflect.Modifier.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.alloc.Interval.RegisterBinding;
-import com.sun.c1x.alloc.Interval.RegisterPriority;
-import com.sun.c1x.alloc.Interval.SpillState;
+import com.sun.c1x.alloc.Interval.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
@@ -495,7 +493,8 @@ public class LinearScan {
 
                         CiValue fromLocation = interval.location();
                         CiValue toLocation = canonicalSpillOpr(interval);
-                        assert fromLocation.isRegister() : "from operand must be a register but is: " + fromLocation;
+
+                        assert fromLocation.isRegister() : "from operand must be a register but is: " + fromLocation + " toLocation=" + toLocation + " spillState=" + interval.spillState();
                         assert toLocation.isStackSlot() : "to operand must be a stack slot";
 
                         insertionBuffer.move(j, fromLocation, toLocation, null);
@@ -1295,6 +1294,21 @@ public class LinearScan {
                 addRegisterHints(op);
 
             } // end of instruction iteration
+
+            // (tw) Make sure that no spill store optimization is applied for phi instructions that flow into exception handlers.
+            if (block.isExceptionEntry()) {
+                FrameState stateBefore = block.stateBefore();
+                stateBefore.forEachLivePhi(block, new PhiProcedure() {
+                    @Override
+                    public boolean doPhi(Phi phi) {
+                        Interval interval = intervalFor(phi.operand());
+                        if (interval != null) {
+                            interval.setSpillState(SpillState.NoOptimization);
+                        }
+                        return true;
+                    }
+                });
+            }
 
         } // end of block iteration
 

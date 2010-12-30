@@ -294,6 +294,7 @@ public class JTConfig {
         jtt.except.Catch_Two01.class,
         jtt.except.Catch_Two02.class,
         jtt.except.Catch_Two03.class,
+        jtt.except.Except_Locals.class,
         jtt.except.Except_Synchronized01.class,
         jtt.except.Except_Synchronized02.class,
         jtt.except.Except_Synchronized03.class,
