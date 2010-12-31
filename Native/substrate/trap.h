@@ -24,8 +24,8 @@
 #ifndef __trap_h__
 #define __trap_h__ 1
 
-#if os_GUESTVMXEN
-#   include <guestvmXen.h>
+#if os_MAXVE
+#   include <maxve.h>
 #else
 #   include <signal.h>
 #   include <stdlib.h>
@@ -36,7 +36,7 @@
 
 #include "os.h"
 
-#if os_GUESTVMXEN
+#if os_MAXVE
 #define SignalHandlerFunction fault_handler_t
 #else
 typedef ucontext_t UContext;

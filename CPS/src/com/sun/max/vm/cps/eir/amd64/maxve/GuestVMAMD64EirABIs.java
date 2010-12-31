@@ -20,29 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.cps.eir.amd64.guestvm;
+package com.sun.max.vm.cps.eir.amd64.maxve;
 
-import static com.sun.max.platform.Platform.*;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.cps.eir.amd64.*;
+import com.sun.max.vm.cps.eir.amd64.unix.*;
 
-import com.sun.max.config.*;
-import com.sun.max.lang.*;
-import com.sun.max.platform.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.cps.eir.*;
+public class GuestVMAMD64EirABIs extends AMD64EirABIsScheme {
 
-/**
- * @author Mick Jordan
- */
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-        registerScheme(EirABIsScheme.class, GuestVMAMD64EirABIs.class);
+    @HOSTED_ONLY
+    public GuestVMAMD64EirABIs() {
+        super(new UnixAMD64EirJavaABI(),
+              new UnixAMD64EirNativeABI(),
+              new UnixAMD64EirCFunctionABI(false /*called from Java only*/),
+              new UnixAMD64EirCFunctionABI(true /*called from native code only*/),
+              new UnixAMD64EirTemplateABI(),
+              new UnixAMD64EirTreeABI());
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return CPSCompiler.Static.isCompiler(vmConfig) && platform().isa == ISA.AMD64 &&
-            platform().os == OS.GUESTVM;
-    }
 }

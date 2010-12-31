@@ -25,4 +25,4 @@
  *
  * @author Mick Jordan
  */
-package com.sun.max.vm.cps.eir.amd64.guestvm;
+package com.sun.max.vm.cps.eir.amd64.maxve;

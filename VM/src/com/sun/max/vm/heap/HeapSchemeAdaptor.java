@@ -168,7 +168,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             case SOLARIS: {
                 return new VariableAddressCodeManager();
             }
-            case GUESTVM: {
+            case MAXVE: {
                 return new FixedAddressCodeManager();
             }
             default: {

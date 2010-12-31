@@ -48,9 +48,9 @@
 	typedef prgreg_t *amd64_OsTeleIntegerRegisters;
 	typedef prfpregset_t *amd64_OsTeleFloatingPointRegisters;
 	typedef prgreg_t *amd64_OsTeleStateRegisters;
-#elif os_GUESTVMXEN
-#   include <guestvmXen_db.h>
-#   include <guestvmXen.h>
+#elif os_MAXVE
+#   include <maxve_db.h>
+#   include <maxve.h>
     typedef struct db_regs* amd64_OsTeleIntegerRegisters;
     typedef struct db_regs* amd64_OsTeleStateRegisters;
     typedef struct db_regs* amd64_OsTeleFloatingPointRegisters;

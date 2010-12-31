@@ -32,9 +32,9 @@
 #   include <thread.h>
 #   include <synch.h>
     typedef mutex_t mutex_Struct;
-#elif os_GUESTVMXEN
-#   include <guestvmXen.h>
-    typedef guestvmXen_monitor_t mutex_Struct;
+#elif os_MAXVE
+#   include <maxve.h>
+    typedef maxve_monitor_t mutex_Struct;
 #endif
 
 typedef mutex_Struct *Mutex;

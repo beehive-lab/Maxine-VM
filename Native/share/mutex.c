@@ -48,8 +48,8 @@ void mutex_initialize(Mutex mutex) {
     if (pthread_mutexattr_destroy(&mutex_attribute) != 0) {
         c_ASSERT(false);
     }
-#elif os_GUESTVMXEN
-    *mutex = guestvmXen_monitor_create();
+#elif os_MAXVE
+    *mutex = maxve_monitor_create();
 #   else
         c_UNIMPLEMENTED();
 #   endif
@@ -60,8 +60,8 @@ int mutex_enter_nolog(Mutex mutex) {
     return mutex_lock(mutex);
 #elif os_LINUX || os_DARWIN
     return pthread_mutex_lock(mutex);
-#elif os_GUESTVMXEN
-    if (guestvmXen_monitor_enter(*mutex) != 0) {
+#elif os_MAXVE
+    if (maxve_monitor_enter(*mutex) != 0) {
         c_ASSERT(false);
     }
     return 0;
@@ -82,8 +82,8 @@ int mutex_exit_nolog(Mutex mutex) {
     return mutex_unlock(mutex);
 #elif os_LINUX || os_DARWIN
     return pthread_mutex_unlock(mutex);
-#elif os_GUESTVMXEN
-    if (guestvmXen_monitor_exit(*mutex) != 0) {
+#elif os_MAXVE
+    if (maxve_monitor_exit(*mutex) != 0) {
         c_ASSERT(false);
     }
     return 0;
@@ -111,7 +111,7 @@ void mutex_dispose(Mutex mutex) {
     if (pthread_mutex_destroy(mutex) != 0) {
         c_ASSERT(false);
     }
-#elif os_GUESTVMXEN
+#elif os_MAXVE
     c_UNIMPLEMENTED();
 #endif
 }

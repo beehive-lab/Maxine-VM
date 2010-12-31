@@ -130,7 +130,7 @@ public final class BootClassLoader extends ClassLoader {
     }
 
     public void loadJavaAndZipNativeLibraries(String javaLibraryPath, String zipLibraryPath) {
-        if (platform().os == OS.GUESTVM) {
+        if (platform().os == OS.MAXVE) {
             // no native libraries in GuestVM
             return;
         }

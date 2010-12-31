@@ -33,9 +33,9 @@
 #   include <thread.h>
 #   include <errno.h>
     typedef cond_t condition_Struct;
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_condition_t condition_Struct;
+#elif os_MAXVE
+#   include "maxve.h"
+    typedef maxve_condition_t condition_Struct;
 #endif
 
 typedef condition_Struct *Condition;
