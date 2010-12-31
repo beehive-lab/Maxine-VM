@@ -21,7 +21,7 @@
  * questions.
  */
 /**
- * ABI specifications for GuestVM on AMD64.
+ * ABI specifications for MaxVE on AMD64.
  *
  * @author Mick Jordan
  */

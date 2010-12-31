@@ -37,7 +37,7 @@ import com.sun.max.vm.cps.eir.*;
 public class Package extends BootImagePackage {
     public Package() {
         super();
-        registerScheme(EirABIsScheme.class, GuestVMAMD64EirABIs.class);
+        registerScheme(EirABIsScheme.class, MaxVEAMD64EirABIs.class);
     }
 
     @Override

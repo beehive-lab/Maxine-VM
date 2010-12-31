@@ -692,7 +692,7 @@ public final class JDK_java_lang_System {
                 initBasicUnixProperties(properties);
                 break;
             case MAXVE:
-                setIfAbsent(properties, "os.name", "GuestVM");
+                setIfAbsent(properties, "os.name", "Maxine VE");
                 setIfAbsent(properties, "java.io.tmpdir", "/tmp");
                 initBasicUnixProperties(properties);
                 break;
