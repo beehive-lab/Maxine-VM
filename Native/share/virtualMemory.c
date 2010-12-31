@@ -29,7 +29,7 @@
 
 #if defined(MAXVE)
 #include <maxve.h>
-/* No mmap function on GuestVM (yet)*/
+/* No mmap function on MaxVE (yet)*/
 #else
 #include <stdlib.h>
 #include <errno.h>

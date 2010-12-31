@@ -131,7 +131,7 @@ public final class BootClassLoader extends ClassLoader {
 
     public void loadJavaAndZipNativeLibraries(String javaLibraryPath, String zipLibraryPath) {
         if (platform().os == OS.MAXVE) {
-            // no native libraries in GuestVM
+            // no native libraries in Maxine VE
             return;
         }
 

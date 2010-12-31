@@ -26,10 +26,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.eir.amd64.unix.*;
 
-public class GuestVMAMD64EirABIs extends AMD64EirABIsScheme {
+public class MaxVEAMD64EirABIs extends AMD64EirABIsScheme {
 
     @HOSTED_ONLY
-    public GuestVMAMD64EirABIs() {
+    public MaxVEAMD64EirABIs() {
         super(new UnixAMD64EirJavaABI(),
               new UnixAMD64EirNativeABI(),
               new UnixAMD64EirCFunctionABI(false /*called from Java only*/),
