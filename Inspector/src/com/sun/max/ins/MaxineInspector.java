@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.TeleVM.Mode;
+import com.sun.max.tele.MaxInspectionMode;
 import com.sun.max.tele.TeleVM.Options;
 import com.sun.max.vm.hosted.*;
 
@@ -67,7 +67,7 @@ public final class MaxineInspector {
                 public void run() {
                     Inspection.initializeSwing();
                     final Inspection inspection = new Inspection(maxVM);
-                    if (TeleVM.mode() == Mode.IMAGE) {
+                    if (maxVM.inspectionMode() == MaxInspectionMode.IMAGE) {
                         // Bring up the boot image info inspector as a starting point for browsing
                         BootImageInspector.make(inspection).highlight();
                     }
