@@ -31,6 +31,8 @@ import com.sun.c1x.value.*;
  */
 public final class MonitorEnter extends AccessMonitor {
 
+    private FrameState stateAfter;
+
     /**
      * Creates a new MonitorEnter instruction.
      *
@@ -62,5 +64,14 @@ public final class MonitorEnter extends AccessMonitor {
     @Override
     public void accept(ValueVisitor v) {
         v.visitMonitorEnter(this);
+    }
+
+    public void setStateAfter(FrameState frameState) {
+        this.stateAfter = frameState;
+    }
+
+    @Override
+    public FrameState stateAfter() {
+        return stateAfter;
     }
 }

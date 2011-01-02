@@ -253,6 +253,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
 
     private void negatePrologue() {
         partialSavePrologue(negateArgument, negateTemp);
+        loadArgument(0, negateArgument);
     }
 
     private void negateEpilogue() {

@@ -42,6 +42,7 @@ import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
 import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
@@ -506,6 +507,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
             case L2I:
                 moveRegs(srcRegister, dest.asRegister());
+                masm.andl(dest.asRegister(), 0xFFFFFFFF);
                 break;
 
             case I2B:
@@ -543,7 +545,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 masm.cvttss2sil(dest.asRegister(), srcRegister);
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
@@ -553,7 +555,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 masm.cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
@@ -572,7 +574,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 masm.mov64(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
                 break;
             }
@@ -583,7 +585,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 masm.mov64(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
                 break;
             }
@@ -1379,14 +1381,14 @@ public class AMD64LIRAssembler extends LIRAssembler {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
-            masm.callGlobalStub(op.globalStub, null, asXmmFloatReg(dest), asXmmFloatReg(dest));
+            masm.callGlobalStub(op.globalStub, null, asXmmFloatReg(dest), dest);
 
         } else if (dest.kind.isDouble()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
 
-            masm.callGlobalStub(op.globalStub, null, asXmmDoubleReg(dest), asXmmDoubleReg(dest));
+            masm.callGlobalStub(op.globalStub, null, asXmmDoubleReg(dest), dest);
         } else {
             CiRegister lreg = left.asRegister();
             CiRegister dreg = dest.asRegister();
@@ -1485,6 +1487,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, CiValue[] operands, Map<XirMark, Mark> marks) {
         LIRDebugInfo info = xir == null ? null : xir.info;
+        LIRDebugInfo infoAfter = xir == null ? null : xir.infoAfter;
 
         for (XirInstruction inst : instructions) {
             switch (inst.op) {
@@ -1651,9 +1654,9 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     if (inst.result != null) {
                         result = operands[inst.result.index].asRegister();
                     }
-                    Object[] args = new Object[inst.arguments.length];
+                    CiValue[] args = new CiValue[inst.arguments.length];
                     for (int i = 0; i < args.length; i++) {
-                        args[i] = asRegisterOrConstant(operands[inst.arguments[i].index]);
+                        args[i] = operands[inst.arguments[i].index];
                     }
                     masm.callGlobalStub(stubId, info, result, args);
                     break;
@@ -1673,7 +1676,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         }
                     }
 
-                    masm.directCall(inst.extra, info);
+                    RuntimeCallInformation runtimeCallInformation = (RuntimeCallInformation) inst.extra;
+                    masm.directCall(runtimeCallInformation.target, (runtimeCallInformation.useInfoAfter) ? infoAfter : info);
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.registerConfig.getReturnRegister(inst.result.kind);

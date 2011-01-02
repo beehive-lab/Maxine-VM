@@ -60,6 +60,16 @@ public abstract class CiXirAssembler {
      * Marks the assembly complete.
      */
     protected boolean finished = true;
+    
+    public static class RuntimeCallInformation {
+        public final Object target;
+        public final boolean useInfoAfter;
+        
+        public RuntimeCallInformation(Object target, boolean useInfoAfter) {
+            this.target = target;
+            this.useInfoAfter = useInfoAfter;
+        }
+    }
 
     /**
      * Represents additional address calculation information.
@@ -767,8 +777,12 @@ public abstract class CiXirAssembler {
     }
 
     public void callRuntime(Object rt, XirOperand result, XirOperand... args) {
+        callRuntime(rt, result, false, args);
+    }
+    
+    public void callRuntime(Object rt, XirOperand result, boolean useInfoAfter, XirOperand... args) {
         CiKind resultKind = result == null ? CiKind.Void : result.kind;
-        append(new XirInstruction(resultKind, rt, CallRuntime, result, args));
+        append(new XirInstruction(resultKind, new RuntimeCallInformation(rt, useInfoAfter), CallRuntime, result, args));
     }
 
     /**
