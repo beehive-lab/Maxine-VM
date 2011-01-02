@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -239,13 +239,13 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return debugCallReturnTagIcon;
     }
 
-    private final Icon debugPauseButtonIcon = createImageIcon("image/NB3Pause.gif", "Continue");
-    private final Icon debugContinueButtonIcon = createImageIcon("image/NB3Continue.gif", "Continue");
-    private final Icon debugRunToCursorButtonIcon = createImageIcon("image/NB3RunToCursor.gif", "Continue");
-    private final Icon debugStepInButtonIcon = createImageIcon("image/NB3StepIn.gif", "Step In");
-    private final Icon debugStepOutButtonIcon = createImageIcon("image/NB3StepOut.gif", "Step In");
-    private final Icon debugStepOverButtonIcon = createImageIcon("image/NB3StepOver.gif", "Step In");
-    private final Icon debugToggleBreakpointButtonIcon = createImageIcon("image/NB3ToggleBreakpoint.gif", "Step In");
+    private final Icon debugPauseButtonIcon = createImageIcon("/NB3Pause.gif", "Continue");
+    private final Icon debugContinueButtonIcon = createImageIcon("/NB3Continue.gif", "Continue");
+    private final Icon debugRunToCursorButtonIcon = createImageIcon("/NB3RunToCursor.gif", "Continue");
+    private final Icon debugStepInButtonIcon = createImageIcon("/NB3StepIn.gif", "Step In");
+    private final Icon debugStepOutButtonIcon = createImageIcon("/NB3StepOut.gif", "Step In");
+    private final Icon debugStepOverButtonIcon = createImageIcon("/NB3StepOver.gif", "Step In");
+    private final Icon debugToggleBreakpointButtonIcon = createImageIcon("/NB3ToggleBreakpoint.gif", "Step In");
     public Icon debugPauseButtonIcon() {
         return debugPauseButtonIcon;
     }
