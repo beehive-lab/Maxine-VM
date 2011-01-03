@@ -36,7 +36,7 @@ public enum OS {
     LINUX("Linux"),
     SOLARIS("Solaris"),
     WINDOWS("Windows"),
-    GUESTVM("GuestVM");
+    MAXVE("MaxVE");
 
     /**
      * The identifier of this OS as part of a class name.
@@ -73,8 +73,8 @@ public enum OS {
         if (name.equals("Mac OS X") || name.equals("Darwin")) {
             return DARWIN;
         }
-        if (name.equals("GuestVM")) {
-            return GUESTVM;
+        if (name.equals("MaxVE")) {
+            return MAXVE;
         }
         throw ProgramError.unexpected("unknown OS: " + name);
     }

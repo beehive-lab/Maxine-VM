@@ -32,7 +32,7 @@ JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM *vm, void *reserved)
 {
     c_initialize();
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     log_initialize(getenv("TELE_LOG_FILE"));
 #endif
     return JNI_VERSION_1_2;

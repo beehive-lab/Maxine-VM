@@ -346,4 +346,9 @@ public class MaxRiRuntime implements RiRuntime {
     public RiRegisterConfig getRegisterConfig(RiMethod method) {
         return vm().registerConfigs.getRegisterConfig((ClassMethodActor) method);
     }
+
+    @Override
+    public int getCustomStackAreaSize() {
+        return 0;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.cps.eir.amd64.guestvm;
+package jtt.optimize;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.cps.eir.amd64.*;
-import com.sun.max.vm.cps.eir.amd64.unix.*;
+/*
+ * Test case for local load elimination. It makes sure that the second field store is not eliminated, because
+ * it is recognized that the first store changes the field "field1", so it is no longer guaranteed that it
+ * has its default value 0.
+ * @Harness: java
+ * @Runs: 0=0
+ */
+public class LLE_01 {
 
-public class GuestVMAMD64EirABIs extends AMD64EirABIsScheme {
+    int field1;
 
-    @HOSTED_ONLY
-    public GuestVMAMD64EirABIs() {
-        super(new UnixAMD64EirJavaABI(),
-              new UnixAMD64EirNativeABI(),
-              new UnixAMD64EirCFunctionABI(false /*called from Java only*/),
-              new UnixAMD64EirCFunctionABI(true /*called from native code only*/),
-              new UnixAMD64EirTemplateABI(),
-              new UnixAMD64EirTreeABI());
+    public static int test(int arg) {
+        LLE_01 o = new LLE_01();
+        o.field1 = 1;
+        o.field1 = 0;
+        return o.field1;
     }
-
 }

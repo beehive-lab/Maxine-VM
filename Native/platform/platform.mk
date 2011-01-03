@@ -52,7 +52,7 @@ endif
 HOSTOS = $(shell uname -s)
 # TARGETOS is the platform we are compiling for (usually the same as HOSTOS)
 # Set TARGETOS explicitly to cross-compile for a different target 
-# (required for GuestVM/Xen when building tele/inspector)
+# (required for Maxine VE when building tele/inspector)
 TARGETOS ?= $(shell uname -s)
 
 ifeq ($(TARGETOS),Darwin)
@@ -119,32 +119,32 @@ ifeq ($(findstring CYGWIN,$(TARGETOS)),CYGWIN)
     ISA := ia32
 endif
 
-# There are three variants for Guest VM, owing to the 32/64 dom0 variants
-# GuestVM: 64 bit dom0, Inspector running in dom0, with libtele referencing 64-bit libguk/libxen*
-# GuestVM64H: Inspector running in domU, with 64 bit libtele not referencing libguk/libxen
-# GuestVM32T: 32 bit dom0, Inspector agent running in dom0, with 32 bit libtele referencing 32 bit libguk/libxen
+# There are three variants for Maxine VE, owing to the 32/64 dom0 variants
+# MaxVE: 64 bit dom0, Inspector running in dom0, with libtele referencing 64-bit libguk/libxen*
+# MaxVE64H: Inspector running in domU, with 64 bit libtele not referencing libguk/libxen
+# MaxVE32T: 32 bit dom0, Inspector agent running in dom0, with 32 bit libtele referencing 32 bit libguk/libxen
 
-ifeq ($(TARGETOS),GuestVM)
+ifeq ($(TARGETOS),MaxVE)
     HYP := xen
-    OS := guestvm
+    OS := maxve
     TELEBITS := 64
     GUK := 1
     ISA := amd64
     ARCH := amd64
 endif
 
-ifeq ($(TARGETOS),GuestVM64H)
+ifeq ($(TARGETOS),MaxVE64H)
     HYP := xen
-    OS := guestvm
+    OS := maxve
     TELEBITS := 64
     GUK := 0
     ISA := amd64
     ARCH := amd64
 endif
 
-ifeq ($(TARGETOS),GuestVM32T)
+ifeq ($(TARGETOS),MaxVE32T)
     HYP := xen
-    OS := guestvm
+    OS := maxve
     TELEBITS := 32
     GUK := 1
     ISA := amd64
@@ -247,7 +247,7 @@ ifeq ($(OS),windows)
     LIB_SUFFIX = .dll
 endif
 
-ifeq ($(OS),guestvm)
+ifeq ($(OS),maxve)
     # assume Xen hypervisor
     ifeq ($(TARGET),TELE)
         ifeq ($(TELEBITS),64)
@@ -268,9 +268,9 @@ ifeq ($(OS),guestvm)
         CFLAGS = -g -Wall -Wno-format -Wpointer-arith -Winline \
                   $(mf) -mno-red-zone -fpic -fno-reorder-blocks \
                   -fno-asynchronous-unwind-tables -fno-builtin \
-                  -DGUESTVMXEN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
+                  -DMAXVE -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     endif
-    C_DEPENDENCIES_FLAGS = -M -DGUESTVMXEN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
+    C_DEPENDENCIES_FLAGS = -M -DMAXVE -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     ifeq ($(HOSTOS),Linux)
         CFLAGS += -fno-stack-protector 
     endif
@@ -301,8 +301,8 @@ ifndef JAVA_HOME
 endif
 
 
-ifeq ($(OS),guestvm)
-    # no guestvm in your typical JAVA_HOME so have to use host 
+ifeq ($(OS),maxve)
+    # no maxve in your typical JAVA_HOME so have to use host 
     ifeq ($(HOSTOS),Darwin)
         HOSTOS_LC = darwin
     endif

@@ -37,7 +37,7 @@ CPPFLAGS = $(PATHS:%=-I %)
 
 LIBRARY = $(LIB_PREFIX)$(LIB)$(LIB_SUFFIX)
 
-ifneq ($(OS),guestvm)
+ifneq ($(OS),maxve)
 
 $(LIBRARY) : $(OBJECTS)
 	$(LINK_LIB) $(OBJECTS) -o $(LIBRARY)

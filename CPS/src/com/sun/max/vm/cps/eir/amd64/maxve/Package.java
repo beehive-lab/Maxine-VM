@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,9 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package com.sun.max.vm.cps.eir.amd64.maxve;
+
+import static com.sun.max.platform.Platform.*;
+
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.cps.eir.*;
+
 /**
- * ABI specifications for GuestVM on AMD64.
- *
  * @author Mick Jordan
  */
-package com.sun.max.vm.cps.eir.amd64.guestvm;
+public class Package extends BootImagePackage {
+    public Package() {
+        super();
+        registerScheme(EirABIsScheme.class, MaxVEAMD64EirABIs.class);
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
+        return CPSCompiler.Static.isCompiler(vmConfig) && platform().isa == ISA.AMD64 &&
+            platform().os == OS.MAXVE;
+    }
+}

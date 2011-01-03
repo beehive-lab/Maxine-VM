@@ -32,11 +32,12 @@
 #define os_LINUX    0
 #define os_WINDOWS  0
 #define os_DARWIN   0
-#define os_GUESTVMXEN    0
+#define os_MAXVE    0
 
-#if defined(GUESTVMXEN)
-#   undef os_GUESTVMXEN
-#   define os_GUESTVMXEN   1
+#if defined(MAXVE)
+#   undef os_MAXVE
+#   define os_MAXVE   1
+#   define os_IDENTIFIER MAXVE
 #elif defined(__sun) || defined(SOLARIS)
 #   undef os_SOLARIS
 #   define os_SOLARIS    1

@@ -42,6 +42,6 @@ public class Package extends BootImagePackage {
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         OS os = platform().os;
         return CPSCompiler.Static.isCompiler(vmConfiguration) && platform().isa == ISA.AMD64 &&
-            (os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN || os == OS.GUESTVM);
+            (os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN || os == OS.MAXVE);
     }
 }

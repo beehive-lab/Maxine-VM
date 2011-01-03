@@ -1252,8 +1252,10 @@ public final class GraphBuilder {
             lockAddress = new MonitorAddress(lockNumber);
             append(lockAddress);
         }
-        appendWithoutOptimization(new MonitorEnter(x, lockAddress, lockNumber, null), bci);
+        MonitorEnter monitorEnter = new MonitorEnter(x, lockAddress, lockNumber, null);
+        appendWithoutOptimization(monitorEnter, bci);
         curState.lock(scope(), x, lockNumber + 1);
+        monitorEnter.setStateAfter(curState.immutableCopy(bci));
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
@@ -1439,21 +1441,25 @@ public final class GraphBuilder {
         return x instanceof Invoke || x instanceof Intrinsic && !((Intrinsic) x).preservesState() || x instanceof ResolveClass;
     }
 
-    private BlockBegin blockAt(int bci) {
+    private BlockBegin blockAtOrNull(int bci) {
         return scopeData.blockAt(bci);
+    }
+
+    private BlockBegin blockAt(int bci) {
+        BlockBegin result = blockAtOrNull(bci);
+        assert result != null : "Expected a block to begin at " + bci;
+        return result;
     }
 
     boolean tryInlineJsr(int jsrStart) {
         // start a new continuation point.
         // all ret instructions will be replaced with gotos to this point
         BlockBegin cont = blockAt(nextBCI());
-        assert cont != null : "continuation must exist";
 
         // push callee scope
         pushScopeForJsr(cont, jsrStart);
 
         BlockBegin jsrStartBlock = blockAt(jsrStart);
-        assert jsrStartBlock != null;
         assert !jsrStartBlock.wasVisited();
         Goto gotoSub = new Goto(jsrStartBlock, null, false);
         gotoSub.setStateAfter(curState.immutableCopy(bci()));
@@ -1706,7 +1712,7 @@ public final class GraphBuilder {
 
         // Introduce a new callee continuation point. All return instructions
         // in the callee will be transformed to Goto's to the continuation
-        BlockBegin continuationBlock = blockAt(nextBCI());
+        BlockBegin continuationBlock = blockAtOrNull(nextBCI());
         boolean continuationExisted = true;
         if (continuationBlock == null) {
             // there was not already a block starting at the next BCI
@@ -1982,7 +1988,7 @@ public final class GraphBuilder {
         boolean blockStart = true;
 
         while (bci < endBCI) {
-            BlockBegin nextBlock = blockAt(bci);
+            BlockBegin nextBlock = blockAtOrNull(bci);
             if (bci == 0 && inliningIntoCurrentBlock) {
                 if (!nextBlock.isParserLoopHeader()) {
                     // Ignore the block boundary of the entry block of a method

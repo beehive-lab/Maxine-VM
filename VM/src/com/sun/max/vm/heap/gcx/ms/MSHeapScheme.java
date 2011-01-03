@@ -140,7 +140,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             case LINUX: {
                 return new LowAddressCodeManager();
             }
-            case GUESTVM:
+            case MAXVE:
             case DARWIN:
             case SOLARIS: {
                 return new FixedAddressCodeManager();

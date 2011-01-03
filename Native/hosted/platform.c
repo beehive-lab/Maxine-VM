@@ -45,8 +45,8 @@ Java_com_sun_max_platform_Platform_nativeGetOS(JNIEnv *env, jclass c)
     return (*env)->NewStringUTF(env, "SOLARIS");
 #elif os_WINDOWS
     return (*env)->NewStringUTF(env, "WINDOWS");
-#elif os_GUESTVMXEN
-    return (*env)->NewStringUTF(env, "GUESTVM");
+#elif os_MAXVE
+    return (*env)->NewStringUTF(env, "MAXVE");
 #else
 #   error
 #endif
@@ -99,7 +99,7 @@ Java_com_sun_max_platform_Platform_nativeNumberOfSignals(JNIEnv *env, jclass c)
     return NSIG;
 #elif os_SOLARIS
     return SIGRTMAX;
-#elif os_GUESTVMXEN
+#elif os_MAXVE
     return 0;
 #else
 #   error
