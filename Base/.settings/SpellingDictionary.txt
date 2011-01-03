@@ -14,6 +14,7 @@ Daynes
 De
 Doug
 Foo
+Franklin
 Hannes
 Hiroshi
 Javadoc
@@ -31,11 +32,14 @@ Michael
 Mick
 Microsystems
 Miranda
+Parkway
 Paul
+Redwood
 Seidl
 Simon
 Solaris
 Soman
+St
 Sunil
 Thomas
 Titzer
