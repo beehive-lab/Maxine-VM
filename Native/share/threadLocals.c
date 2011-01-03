@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /**
@@ -47,10 +49,10 @@
     typedef thread_t Thread;
     typedef thread_key_t ThreadLocalsKey;
     typedef void (*ThreadLocalsBlockDestructor)(void *);
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_Thread Thread;
-    typedef guestvmXen_SpecificsKey ThreadLocalsKey;
+#elif os_MAXVE
+#   include "maxve.h"
+    typedef maxve_Thread Thread;
+    typedef maxve_SpecificsKey ThreadLocalsKey;
     typedef void (*ThreadLocalsBlockDestructor)(void *);
 #endif
 
@@ -62,16 +64,16 @@ int theTLASize = -1;
 static ThreadLocalsKey theThreadLocalsKey;
 
 static Address allocateThreadLocalBlock(size_t tlBlockSize) {
-#if os_GUESTVMXEN
-	return (Address) guestvmXen_virtualMemory_allocate(tlBlockSize, DATA_VM);
+#if os_MAXVE
+	return (Address) maxve_virtualMemory_allocate(tlBlockSize, DATA_VM);
 #else
 	return (Address) valloc(tlBlockSize);
 #endif
 }
 
 static void deallocateThreadLocalBlock(Address tlBlock, Size tlBlockSize) {
-#if os_GUESTVMXEN
-	guestvmXen_virtualMemory_deallocate((void *) tlBlock, tlBlockSize, DATA_VM);
+#if os_MAXVE
+	maxve_virtualMemory_deallocate((void *) tlBlock, tlBlockSize, DATA_VM);
 #else
 	free ((void *) tlBlock);
 #endif
@@ -210,9 +212,9 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
 
     // no protection for the primordial thread
     if (guardZonePages != 0) {
-#if os_GUESTVMXEN
+#if os_MAXVE
         // custom stack initialization
-        guestvmXen_initStack(ntl);
+        maxve_initStack(ntl);
 #else
         virtualMemory_protectPages(startGuardZone, guardZonePages);
 #endif
@@ -307,10 +309,10 @@ void threadLocalsBlock_destroy(Address tlBlock) {
     virtualMemory_unprotectPages(tlBlock, 1);
 
     /* Unprotect the stack guard pages */
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     virtualMemory_unprotectPages(startGuardZone, guardZonePages);
 #else
-    // on GUESTVMXEN stack protection is handled elsewhere
+    // on MAXVE stack protection is handled elsewhere
 #endif
 
     // Undo the temporary re-establishment of the thread locals block
@@ -331,8 +333,8 @@ void tla_initialize(int tlaSize) {
     pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
 #elif os_SOLARIS
     thr_keycreate(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
-#elif os_GUESTVMXEN
-    guestvmXen_thread_initializeSpecificsKey(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
+#elif os_MAXVE
+    maxve_thread_initializeSpecificsKey(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -351,8 +353,8 @@ Address threadLocalsBlock_current() {
         log_exit(result, "thr_getspecific failed");
     }
     tlBlock = value;
-#elif os_GUESTVMXEN
-    tlBlock = (Address) guestvmXen_thread_getSpecific(theThreadLocalsKey);
+#elif os_MAXVE
+    tlBlock = (Address) maxve_thread_getSpecific(theThreadLocalsKey);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -364,8 +366,8 @@ void threadLocalsBlock_setCurrent(Address tlBlock) {
     pthread_setspecific(theThreadLocalsKey, (void *) tlBlock);
 #elif os_SOLARIS
     thr_setspecific(theThreadLocalsKey, (void *) tlBlock);
-#elif os_GUESTVMXEN
-    guestvmXen_thread_setSpecific(theThreadLocalsKey, (void *) tlBlock);
+#elif os_MAXVE
+    maxve_thread_setSpecific(theThreadLocalsKey, (void *) tlBlock);
 #endif
 }
 

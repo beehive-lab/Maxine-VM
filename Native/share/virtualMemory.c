@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 /**
  * @author Bernd Mathiske
@@ -25,9 +27,9 @@
 #include "virtualMemory.h"
 #include "log.h"
 
-#if defined(GUESTVMXEN)
-#include <guestvmXen.h>
-/* No mmap function on GuestVM (yet)*/
+#if defined(MAXVE)
+#include <maxve.h>
+/* No mmap function on MaxVE (yet)*/
 #else
 #include <stdlib.h>
 #include <errno.h>
@@ -120,13 +122,13 @@ Address virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd,
     return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_PRIVATE | MAP_FIXED, fd, (off_t) offset));
 }
 
-// end of conditional exclusion of mmap stuff not available (or used) on GUESTVMXEN
-#endif // GUESTVMXEN
+// end of conditional exclusion of mmap stuff not available (or used) on MAXVE
+#endif // MAXVE
 
 
 Address virtualMemory_allocate(Size size, int type) {
-#if os_GUESTVMXEN
-	return (Address) guestvmXen_virtualMemory_allocate(size, type);
+#if os_MAXVE
+	return (Address) maxve_virtualMemory_allocate(size, type);
 #else
     return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE, -1, (off_t) 0));
 #endif
@@ -135,8 +137,8 @@ Address virtualMemory_allocate(Size size, int type) {
 Address virtualMemory_allocateIn31BitSpace(Size size, int type) {
 #if os_LINUX
     return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0));
-#elif os_GUESTVMXEN
-    return (Address) guestvmXen_virtualMemory_allocateIn31BitSpace(size, type);
+#elif os_MAXVE
+    return (Address) maxve_virtualMemory_allocateIn31BitSpace(size, type);
 #else
     c_UNIMPLEMENTED();
     return 0;
@@ -144,8 +146,8 @@ Address virtualMemory_allocateIn31BitSpace(Size size, int type) {
 }
 
 Address virtualMemory_deallocate(Address start, Size size, int type) {
-#if os_GUESTVMXEN
-    return (Address) guestvmXen_virtualMemory_deallocate((void *)start, size, type);
+#if os_MAXVE
+    return (Address) maxve_virtualMemory_deallocate((void *)start, size, type);
 #else
     int result = munmap((void *) start, (size_t) size);
     return result == -1 ? 0 : start;
@@ -155,8 +157,8 @@ Address virtualMemory_deallocate(Address start, Size size, int type) {
 boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
 #if os_SOLARIS || os_DARWIN
     return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0)) != ALLOC_FAILED;
-#elif os_GUESTVMXEN
-    return (Address) guestvmXen_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type) != ALLOC_FAILED;
+#elif os_MAXVE
+    return (Address) maxve_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type) != ALLOC_FAILED;
 #else
     c_UNIMPLEMENTED();
     return false;
@@ -171,8 +173,8 @@ void virtualMemory_protectPages(Address address, int count) {
          int error = errno;
          log_exit(error, "protectPages: mprotect(%p) failed: %s", address, strerror(error));
     }
-#elif os_GUESTVMXEN
-    guestvmXen_virtualMemory_protectPages(address, count);
+#elif os_MAXVE
+    maxve_virtualMemory_protectPages(address, count);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -185,8 +187,8 @@ void virtualMemory_unprotectPages(Address address, int count) {
          int error = errno;
 	     log_exit(error, "unprotectPages: mprotect(%p) failed: %s", address, strerror(error));
 	}
-#elif os_GUESTVMXEN
-	guestvmXen_virtualMemory_unProtectPages(address, count);
+#elif os_MAXVE
+	maxve_virtualMemory_unProtectPages(address, count);
 #else
 	c_UNIMPLEMENTED();
 #endif
@@ -195,8 +197,8 @@ void virtualMemory_unprotectPages(Address address, int count) {
 static unsigned int pageSize = 0;
 
 unsigned int virtualMemory_getPageSize(void) {
-#if os_GUESTVMXEN
-    return guestvmXen_virtualMemory_pageSize();
+#if os_MAXVE
+    return maxve_virtualMemory_pageSize();
 #else
     if (pageSize == 0) {
         pageSize = getpagesize();
