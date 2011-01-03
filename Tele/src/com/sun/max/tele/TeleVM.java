@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.tele;
 
@@ -1265,7 +1267,7 @@ public abstract class TeleVM implements MaxVM {
                 return false;
             }
             if (false && bootImage.vmConfiguration.debugging()) {
-                final Pointer cell = vmConfig().layoutScheme().generalLayout.originToCell(origin);
+                final Pointer cell = Layout.originToCell(origin);
                 // Checking is easy in a debugging build; there's a special word preceding each object
                 final Word tag = dataAccess().getWord(cell, 0, -1);
                 return DebugHeap.isValidCellTag(tag);
@@ -1281,14 +1283,14 @@ public abstract class TeleVM implements MaxVM {
             // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
             // class {@link DynamicHub}.
             //          tuple -> dynamicHub of the tuple's class -> dynamicHub of DynamicHub
-            Word hubWord = vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
+            Word hubWord = Layout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
             for (int i = 0; i < 3; i++) {
                 final RemoteTeleReference hubRef = createTemporaryRemoteTeleReference(hubWord);
                 final Pointer hubOrigin = hubRef.toOrigin();
                 if (!heap().contains(hubOrigin) && !codeCache().contains(hubOrigin)) {
                     return false;
                 }
-                final Word nextHubWord = vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(hubRef);
+                final Word nextHubWord = Layout.readHubReferenceAsWord(hubRef);
                 if (nextHubWord.equals(hubWord)) {
                     // We arrived at a DynamicHub for the class DynamicHub
                     if (i < 2) {
@@ -1331,7 +1333,7 @@ public abstract class TeleVM implements MaxVM {
      */
     private boolean isStaticTuple(Pointer origin) {
         // If this is a {@link StaticTuple} then a field in the header points at a {@link StaticHub}
-        Word staticHubWord = vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
+        Word staticHubWord = Layout.readHubReferenceAsWord(temporaryRemoteTeleReferenceFromOrigin(origin));
         final RemoteTeleReference staticHubRef = createTemporaryRemoteTeleReference(staticHubWord);
         final Pointer staticHubOrigin = staticHubRef.toOrigin();
         if (!heap().contains(staticHubOrigin) && !codeCache().contains(staticHubOrigin)) {
@@ -1399,33 +1401,37 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * @param reference a {@link Reference} to memory in the VM.
+     * Reads an element from an array of {@linkplain Reference references} in the
+     * VM. Gets the address from the reference and create an Inspector reference
+     * pointing at that object.
+     *
+     * @param reference an array of references in the VM
      * @param index offset into an array of references
      * @return the contents of the array at the index, interpreted as an address and wrapped in a Reference.
      * @throws InvalidReferenceException (unchecked)
      */
     public final Reference readReference(Reference reference, int index) throws InvalidReferenceException {
         checkReference(reference);
-        return wordToReference(vmConfig().layoutScheme().wordArrayLayout.getWord(reference, index));
+        // Read as an array of words
+        return wordToReference(Layout.getWord(reference, index));
     }
 
     /**
-     * Returns a local copy of the contents of a {@link String} object in the VM's heap.
+     * Returns a local copy of a {@link String} object in the VM's heap.
      *
      * @param stringReference A {@link String} object in the VM.
-     * @return A local {@link String} representing the object's contents.
+     * @return A local {@link String} duplicating the object's contents.
      * @throws InvalidReferenceException if the argument does not point a valid heap object.
      */
     public final String getString(Reference stringReference)  throws InvalidReferenceException {
         checkReference(stringReference);
-        final Reference valueReference = teleFields().String_value.readReference(stringReference);
-        checkReference(valueReference);
+        final Reference charArrayReference = teleFields().String_value.readReference(stringReference);
+        checkReference(charArrayReference);
         int offset = teleFields().String_offset.readInt(stringReference);
         final int count = teleFields().String_count.readInt(stringReference);
         final char[] chars = new char[count];
-        final ArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
         for (int i = 0; i < count; i++) {
-            chars[i] = charArrayLayout.getChar(valueReference, offset);
+            chars[i] = Layout.getChar(charArrayReference, offset);
             offset++;
         }
         return new String(chars);
@@ -1441,7 +1447,7 @@ public abstract class TeleVM implements MaxVM {
      * for example on the canonical reference machinery.
      *
      * @param stringReference a {@link String} object in the VM
-     * @return A local {@link String} representing the remote object's contents, null if it can't be read.
+     * @return A local {@link String} duplicating the remote object's contents, null if it can't be read.
      */
     public final String getStringUnsafe(Reference stringReference) {
         // Work only with temporary references that are unsafe across GC
@@ -1453,9 +1459,8 @@ public abstract class TeleVM implements MaxVM {
             int offset = stringRef.readInt(teleFields.String_offset.fieldActor().offset());
             final int count = stringRef.readInt(teleFields.String_count.fieldActor().offset());
             final char[] chars = new char[count];
-            final ArrayLayout charArrayLayout = vmConfig().layoutScheme().charArrayLayout;
             for (int i = 0; i < count; i++) {
-                chars[i] = charArrayLayout.getChar(valueRef, offset);
+                chars[i] = Layout.getChar(valueRef, offset);
                 offset++;
             }
             return new String(chars);
@@ -1491,14 +1496,14 @@ public abstract class TeleVM implements MaxVM {
         final Word fieldValue = readWord(dynamicHeapRegionsArrayFieldPointer.asAddress());
 
         if (!fieldValue.isZero()) {
-            // Assert that this points to an array of references
-            final RemoteTeleReference arrayReference = createTemporaryRemoteTeleReference(fieldValue);
-            final int length = vmConfig().layoutScheme().arrayLayout.readLength(arrayReference);
+            // Assert that this points to an array of references, read as words
+            final RemoteTeleReference wordArrayReference = createTemporaryRemoteTeleReference(fieldValue);
+            final int length = Layout.readArrayLength(wordArrayReference);
 
             // Read the references as words to avoid using too much machinery
             for (int index = 0; index < length; index++) {
                 // Read an entry from the array
-                final Word regionReferenceWord = vmConfig().layoutScheme().wordArrayLayout.getWord(arrayReference, index);
+                final Word regionReferenceWord = Layout.getWord(wordArrayReference, index);
                 // Assert that this points to an object of type {@link MemoryRegion} in the VM
                 RemoteTeleReference regionReference = createTemporaryRemoteTeleReference(regionReferenceWord);
                 final Address address = regionReference.readWord(teleFields.MemoryRegion_start.fieldActor().offset()).asAddress();
@@ -1578,69 +1583,67 @@ public abstract class TeleVM implements MaxVM {
 
     public final ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException {
         checkReference(objectReference);
-        final Reference hubReference = wordToReference(vmConfig().layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
+        final Reference hubReference = wordToReference(Layout.readHubReferenceAsWord(objectReference));
         final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
         return makeClassActor(classActorReference);
     }
 
     public final Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException {
-        LayoutScheme layoutScheme = vmConfig().layoutScheme();
         switch (kind.asEnum) {
             case BYTE:
-                return ByteValue.from(layoutScheme.byteArrayLayout.getByte(reference, index));
+                return ByteValue.from(Layout.getByte(reference, index));
             case BOOLEAN:
-                return BooleanValue.from(layoutScheme.booleanArrayLayout.getBoolean(reference, index));
+                return BooleanValue.from(Layout.getBoolean(reference, index));
             case SHORT:
-                return ShortValue.from(layoutScheme.shortArrayLayout.getShort(reference, index));
+                return ShortValue.from(Layout.getShort(reference, index));
             case CHAR:
-                return CharValue.from(layoutScheme.charArrayLayout.getChar(reference, index));
+                return CharValue.from(Layout.getChar(reference, index));
             case INT:
-                return IntValue.from(layoutScheme.intArrayLayout.getInt(reference, index));
+                return IntValue.from(Layout.getInt(reference, index));
             case FLOAT:
-                return FloatValue.from(layoutScheme.floatArrayLayout.getFloat(reference, index));
+                return FloatValue.from(Layout.getFloat(reference, index));
             case LONG:
-                return LongValue.from(layoutScheme.longArrayLayout.getLong(reference, index));
+                return LongValue.from(Layout.getLong(reference, index));
             case DOUBLE:
-                return DoubleValue.from(layoutScheme.doubleArrayLayout.getDouble(reference, index));
+                return DoubleValue.from(Layout.getDouble(reference, index));
             case WORD:
-                return new WordValue(layoutScheme.wordArrayLayout.getWord(reference, index));
+                return new WordValue(Layout.getWord(reference, index));
             case REFERENCE:
                 checkReference(reference);
-                return TeleReferenceValue.from(this, wordToReference(layoutScheme.wordArrayLayout.getWord(reference, index)));
+                return TeleReferenceValue.from(this, wordToReference(Layout.getWord(reference, index)));
             default:
                 throw TeleError.unknownCase("unknown array kind");
         }
     }
 
     public final void copyElements(Kind kind, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
-        LayoutScheme layoutScheme = vmConfig().layoutScheme();
         switch (kind.asEnum) {
             case BYTE:
-                layoutScheme.byteArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                Layout.byteArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case BOOLEAN:
-                layoutScheme.booleanArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                Layout.booleanArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case SHORT:
-                layoutScheme.shortArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                Layout.shortArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case CHAR:
-                layoutScheme.charArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                Layout.charArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case INT:
-                layoutScheme.intArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                Layout.intArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case FLOAT:
-                layoutScheme.floatArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                Layout.floatArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case LONG:
-                layoutScheme.longArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                Layout.longArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case DOUBLE:
-                layoutScheme.doubleArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                Layout.doubleArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             case WORD:
-                layoutScheme.wordArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                Layout.wordArrayLayout().copyElements(src, srcIndex, dst, dstIndex, length);
                 break;
             default:
                 throw TeleError.unknownCase("unknown array kind");

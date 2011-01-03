@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 #include <stdlib.h>
 #include <unistd.h>
@@ -98,7 +100,7 @@ static int tele_xg_writebytes(uint64_t src, char *buf, unsigned short size) {
     return size - result;
 }
 
-static struct guestvm_memory_handler xg_memory_handler = {
+static struct maxve_memory_handler xg_memory_handler = {
                 .readbytes = &tele_xg_readbytes,
                 .writebytes = &tele_xg_writebytes
 };
@@ -106,14 +108,14 @@ static struct guestvm_memory_handler xg_memory_handler = {
 
 /* Custom initialization for XG. */
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeInit(JNIEnv *env, jclass c) {
+Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeInit(JNIEnv *env, jclass c) {
     tele_xg_thread_list = NULL;
     resume_vcpu = -1;
     xg_init();
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeAttach(JNIEnv *env, jclass c, jint domainId, jlong extra1) {
+Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeAttach(JNIEnv *env, jclass c, jint domainId, jlong extra1) {
     thread_list_address = extra1;
     debug_println("Calling xg_attach on domId=%d, thread_list_addr %lx", domainId, extra1);
     return xg_attach(domainId);
@@ -212,7 +214,7 @@ static struct tele_xg_thread *get_thread(int id) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jlong tlaList, jlong primordialETLA) {
+Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jlong tlaList, jlong primordialETLA) {
     tele_xg_gather_threads();
     struct tele_xg_thread *tcb = tele_xg_thread_list;
     while (tcb != NULL) {
@@ -227,7 +229,7 @@ Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeGat
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeResume(JNIEnv *env, jobject domain) {
+Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeResume(JNIEnv *env, jobject domain) {
     debug_println("Calling xg_resume_n_wait");
     resume_vcpu = xg_resume_n_wait(64);
     debug_println("xg_resume_n_wait returned %d", resume_vcpu);
@@ -236,19 +238,19 @@ Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeRes
 
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeReadBytes(JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
+Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeReadBytes(JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
     return teleProcess_read(&xg_memory_handler, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeWriteBytes(JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
+Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeWriteBytes(JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
     return teleProcess_write(&xg_memory_handler, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }
 
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeSingleStep(JNIEnv *env, jclass c, jint threadId) {
+Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeSingleStep(JNIEnv *env, jclass c, jint threadId) {
     debug_println("nativeSingleStep %d", threadId);
     struct tele_xg_thread *tcb = get_thread(threadId);
     int rc = xg_step(tcb->cpu, 64);
@@ -257,7 +259,7 @@ Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeSin
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint threadId, jlong ip) {
+Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint threadId, jlong ip) {
     debug_println("nativeSetInstructionPointer %d %lx", threadId, ip);
     struct tele_xg_thread *tcb = get_thread(threadId);
     tcb->regs.u.xregs_64.rip = ip;
@@ -266,7 +268,7 @@ Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeSet
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeReadRegisters(JNIEnv *env, jclass c, jint threadId,
+Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeReadRegisters(JNIEnv *env, jclass c, jint threadId,
         jbyteArray integerRegisters, jint integerRegistersLength,
         jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
         jbyteArray stateRegisters, jint stateRegistersLength) {
