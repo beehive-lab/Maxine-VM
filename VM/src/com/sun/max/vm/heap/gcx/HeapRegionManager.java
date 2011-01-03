@@ -27,6 +27,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.FixedSizeRegionAllocator.RegionBitSet;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -220,6 +221,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         for (int i = 0; i < numRegions; i++) {
             bootstrapAllocator.createTuple(regionInfoClass);
         }
+        final int numWordsPerBitSet = 1 + (numRegions >> RegionBitSet.LOG2_BITS_PER_WORD);
         RegionTable.initialize(regionTable, regionInfoClass, startOfManagedSpace, numRegions);
         // Allocate the backing storage for the region list.
         int [] listStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
