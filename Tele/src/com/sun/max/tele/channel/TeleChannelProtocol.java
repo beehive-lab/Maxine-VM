@@ -61,8 +61,8 @@ public interface TeleChannelProtocol extends TeleChannelDataIOProtocol {
      * This avoids explicit types so that different versions of the Inspector types can be used on the two sides
      * of the communication channel.
      * @param teleDomain a {@link MaxVETeleDomain} object
+     * @param threadList a {@link List} of {@link TeleNativeThread} objects
      * @param tlaList address of the thread locals list in the target VM
-     * @param threads a {@link List} of {@link TeleNativeThread} objects
      * @return {@code true} if the gather was successful, {@code false} otherwise.
      */
     boolean gatherThreads(Object teleDomain, Object threadList, long tlaList);
