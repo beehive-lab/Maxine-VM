@@ -120,8 +120,14 @@ public abstract class TeleVM implements MaxVM {
 
     private static final int TRACE_VALUE = 1;
 
-    private static final String PROGRAM_NAME = "maxvm";
+    /**
+     * The of the binary file in which the VM executable is stored.
+     */
+    private static final String BOOTIMAGE_FILE_NAME = "maxvm";
 
+    /**
+     * The name of the native library that supports the Inspector.
+     */
     public static final String TELE_LIBRARY_NAME = "tele";
 
     private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
@@ -731,7 +737,7 @@ public abstract class TeleVM implements MaxVM {
 
         this.wordSize = Size.fromInt(platform().wordWidth().numberOfBytes);
         this.pageSize = Size.fromInt(platform().pageSize);
-        this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
+        this.programFile = new File(bootImageFile.getParent(), BOOTIMAGE_FILE_NAME);
 
         if (mode == MaxInspectionMode.ATTACH || mode == MaxInspectionMode.ATTACHWAITING) {
             this.teleProcess = attachToTeleProcess();
