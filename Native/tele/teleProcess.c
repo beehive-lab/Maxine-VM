@@ -106,7 +106,7 @@ static boolean isTLAForStackPointer(ProcessHandle ph, Address stackPointer, Addr
     return stackBase <= stackPointer && stackPointer < (stackBase + stackSize);
 }
 
-TLA teleProcess_findTLA(ProcessHandle ph, Address tlaList, Address primordialETLA, Address stackPointer, TLA tlaCopy, NativeThreadLocals ntlCopy) {
+TLA teleProcess_findTLA(ProcessHandle ph, Address tlaList, Address stackPointer, TLA tlaCopy, NativeThreadLocals ntlCopy) {
     memset((void *) tlaCopy, 0, tlaSize());
     memset((void *) ntlCopy, 0, sizeof(NativeThreadLocalsStruct));
 
@@ -118,11 +118,6 @@ TLA teleProcess_findTLA(ProcessHandle ph, Address tlaList, Address primordialETL
             }
             tla = tla_load(Address, tlaCopy, FORWARD_LINK);
         };
-    }
-    if (primordialETLA != 0) {
-        if (isTLAForStackPointer(ph, stackPointer, primordialETLA, tlaCopy, ntlCopy)) {
-            return tlaCopy;
-        }
     }
     return 0;
 }
