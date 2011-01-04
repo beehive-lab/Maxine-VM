@@ -541,6 +541,39 @@ public class OptionSet {
     }
 
     /**
+     * Prints a textual listing of these options and their values
+     * to the specified output stream.
+     * @param stream the output stream to which to write the text
+     * @param verbose add each option's description when true
+     * @param width the length of the line to truncate
+     */
+    public void printValues(PrintStream stream, boolean verbose, int width) {
+        for (Option<?> option : getSortedOptions()) {
+            if (option.type == OptionTypes.BLANK_BOOLEAN_TYPE && option instanceof FieldOption) {
+                FieldOption fopt = (FieldOption) option;
+                try {
+                    if (!fopt.nullValue.equals(fopt.field.getBoolean(null))) {
+                        // Don't show message for "-XX:+<opt>" option if the default is represented by the
+                        // "-XX:-<opt>" option instead (and vice versa).
+                        continue;
+                    }
+                } catch (Exception e) {
+                }
+            }
+
+
+            final Option<Object> opt = Utils.cast(option);
+            stream.print("    " + opt.getName() + ": " + opt.getValue());
+            if (verbose) {
+                stream.println(opt.isAssigned() ? "" : " (default)");
+                stream.println("        " + opt.getHelp());
+                stream.println("        " + getUsage(opt));
+            }
+            stream.println();
+        }
+    }
+
+    /**
      * This method gets a usage string for a particular option that describes
      * the range of valid string values that it accepts.
      * @param option the option for which to get usage
