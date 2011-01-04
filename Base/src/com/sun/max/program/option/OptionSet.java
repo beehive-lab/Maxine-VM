@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -586,7 +586,7 @@ public class OptionSet {
      * @param name the name of the option
      * @param object the object containing the field (if the field is not static)
      * @param field the field to store the value
-     * @param help the help text for the option   @return a new option that will mod?ify the field when parsed
+     * @param help the help text for the option   @return a new option that will modify the field when parsed
      * @return the option created
      */
     @SuppressWarnings("unchecked")
