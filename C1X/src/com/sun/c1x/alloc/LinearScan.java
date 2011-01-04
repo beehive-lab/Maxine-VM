@@ -497,7 +497,7 @@ public class LinearScan {
 
                         CiValue fromLocation = interval.location();
                         CiValue toLocation = canonicalSpillOpr(interval);
-                        assert fromLocation.isRegister() : "from operand must be a register";
+                        assert fromLocation.isRegister() : "from operand must be a register but is: " + fromLocation;
                         assert toLocation.isStackSlot() : "to operand must be a stack slot";
 
                         insertionBuffer.move(j, fromLocation, toLocation, null);
@@ -2018,21 +2018,20 @@ public class LinearScan {
         return attributes(operand.asRegister()).isCallerSave;
     }
 
-    void computeOopMap(IntervalWalker iw, LIRInstruction op, CiBitMap frameRefMap, CiBitMap regRefMap) {
-        assert op.info != null : "no oop map needed";
-        computeOopMap(iw, op, op.info, op.hasCall(), frameRefMap, regRefMap);
+    void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, CiBitMap frameRefMap, CiBitMap regRefMap) {
+        computeOopMap(iw, op, info, op.hasCall(), frameRefMap, regRefMap);
         if (op instanceof LIRCall) {
             List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
             if (pointerSlots != null) {
                 for (CiValue v : pointerSlots) {
-                    op.info.setOop(v, compilation, frameRefMap, regRefMap);
+                    info.setOop(v, compilation, frameRefMap, regRefMap);
                 }
             }
         } else if (op instanceof LIRXirInstruction) {
             List<CiValue> pointerSlots = ((LIRXirInstruction) op).pointerSlots;
             if (pointerSlots != null) {
                 for (CiValue v : pointerSlots) {
-                    op.info.setOop(v, compilation, frameRefMap, regRefMap);
+                    info.setOop(v, compilation, frameRefMap, regRefMap);
                 }
             }
         }
@@ -2132,7 +2131,18 @@ public class LinearScan {
 
     void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
         assert iw != null : "interval walker needed for debug information";
-        LIRDebugInfo info = op.info;
+        computeDebugInfo(iw, op, op.info);
+
+        if (op instanceof LIRXirInstruction) {
+            LIRXirInstruction xir = (LIRXirInstruction) op;
+            if (xir.infoAfter != null) {
+                computeDebugInfo(iw, op, xir.infoAfter);
+            }
+        }
+    }
+
+
+    void computeDebugInfo(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info) {
         if (info != null) {
             if (info.debugInfo == null) {
                 int frameSize = compilation.frameMap().frameSize();
@@ -2140,7 +2150,7 @@ public class LinearScan {
                 CiBitMap frameRefMap = new CiBitMap(frameWords);
                 CiBitMap regRefMap = !op.hasCall() ? new CiBitMap(compilation.target.arch.registerReferenceMapBitCount) : null;
                 Frame frame = computeFrame(info.state, op.id, frameRefMap);
-                computeOopMap(iw, op, frameRefMap, regRefMap);
+                computeOopMap(iw, op, info, frameRefMap, regRefMap);
                 info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);
             } else if (C1XOptions.DetailedAsserts) {
                 assert info.debugInfo.frame().equals(computeFrame(info.state, op.id, new CiBitMap(info.debugInfo.frameRefMap.size())));

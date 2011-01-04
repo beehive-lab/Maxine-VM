@@ -24,10 +24,18 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 0.0d = -0.0d; -1.01d = 1.01d; 7263.8734d = -7263.8734d
+ * @Runs: (0.0d, 1.0d, 0) = -0.0d; (-1.01d, -2.01d, 0) = 1.01d; (7263.8734d, 8263.8734d, 0) = -7263.8734d; (0.0d, 1.0d, 1) = -1.0d; (-1.01d, -2.01d, 1) = 2.01d; (7263.8734d, 8263.8734d, 1) = -8263.8734d
  */
 public class BC_dneg {
-    public static double test(double a) {
-        return -a;
+    public static double test(double a, double b, int which) {
+        double result1 = -a;
+        double result2 = -b;
+        double result = 0.0;
+        if (which == 0) {
+            result = result1;
+        } else {
+            result = result2;
+        }
+        return result;
     }
 }

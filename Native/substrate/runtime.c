@@ -32,8 +32,8 @@
 #   include <sys/types.h>
 #   include <sys/pset.h>
 #   include <unistd.h>
-#elif os_GUESTVMXEN
-#   include <guestvmXen.h>
+#elif os_MAXVE
+#   include <maxve.h>
 #elif os_WINDOWS
 	// TODO
 #endif
@@ -83,8 +83,8 @@ Java_java_lang_Runtime_availableProcessors(JNIEnv *env, jclass c, jobject runtim
 	    return numberOfBits;
 	}
 	return si.dwNumberOfProcessors;
-#elif os_GUESTVMXEN
-	return guestvmXen_numProcessors();
+#elif os_MAXVE
+	return maxve_numProcessors();
 #else
 	c_UNIMPLEMENTED();
 #endif

@@ -48,7 +48,7 @@ static sem_t signal_sem;
 #elif os_LINUX
 #include <semaphore.h>
 static sem_t signal_sem;
-#elif os_GUESTVMXEN
+#elif os_MAXVE
 // no signals, so nothing necessary
 #endif
 
@@ -75,7 +75,7 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalNotify(JNIEnv *env, jcl
     if (sem_post(&signal_sem) != 0) {
         log_exit(11, "sem_post failed: %s", strerror(errno));
     }
-#elif os_GUESTVMXEN
+#elif os_MAXVE
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -122,7 +122,7 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalWait(JNIEnv *env, jclas
     if (ret != 0) {
         log_exit(11, "sem_wait failed: %s", strerror(errno));
     }
-#elif os_GUESTVMXEN
+#elif os_MAXVE
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -149,7 +149,7 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalInit(JNIEnv *env, jclas
     if (sem_init(&signal_sem, 0, USYNC_THREAD, NULL) != 0) {
         log_exit(11, "sema_init failed: %s", strerror(errno));
     }
-#elif os_GUESTVMXEN
+#elif os_MAXVE
     return;
 #else
     c_UNIMPLEMENTED();

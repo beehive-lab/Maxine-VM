@@ -108,7 +108,7 @@ public class RegisterConfigs {
     public static RegisterConfigs create() {
         if (platform().isa == ISA.AMD64) {
             OS os = platform().os;
-            if (os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN || os == OS.GUESTVM) {
+            if (os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN || os == OS.MAXVE) {
                 /**
                  * The set of allocatable registers shared by most register configurations.
                  */

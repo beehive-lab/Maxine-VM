@@ -383,7 +383,7 @@ public final class JDK_java_lang_System {
      */
     private static String findJavaHome() {
         switch (platform().os) {
-            case GUESTVM:
+            case MAXVE:
             case SOLARIS:
             case LINUX: {
                 // TODO: Assume we are in the JRE and walk around from there.
@@ -435,7 +435,7 @@ public final class JDK_java_lang_System {
                 return getenv("LD_LIBRARY_PATH", false);
             }
             case WINDOWS:
-            case GUESTVM:
+            case MAXVE:
             default: {
                 return "";
             }
@@ -456,7 +456,7 @@ public final class JDK_java_lang_System {
                 return getenv("CLASSPATH", false);
             }
             case WINDOWS:
-            case GUESTVM:
+            case MAXVE:
             default: {
                 return "";
             }
@@ -691,8 +691,8 @@ public final class JDK_java_lang_System {
                 setIfAbsent(properties, "os.name", "Mac OS X");
                 initBasicUnixProperties(properties);
                 break;
-            case GUESTVM:
-                setIfAbsent(properties, "os.name", "GuestVM");
+            case MAXVE:
+                setIfAbsent(properties, "os.name", "Maxine VE");
                 setIfAbsent(properties, "java.io.tmpdir", "/tmp");
                 initBasicUnixProperties(properties);
                 break;
@@ -822,7 +822,7 @@ public final class JDK_java_lang_System {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/java/packages/lib/ext"));
         } else if (os == OS.SOLARIS) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext"), "/usr/jdk/packages/lib/ext"));
-        } else if (os == OS.GUESTVM) {
+        } else if (os == OS.MAXVE) {
             setIfAbsent(properties, "java.ext.dirs", asClasspath(asFilesystemPath(javaHome, "lib/ext")));
         } else {
             ProgramError.unknownCase(os.toString());
@@ -939,7 +939,7 @@ public final class JDK_java_lang_System {
                 // We support this by returning its first choice here:
                 return "lib" + libraryName + ".jnilib";
             case LINUX:
-            case GUESTVM:
+            case MAXVE:
             case SOLARIS:
                 return "lib" + libraryName + ".so";
             case WINDOWS:

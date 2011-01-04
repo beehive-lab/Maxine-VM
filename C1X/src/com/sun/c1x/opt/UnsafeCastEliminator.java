@@ -57,9 +57,9 @@ public class UnsafeCastEliminator implements ValueClosure, BlockClosure {
                 stateBefore.valuesDo(this);
             }
             i.inputValuesDo(this);
-            if (i instanceof BlockEnd) {
-                // Remove redundant unsafe casts in the state at the end of a block
-                i.stateAfter().valuesDo(this);
+            FrameState stateAfter = i.stateAfter();
+            if (stateAfter != null) {
+                stateAfter.valuesDo(this);
             }
             i = i.next();
         }

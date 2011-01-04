@@ -49,9 +49,9 @@
 #define IMAGE_VERSION                    1
 #define DEFAULT_RELOCATION_SCHEME        0
 
-#if os_GUESTVMXEN
+#if os_MAXVE
 #define MEMORY_IMAGE 1
-#include <guestvmXen.h>
+#include <maxve.h>
 #include <string.h>
 #else
 #define MEMORY_IMAGE 0
@@ -349,9 +349,9 @@ static void mapHeapAndCode(int fd) {
 #else
     c_UNIMPLEMENTED();
 #endif
-#if os_GUESTVMXEN
+#if os_MAXVE
     // boot heap and code must be mapped together (the method offsets in boot image are relative to heap base)
-    theHeap = guestvmXen_remap_boot_code_region(theHeap, heapAndCodeSize);
+    theHeap = maxve_remap_boot_code_region(theHeap, heapAndCodeSize);
 #endif
 #if log_LOADER
     log_println("boot heap mapped at %p", theHeap);

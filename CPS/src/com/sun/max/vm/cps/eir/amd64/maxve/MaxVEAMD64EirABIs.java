@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef __condition_h__
-#define __condition_h__ 1
+package com.sun.max.vm.cps.eir.amd64.maxve;
 
-#include "mutex.h"
+import com.sun.max.annotate.*;
+import com.sun.max.vm.cps.eir.amd64.*;
+import com.sun.max.vm.cps.eir.amd64.unix.*;
 
-#if (os_DARWIN || os_LINUX)
-#   include <pthread.h>
-#   include <errno.h>
-    typedef pthread_cond_t condition_Struct;
-#elif os_SOLARIS
-#   include <thread.h>
-#   include <errno.h>
-    typedef cond_t condition_Struct;
-#elif os_MAXVE
-#   include "maxve.h"
-    typedef maxve_condition_t condition_Struct;
-#endif
+public class MaxVEAMD64EirABIs extends AMD64EirABIsScheme {
 
-typedef condition_Struct *Condition;
+    @HOSTED_ONLY
+    public MaxVEAMD64EirABIs() {
+        super(new UnixAMD64EirJavaABI(),
+              new UnixAMD64EirNativeABI(),
+              new UnixAMD64EirCFunctionABI(false /*called from Java only*/),
+              new UnixAMD64EirCFunctionABI(true /*called from native code only*/),
+              new UnixAMD64EirTemplateABI(),
+              new UnixAMD64EirTreeABI());
+    }
 
-extern void condition_initialize(Condition condition);
-extern void condition_destroy(Condition condition);
-extern boolean condition_wait(Condition condition, Mutex mutex);
-extern boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
-extern boolean condition_notify(Condition condition);
-extern boolean condition_notifyAll(Condition condition);
-
-#endif /*__condition_h__*/
+}

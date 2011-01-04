@@ -59,7 +59,7 @@ public interface TeleChannelProtocol extends TeleChannelDataIOProtocol {
      * Gathers the set of active threads in the target VM.
      * This avoids explicit types so that different versions of the Inspector types can be used on the two sides
      * of the communication channel.
-     * @param teleDomain a {@link GuestVMTeleDomain} object
+     * @param teleDomain a {@link MaxVETeleDomain} object
      * @param threads an {@link AppendableSequence<TeleNativeThread>}
      * @param tlaList address of the thread locals list in the target VM
      * @param primordialETLA address of the primordial thread locals in the target VM

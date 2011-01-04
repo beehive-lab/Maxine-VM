@@ -44,8 +44,8 @@ void condition_initialize(Condition condition) {
     if (pthread_cond_init(condition, NULL) != 0) {
         c_FATAL();
     }
-#elif os_GUESTVMXEN
-    *condition = guestvmXen_condition_create();
+#elif os_MAXVE
+    *condition = maxve_condition_create();
 #else
 #   error
 #endif
@@ -66,7 +66,7 @@ void condition_destroy(Condition condition) {
 #endif
 }
 
-#if os_GUESTVMXEN
+#if os_MAXVE
 #   define ETIMEDOUT -1
 #endif
 
@@ -96,8 +96,8 @@ boolean condition_wait(Condition condition, Mutex mutex) {
 #endif
         return true;
     }
-#elif os_GUESTVMXEN
-    error = guestvmXen_condition_wait(*condition, *mutex, 0);
+#elif os_MAXVE
+    error = maxve_condition_wait(*condition, *mutex, 0);
     if (error == 1) {
         /* (Doug) I assume 1 means EINTR */
         return true;
@@ -190,11 +190,11 @@ boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 #endif
 	    return true;
 	}
-#elif os_GUESTVMXEN
-	struct guestvmXen_TimeSpec reltime;
+#elif os_MAXVE
+	struct maxve_TimeSpec reltime;
 	reltime.tv_sec = timeoutMilliSeconds / 1000;
 	reltime.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
-	error = guestvmXen_condition_wait(*condition, *mutex, &reltime);
+	error = maxve_condition_wait(*condition, *mutex, &reltime);
 	if (error == 1) {
 	    /* (Doug) I assume 1 means EINTR */
 	    return true;
@@ -221,8 +221,8 @@ boolean condition_notify(Condition condition) {
     return pthread_cond_signal(condition) == 0;
 #elif os_SOLARIS
     return cond_signal(condition) == 0;
-#elif os_GUESTVMXEN
-    return guestvmXen_condition_notify(*condition, 0) == 0;
+#elif os_MAXVE
+    return maxve_condition_notify(*condition, 0) == 0;
 #else
 #  error
 #endif
@@ -236,8 +236,8 @@ boolean condition_notifyAll(Condition condition) {
     return pthread_cond_broadcast(condition) == 0;
 #elif os_SOLARIS
     return cond_broadcast(condition) == 0;
-#elif os_GUESTVMXEN
-    return guestvmXen_condition_notify(*condition, 1) == 0;
+#elif os_MAXVE
+    return maxve_condition_notify(*condition, 1) == 0;
 #else
 #   error
 #endif

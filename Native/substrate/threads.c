@@ -58,10 +58,10 @@
 #   include <thread.h>
     typedef thread_t Thread;
 #define thread_current() (thr_self())
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_Thread Thread;
-#define thread_current() (guestvmXen_get_current())
+#elif os_MAXVE
+#   include "maxve.h"
+    typedef maxve_Thread Thread;
+#define thread_current() (maxve_get_current())
 #endif
 
 /**
@@ -118,9 +118,9 @@ void thread_getStackInfo(Address *stackBase, Size* stackSize) {
         log_exit(11, "Cannot get current stack size");
     }
     *stackBase = (Address) stackTop - *stackSize;
-#elif os_GUESTVMXEN
-    guestvmXen_stackinfo_t stackInfo;
-    guestvmXen_get_stack_info(&stackInfo);
+#elif os_MAXVE
+    maxve_stackinfo_t stackInfo;
+    maxve_get_stack_info(&stackInfo);
     *stackBase = stackInfo.ss_base;
     *stackSize = stackInfo.ss_size;
 #else
@@ -142,7 +142,7 @@ void *thread_run(void *arg);
  */
 static Thread thread_create(jint id, Size stackSize, int priority) {
     Thread thread;
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     int error;
 #endif
 
@@ -170,8 +170,8 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 
     tla_store(tlBlock, ID, id);
 
-#if os_GUESTVMXEN
-    thread = guestvmXen_create_thread(
+#if os_MAXVE
+    thread = maxve_create_thread(
     	(void (*)(void *)) thread_run,
 	    stackSize,
 		priority,
@@ -224,8 +224,8 @@ static int thread_join(Thread thread) {
 #elif os_SOLARIS
     void *status;
     error = thr_join(thread, NULL, &status);
-#elif os_GUESTVMXEN
-    error = guestvmXen_thread_join(thread);
+#elif os_MAXVE
+    error = maxve_thread_join(thread);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -499,8 +499,8 @@ Java_com_sun_max_vm_thread_VmThread_nativeYield(JNIEnv *env, jclass c) {
     sched_yield();
 #elif os_LINUX
     pthread_yield();
-#elif os_GUESTVMXEN
-    guestvmXen_yield();
+#elif os_MAXVE
+    maxve_yield();
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -523,16 +523,16 @@ Java_com_sun_max_vm_thread_VmThread_nativeInterrupt(JNIEnv *env, jclass c, Addre
     if (result != 0) {
         log_exit(11, "Error sending signal SIGUSR1 to native thread %p", nativeThread);
     }
-#elif os_GUESTVMXEN
-	guestvmXen_interrupt((void*) nativeThread);
+#elif os_MAXVE
+	maxve_interrupt((void*) nativeThread);
 #else
     c_UNIMPLEMENTED();
  #endif
 }
 
 jboolean thread_sleep(jlong numberOfMilliSeconds) {
-#if os_GUESTVMXEN
-    return guestvmXen_sleep(numberOfMilliSeconds * 1000000);
+#if os_MAXVE
+    return maxve_sleep(numberOfMilliSeconds * 1000000);
 #else
     struct timespec time, remainder;
 
@@ -565,8 +565,8 @@ Java_com_sun_max_vm_thread_VmThread_nativeSetPriority(JNIEnv *env, jclass c, Add
     int err = thr_setprio(nativeThread, priority);
     c_ASSERT(err != ESRCH);
     c_ASSERT(err != EINVAL);
-#elif os_GUESTVMXEN
-    guestvmXen_set_priority((void *) nativeThread, priority);
+#elif os_MAXVE
+    maxve_set_priority((void *) nativeThread, priority);
 #else
     //    log_println("nativeSetPriority %d ignored!", priority);
 #endif

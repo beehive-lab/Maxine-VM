@@ -84,8 +84,8 @@ public class JVMFunctions {
     public static Class[] GetClassContext() {
         ClassContext classContext = new ClassContext();
 
-        // In GuestVM there are no native frames, or JNI calls on the stack that need to be ignored
-        classContext.skippingUntilNativeMethod = platform().os != OS.GUESTVM;
+        // In Maxine VE there are no native frames, or JNI calls on the stack that need to be ignored
+        classContext.skippingUntilNativeMethod = platform().os != OS.MAXVE;
 
         classContext.walk(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         ArrayList<Class> classes = classContext.classes;
