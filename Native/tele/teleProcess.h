@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 #ifndef __teleProcess_h__
 #define __teleProcess_h__ 1
@@ -62,17 +64,17 @@ typedef task_t ProcessHandle;
 typedef struct ps_prochandle *ProcessHandle;
 #define readProcessMemory(ph, src, dst, size) Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
 #define writeProcessMemory(ph, dst, src, size) Pwrite(ph, src, length, (uintptr_t) dst);
-#elif os_GUESTVMXEN
+#elif os_MAXVE
 // N.B The tele library may execute on either a 32 bit or a 64 bit host depending on the particular Xen/Linux configration.
 // In particular, Oracle VM 2.x has a 32 bit dom0.
 // We (ab)use the ProcessHandle argument to distinguish the two different native implementations (xg,db) of tele
 #include <stdint.h>
-typedef int (*GuestVMXenMemoryHandler)(uint64_t, char *, unsigned short);
-struct guestvm_memory_handler {
-    GuestVMXenMemoryHandler readbytes;
-    GuestVMXenMemoryHandler writebytes;
+typedef int (*MaxVEMemoryHandler)(uint64_t, char *, unsigned short);
+struct maxve_memory_handler {
+    MaxVEMemoryHandler readbytes;
+    MaxVEMemoryHandler writebytes;
 };
-typedef struct guestvm_memory_handler *ProcessHandle;
+typedef struct maxve_memory_handler *ProcessHandle;
 #define readProcessMemory(ph, src, dst, size) ph->readbytes((uint64_t) src, (char *) dst, (unsigned short) size)
 #define writeProcessMemory(ph, dst, src, size) ph->writebytes((uint64_t) dst, (char *) src, (unsigned short) size);
 #else

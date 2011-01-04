@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.tele;
 
@@ -125,30 +127,6 @@ public abstract class TeleVM implements MaxVM {
     private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
 
     /**
-     * Modes in which the Inspector operates, which require different startup behavior.
-     */
-    public enum Mode {
-        /**
-         * Create and start a new process to execute the VM, passing arguments.
-         */
-        CREATE,
-        /**
-         * Attach to an existing VM process that is already running or core-dumped.
-         */
-        ATTACH,
-        /**
-         * Attach to an existing VM process that is waiting to be started.
-         * I.e., the process exists, the arguments have been supplied, but it
-         * has not executed the VM, but it waiting for the Inspector to release it.
-          */
-        ATTACHWAITING,
-        /**
-         * Browse a VM image as produced by the {@link BootImageGenerator}.
-         */
-        IMAGE,
-    }
-
-    /**
      * Defines whether the target VM running locally or on a remote machine, or is core-dump.
      */
     public static final class TargetLocation {
@@ -216,7 +194,7 @@ public abstract class TeleVM implements MaxVM {
             } else {
                 TeleError.unexpected("usage: " + options.targetKindOption.getHelp());
             }
-            if (mode == Mode.ATTACH || mode == Mode.ATTACHWAITING) {
+            if (mode == MaxInspectionMode.ATTACH || mode == MaxInspectionMode.ATTACHWAITING) {
                 if (kind == Kind.FILE) {
                     // must have a dump file, if not provided put up a dialog to get it.
                     if (target == null) {
@@ -238,9 +216,9 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * The mode the Inspector is running in.
+     * The mode of the inspection, which require different startup behavior.
      */
-    private static Mode mode;
+    private static MaxInspectionMode mode;
 
     /**
      * Information about where the (running/dumped) target VM is located.
@@ -305,11 +283,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public static boolean isAttaching() {
-        return mode == Mode.ATTACH;
+        return mode == MaxInspectionMode.ATTACH;
     }
 
     public static boolean isDump() {
-        return mode == Mode.ATTACH && targetLocation.kind == TargetLocation.Kind.FILE;
+        return mode == MaxInspectionMode.ATTACH && targetLocation.kind == TargetLocation.Kind.FILE;
     }
 
     /**
@@ -319,7 +297,7 @@ public abstract class TeleVM implements MaxVM {
      * @param os
      */
     private void setTeleChannelProtocol(OS os) {
-        if (mode == Mode.IMAGE) {
+        if (mode == MaxInspectionMode.IMAGE) {
             teleChannelProtocol = new ReadOnlyTeleChannelProtocol();
             return;
         }
@@ -368,7 +346,7 @@ public abstract class TeleVM implements MaxVM {
      * @return a new VM instance
      */
     public static TeleVM create(Options options) throws BootImageException {
-        mode = Mode.valueOf(options.modeOption.getValue().toUpperCase());
+        mode = MaxInspectionMode.valueOf(options.modeOption.getValue().toUpperCase());
 
         TargetLocation.set(options);
 
@@ -474,7 +452,7 @@ public abstract class TeleVM implements MaxVM {
         return vm;
     }
 
-    public static Mode mode() {
+    public MaxInspectionMode inspectionMode() {
         return mode;
     }
 
@@ -755,7 +733,7 @@ public abstract class TeleVM implements MaxVM {
         this.pageSize = Size.fromInt(platform().pageSize);
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
-        if (mode == Mode.ATTACH || mode == Mode.ATTACHWAITING) {
+        if (mode == MaxInspectionMode.ATTACH || mode == MaxInspectionMode.ATTACHWAITING) {
             this.teleProcess = attachToTeleProcess();
         } else {
             this.teleProcess = createTeleProcess(commandLineArguments);
