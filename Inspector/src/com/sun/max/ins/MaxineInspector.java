@@ -28,7 +28,6 @@ import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxInspectionMode;
 import com.sun.max.tele.TeleVM.Options;
 import com.sun.max.vm.hosted.*;
 
@@ -40,9 +39,12 @@ import com.sun.max.vm.hosted.*;
  */
 public final class MaxineInspector {
 
+    public static final String NAME = "Maxine Inspector";
+    public static final String VERSION = "0.2";
+
     private static final int TRACE_VALUE = 1;
 
-    private static final String tracePrefix = "[MaxineInspector] ";
+    private static final String tracePrefix = "[Inspector] ";
 
     private MaxineInspector() {
     }
@@ -66,7 +68,7 @@ public final class MaxineInspector {
 
                 public void run() {
                     Inspection.initializeSwing();
-                    final Inspection inspection = new Inspection(maxVM);
+                    final Inspection inspection = new Inspection(maxVM, options);
                     if (maxVM.inspectionMode() == MaxInspectionMode.IMAGE) {
                         // Bring up the boot image info inspector as a starting point for browsing
                         BootImageInspector.make(inspection).highlight();
