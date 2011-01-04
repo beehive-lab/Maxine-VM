@@ -34,7 +34,7 @@
 #include "mutex.h"
 #include "threads.h"
 
-#if !os_GUESTVMXEN
+#if !os_MAXVE
 static FILE *fileStream = NULL;
 #endif
 
@@ -49,7 +49,7 @@ static mutex_Struct log_mutexStruct;
 
 void log_initialize(const char *path) {
     mutex_initialize(&log_mutexStruct);
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     if (path == NULL) {
         path = "stdout";
     }
@@ -88,7 +88,7 @@ void log_unlock(void) {
 void log_print_format(const char *format, ...) {
     va_list ap;
     va_start(ap, format);
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     FILE* out = fileStream == NULL ? stdout : fileStream;
     vfprintf(out, format, ap);
 #else
@@ -98,14 +98,14 @@ void log_print_format(const char *format, ...) {
 }
 
 void log_flush() {
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     FILE* out = fileStream == NULL ? stdout : fileStream;
     fflush(out);
 #endif
 }
 
 void log_print_vformat(const char *format, va_list ap) {
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     FILE* out = fileStream == NULL ? stdout : fileStream;
     vfprintf(out, format, ap);
 #else
@@ -157,7 +157,7 @@ void log_print_newline() {
 }
 
 void log_print_symbol(Address address) {
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     Dl_info info;
     if (dladdr((void *) address, &info) != 0) {
         if (info.dli_sname == NULL) {
@@ -179,7 +179,7 @@ void log_print_symbol(Address address) {
 
 void log_print_float(float f) {
 	// TODO: fprintf may not produce exactly the same format of floating point numbers
-#if os_GUESTVMXEN
+#if os_MAXVE
 	log_print_buffer("%f not supported");
 #else
 	log_print_format("%f", f);

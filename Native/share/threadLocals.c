@@ -49,10 +49,10 @@
     typedef thread_t Thread;
     typedef thread_key_t ThreadLocalsKey;
     typedef void (*ThreadLocalsBlockDestructor)(void *);
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_Thread Thread;
-    typedef guestvmXen_SpecificsKey ThreadLocalsKey;
+#elif os_MAXVE
+#   include "maxve.h"
+    typedef maxve_Thread Thread;
+    typedef maxve_SpecificsKey ThreadLocalsKey;
     typedef void (*ThreadLocalsBlockDestructor)(void *);
 #endif
 
@@ -64,16 +64,16 @@ int theTLASize = -1;
 static ThreadLocalsKey theThreadLocalsKey;
 
 static Address allocateThreadLocalBlock(size_t tlBlockSize) {
-#if os_GUESTVMXEN
-	return (Address) guestvmXen_virtualMemory_allocate(tlBlockSize, DATA_VM);
+#if os_MAXVE
+	return (Address) maxve_virtualMemory_allocate(tlBlockSize, DATA_VM);
 #else
 	return (Address) valloc(tlBlockSize);
 #endif
 }
 
 static void deallocateThreadLocalBlock(Address tlBlock, Size tlBlockSize) {
-#if os_GUESTVMXEN
-	guestvmXen_virtualMemory_deallocate((void *) tlBlock, tlBlockSize, DATA_VM);
+#if os_MAXVE
+	maxve_virtualMemory_deallocate((void *) tlBlock, tlBlockSize, DATA_VM);
 #else
 	free ((void *) tlBlock);
 #endif
@@ -212,9 +212,9 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
 
     // no protection for the primordial thread
     if (guardZonePages != 0) {
-#if os_GUESTVMXEN
+#if os_MAXVE
         // custom stack initialization
-        guestvmXen_initStack(ntl);
+        maxve_initStack(ntl);
 #else
         virtualMemory_protectPages(startGuardZone, guardZonePages);
 #endif
@@ -309,10 +309,10 @@ void threadLocalsBlock_destroy(Address tlBlock) {
     virtualMemory_unprotectPages(tlBlock, 1);
 
     /* Unprotect the stack guard pages */
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     virtualMemory_unprotectPages(startGuardZone, guardZonePages);
 #else
-    // on GUESTVMXEN stack protection is handled elsewhere
+    // on MAXVE stack protection is handled elsewhere
 #endif
 
     // Undo the temporary re-establishment of the thread locals block
@@ -333,8 +333,8 @@ void tla_initialize(int tlaSize) {
     pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
 #elif os_SOLARIS
     thr_keycreate(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
-#elif os_GUESTVMXEN
-    guestvmXen_thread_initializeSpecificsKey(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
+#elif os_MAXVE
+    maxve_thread_initializeSpecificsKey(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -353,8 +353,8 @@ Address threadLocalsBlock_current() {
         log_exit(result, "thr_getspecific failed");
     }
     tlBlock = value;
-#elif os_GUESTVMXEN
-    tlBlock = (Address) guestvmXen_thread_getSpecific(theThreadLocalsKey);
+#elif os_MAXVE
+    tlBlock = (Address) maxve_thread_getSpecific(theThreadLocalsKey);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -366,8 +366,8 @@ void threadLocalsBlock_setCurrent(Address tlBlock) {
     pthread_setspecific(theThreadLocalsKey, (void *) tlBlock);
 #elif os_SOLARIS
     thr_setspecific(theThreadLocalsKey, (void *) tlBlock);
-#elif os_GUESTVMXEN
-    guestvmXen_thread_setSpecific(theThreadLocalsKey, (void *) tlBlock);
+#elif os_MAXVE
+    maxve_thread_setSpecific(theThreadLocalsKey, (void *) tlBlock);
 #endif
 }
 

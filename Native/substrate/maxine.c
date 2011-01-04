@@ -46,8 +46,8 @@
 
 #include "maxine.h"
 
-#if os_GUESTVMXEN
-#include "guestvmXen.h"
+#if os_MAXVE
+#include "maxve.h"
 #endif
 
 #define IMAGE_FILE_NAME  "maxine.vm"
@@ -64,7 +64,7 @@ static void getExecutablePath(char *result) {
         exit(1);
     }
     int numberOfChars = strlen(result);
-#elif os_GUESTVMXEN
+#elif os_MAXVE
     result[0] = 0;
     return;
 #elif os_LINUX
@@ -83,7 +83,7 @@ static void getExecutablePath(char *result) {
     }
 #endif
 
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     char *p;
     // chop off the name of the executable
     for (p = result + numberOfChars; p >= result; p--) {
@@ -96,7 +96,7 @@ static void getExecutablePath(char *result) {
 }
 
 static void getImageFilePath(char *result) {
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     getExecutablePath(result);
 
     // append the name of the image to the executable path
@@ -139,7 +139,7 @@ static void* loadSymbol(void* handle, const char* symbol) {
 #endif
     void* result = dlsym(handle, symbol);
 #if log_LINKER
-#if os_GUESTVMXEN
+#if os_MAXVE
     log_println("loadSymbol(%p, \"%s\") = %p", handle, symbol, result);
 #else
     char* errorMessage = dlerror();
@@ -313,7 +313,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #endif
 
 #if log_LOADER
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     char *ldpath = getenv("LD_LIBRARY_PATH");
     if (ldpath == NULL) {
         log_println("LD_LIBRARY_PATH not set");
@@ -389,7 +389,7 @@ void native_exit(jint code) {
 }
 
 void core_dump() {
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     log_print("dumping core....\n  heap @ ");
     log_print_symbol(image_heap());
     log_print_newline();
@@ -427,8 +427,8 @@ void *native_properties(void) {
     if (nativeProperties.user_dir != NULL) {
         return &nativeProperties;
     }
-#if os_GUESTVMXEN
-    guestvmXen_native_props(&nativeProperties);
+#if os_MAXVE
+    maxve_native_props(&nativeProperties);
 #else
     /* user properties */
     {
@@ -458,7 +458,7 @@ void *native_properties(void) {
 }
 
 float native_parseFloat(const char* cstring, float nan) {
-#if os_GUESTVMXEN
+#if os_MAXVE
     // TODO
     return nan;
 #else

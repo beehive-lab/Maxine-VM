@@ -1157,7 +1157,7 @@ public class VmThread {
     }
 
     /*
-     * use protected member method so that GuestVM's SchedThread is able to implement its own sleep method
+     * use protected member method so that Maxine VE's SchedThread is able to implement its own sleep method
      */
     protected boolean sleep0(long numberOfMilliSeconds) {
         return VmThread.nativeSleep(numberOfMilliSeconds);

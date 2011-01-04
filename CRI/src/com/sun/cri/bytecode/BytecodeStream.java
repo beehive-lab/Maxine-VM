@@ -130,7 +130,7 @@ public class BytecodeStream {
      */
     public int readFarBranchDest() {
         // reads the destination for a wide branch bytecode
-        return curBCI + Bytes.beS4(code, curBCI + 2);
+        return curBCI + Bytes.beS4(code, curBCI + 1);
     }
 
     /**

@@ -20,31 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef __condition_h__
-#define __condition_h__ 1
+package jtt.bytecode;
 
-#include "mutex.h"
+/*
+ * @Harness: java
+ * @Runs: 1L = null; 123456789L = null
+ */
+public class BC_l2i_2 {
 
-#if (os_DARWIN || os_LINUX)
-#   include <pthread.h>
-#   include <errno.h>
-    typedef pthread_cond_t condition_Struct;
-#elif os_SOLARIS
-#   include <thread.h>
-#   include <errno.h>
-    typedef cond_t condition_Struct;
-#elif os_MAXVE
-#   include "maxve.h"
-    typedef maxve_condition_t condition_Struct;
-#endif
+    static Object[] array = {null};
 
-typedef condition_Struct *Condition;
-
-extern void condition_initialize(Condition condition);
-extern void condition_destroy(Condition condition);
-extern boolean condition_wait(Condition condition, Mutex mutex);
-extern boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
-extern boolean condition_notify(Condition condition);
-extern boolean condition_notifyAll(Condition condition);
-
-#endif /*__condition_h__*/
+    public static Object test(long a) {
+        a = a << 32;
+        return array[(int) a];
+    }
+}

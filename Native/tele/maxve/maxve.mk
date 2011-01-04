@@ -21,4 +21,4 @@
 # questions.
 #
 
-OS_SOURCES = teleProcess.c guestvmDBChannel.c guestvmXGChannel.c
+OS_SOURCES = teleProcess.c maxveDBChannel.c maxveXGChannel.c

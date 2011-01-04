@@ -70,7 +70,7 @@ public final class RuntimeInfo {
                 if (matcher.matches()) {
                     freeMemory *= Long.parseLong(matcher.group(1));
                 }
-            } else if (os.equals("GuestVM")) {
+            } else if (os.equals("MaxVE")) {
                 freeMemory = 0L;
             }
         } catch (Exception e) {

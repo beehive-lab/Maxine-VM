@@ -20,10 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef __LIB_GUESTVMXEN_DB__
-#define __LIB_GUESTVMXEN_DB__ 1
+#ifndef __maxve_db__
+#define __maxve_db__ 1
 
-// This file contains copies of declarations from the GuestVM microkernel to avoid a compilation dependency in Maxine
+// This file contains copies of declarations from the GUK microkernel to avoid a compilation dependency in Maxine
 
 #include <inttypes.h>
 
@@ -122,4 +122,4 @@ int db_activate_watchpoint(uint64_t address, uint64_t size, int kind);
 int db_deactivate_watchpoint(uint64_t address, uint64_t size);
 uint64_t db_watchpoint_info(uint16_t thread_id, int *kind);
 
-#endif /* __LIB_GUESTVMXEN_DB__ */
+#endif /* __maxve_db__ */
