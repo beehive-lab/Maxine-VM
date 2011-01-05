@@ -47,7 +47,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.tcp.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
+import com.sun.max.tele.debug.TeleBytecodeBreakpoint.BytecodeBreakpointManager;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
@@ -65,7 +65,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
@@ -666,24 +665,6 @@ public abstract class TeleVM implements MaxVM {
     }
 
     private final Classpath sourcepath;
-
-    /**
-     * Classes, possibly not loaded, available on the classpath.
-     * Lazily initialized; can re re-initialized.
-     * @see #updateLoadableTypeDescriptorsFromClasspath()
-     */
-    private Set<TypeDescriptor> typesOnClasspath;
-
-    /**
-     * @return classes, possibly loaded, not available on the classpath.
-     */
-    private Set<TypeDescriptor> typesOnClasspath() {
-        if (typesOnClasspath == null) {
-            // Delayed initialization, because this can take some time.
-            updateLoadableTypeDescriptorsFromClasspath();
-        }
-        return typesOnClasspath;
-    }
 
     private int interpreterUseLevel = 0;
 
@@ -1366,7 +1347,7 @@ public abstract class TeleVM implements MaxVM {
      * @throws InvalidReferenceException when the location does <strong>not</strong> point
      * at a valid heap object.
      */
-    private void checkReference(Reference reference) throws InvalidReferenceException {
+    public void checkReference(Reference reference) throws InvalidReferenceException {
         if (!isValidOrigin(reference.toOrigin())) {
             throw new InvalidReferenceException(reference);
         }
@@ -1500,80 +1481,6 @@ public abstract class TeleVM implements MaxVM {
         return regions;
     }
 
-    /**
-     * Gets a canonical local {@link ClassActor} for the named class, creating one if needed by loading the class from
-     * the classpath using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
-     *
-     * @param name the name of a class
-     * @return Local {@link ClassActor} corresponding to the class, possibly created by loading it from classpath.
-     * @throws ClassNotFoundException if not already loaded and unavailable on the classpath.
-     */
-    private ClassActor makeClassActor(String name) throws ClassNotFoundException {
-        // The VM registry includes all ClassActors for classes loaded locally
-        // using the prototype class loader
-        HostedBootClassLoader classLoader = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
-        synchronized (classLoader) {
-            ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString(name));
-            if (classActor == null) {
-                // Try to load the class from the local classpath.
-                if (name.endsWith("[]")) {
-                    classActor = ClassActorFactory.createArrayClassActor(makeClassActor(name.substring(0, name.length() - 2)));
-                } else {
-                    classActor = classLoader.makeClassActor(
-                                    JavaTypeDescriptor.getDescriptorForWellFormedTupleName(name));
-                }
-            }
-            return classActor;
-        }
-    }
-
-    /**
-     * Gets the canonical local {@link ClassActor} corresponding to a
-     * {@link ClassActor} in the VM, creating it if needed.
-     * Creation is done by loading the class, either from the classpath if present, or
-     * by copying the classfile from the VM.  In either case the class is loaded by the
-     * {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
-     *
-     * @param classActorReference  a {@link ClassActor} in the VM.
-     * @return Local, canonical, equivalent {@link ClassActor} created by loading the same class.
-     * @throws InvalidReferenceException if the argument does not point to a valid heap object in the VM.
-     * @throws NoClassDefFoundError if the classfile is not on the classpath and the copy from the VM fails.
-     * @throws TeleError if a classfile copied from the VM is cannot be loaded
-     */
-    public final ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
-        checkReference(classActorReference);
-        final Reference utf8ConstantReference = teleFields().Actor_name.readReference(classActorReference);
-        checkReference(utf8ConstantReference);
-        final Reference stringReference = teleFields().Utf8Constant_string.readReference(utf8ConstantReference);
-        final String name = getString(stringReference);
-        try {
-            return makeClassActor(name);
-        } catch (ClassNotFoundException classNotFoundException) {
-            // Not loaded and not available on local classpath; load by copying classfile from the VM
-            final Reference byteArrayReference = teleFields().ClassActor_classfile.readReference(classActorReference);
-            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) heap().makeTeleObject(byteArrayReference);
-            if (teleByteArrayObject == null) {
-                throw new NoClassDefFoundError(String.format("Could not retrieve class file from VM for %s%nTry using '%s' VM option to access generated class files.",
-                    name, ClassfileReader.saveClassDir));
-            }
-            final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
-            try {
-                return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.makeClassActor(name, classfile);
-            } catch (ClassFormatError classFormatError) {
-                final String msg = "in " + tracePrefix() + " unable to load classfile copied from VM, error message follows:\n   " + classFormatError;
-                TeleError.unexpected(msg, null);
-                return null;
-            }
-        }
-    }
-
-    public final ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException {
-        checkReference(objectReference);
-        final Reference hubReference = wordToReference(Layout.readHubReferenceAsWord(objectReference));
-        final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
-        return makeClassActor(classActorReference);
-    }
-
     public final Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException {
         switch (kind.asEnum) {
             case BYTE:
@@ -1636,49 +1543,6 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    public final TeleClassActor findTeleClassActor(int id) {
-        return teleClassRegistry.findTeleClassActorByID(id);
-    }
-
-    public final TeleClassActor findTeleClassActor(TypeDescriptor typeDescriptor) {
-        return teleClassRegistry.findTeleClassActorByType(typeDescriptor);
-    }
-
-    public final TeleClassActor findTeleClassActor(Class javaClass) {
-        return teleClassRegistry.findTeleClassActorByClass(javaClass);
-    }
-
-    public final Set<TypeDescriptor> typeDescriptors() {
-        return teleClassRegistry.typeDescriptors();
-    }
-
-    public final synchronized Iterable<TypeDescriptor> loadableTypeDescriptors() {
-        final SortedSet<TypeDescriptor> typeDescriptors = new TreeSet<TypeDescriptor>();
-        for (TypeDescriptor typeDescriptor : teleClassRegistry.typeDescriptors()) {
-            typeDescriptors.add(typeDescriptor);
-        }
-        typeDescriptors.addAll(typesOnClasspath());
-        return typeDescriptors;
-    }
-
-    public final void updateLoadableTypeDescriptorsFromClasspath() {
-        final Set<TypeDescriptor> typesOnClasspath = new TreeSet<TypeDescriptor>();
-        Trace.begin(TRACE_VALUE, tracePrefix() + "searching classpath for class files");
-        new ClassSearch() {
-            @Override
-            protected boolean visitClass(String className) {
-                if (!className.endsWith("package-info")) {
-                    final String typeDescriptorString = "L" + className.replace('.', '/') + ";";
-                    typesOnClasspath.add(JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString));
-                }
-                return true;
-            }
-        }.run(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath());
-        Trace.end(TRACE_VALUE, tracePrefix() + "searching classpath for class files ["
-                + typesOnClasspath.size() + " types found]");
-        this.typesOnClasspath = typesOnClasspath;
-    }
-
     public final List<MaxCodeLocation> inspectableMethods() {
         final List<MaxCodeLocation> methods = new ArrayList<MaxCodeLocation>(teleMethods.clientInspectableMethods());
         methods.addAll(heap.inspectableMethods());
@@ -1686,7 +1550,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final <TeleMethodActor_Type extends TeleMethodActor> TeleMethodActor_Type findTeleMethodActor(Class<TeleMethodActor_Type> teleMethodActorType, MethodActor methodActor) {
-        final TeleClassActor teleClassActor = teleClassRegistry.findTeleClassActorByType(methodActor.holder().typeDescriptor);
+        final TeleClassActor teleClassActor = teleClassRegistry.findTeleClassActor(methodActor.holder().typeDescriptor);
         if (teleClassActor != null) {
             for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
                 if (teleMethodActor.methodActor().equals(methodActor)) {
@@ -2399,7 +2263,7 @@ public abstract class TeleVM implements MaxVM {
             // Always fake the Object class, otherwise try to find a class in the
             // Maxine VM that matches the signature.
             if (!klass.equals(Object.class)) {
-                referenceTypeProvider = TeleVM.this.findTeleClassActor(klass);
+                referenceTypeProvider = TeleVM.this.classRegistry().findTeleClassActor(klass);
             }
 
             // If no class was found within the Maxine VM, create a faked reference
@@ -2424,9 +2288,9 @@ public abstract class TeleVM implements MaxVM {
             // Try to find a matching class actor that lives within the VM based on
             // the signature.
             final List<ReferenceTypeProvider> result = new LinkedList<ReferenceTypeProvider>();
-            for (TypeDescriptor typeDescriptor : TeleVM.this.typeDescriptors()) {
+            for (TypeDescriptor typeDescriptor : TeleVM.this.classRegistry().typeDescriptors()) {
                 if (typeDescriptor.toString().equals(signature)) {
-                    final TeleClassActor teleClassActor = TeleVM.this.findTeleClassActor(typeDescriptor);
+                    final TeleClassActor teleClassActor = TeleVM.this.classRegistry().findTeleClassActor(typeDescriptor);
 
                     // Do not include array types, there should always be faked in
                     // order to be able to call newInstance on them. Arrays that are

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     @Override
     protected TeleObject convertSelectedItem(Object listItem) {
         final String name = (String) listItem;
-        return vm().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
+        return vm().classRegistry().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
     }
 
     /**
@@ -86,7 +86,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     protected void rebuildList(String filterText) {
         if (!filterText.isEmpty()) {
             final String filter = filterText.toLowerCase();
-            final Set<TypeDescriptor> typeDescriptors = vm().typeDescriptors();
+            final Set<TypeDescriptor> typeDescriptors = vm().classRegistry().typeDescriptors();
             final SortedSet<String> classNames = new TreeSet<String>();
             for (TypeDescriptor typeDescriptor : typeDescriptors) {
                 final String className = match(filter, typeDescriptor);

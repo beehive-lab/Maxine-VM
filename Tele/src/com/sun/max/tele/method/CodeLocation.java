@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -212,7 +212,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return null;
         }
         try {
-            final TeleClassActor teleClassActor = vm().findTeleClassActor(methodKey.holder());
+            final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(methodKey.holder());
             if (teleClassActor != null) {
                 // find a matching method
                 final String methodKeyString = methodKey.signature().toJavaString(true, true);

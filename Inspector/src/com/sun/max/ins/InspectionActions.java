@@ -585,7 +585,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            vm().updateLoadableTypeDescriptorsFromClasspath();
+            vm().classRegistry().updateLoadableTypeDescriptorsFromClasspath();
         }
     }
 
@@ -1776,7 +1776,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 16);
-                    final TeleClassActor teleClassActor = vm().findTeleClassActor(serial);
+                    final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(serial);
                     if (teleClassActor == null) {
                         gui().errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
                     } else {
@@ -1816,7 +1816,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 10);
-                    final TeleClassActor teleClassActor = vm().findTeleClassActor(serial);
+                    final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(serial);
                     if (teleClassActor == null) {
                         gui().errorMessage("failed to find ClassActor for ID: " + serial);
                     } else {

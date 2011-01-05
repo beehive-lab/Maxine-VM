@@ -24,6 +24,11 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.util.*;
+
+import com.sun.max.tele.object.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.type.*;
 
 
 /**
@@ -32,6 +37,47 @@ import java.io.*;
  * @author Michael Van De Vanter
  */
 public interface MaxClassRegistry extends MaxEntity<MaxClassRegistry> {
+
+
+    /**
+     * @return  {@link TypeDescriptor}s for all classes loaded in the VM.
+     */
+    Set<TypeDescriptor> typeDescriptors();
+
+    /**
+     * @return an ordered set of {@link TypeDescriptor}s for classes loaded in
+     *         the VM, plus classes found on the class path.
+     */
+    Iterable<TypeDescriptor> loadableTypeDescriptors();
+
+    /**
+     * Updates the set of types that are available by scanning the class path. This
+     * scan will be performed automatically the first time
+     * {@link #loadableTypeDescriptors()} is called. However, it should also be
+     * performed any time the set of classes available on the class path may
+     * have changed.
+     */
+    void updateLoadableTypeDescriptorsFromClasspath();
+
+    /**
+     * @param id  Class ID of a {@link ClassActor} in the VM.
+     * @return surrogate for the {@link ClassActor} in the VM, null if not known.
+     * @see ClassActor
+     */
+    TeleClassActor findTeleClassActor(int id);
+
+    /**
+     * @param typeDescriptor A {@link TypeDescriptor} local to the inspection
+     * @return surrogate for the equivalent {@link ClassActor} in the VM, null if not known.
+     * @see ClassActor
+     */
+    TeleClassActor findTeleClassActor(TypeDescriptor typeDescriptor);
+
+    /**
+     * @param type a {@link Class} instance local to the inspection
+     * @return surrogate for the equivalent {@link ClassActor} in the VM, null if not known.
+     */
+    TeleClassActor findTeleClassActor(Class type);
 
     /**
      * Writes current statistics concerning inspection of the VM's heap.
