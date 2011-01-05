@@ -94,7 +94,8 @@ public final class AboutSessionDialog extends InspectorDialog {
         final PrintStream stream = new PrintStream(byteArrayOutputStream);
         final long lastModified = vm().bootImageFile().lastModified();
         final Date bootImageDate = lastModified == 0 ? null : new Date(lastModified);
-        if (verboseRadioButton.isSelected()) {
+        final boolean verbose = verboseRadioButton.isSelected();
+        if (verbose) {
             stream.print(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION + "\n");
             stream.print(INDENT + "Mode: " + vm().inspectionMode().name() + ",  " + vm().inspectionMode().description() + "\n");
             stream.print("\nVM:\n");
@@ -110,7 +111,9 @@ public final class AboutSessionDialog extends InspectorDialog {
             stream.print(INDENT + bootImageDate.toString() + "\n");
         }
         stream.print("\nSESSION OPTIONS: \n");
-        inspection().options().printValues(stream, indent, verboseRadioButton.isSelected());
+        inspection().options().printValues(stream, indent, verbose);
+        stream.print("\nHEAP:\n");
+        vm().heap().printStats(stream, indent, verbose);
         textArea.setText(byteArrayOutputStream.toString());
         textArea.setCaretPosition(0);
     }
