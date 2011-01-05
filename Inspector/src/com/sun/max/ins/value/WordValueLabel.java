@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -424,7 +424,7 @@ public class WordValueLabel extends ValueLabel {
                                         displayMode = (valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
                                     }
                                 } else if (valueMode == ValueMode.ITABLE_ENTRY) {
-                                    final TeleClassActor teleClassActor = vm().findTeleClassActor(newValue.asWord().asAddress().toInt());
+                                    final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(newValue.asWord().asAddress().toInt());
                                     if (teleClassActor != null) {
                                         this.teleClassActor = teleClassActor;
                                         displayMode = DisplayMode.CLASS_ACTOR;
@@ -867,7 +867,7 @@ public class WordValueLabel extends ValueLabel {
             }
             case CLASS_ACTOR_ID:
             case CLASS_ACTOR: {
-                final TeleClassActor teleClassActor = vm().findTeleClassActor(value.asWord().asAddress().toInt());
+                final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(value.asWord().asAddress().toInt());
                 if (teleClassActor != null) {
                     action = actions().inspectObject(teleClassActor, "Inspect ClassActor");
                 }

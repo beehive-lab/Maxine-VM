@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,7 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/** 
- * Images used by the Inspector.
+package test.com.sun.max.vm.jtrun;
+
+import test.com.sun.max.vm.jtrun.some.*;
+
+/**
+ * Simple class to allow a main entry point into the Java tester tests.
+ *
+ * @author Thomas Wuerthinger
  */
-package com.sun.max.ins.gui.image;
+public class Main {
+
+    /**
+     * Call with start and end test number as parameters.
+     */
+    public static void main(String[] args) {
+        int start = 0;
+        int end = 10000;
+
+        if (args.length > 0) {
+            start = Integer.parseInt(args[0]);
+        }
+
+        if (args.length > 1) {
+            end = Integer.parseInt(args[1]);
+        }
+
+        JTUtil.reset(start, end);
+        JTUtil.verbose = 3;
+        JTRuns.runTests(start, end);
+        JTUtil.printReport();
+    }
+}

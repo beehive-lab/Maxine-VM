@@ -302,7 +302,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirArgument obj = toXirArgument(x.object());
         XirArgument lockAddress = toXirArgument(x.lockAddress());
         XirSnippet snippet = xir.genMonitorEnter(site(x), obj, lockAddress);
-        emitXir(snippet, x, maybeStateFor(x), null, true);
+        emitXir(snippet, x, maybeStateFor(x), stateFor(x, x.stateAfter()), null, true, null);
     }
 
     @Override
@@ -557,7 +557,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
         if (C1XOptions.invokeinterfaceTemplatePos) {
-            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false, pointerSlots);
+            destinationAddress = emitXir(snippet, x, info.copy(), null, x.target(), false, pointerSlots);
         }
 
         // emit direct or indirect call to the destination address
@@ -874,10 +874,10 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected CiValue emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult) {
-        return emitXir(snippet, x, info, method, setInstructionResult, null);
+        return emitXir(snippet, x, info, null, method, setInstructionResult, null);
     }
 
-    protected CiValue emitXir(XirSnippet snippet, Instruction instruction, LIRDebugInfo info, RiMethod method, boolean setInstructionResult, List<CiValue> pointerSlots) {
+    protected CiValue emitXir(XirSnippet snippet, Instruction instruction, LIRDebugInfo info, LIRDebugInfo infoAfter, RiMethod method, boolean setInstructionResult, List<CiValue> pointerSlots) {
         if (C1XOptions.PrintXirTemplates) {
             TTY.println("Emit XIR template " + snippet.template.name);
         }
@@ -899,6 +899,15 @@ public abstract class LIRGenerator extends ValueVisitor {
             operands[resultOperand.index] = outputOperand;
             if (C1XOptions.PrintXirTemplates) {
                 TTY.println("Output operand: " + outputOperand);
+            }
+        }
+
+        for (XirTemp t : snippet.template.temps) {
+            if (t instanceof XirRegister) {
+                XirRegister reg = (XirRegister) t;
+                if (!t.reserve) {
+                    operands[t.index] = reg.register;
+                }
             }
         }
 
@@ -977,7 +986,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.length, tempOperands.length,
                     operandArray, operandIndicesArray,
                     (operands[resultOperand.index] == IllegalValue) ? -1 : resultOperand.index,
-                    info, method, pointerSlots);
+                    info, infoAfter, method, pointerSlots);
         }
 
         return operands[resultOperand.index];

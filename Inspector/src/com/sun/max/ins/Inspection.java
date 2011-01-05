@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
@@ -55,8 +56,6 @@ import com.sun.max.vm.classfile.*;
  * @author Michael Van De Vanter
  */
 public final class Inspection implements InspectionHolder {
-
-    private static final String INSPECTOR_NAME = "Maxine Inspector";
 
     private static final int TRACE_VALUE = 1;
 
@@ -121,6 +120,8 @@ public final class Inspection implements InspectionHolder {
 
     private final String bootImageFileName;
 
+    private final OptionSet options;
+
     private final InspectorNameDisplay nameDisplay;
 
     private final InspectionFocus focus;
@@ -138,10 +139,11 @@ public final class Inspection implements InspectionHolder {
 
     private NotepadManager notepadManager;
 
-    public Inspection(MaxVM vm) {
+    public Inspection(MaxVM vm, OptionSet options) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
         this.vm = vm;
+        this.options = options;
         this.bootImageFileName = vm.bootImageFile().getAbsolutePath().toString();
         this.nameDisplay = new InspectorNameDisplay(this);
         this.focus = new InspectionFocus(this);
@@ -161,7 +163,7 @@ public final class Inspection implements InspectionHolder {
             vm.watchpointManager().addListener(new WatchpointListener());
         }
 
-        inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
+        inspectorMainFrame = new InspectorMainFrame(this, MaxineInspector.NAME, nameDisplay, settings, inspectionActions);
 
         MethodInspector.Manager.make(this);
         objectInspectorFactory = ObjectInspectorFactory.make(this);
@@ -236,19 +238,22 @@ public final class Inspection implements InspectionHolder {
         return inspectionActions;
     }
 
+    public OptionSet options() {
+        return options;
+    }
+
     /**
      * Updates the string appearing the outermost window frame: program name, process state, boot image filename.
      */
     public String currentInspectionTitle() {
         final StringBuilder sb = new StringBuilder(50);
-        sb.append(INSPECTOR_NAME);
-        sb.append(" (");
-        sb.append(vm().state() == null ? "" : vm().state().processState());
+        sb.append(MaxineInspector.NAME);
+        sb.append(" (VM ");
+        sb.append(vm().state() == null ? "<?>" : vm().state().processState());
         if (vm().state().isInGC()) {
             sb.append(" in GC");
         }
         sb.append(") ");
-        sb.append(bootImageFileName);
         return sb.toString();
     }
 
@@ -497,7 +502,7 @@ public final class Inspection implements InspectionHolder {
      *         otherwise the generic name of the inspector.
      */
     public String currentActionTitle() {
-        return currentAction != null ? currentAction.name() : INSPECTOR_NAME;
+        return currentAction != null ? currentAction.name() : MaxineInspector.NAME;
     }
 
     private Set<InspectionListener> inspectionListeners = CiUtil.newIdentityHashSet();

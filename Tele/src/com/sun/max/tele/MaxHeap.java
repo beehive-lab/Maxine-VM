@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.object.*;
@@ -124,5 +125,14 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      * @return surrogate for a VM object, null if none found
      */
     TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
+
+    /**
+     * Writes current statistics concerning inspection of the VM's heap.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
+     */
+    void printStats(PrintStream printStream, int indent, boolean verbose);
 
 }

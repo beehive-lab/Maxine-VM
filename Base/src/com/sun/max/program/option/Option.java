@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,6 +71,7 @@ public class Option<T> implements Cloneable {
 
     protected final String name;
     protected T defaultValue;
+    private boolean assigned;
     protected final Type<T> type;
     protected final String help;
     protected T value;
@@ -131,7 +132,14 @@ public class Option<T> implements Cloneable {
         return !assigned ? defaultValue : value;
     }
 
-    private boolean assigned;
+    /**
+     * Whether the option has been explicitly given a value.
+     *
+     * @return true if value explicitly assigned; false if relying on default value.
+     */
+    public boolean isAssigned() {
+        return assigned;
+    }
 
     /**
      * The {@code setValue()) method sets the value of this option.
