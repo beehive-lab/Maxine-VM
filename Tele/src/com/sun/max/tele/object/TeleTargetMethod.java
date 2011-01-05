@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,7 +94,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      *         method matching {@code methodKey}
      */
     public static List<TeleTargetMethod> get(TeleVM vm, MethodKey methodKey) {
-        TeleClassActor teleClassActor = vm.findTeleClassActor(methodKey.holder());
+        TeleClassActor teleClassActor = vm.classRegistry().findTeleClassActor(methodKey.holder());
         if (teleClassActor != null) {
             final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
             for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {

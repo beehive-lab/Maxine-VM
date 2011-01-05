@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,7 +71,9 @@ import com.sun.max.vm.type.*;
  */
 public final class MaxineVM {
 
+    public static final String NAME = "Maxine Virtual Machine";
     public static final String VERSION = "0.2";
+    public static final String HOME_URL = "http://labs.oracle.com/projects/maxine/";
     public static final int HARD_EXIT_CODE = -2;
 
     /**
@@ -219,11 +221,11 @@ public final class MaxineVM {
     }
 
     public static String name() {
-        return "Maxine VM";
+        return NAME;
     }
 
     public static String description() {
-        return "The Maxine Virtual Machine, see <http://kenai.com/projects/maxine>";
+        return "The " + NAME + " Ver. " + VERSION + "  <" + HOME_URL + ">";
     }
 
     /**

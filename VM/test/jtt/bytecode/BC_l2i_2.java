@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,35 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.object;
+package jtt.bytecode;
 
-import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.tele.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.reference.*;
-
-/**
- * Canonical surrogate for a  {@link PrimitiveClassActor} in the VM.
- *
- * @author Michael Van De Vanter
+/*
+ * @Harness: java
+ * @Runs: 1L = null; 123456789L = null
  */
-public class TelePrimitiveClassActor extends TeleClassActor implements ClassProvider {
+public class BC_l2i_2 {
 
-    protected TelePrimitiveClassActor(TeleVM teleVM, Reference primitiveClassActorReference) {
-        super(teleVM, primitiveClassActorReference);
+    static Object[] array = {null};
+
+    public static Object test(long a) {
+        a = a << 32;
+        return array[(int) a];
     }
-
-    public PrimitiveClassActor primitiveClassActor() {
-        return (PrimitiveClassActor) classActor();
-    }
-
-    @Override
-    public String maxineRole() {
-        return "PrimitiveClassActor";
-    }
-
-    public ClassProvider getSuperClass() {
-        return (ClassProvider) vm().classRegistry().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
-    }
-
 }

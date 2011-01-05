@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -688,7 +688,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      */
     public static void copyStaticFields(TeleVM teleVM, Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        final TeleClassActor teleClassActor = teleVM.findTeleClassActor(javaClass);
+        final TeleClassActor teleClassActor = teleVM.classRegistry().findTeleClassActor(javaClass);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
 
         final String classMessage = "Copying static fields of " + javaClass + " from VM";
@@ -716,6 +716,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     }
 
     public ReferenceTypeProvider getReferenceType() {
-        return vm().findTeleClassActor(classActorForObjectType().typeDescriptor);
+        return vm().classRegistry().findTeleClassActor(classActorForObjectType().typeDescriptor);
     }
 }

@@ -212,4 +212,10 @@ public interface RiRuntime {
      * @param method the top level method of a compilation
      */
     RiRegisterConfig getRegisterConfig(RiMethod method);
+
+    /**
+     * Custom area on the stack of each compiled method that the VM can use for its own purposes.
+     * @return the size of the custom area in bytes
+     */
+    int getCustomStackAreaSize();
 }

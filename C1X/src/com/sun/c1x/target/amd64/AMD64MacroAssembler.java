@@ -70,17 +70,17 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         throw new IllegalArgumentException("This assembler does not support compiling calls to global stubs");
     }
 
-    public final int callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, Object... args) {
+    public final int callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
         assert args.length == stub.parameters.length;
         return callGlobalStubHelper(lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
     }
 
-    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, Object... args) {
+    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
         assert args.length == stub.argOffsets.length;
         return callGlobalStubHelper(stub, stub.resultKind, info, result, args);
     }
 
-    private int callGlobalStubHelper(GlobalStub stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, Object... args) {
+    private int callGlobalStubHelper(GlobalStub stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, CiValue... args) {
         for (int i = 0; i < args.length; i++) {
             storeParameter(args[i], stub.argOffsets[i]);
         }
@@ -103,21 +103,34 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     void loadResult(CiRegister r, int offset, CiKind kind) {
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
             movl(r, new CiAddress(CiKind.Int, AMD64.RSP, offset));
+        } else if (kind == CiKind.Float) {
+            movss(r, new CiAddress(CiKind.Float, AMD64.RSP, offset));
+        } else if (kind == CiKind.Double) {
+            movsd(r, new CiAddress(CiKind.Double, AMD64.RSP, offset));
         } else {
             movq(r, new CiAddress(CiKind.Word, AMD64.RSP, offset));
         }
     }
 
-    void storeParameter(Object registerOrConstant, int offset) {
-        if (registerOrConstant instanceof CiConstant) {
+    void storeParameter(CiValue registerOrConstant, int offset) {
+        CiKind k = registerOrConstant.kind;
+        if (registerOrConstant.isConstant()) {
             CiConstant c = (CiConstant) registerOrConstant;
             if (c.kind == CiKind.Object) {
                 movoop(new CiAddress(CiKind.Word, AMD64.RSP, offset), c);
             } else {
                 movptr(new CiAddress(CiKind.Word, AMD64.RSP, offset), c.asInt());
             }
-        } else if (registerOrConstant instanceof CiRegister) {
-            movq(new CiAddress(CiKind.Word, AMD64.RSP, offset), ((CiRegister) registerOrConstant));
+        } else if (registerOrConstant.isRegister()) {
+            if (k.isFloat()) {
+                movss(new CiAddress(CiKind.Float, AMD64.RSP, offset), registerOrConstant.asRegister());
+            } else if (k.isDouble()) {
+                movsd(new CiAddress(CiKind.Double, AMD64.RSP, offset), registerOrConstant.asRegister());
+            } else {
+                movq(new CiAddress(CiKind.Word, AMD64.RSP, offset), registerOrConstant.asRegister());
+            }
+        } else {
+            Util.shouldNotReachHere();
         }
     }
 
