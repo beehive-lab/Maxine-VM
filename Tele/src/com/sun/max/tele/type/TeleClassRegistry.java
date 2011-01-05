@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.max.tele.type;
 
+import java.io.*;
+import java.text.*;
 import java.util.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
@@ -54,9 +56,13 @@ import com.sun.max.vm.value.*;
  * @author Athul Acharya
  * @author Michael Van De Vanter
  */
-public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCache {
+public class TeleClassRegistry extends AbstractTeleVMHolder implements MaxClassRegistry, TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
+
+    private static final String entityName = "Class Registry";
+
+    private final String entityDescription;
 
     private final TimedTrace updateTracer;
 
@@ -121,6 +127,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
         final TimedTrace initTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         initTracer.begin();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+        this.entityDescription = "Class loading and management for the " + vm().entityName();
 
         int count = 0;
         try {
@@ -198,6 +205,31 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
         updateTracer.end(statsPrinter);
     }
 
+
+    public String entityName() {
+        return entityName;
+    }
+
+    public String entityDescription() {
+        return entityDescription;
+    }
+
+    public MaxEntityMemoryRegion<MaxClassRegistry> memoryRegion() {
+        // The class registry has no VM memory allocated, other than for its constituent objects
+        return null;
+    }
+
+    public boolean contains(Address address) {
+        // Class registry not represented by a memory region
+        return false;
+    }
+    public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        final NumberFormat formatter = NumberFormat.getInstance();
+        printStream.print(indentation + "Classes loaded: " + formatter.format(initialClassCount + dynamicallyLoadedClassCount) +
+                        " (initial: " + formatter.format(initialClassCount) +
+                        ", during session: " + formatter.format(dynamicallyLoadedClassCount) + ")\n");
+    }
 
     public void processAttachFixupList() {
         final TimedTrace timedTrace = new TimedTrace(TRACE_VALUE, tracePrefix() + " adding entries from attach fixup list");

@@ -32,6 +32,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 
 /**
  * @author Michael Van De Vanter
@@ -89,6 +90,9 @@ public final class AboutSessionDialog extends InspectorDialog {
         setVisible(true);
     }
 
+    /**
+     * Replaces contents of the text area.
+     */
     private void refresh() {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final PrintStream stream = new PrintStream(byteArrayOutputStream);
@@ -112,8 +116,15 @@ public final class AboutSessionDialog extends InspectorDialog {
         }
         stream.print("\nSESSION OPTIONS: \n");
         inspection().options().printValues(stream, indent, verbose);
-        stream.print("\nHEAP:\n");
-        vm().heap().printStats(stream, indent, verbose);
+
+        final MaxHeap heap = vm().heap();
+        stream.print("\n" + heap.entityName().toString().toUpperCase() + ":\n");
+        heap.printStats(stream, indent, verbose);
+
+        final MaxClassRegistry classRegistry = vm().classRegistry();
+        stream.print("\n" + classRegistry.entityName().toString().toUpperCase() + ":\n");
+        classRegistry.printSessionStats(stream, indent, verbose);
+
         textArea.setText(byteArrayOutputStream.toString());
         textArea.setCaretPosition(0);
     }

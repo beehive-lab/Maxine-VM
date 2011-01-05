@@ -904,6 +904,10 @@ public abstract class TeleVM implements MaxVM {
         return programFile;
     }
 
+    public TeleClassRegistry classRegistry() {
+        return teleClassRegistry;
+    }
+
     public final TeleHeap heap() {
         return heap;
     }
