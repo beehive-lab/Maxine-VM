@@ -114,14 +114,14 @@ public class HeapAccount<T extends HeapAccountOwner>{
         return INVALID_REGION_ID;
     }
 
-    private void recordAllocated(int regionID, int numRegions, HeapRegionList recipient, boolean prepend) {
+    void recordAllocated(int regionID, int numRegions, HeapRegionList recipient, boolean prepend) {
         final int lastRegionID = regionID + numRegions - 1;
         int r = regionID;
         // Record the allocated regions for accounting, initialize their region information,
         HeapRegionInfo regionInfo = RegionTable.theRegionTable().regionInfo(r);
         while (r <= lastRegionID) {
             regionInfo.setOwner(owner);
-            allocated.append(r);
+            allocated.append(r++);
             regionInfo = regionInfo.next();
         }
         if (recipient != null) {
@@ -149,7 +149,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
      * @return true if the requested number of regions is allocated, false otherwise.
      */
     public synchronized boolean allocate(int numRegions, HeapRegionList recipient, boolean prepend) {
-        if (allocated.size() + numRegions >= reserve) {
+        if (allocated.size() + numRegions > reserve) {
             return false;
         }
         final FixedSizeRegionAllocator regionAllocator = theHeapRegionManager.regionAllocator();
@@ -175,7 +175,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
      * @return true if the requested number of contiguous regions is allocated, false otherwise.
      */
     public synchronized boolean allocateContiguous(int numRegions, HeapRegionList recipient, boolean prepend) {
-        if (allocated.size() + numRegions >= reserve) {
+        if (allocated.size() + numRegions > reserve) {
             return false;
         }
         int regionID = theHeapRegionManager.regionAllocator().allocate(numRegions);

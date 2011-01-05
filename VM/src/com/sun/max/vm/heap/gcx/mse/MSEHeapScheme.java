@@ -203,7 +203,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         // From now on, we can allocate. The operations below have been postponed up to now because
         // they perform allocation indirectly (e.g., because of runtime class loading, compilation, or simply, use of var-args).
         theHeapRegionManager().verifyAfterInitialization();
-        InspectableHeapInfo.init(true, heapBounds);
     }
 
     @Override
