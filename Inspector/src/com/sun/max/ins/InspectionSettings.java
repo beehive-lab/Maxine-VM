@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,8 +44,8 @@ public class InspectionSettings {
 
     private static final int TRACE_VALUE = 2;
 
-    private static final String BOOT_VERSION_KEY = "version";
-    private static final String BOOT_ID_KEY = "id";
+    private static final String BOOT_IMAGE_FORMAT_VERSION_KEY = "bootImageFormatVersion";
+    private static final String BOOT_IMAGE_ID_KEY = "bootImageId";
     private static final String COMPONENT_X_KEY = "x";
     private static final String COMPONENT_Y_KEY = "y";
     private static final String COMPONENT_HEIGHT_KEY = "height";
@@ -197,15 +197,15 @@ public class InspectionSettings {
         final BootImage bootImage = inspection.vm().bootImage();
         bootimageClient = new AbstractSaveSettingsListener("bootimage") {
             public void saveSettings(SaveSettingsEvent settings) {
-                settings.save(BOOT_VERSION_KEY, String.valueOf(bootImage.header.version));
-                settings.save(BOOT_ID_KEY, String.valueOf(bootImage.header.randomID));
+                settings.save(BOOT_IMAGE_FORMAT_VERSION_KEY, String.valueOf(bootImage.header.bootImageFormatVersion));
+                settings.save(BOOT_IMAGE_ID_KEY, String.valueOf(bootImage.header.randomID));
             }
         };
 
         addSaveSettingsListener(bootimageClient);
-        final int version = get(bootimageClient, BOOT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
-        final int randomID = get(bootimageClient, BOOT_ID_KEY, OptionTypes.INT_TYPE, 0);
-        bootImageChanged = version != bootImage.header.version || randomID != bootImage.header.randomID;
+        final int version = get(bootimageClient, BOOT_IMAGE_FORMAT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
+        final int randomID = get(bootimageClient, BOOT_IMAGE_ID_KEY, OptionTypes.INT_TYPE, 0);
+        bootImageChanged = version != bootImage.header.bootImageFormatVersion || randomID != bootImage.header.randomID;
         bootimageClient.saveSettings(new SaveSettingsEvent(bootimageClient, properties));
         saver = new Saver();
     }
