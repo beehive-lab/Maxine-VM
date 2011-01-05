@@ -299,6 +299,14 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         return heapAccount;
     }
 
+    void bootInitialize(Address start, Size initSize) {
+        tlabAllocator.initialize(start, initSize, initSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+    }
+
+    public LinearSpaceAllocator bootAllocator() {
+        return tlabAllocator;
+    }
+
     public void initialize(Size minSize, Size maxSize) {
         if (!heapAccount.open(numberOfRegions(maxSize))) {
             FatalError.unexpected("Failed to create application heap");

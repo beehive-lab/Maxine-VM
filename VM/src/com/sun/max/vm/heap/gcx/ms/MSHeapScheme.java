@@ -201,7 +201,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
 
         // From now on, we can allocate. The following does this because of the var-arg arguments.
-        InspectableHeapInfo.init(markedSpace);
+        InspectableHeapInfo.init(true, markedSpace);
     }
 
     @Override
@@ -490,6 +490,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             Log.unlock(lockDisabledSafepoints);
         }
         refillTLAB(etla, tlab, effectiveSize);
+    }
+
+    @Override
+    protected Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag) {
+        // Default is to use the immortal heap.
+        return ImmortalHeap.allocate(size, true);
     }
 
     @Override

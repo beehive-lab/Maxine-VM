@@ -77,6 +77,10 @@ public final class ImmortalHeap {
         VMOptions.addFieldOption("-XX:", "MaxPermSize", ImmortalHeap.class, "Size of immortal heap.", MaxineVM.Phase.PRISTINE);
     }
 
+    public static boolean contains(Address address) {
+        return immortalHeap.contains(address);
+    }
+
     /**
      * Returns the immortal heap memory.
      * @return immortal heap

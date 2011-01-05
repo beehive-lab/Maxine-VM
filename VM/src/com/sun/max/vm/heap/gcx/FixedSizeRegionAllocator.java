@@ -266,13 +266,14 @@ public class FixedSizeRegionAllocator {
      */
     public void initialize(Address start, int numRegions, int numPreCommitted) {
         FatalError.check(backingStorage.start().isZero(), "Can only be initialized once");
+        final int numWordsPerBitSet = 1 + (numRegions >> RegionBitSet.LOG2_BITS_PER_WORD);
         numFreeRegions = numRegions;
 
         backingStorage.setStart(start);
         backingStorage.setSize(Size.fromInt(numRegions << log2RegionSizeInBytes));
 
-        allocated.initialize(new long[numFreeRegions]);
-        committed.initialize(new long[numFreeRegions]);
+        allocated.initialize(new long[numWordsPerBitSet]);
+        committed.initialize(new long[numWordsPerBitSet]);
 
         highestAllocated = INVALID_REGION_ID;
         residentRegions = numPreCommitted;

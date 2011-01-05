@@ -144,12 +144,12 @@ public class HostedHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
     }
 
     @Override
-    public void disableImmortalMemoryAllocation() {
+    public void disableCustomAllocation() {
         FatalError.unexpected("Non implemented");
     }
 
     @Override
-    public void enableImmortalMemoryAllocation() {
+    public void enableCustomAllocation(Address customAllocator) {
         FatalError.unexpected("Non implemented");
     }
 }
