@@ -87,7 +87,7 @@ public class BootImage {
     /**
      * A version number of the boot image file layout, checked against IMAGE_FORMAT_VERSION in Native/substrate/image.c .
      */
-    public static final int BOOT_IMAGE_FORMAT_VERSION = 1;
+    public static final int BOOT_IMAGE_FORMAT_VERSION = 2;
 
     /**
      * A field section in a boot image is described by the {@code public final} and {@code final}

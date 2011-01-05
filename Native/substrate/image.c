@@ -49,7 +49,7 @@
 /*
  * Image format version checked against com.sun.max.vm.hosted.BootImage.BOOT_IMAGE_FORMAT_VERSION
  */
-#define IMAGE_FORMAT_VERSION                    1
+#define IMAGE_FORMAT_VERSION                    2
 #define DEFAULT_RELOCATION_SCHEME        0
 
 #if os_MAXVE
