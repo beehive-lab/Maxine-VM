@@ -548,6 +548,7 @@ public class OptionSet {
      * @param verbose add each option's description when true
      */
     public void printValues(PrintStream stream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
         for (Option<?> option : getSortedOptions()) {
             if (option.type == OptionTypes.BLANK_BOOLEAN_TYPE && option instanceof FieldOption) {
                 FieldOption fopt = (FieldOption) option;
@@ -563,10 +564,7 @@ public class OptionSet {
 
 
             final Option<Object> opt = Utils.cast(option);
-            for (int i = 0; i < indent; i++) {
-                stream.print(' ');
-            }
-            stream.print(opt.getName() + ": " + opt.getValue());
+            stream.print(indentation + opt.getName() + ": " + opt.getValue());
             if (verbose) {
                 stream.println(opt.isAssigned() ? "" : " (default)");
                 stream.println("        " + opt.getHelp());
