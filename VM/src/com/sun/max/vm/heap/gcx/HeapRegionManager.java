@@ -192,10 +192,10 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
             // Ready to open bootstrap heap accounts now.
             // Start with opening the boot heap account to set the records straight after bootstrap.
-            // FIXME: initialSize may not be the reserve we want here. Need to adjust that to the desired "immortal" size.
+            // FIXME: initialNumRegions may not be the reserve we want here. Need to adjust that to the desired "immortal" size.
             FatalError.check(bootHeapAccount.open(initialNumRegions), "Failed to create boot heap account");
-            // Allocate the region after the fact. This will straightened the data structures for the boot heap account and the region allocator.
-            bootHeapAccount.allocate(initialNumRegions);
+            // Now fix up the boot heap account to records the regions used up to now.
+            bootHeapAccount.recordAllocated(0, initialNumRegions, null, false);
         } finally {
             VMConfiguration.vmConfig().heapScheme().disableCustomAllocation();
         }

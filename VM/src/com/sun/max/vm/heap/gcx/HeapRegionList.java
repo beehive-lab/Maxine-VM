@@ -23,6 +23,9 @@
 
 package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -59,6 +62,7 @@ public final class HeapRegionList {
     private static final int [][] listsStorage = new int[RegionListUse.values().length][];
 
     static void initializeListStorage(RegionListUse use, int [] storage) {
+        Arrays.fill(storage, INVALID_REGION_ID);
         listsStorage[use.ordinal()] = storage;
     }
 
