@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,7 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 
     private TypeSearchDialog(Inspection inspection, String title, String actionName) {
         super(inspection, title == null ? "Select Class" : title, "Class Name", actionName, false);
-        types = vm().loadableTypeDescriptors();
+        types = vm().classRegistry().loadableTypeDescriptors();
     }
 
     private final Iterable<TypeDescriptor> types;

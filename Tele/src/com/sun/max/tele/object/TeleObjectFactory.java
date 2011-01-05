@@ -309,7 +309,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
             // meta-information necessary to understanding how to access information in the object.
             hubReference = vm().wordToReference(Layout.readHubReferenceAsWord(reference));
             classActorReference = vm().teleFields().Hub_classActor.readReference(hubReference);
-            classActor = vm().makeClassActor(classActorReference);
+            classActor = vm().classRegistry().makeClassActor(classActorReference);
         } catch (InvalidReferenceException invalidReferenceException) {
             Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
                             " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
@@ -320,7 +320,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         // Must check for the static tuple case first; it doesn't follow the usual rules
         final Reference hubhubReference = vm().wordToReference(Layout.readHubReferenceAsWord(hubReference));
         final Reference hubClassActorReference = vm().teleFields().Hub_classActor.readReference(hubhubReference);
-        final ClassActor hubClassActor = vm().makeClassActor(hubClassActorReference);
+        final ClassActor hubClassActor = vm().classRegistry().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
             //teleObject = new TeleStaticTuple(teleVM(), reference);       ?????????

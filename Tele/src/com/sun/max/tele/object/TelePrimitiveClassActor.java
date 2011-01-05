@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for a  {@link PrimitiveClassActor} in the {@link TeleVM}.
+ * Canonical surrogate for a  {@link PrimitiveClassActor} in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -48,7 +48,7 @@ public class TelePrimitiveClassActor extends TeleClassActor implements ClassProv
     }
 
     public ClassProvider getSuperClass() {
-        return (ClassProvider) vm().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
+        return (ClassProvider) vm().classRegistry().findTeleClassActor(this.classActor().superClassActor.typeDescriptor);
     }
 
 }

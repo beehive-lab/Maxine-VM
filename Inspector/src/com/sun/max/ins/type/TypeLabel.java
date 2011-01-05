@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,7 +111,7 @@ public class TypeLabel extends InspectorLabel {
             teleClassActor = null;
         } else {
             // Might be null if class not yet known in VM
-            teleClassActor = vm().findTeleClassActor(typeDescriptor);
+            teleClassActor = vm().classRegistry().findTeleClassActor(typeDescriptor);
         }
     }
 

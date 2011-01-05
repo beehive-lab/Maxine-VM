@@ -345,17 +345,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     ReferenceValue createReferenceValue(Reference reference);
 
     /**
-     * Gets a canonical local {@classActor} corresponding to the type of a heap object in the VM, creating one if
-     * needed by loading the class using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER} from either the
-     * classpath, or if not found on the classpath, by copying the classfile from the VM.
-     *
-     * @param objectReference An {@link Object} in  VM heap.
-     * @return Local {@link ClassActor} representing the type of the object.
-     * @throws InvalidReferenceException
-     */
-    ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException;
-
-    /**
      * Fetches a primitive value from an array in the memory of the VM.
      *
      * @param kind identifies one of the basic VM value types
@@ -372,46 +361,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return possibly interesting, predefined methods.
      */
     List<MaxCodeLocation> inspectableMethods();
-
-    /**
-     * @param id  Class ID of a {@link ClassActor} in the VM.
-     * @return surrogate for the {@link ClassActor} in the VM, null if not known.
-     * @see ClassActor
-     */
-    TeleClassActor findTeleClassActor(int id);
-
-    /**
-     * @param typeDescriptor A local {@link TypeDescriptor}.
-     * @return surrogate for the equivalent {@link ClassActor} in the VM, null if not known.
-     * @see ClassActor
-     */
-    TeleClassActor findTeleClassActor(TypeDescriptor typeDescriptor);
-
-    /**
-     * @param type a local class instance
-     * @return surrogate for the equivalent {@link ClassActor} in the VM, null if not known.
-     */
-    TeleClassActor findTeleClassActor(Class type);
-
-    /**
-     * @return  {@link TypeDescriptor}s for all classes loaded in the VM.
-     */
-    Set<TypeDescriptor> typeDescriptors();
-
-    /**
-     * @return an ordered set of {@link TypeDescriptor}s for classes loaded in
-     *         the VM, plus classes found on the class path.
-     */
-    Iterable<TypeDescriptor> loadableTypeDescriptors();
-
-    /**
-     * Updates the set of types that are available by scanning the class path. This
-     * scan will be performed automatically the first time
-     * {@link #loadableTypeDescriptors()} is called. However, it should also be
-     * performed any time the set of classes available on the class path may
-     * have changed.
-     */
-    void updateLoadableTypeDescriptorsFromClasspath();
 
     /**
      * Finds the remote {@link MethodActor} corresponding to a local one.

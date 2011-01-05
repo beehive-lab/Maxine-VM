@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
 
     @Override
     protected Actor initActor() {
-        ClassActor classActor = vm().makeClassActor(reference());
+        ClassActor classActor = vm().classRegistry().makeClassActor(reference());
         return classActor;
     }
 
@@ -379,7 +379,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final HashSet<InterfaceActor> interfaces = classActor().getAllInterfaceActors();
         final List<InterfaceProvider> result = new LinkedList<InterfaceProvider>();
         for (InterfaceActor interfaceActor : interfaces) {
-            final InterfaceProvider interfaceProvider = (TeleInterfaceActor) vm().findTeleClassActor(interfaceActor.typeDescriptor);
+            final InterfaceProvider interfaceProvider = (TeleInterfaceActor) vm().classRegistry().findTeleClassActor(interfaceActor.typeDescriptor);
             if (interfaceProvider != this) {
                 result.add(interfaceProvider);
             }
@@ -396,7 +396,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final ClassActor[] actors = classActor().innerClassActors();
         final ReferenceTypeProvider[] result = new ReferenceTypeProvider[actors.length];
         for (int i = 0; i < actors.length; i++) {
-            result[i] = vm().findTeleClassActor(actors[i].typeDescriptor);
+            result[i] = vm().classRegistry().findTeleClassActor(actors[i].typeDescriptor);
         }
         return result;
     }
