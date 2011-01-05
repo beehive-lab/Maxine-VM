@@ -544,10 +544,10 @@ public class OptionSet {
      * Prints a textual listing of these options and their values
      * to the specified output stream.
      * @param stream the output stream to which to write the text
+     * @param indent the number of spaces to indent
      * @param verbose add each option's description when true
-     * @param width the length of the line to truncate
      */
-    public void printValues(PrintStream stream, boolean verbose, int width) {
+    public void printValues(PrintStream stream, int indent, boolean verbose) {
         for (Option<?> option : getSortedOptions()) {
             if (option.type == OptionTypes.BLANK_BOOLEAN_TYPE && option instanceof FieldOption) {
                 FieldOption fopt = (FieldOption) option;
@@ -563,7 +563,10 @@ public class OptionSet {
 
 
             final Option<Object> opt = Utils.cast(option);
-            stream.print("    " + opt.getName() + ": " + opt.getValue());
+            for (int i = 0; i < indent; i++) {
+                stream.print(' ');
+            }
+            stream.print(opt.getName() + ": " + opt.getValue());
             if (verbose) {
                 stream.println(opt.isAssigned() ? "" : " (default)");
                 stream.println("        " + opt.getHelp());

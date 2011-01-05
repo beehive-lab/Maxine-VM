@@ -40,6 +40,7 @@ import com.sun.max.ins.gui.*;
 public final class AboutSessionDialog extends InspectorDialog {
 
     private static final String INDENT = "    ";
+    private static final int indent = INDENT.length();
 
 
     private static final Border border = BorderFactory.createLineBorder(Color.black);
@@ -89,29 +90,28 @@ public final class AboutSessionDialog extends InspectorDialog {
     }
 
     private void refresh() {
-        final StringBuffer sb = new StringBuffer();
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final PrintStream stream = new PrintStream(byteArrayOutputStream);
         final long lastModified = vm().bootImageFile().lastModified();
         final Date bootImageDate = lastModified == 0 ? null : new Date(lastModified);
         if (verboseRadioButton.isSelected()) {
-            sb.append(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION + "\n");
-            sb.append(INDENT + "Mode: " + vm().inspectionMode().name() + ",  " + vm().inspectionMode().description() + "\n");
-            sb.append("\nVM:\n");
-            sb.append(INDENT + vm().getDescription() + "\n");
-            sb.append(INDENT + "Boot image: " + vm().bootImageFile().getAbsolutePath().toString() + "\n");
-            sb.append(INDENT + "Last modified: " + bootImageDate.toString() + "\n");
-            sb.append(INDENT + "See also: View->Boot image info\n");
+            stream.print(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION + "\n");
+            stream.print(INDENT + "Mode: " + vm().inspectionMode().name() + ",  " + vm().inspectionMode().description() + "\n");
+            stream.print("\nVM:\n");
+            stream.print(INDENT + vm().getDescription() + "\n");
+            stream.print(INDENT + "Boot image: " + vm().bootImageFile().getAbsolutePath().toString() + "\n");
+            stream.print(INDENT + "Last modified: " + bootImageDate.toString() + "\n");
+            stream.print(INDENT + "See also: View->Boot image info\n");
         } else {
-            sb.append(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION + " mode=" + vm().inspectionMode().name() + "\n");
-            sb.append("\nVM:\n");
-            sb.append(INDENT + vm().entityName() + " Ver. " + vm().getVersion() + "\n");
-            sb.append(INDENT + vm().bootImageFile().getAbsolutePath().toString() + "\n");
-            sb.append(INDENT + bootImageDate.toString() + "\n");
+            stream.print(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION + " mode=" + vm().inspectionMode().name() + "\n");
+            stream.print("\nVM:\n");
+            stream.print(INDENT + vm().entityName() + " Ver. " + vm().getVersion() + "\n");
+            stream.print(INDENT + vm().bootImageFile().getAbsolutePath().toString() + "\n");
+            stream.print(INDENT + bootImageDate.toString() + "\n");
         }
-        sb.append("\nSESSION OPTIONS: \n");
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        inspection().options().printValues(new PrintStream(byteArrayOutputStream), verboseRadioButton.isSelected(), 50);
-        sb.append(byteArrayOutputStream);
-        textArea.setText(sb.toString());
+        stream.print("\nSESSION OPTIONS: \n");
+        inspection().options().printValues(stream, indent, verboseRadioButton.isSelected());
+        textArea.setText(byteArrayOutputStream.toString());
         textArea.setCaretPosition(0);
     }
 
