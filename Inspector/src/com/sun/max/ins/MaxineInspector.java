@@ -40,8 +40,9 @@ import com.sun.max.vm.hosted.*;
 public final class MaxineInspector {
 
     public static final String NAME = "Maxine Inspector";
-    public static final String VERSION = "0.2";
-
+    public static final int MAJOR_VERSION = 1;
+    public static final int MINOR_VERSION = 0;
+    public static final String VERSION_STRING = Integer.toString(MAJOR_VERSION) + "." + Integer.toString(MINOR_VERSION);
     private static final int TRACE_VALUE = 1;
 
     private static final String tracePrefix = "[Inspector] ";

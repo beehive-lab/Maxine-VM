@@ -100,7 +100,7 @@ public final class AboutSessionDialog extends InspectorDialog {
         final Date bootImageDate = lastModified == 0 ? null : new Date(lastModified);
         final boolean verbose = verboseRadioButton.isSelected();
         if (verbose) {
-            stream.print(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION + "\n");
+            stream.print(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION_STRING + "\n");
             stream.print(INDENT + "Mode: " + vm().inspectionMode().name() + ",  " + vm().inspectionMode().description() + "\n");
             stream.print("\nVM:\n");
             stream.print(INDENT + vm().getDescription() + "\n");
@@ -108,7 +108,7 @@ public final class AboutSessionDialog extends InspectorDialog {
             stream.print(INDENT + "Last modified: " + bootImageDate.toString() + "\n");
             stream.print(INDENT + "See also: View->Boot image info\n");
         } else {
-            stream.print(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION + " mode=" + vm().inspectionMode().name() + "\n");
+            stream.print(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION_STRING + " mode=" + vm().inspectionMode().name() + "\n");
             stream.print("\nVM:\n");
             stream.print(INDENT + vm().entityName() + " Ver. " + vm().getVersion() + "\n");
             stream.print(INDENT + vm().bootImageFile().getAbsolutePath().toString() + "\n");

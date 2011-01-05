@@ -35,7 +35,7 @@ import com.sun.max.vm.*;
 public final class AboutMaxineDialog extends SimpleDialog {
 
     private static final String aboutString =
-        MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION + "\n" +
+        MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION_STRING + "\n" +
         "A combined debugger and object browser tool for the " + MaxineVM.NAME + ", an Open Source\n" +
         "research virtual machine written in and for the Java(TM) Programming Language.\n" +
         "\n" +
