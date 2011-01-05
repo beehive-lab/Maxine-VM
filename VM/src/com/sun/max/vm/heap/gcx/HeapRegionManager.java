@@ -27,11 +27,13 @@ import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.gcx.FixedSizeRegionAllocator.RegionBitSet;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -114,46 +116,8 @@ public final class HeapRegionManager implements HeapAccountOwner {
         return regionAllocator.isValidRegionId(regionID);
     }
 
-    // One way to make this a throw away object is to allocate it in some far region that
-    // we free afterward. An alternative is to make it the heap manager's heap.
-    private class BootstrapAllocator {
-        private Address top;
-        private Address end;
-
-        void initialize(Address top, Address end) {
-            this.top = top;
-            this.end = end;
-        }
-        @INLINE
-        private Pointer allocate(Size size) {
-            Address cell = top;
-            top = cell.plus(size).asPointer();
-            if (top.greaterThan(end)) {
-                FatalError.unexpected("Not enough memory to initialize heap manager");
-            }
-            return cell.asPointer();
-        }
-
-        public final Object createTuple(Hub hub) {
-            return Cell.plantTuple(allocate(hub.tupleSize), hub);
-        }
-
-        final <T> T createTuple(Class<T> tupleClass) {
-            return tupleClass.cast(createTuple(ClassActor.fromJava(tupleClass).dynamicHub()));
-        }
-
-        public final Object createArray(DynamicHub dynamicHub, int length) {
-            final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
-            return Cell.plantArray(allocate(size), size, dynamicHub, length);
-        }
-    }
-
-    BootstrapAllocator bootstrapAllocator;
-
-
     private HeapRegionManager() {
         regionAllocator = new FixedSizeRegionAllocator("Heap Backing Storage");
-        bootstrapAllocator = new BootstrapAllocator();
         bootHeapAccount = new HeapAccount<HeapRegionManager>(this);
     }
 
@@ -180,7 +144,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
      * @param reservedSpaceSize size in byte of the heap space
      * @param regionInfoClass the sub-class of HeapRegionInfo used for region management.
      */
-    public void initialize(Address reservedSpace, Size reservedSpaceSize, Class<HeapRegionInfo> regionInfoClass) {
+    public void initialize(LinearSpaceAllocator bootAllocator, Address reservedSpace, Size reservedSpaceSize, Class<HeapRegionInfo> regionInfoClass) {
         // Initialize region constants (size and log constants).
         HeapRegionConstants.initializeConstants();
         // Adjust reserved space to region boundaries.
@@ -205,40 +169,36 @@ public final class HeapRegionManager implements HeapAccountOwner {
         initialSize = initialSize.roundedUpBy(regionSizeInBytes);
         final int initialNumRegions = initialSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
 
-        bootstrapAllocator.initialize(startOfManagedSpace, startOfManagedSpace.plus(initialSize));
+        // initialize a bootstrap allocator. The rest of the initialization code needs to allocate heap region management
+        // object. We solve the bootstrapping problem this causes by using a linear allocator as a custom allocator for the current
+        // thread. The contiguous set of regions consumed by the initialization will be accounted after the fact to the special
+        // boot heap account.
+        bootAllocator.initialize(startOfManagedSpace, initialSize, initialSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
+        try {
+            VMConfiguration.vmConfig().heapScheme().enableCustomAllocation(Reference.fromJava(bootAllocator).toOrigin());
 
-        // Commit space and initialize the bootstrap allocator
-        regionAllocator.initialize(startOfManagedSpace, numRegions, initialNumRegions);
+            // Commit space
+            regionAllocator.initialize(startOfManagedSpace, numRegions, initialNumRegions);
 
+            // enable early inspection.
+            InspectableHeapInfo.init(false, regionAllocator.bounds());
 
-        // FIXME: Here, ideally, we should have some mechanism to makes the standard allocation mechanism
-        // tapping directly on the bootstrap linear allocator over the start of heap space.
-        // Unclear how to do that while the heap scheme is not initialized yet.
-        // If we do, this code could migrate to the RegionTable class
-        // Where we'd do the allocation of the region info in the constructor!
+            RegionTable.initialize(regionInfoClass, startOfManagedSpace, numRegions);
+            // Allocate the backing storage for the region lists.
+            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[numRegions]);
+            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, new int[numRegions]);
 
-        // The region manager lays its data out at the beginning of the heap space as follows:
+            FatalError.check(bootAllocator.end.roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(initialSize)), "");
 
-        final RegionTable regionTable = bootstrapAllocator.createTuple(RegionTable.class);
-        for (int i = 0; i < numRegions; i++) {
-            bootstrapAllocator.createTuple(regionInfoClass);
+            // Ready to open bootstrap heap accounts now.
+            // Start with opening the boot heap account to set the records straight after bootstrap.
+            // FIXME: initialSize may not be the reserve we want here. Need to adjust that to the desired "immortal" size.
+            FatalError.check(bootHeapAccount.open(initialNumRegions), "Failed to create boot heap account");
+            // Allocate the region after the fact. This will straightened the data structures for the boot heap account and the region allocator.
+            bootHeapAccount.allocate(initialNumRegions);
+        } finally {
+            VMConfiguration.vmConfig().heapScheme().disableCustomAllocation();
         }
-        final int numWordsPerBitSet = 1 + (numRegions >> RegionBitSet.LOG2_BITS_PER_WORD);
-        RegionTable.initialize(regionTable, regionInfoClass, startOfManagedSpace, numRegions);
-        // Allocate the backing storage for the region list.
-        int [] listStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
-        HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, listStorage);
-        listStorage = (int[]) bootstrapAllocator.createArray(ClassRegistry.INT_ARRAY.dynamicHub(), numRegions);
-        HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, listStorage);
-
-        FatalError.check(bootstrapAllocator.end.roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(initialSize)), "");
-
-        // Ready to open bootstrap heap accounts now.
-        // Start with opening the boot heap account to set the records straight after bootstrap.
-        // FIXME: initialSize may not be the reserve we want here. Need to adjust that to the desired "immortal" size.
-        bootHeapAccount.open(initialNumRegions);
-        // Allocate the region after the fact. This will straightened the data structures for the boot heap account and the region allocator.
-        bootHeapAccount.allocate();
     }
 
     /**

@@ -22,10 +22,12 @@
  */
 package com.sun.max.vm.heap.gcx.mse;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -36,6 +38,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -161,7 +164,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         // Initialize the heap region manager.
         final Address  firstUnusedByteAddress = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
 
-        theHeapRegionManager().initialize(firstUnusedByteAddress, maxSize, HeapRegionInfo.class);
+        theHeapRegionManager().initialize(theHeap.bootAllocator(), firstUnusedByteAddress, maxSize, HeapRegionInfo.class);
         final MemoryRegion heapBounds = theHeapRegionManager().bounds();
 
         // Compute space needed by the heap marker. This is proportional to the size of the space traced by the heap marker.
@@ -200,7 +203,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         // From now on, we can allocate. The operations below have been postponed up to now because
         // they perform allocation indirectly (e.g., because of runtime class loading, compilation, or simply, use of var-args).
         theHeapRegionManager().verifyAfterInitialization();
-        InspectableHeapInfo.init(heapBounds);
+        InspectableHeapInfo.init(true, heapBounds);
     }
 
     @Override
@@ -472,6 +475,15 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             Log.unlock(lockDisabledSafepoints);
         }
         refillTLAB(etla, tlab, effectiveSize);
+    }
+
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native LinearSpaceAllocator asLinearSpaceAllocator(Object object);
+
+    @Override
+    protected Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag) {
+        return asLinearSpaceAllocator(Reference.fromOrigin(Layout.cellToOrigin(customAllocator)).toJava()).allocateCleared(size);
     }
 
     @Override

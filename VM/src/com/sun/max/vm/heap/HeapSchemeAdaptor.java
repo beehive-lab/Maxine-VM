@@ -214,14 +214,14 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         return true;
     }
 
-    public void disableImmortalMemoryAllocation() {
+    public void disableCustomAllocation() {
         final Pointer etla = ETLA.load(currentTLA());
-        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.zero());
+        CUSTOM_ALLOCATION_ENABLED.store(etla, Word.zero());
     }
 
-    public void enableImmortalMemoryAllocation() {
+    public void enableCustomAllocation(Address customAllocator) {
         final Pointer etla = ETLA.load(currentTLA());
-        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.allOnes());
+        CUSTOM_ALLOCATION_ENABLED.store(etla, customAllocator);
     }
 
     public long maxObjectInspectionAge() {

@@ -116,26 +116,26 @@ public class HeapAccount<T extends HeapAccountOwner>{
 
     private void recordAllocated(int regionID, int numRegions, HeapRegionList recipient, boolean prepend) {
         final int lastRegionID = regionID + numRegions - 1;
-
+        int r = regionID;
         // Record the allocated regions for accounting, initialize their region information,
-        // and add them to their recipient in the desired order.
-        if (prepend) {
-            int r = lastRegionID;
-            HeapRegionInfo regionInfo = RegionTable.theRegionTable().regionInfo(r);
-            while (r >= regionID) {
-                regionInfo.setOwner(owner);
-                allocated.prepend(r);
-                recipient.prepend(r);
-                regionInfo = regionInfo.prev();
-            }
-        } else {
-            int r = regionID;
-            HeapRegionInfo regionInfo = RegionTable.theRegionTable().regionInfo(r);
-            while (r <= lastRegionID) {
-                regionInfo.setOwner(owner);
-                allocated.append(r);
-                recipient.append(r);
-                regionInfo = regionInfo.next();
+        HeapRegionInfo regionInfo = RegionTable.theRegionTable().regionInfo(r);
+        while (r <= lastRegionID) {
+            regionInfo.setOwner(owner);
+            allocated.append(r);
+            regionInfo = regionInfo.next();
+        }
+        if (recipient != null) {
+            // add them to their recipient in the desired order.
+            if (prepend) {
+                r = lastRegionID;
+                while (r >= regionID) {
+                    recipient.prepend(r--);
+                }
+            } else {
+                r = regionID;
+                while (r <= lastRegionID) {
+                    recipient.append(r++);
+                }
             }
         }
     }
@@ -185,5 +185,13 @@ public class HeapAccount<T extends HeapAccountOwner>{
         theHeapRegionManager.regionAllocator().commit(regionID, numRegions);
         recordAllocated(regionID, numRegions, recipient, prepend);
         return true;
+    }
+
+    public boolean allocate(int numRegions) {
+        return allocate(numRegions, null, false);
+    }
+
+    public boolean allocateContiguous(int numRegions) {
+        return allocateContiguous(numRegions, null, false);
     }
 }
