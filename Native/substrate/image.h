@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@
 #define IMAGE_HEADER_FIELDS(f) \
     f(isBigEndian) /* 0: LITTLE, anything else: BIG. Must be first.  */ \
     f(identification) /* Magic number that must be present and have the same value in every Maxine boot image file  */ \
-    f(version) /* Version of boot image file format  */ \
+    f(bootImageFormatVersion) /* Version of boot image file format  */ \
     f(randomID) /* Specific to one particular instance of boot image file  */ \
     f(wordSize) /* 4 or 8  */ \
     f(cacheAlignment) \
@@ -118,7 +118,7 @@ extern image_StringInfo image_stringInfo(void);
  */
 typedef struct image_Trailer {
     jint randomID;
-    jint version;
+    jint bootImageFormatVersion;
     jint identification;
 } *image_Trailer;
 
