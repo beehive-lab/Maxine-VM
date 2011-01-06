@@ -128,9 +128,6 @@ public class CheckCopyright {
             final String extension = getExtension(fileName);
             CopyrightKind ck = copyrightMap.get(extension);
             assert ck != null;
-            if (fileName.equals("Native/hosted/hosted.mk")) {
-                System.console();
-            }
             if (ck.copyrightPattern.matcher(fileContent).matches()) {
                 final int lx = getModifiedYearIndex(fileContent);
                 return Integer.parseInt(fileContent.substring(lx, lx + 4));
@@ -326,8 +323,8 @@ public class CheckCopyright {
         final String fileContent = new String(b);
         int mYear = CopyrightKind.getCopyright(fileName, fileContent);
         if (mYear > 0) {
-            if (mYear != info.lastYear) {
-                System.out.println(fileName + " last modified year " + mYear + ", hg log says " + info.lastYear);
+            if ((mYear != info.lastYear) || (HG_MODIFIED.getValue() && mYear != currentYear)) {
+                System.out.println(fileName + " copyright last modified year " + mYear + ", hg last modified year " + (HG_MODIFIED.getValue() ? currentYear : info.lastYear));
                 if (FIX.getValue()) {
                     // Use currentYear as that is what it will be when it's checked in!
                     System.out.println("updating last modified year of " + fileName + " to " + currentYear);
