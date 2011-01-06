@@ -31,6 +31,8 @@ import com.sun.max.program.option.*;
 
 /**
  * A program to check the existence and correctness of the copyright notice on a given set of Maxine sources.
+ * Sources are defined to be those under management by Mercurial and various options are available
+ * to limit the set of sources scanned.
  *
  * @author Mick Jordan
  */
