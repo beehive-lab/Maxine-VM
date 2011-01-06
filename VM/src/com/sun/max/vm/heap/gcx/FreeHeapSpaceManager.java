@@ -660,11 +660,6 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         smallObjectAllocator = new MultiChunkTLABAllocator(new LinearSpaceRefillManager());
     }
 
-    @HOSTED_ONLY
-    public void hostInitialize() {
-        smallObjectAllocator.hostInitialize();
-    }
-
     public void initialize(HeapScheme heapScheme, Address start, Size initSize, Size maxSize) {
         if (!committedHeapSpace.reserve(start, maxSize)) {
             MaxineVM.reportPristineMemoryFailure("object heap", "reserve", maxSize);
