@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,6 +70,12 @@ public final class HeapRegionManager implements HeapAccountOwner {
         return bootHeapAccount;
     }
 
+    final LinearSpaceAllocator bootAllocator;
+
+    public LinearSpaceAllocator bootAllocator() {
+        return bootAllocator;
+    }
+
     /**
      * Total number of unreserved regions.
      */
@@ -93,7 +99,6 @@ public final class HeapRegionManager implements HeapAccountOwner {
         unreserved -= numRegions;
         return true;
     }
-
     /**
      * Release reserved regions (i.e., "unreserved" them).
      *
@@ -119,6 +124,25 @@ public final class HeapRegionManager implements HeapAccountOwner {
     private HeapRegionManager() {
         regionAllocator = new FixedSizeRegionAllocator("Heap Backing Storage");
         bootHeapAccount = new HeapAccount<HeapRegionManager>(this);
+        bootAllocator = new LinearSpaceAllocator(new LinearSpaceAllocator.RefillManager() {
+
+            @Override
+            boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
+                return true;
+            }
+
+            @Override
+            Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
+                FatalError.unimplemented();
+                return null;
+            }
+
+            @Override
+            Address allocate(Size size) {
+                FatalError.unimplemented();
+                return null;
+            }
+        });
     }
 
     private Size tupleSize(Class tupleClass) {
@@ -144,7 +168,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
      * @param reservedSpaceSize size in byte of the heap space
      * @param regionInfoClass the sub-class of HeapRegionInfo used for region management.
      */
-    public void initialize(LinearSpaceAllocator bootAllocator, Address reservedSpace, Size reservedSpaceSize, Class<HeapRegionInfo> regionInfoClass) {
+    public void initialize(Address reservedSpace, Size reservedSpaceSize, Class<HeapRegionInfo> regionInfoClass) {
         // Initialize region constants (size and log constants).
         HeapRegionConstants.initializeConstants();
         // Adjust reserved space to region boundaries.
@@ -169,7 +193,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         initialSize = initialSize.roundedUpBy(regionSizeInBytes);
         final int initialNumRegions = initialSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
 
-        // initialize a bootstrap allocator. The rest of the initialization code needs to allocate heap region management
+        // initialize the bootstrap allocator. The rest of the initialization code needs to allocate heap region management
         // object. We solve the bootstrapping problem this causes by using a linear allocator as a custom allocator for the current
         // thread. The contiguous set of regions consumed by the initialization will be accounted after the fact to the special
         // boot heap account.

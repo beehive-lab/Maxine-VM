@@ -25,7 +25,6 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -299,14 +298,6 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         return heapAccount;
     }
 
-    void bootInitialize(Address start, Size initSize) {
-        tlabAllocator.initialize(start, initSize, initSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
-    }
-
-    public LinearSpaceAllocator bootAllocator() {
-        return tlabAllocator;
-    }
-
     public void initialize(Size minSize, Size maxSize) {
         if (!heapAccount.open(numberOfRegions(maxSize))) {
             FatalError.unexpected("Failed to create application heap");
@@ -320,11 +311,6 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         // Set the iterable to the allocating regions. This is the default. Any exception to this should
         // reset to the allocating region list when done.
         regionsRangeIterable.initialize(allocatingRegions);
-    }
-
-    @HOSTED_ONLY
-    public void hostInitialize() {
-        tlabAllocator.hostInitialize();
     }
 
     /**
