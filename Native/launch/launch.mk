@@ -37,4 +37,3 @@ all : $(MAIN)
 	cp -f $(PROJECT)/build/$(OS)/launch/$(MAIN) $(PROJECT)/generated/$(OS)
 	# The command below was needed for JDK 1.6.0_17 on Mac OS X:
 	# if [ $(OS) = "darwin" ]; then $(PROJECT)/../bin/mod-macosx-javalib.sh $(PROJECT)/generated/$(OS) $(JAVA_HOME); fi
-	
