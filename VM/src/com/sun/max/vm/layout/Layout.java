@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,25 +75,31 @@ public final class Layout {
         /**
          * The header word from which the hub of an object can be found.
          */
-        public static final HeaderField HUB = new HeaderField("HUB");
+        public static final HeaderField HUB = new HeaderField("HUB", "Reference to layout description (\"Hub\") for the object, based on its type");
 
         /**
          * The header word in which the monitor and hash code details of an object are encoded.
          */
-        public static final HeaderField MISC = new HeaderField("MISC");
+        public static final HeaderField MISC = new HeaderField("MISC", "Encoded monitor and hash code details for the object");
 
         /**
          * The header word in which the length of an array object is encoded.
          */
-        public static final HeaderField LENGTH = new HeaderField("LENGTH");
+        public static final HeaderField LENGTH = new HeaderField("LENGTH", "The number of elements in the array");
 
         /**
          * The name of this header field.
          */
         public final String name;
 
-        public HeaderField(String name) {
+        /**
+         * A short, human-readable description of the field and the role it plays, suitable for inspection.
+         */
+        public final String description;
+
+        public HeaderField(String name, String description) {
             this.name = name;
+            this.description = description;
         }
 
         @Override
