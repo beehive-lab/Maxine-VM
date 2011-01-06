@@ -314,7 +314,10 @@ public class CheckCopyright {
     private static void checkFile(String c, Info info) throws IOException {
         String fileName = info.fileName;
         File file = new File(fileName);
-        assert file.exists();
+        if (!file.exists()) {
+            System.err.println("WARNING: file " + file + " doesn't exist");
+            return;
+        }
         int fileLength = (int) file.length();
         byte[] b = new byte[fileLength];
         FileInputStream is = new FileInputStream(file);
