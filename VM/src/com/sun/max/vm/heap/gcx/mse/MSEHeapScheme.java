@@ -153,7 +153,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
         // Verify that the constraint of the heap scheme are met:
         FatalError.check(Heap.bootHeapRegion.start() == Heap.startOfReservedVirtualSpace(),
-                        "Boot heap region must be mapped at start of reserved virtual space");
+            "Boot heap region must be mapped at start of reserved virtual space");
 
         final Address endOfBootCodeRegion = Code.bootCodeRegion.end().roundedUpBy(pageSize);
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeCodeRegion().end();
@@ -164,44 +164,47 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         final Address  firstUnusedByteAddress = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
 
         theHeapRegionManager().initialize(firstUnusedByteAddress, maxSize, HeapRegionInfo.class);
-        final MemoryRegion heapBounds = theHeapRegionManager().bounds();
+        try {
+            enableCustomAllocation(theHeapRegionManager().bootAllocator());
+            final MemoryRegion heapBounds = theHeapRegionManager().bounds();
+            final Size applicationHeapMaxSize = heapBounds.size().minus(theHeapRegionManager().size());
 
-        // Compute space needed by the heap marker. This is proportional to the size of the space traced by the heap marker.
-        // The boot image isn't traced (it is assumed a permanent root of collection).
-        final Size heapMarkerDatasize = heapMarker.memoryRequirement(heapBounds.size());
+            // Compute space needed by the heap marker. This is proportional to the size of the space traced by the heap marker.
+            // The boot image isn't traced (it is assumed a permanent root of collection).
+            final Size heapMarkerDatasize = heapMarker.memoryRequirement(heapBounds.size());
 
-        // Heap Marker Data are allocated at end of the space reserved to the heap regions.
-        final Address heapMarkerDataStart = heapBounds.end().roundedUpBy(pageSize);
-        // Address to the first reserved byte unused by the heap scheme.
-        final Address unusedReservedSpaceStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
-        FatalError.check(unusedReservedSpaceStart.greaterThan(Heap.startOfReservedVirtualSpace()),
-            "Not enough reserved space to initialize heap scheme");
+            // Heap Marker Data are allocated at end of the space reserved to the heap regions.
+            final Address heapMarkerDataStart = heapBounds.end().roundedUpBy(pageSize);
+            // Address to the first reserved byte unused by the heap scheme.
+            final Address unusedReservedSpaceStart = heapMarkerDataStart.plus(heapMarkerDatasize).roundedUpBy(pageSize);
+            FatalError.check(unusedReservedSpaceStart.greaterThan(Heap.startOfReservedVirtualSpace()),
+                "Not enough reserved space to initialize heap scheme");
 
-        theHeap.initialize(initSize, heapBounds.size());
-        // FIXME: We should uncommit what hasn't been committed yet!
+            theHeap.initialize(initSize, applicationHeapMaxSize);
+            // FIXME: We should uncommit what hasn't been committed yet!
 
-        // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
-        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
-            MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
+            // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
+            if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+                MaxineVM.reportPristineMemoryFailure("heap marker data", "allocate", heapMarkerDatasize);
+            }
+
+            heapMarker.initialize(heapBounds.start(), heapBounds.end(), heapMarkerDataStart, heapMarkerDatasize);
+
+            // Free reserved space we will not be using.
+            Size leftoverSize = endOfReservedSpace.minus(unusedReservedSpaceStart).asSize();
+
+            // First, uncommit range we want to free (this will create a new mapping that can then be deallocated)
+            if (!VirtualMemory.uncommitMemory(unusedReservedSpaceStart, leftoverSize,  VirtualMemory.Type.DATA)) {
+                MaxineVM.reportPristineMemoryFailure("reserved space leftover", "uncommit", leftoverSize);
+            }
+
+            if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
+                MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
+            }
+            theHeapRegionManager().verifyAfterInitialization();
+        } finally {
+            disableCustomAllocation();
         }
-
-        heapMarker.initialize(heapBounds.start(), heapBounds.end(), heapMarkerDataStart, heapMarkerDatasize);
-
-        // Free reserved space we will not be using.
-        Size leftoverSize = endOfReservedSpace.minus(unusedReservedSpaceStart).asSize();
-
-        // First, uncommit range we want to free (this will create a new mapping that can then be deallocated)
-        if (!VirtualMemory.uncommitMemory(unusedReservedSpaceStart, leftoverSize,  VirtualMemory.Type.DATA)) {
-            MaxineVM.reportPristineMemoryFailure("reserved space leftover", "uncommit", leftoverSize);
-        }
-
-        if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
-            MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
-        }
-
-        // From now on, we can allocate. The operations below have been postponed up to now because
-        // they perform allocation indirectly (e.g., because of runtime class loading, compilation, or simply, use of var-args).
-        theHeapRegionManager().verifyAfterInitialization();
     }
 
     @Override

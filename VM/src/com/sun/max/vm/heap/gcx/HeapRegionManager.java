@@ -70,10 +70,17 @@ public final class HeapRegionManager implements HeapAccountOwner {
         return bootHeapAccount;
     }
 
+    /**
+     * Size of the space reserved by the heap region manager.
+     * @return a size in byte
+     */
+    public Size size() {
+        return Size.fromInt(heapAccount().reserve()).shiftedLeft(log2RegionSizeInBytes);
+    }
     final LinearSpaceAllocator bootAllocator;
 
-    public LinearSpaceAllocator bootAllocator() {
-        return bootAllocator;
+    public Address bootAllocator() {
+        return Reference.fromJava(bootAllocator).toOrigin();
     }
 
     /**
@@ -134,13 +141,13 @@ public final class HeapRegionManager implements HeapAccountOwner {
             @Override
             Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
                 FatalError.unimplemented();
-                return null;
+                return Address.zero();
             }
 
             @Override
             Address allocate(Size size) {
                 FatalError.unimplemented();
-                return null;
+                return Address.zero();
             }
         });
     }
