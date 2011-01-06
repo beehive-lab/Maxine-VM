@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -439,38 +439,38 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
         // Is it a heap region?
         if (memoryRegion.sameAs(vm().heap().bootHeapRegion().memoryRegion())) {
-            return "Boot heap region";
+            return "boot heap region";
         }
         for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {
             if (memoryRegion.sameAs(heapRegion.memoryRegion())) {
-                return "Dynamic heap region:  " + regionName + heapSchemeSuffix;
+                return "dynamic heap region:  " + regionName + heapSchemeSuffix;
             }
         }
         final MaxHeapRegion immortalHeapRegion = vm().heap().immortalHeapRegion();
         if (immortalHeapRegion != null && memoryRegion.sameAs(immortalHeapRegion.memoryRegion())) {
-            return "Immortal heap: " + regionName;
+            return "immortal heap: " + regionName;
         }
         if (memoryRegion.sameAs(vm().heap().rootsMemoryRegion())) {
-            return "Inspector roots region: " + regionName;
+            return "inspector roots region: " + regionName;
         }
 
         // Is it a compiled code region?
         if (memoryRegion.sameAs(vm().codeCache().bootCodeRegion().memoryRegion())) {
-            return "Boot code region: " + regionName;
+            return "boot code region: " + regionName;
         }
         for (MaxCompiledCodeRegion codeRegion : vm().codeCache().compiledCodeRegions()) {
             if (memoryRegion.sameAs(codeRegion.memoryRegion())) {
-                return "Dynamic code region: " + regionName;
+                return "dynamic code region: " + regionName;
             }
         }
 
         // Is it a thread-related region?
         for (MaxThread thread : vm().threadManager().threads()) {
             if (memoryRegion.sameAs(thread.stack().memoryRegion())) {
-                return "Thread stack region: " + longName(thread);
+                return "thread stack region: " + longName(thread);
             }
             if (memoryRegion.sameAs(thread.localsBlock().memoryRegion())) {
-                return "Thread locals region: " + longName(thread);
+                return "thread locals region: " + longName(thread);
             }
         }
         return regionName;

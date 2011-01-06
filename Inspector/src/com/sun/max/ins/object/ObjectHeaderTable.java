@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -167,11 +167,16 @@ public final class ObjectHeaderTable extends InspectorTable {
     private final class ObjectHeaderTableModel extends InspectorMemoryTableModel {
 
         private TeleHub teleHub;
+        private final String[] headerFieldDescriptions;
 
         public ObjectHeaderTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
             if (teleObject.isLive()) {
                 teleHub = teleObject.getTeleHub();
+            }
+            headerFieldDescriptions = new String[headerFields.length];
+            for (int row = 0; row < headerFields.length; row++) {
+                headerFieldDescriptions[row] = "Object header field \"" + headerFields[row].name + "\": " + headerFields[row].description;
             }
         }
 
@@ -225,6 +230,10 @@ public final class ObjectHeaderTable extends InspectorTable {
             return headerFields[row].toString();
         }
 
+        public String rowToDescription(int row) {
+            return headerFieldDescriptions[row];
+        }
+
         public TeleHub teleHub() {
             return teleHub;
         }
@@ -261,6 +270,7 @@ public final class ObjectHeaderTable extends InspectorTable {
             final Component renderer = getRenderer(tableModel.getMemoryRegion(row), focus().thread(), tableModel.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
             renderer.setBackground(cellBackgroundColor(isSelected));
+            setToolTipText(tableModel.rowToDescription(row));
             return renderer;
         }
     }
@@ -318,7 +328,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(tableModel.rowToName(row));
+            setValue(tableModel.rowToName(row), tableModel.rowToDescription(row));
             setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -649,10 +649,10 @@ public final class JDK_java_lang_System {
 
         // 2. set up basic Maxine configuration information
         setIfAbsent(properties, "java.runtime.name", MaxineVM.name());
-        setIfAbsent(properties, "java.runtime.version", MaxineVM.VERSION);
+        setIfAbsent(properties, "java.runtime.version", MaxineVM.VERSION_STRING);
 
         setIfAbsent(properties, "java.vm.name", MaxineVM.name());
-        setIfAbsent(properties, "java.vm.version", MaxineVM.VERSION);
+        setIfAbsent(properties, "java.vm.version", MaxineVM.VERSION_STRING);
         setIfAbsent(properties, "java.vm.info", vmConfig().compilationScheme().mode().name().toLowerCase() + " mode");
 
         setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width()));
