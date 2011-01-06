@@ -306,11 +306,17 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         fullRegions = HeapRegionList.RegionListUse.OWNERSHIP.createList();
         heapAccount.allocate(numberOfRegions(minSize), allocatingRegions, true);
         minReclaimableSpace = Size.fromInt(Sweepable.freeChunkMinSizeOption.getValue());
-
-        //smallObjectSpace.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minReclaimableSpace);
         // Set the iterable to the allocating regions. This is the default. Any exception to this should
         // reset to the allocating region list when done.
         regionsRangeIterable.initialize(allocatingRegions);
+
+        // Initialize the tlab allocator with the first contiguous range.
+        regionsRangeIterable.reset();
+        RegionRange firstContiguousChunk = regionsRangeIterable.next();
+        Address start = HeapRegionInfo.fromRegionID(firstContiguousChunk.firstRegion()).regionStart();
+        Size size = Size.fromInt(firstContiguousChunk.numRegions()).shiftedLeft(HeapRegionConstants.log2RegionSizeInBytes);
+        Size minLargeObjectSize = Size.fromInt(HeapRegionConstants.regionSizeInBytes);
+        tlabAllocator.initialize(start, size, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minReclaimableSpace);
     }
 
     /**
