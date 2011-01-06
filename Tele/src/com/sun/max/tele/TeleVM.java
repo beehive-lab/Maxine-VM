@@ -854,7 +854,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final String getVersion() {
-        return MaxineVM.VERSION;
+        return MaxineVM.VERSION_STRING;
     }
 
     public final String getDescription() {

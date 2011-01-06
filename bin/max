@@ -2,7 +2,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 #
-# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -647,6 +647,22 @@ function run_jnigen() {
     result=$?
     exit $result
 }
+
+#=======================================
+# 'copycheck' command
+#=======================================
+
+copycheck_usage="[options]"
+copycheck_help="run copyright check on the Maxine sources (defined as being under hg control)"
+ 
+function run_copycheck() {
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tools.CheckCopyright $@
+    result=$?
+    if [ $result -ne 0 ]; then
+        exit $result
+    fi
+ }
+
 
 #=======================================
 # 'check' command

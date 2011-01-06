@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,10 @@
 #define MIN_CACHE_ALIGNMENT 8
 
 #define IMAGE_IDENTIFICATION             0xcafe4dad
-#define IMAGE_VERSION                    1
+/*
+ * Image format version checked against com.sun.max.vm.hosted.BootImage.BOOT_IMAGE_FORMAT_VERSION
+ */
+#define IMAGE_FORMAT_VERSION                    2
 #define DEFAULT_RELOCATION_SCHEME        0
 
 #if os_MAXVE
@@ -226,8 +229,8 @@ static void checkImage(void) {
     if (theHeader->identification != (jint) IMAGE_IDENTIFICATION) {
         log_exit(2, "not a valid Maxine VM boot image file");
     }
-    if (theHeader->version != IMAGE_VERSION) {
-        log_exit(2, "wrong image format version - expected: %d, found: %d", IMAGE_VERSION, theHeader->version);
+    if (theHeader->bootImageFormatVersion != IMAGE_FORMAT_VERSION) {
+        log_exit(2, "wrong image format version - expected: %d, found: %d", IMAGE_FORMAT_VERSION, theHeader->bootImageFormatVersion);
     }
     if ((theHeader->wordSize == 8) != word_64_BITS) {
         log_exit(2, "image has wrong word size - expected: %d bits, found: %d bits", word_64_BITS ? 64 : 32, theHeader->wordSize * 8);
@@ -277,7 +280,7 @@ static void checkTrailer(int fd) {
     trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_start) + trailerOffset);
 #endif
 
-    if (trailerStructPtr->identification != theHeader->identification || trailerStructPtr->version != theHeader->version || trailerStructPtr->randomID != theHeader->randomID) {
+    if (trailerStructPtr->identification != theHeader->identification || trailerStructPtr->bootImageFormatVersion != theHeader->bootImageFormatVersion || trailerStructPtr->randomID != theHeader->randomID) {
         log_println("inconsistent trailer");
 #if !MEMORY_IMAGE
         offset = lseek(fd, -sizeof(trailerStruct), SEEK_END);
@@ -291,7 +294,7 @@ static void checkTrailer(int fd) {
 #else
         trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_end) - sizeof(trailerStruct));
 #endif
-        if (trailerStructPtr->identification == theHeader->identification && trailerStructPtr->version == theHeader->version && trailerStructPtr->randomID == theHeader->randomID) {
+        if (trailerStructPtr->identification == theHeader->identification && trailerStructPtr->bootImageFormatVersion == theHeader->bootImageFormatVersion && trailerStructPtr->randomID == theHeader->randomID) {
             log_println("FYI, found valid trailer at end of file");
         }
         exit(2);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,7 +91,7 @@ public final class BootImageTable extends InspectorTable {
             dummyLabel = new PlainLabel(inspection, "");
 
             addRow("identification:", new DataLabel.IntAsHex(inspection(), header.identification), null);
-            addRow("version:", new DataLabel.IntAsDecimal(inspection(),  header.version), null);
+            addRow("format version:", new DataLabel.IntAsDecimal(inspection(),  header.bootImageFormatVersion), null);
             addRow("random ID:", new DataLabel.IntAsHex(inspection(), header.randomID), null);
 
             addRow("build level:", new DataLabel.EnumAsText(inspection(), vmConfiguration.buildLevel), null);

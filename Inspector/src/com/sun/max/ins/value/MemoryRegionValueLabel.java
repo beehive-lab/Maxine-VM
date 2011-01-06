@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,7 +96,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
         }
         if (memoryRegion != null) {
             regionName = inspection().nameDisplay().shortName(memoryRegion);
-            toolTipText = inspection().nameDisplay().longName(memoryRegion);
+            toolTipText = "Value points into " + inspection().nameDisplay().longName(memoryRegion);
         }
         setText(regionName);
         setToolTipText(toolTipText);

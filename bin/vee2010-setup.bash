@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-# Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+# ----------------------------------------------------------------------------------------------------
+#
+# Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -20,6 +22,8 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
+#
+# ----------------------------------------------------------------------------------------------------
 #
 
 export VEE_TEST_OPTIONS="-timing-runs=5 -fail-fast=f -tests=specjvm98,dacapo -specjvm98=/proj/maxwell/specjvm98.zip -dacapo=/proj/maxwell/dacapo-2006-10-MR2.jar"
