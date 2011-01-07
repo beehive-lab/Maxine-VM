@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 #include "mutex.h"
 #include "log.h"
@@ -46,8 +48,8 @@ void mutex_initialize(Mutex mutex) {
     if (pthread_mutexattr_destroy(&mutex_attribute) != 0) {
         c_ASSERT(false);
     }
-#elif os_GUESTVMXEN
-    *mutex = guestvmXen_monitor_create();
+#elif os_MAXVE
+    *mutex = maxve_monitor_create();
 #   else
         c_UNIMPLEMENTED();
 #   endif
@@ -58,8 +60,8 @@ int mutex_enter_nolog(Mutex mutex) {
     return mutex_lock(mutex);
 #elif os_LINUX || os_DARWIN
     return pthread_mutex_lock(mutex);
-#elif os_GUESTVMXEN
-    if (guestvmXen_monitor_enter(*mutex) != 0) {
+#elif os_MAXVE
+    if (maxve_monitor_enter(*mutex) != 0) {
         c_ASSERT(false);
     }
     return 0;
@@ -80,8 +82,8 @@ int mutex_exit_nolog(Mutex mutex) {
     return mutex_unlock(mutex);
 #elif os_LINUX || os_DARWIN
     return pthread_mutex_unlock(mutex);
-#elif os_GUESTVMXEN
-    if (guestvmXen_monitor_exit(*mutex) != 0) {
+#elif os_MAXVE
+    if (maxve_monitor_exit(*mutex) != 0) {
         c_ASSERT(false);
     }
     return 0;
@@ -109,7 +111,7 @@ void mutex_dispose(Mutex mutex) {
     if (pthread_mutex_destroy(mutex) != 0) {
         c_ASSERT(false);
     }
-#elif os_GUESTVMXEN
+#elif os_MAXVE
     c_UNIMPLEMENTED();
 #endif
 }

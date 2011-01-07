@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 #include <stdlib.h>
 #include <unistd.h>
@@ -37,13 +39,13 @@ static int terminated = 0;    // target domain has terminated
 static struct db_thread *threads_at_rest = NULL;  // cache of threads on return from resume
 static int num_threads_at_rest;
 static volatile int suspend_all_request = 0;
-static struct guestvm_memory_handler db_memory_handler = {
+static struct maxve_memory_handler db_memory_handler = {
                 .readbytes = &db_readbytes,
                 .writebytes = &db_writebytes
 };
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeAttach(JNIEnv *env, jclass c, jint domainId, jlong extra1) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeAttach(JNIEnv *env, jclass c, jint domainId, jlong extra1) {
     // The agent can handle multiple connections serially, so we must re-initialize the static state
     terminated = 0;
     threads_at_rest = NULL;
@@ -54,7 +56,7 @@ Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeAtt
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeDetach(JNIEnv *env, jclass c) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeDetach(JNIEnv *env, jclass c) {
     tele_log_println("Calling do_detach");
     return db_detach();
 }
@@ -70,31 +72,31 @@ static struct db_regs *checked_get_regs(char *f, int threadId) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeSuspendAll(JNIEnv *env, jclass c) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeSuspendAll(JNIEnv *env, jclass c) {
 	suspend_all_request = 1;
 	return true;
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeSuspend(JNIEnv *env, jclass c, jint threadId) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeSuspend(JNIEnv *env, jclass c, jint threadId) {
     db_suspend(threadId);
     return 1;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeSingleStep(JNIEnv *env, jclass c, jint threadId) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeSingleStep(JNIEnv *env, jclass c, jint threadId) {
     int rc = db_single_step(threadId);
     return rc == 0;
 }
 
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint threadId, jlong ip) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint threadId, jlong ip) {
     return db_set_ip(threadId, ip);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeReadRegisters(JNIEnv *env, jclass c, jint threadId,
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeReadRegisters(JNIEnv *env, jclass c, jint threadId,
 		jbyteArray integerRegisters, jint integerRegistersLength,
 		jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
 		jbyteArray stateRegisters, jint stateRegistersLength) {
@@ -156,7 +158,7 @@ static ThreadState_t toThreadState(int state) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jlong tlaList, jlong primordialETLA) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jlong tlaList, jlong primordialETLA) {
     struct db_thread *threads;
     int num_threads;
 
@@ -209,7 +211,7 @@ void gather_and_trace_threads(void) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeResume(JNIEnv *env, jobject domain) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeResume(JNIEnv *env, jobject domain) {
     unsigned long sleep_time = 0;
     struct db_thread *threads;
     int num_threads, i;
@@ -263,32 +265,32 @@ Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeRes
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeGetBootHeapStart(JNIEnv *env, jclass c) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeGetBootHeapStart(JNIEnv *env, jclass c) {
     return db_app_specific1(0);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeSetTransportDebugLevel(JNIEnv *env, jclass c, jint level) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeSetTransportDebugLevel(JNIEnv *env, jclass c, jint level) {
     return db_debug(level);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeReadBytes(JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeReadBytes(JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
     return teleProcess_read(&db_memory_handler, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeWriteBytes(JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeWriteBytes(JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
     return teleProcess_write(&db_memory_handler, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeMaxByteBufferSize(JNIEnv *env, jclass c) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeMaxByteBufferSize(JNIEnv *env, jclass c) {
 	return db_multibytebuffersize();
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeActivateWatchpoint(JNIEnv *env, jclass c, jlong address, jlong size, jboolean after, jboolean read, jboolean write, jboolean exec) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeActivateWatchpoint(JNIEnv *env, jclass c, jlong address, jlong size, jboolean after, jboolean read, jboolean write, jboolean exec) {
     int kind = 0;
     if (after) kind |= AFTER_W;
     if (read) kind |= READ_W;
@@ -299,7 +301,7 @@ Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeAct
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeDeactivateWatchpoint(JNIEnv *env, jclass c, jlong address, jlong size) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeDeactivateWatchpoint(JNIEnv *env, jclass c, jlong address, jlong size) {
 	return db_deactivate_watchpoint(address, size);
 }
 
@@ -314,7 +316,7 @@ static int get_wp_thread() {
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeReadWatchpointAddress(JNIEnv *env, jclass c) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeReadWatchpointAddress(JNIEnv *env, jclass c) {
 	int thread_id = get_wp_thread();
 	int kind;
 	if (thread_id < 0) {
@@ -325,7 +327,7 @@ Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeRea
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_GuestVMDBNativeTeleChannelProtocol_nativeReadWatchpointAccessCode(JNIEnv *env, jclass c) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeReadWatchpointAccessCode(JNIEnv *env, jclass c) {
 	int thread_id = get_wp_thread();
 	int kind;
 	if (thread_id < 0) {

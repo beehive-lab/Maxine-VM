@@ -1,25 +1,29 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.tele.type;
 
+import java.io.*;
+import java.text.*;
 import java.util.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
@@ -33,6 +37,8 @@ import com.sun.max.tele.util.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -52,9 +58,13 @@ import com.sun.max.vm.value.*;
  * @author Athul Acharya
  * @author Michael Van De Vanter
  */
-public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCache {
+public final class TeleClassRegistry extends AbstractTeleVMHolder implements MaxClassRegistry, TeleVMCache {
 
     private static final int TRACE_VALUE = 1;
+
+    private static final String entityName = "Class Registry";
+
+    private final String entityDescription;
 
     private final TimedTrace updateTracer;
 
@@ -78,6 +88,13 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
      * The number of classes loaded in the VM, known so far, that have been loaded since the registry was created.
      */
     private int dynamicallyLoadedClassCount = 0;
+
+    /**
+     * Classes, possibly not loaded, available on the classpath.
+     * Lazily initialized; can re re-initialized.
+     * @see #updateLoadableTypeDescriptorsFromClasspath()
+     */
+    private Set<TypeDescriptor> typesOnClasspath;
 
     /**
      * A list of indices in the class registry table that need processing after the {@link TeleHeap} is fully initialized.
@@ -119,13 +136,14 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
         final TimedTrace initTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         initTracer.begin();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
+        this.entityDescription = "Class loading and management for the " + vm().entityName();
 
         int count = 0;
         try {
-            final Reference classRegistryReference = vm().bootClassRegistryReference();
+            final Reference classRegistryReference = vm.bootClassRegistryReference();
 
             if (vm().getInterpreterUseLevel() > 0) {
-                final TeleReferenceValue classRegistryReferenceValue = TeleReferenceValue.from(vm(), classRegistryReference);
+                final TeleReferenceValue classRegistryReferenceValue = TeleReferenceValue.from(vm, classRegistryReference);
                 final int length = TeleInterpreter.execute(vm, ClassRegistry.class, "numberOfClassActors", SignatureDescriptor.fromJava(int.class),
                                 classRegistryReferenceValue).asInt();
 
@@ -197,6 +215,89 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
     }
 
 
+    public String entityName() {
+        return entityName;
+    }
+
+    public String entityDescription() {
+        return entityDescription;
+    }
+
+    public MaxEntityMemoryRegion<MaxClassRegistry> memoryRegion() {
+        // The class registry has no VM memory allocated, other than for its constituent objects
+        return null;
+    }
+
+    public boolean contains(Address address) {
+        // Class registry not represented by a memory region
+        return false;
+    }
+
+    public Set<TypeDescriptor> typeDescriptors() {
+        return Collections.unmodifiableSet(typeDescriptorToClassActorReference.keySet());
+    }
+
+    public Iterable<TypeDescriptor> loadableTypeDescriptors() {
+        final SortedSet<TypeDescriptor> typeDescriptors = new TreeSet<TypeDescriptor>();
+        for (TypeDescriptor typeDescriptor : typeDescriptors()) {
+            typeDescriptors.add(typeDescriptor);
+        }
+        typeDescriptors.addAll(typesOnClasspath());
+        return typeDescriptors;
+    }
+
+    public void updateLoadableTypeDescriptorsFromClasspath() {
+        final Set<TypeDescriptor> typesOnClasspath = new TreeSet<TypeDescriptor>();
+        Trace.begin(TRACE_VALUE, tracePrefix() + "searching classpath for class files");
+        new ClassSearch() {
+            @Override
+            protected boolean visitClass(String className) {
+                if (!className.endsWith("package-info")) {
+                    final String typeDescriptorString = "L" + className.replace('.', '/') + ";";
+                    typesOnClasspath.add(JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString));
+                }
+                return true;
+            }
+        }.run(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath());
+        Trace.end(TRACE_VALUE, tracePrefix() + "searching classpath for class files ["
+                + typesOnClasspath.size() + " types found]");
+        this.typesOnClasspath = typesOnClasspath;
+    }
+
+    public TeleClassActor findTeleClassActor(int id) {
+        final Reference classActorReference = idToClassActorReference.get(id);
+        if (classActorReference != null && !classActorReference.isZero()) {
+            return (TeleClassActor) heap().makeTeleObject(classActorReference);
+        }
+        return null;
+    }
+
+    public TeleClassActor findTeleClassActor(TypeDescriptor typeDescriptor) {
+        final Reference classActorReference = typeDescriptorToClassActorReference.get(typeDescriptor);
+        if (classActorReference == null) {
+            // Class hasn't been loaded yet by the inspectee.
+            return null;
+        }
+        return (TeleClassActor) heap().makeTeleObject(classActorReference);
+    }
+
+    public TeleClassActor findTeleClassActor(Class javaClass) {
+        final Reference classActorReference = typeDescriptorToClassActorReference.get(JavaTypeDescriptor.forJavaClass(javaClass));
+        if (classActorReference == null) {
+            // Class hasn't been loaded yet by the inspectee.
+            return null;
+        }
+        return (TeleClassActor) heap().makeTeleObject(classActorReference);
+    }
+
+    public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        final NumberFormat formatter = NumberFormat.getInstance();
+        printStream.print(indentation + "Classes loaded: " + formatter.format(initialClassCount + dynamicallyLoadedClassCount) +
+                        " (initial: " + formatter.format(initialClassCount) +
+                        ", during session: " + formatter.format(dynamicallyLoadedClassCount) + ")\n");
+    }
+
     public void processAttachFixupList() {
         final TimedTrace timedTrace = new TimedTrace(TRACE_VALUE, tracePrefix() + " adding entries from attach fixup list");
         timedTrace.begin();
@@ -209,51 +310,6 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
     }
 
     /**
-     * @param id  Class ID of a {@link ClassActor} in the VM.
-     * @return surrogate for the {@link ClassActor} in the VM, null if not known.
-     */
-    public TeleClassActor findTeleClassActorByID(int id) {
-        final Reference classActorReference = idToClassActorReference.get(id);
-        if (classActorReference != null && !classActorReference.isZero()) {
-            return (TeleClassActor) heap().makeTeleObject(classActorReference);
-        }
-        return null;
-    }
-
-    /**
-     * @param typeDescriptor A local {@link TypeDescriptor}.
-     * @return surrogate for the equivalent {@link ClassActor} in the VM, null if not known.
-     */
-    public TeleClassActor findTeleClassActorByType(TypeDescriptor typeDescriptor) {
-        final Reference classActorReference = typeDescriptorToClassActorReference.get(typeDescriptor);
-        if (classActorReference == null) {
-            // Class hasn't been loaded yet by the inspectee.
-            return null;
-        }
-        return (TeleClassActor) heap().makeTeleObject(classActorReference);
-    }
-
-    /**
-     * @param javaClass   A local {@link Class} object.
-     * @return surrogate for the equivalent {@link ClassActor} in the VM, null if not known.
-     */
-    public TeleClassActor findTeleClassActorByClass(Class javaClass) {
-        final Reference classActorReference = typeDescriptorToClassActorReference.get(JavaTypeDescriptor.forJavaClass(javaClass));
-        if (classActorReference == null) {
-            // Class hasn't been loaded yet by the inspectee.
-            return null;
-        }
-        return (TeleClassActor) heap().makeTeleObject(classActorReference);
-    }
-
-    /**
-     * @return  {@link TypeDescriptor}s for all classes loaded in the VM.
-     */
-    public Set<TypeDescriptor> typeDescriptors() {
-        return Collections.unmodifiableSet(typeDescriptorToClassActorReference.keySet());
-    }
-
-    /**
      * @return surrogates for all {@link ClassActor}s loaded in the VM.
      */
     public ReferenceTypeProvider[] teleClassActors() {
@@ -263,6 +319,89 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
             result[index++] = (TeleClassActor) heap().makeTeleObject(classActorReference);
         }
         return result;
+    }
+
+    /**
+     * Gets the canonical local {@link ClassActor} corresponding to a
+     * {@link ClassActor} in the VM, creating it if needed.
+     * Creation is done by loading the class, either from the classpath if present, or
+     * by copying the classfile from the VM.  In either case the class is loaded by the
+     * {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
+     *
+     * @param classActorReference  a {@link ClassActor} in the VM.
+     * @return Local, canonical, equivalent {@link ClassActor} created by loading the same class.
+     * @throws InvalidReferenceException if the argument does not point to a valid heap object in the VM.
+     * @throws NoClassDefFoundError if the classfile is not on the classpath and the copy from the VM fails.
+     * @throws TeleError if a classfile copied from the VM is cannot be loaded
+     */
+    public ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
+        vm().checkReference(classActorReference);
+        final Reference utf8ConstantReference = vm().teleFields().Actor_name.readReference(classActorReference);
+        vm().checkReference(utf8ConstantReference);
+        final Reference stringReference = vm().teleFields().Utf8Constant_string.readReference(utf8ConstantReference);
+        final String name = vm().getString(stringReference);
+        try {
+            return makeClassActor(name);
+        } catch (ClassNotFoundException classNotFoundException) {
+            // Not loaded and not available on local classpath; load by copying classfile from the VM
+            final Reference byteArrayReference = vm().teleFields().ClassActor_classfile.readReference(classActorReference);
+            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) heap().makeTeleObject(byteArrayReference);
+            if (teleByteArrayObject == null) {
+                throw new NoClassDefFoundError(String.format("Could not retrieve class file from VM for %s%nTry using '%s' VM option to access generated class files.",
+                    name, ClassfileReader.saveClassDir));
+            }
+            final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
+            try {
+                return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.makeClassActor(name, classfile);
+            } catch (ClassFormatError classFormatError) {
+                final String msg = "in " + tracePrefix() + " unable to load classfile copied from VM, error message follows:\n   " + classFormatError;
+                TeleError.unexpected(msg, null);
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Gets a canonical local {@link ClassActor} for the named class, creating one if needed by loading the class from
+     * the classpath using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
+     *
+     * @param name the name of a class
+     * @return Local {@link ClassActor} corresponding to the class, possibly created by loading it from classpath.
+     * @throws ClassNotFoundException if not already loaded and unavailable on the classpath.
+     */
+    private ClassActor makeClassActor(String name) throws ClassNotFoundException {
+        // The VM registry includes all ClassActors for classes loaded locally
+        // using the prototype class loader
+        HostedBootClassLoader classLoader = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
+        synchronized (classLoader) {
+            ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString(name));
+            if (classActor == null) {
+                // Try to load the class from the local classpath.
+                if (name.endsWith("[]")) {
+                    classActor = ClassActorFactory.createArrayClassActor(makeClassActor(name.substring(0, name.length() - 2)));
+                } else {
+                    classActor = classLoader.makeClassActor(
+                                    JavaTypeDescriptor.getDescriptorForWellFormedTupleName(name));
+                }
+            }
+            return classActor;
+        }
+    }
+
+    /**
+     * Gets a canonical local {@classActor} corresponding to the type of a heap object in the VM, creating one if
+     * needed by loading the class using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER} from either the
+     * classpath, or if not found on the classpath, by copying the classfile from the VM.
+     *
+     * @param objectReference An {@link Object} in the VM heap.
+     * @return Local {@link ClassActor} representing the type of the object.
+     * @throws InvalidReferenceException
+     */
+    public ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException {
+        vm().checkReference(objectReference);
+        final Reference hubReference = vm().wordToReference(Layout.readHubReferenceAsWord(objectReference));
+        final Reference classActorReference = vm().teleFields().Hub_classActor.readReference(hubReference);
+        return makeClassActor(classActorReference);
     }
 
     /**
@@ -291,11 +430,22 @@ public class TeleClassRegistry extends AbstractTeleVMHolder implements TeleVMCac
         if (classActor == null) {
             final Reference classActorReference = idToClassActorReference.get(id);
             if (classActorReference != null) {
-                classActor = vm().makeClassActor(classActorReference);
+                classActor = makeClassActor(classActorReference);
                 idToClassActor.put(id, classActor);
             }
         }
         return classActor;
+    }
+
+    /**
+     * @return classes, possibly loaded, not available on the classpath.
+     */
+    private Set<TypeDescriptor> typesOnClasspath() {
+        if (typesOnClasspath == null) {
+            // Delayed initialization, because this can take some time.
+            updateLoadableTypeDescriptorsFromClasspath();
+        }
+        return typesOnClasspath;
     }
 
     private static ThreadLocal<Boolean> usingTeleClassIDs = new ThreadLocal<Boolean>() {
