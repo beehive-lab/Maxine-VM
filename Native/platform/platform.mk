@@ -1,22 +1,24 @@
 #
-# Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
-# 
-# Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product 
-# that is described in this document. In particular, and without limitation, these intellectual property 
-# rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or 
-# more additional patents or pending patent applications in the U.S. and in other countries.
-# 
-# U.S. Government Rights - Commercial software. Government users are subject to the Sun 
-# Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its 
-# supplements.
-# 
-# Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or 
-# registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks 
-# are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the 
-# U.S. and other countries.
+# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
-# UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open 
-# Company, Ltd.
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
 # Currently all Maxine target implementations are 64 bit. 
@@ -50,7 +52,7 @@ endif
 HOSTOS = $(shell uname -s)
 # TARGETOS is the platform we are compiling for (usually the same as HOSTOS)
 # Set TARGETOS explicitly to cross-compile for a different target 
-# (required for GuestVM/Xen when building tele/inspector)
+# (required for Maxine VE when building tele/inspector)
 TARGETOS ?= $(shell uname -s)
 
 ifeq ($(TARGETOS),Darwin)
@@ -117,32 +119,32 @@ ifeq ($(findstring CYGWIN,$(TARGETOS)),CYGWIN)
     ISA := ia32
 endif
 
-# There are three variants for Guest VM, owing to the 32/64 dom0 variants
-# GuestVM: 64 bit dom0, Inspector running in dom0, with libtele referencing 64-bit libguk/libxen*
-# GuestVM64H: Inspector running in domU, with 64 bit libtele not referencing libguk/libxen
-# GuestVM32T: 32 bit dom0, Inspector agent running in dom0, with 32 bit libtele referencing 32 bit libguk/libxen
+# There are three variants for Maxine VE, owing to the 32/64 dom0 variants
+# MaxVE: 64 bit dom0, Inspector running in dom0, with libtele referencing 64-bit libguk/libxen*
+# MaxVE64H: Inspector running in domU, with 64 bit libtele not referencing libguk/libxen
+# MaxVE32T: 32 bit dom0, Inspector agent running in dom0, with 32 bit libtele referencing 32 bit libguk/libxen
 
-ifeq ($(TARGETOS),GuestVM)
+ifeq ($(TARGETOS),MaxVE)
     HYP := xen
-    OS := guestvm
+    OS := maxve
     TELEBITS := 64
     GUK := 1
     ISA := amd64
     ARCH := amd64
 endif
 
-ifeq ($(TARGETOS),GuestVM64H)
+ifeq ($(TARGETOS),MaxVE64H)
     HYP := xen
-    OS := guestvm
+    OS := maxve
     TELEBITS := 64
     GUK := 0
     ISA := amd64
     ARCH := amd64
 endif
 
-ifeq ($(TARGETOS),GuestVM32T)
+ifeq ($(TARGETOS),MaxVE32T)
     HYP := xen
-    OS := guestvm
+    OS := maxve
     TELEBITS := 32
     GUK := 1
     ISA := amd64
@@ -245,7 +247,7 @@ ifeq ($(OS),windows)
     LIB_SUFFIX = .dll
 endif
 
-ifeq ($(OS),guestvm)
+ifeq ($(OS),maxve)
     # assume Xen hypervisor
     ifeq ($(TARGET),TELE)
         ifeq ($(TELEBITS),64)
@@ -266,9 +268,9 @@ ifeq ($(OS),guestvm)
         CFLAGS = -g -Wall -Wno-format -Wpointer-arith -Winline \
                   $(mf) -mno-red-zone -fpic -fno-reorder-blocks \
                   -fno-asynchronous-unwind-tables -fno-builtin \
-                  -DGUESTVMXEN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
+                  -DMAXVE -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     endif
-    C_DEPENDENCIES_FLAGS = -M -DGUESTVMXEN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
+    C_DEPENDENCIES_FLAGS = -M -DMAXVE -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     ifeq ($(HOSTOS),Linux)
         CFLAGS += -fno-stack-protector 
     endif
@@ -299,8 +301,8 @@ ifndef JAVA_HOME
 endif
 
 
-ifeq ($(OS),guestvm)
-    # no guestvm in your typical JAVA_HOME so have to use host 
+ifeq ($(OS),maxve)
+    # no maxve in your typical JAVA_HOME so have to use host 
     ifeq ($(HOSTOS),Darwin)
         HOSTOS_LC = darwin
     endif

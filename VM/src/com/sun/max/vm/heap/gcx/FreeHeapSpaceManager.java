@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.vm.heap.gcx;
 
@@ -49,20 +51,18 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
 
-    private static final VMIntOption freeChunkMinSizeOption =
-        register(new VMIntOption("-XX:FreeChunkMinSize=", 256,
-                        "Minimum size of contiguous space considered for space reclamation." +
-                        "Below this size, the space is ignored (dark matter)"),
-                        MaxineVM.Phase.PRISTINE);
-
     private static boolean TraceSweep = false;
     private static boolean TraceTLAB = false;
 
-    class LinearSpaceRefillManager extends LinearSpaceAllocator.RefillManager {
+    class LinearSpaceRefillManager extends MultiChunkTLABAllocator.RefillManager {
         /**
          * Size linear space allocated managed by this refill manager are refilled with.
          */
         Size refillSize;
+        /**
+         * Amount of space below which a refill is warranted. Also used as the minimum acceptable size
+         * for a TLAB chunk, when allocation discontinuous TLABs.
+         */
         Size refillThreshold;
 
         LinearSpaceRefillManager() {
@@ -81,13 +81,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
         @Override
         @INLINE(override = true)
-        Address allocateTLAB(Size size) {
-            return binAllocateTLAB(size);
-        }
-
-        @Override
-        @INLINE(override = true)
-        boolean shouldRefill(Size spaceLeft) {
+        boolean shouldRefill(Size requestedSpace, Size spaceLeft) {
             return spaceLeft.lessThan(refillThreshold);
         }
 
@@ -95,6 +89,31 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         @INLINE(override = true)
         Address refill(Pointer startOfSpaceLeft, Size spaceLeft) {
             return binRefill(refillSize, startOfSpaceLeft, spaceLeft);
+        }
+
+        /**
+         * Allocate a TLAB and refill the allocator along the way.
+         * If possible, the remaining space in the allocator is used for the TLAB.
+         * The allocator is refilled only if there is enough space, otherwise it is left full
+         * which will trigger GC on next request.
+         */
+        @Override
+        Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
+            Address firstChunk = Address.zero();
+            if (leftoverSize.greaterThan(0)) {
+                if (leftoverSize.lessThan(refillThreshold)) {
+                    // Don't bother with the left over in the allocator.
+                    HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(leftoverSize));
+                } else {
+                    HeapFreeChunk.format(leftover, leftoverSize);
+                    tlabSize = tlabSize.minus(leftoverSize);
+                    if (tlabSize.lessThan(refillThreshold)) {
+                        return leftover;
+                    }
+                    firstChunk = leftover;
+                }
+            }
+            return binAllocateTLAB(tlabSize, firstChunk);
         }
     }
 
@@ -105,7 +124,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
     private boolean useTLABBin;
 
-    private final LinearSpaceAllocator smallObjectAllocator;
+    private final MultiChunkTLABAllocator smallObjectAllocator;
 
 
     /**
@@ -214,7 +233,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
                     if (spaceLeft.greaterEqual(minReclaimableSpace)) {
                         // Space is allocated at the end of the chunk to avoid reformatting the leftover
                         // if it doesn't change bins.
-                        // FIXME: need to revisit the API to clear distinguish the cases when what's needed is formatted chunks
+                        // FIXME: need to revisit the API to clearly distinguish the cases when what's needed is formatted chunks
                         // (e.g., when allocating for allocators, like TLABs), or when all that is needed is bytes (i.e., for direct object allocation)
                         result = result.plus(spaceLeft);
                         HeapFreeChunk.format(result, size);
@@ -368,13 +387,22 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
      * @param size
      * @return  the address of the first chunks allocated to the TLAB
      */
-    private synchronized Address binAllocateTLAB(Size size) {
+    private synchronized Address binAllocateTLAB(Size size, Address firstChunk) {
         long requiredSpace = size.toLong();
         // First, try to allocate from the TLAB bin.
         if (tlabFreeSpaceList.totalSize > requiredSpace) {
             Address result = tlabFreeSpaceList.allocateChunks(size);
             checkBinFreeSpace();
-            return result;
+            if (firstChunk.isZero()) {
+                return result;
+            }
+            HeapFreeChunk.setFreeChunkNext(firstChunk, result);
+            return firstChunk;
+        }
+        // Here, we can't use firstChunk after any call to allocate as a GC might occur
+        // and invalidate it. Simplest is to put it back in the pool of free space.
+        if (!firstChunk.isZero()) {
+            recordFreeSpace(firstChunk, HeapFreeChunk.getFreechunkSize(firstChunk));
         }
         // In any case, after this call, there will be no more TLAB chunks left.
         // Let future TLAB allocation not use this until filled again by GC.
@@ -416,6 +444,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         useTLABBin = false;
         return initialChunks;
     }
+
 
     synchronized Address binAllocate(Size size) {
         return  binAllocate(binIndex(size), size, true);
@@ -628,12 +657,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
             freeChunkBins[i] = new FreeSpaceList(i);
         }
         tlabFreeSpaceList = freeChunkBins[0];
-        smallObjectAllocator = new LinearSpaceAllocator(new LinearSpaceRefillManager());
-    }
-
-    @HOSTED_ONLY
-    public void hostInitialize() {
-        smallObjectAllocator.hostInitialize();
+        smallObjectAllocator = new MultiChunkTLABAllocator(new LinearSpaceRefillManager());
     }
 
     public void initialize(HeapScheme heapScheme, Address start, Size initSize, Size maxSize) {
@@ -650,10 +674,13 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         TraceSweep = MaxineVM.isDebug() ? traceSweepingOption.getValue() : false;
         TraceTLAB = heapScheme instanceof HeapSchemeWithTLAB && HeapSchemeWithTLAB.traceTLAB();
 
+        // Refill TLAB on TLAB overflow if less than this:
+        Size tlabRefillThreshold = Size.fromInt(Word.widthValue().numberOfBytes * 64);
+
         // Dumb refill policy. Doesn't matter in the long term as we'll switch to a first fit linear allocator with overflow allocator on the side.
         LinearSpaceRefillManager refillManager = (LinearSpaceRefillManager) smallObjectAllocator.refillManager();
-        refillManager.setRefillPolicy(minLargeObjectSize, Size.fromInt(Word.widthValue().numberOfBytes * 64));
-        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minReclaimableSpace);
+        refillManager.setRefillPolicy(minLargeObjectSize, tlabRefillThreshold);
+        smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
         useTLABBin = false;
     }
 
@@ -727,7 +754,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
     @INLINE
     public final Pointer allocateTLAB(Size size) {
-        return useTLABBin ? binAllocateTLAB(size).asPointer() : smallObjectAllocator.allocateTLAB(size);
+        return useTLABBin ? binAllocateTLAB(size, Address.zero()).asPointer() : smallObjectAllocator.allocateTLAB(size);
     }
 
     /**

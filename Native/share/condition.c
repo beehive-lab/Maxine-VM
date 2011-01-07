@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 #include <sys/time.h>
 #include <time.h>
@@ -42,8 +44,8 @@ void condition_initialize(Condition condition) {
     if (pthread_cond_init(condition, NULL) != 0) {
         c_FATAL();
     }
-#elif os_GUESTVMXEN
-    *condition = guestvmXen_condition_create();
+#elif os_MAXVE
+    *condition = maxve_condition_create();
 #else
 #   error
 #endif
@@ -64,7 +66,7 @@ void condition_destroy(Condition condition) {
 #endif
 }
 
-#if os_GUESTVMXEN
+#if os_MAXVE
 #   define ETIMEDOUT -1
 #endif
 
@@ -94,8 +96,8 @@ boolean condition_wait(Condition condition, Mutex mutex) {
 #endif
         return true;
     }
-#elif os_GUESTVMXEN
-    error = guestvmXen_condition_wait(*condition, *mutex, 0);
+#elif os_MAXVE
+    error = maxve_condition_wait(*condition, *mutex, 0);
     if (error == 1) {
         /* (Doug) I assume 1 means EINTR */
         return true;
@@ -188,11 +190,11 @@ boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 #endif
 	    return true;
 	}
-#elif os_GUESTVMXEN
-	struct guestvmXen_TimeSpec reltime;
+#elif os_MAXVE
+	struct maxve_TimeSpec reltime;
 	reltime.tv_sec = timeoutMilliSeconds / 1000;
 	reltime.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
-	error = guestvmXen_condition_wait(*condition, *mutex, &reltime);
+	error = maxve_condition_wait(*condition, *mutex, &reltime);
 	if (error == 1) {
 	    /* (Doug) I assume 1 means EINTR */
 	    return true;
@@ -219,8 +221,8 @@ boolean condition_notify(Condition condition) {
     return pthread_cond_signal(condition) == 0;
 #elif os_SOLARIS
     return cond_signal(condition) == 0;
-#elif os_GUESTVMXEN
-    return guestvmXen_condition_notify(*condition, 0) == 0;
+#elif os_MAXVE
+    return maxve_condition_notify(*condition, 0) == 0;
 #else
 #  error
 #endif
@@ -234,8 +236,8 @@ boolean condition_notifyAll(Condition condition) {
     return pthread_cond_broadcast(condition) == 0;
 #elif os_SOLARIS
     return cond_broadcast(condition) == 0;
-#elif os_GUESTVMXEN
-    return guestvmXen_condition_notify(*condition, 1) == 0;
+#elif os_MAXVE
+    return maxve_condition_notify(*condition, 1) == 0;
 #else
 #   error
 #endif

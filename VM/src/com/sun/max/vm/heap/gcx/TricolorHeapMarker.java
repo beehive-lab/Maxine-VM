@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.vm.heap.gcx;
 
@@ -171,17 +173,17 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     final int log2BytesCoveredPerBit;
     /**
-     * Log 2 to get bitmap word index from an address.
+     * Log 2 to compute the bitmap word index from an offset from the beginning of the covered area.
      */
     final int log2BitmapWord;
 
     /**
-     * Start of the heap area covered by the mark bitmap.
+     * Start of the contiguous range of addresses covered by the mark bitmap.
      */
     Address coveredAreaStart;
 
     /**
-     * End of the heap area covered by the mark bitmap.
+     * End of the contiguous range of addresses  covered by the mark bitmap.
      */
     Address coveredAreaEnd;
 
@@ -1047,6 +1049,21 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             return heapMarker.bitmapWordIndex(endOfRightmostVisitedObject());
         }
 
+        public void visitGreyObjects(int rangeLeftmostWordIndex, int rangeRightmostBitmapWordIndex) {
+            // TODO
+            FatalError.unimplemented();
+        }
+
+        public void visitGreyObjects(HeapRegionRangeIterable regions, int log2RegionToBitmapWord) {
+            while (regions.hasNext()) {
+                final RegionRange regionRange = regions.next();
+                final int firstRegion = regionRange.firstRegion();
+                final int rangeLeftmostWordIndex = firstRegion << log2RegionToBitmapWord;
+                final int rangeRightmostBitmapWordIndex = (firstRegion + regionRange.numRegions()) << log2RegionToBitmapWord;
+                visitGreyObjects(rangeLeftmostWordIndex, rangeRightmostBitmapWordIndex);
+            }
+        }
+
         @Override
         public void visitGreyObjects() {
             final Pointer colorMapBase = heapMarker.base.asPointer();
@@ -1719,6 +1736,28 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     /**
+     * Visit all objects marked grey during root marking that resides in list of memory region ranges.
+     * Regions are numbered from 0, where in the address to the first bytes of region 0 coincide with
+     * the covered area's start address.
+     *
+     * @param regions an ordered list of region ranges
+     * @param log2RegionSizeInBytes the power of 2 of the size of the regions
+     */
+    void visitAllGreyObjects(HeapRegionRangeIterable regions, int log2RegionSizeInBytes) {
+        forwardScanState.rightmost = rootCellVisitor.rightmost;
+        forwardScanState.finger = rootCellVisitor.leftmost;
+        forwardScanState.numMarkinkgStackOverflow = 0;
+        overflowLinearScanState.numMarkinkgStackOverflow = 0;
+        currentScanState = forwardScanState;
+        overflowScanState.markingStackFlusher().setScanState(currentScanState);
+
+        // For simplicity, we disallow region smaller than 1 << log2BitmapWord (i.e., 512 bytes if word is 8 bytes).
+        FatalError.check(log2RegionSizeInBytes >= log2BitmapWord, "Region size too small for heap marker");
+        final int log2RegionToBitmapWord = log2RegionSizeInBytes - log2BitmapWord;
+        forwardScanState.visitGreyObjects(regions, log2RegionToBitmapWord);
+    }
+
+    /**
      * Visit all objects marked grey during root marking.
      */
     void visitAllGreyObjects() {
@@ -1919,6 +1958,36 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
         verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
     }
+
+    /**
+     * Mark all live objects that resides in the heap regions enumerated by the iterable region range.
+     * @param heapRegions
+     * @param log2RegionSize
+     */
+    public void markAll(HeapRegionRangeIterable heapRegions, int log2RegionSize) {
+        traceGCTimes = Heap.traceGCTime();
+        if (traceGCTimes) {
+            recoveryScanTimer.reset();
+        }
+
+        clearColorMap();
+        if (MaxineVM.isDebug()) {
+            FatalError.check(markingStack.isEmpty(), "Marking stack must be empty");
+        }
+        markRoots();
+        if (Heap.traceGCPhases()) {
+            Log.println("Tracing grey objects...");
+        }
+        startTimer(heapMarkingTimer);
+        visitAllGreyObjects(heapRegions, log2RegionSize);
+        stopTimer(heapMarkingTimer);
+        if (traceGCTimes) {
+            totalRecoveryScanCount += recoveryScanTimer.getCount();
+            totalRecoveryElapsedTime += recoveryScanTimer.getElapsedTime();
+        }
+        verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
+    }
+
 
     private static final class RefForwarder implements SpecialReferenceManager.ReferenceForwarder {
         final TricolorHeapMarker heapMarker;
