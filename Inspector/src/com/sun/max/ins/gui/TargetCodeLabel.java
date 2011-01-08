@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,12 @@ import com.sun.max.ins.*;
  */
 public class TargetCodeLabel extends InspectorLabel {
 
+    /**
+     * Creates an opaque textual label suitable for a program element name, to
+     * be displayed in bold.
+     * @param inspection
+     * @param text
+     */
     public TargetCodeLabel(Inspection inspection, String text) {
         super(inspection, text);
         setOpaque(true);
@@ -41,6 +47,12 @@ public class TargetCodeLabel extends InspectorLabel {
         // no remote data to refresh.
     }
 
+    /**
+     * Sets the displayed text of the label, displayed in bold, as well as tool tip text.
+     *
+     * @param text the text for the label
+     * @param toolTipText tool tip text for the label
+     */
     public void setValue(String text, String toolTipText) {
         setText("<html><b>" + text + "</b>");
         setToolTipText(toolTipText);
@@ -49,6 +61,11 @@ public class TargetCodeLabel extends InspectorLabel {
     @Override
     public void setText(String text) {
         super.setText("<html><b>" + text + "</b>");
+    }
+
+    @Override
+    public void setWrappedText(String text) {
+        super.setWrappedText("<html><b>" + text + "</b>");
     }
 
     public final void redisplay() {

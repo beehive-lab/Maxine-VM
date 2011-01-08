@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,6 +103,28 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     private final String tracePrefix;
 
     /**
+     * An optional string that can be prepended to every label's text.
+     */
+    private String textPrefix;
+
+
+    /**
+     * An optional string that can be appended to every label's text.
+     */
+    private String textSuffix;
+
+    /**
+     * An optional string that can be prepended to every label tooltip text.
+     */
+    private String toolTipPrefix;
+
+
+    /**
+     * An optional string that can be appended to every label tooltip text.
+     */
+    private String toolTipSuffix;
+
+    /**
      * A label for use in the inspector, by default not opaque.
      *
      * @param text label text
@@ -164,6 +186,98 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     }
 
     /**
+     * Sets text to be prepended to every subsequently "wrapped" label text, with an additional
+     * space inserted between.
+     *
+     * @param textPrefix prefix for every text display.
+     * @see #setWrappedText(String)
+     */
+    public final void setTextPrefix(String textPrefix) {
+        if (textPrefix == null || textPrefix.equals("")) {
+            this.textPrefix = null;
+        } else {
+            this.textPrefix = textPrefix + " ";
+        }
+    }
+
+    /**
+     * Sets text to be appended to every subsequently "wrapped" label text, with an additional
+     * space inserted between.
+     *
+     * @param textSuffix suffix for every text display.
+     * @see #setWrappedText(String)
+     */
+    public final void setTextSuffix(String textSuffix) {
+        if (textSuffix == null || textSuffix.equals("")) {
+            this.textSuffix = null;
+        } else {
+            this.textSuffix = " " + textSuffix;
+        }
+    }
+
+    /**
+     * Sets the label's text to the specified string, but wrapped
+     * by an optional prefix and an optional suffix.
+     *
+     * @param text the text to be wrapped and set as the label's text.
+     * @see #setTextPrefix(String)
+     * @see #setTextSuffix(String)
+     * @see #setText(String)
+     */
+    public void setWrappedText(String text) {
+        String wrappedText = text;
+        wrappedText = textPrefix == null ? wrappedText : textPrefix + wrappedText;
+        wrappedText = textSuffix == null ? wrappedText : wrappedText + textSuffix;
+        super.setText(wrappedText);
+    }
+
+    /**
+     * Sets text to be prepended to every subsequently "wrapped" tooltip, with an additional
+     * space inserted between.
+     *
+     * @param toolTipPrefix prefix for every tooltip display.
+     * @see #setWrappedToolTipText(String)
+     */
+    public final void setToolTipPrefix(String toolTipPrefix) {
+        if (toolTipPrefix == null || toolTipPrefix.equals("")) {
+            this.toolTipPrefix = null;
+        } else {
+            this.toolTipPrefix = toolTipPrefix + " ";
+        }
+    }
+
+    /**
+     * Sets text to be appended to every subsequently "wrapped" tooltip, with an additional
+     * space inserted between.
+     *
+     * @param toolTipSuffix suffix for every tooltip display.
+     * @see #setWrappedToolTipText(String)
+     */
+    public final void setToolTipSuffix(String toolTipSuffix) {
+        if (toolTipSuffix == null || toolTipSuffix.equals("")) {
+            this.toolTipSuffix = null;
+        } else {
+            this.toolTipSuffix = " " + toolTipSuffix;
+        }
+    }
+
+    /**
+     * Sets the label's tool tip text to the specified string, but wrapped
+     * by an optional prefix and an optional suffix.
+     *
+     * @param toolTipText the text to be wrapped and set as the label's tool tip text.
+     * @see #setToolTipPrefix(String)
+     * @see #setToolTispSuffix(String)
+     * @see #setToolTipText(String)
+     */
+    public final void setWrappedToolTipText(String toolTipText) {
+        String wrappedText = toolTipText;
+        wrappedText = toolTipPrefix == null ? wrappedText : toolTipPrefix + wrappedText;
+        wrappedText = toolTipSuffix == null ? wrappedText : wrappedText + toolTipSuffix;
+        super.setToolTipText(wrappedText);
+    }
+
+    /**
      * Enables support for this label to act as a <strong>source</strong> for drag
      * and drop operations (copy only, not move).
      * <br>
@@ -179,6 +293,13 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
             dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, new InspectorLabelDragSource());
             dragSourceEnabled = true;
         }
+    }
+
+    /**
+     * @return the dragSourceEnabled
+     */
+    protected boolean isDragSourceEnabled() {
+        return dragSourceEnabled;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -293,10 +293,11 @@ public final class ObjectFieldsTable extends InspectorTable {
 
     }
 
-    private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
+    private final class AddressRenderer extends LocationLabel.AsAddressWithByteOffset implements TableCellRenderer {
 
         AddressRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Field memory address");
             setOpaque(true);
         }
 
@@ -312,6 +313,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         public PositionRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Field memory address");
             setOpaque(true);
         }
 
@@ -378,18 +380,17 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            InspectorLabel label = labels[row];
-            if (label == null) {
+            if (labels[row] == null) {
                 final FieldActor fieldActor = (FieldActor) value;
                 if (fieldActor.kind.isReference) {
-                    label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
+                    labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return teleObject.readFieldValue(fieldActor);
                         }
                     };
                 } else if (fieldActor.kind.isWord) {
-                    label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
+                    labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return teleObject.readFieldValue(fieldActor);
@@ -397,20 +398,19 @@ public final class ObjectFieldsTable extends InspectorTable {
                     };
                 } else if (isTeleActor && fieldActor.name.toString().equals("flags")) {
                     final TeleActor teleActor = (TeleActor) teleObject;
-                    label = new ActorFlagsValueLabel(inspection(), teleActor);
+                    labels[row] = new ActorFlagsValueLabel(inspection(), teleActor);
                 } else {
-                    label = new PrimitiveValueLabel(inspection(), fieldActor.kind) {
+                    labels[row] = new PrimitiveValueLabel(inspection(), fieldActor.kind) {
                         @Override
                         public Value fetchValue() {
                             return teleObject.readFieldValue(fieldActor);
                         }
                     };
                 }
-                label.setOpaque(true);
-                labels[row] = label;
+                labels[row].setOpaque(true);
             }
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
+            labels[row].setBackground(cellBackgroundColor(isSelected));
+            return labels[row];
         }
     }
 
@@ -438,20 +438,17 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            InspectorLabel label = labels[row];
-            if (label == null) {
+            if (labels[row] == null) {
                 final FieldActor fieldActor = (FieldActor) value;
-                label = new MemoryRegionValueLabel(inspection()) {
+                labels[row] = new MemoryRegionValueLabel(inspection(), "Field value") {
                     @Override
                     public Value fetchValue() {
                         return teleObject.readFieldValue(fieldActor);
                     }
                 };
-                label.setOpaque(true);
-                labels[row] = label;
             }
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
+            labels[row].setBackground(cellBackgroundColor(isSelected));
+            return labels[row];
         }
     }
 

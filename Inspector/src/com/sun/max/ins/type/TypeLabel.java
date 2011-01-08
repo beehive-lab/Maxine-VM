@@ -66,11 +66,11 @@ public class TypeLabel extends InspectorLabel {
                     final InspectorPopupMenu menu = new InspectorPopupMenu();
                     final boolean enabled = teleClassActor != null;
 
-                    final InspectorAction inspectActorAction = actions().inspectObject(teleClassActor, "Inspect ClassActor (Left-Button)");
+                    final InspectorAction inspectActorAction = actions().inspectObject(teleClassActor, "Inspect ClassActor for this type (Left-Button)");
                     inspectActorAction.setEnabled(enabled);
                     menu.add(inspectActorAction);
 
-                    final InspectorAction inspectMemoryWordsAction = actions().inspectObjectMemoryWords(teleClassActor, "Inspect ClassActor memory words");
+                    final InspectorAction inspectMemoryWordsAction = actions().inspectObjectMemoryWords(teleClassActor, "Inspect memory for this type's ClassActor");
                     inspectMemoryWordsAction.setEnabled(enabled);
                     menu.add(inspectMemoryWordsAction);
 
@@ -123,15 +123,16 @@ public class TypeLabel extends InspectorLabel {
     private void updateText() {
         if (typeDescriptor == null) {
             setText("");
-            setToolTipText("");
+            setToolTipText("<no type available>");
         } else {
             final Class javaType = typeDescriptor.resolveType(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER);
-            setText(javaType.getSimpleName());
+            final String typeName = javaType.getSimpleName();
+            setText(typeName);
             if (teleClassActor == null) {
                 setForeground(style().javaUnresolvedNameColor());
                 setToolTipText("<unloaded>" +  javaType.getName());
             } else {
-                setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
+                setToolTipText("Field/element type=" + typeName + " (represented by: " + inspection().nameDisplay().referenceToolTipText(teleClassActor) + ")");
             }
         }
     }

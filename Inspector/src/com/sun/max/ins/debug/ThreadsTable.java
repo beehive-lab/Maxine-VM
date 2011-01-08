@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -241,7 +241,7 @@ public final class ThreadsTable extends InspectorTable {
                 }
             }
             setText(kind);
-            setToolTipText("Kind:  " + kind);
+            setToolTipText("Thread kind:  " + kind);
             setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
@@ -257,7 +257,7 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
-            setValue(inspection().nameDisplay().shortName(thread), "Name:  " + inspection().nameDisplay().longName(thread));
+            setValue(inspection().nameDisplay().shortName(thread), "Thread name:  " + inspection().nameDisplay().longName(thread));
             setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;

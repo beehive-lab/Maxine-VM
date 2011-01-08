@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.debug;
 
+
+
 import java.awt.*;
 
 import javax.swing.*;
@@ -42,11 +44,14 @@ public final class RegistersTable extends InspectorTable {
 
     private static final Color[] ageColors = {Color.RED, Color.MAGENTA, Color.BLUE};
 
+    private final String cpuName;
     private final RegistersTableModel tableModel;
     private RegistersColumnModel columnModel;
 
     public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
+
+        cpuName = vm().getCPUName();
         tableModel = new RegistersTableModel(inspection, thread);
         columnModel = new RegistersColumnModel(viewPreferences);
         configureMemoryTable(tableModel, columnModel);
@@ -154,12 +159,14 @@ public final class RegistersTable extends InspectorTable {
 
         NameCellRenderer(Inspection inspection) {
             super(inspection, null);
+            setToolTipPrefix("Register name (" + cpuName + "):");
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final RegisterHistory registerHistory = (RegisterHistory) value;
             final String name = registerHistory.name();
-            setValue(name, "Register " + name);
+            setText(name);
+            setWrappedToolTipText(name);
             final int age = registerHistory.age();
             if (age < 0 || age >= ageColors.length) {
                 setForeground(null);
@@ -216,7 +223,7 @@ public final class RegistersTable extends InspectorTable {
 
     private final class RegionCellRenderer implements TableCellRenderer, Prober {
 
-        private MemoryRegionValueLabel[] labels = new MemoryRegionValueLabel[tableModel.getRowCount()];
+        private ValueLabel[] labels = new ValueLabel[tableModel.getRowCount()];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -236,15 +243,26 @@ public final class RegistersTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final RegisterHistory registerHistory = (RegisterHistory) value;
-            MemoryRegionValueLabel label = labels[row];
-            if (label == null) {
-                label = new MemoryRegionValueLabel(inspection());
-                label.setOpaque(true);
-                labels[row] = label;
+            if (labels[row] == null) {
+                switch(tableModel.getValueMode(row)) {
+                    case WORD:
+                    case REFERENCE:
+                    case LITERAL_REFERENCE:
+                    case INTEGER_REGISTER:
+                    case CALL_ENTRY_POINT:
+                    case CALL_RETURN_POINT:
+                        labels[row] = new MemoryRegionValueLabel(inspection(), "Register value");
+                        break;
+                    default:
+                        // Don't even try to figure what region some register values might
+                        // point into, for example floats.  This suppresses the default tooltip,
+                        // which announces that the value points into no known region.
+                        labels[row] = new NullValueLabel(inspection());
+                }
             }
-            label.setValue(registerHistory.value());
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
+            labels[row].setValue(registerHistory.value());
+            labels[row].setBackground(cellBackgroundColor(isSelected));
+            return labels[row];
         }
     }
 }

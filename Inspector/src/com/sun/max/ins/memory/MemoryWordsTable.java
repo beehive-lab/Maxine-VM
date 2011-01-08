@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -349,6 +349,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
         public WordOffsetRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Memory address");
             setOpaque(true);
         }
 
@@ -368,6 +369,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
         public OffsetRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Memory address");
             setOpaque(true);
         }
 
@@ -544,8 +546,7 @@ public final class MemoryWordsTable extends InspectorTable {
         // Designed so that we only read memory lazily, for words that are visible
         // This label has no state, so we only need one.
         RegionRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
+            super(inspection, "Value");
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
