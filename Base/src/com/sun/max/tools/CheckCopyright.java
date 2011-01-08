@@ -276,15 +276,15 @@ public class CheckCopyright {
         while (ix < logInfo.size()) {
             String s = logInfo.get(ix++);
             assert s.startsWith("changeset");
-            // process every entry in a given change set
             s = logInfo.get(ix++);
+            // process every entry in a given change set
+            if (s.startsWith("tag")) {
+                s = logInfo.get(ix++);
+            }
             if (s.startsWith("branch")) {
                 s = logInfo.get(ix++);
             }
             while (s.startsWith("parent")) {
-                s = logInfo.get(ix++);
-            }
-            if (s.startsWith("tag")) {
                 s = logInfo.get(ix++);
             }
             assert s.startsWith("user");
