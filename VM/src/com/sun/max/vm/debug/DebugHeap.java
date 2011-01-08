@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -183,7 +183,7 @@ public final class DebugHeap {
             checkNonNullRefTag(ref);
         }
         final Pointer origin = ref.toOrigin();
-        if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.getImmortalHeap().contains(origin)) {
+        if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin)) {
             return;
         }
         if (space1 != null && space1.contains(origin)) {

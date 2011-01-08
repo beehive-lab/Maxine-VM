@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -280,8 +280,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             // It is a refill, not an initial fill. So invoke handler.
             doBeforeTLABRefill(allocationMark, TLAB_TOP.load(etla));
         } else {
-            ProgramError.check(IMMORTAL_ALLOCATION_ENABLED.load(etla).isZero(),
-                "Must not refill TLAB when in Immortal allocation");
+            ProgramError.check(CUSTOM_ALLOCATION_ENABLED.load(etla).isZero(),
+                "Must not refill TLAB when in custom allocator is set");
         }
 
         TLAB_TOP.store(etla, tlabTop);
@@ -353,6 +353,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return cell;
     }
 
+    protected abstract Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag);
+
     @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     @NEVER_INLINE
     private Pointer slowPathAllocate(Size size, final Pointer etla, final Pointer oldAllocationMark, final Pointer tlabEnd) {
@@ -360,10 +362,11 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         // or because allocation in immortal heap was requested.
         // Check for the second here.
         checkAllocationEnabled(size);
-        // Check for Immortal memory allocation.
-        final Pointer immortalAllocation = IMMORTAL_ALLOCATION_ENABLED.load(etla);
-        if (!immortalAllocation.isZero()) {
-            return ImmortalHeap.allocate(size, true);
+        // Check for custom allocation
+
+        final Pointer customAllocator = CUSTOM_ALLOCATION_ENABLED.load(etla);
+        if (!customAllocator.isZero()) {
+            return customAllocate(customAllocator, size, true);
         }
         // This path will always be taken if TLAB allocation is not enabled.
         return handleTLABOverflow(size, etla, oldAllocationMark, tlabEnd);
@@ -418,8 +421,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     @Override
-    public void enableImmortalMemoryAllocation() {
-        super.enableImmortalMemoryAllocation();
+    public void enableCustomAllocation(Address customAllocator) {
+        super.enableCustomAllocation(customAllocator);
         if (usesTLAB()) {
             final Pointer etla = ETLA.load(currentTLA());
             final Pointer allocationMark = TLAB_MARK.load(etla);
@@ -433,8 +436,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     @Override
-    public void disableImmortalMemoryAllocation() {
-        super.disableImmortalMemoryAllocation();
+    public void disableCustomAllocation() {
+        super.disableCustomAllocation();
         if (usesTLAB()) {
             final Pointer etla = ETLA.load(currentTLA());
             final Pointer allocationMarkTmp = TLAB_MARK_TMP.load(etla);
@@ -446,7 +449,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             TLAB_TOP_TMP.store(etla, Word.zero());
         }
     }
-
 
     @Override
     public void notifyCurrentThreadDetach() {

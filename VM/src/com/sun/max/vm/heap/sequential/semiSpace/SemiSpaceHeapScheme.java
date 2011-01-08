@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -222,7 +222,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
             // From now on we can allocate
 
-            InspectableHeapInfo.init(toSpace, fromSpace);
+            InspectableHeapInfo.init(true, toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
             if (growPolicy.equals(DOUBLE_GROW_POLICY_NAME)) {
@@ -813,6 +813,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         Pointer tlab = retryAllocate(tlabSize, false);
         refillTLAB(etla, tlab, tlabSize);
     }
+
+    @Override
+    protected Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag) {
+        // Default is to use the immortal heap.
+        return ImmortalHeap.allocate(size, true);
+    }
+
     /**
      * Handling of TLAB Overflow. This may refill the TLAB or allocate memory directly from the underlying heap.
      * This will always be taken when not using TLABs which is fine as the cost of the
@@ -1172,24 +1179,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
         void setAmount(Size amount) {
             this.amount = amount.toInt();
-        }
-    }
-
-    @Override
-    public void disableImmortalMemoryAllocation() {
-        final Pointer etla = ETLA.load(currentTLA());
-        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.zero());
-        if (usesTLAB()) {
-            super.disableImmortalMemoryAllocation();
-        }
-    }
-
-    @Override
-    public void enableImmortalMemoryAllocation() {
-        final Pointer etla = ETLA.load(currentTLA());
-        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.allOnes());
-        if (usesTLAB()) {
-            super.enableImmortalMemoryAllocation();
         }
     }
 

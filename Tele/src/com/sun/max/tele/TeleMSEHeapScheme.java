@@ -25,22 +25,26 @@ package com.sun.max.tele;
 import java.util.*;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.gcx.ms.*;
+import com.sun.max.vm.heap.gcx.mse.*;
 
 /**
- * Implementation details about the heap in the VM, specialized for the mark-sweep implementation.
+ * Implementation details about the heap in the VM, specialized for the region-based mark-sweep implementation.
  *
  * @author Laurent Daynes
  *
  */
-public final class TeleMSHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme {
+public class TeleMSEHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme {
 
-    TeleMSHeapScheme(TeleVM teleVM) {
+    /**
+     * @param teleVM
+     */
+    public TeleMSEHeapScheme(TeleVM teleVM) {
         super(teleVM);
     }
 
+    @Override
     public Class heapSchemeClass() {
-        return MSHeapScheme.class;
+        return MSEHeapScheme.class;
     }
 
     public Offset gcForwardingPointerOffset() {

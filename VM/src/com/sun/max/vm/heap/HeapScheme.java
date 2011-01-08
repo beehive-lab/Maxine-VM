@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -255,26 +255,27 @@ public interface HeapScheme extends VMScheme {
     boolean usesTLAB();
 
     /**
-     * Turns immortal memory allocation on for a heap scheme. All performed memory allocations happen in the immortal space.
+     * Turns custom memory allocation on for the current thread. All memory allocations performed by the current thread
+     * happen in the allocator identified by the customAllocator value.
      *
      * Should be used like:
      *      try {
-     *          Heap.enableImmortalMemoryAllocation();
+     *          Heap.enableCustomAllocation(customAllocatorID);
      *          ...
-     *          <allocations which should happen on the immortal heap>
+     *          <allocations are now performed by the custom allocator>
      *          ...
      *      } finally {
-     *          Heap.disableImmortalMemoryAllocation();
+     *          Heap.disableCustomAllocationAllocation();
      *      }
      *
      */
-    void enableImmortalMemoryAllocation();
+    void enableCustomAllocation(Address customAllocator);
 
     /**
-     * Turns immortal memory allocation off for a heap scheme. All performed memory allocations happen in the garbage collected
-     * heap.
+     * Turns custom memory allocation off for the current thread. All memory allocations performed by the current thread
+     * happen in the garbage collected heap.
      */
-    void disableImmortalMemoryAllocation();
+    void disableCustomAllocation();
 
     /**
      * Announces that the current thread is detaching from the VM so that

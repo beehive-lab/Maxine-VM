@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,12 @@ public abstract class Sweepable {
     //  Debug tracing
     static final VMBooleanXXOption traceSweepingOption =
         register(new VMBooleanXXOption("-XX:-", "TraceSweep", "Trace heap sweep operations. Do nothing for PRODUCT images"),
+                        MaxineVM.Phase.PRISTINE);
+
+    static final VMIntOption freeChunkMinSizeOption =
+        register(new VMIntOption("-XX:FreeChunkMinSize=", 256,
+                        "Minimum size of contiguous space considered for space reclamation." +
+                        "Below this size, the space is ignored (dark matter)"),
                         MaxineVM.Phase.PRISTINE);
 
     /**

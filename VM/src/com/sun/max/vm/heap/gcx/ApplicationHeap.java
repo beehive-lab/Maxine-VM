@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
- */
-package test.com.sun.max.vm.jtrun.all;
+package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.run.*;
+import com.sun.max.unsafe.*;
 
 /**
- * @see MaxPackage
+ * Application heap interface to a GCX heap scheme.
  *
- * @author Ben L. Titzer
+ * @author Laurent Daynes.
  */
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-        registerScheme(RunScheme.class, JTRunScheme.class);
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.runPackage.equals(this);
-    }
+public interface ApplicationHeap {
+    Pointer allocate(Size size);
+    Pointer allocateTLAB(Size size);
+    boolean contains(Address address);
+    boolean canSatisfyAllocation(Size size);
+    Size totalSpace();
+    Size freeSpace();
+    Size usedSpace();
+    void makeParsable();
 }
