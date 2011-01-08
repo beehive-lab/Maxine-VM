@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -230,10 +230,11 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         }
     }
 
-    private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
+    private final class AddressRenderer extends LocationLabel.AsAddressWithByteOffset implements TableCellRenderer {
 
         AddressRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Thread local memory address");
             setOpaque(true);
         }
 
@@ -250,6 +251,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
 
         public PositionRenderer(Inspection inspection) {
             super(inspection, 0, Address.zero(), Word.size());
+            setToolTipPrefix("Thread local memory address");
             setOpaque(true);
         }
 
@@ -348,19 +350,16 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            InspectorLabel label = labels[row];
-            if (label == null) {
-                label = new MemoryRegionValueLabel(inspection()) {
+            if (labels[row] == null) {
+                labels[row] = new MemoryRegionValueLabel(inspection(), "Thread local") {
                     @Override
                     public Value fetchValue() {
                         return tableModel.rowToVariableValue(row);
                     }
                 };
-                label.setOpaque(true);
-                labels[row] = label;
             }
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
+            labels[row].setBackground(cellBackgroundColor(isSelected));
+            return labels[row];
         }
     }
 

@@ -275,10 +275,11 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
     }
 
-    private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
+    private final class AddressRenderer extends LocationLabel.AsAddressWithByteOffset implements TableCellRenderer {
 
         AddressRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Header field memory address");
             setOpaque(true);
         }
 
@@ -294,6 +295,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         public PositionRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Header field memory address");
             setOpaque(true);
         }
 
@@ -343,10 +345,9 @@ public final class ObjectHeaderTable extends InspectorTable {
 
             for (int row = 0; row < headerFields.length; row++) {
                 // Create a label suitable for the kind of header field
-                InspectorLabel label = null;
                 HeaderField headerField = headerFields[row];
                 if (headerField == HeaderField.HUB) {
-                    label = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
+                    labels[row] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
 
                         @Override
                         public Value fetchValue() {
@@ -355,12 +356,12 @@ public final class ObjectHeaderTable extends InspectorTable {
                         }
                     };
                 } else if (headerField == HeaderField.MISC) {
-                    label = new MiscWordLabel(inspection, teleObject);
+                    labels[row] = new MiscWordLabel(inspection, teleObject);
                 } else if (headerField == HeaderField.LENGTH) {
                     switch (teleObject.kind()) {
                         case ARRAY:
                             final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
-                            label = new PrimitiveValueLabel(inspection, Kind.INT) {
+                            labels[row] = new PrimitiveValueLabel(inspection, Kind.INT) {
 
                                 @Override
                                 public Value fetchValue() {
@@ -370,7 +371,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                             break;
                         case HYBRID:
                             final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
-                            label = new PrimitiveValueLabel(inspection, Kind.INT) {
+                            labels[row] = new PrimitiveValueLabel(inspection, Kind.INT) {
 
                                 @Override
                                 public Value fetchValue() {
@@ -386,7 +387,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                     }
                 } else {
                     final HeaderField finalHeaderField = headerField;
-                    label = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, ObjectHeaderTable.this) {
+                    labels[row] = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, ObjectHeaderTable.this) {
 
                         @Override
                         public Value fetchValue() {
@@ -394,8 +395,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                         }
                     };
                 }
-                label.setOpaque(true);
-                labels[row] = label;
+                labels[row].setOpaque(true);
             }
         }
 
@@ -424,7 +424,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         private final InspectorLabel dummyLabel;
 
         public RegionRenderer(Inspection inspection) {
-            regionLabel = new MemoryRegionValueLabel(inspection) {
+            regionLabel = new MemoryRegionValueLabel(inspection, "Header field value") {
 
                 @Override
                 public Value fetchValue() {
@@ -435,7 +435,6 @@ public final class ObjectHeaderTable extends InspectorTable {
                     return WordValue.ZERO;
                 }
             };
-            regionLabel.setOpaque(true);
             dummyLabel = new PlainLabel(inspection, "");
             dummyLabel.setOpaque(true);
         }

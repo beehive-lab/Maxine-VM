@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,27 +58,49 @@ public abstract class LocationLabel extends InspectorLabel {
     protected abstract void updateText();
 
     /**
-     * @return string describing the relative location in both decimal and hex, with no "+" prefix.
+     * Translate an address to un-prefixed hex text, e.g. "1234567890abcde"
+     *
+     * @return address as a hex text string without the {@code "0x"} prefix.
      */
-    protected final String unsignedLocationText() {
-        return Integer.toString(value) + "(0x" + Integer.toHexString(value) + ")";
+    protected final String addressToHex(Address address) {
+        return address.toHexString();
     }
 
     /**
+     * Translate an address to prefixed hex text, e.g. "0x1234567890abcde"
+     *
+     * @return address as a hex text string with the {@code "0x"} prefix.
+     */
+    protected final String addressTo0xHex(Address address) {
+        return "0x" + address.toHexString();
+    }
+
+    /**
+     * Translates an integer into decimal text with plus/minus, e.g. "-2", "0", or "+3"
+     *
+     * @return integer as a decimal text string with a plus/minus prefix if not zero.
+     */
+    protected final String intToPlusMinusDecimal(int intValue) {
+        return (intValue >= 0 ? "+" : "") + Integer.toString(intValue);
+    }
+
+    /**
+     * Translates an integer into decimal text with plus/minus, followed by prefixed
+     * hex equivalent, e.g. "+22(0x16)"
+     *
      * @return string describing the relative location in both decimal and hex, with a "+" prefix when non-negative
      */
-    protected final String signedLocationText() {
-        return (value >= 0 ? "+" : "") + Integer.toString(value) + "(0x" + Integer.toHexString(value) + ")";
+    protected final String intToPlusMinusDecimalAndHex(int intValue) {
+        return intToPlusMinusDecimal(intValue) + "(0x" + Integer.toHexString(intValue) + ")";
     }
 
     /**
-     * @return string displaying the location as a hex address in the standard format.
+     * Translates an integer into decimal text, followed by prefixed hex equivalent, e.g. "22(0x16)"
+     *
+     * @return string describing the relative location in both decimal and hex, with no "+" prefix.
      */
-    protected final String addressText() {
-        if (origin == null) {
-            return "";
-        }
-        return "Address:  0x" + origin.plus(value).toHexString();
+    protected final String intToDecimalAndHex(int intValue) {
+        return Integer.toString(intValue) + "(0x" + Integer.toHexString(intValue) + ")";
     }
 
     protected LocationLabel(Inspection inspection, int value, Address origin) {
@@ -135,14 +157,14 @@ public abstract class LocationLabel extends InspectorLabel {
      * A label that displays, in hex, an address relative to an origin.
      * A right-button menu is available with some useful commands.
      */
-    public static class AsAddressWithOffset extends LocationLabel {
+    public static class AsAddressWithByteOffset extends LocationLabel {
 
-        public AsAddressWithOffset(Inspection inspection, int offset, Address origin) {
+        public AsAddressWithByteOffset(Inspection inspection, int offset, Address origin) {
             super(inspection, offset, origin);
             redisplay();
         }
 
-        public AsAddressWithOffset(Inspection inspection) {
+        public AsAddressWithByteOffset(Inspection inspection) {
             this(inspection, 0, Address.zero());
         }
 
@@ -153,8 +175,9 @@ public abstract class LocationLabel extends InspectorLabel {
 
         @Override
         protected final void updateText() {
-            setText(origin.plus(value).toHexString());
-            setToolTipText("Offset: " + signedLocationText() + ", " + addressText());
+            final Address address = origin.plus(value);
+            setText(addressToHex(address));
+            setWrappedToolTipText(addressTo0xHex(address) + " (" + intToPlusMinusDecimalAndHex(value) + " bytes from origin)");
         }
     }
 
@@ -179,8 +202,9 @@ public abstract class LocationLabel extends InspectorLabel {
 
         @Override
         protected final void updateText() {
-            setText(origin.plus(value).toHexString());
-            setToolTipText("Position: " + unsignedLocationText() + ", " + addressText());
+            final Address address = origin.plus(value);
+            setText(addressToHex(address));
+            setWrappedToolTipText(addressTo0xHex(address) + " (position " + intToDecimalAndHex(value) + " bytes from start)");
         }
     }
 
@@ -211,9 +235,9 @@ public abstract class LocationLabel extends InspectorLabel {
         protected final void updateText() {
             setText(Integer.toString(value));
             if (origin != null) {
-                setToolTipText("Position: " + unsignedLocationText() + ", " + addressText());
+                setWrappedToolTipText(addressTo0xHex(origin.plus(value)) + " (position " + intToDecimalAndHex(value) + " bytes from start)");
             } else {
-                setToolTipText("Position: " + unsignedLocationText());
+                setWrappedToolTipText("position " + intToDecimalAndHex(value));
             }
         }
     }
@@ -249,15 +273,14 @@ public abstract class LocationLabel extends InspectorLabel {
 
         @Override
         protected void updateText() {
-            setText((value >= 0 ? "+" : "") + Integer.toString(value));
-            StringBuilder text = new StringBuilder("Offset: ").append(signedLocationText());
+            setText(intToPlusMinusDecimal(value));
+            String toolTip = addressTo0xHex(origin.plus(value));
             if (indexScalingFactor != 0) {
-                text.append(", Index: ").append(value / indexScalingFactor);
+                toolTip += " index=" + Integer.toString(value / indexScalingFactor);
             }
-            if (origin != null) {
-                text.append(", ").append(addressText());
-            }
-            setToolTipText(text.toString());
+            toolTip += " (" + intToPlusMinusDecimalAndHex(value) + " bytes from origin)";
+            setWrappedToolTipText(toolTip);
+
         }
     }
 
@@ -297,15 +320,8 @@ public abstract class LocationLabel extends InspectorLabel {
         @Override
         protected void updateText() {
             final int wordOffset = value / vm().wordSize().toInt();
-            final String shortText = (wordOffset >= 0 ? "+" : "") + Integer.toString(wordOffset);
-            setText(shortText);
-            StringBuilder sb = new StringBuilder(50);
-            sb.append("Offset: ");
-            sb.append(shortText).append("(0x").append(Integer.toHexString(wordOffset)).append(") words");
-            if (origin != null) {
-                sb.append(", ").append(addressText());
-            }
-            setToolTipText(sb.toString());
+            setText(intToPlusMinusDecimal(wordOffset));
+            setWrappedToolTipText(addressTo0xHex(origin.plus(value)) + " (" + intToPlusMinusDecimalAndHex(wordOffset) + " words from origin)");
         }
     }
 
@@ -346,9 +362,9 @@ public abstract class LocationLabel extends InspectorLabel {
         protected void updateText() {
             setText(prefix  + "[" + index + "]");
             if (origin != null) {
-                setToolTipText("Offset: " + signedLocationText() + ", " + addressText());
+                setWrappedToolTipText(addressTo0xHex(origin.plus(value)) + " index=" + index + " (" + intToPlusMinusDecimalAndHex(value) + " bytes from origin)");
             } else {
-                setToolTipText("Offset: " + signedLocationText());
+                setWrappedToolTipText(intToPlusMinusDecimalAndHex(value) + " bytes from origin");
             }
         }
     }
@@ -357,6 +373,7 @@ public abstract class LocationLabel extends InspectorLabel {
      * A label that displays a textual label,
      * with associated memory location information (origin
      * and position) displayed in the ToolTip text.
+     * Displays nothing if the label is null.
      */
     public static class AsTextLabel extends LocationLabel {
 
@@ -368,7 +385,7 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public final void setLocation(String labelText, int value) {
-            this.labelText = (labelText == null) ? "" : labelText;
+            this.labelText = labelText;
             setValue(value);
         }
 
@@ -380,7 +397,11 @@ public abstract class LocationLabel extends InspectorLabel {
         @Override
         protected final void updateText() {
             setText(labelText);
-            setToolTipText(labelText + " Position: " + unsignedLocationText() + ", " + addressText());
+            if (labelText != null && !labelText.equals("")) {
+                setWrappedToolTipText(addressTo0xHex(origin.plus(value)) + " (position " + intToDecimalAndHex(value) + " bytes from start)");
+            } else {
+                setToolTipText(null);
+            }
         }
     }
 

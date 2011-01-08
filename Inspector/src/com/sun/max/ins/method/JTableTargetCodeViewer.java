@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,6 +63,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private static final int TRACE_VALUE = 2;
 
+    private final String cpuName;
     private final Inspection inspection;
     private final TargetCodeTable table;
     private final TargetCodeTableModel tableModel;
@@ -76,6 +77,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
         super(inspection, parent, machineCode);
         this.inspection = inspection;
+        //inspection.vm().bootImage().header.
+        cpuName = inspection.vm().getCPUName();
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
         this.tableModel = new TargetCodeTableModel(inspection, machineCode);
@@ -537,6 +540,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         AddressRenderer(Address entryAddress) {
             super(inspection, 0, entryAddress);
+            setToolTipPrefix("Instruction memory address");
             this.entryAddress = entryAddress;
         }
 
@@ -555,6 +559,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         public PositionRenderer(Address entryAddress) {
             super(inspection, 0, entryAddress);
+            setToolTipPrefix("Instruction memory address");
             this.position = 0;
         }
 
@@ -575,6 +580,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         public LabelRenderer(Address entryAddress) {
             super(inspection, entryAddress);
+            setToolTipPrefix("Label memory address ");
             setOpaque(true);
         }
 
@@ -625,7 +631,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     return new WordValue(vm().readWord(literalAddress, 0));
                 }
             };
-            wordValueLabel.setPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")));
+            wordValueLabel.setTextPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")));
             wordValueLabel.setToolTipSuffix(" from RIP " + literalLoadText.substring(literalLoadText.indexOf("["), literalLoadText.length()));
             wordValueLabel.updateText();
             return wordValueLabel;
@@ -640,7 +646,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     return new WordValue(vm().readWord(literalAddress, 0));
                 }
             };
-            wordValueLabel.setSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
+            wordValueLabel.setTextSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
             wordValueLabel.setToolTipSuffix(" from " + literalLoadText.substring(0, literalLoadText.indexOf(",")));
             wordValueLabel.updateText();
             return wordValueLabel;
@@ -771,6 +777,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     final PoolConstantLabel poolConstantLabel =
                         PoolConstantLabel.make(inspection, instructionMap().calleeConstantPoolIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
                     poolConstantLabel.setToolTipPrefix(text);
+                    poolConstantLabel.redisplay();
                     renderer = poolConstantLabel;
                     renderer.setForeground(getRowTextColor(row));
                 } else {

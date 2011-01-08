@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -328,10 +328,11 @@ public final class ArrayElementsTable extends InspectorTable {
         }
     }
 
-    private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
+    private final class AddressRenderer extends LocationLabel.AsAddressWithByteOffset implements TableCellRenderer {
 
         AddressRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Array element memory address");
             setOpaque(true);
         }
 
@@ -347,6 +348,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public PositionRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Array element memory address");
             setOpaque(true);
         }
 
@@ -377,6 +379,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public NameRenderer(Inspection inspection) {
             super(inspection, indexPrefix, 0, Offset.zero(), Address.zero());
+            setToolTipPrefix("Array element address");
             setOpaque(true);
         }
 
@@ -416,10 +419,9 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final int elementIndex = tableModel.rowToElementIndex(row);
-            InspectorLabel label = labels[elementIndex];
-            if (label == null) {
+            if (labels[elementIndex] == null) {
                 if (elementKind.isReference) {
-                    label = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ArrayElementsTable.this) {
+                    labels[elementIndex] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return vm().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
@@ -431,7 +433,7 @@ public final class ArrayElementsTable extends InspectorTable {
                         }
                     };
                 } else if (elementKind.isWord) {
-                    label = new WordValueLabel(inspection, wordValueMode, ArrayElementsTable.this) {
+                    labels[elementIndex] = new WordValueLabel(inspection, wordValueMode, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return vm().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
@@ -443,7 +445,7 @@ public final class ArrayElementsTable extends InspectorTable {
                         }
                     };
                 } else {
-                    label = new PrimitiveValueLabel(inspection, elementKind) {
+                    labels[elementIndex] = new PrimitiveValueLabel(inspection, elementKind) {
                         @Override
                         public Value fetchValue() {
                             return vm().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
@@ -455,11 +457,11 @@ public final class ArrayElementsTable extends InspectorTable {
                         }
                     };
                 }
-                label.setOpaque(true);
-                labels[elementIndex] = label;
+                labels[elementIndex].setOpaque(true);
+
             }
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
+            labels[elementIndex].setBackground(cellBackgroundColor(isSelected));
+            return labels[elementIndex];
         }
     }
 
@@ -491,19 +493,16 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final int elementIndex = tableModel.rowToElementIndex(row);
-            InspectorLabel label = labels[elementIndex];
-            if (label == null) {
-                label = new MemoryRegionValueLabel(inspection) {
+            if (labels[elementIndex] == null) {
+                labels[elementIndex] = new MemoryRegionValueLabel(inspection, "Array element value") {
                     @Override
                     public Value fetchValue() {
                         return vm().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                     }
                 };
-                label.setOpaque(true);
-                labels[elementIndex] = label;
             }
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
+            labels[elementIndex].setBackground(cellBackgroundColor(isSelected));
+            return labels[elementIndex];
         }
     }
 

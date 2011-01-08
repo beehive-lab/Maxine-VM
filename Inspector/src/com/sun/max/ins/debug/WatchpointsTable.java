@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -513,8 +513,7 @@ public final class WatchpointsTable extends InspectorTable {
     private final class RegionRenderer extends MemoryRegionValueLabel implements TableCellRenderer {
 
         public RegionRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
+            super(inspection, "Start address");
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

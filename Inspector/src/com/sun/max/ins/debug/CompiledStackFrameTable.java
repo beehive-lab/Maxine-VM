@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -309,10 +309,11 @@ public class CompiledStackFrameTable extends InspectorTable {
         }
     }
 
-    private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
+    private final class AddressRenderer extends LocationLabel.AsAddressWithByteOffset implements TableCellRenderer {
 
         AddressRenderer(Inspection inspection) {
             super(inspection, 0, tableModel.getOrigin());
+            setToolTipPrefix("Slot memory address");
             setOpaque(true);
         }
 
@@ -328,6 +329,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         public OffsetSPRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Slot memory address");
             setOpaque(true);
         }
 
@@ -343,6 +345,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         public OffsetFPRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Slot memory address");
             setOpaque(true);
         }
 
@@ -404,8 +407,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         // Designed so that we only read memory lazily, for words that are visible
         // This label has no state, so we only need one.
         RegionRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
+            super(inspection, "Slot value");
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
