@@ -861,6 +861,10 @@ public abstract class TeleVM implements MaxVM {
         return MaxineVM.description();
     }
 
+    public final String getCPUName() {
+        return platform().cpu.name();
+    }
+
     public final File vmDirectory() {
         return vmDirectory;
     }

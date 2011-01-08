@@ -64,6 +64,11 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     String getDescription();
 
     /**
+     * @return the name of the CPU in the VM's platform
+     */
+    String getCPUName();
+
+    /**
      * @return size of a word in the VM.
      */
     Size wordSize();
