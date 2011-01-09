@@ -24,7 +24,6 @@ package com.sun.max.ins;
 
 import static com.sun.max.tele.debug.ProcessState.*;
 
-import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -38,7 +37,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
