@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -185,6 +185,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
+    private interface MouseButtonMapper {
+        int getButton(MouseEvent mouseEvent);
+    }
+
     private final Inspection inspection;
     private final String tracePrefix;
     private final InspectorNameDisplay nameDisplay;
@@ -200,6 +204,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * Location in absolute screen coordinates of the most recent mouse location of interest.
      */
     private Point mostRecentMouseLocation = DEFAULT_LOCATION;
+
+    /**
+     * Platform-specific way to handle mouse clicks.
+     */
+    private final MouseButtonMapper mouseButtonMapper;
 
     /**
      * Creates a new main window frame for the VM inspection session.
@@ -220,6 +229,31 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
         setDefaultLookAndFeelDecorated(true);
         Toolkit.getDefaultToolkit().addAWTEventListener(new MouseLocationListener(), AWTEvent.MOUSE_EVENT_MASK);
+
+        if (inspection.vm().platform().getOS() == MaxPlatform.OS.DARWIN) {
+            // For Darwin, make sure alternate mouse buttons get mapped properly
+            mouseButtonMapper = new MouseButtonMapper() {
+                public int getButton(MouseEvent mouseEvent) {
+                    if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
+                        if (mouseEvent.isControlDown()) {
+                            if (!mouseEvent.isAltDown()) {
+                                return MouseEvent.BUTTON3;
+                            }
+                        } else if (mouseEvent.isAltDown()) {
+                            return MouseEvent.BUTTON2;
+                        }
+                    }
+                    return mouseEvent.getButton();
+                }
+            };
+        } else {
+            // For all other platforms, use the standard mouse event mapping.
+            mouseButtonMapper = new MouseButtonMapper() {
+                public int getButton(MouseEvent mouseEvent) {
+                    return mouseEvent.getButton();
+                }
+            };
+        }
 
         // Set default geometry; may get overridden by settings when initialized
         setMinimumSize(inspection.geometry().inspectorFrameMinSize());
@@ -269,7 +303,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopPane.addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
-                if (Inspection.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                if (InspectorMainFrame.this.inspection.gui().getButton(mouseEvent) == MouseEvent.BUTTON3) {
                     desktopMenu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                 }
             }
@@ -391,6 +425,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     public void postToClipboard(String text) {
         final StringSelection selection = new StringSelection(text);
         getToolkit().getSystemClipboard().setContents(selection, selection);
+    }
+
+    public int getButton(MouseEvent mouseEvent) {
+        return mouseButtonMapper.getButton(mouseEvent);
     }
 
     public void setLocationRelativeToMouse(Inspector inspector) {

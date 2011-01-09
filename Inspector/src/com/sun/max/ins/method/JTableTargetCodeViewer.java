@@ -22,8 +22,6 @@
  */
 package com.sun.max.ins.method;
 
-import static com.sun.max.platform.Platform.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
@@ -63,7 +61,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private static final int TRACE_VALUE = 2;
 
-    private final String cpuName;
+    private final MaxPlatform.ISA isa;
     private final Inspection inspection;
     private final TargetCodeTable table;
     private final TargetCodeTableModel tableModel;
@@ -78,7 +76,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         super(inspection, parent, machineCode);
         this.inspection = inspection;
         //inspection.vm().bootImage().header.
-        cpuName = inspection.vm().getCPUName();
+        this.isa = inspection.vm().platform().getISA();
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
         this.tableModel = new TargetCodeTableModel(inspection, machineCode);
@@ -654,7 +652,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        ISA isa = platform().isa;
         switch (isa) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;

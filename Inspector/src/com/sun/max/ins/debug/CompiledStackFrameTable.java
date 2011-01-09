@@ -179,7 +179,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             regions = new MaxMemoryRegion[slots.size()];
             int index = 0;
             for (Slot slot : slots) {
-                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().wordSize());
+                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().platform().wordSize());
                 index++;
             }
         }
@@ -203,7 +203,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         @Override
         public int findRow(Address address) {
-            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().wordSize()).toInt();
+            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().platform().wordSize()).toInt();
             return (wordOffset >= 0 && wordOffset < slots.size()) ? wordOffset : -1;
         }
 

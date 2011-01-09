@@ -23,28 +23,14 @@
 
 package com.sun.max.tele;
 
+import com.sun.max.unsafe.*;
+
 
 
 /**
  * Descriptors for various platforms on which the VM may be running.
  *
  * @author Michael Van De Vanter
- */
-/**
- * @author Michael Van De Vanter
- *
- */
-/**
- * @author Michael Van De Vanter
- *
- */
-/**
- * @author Michael Van De Vanter
- *
- */
-/**
- * @author Michael Van De Vanter
- *
  */
 public interface MaxPlatform {
 
@@ -57,6 +43,10 @@ public interface MaxPlatform {
         IA32,
         PPC,
         SPARC;
+
+        public static ISA fromName(String name) {
+            return ISA.valueOf(name.toUpperCase());
+        }
     }
 
     /**
@@ -69,11 +59,14 @@ public interface MaxPlatform {
         PPC,
         SPARC,
         SPARCV9;
+
+        public static CPU fromName(String name) {
+            return CPU.valueOf(name.toUpperCase());
+        }
     }
 
     /**
      * Specific operating system.
-     *
      */
     public enum OS {
         DARWIN("Darwin"),
@@ -86,6 +79,10 @@ public interface MaxPlatform {
 
         private OS(String name) {
             this.name = name;
+        }
+
+        public static OS fromName(String name) {
+            return OS.valueOf(name.toUpperCase());
         }
 
         @Override
@@ -108,5 +105,15 @@ public interface MaxPlatform {
      * @return OS information for the VM's platform
      */
     OS getOS();
+
+    /**
+     * @return size of a word in the VM.
+     */
+    Size wordSize();
+
+    /**
+     * @return size a memory page in the VM
+     */
+    Size pageSize();
 
 }

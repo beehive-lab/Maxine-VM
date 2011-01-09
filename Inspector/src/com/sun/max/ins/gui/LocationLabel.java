@@ -111,7 +111,7 @@ public abstract class LocationLabel extends InspectorLabel {
             addMouseListener(new InspectorMouseClickAdapter(inspection) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                    switch (inspection().gui().getButton(mouseEvent)) {
                         case MouseEvent.BUTTON3: {
                             createLocationMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                             break;
@@ -319,7 +319,7 @@ public abstract class LocationLabel extends InspectorLabel {
 
         @Override
         protected void updateText() {
-            final int wordOffset = value / vm().wordSize().toInt();
+            final int wordOffset = value / vm().platform().wordSize().toInt();
             setText(intToPlusMinusDecimal(wordOffset));
             setWrappedToolTipText(addressTo0xHex(origin.plus(value)) + " (" + intToPlusMinusDecimalAndHex(wordOffset) + " words from origin)");
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ public final class HubLabel extends InspectorLabel {
         addMouseListener(new InspectorMouseClickAdapter(inspection()) {
             @Override
             public void procedure(MouseEvent mouseEvent) {
-                if (Inspection.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
+                if (inspection().gui().getButton(mouseEvent) == MouseEvent.BUTTON1) {
                     if (mouseEvent.isControlDown()) {
                         actions().inspectObjectMemoryWords(teleHub).perform();
                     } else {

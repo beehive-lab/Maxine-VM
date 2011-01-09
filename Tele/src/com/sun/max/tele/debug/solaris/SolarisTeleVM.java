@@ -22,10 +22,9 @@
  */
 package com.sun.max.tele.debug.solaris;
 
-import static com.sun.max.platform.Platform.*;
-
 import java.io.*;
 
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.hosted.*;
@@ -41,11 +40,11 @@ public final class SolarisTeleVM extends TeleVM {
 
     @Override
     protected SolarisTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new SolarisTeleProcess(this, platform(), programFile(), commandLineArguments);
+        return new SolarisTeleProcess(this, Platform.platform(), programFile(), commandLineArguments);
     }
 
     @Override
     protected SolarisTeleProcess attachToTeleProcess() throws BootImageException {
-        return new SolarisTeleProcess(this, platform(), programFile(), targetLocation().id);
+        return new SolarisTeleProcess(this, Platform.platform(), programFile(), targetLocation().id);
     }
 }

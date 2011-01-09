@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -160,7 +160,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
             final int row = rowAtPoint(p);
             //System.out.println("(" + row + "," + col + ")");
             if ((col != -1) && (row != -1)) {
-                switch(Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                switch(inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1:
                         // Give subclass an opportunity to handle a left-click specially.
                         mouseButton1Clicked(row, modelCol, mouseEvent);

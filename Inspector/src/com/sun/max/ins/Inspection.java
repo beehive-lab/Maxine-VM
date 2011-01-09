@@ -59,19 +59,6 @@ public final class Inspection implements InspectionHolder {
 
     private static final int TRACE_VALUE = 1;
 
-    public static int mouseButtonWithModifiers(MouseEvent mouseEvent) {
-        if (OS.current() == OS.DARWIN && mouseEvent.getButton() == MouseEvent.BUTTON1) {
-            if (mouseEvent.isControlDown()) {
-                if (!mouseEvent.isAltDown()) {
-                    return MouseEvent.BUTTON3;
-                }
-            } else if (mouseEvent.isAltDown()) {
-                return MouseEvent.BUTTON2;
-            }
-        }
-        return mouseEvent.getButton();
-    }
-
     /**
      * Initializes the UI system to a specified L&F.
      */
