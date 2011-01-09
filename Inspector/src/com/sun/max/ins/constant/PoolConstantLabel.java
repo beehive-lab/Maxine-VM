@@ -130,7 +130,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
-                switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                switch (inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1:
                         handleLeftButtonEvent();
                         break;

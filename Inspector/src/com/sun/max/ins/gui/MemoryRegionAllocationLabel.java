@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ public final class MemoryRegionAllocationLabel extends AbstractMemoryRegionLabel
         addMouseListener(new InspectorMouseClickAdapter(inspection()) {
             @Override
             public void procedure(MouseEvent mouseEvent) {
-                switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                switch (inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON2: {
                         final InspectorAction cycleAction = getCycleDisplayTextAction();
                         if (cycleAction != null) {

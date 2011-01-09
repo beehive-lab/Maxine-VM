@@ -44,14 +44,13 @@ public final class RegistersTable extends InspectorTable {
 
     private static final Color[] ageColors = {Color.RED, Color.MAGENTA, Color.BLUE};
 
-    private final String cpuName;
+    private final String isaName;
     private final RegistersTableModel tableModel;
     private RegistersColumnModel columnModel;
 
     public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
-
-        cpuName = vm().getCPUName();
+        this.isaName = inspection.vm().platform().getISA().name();
         tableModel = new RegistersTableModel(inspection, thread);
         columnModel = new RegistersColumnModel(viewPreferences);
         configureMemoryTable(tableModel, columnModel);
@@ -159,7 +158,7 @@ public final class RegistersTable extends InspectorTable {
 
         NameCellRenderer(Inspection inspection) {
             super(inspection, null);
-            setToolTipPrefix("Register name (" + cpuName + "):");
+            setToolTipPrefix("Register name (" + isaName + "):");
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
