@@ -59,7 +59,7 @@ public final class HeapRegionConstants {
         log2RegionSizeInBytes = Integer.numberOfTrailingZeros(regionSizeInBytes);
         FatalError.check(regionSizeInBytes == (1 << log2RegionSizeInBytes), "Heap region size must be a power of 2");
         regionSizeInWords = regionSizeInBytes >> Word.widthValue().log2numberOfBytes;
-        log2RegionSizeInWords = log2RegionSizeInBytes + Word.widthValue().log2numberOfBytes;
+        log2RegionSizeInWords = log2RegionSizeInBytes - Word.widthValue().log2numberOfBytes;
         regionAlignmentMask = regionSizeInBytes - 1;
     }
 
