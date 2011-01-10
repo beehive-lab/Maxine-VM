@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.sun.max.ide.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 
@@ -82,7 +83,7 @@ public class CheckCopyright {
 
         private static Map<String, CopyrightKind> copyrightMap;
         private static final String COPYRIGHT_REGEX = "Base/.copyright.regex";
-        private static final String copyrightFiles = "bin/max|.*/makefile|.*/Makefile|.*\\.sh|.*\\.bash|.*\\.mk|.*\\.java|.*\\.c|.*\\.h";
+        private static String copyrightFiles = "bin/max|.*/makefile|.*/Makefile|.*\\.sh|.*\\.bash|.*\\.mk|.*\\.java|.*\\.c|.*\\.h";
         private static Pattern copyrightFilePattern;
         private final String suffix;
         private String copyright;
@@ -92,8 +93,12 @@ public class CheckCopyright {
             this.suffix = suffix;
         }
 
+        static void addCopyrightFilesPattern(String pattern) {
+            copyrightFiles += "|" + pattern;
+        }
+
         void readCopyright()  throws IOException {
-            final File file = new File(COPYRIGHT_REGEX + "." + suffix);
+            final File file = new File(workSpaceDirectory, COPYRIGHT_REGEX + "." + suffix);
             assert file.exists();
             byte[] b = new byte[(int) file.length()];
             FileInputStream is = new FileInputStream(file);
@@ -164,7 +169,9 @@ public class CheckCopyright {
     private static final Option<String> OUTGOING_REPO = options.newStringOption("repo", null, "override outgoing repository");
     private static final Option<Boolean> EXHAUSTIVE = options.newBooleanOption("exhaustive", false, "check all hg managed files");
     private static final Option<Boolean> FIX = options.newBooleanOption("fix", false, "fix copyright errors");
+    private static final Option<String> FILE_PATTERN = options.newStringOption("filepattern", null, "append additiional file patterns for copyright checks");
     private static boolean error;
+    private static File workSpaceDirectory;
 
 
     public static void main(String[] args) {
@@ -174,6 +181,12 @@ public class CheckCopyright {
         if (help.getValue()) {
             options.printHelp(System.out, 100);
             return;
+        }
+
+        workSpaceDirectory = JavaProject.findWorkspaceDirectory();
+
+        if (FILE_PATTERN.getValue() != null) {
+            CopyrightKind.addCopyrightFilesPattern(FILE_PATTERN.getValue());
         }
 
         try {
@@ -218,7 +231,9 @@ public class CheckCopyright {
 
     private static boolean isInProjects(String fileName, List<String> projects) {
         final int ix = fileName.indexOf(File.separatorChar);
-        assert ix > 0;
+        if (ix < 0) {
+            return false;
+        }
         final String fileProject = fileName.substring(0, ix);
         for (String project : projects) {
             if (fileProject.equals(project)) {
@@ -261,15 +276,15 @@ public class CheckCopyright {
         while (ix < logInfo.size()) {
             String s = logInfo.get(ix++);
             assert s.startsWith("changeset");
-            // process every entry in a given change set
             s = logInfo.get(ix++);
+            // process every entry in a given change set
+            if (s.startsWith("tag")) {
+                s = logInfo.get(ix++);
+            }
             if (s.startsWith("branch")) {
                 s = logInfo.get(ix++);
             }
             while (s.startsWith("parent")) {
-                s = logInfo.get(ix++);
-            }
-            if (s.startsWith("tag")) {
                 s = logInfo.get(ix++);
             }
             assert s.startsWith("user");
@@ -302,6 +317,12 @@ public class CheckCopyright {
         if (summary != null && summary.contains("Initial commit of VM sources")) {
             firstYear = 2007;
         }
+        if (HG_MODIFIED.getValue()) {
+            // We are only looking at modified and, therefore, uncommitted files.
+            // This means that the lastYear value will be the current year once the
+            // file is committed, so that is what we want tto check against.
+            lastYear = currentYear;
+        }
         return new Info(fileName, firstYear, lastYear);
     }
 
@@ -324,10 +345,10 @@ public class CheckCopyright {
         is.read(b);
         is.close();
         final String fileContent = new String(b);
-        int mYear = CopyrightKind.getCopyright(fileName, fileContent);
-        if (mYear > 0) {
-            if ((mYear != info.lastYear) || (HG_MODIFIED.getValue() && mYear != currentYear)) {
-                System.out.println(fileName + " copyright last modified year " + mYear + ", hg last modified year " + (HG_MODIFIED.getValue() ? currentYear : info.lastYear));
+        int yearInCopyright = CopyrightKind.getCopyright(fileName, fileContent);
+        if (yearInCopyright > 0) {
+            if (yearInCopyright != info.lastYear) {
+                System.out.println(fileName + " copyright last modified year " + yearInCopyright + ", hg last modified year " + info.lastYear);
                 if (FIX.getValue()) {
                     // Use currentYear as that is what it will be when it's checked in!
                     System.out.println("updating last modified year of " + fileName + " to " + currentYear);
@@ -341,7 +362,7 @@ public class CheckCopyright {
                 }
             }
         } else {
-            if (mYear < 0 || EXHAUSTIVE.getValue()) {
+            if (yearInCopyright < 0 || EXHAUSTIVE.getValue()) {
                 System.out.println("ERROR: file " + fileName + " has no copyright");
                 error = true;
             }
