@@ -299,7 +299,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
     private boolean propagateFlowSensitive(BlockInfo pred, CiBitMap bitMap, BlockBegin succ) {
         if (C1XOptions.OptFlowSensitiveNCE) {
             if (pred.ifEdge != null && pred.ifEdge.succ == succ) {
-                if (checkValue(pred.ifEdge.checked, bitMap)) {
+                if (!checkValue(pred.ifEdge.checked, bitMap)) {
                     // there is a special if edge between these blocks, add the checked instruction
                     setValue(pred.ifEdge.checked, bitMap);
                     return true;
