@@ -282,13 +282,12 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         if (succInfo.localIn == null) {
             // this is the first time this block is being iterated
             succInfo.localIn = bitMap.copy();
+            propagateFlowSensitive(pred, succInfo.localIn, succ, false);
             changed = true;
         } else {
             // perform intersection with previous map
+            bitMap = propagateFlowSensitive(pred, bitMap, succ, true);
             changed = succInfo.localIn.setIntersect(bitMap);
-        }
-        if (propagateFlowSensitive(pred, succInfo.localIn, succ)) {
-            changed = true;
         }
         if (changed && !isMarked(succInfo)) {
             mark(succInfo);
@@ -296,17 +295,17 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         }
     }
 
-    private boolean propagateFlowSensitive(BlockInfo pred, CiBitMap bitMap, BlockBegin succ) {
+    private CiBitMap propagateFlowSensitive(BlockInfo pred, CiBitMap bitMap, BlockBegin succ, boolean copy) {
         if (C1XOptions.OptFlowSensitiveNCE) {
             if (pred.ifEdge != null && pred.ifEdge.succ == succ) {
-                if (!checkValue(pred.ifEdge.checked, bitMap)) {
-                    // there is a special if edge between these blocks, add the checked instruction
-                    setValue(pred.ifEdge.checked, bitMap);
-                    return true;
+                if (copy) {
+                    bitMap = bitMap.copy();
                 }
+                // there is a special if edge between these blocks, add the checked instruction
+                setValue(pred.ifEdge.checked, bitMap);
             }
         }
-        return false;
+        return bitMap;
     }
 
     private void reprocessUses(CiBitMap in, List<Value> uses) {
@@ -502,8 +501,10 @@ public class NullCheckEliminator extends DefaultValueVisitor {
 
     private void propagateNonNull(If i, Value use, BlockBegin succ) {
         BlockInfo info = getBlockInfo(i.begin());
-        assert info.ifEdge == null;
-        info.ifEdge = new IfEdge(i.begin(), succ, use);
+        if (info.ifEdge == null) {
+            // Only use one if edge.
+            info.ifEdge = new IfEdge(i.begin(), succ, use);
+        }
     }
 
     private ValueInfo getValueInfo(Value value) {
