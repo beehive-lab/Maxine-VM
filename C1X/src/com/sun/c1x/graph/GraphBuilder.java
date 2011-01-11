@@ -788,7 +788,7 @@ public final class GraphBuilder {
 
     private void checkForDirectCompare(TypeCheck check) {
         RiType type = check.targetClass();
-        if (type.isArrayClass()) {
+        if (!type.isResolved() || type.isArrayClass()) {
             return;
         }
         if (assumeLeafClass(type)) {
