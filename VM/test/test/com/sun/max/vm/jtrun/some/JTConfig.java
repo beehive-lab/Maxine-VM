@@ -527,6 +527,7 @@ public class JTConfig {
         jtt.optimize.NCE_FlowSensitive02.class,
         jtt.optimize.NCE_FlowSensitive03.class,
         jtt.optimize.NCE_FlowSensitive04.class,
+        jtt.optimize.NCE_FlowSensitive05.class,
         jtt.optimize.Narrow_byte01.class,
         jtt.optimize.Narrow_byte02.class,
         jtt.optimize.Narrow_byte03.class,
