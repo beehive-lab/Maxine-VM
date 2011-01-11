@@ -52,6 +52,7 @@ public class C1XCompilation {
     public final RiRegisterConfig registerConfig;
     public final CiStatistics stats;
     public final int osrBCI;
+    public final CiAssumptions assumptions = new CiAssumptions();
 
     private boolean hasExceptionHandlers;
 
@@ -365,6 +366,9 @@ public class C1XCompilation {
             lirAssembler.emitTraps();
 
             CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
+            if (assumptions.count() > 0) {
+                targetMethod.setAssumptions(assumptions);
+            }
 
             if (cfgPrinter() != null) {
                 cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);

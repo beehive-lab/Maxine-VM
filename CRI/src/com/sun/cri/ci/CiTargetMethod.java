@@ -231,11 +231,16 @@ public class CiTargetMethod implements Serializable {
     private int registerRestoreEpilogueOffset = -1;
     private byte[] targetCode;
     private int targetCodeSize;
+    private CiAssumptions assumptions;
 
     /**
      * Constructs a new target method.
      */
     public CiTargetMethod() {
+    }
+    
+    public void setAssumptions(CiAssumptions assumptions) {
+        this.assumptions = assumptions;
     }
 
     /**

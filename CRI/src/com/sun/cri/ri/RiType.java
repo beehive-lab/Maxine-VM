@@ -209,6 +209,13 @@ public interface RiType {
      * @return the exact type of this type, if it exists; {@code null} otherwise
      */
     RiType exactType();
+    
+    /**
+     * Attempts to get the unique concrete subtype of this type.
+     * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
+     * @return the exact type of this type, if it exists; {@code null} otherwise
+     */
+    RiType uniqueConcreteSubtype();
 
     /**
      * Resolves the method implementation for virtual dispatches on objects
