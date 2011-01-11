@@ -201,6 +201,11 @@ public abstract class UnresolvedType implements RiType {
         throw unresolved("resolveMethodImpl()");
     }
 
+    @Override
+    public RiType uniqueConcreteSubtype() {
+        throw unresolved("uniqueConcreteSubtype()");
+    }
+
     public CiKind kind() {
         return typeDescriptor.toKind().ciKind;
     }

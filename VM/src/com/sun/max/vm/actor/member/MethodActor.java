@@ -521,6 +521,12 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return isStatic() || isPrivate() || holder().isFinal();
     }
 
+    @Override
+    public RiMethod uniqueConcreteMethod() {
+        // (tw) TODO: Return unique concrete method.
+        return null;
+    }
+
     public final boolean isOverridden() {
         // TODO: do more sophisticated leaf method check than just if class has subclass
         return !canBeStaticallyBound() && holder().hasSubclass(); // TODO what about interfaces?

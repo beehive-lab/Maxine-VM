@@ -85,6 +85,11 @@ public class CiUnresolvedMethod implements RiMethod {
     public boolean isLeafMethod() {
         throw unresolved("maxStackSize()");
     }
+    
+    @Override
+    public RiMethod uniqueConcreteMethod() {
+        throw unresolved("uniqueConcreteMethod()");
+    }
 
     public boolean isClassInitializer() {
         throw unresolved("maxStackSize()");

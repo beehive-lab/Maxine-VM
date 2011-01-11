@@ -94,6 +94,7 @@ public class C1XOptions {
     public static boolean PrintLoopList                      = ____;
     public static int     MethodEndBreakpointGuards          = 0;
     public static boolean ZapStackOnMethodEntry              = ____;
+    public static boolean PrintAssumptions                   = ____;
 
     /**
      * See {@link Filter#Filter(String, Object)}.
@@ -120,7 +121,6 @@ public class C1XOptions {
     public static boolean OptLocalLoadElimination;
     public static boolean OptCSEArrayLength;
     public static boolean OptCHA;
-    public static boolean OptLeafMethods;
     public static boolean OptGlobalValueNumbering;
     public static boolean OptCEElimination;
     public static boolean OptBlockMerging;
@@ -135,7 +135,7 @@ public class C1XOptions {
     public static boolean OptMoveElimination;
 
     // optimistic optimization settings
-    public static boolean UseDeopt                      = ____;
+    public static boolean UseAssumptions                = ____;
     public static boolean NormalCPEResolution           = true;
 
     // state merging settings
@@ -247,8 +247,7 @@ public class C1XOptions {
 
         // turn on speculative optimizations
         OptCHA                          = ____;
-        UseDeopt                        = ____;
-        OptLeafMethods                  = ____;
+        UseAssumptions                  = ____;
 
         // turn on backend optimizations
         OptControlFlow                  = true;
@@ -275,12 +274,11 @@ public class C1XOptions {
         OptCSEArrayLength               = ____;
 
         // turn on state merging optimizations
-        PhiLoopStores = true;
+        PhiLoopStores                   = true;
 
         // turn on speculative optimizations
         OptCHA                          = true;
-        UseDeopt                        = true;
-        OptLeafMethods                  = true;
+        UseAssumptions                  = true;
 
         // turn on backend optimizations
         OptControlFlow                  = true;
@@ -317,11 +315,10 @@ public class C1XOptions {
 
         // turn on speculative optimizations
         OptCHA                          = true;
-        UseDeopt                        = true;
-        OptLeafMethods                  = true;
+        UseAssumptions                  = true;
 
-        // turn on backend optimizations
         OptControlFlow                  = true;
+        // turn on backend optimizations
         OptMoveElimination              = true;
 
         // turn on global optimizations
