@@ -392,12 +392,12 @@ public class FixedSizeRegionAllocator {
     private boolean isValidAllocatedRange(int firstRegionId, int numRegions) {
         final int end = firstRegionId + numRegions;
         return firstRegionId >= residentRegions && (end - 1) <= highestAllocated &&
-        allocated.numClearBitsAt(firstRegionId, end) != 0;
+        allocated.numClearBitsAt(firstRegionId, end) == 0;
     }
 
     private boolean isValidCommittedRange(int firstRegionId, int numRegions) {
         final int end = firstRegionId + numRegions;
-        return firstRegionId >= residentRegions && end <= committed.numBits() && committed.numClearBitsAt(firstRegionId, end) != 0;
+        return firstRegionId >= residentRegions && end <= committed.numBits() && committed.numClearBitsAt(firstRegionId, end) == numRegions;
     }
 
     synchronized boolean free(int firstRegionId, int numRegions) {
@@ -422,6 +422,7 @@ public class FixedSizeRegionAllocator {
         final Size size = Size.fromInt(numRegions).shiftedLeft(log2RegionSizeInBytes);
         if (VirtualMemory.commitMemory(regionStart(firstRegionId), size, VirtualMemory.Type.HEAP)) {
             committed.set(firstRegionId, firstRegionId + numRegions);
+            committedSize += numRegions;
             return true;
         }
         return false;
