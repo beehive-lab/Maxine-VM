@@ -120,7 +120,6 @@ public class C1XOptions {
     public static boolean OptLocalValueNumbering;
     public static boolean OptLocalLoadElimination;
     public static boolean OptCSEArrayLength;
-    public static boolean OptCHA;
     public static boolean OptGlobalValueNumbering;
     public static boolean OptCEElimination;
     public static boolean OptBlockMerging;
@@ -246,7 +245,6 @@ public class C1XOptions {
         PhiLoopStores = true;
 
         // turn on speculative optimizations
-        OptCHA                          = ____;
         UseAssumptions                  = ____;
 
         // turn on backend optimizations
@@ -277,7 +275,6 @@ public class C1XOptions {
         PhiLoopStores                   = true;
 
         // turn on speculative optimizations
-        OptCHA                          = true;
         UseAssumptions                  = true;
 
         // turn on backend optimizations
@@ -314,7 +311,6 @@ public class C1XOptions {
         UseStackMapTableLiveness        = true;
 
         // turn on speculative optimizations
-        OptCHA                          = true;
         UseAssumptions                  = true;
 
         OptControlFlow                  = true;
