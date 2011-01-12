@@ -170,6 +170,8 @@ public class CheckCopyright {
     private static final Option<Boolean> EXHAUSTIVE = options.newBooleanOption("exhaustive", false, "check all hg managed files");
     private static final Option<Boolean> FIX = options.newBooleanOption("fix", false, "fix copyright errors");
     private static final Option<String> FILE_PATTERN = options.newStringOption("filepattern", null, "append additiional file patterns for copyright checks");
+    private static final Option<Boolean> REPORT_ERRORS = options.newBooleanOption("reporterrors", false, "report non-fatal errors");
+    private static final Option<Boolean> CONTINUE_ON_ERROR = options.newBooleanOption("continueonerror", false, "continue after normally fatal error");
     private static boolean error;
     private static File workSpaceDirectory;
 
@@ -428,7 +430,7 @@ public class CheckCopyright {
         return new ArrayList<String>(outSet.values());
     }
 
-    private static List<String> exec(File workingDir, String[] command, boolean failExit) throws IOException, InterruptedException {
+    private static List<String> exec(File workingDir, String[] command, boolean failOnError) throws IOException, InterruptedException {
         List<String> result = new ArrayList<String>();
         if (Trace.hasLevel(2)) {
             Trace.line(2, "Executing process in directory: " + workingDir);
@@ -440,18 +442,22 @@ public class CheckCopyright {
         try {
             result = readOutput(process.getInputStream());
             final int exitValue = process.waitFor();
-            if (exitValue != 0 && failExit) {
-                final List<String> errorResult = readOutput(process.getErrorStream());
-                System.err.print("execution of command: ");
-                for (String c : command) {
-                    System.err.print(c);
-                    System.err.print(' ');
+            if (exitValue != 0) {
+                if (REPORT_ERRORS.getValue()) {
+                    final List<String> errorResult = readOutput(process.getErrorStream());
+                    System.err.print("execution of command: ");
+                    for (String c : command) {
+                        System.err.print(c);
+                        System.err.print(' ');
+                    }
+                    System.err.println("failed with result " + exitValue);
+                    for (String e : errorResult) {
+                        System.err.println(e);
+                    }
                 }
-                System.err.println("failed with result " + exitValue);
-                for (String e : errorResult) {
-                    System.err.println(e);
+                if (failOnError && !CONTINUE_ON_ERROR.getValue()) {
+                    ProgramError.unexpected("terminating");
                 }
-                ProgramError.unexpected("terminating");
             }
         } finally {
             process.destroy();
