@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.run.java;
+package com.sun.max.vm.layout.xohm;
 
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.run.*;
+import com.sun.max.vm.layout.*;
 
-/**
- * @see MaxPackage
- *
- * @author Bernd Mathiske
- */
 public class Package extends BootImagePackage {
     public Package() {
-        super();
-        registerScheme(RunScheme.class, JavaRunScheme.class);
+        registerScheme(LayoutScheme.class, XOhmLayoutScheme.class);
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.schemeImplClassIsSubClass(RunScheme.class, JavaRunScheme.class);
+        return vmConfiguration.layoutPackage.equals(this);
     }
 }

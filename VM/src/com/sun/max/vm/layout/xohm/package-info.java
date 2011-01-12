@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.run.java;
-
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.run.*;
-
 /**
- * @see MaxPackage
+ * This package implements an eXtended Origin-Header-Mixed (OHM) object layout.
+ * The layout is an extension of {@link com.sun.max.vm.layout.ohm.OhmLayoutScheme} with an extra word
+ * for use in arbitrary ways.
  *
- * @author Bernd Mathiske
+* @author Virendra J. Marathe
+* @author Du Li
+* @author Mick Jordan
  */
-public class Package extends BootImagePackage {
-    public Package() {
-        super();
-        registerScheme(RunScheme.class, JavaRunScheme.class);
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.schemeImplClassIsSubClass(RunScheme.class, JavaRunScheme.class);
-    }
-}
+package com.sun.max.vm.layout.xohm;

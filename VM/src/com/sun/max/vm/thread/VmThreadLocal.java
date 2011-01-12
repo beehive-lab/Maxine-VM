@@ -299,6 +299,11 @@ public class VmThreadLocal {
     public static final VmThreadLocal CUSTOM_ALLOCATION_ENABLED
         = new VmThreadLocal("CUSTOM_ALLOCATION_ENABLED", false, "Non-zero to bypass TLAB allocation and use an alternate allocator", Nature.Single);
 
+    /**
+     * Slot for use by the object analysis framework.
+     */
+    public static final VmThreadLocal OBJECT_ANALYSIS = new VmThreadLocal("OBJECT_ANALYSIS", false, "For use by object analysis framework");
+
     private static VmThreadLocal[] valuesNeedingInitialization;
 
     /**
