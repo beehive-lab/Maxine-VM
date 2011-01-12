@@ -161,26 +161,27 @@ public final class GraphBuilder {
         // 5.
         C1XIntrinsic intrinsic = C1XOptions.OptIntrinsify ? C1XIntrinsic.getIntrinsic(rootMethod) : null;
         if (intrinsic != null) {
+            lastInstr = stdEntry;
             // 6A.1 the root method is an intrinsic; load the parameters onto the stack and try to inline it
-            lastInstr = curBlock;
-            if (C1XOptions.OptIntrinsify) {
+            if (C1XOptions.OptIntrinsify && osrEntry == null) {
                 // try to inline an Intrinsic node
                 boolean isStatic = Modifier.isStatic(rootMethod.accessFlags());
                 int argsSize = rootMethod.signature().argumentSlots(!isStatic);
                 Value[] args = new Value[argsSize];
                 for (int i = 0; i < args.length; i++) {
                     args[i] = curState.localAt(i);
+                    assert args[i] != null;
                 }
                 if (tryInlineIntrinsic(rootMethod, args, isStatic, intrinsic)) {
                     // intrinsic inlining succeeded, add the return node
-                    CiKind rt = returnKind(rootMethod);
+                    CiKind rt = returnKind(rootMethod).stackKind();
                     Value result = null;
                     if (rt != CiKind.Void) {
                         result = pop(rt);
                     }
                     genReturn(result);
                     BlockEnd end = (BlockEnd) lastInstr;
-                    curBlock.setEnd(end);
+                    stdEntry.setEnd(end);
                     end.setStateAfter(curState.immutableCopy(bci()));
                 }  else {
                     // try intrinsic failed; do the normal parsing
@@ -1199,8 +1200,9 @@ public final class GraphBuilder {
         if (needsCheck) {
             // append a call to the registration intrinsic
             loadLocal(0, CiKind.Object);
+            FrameState stateBefore = curState.immutableCopy(bci());
             append(new Intrinsic(CiKind.Void, C1XIntrinsic.java_lang_Object$init,
-                                 null, curState.popArguments(1), false, curState.immutableCopy(bci()), true, true));
+                                 null, curState.popArguments(1), false, stateBefore, true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
 
@@ -1443,8 +1445,15 @@ public final class GraphBuilder {
         }
 
         assert x.next() == null : "instruction should not have been appended yet";
-        assert lastInstr.next() == null : "cannot append instruction to instruction which isn't end";
-        lastInstr = lastInstr.setNext(x, bci);
+        assert lastInstr.next() == null : "cannot append instruction to instruction which isn't end (" + lastInstr + "->" + lastInstr.next() + ")";
+        if (lastInstr instanceof Base) {
+            assert x instanceof Intrinsic : "may only happen when inlining intrinsics";
+            Instruction prev = lastInstr.prev(lastInstr.block());
+            prev.setNext(x, bci);
+            x.setNext(lastInstr, bci);
+        } else {
+            lastInstr = lastInstr.setNext(x, bci);
+        }
         if (++stats.nodeCount >= C1XOptions.MaximumInstructionCount) {
             // bailout if we've exceeded the maximum inlining size
             throw new CiBailout("Method and/or inlining is too large");
@@ -1604,8 +1613,47 @@ public final class GraphBuilder {
 
         // handle intrinsics differently
         switch (intrinsic) {
-            // java.lang.Object
-            case java_lang_Object$init:   // fall through
+            case java_lang_Object$init: // fall through
+            case java_lang_String$equals: // fall through
+            case java_lang_String$compareTo: // fall through
+            case java_lang_String$indexOf: // fall through
+            case java_lang_Math$max: // fall through
+            case java_lang_Math$min: // fall through
+            case java_lang_Math$pow: // fall through
+            case java_lang_Math$exp: // fall through
+            case java_nio_Buffer$checkIndex: // fall through
+            case java_lang_System$arraycopy: // fall through
+            case java_lang_System$identityHashCode: // fall through
+            case java_lang_System$currentTimeMillis: // fall through
+            case java_lang_System$nanoTime: // fall through
+            case java_lang_Object$getClass: // fall through
+            case java_lang_Object$hashCode: // fall through
+            case java_lang_Thread$currentThread: // fall through
+            case java_lang_Class$isAssignableFrom: // fall through
+            case java_lang_Class$isInstance: // fall through
+            case java_lang_Class$getModifiers: // fall through
+            case java_lang_Class$isInterface: // fall through
+            case java_lang_Class$isArray: // fall through
+            case java_lang_Class$isPrimitive: // fall through
+            case java_lang_Class$getSuperclass: // fall through
+            case java_lang_Class$getComponentType: // fall through
+            case java_lang_reflect_Array$getLength: // fall through
+            case java_lang_reflect_Array$newArray: // fall through
+            case java_lang_Double$doubleToRawLongBits: // fall through
+            case java_lang_Double$doubleToLongBits: // fall through
+            case java_lang_Double$longBitsToDouble: // fall through
+            case java_lang_Float$floatToIntBits: // fall through
+            case java_lang_Float$floatToRawIntBits: // fall through
+            case java_lang_Float$intBitsToFloat: // fall through
+            case java_lang_Math$sin: // fall through
+            case java_lang_Math$cos: // fall through
+            case java_lang_Math$tan: // fall through
+            case java_lang_Math$log: // fall through
+            case java_lang_Math$log10: // fall through
+            case java_lang_Integer$bitCount: // fall through
+            case java_lang_Integer$reverseBytes: // fall through
+            case java_lang_Long$bitCount: // fall through
+            case java_lang_Long$reverseBytes: // fall through
             case java_lang_Object$clone:  return false;
             // TODO: preservesState and canTrap for complex intrinsics
         }

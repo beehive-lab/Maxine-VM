@@ -56,7 +56,19 @@ public final class Intrinsic extends StateSplit {
                      FrameState stateBefore, boolean preservesState, boolean canTrap) {
         super(kind, stateBefore);
         this.intrinsic = intrinsic;
-        this.arguments = args;
+        int nonNullArgs = 0;
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i] != null) {
+                nonNullArgs++;
+            }
+        }
+        this.arguments = new Value[nonNullArgs];
+        int z = 0;
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i] != null) {
+                arguments[z++] = args[i];
+            }
+        }
         this.target = target;
         initFlag(Flag.IsStatic, isStatic);
         // Preserves state means that the intrinsic preserves register state across all cases,

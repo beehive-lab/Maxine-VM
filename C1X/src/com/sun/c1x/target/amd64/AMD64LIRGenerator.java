@@ -529,11 +529,12 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     protected void genCompareAndSwap(Intrinsic x, CiKind kind) {
-        assert x.numberOfArguments() == 4 : "wrong type";
-        LIRItem obj = new LIRItem(x.argumentAt(0), this); // object
-        LIRItem offset = new LIRItem(x.argumentAt(1), this); // offset of field
-        LIRItem cmp = new LIRItem(x.argumentAt(2), this); // value to compare with field
-        LIRItem val = new LIRItem(x.argumentAt(3), this); // replace field with val if matches cmp
+        assert x.numberOfArguments() == 5 : "wrong number of arguments: " + x.numberOfArguments();
+        // Argument 0 is the receiver.
+        LIRItem obj = new LIRItem(x.argumentAt(1), this); // object
+        LIRItem offset = new LIRItem(x.argumentAt(2), this); // offset of field
+        LIRItem cmp = new LIRItem(x.argumentAt(3), this); // value to compare with field
+        LIRItem val = new LIRItem(x.argumentAt(4), this); // replace field with val if matches cmp
 
         assert obj.instruction.kind.isObject() : "invalid type";
 
@@ -587,14 +588,13 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         assert x.numberOfArguments() == 1 : "wrong type";
 
         CiValue calcInput = load(x.argumentAt(0));
-        CiValue calcResult = createResultVariable(x);
 
         switch (x.intrinsic()) {
             case java_lang_Math$abs:
-                lir.abs(calcInput, calcResult, ILLEGAL);
+                lir.abs(calcInput, createResultVariable(x), ILLEGAL);
                 break;
             case java_lang_Math$sqrt:
-                lir.sqrt(calcInput, calcResult, ILLEGAL);
+                lir.sqrt(calcInput, createResultVariable(x), ILLEGAL);
                 break;
             case java_lang_Math$sin:
                 setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticSin, null, calcInput));
@@ -612,7 +612,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticLog10, null, calcInput));
                 break;
             default:
-                Util.shouldNotReachHere();
+                Util.shouldNotReachHere("Unknown math intrinsic");
         }
     }
 

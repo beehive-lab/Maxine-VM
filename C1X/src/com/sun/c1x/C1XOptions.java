@@ -240,6 +240,7 @@ public class C1XOptions {
         OptLocalValueNumbering          = true;
         OptLocalLoadElimination         = true;
         OptCSEArrayLength               = ____;
+        OptIntrinsify                   = ____;
 
         // turn on state merging optimizations
         PhiLoopStores = true;
@@ -270,6 +271,7 @@ public class C1XOptions {
         OptLocalValueNumbering          = true;
         OptLocalLoadElimination         = true;
         OptCSEArrayLength               = ____;
+        OptIntrinsify                   = ____;
 
         // turn on state merging optimizations
         PhiLoopStores                   = true;
@@ -300,6 +302,7 @@ public class C1XOptions {
         OptLocalValueNumbering          = true;
         OptLocalLoadElimination         = true;
         OptCSEArrayLength               = true;
+        OptIntrinsify                   = true;
 
         // turn on more aggressive inlining
         OptInlineExcept                 = true;
