@@ -1639,12 +1639,8 @@ public final class GraphBuilder {
             case java_lang_Class$getComponentType: // fall through
             case java_lang_reflect_Array$getLength: // fall through
             case java_lang_reflect_Array$newArray: // fall through
-            case java_lang_Double$doubleToRawLongBits: // fall through
             case java_lang_Double$doubleToLongBits: // fall through
-            case java_lang_Double$longBitsToDouble: // fall through
             case java_lang_Float$floatToIntBits: // fall through
-            case java_lang_Float$floatToRawIntBits: // fall through
-            case java_lang_Float$intBitsToFloat: // fall through
             case java_lang_Math$sin: // fall through
             case java_lang_Math$cos: // fall through
             case java_lang_Math$tan: // fall through
@@ -1654,7 +1650,6 @@ public final class GraphBuilder {
             case java_lang_Integer$reverseBytes: // fall through
             case java_lang_Long$bitCount: // fall through
             case java_lang_Long$reverseBytes: // fall through
-            //case sun_misc_Unsafe$compareAndSwapObject: // fall through
             case java_lang_Object$clone:  return false;
             // TODO: preservesState and canTrap for complex intrinsics
         }
