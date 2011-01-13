@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -591,7 +591,7 @@ public abstract class ClassActor extends Actor implements RiType {
         return null;
     }
 
-    @HOSTED_ONLY
+//    @HOSTED_ONLY
     public final FieldActor findStaticFieldActor(int offset) {
         ClassActor holder = this;
         do {
@@ -665,7 +665,7 @@ public abstract class ClassActor extends Actor implements RiType {
         return null;
     }
 
-    @HOSTED_ONLY
+//    @HOSTED_ONLY
     public final FieldActor findInstanceFieldActor(int offset) {
         ClassActor holder = this;
         do {
