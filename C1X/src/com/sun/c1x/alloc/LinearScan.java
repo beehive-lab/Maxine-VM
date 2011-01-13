@@ -53,7 +53,7 @@ import com.sun.cri.ri.*;
  * @author Thomas Wuerthinger
  * @author Doug Simon
  */
-public class LinearScan {
+public final class LinearScan {
 
     final C1XCompilation compilation;
     final IR ir;
@@ -1937,7 +1937,7 @@ public class LinearScan {
      * @param mode the usage mode for {@code operand} by the instruction
      * @return the location assigned for the operand
      */
-    CiValue colorLirOperand(CiVariable operand, int opId, OperandMode mode) {
+    private CiValue colorLirOperand(CiVariable operand, int opId, OperandMode mode) {
         Interval interval = intervalFor(operand);
         assert interval != null : "interval must exist";
 
@@ -2143,7 +2143,7 @@ public class LinearScan {
         return new Frame(callerFrame, state.scope().method, state.bci, values, state.localsSize(), state.stackSize(), state.locksSize());
     }
 
-    void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
+    private void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
         assert iw != null : "interval walker needed for debug information";
         computeDebugInfo(iw, op, op.info);
 
@@ -2156,7 +2156,7 @@ public class LinearScan {
     }
 
 
-    void computeDebugInfo(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info) {
+    private void computeDebugInfo(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info) {
         if (info != null) {
             if (info.debugInfo == null) {
                 int frameSize = compilation.frameMap().frameSize();
@@ -2179,7 +2179,7 @@ public class LinearScan {
         return computeFrameForState(opId, state, frameRefMap);
     }
 
-    void assignLocations(List<LIRInstruction> instructions, IntervalWalker iw) {
+    private void assignLocations(List<LIRInstruction> instructions, IntervalWalker iw) {
         int numInst = instructions.size();
         boolean hasDead = false;
 
@@ -2220,9 +2220,8 @@ public class LinearScan {
 
             // remove useless moves
             if (op.code == LIROpcode.Move) {
-                LIROp1 move = (LIROp1) op;
-                CiValue src = move.operand();
-                CiValue dst = move.result();
+                CiValue src = op.operand(0);
+                CiValue dst = op.result();
                 if (dst == src || src.equals(dst)) {
                     // TODO: what about o.f = o.f and exceptions?
                     instructions.set(j, null);
@@ -2247,7 +2246,7 @@ public class LinearScan {
         }
     }
 
-    void assignLocations() {
+    private void assignLocations() {
         IntervalWalker iw = initComputeOopMaps();
         for (BlockBegin block : sortedBlocks) {
             assignLocations(block.lir().instructionsList(), iw);

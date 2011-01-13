@@ -170,7 +170,6 @@ public final class GraphBuilder {
                 Value[] args = new Value[argsSize];
                 for (int i = 0; i < args.length; i++) {
                     args[i] = curState.localAt(i);
-                    assert args[i] != null;
                 }
                 if (tryInlineIntrinsic(rootMethod, args, isStatic, intrinsic)) {
                     // intrinsic inlining succeeded, add the return node
@@ -1619,6 +1618,7 @@ public final class GraphBuilder {
             case java_lang_String$indexOf: // fall through
             case java_lang_Math$max: // fall through
             case java_lang_Math$min: // fall through
+            case java_lang_Math$atan2: // fall through
             case java_lang_Math$pow: // fall through
             case java_lang_Math$exp: // fall through
             case java_nio_Buffer$checkIndex: // fall through
@@ -1654,12 +1654,17 @@ public final class GraphBuilder {
             case java_lang_Integer$reverseBytes: // fall through
             case java_lang_Long$bitCount: // fall through
             case java_lang_Long$reverseBytes: // fall through
+            //case sun_misc_Unsafe$compareAndSwapObject: // fall through
             case java_lang_Object$clone:  return false;
             // TODO: preservesState and canTrap for complex intrinsics
         }
 
         // get the arguments for the intrinsic
         CiKind resultType = returnKind(target);
+
+        if (C1XOptions.PrintInlinedIntrinsics) {
+            TTY.println("Inlining intrinsic: " + intrinsic);
+        }
 
         // create the intrinsic node
         Intrinsic result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.immutableCopy(bci()), preservesState, canTrap);

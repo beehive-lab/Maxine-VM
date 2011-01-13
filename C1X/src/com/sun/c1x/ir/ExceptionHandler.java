@@ -186,7 +186,7 @@ public class ExceptionHandler {
         return lirOpId;
     }
 
-    public LIRList entryCode() {
+    public final LIRList entryCode() {
         return entryCode;
     }
 

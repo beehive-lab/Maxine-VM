@@ -1572,4 +1572,10 @@ public class MaxXirGenerator implements RiXirGenerator {
     public XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments, RiMethod method) {
         return null;
     }
+
+    @Override
+    public XirSnippet genWriteBarrier(XirArgument object) {
+        // TODO: Implement write barrier.
+        return null;
+    }
 }

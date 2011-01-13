@@ -234,7 +234,7 @@ public class IntervalWalker {
         }
     }
 
-    void intervalMoved(Interval interval, RegisterBinding kind, State from, State to) {
+    private void intervalMoved(Interval interval, RegisterBinding kind, State from, State to) {
         // intervalMoved() is called whenever an interval moves from one interval list to another.
         // In the implementation of this method it is prohibited to move the interval to any list.
         if (C1XOptions.TraceLinearScanLevel >= 4 && !TTY.isSuppressed()) {

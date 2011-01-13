@@ -1755,6 +1755,10 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void postGCWriteBarrier(CiValue addr, CiValue newVal) {
+       XirSnippet writeBarrier = xir.genWriteBarrier(XirArgument.forObject(addr));
+       if (writeBarrier != null) {
+           emitXir(writeBarrier, null, null, null, false);
+       }
     }
 
     protected void preGCWriteBarrier(CiValue addrOpr, boolean patch, LIRDebugInfo info) {

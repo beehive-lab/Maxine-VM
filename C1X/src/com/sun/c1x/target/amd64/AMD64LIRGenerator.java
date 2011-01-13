@@ -544,20 +544,17 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         // get address of field
         obj.loadItem();
         offset.loadNonconstant();
-        CiAddress addr = new CiAddress(kind, obj.result(), offset.result());
-
-        if (kind.isObject()) {
-            cmp.loadItemForce(AMD64.rax.asValue(CiKind.Object));
-            val.loadItem();
-        } else if (kind.isInt()) {
-            cmp.loadItemForce(RAX_I);
-            val.loadItem();
-        } else if (kind.isLong()) {
-            cmp.loadItemForce(RAX_L);
-            val.loadItemForce(AMD64.rbx.asValue(CiKind.Long));
+        CiAddress addr;
+        if (offset.result().isConstant()) {
+            addr = new CiAddress(kind, obj.result(), (int) ((CiConstant) offset.result()).asLong());
         } else {
-            Util.shouldNotReachHere();
+            addr = new CiAddress(kind, obj.result(), offset.result());
         }
+
+        // Compare operand needs to be in RAX.
+        CiValue cmpValue = AMD64.rax.asValue(kind);
+        cmp.loadItemForce(cmpValue);
+        val.loadItem();
 
         if (kind.isObject()) { // Write-barrier needed for Object fields.
             // Do the pre-write barrier : if any.

@@ -95,6 +95,7 @@ public class C1XOptions {
     public static int     MethodEndBreakpointGuards          = 0;
     public static boolean ZapStackOnMethodEntry              = ____;
     public static boolean PrintAssumptions                   = ____;
+    public static boolean PrintInlinedIntrinsics             = ____;
 
     /**
      * See {@link Filter#Filter(String, Object)}.
