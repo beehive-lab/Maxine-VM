@@ -73,7 +73,7 @@ public class LIRList {
         assert op.verify();
     }
 
-    public List<LIRInstruction> instructionsList() {
+    public final List<LIRInstruction> instructionsList() {
         return operations;
     }
 

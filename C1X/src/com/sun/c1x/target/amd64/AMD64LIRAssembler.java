@@ -53,7 +53,7 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public class AMD64LIRAssembler extends LIRAssembler {
+public final class AMD64LIRAssembler extends LIRAssembler {
 
     private static final Object[] NO_PARAMS = new Object[0];
     private static final long NULLWORD = 0;

@@ -270,7 +270,7 @@ public class C1XCompilation {
         return assembler;
     }
 
-    public boolean hasExceptionHandlers() {
+    public final boolean hasExceptionHandlers() {
         return hasExceptionHandlers;
     }
 

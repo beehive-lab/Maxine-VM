@@ -29,12 +29,12 @@ package com.sun.cri.bytecode;
  *
  * @author Ben L. Titzer
  */
-public class BytecodeStream {
+public final class BytecodeStream {
 
-    final byte[] code;
-    int opcode;
-    int curBCI;
-    int nextBCI;
+    private final byte[] code;
+    private int opcode;
+    private int curBCI;
+    private int nextBCI;
 
     /**
      * Creates a new {@code BytecodeStream} for the specified bytecode.
