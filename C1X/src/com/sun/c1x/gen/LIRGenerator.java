@@ -536,7 +536,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue destinationAddress = null;
         // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
         // implicit calling convention between the XirSnippet and the call.
-        if (!C1XOptions.invokeinterfaceTemplatePos) {
+        if (!C1XOptions.InvokeSnippetAfterArguments) {
             destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
         }
 
@@ -545,7 +545,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         List<CiValue> pointerSlots = new ArrayList<CiValue>(2);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
-        if (C1XOptions.invokeinterfaceTemplatePos) {
+        if (C1XOptions.InvokeSnippetAfterArguments) {
             destinationAddress = emitXir(snippet, x, info.copy(), null, x.target(), false, pointerSlots);
         }
 
@@ -855,7 +855,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (arg.constant != null) {
             return arg.constant;
         } else {
-            assert arg.object != null && arg.object instanceof LIRItem;
+            assert arg.object != null;
+            if (arg.object instanceof CiValue) {
+                return (CiValue) arg.object;
+            }
+            assert arg.object instanceof LIRItem;
             LIRItem item = (LIRItem) arg.object;
             item.loadItem(var.kind);
             return item.result();
@@ -1755,7 +1759,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void postGCWriteBarrier(CiValue addr, CiValue newVal) {
-       XirSnippet writeBarrier = xir.genWriteBarrier(XirArgument.forObject(addr));
+       XirSnippet writeBarrier = xir.genWriteBarrier(XirArgument.forInternalObject(addr));
        if (writeBarrier != null) {
            emitXir(writeBarrier, null, null, null, false);
        }

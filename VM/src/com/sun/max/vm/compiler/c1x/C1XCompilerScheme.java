@@ -92,7 +92,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     @HOSTED_ONLY
     protected C1XCompilerScheme(MaxXirGenerator xirGenerator) {
-        VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
+        VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.getHelpMap());
         this.xirGenerator = xirGenerator;
     }
 

@@ -556,17 +556,20 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         cmp.loadItemForce(cmpValue);
         val.loadItem();
 
+        CiValue pointer = newVariable(CiKind.Word);
+        lir.lea(addr, pointer);
+
         if (kind.isObject()) { // Write-barrier needed for Object fields.
             // Do the pre-write barrier : if any.
-            preGCWriteBarrier(addr, false, null);
+            preGCWriteBarrier(pointer, false, null);
         }
 
         if (kind.isObject()) {
-            lir.casObj(addr, cmp.result(), val.result());
+            lir.casObj(pointer, cmp.result(), val.result());
         } else if (kind.isInt()) {
-            lir.casInt(addr, cmp.result(), val.result());
+            lir.casInt(pointer, cmp.result(), val.result());
         } else if (kind.isLong()) {
-            lir.casLong(addr, cmp.result(), val.result());
+            lir.casLong(pointer, cmp.result(), val.result());
         } else {
             Util.shouldNotReachHere();
         }
@@ -576,7 +579,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         lir.cmove(Condition.EQ, CiConstant.INT_1, CiConstant.INT_0, result);
         if (kind.isObject()) { // Write-barrier needed for Object fields.
             // Seems to be precise
-            postGCWriteBarrier(addr, val.result());
+            postGCWriteBarrier(pointer, val.result());
         }
     }
 
