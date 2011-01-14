@@ -46,7 +46,7 @@ import com.sun.cri.xir.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public class LIRList {
+public final class LIRList {
 
     private List<LIRInstruction> operations;
     private final LIRGenerator generator;
@@ -73,7 +73,7 @@ public class LIRList {
         assert op.verify();
     }
 
-    public final List<LIRInstruction> instructionsList() {
+    public List<LIRInstruction> instructionsList() {
         return operations;
     }
 

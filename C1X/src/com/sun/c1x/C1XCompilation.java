@@ -41,7 +41,7 @@ import com.sun.cri.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class C1XCompilation {
+public final class C1XCompilation {
 
     private static ThreadLocal<C1XCompilation> currentCompilation = new ThreadLocal<C1XCompilation>();
 
@@ -270,7 +270,7 @@ public class C1XCompilation {
         return assembler;
     }
 
-    public final boolean hasExceptionHandlers() {
+    public boolean hasExceptionHandlers() {
         return hasExceptionHandlers;
     }
 

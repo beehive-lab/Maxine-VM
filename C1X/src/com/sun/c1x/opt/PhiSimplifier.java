@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class PhiSimplifier implements BlockClosure {
+public final class PhiSimplifier implements BlockClosure {
 
     final IR ir;
     final InstructionSubstituter subst;

@@ -31,7 +31,7 @@ import com.sun.cri.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class LIRBlock {
+public final class LIRBlock {
 
     public LIRBlock() {
     }
