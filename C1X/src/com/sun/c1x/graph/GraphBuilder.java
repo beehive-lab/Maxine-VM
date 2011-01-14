@@ -936,7 +936,7 @@ public final class GraphBuilder {
         }
         RiType holder = target.holder();
         boolean isInitialized = !C1XOptions.TestPatching && target.isResolved() && holder.isInitialized();
-        if (!isInitialized && C1XOptions.GenerateClassResolveForStaticInvoke) {
+        if (!isInitialized && C1XOptions.ResolveClassBeforStaticInvoke) {
             // Re-use the same resolution code as for accessing a static field. Even though
             // the result of resolution is not used by the invocation (only the side effect
             // of initialization is required), it can be commoned with static field accesses.
@@ -2727,7 +2727,7 @@ public final class GraphBuilder {
     }
 
     boolean assumeLeafClass(RiType type) {
-        if (!C1XOptions.TestSlowPath && type.isResolved()) {
+        if (type.isResolved()) {
             if (isFinal(type.accessFlags())) {
                 return true;
             }
@@ -2747,7 +2747,7 @@ public final class GraphBuilder {
     }
 
     RiMethod getAssumedLeafMethod(RiMethod method) {
-        if (!C1XOptions.TestSlowPath && method.isResolved()) {
+        if (method.isResolved()) {
             if (method.isLeafMethod()) {
                 return method;
             }

@@ -38,7 +38,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @param expectedValue
      * @param newValue
      */
-    public LIRCompareAndSwap(LIROpcode opcode, CiAddress addr, CiValue expectedValue, CiValue newValue) {
+    public LIRCompareAndSwap(LIROpcode opcode, CiValue addr, CiValue expectedValue, CiValue newValue) {
         super(opcode, CiValue.IllegalValue, null, false, 0, 0, addr, expectedValue, newValue);
     }
 
@@ -47,8 +47,8 @@ public class LIRCompareAndSwap extends LIRInstruction {
      *
      * @return the address
      */
-    public CiAddress address() {
-        return (CiAddress) operand(0);
+    public CiValue address() {
+        return operand(0);
     }
 
     /**
