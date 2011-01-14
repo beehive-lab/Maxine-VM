@@ -857,7 +857,7 @@ public class Canonicalizer extends DefaultValueVisitor {
     private void reduceIntrinsic(Intrinsic i) {
         Value[] args = i.arguments();
         C1XIntrinsic intrinsic = i.intrinsic();
-        if (C1XOptions.IntrinsifyClassOps && intrinsic == C1XIntrinsic.java_lang_Class$isInstance) {
+        if (intrinsic == C1XIntrinsic.java_lang_Class$isInstance) {
             // try to convert a call to Class.isInstance() into an InstanceOf
             RiType type = asRiType(args[0]);
             if (type != null) {
@@ -865,7 +865,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 return;
             }
         }
-        if (C1XOptions.IntrinsifyArrayOps && intrinsic == C1XIntrinsic.java_lang_reflect_Array$newArray) {
+        if (intrinsic == C1XIntrinsic.java_lang_reflect_Array$newArray) {
             // try to convert a call to Array.newInstance() into a NewObjectArray or NewTypeArray
             RiType type = asRiType(args[0]);
             if (type != null) {

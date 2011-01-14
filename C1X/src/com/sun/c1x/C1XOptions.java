@@ -54,20 +54,10 @@ public class C1XOptions {
 
     // intrinsification settings
     public static boolean OptIntrinsify                      = ____;
-    public static boolean IntrinsifyObjectOps                = true;
-    public static boolean IntrinsifyClassOps                 = true;
-    public static boolean IntrinsifyIntOps                   = true;
-    public static boolean IntrinsifyLongOps                  = true;
-    public static boolean IntrinsifyStringOps                = true;
-    public static boolean IntrinsifyArrayOps                 = true;
-    public static boolean IntrinsifyReflection               = true;
-    public static boolean IntrinsifyMath                     = true;
-    public static boolean IntrinsifyAtomic                   = true;
-    public static boolean IntrinsifyUnsafe                   = true;
 
     // debugging and printing settings
     public static boolean VerifyPointerMaps                  = ____;
-    public static boolean IRChecking                         = true;
+    public static boolean IRChecking                         = ____;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
