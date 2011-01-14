@@ -33,7 +33,7 @@ import com.sun.c1x.graph.IR;
  *
  * @author Ben L. Titzer
  */
-public class InstructionSubstituter implements BlockClosure, ValueClosure {
+public final class InstructionSubstituter implements BlockClosure, ValueClosure {
 
     final IR ir;
     boolean hasSubstitution;

@@ -119,7 +119,7 @@ import com.sun.cri.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class BlockMap {
+public final class BlockMap {
 
     private static final BlockBegin[] NONE = {};
     private static final List<BlockBegin> NONE_LIST = Collections.emptyList();

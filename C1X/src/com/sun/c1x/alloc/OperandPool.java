@@ -39,7 +39,7 @@ import com.sun.cri.ci.*;
  *
  * @author Doug Simon
  */
-public class OperandPool {
+public final class OperandPool {
 
     public static final int INITIAL_VARIABLE_CAPACITY = 20;
 

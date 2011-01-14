@@ -289,7 +289,7 @@ public abstract class CiXirAssembler {
      * arguments, respectively. Only the {@link XirOp#CallStub} and {@link XirOp#CallRuntime} instructions can have more than three arguments.
      *
      */
-    public static class XirInstruction {
+    public static final class XirInstruction {
         /**
          * The {@link CiKind kind} of values the instruction operates on.
          */

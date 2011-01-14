@@ -281,7 +281,7 @@ public abstract class FrameState {
      * @param i the index into the stack, with {@code 0} being the bottom of the stack
      * @return the instruction at the specified position in the stack
      */
-    public Value stackAt(int i) {
+    public final Value stackAt(int i) {
         assert i < stackIndex;
         return values[i + maxLocals];
     }
@@ -292,7 +292,7 @@ public abstract class FrameState {
      * @param i the index into the locals
      * @return the instruction that produced the value for the specified local
      */
-    public Value localAt(int i) {
+    public final Value localAt(int i) {
         assert i < maxLocals : "local variable index out of range: " + i;
         return values[i];
     }
@@ -302,7 +302,7 @@ public abstract class FrameState {
      * @param i the index into the lock stack
      * @return the instruction which produced the object at the specified location in the lock stack
      */
-    public Value lockAt(int i) {
+    public final Value lockAt(int i) {
         return locks.get(i);
     }
 
@@ -350,7 +350,7 @@ public abstract class FrameState {
      * @param i a value in the range {@code [0 .. valuesSize()]}
      * @return the value at index {@code i} which may be {@code null}
      */
-    public Value valueAt(int i) {
+    public final Value valueAt(int i) {
         return values[i];
     }
 
@@ -362,11 +362,11 @@ public abstract class FrameState {
      *
      * @return the number of local variables in this frame
      */
-    public int valuesSize() {
+    public final int valuesSize() {
         return maxLocals + stackIndex;
     }
 
-    public int callerStackSize() {
+    public final int callerStackSize() {
         FrameState callerState = scope().callerState;
         return callerState == null ? 0 : callerState.stackSize();
     }
@@ -475,7 +475,7 @@ public abstract class FrameState {
      * @param block only phis {@linkplain Phi#block() associated} with this block are traversed
      * @param proc the call back invoked for each live phi traversed
      */
-    public boolean forEachLivePhi(BlockBegin block, PhiProcedure proc) {
+    public final boolean forEachLivePhi(BlockBegin block, PhiProcedure proc) {
         int max = this.valuesSize();
         for (int i = 0; i < max; i++) {
             Value instr = values[i];
@@ -550,7 +550,7 @@ public abstract class FrameState {
      *
      * @param proc the call back called to process each live value traversed
      */
-    public void forEachLiveStateValue(ValueProcedure proc) {
+    public final void forEachLiveStateValue(ValueProcedure proc) {
         FrameState state = this;
         while (state != null) {
             final int max = state.valuesSize();

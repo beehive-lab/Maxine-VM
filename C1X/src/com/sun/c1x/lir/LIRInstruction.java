@@ -395,7 +395,7 @@ public abstract class LIRInstruction {
         return allocatorOperands.size() > 0;
     }
 
-    public boolean hasCall() {
+    public final boolean hasCall() {
         return hasCall;
     }
 
