@@ -268,8 +268,10 @@ public abstract class BytecodeViewer extends CodeViewer {
     }
 
     /**
-     * @author Michael Van De Vanter
+     * A representation of a bytecode instruction, suitable for displaying
+     * different aspects of it.
      *
+     * @author Michael Van De Vanter
      */
     protected class BytecodeInstruction {
 

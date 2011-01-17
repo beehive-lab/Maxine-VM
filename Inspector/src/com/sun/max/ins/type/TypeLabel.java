@@ -123,16 +123,16 @@ public class TypeLabel extends InspectorLabel {
     private void updateText() {
         if (typeDescriptor == null) {
             setText("");
-            setToolTipText("<no type available>");
+            setWrappedToolTipText(htmlify("<no type available>"));
         } else {
             final Class javaType = typeDescriptor.resolveType(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER);
             final String typeName = javaType.getSimpleName();
             setText(typeName);
             if (teleClassActor == null) {
                 setForeground(style().javaUnresolvedNameColor());
-                setToolTipText("<unloaded>" +  javaType.getName());
+                setWrappedToolTipText(htmlify("<unloaded>") +  javaType.getName());
             } else {
-                setToolTipText("Field/element type=" + typeName + " (represented by: " + inspection().nameDisplay().referenceToolTipText(teleClassActor) + ")");
+                setWrappedToolTipText(typeDescriptor.toJavaString(true) + "<br>ClassActor = " + htmlify(inspection().nameDisplay().referenceToolTipText(teleClassActor)) + ")");
             }
         }
     }

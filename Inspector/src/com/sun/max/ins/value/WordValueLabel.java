@@ -371,7 +371,7 @@ public class WordValueLabel extends ValueLabel {
                         // If we don't catch this the views will not be updated at all.
                         teleObject = null;
                         displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
-                        setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                        setWrappedToolTipText("<b>" + throwable + "</b><br>See log for complete stack trace.");
                         throwable.printStackTrace(Trace.stream());
                     }
                 } else {
@@ -412,7 +412,7 @@ public class WordValueLabel extends ValueLabel {
 
                                 // If we don't catch this the views will not be updated at all.
                                 displayMode = DisplayMode.INVALID;
-                                setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                                setWrappedToolTipText("<b>" + throwable + "</b><br>See log for complete stack trace.");
                                 throwable.printStackTrace(Trace.stream());
                             }
                         }
@@ -437,7 +437,7 @@ public class WordValueLabel extends ValueLabel {
             setFont(style().wordAlternateTextFont());
             setForeground(style().wordInvalidDataColor());
             setWrappedText("void");
-            setToolTipText("Unable to read value");
+            setWrappedToolTipText("<unable to read value>");
             if (parent != null) {
                 parent.repaint();
             }
@@ -450,25 +450,33 @@ public class WordValueLabel extends ValueLabel {
         switch (displayMode) {
             case WORD: {
                 setFont(style().wordDataFont());
-                setForeground(value.isZero() ? style().wordNullDataColor() : null);
                 setWrappedText(hexString);
-                setWrappedToolTipText("Int: " + (value.isZero() ? 0 : Long.toString(value.toLong())));
+                if (value.isZero()) {
+                    setForeground(style().wordNullDataColor());
+                    setWrappedToolTipText("zero");
+                } else {
+                    setForeground(null);
+                    setWrappedToolTipText(value.toWord().to0xHexString() + "<br>Decimal= " + Long.toString(value.toLong()));
+                }
                 break;
             }
             case UNCHECKED_WORD: {
                 setFont(style().wordDataFont());
-                setForeground(value.isZero() ? style().wordNullDataColor() : null);
                 setWrappedText(hexString);
-                setWrappedToolTipText("Unchecked word");
+                if (value.isZero()) {
+                    setForeground(style().wordNullDataColor());
+                    setWrappedToolTipText("zero");
+                } else {
+                    setForeground(null);
+                    setWrappedToolTipText(valueToDecimalAndHex(value) + " - UNCHECKED");
+                }
                 break;
             }
             case NULL_WORD: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordNullDataColor());
                 setWrappedText("null");
-                if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setWrappedToolTipText("null");
-                }
+                setWrappedToolTipText("null");
                 break;
             }
             case INVALID: {
@@ -476,7 +484,9 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordInvalidDataColor());
                 setWrappedText(hexString);
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setWrappedToolTipText("invalid");
+                    setWrappedToolTipText("invalid reference");
+                } else {
+                    setWrappedToolTipText(valueToDecimalAndHex(value));
                 }
                 break;
             }
@@ -485,38 +495,53 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordValidObjectReferenceDataColor());
                 setWrappedText(hexString);
                 try {
-                    if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                        setWrappedToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject));
+                    // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
+                    final StringBuilder toolTipSB = new StringBuilder();
+                    toolTipSB.append(value.toWord().toPadded0xHexString('0'));
+                    toolTipSB.append("<br>Reference to ").append(htmlify(inspection().nameDisplay().referenceToolTipText(teleObject)));
+                    toolTipSB.append("<br>In ");
+                    final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(value().toWord().asAddress());
+                    if (memoryRegion == null) {
+                        toolTipSB.append(htmlify("<unknown memory region>"));
                     } else {
-                        setWrappedToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject));
+                        toolTipSB.append("\"").append(inspection().nameDisplay().longName(memoryRegion)).append("\"");
                     }
+                    setWrappedToolTipText(toolTipSB.toString());
                 } catch (Throwable throwable) {
                     // If we don't catch this the views will not be updated at all.
                     teleObject = null;
                     displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
-                    setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                    setWrappedToolTipText("<b>" + throwable + "</b><br>See log for complete stack trace.");
                     throwable.printStackTrace(Trace.stream());
                 }
                 break;
             }
             case OBJECT_REFERENCE_TEXT: {
+                setFont(style().wordAlternateTextFont());
+                setForeground(style().wordValidObjectReferenceDataColor());
                 try {
                     final String labelText = inspection().nameDisplay().referenceLabelText(teleObject);
                     if (labelText != null) {
-                        setWrappedText(labelText);
-                        setWrappedToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject));
-                        setFont(style().wordAlternateTextFont());
-                        setForeground(style().wordValidObjectReferenceDataColor());
-                        if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                            setWrappedToolTipText(getToolTipText());
+                        setText(labelText);
+                        // The syntax of object reference names contains "<" and ">"; make them safe for HTML tool tips.
+                        final StringBuilder toolTipSB = new StringBuilder();
+                        toolTipSB.append(value.toWord().toPadded0xHexString('0'));
+                        toolTipSB.append("<br>Reference to ").append(htmlify(labelText));
+                        toolTipSB.append("<br>In ");
+                        final MaxMemoryRegion memoryRegion = vm().findMemoryRegion(value().toWord().asAddress());
+                        if (memoryRegion == null) {
+                            toolTipSB.append(htmlify("<unknown memory region>"));
+                        } else {
+                            toolTipSB.append("\"").append(inspection().nameDisplay().longName(memoryRegion)).append("\"");
                         }
+                        setWrappedToolTipText(toolTipSB.toString());
                         break;
                     }
                 } catch (Throwable throwable) {
                     // If we don't catch this the views will not be updated at all.
                     teleObject = null;
                     displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
-                    setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                    setWrappedToolTipText("<b>" + throwable + "</b><br>See log for complete stack trace.");
                     throwable.printStackTrace(Trace.stream());
                     break;
                 }
@@ -530,8 +555,8 @@ public class WordValueLabel extends ValueLabel {
                 setWrappedText(hexString);
                 final String threadName = inspection().nameDisplay().longName(thread);
                 final long offset = value().asWord().asAddress().minus(thread.stack().memoryRegion().start()).toLong();
-                final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
-                setWrappedToolTipText("Stack:  thread=" + threadName + ", offset=" + hexOffsetString);
+                setWrappedToolTipText(value.toWord().to0xHexString() + "<br>Points into stack for thread " + threadName +
+                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
                 break;
             }
             case STACK_LOCATION_TEXT: {
@@ -541,7 +566,8 @@ public class WordValueLabel extends ValueLabel {
                 final long offset = value().asWord().asAddress().minus(thread.stack().memoryRegion().start()).toLong();
                 final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setWrappedText(threadName + " " + decimalOffsetString);
-                setWrappedToolTipText("Stack:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));
+                setWrappedToolTipText(value.toWord().to0xHexString() + "<br>Points into stack for thread " + threadName +
+                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
                 break;
             }
             case THREAD_LOCALS_BLOCK_LOCATION: {
@@ -550,8 +576,8 @@ public class WordValueLabel extends ValueLabel {
                 setWrappedText(hexString);
                 final String threadName = inspection().nameDisplay().longName(thread);
                 final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
-                final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
-                setWrappedToolTipText("Thread locals:  thread=" + threadName + ", offset=" + hexOffsetString);
+                setWrappedToolTipText(value.toWord().to0xHexString() + "<br>Points into thread locals area for thread " + threadName +
+                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
                 break;
             }
             case THREAD_LOCALS_BLOCK_LOCATION_TEXT: {
@@ -559,9 +585,9 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 final String threadName = inspection().nameDisplay().longName(thread);
                 final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
-                final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
-                setWrappedText(threadName + " " + decimalOffsetString);
-                setWrappedToolTipText("Thread locals:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));
+                setWrappedText(threadName + " " + longToPlusMinusDecimal(offset));
+                setWrappedToolTipText(value.toWord().to0xHexString() + "<br>Points into thread locals area for thread " + threadName +
+                                "<br>" + longToDecimalAndHex(offset) + " bytes from beginning");
                 break;
             }
             case UNCHECKED_REFERENCE: {
@@ -569,7 +595,7 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordUncheckedReferenceDataColor());
                 setWrappedText(hexString);
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setWrappedToolTipText("<unchecked>");
+                    setWrappedToolTipText(htmlify("<unchecked>"));
                 } else {
                     setWrappedToolTipText("Unchecked Reference");
                 }
@@ -580,7 +606,7 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordInvalidObjectReferenceDataColor());
                 setWrappedText(hexString);
                 if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setWrappedToolTipText("<invalid>");
+                    setWrappedToolTipText(htmlify("<invalid>"));
                 }
                 break;
             }
@@ -588,14 +614,18 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordCallEntryPointColor());
                 setWrappedText(hexString);
-                setWrappedToolTipText("Code: " + inspection().nameDisplay().longName(compiledCode));
+                setWrappedToolTipText(value.toWord().to0xHexString() +
+                                "<br>Points to entry in compilation number " + compiledCode.compilationIndex() + " for method" +
+                                "<br>" + htmlify(inspection().nameDisplay().longName(compiledCode)));
                 break;
             }
             case CALL_ENTRY_POINT_TEXT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordCallEntryPointColor());
                 setWrappedText(inspection().nameDisplay().veryShortName(compiledCode));
-                setWrappedToolTipText("Code: " + inspection().nameDisplay().longName(compiledCode));
+                setWrappedToolTipText(value.toWord().to0xHexString() +
+                                "<br>Points to entry in compilation number " + compiledCode.compilationIndex() + " for method" +
+                                "<br>" + htmlify(inspection().nameDisplay().longName(compiledCode)));
                 break;
             }
             case CLASS_ACTOR_ID: {
@@ -619,7 +649,11 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordCallReturnPointColor());
                 setWrappedText(hexString);
                 if (compiledCode != null) {
-                    setWrappedToolTipText("Code: " + inspection().nameDisplay().longName(compiledCode, value.toWord().asAddress()));
+                    final long position = value().asWord().asAddress().minus(compiledCode.getCodeStart()).toLong();
+                    setWrappedToolTipText(value.toWord().to0xHexString() +
+                                    "<br>Points into compilation number " + compiledCode.compilationIndex() + " for method" +
+                                    "<br>" + htmlify(inspection().nameDisplay().longName(compiledCode)) +
+                                    "<br>" + longToDecimalAndHex(position) + "bytes from beginning");
                 }
                 break;
             }
@@ -628,7 +662,11 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordCallReturnPointColor());
                 if (compiledCode != null) {
                     setWrappedText(inspection().nameDisplay().veryShortName(compiledCode, value.toWord().asAddress()));
-                    setWrappedToolTipText("Code: " + inspection().nameDisplay().longName(compiledCode, value.toWord().asAddress()));
+                    final long position = value().asWord().asAddress().minus(compiledCode.getCodeStart()).toLong();
+                    setWrappedToolTipText(value.toWord().to0xHexString() +
+                                    "<br>Points into compilation number " + compiledCode.compilationIndex() + " for method" +
+                                    "<br>" + htmlify(inspection().nameDisplay().longName(compiledCode)) +
+                                    "<br>" + longToDecimalAndHex(position) + "bytes from beginning");
                 }
                 break;
             }
@@ -656,15 +694,19 @@ public class WordValueLabel extends ValueLabel {
             case FLOAT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(null);
-                setWrappedText(Float.toString(Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL))) + "f");
-                setWrappedToolTipText("0x" + hexString + "  (as double = " + Double.toString(Double.longBitsToDouble(value.toLong())) + ")");
+                final String floatText = valueToFloatText(value);
+                final String doubleText = valueToDoubleText(value);
+                setWrappedText(floatText);
+                setWrappedToolTipText("0x" + hexString + "<br>As float = " + floatText + "<br>As double = " + doubleText);
                 break;
             }
             case DOUBLE: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(null);
-                setWrappedText(Double.toString(Double.longBitsToDouble(value.toLong())) + "d");
-                setWrappedToolTipText("0x" + hexString + "(as float = " + Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL)) + ")");
+                final String floatText = valueToFloatText(value);
+                final String doubleText = valueToDoubleText(value);
+                setWrappedText(doubleText);
+                setWrappedToolTipText("0x" + hexString + "<br>As float = " + floatText + "<br>As double = " + doubleText);
                 break;
             }
             case UNAVAILABLE: {

@@ -33,6 +33,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
@@ -180,7 +181,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        final int position = tableModel.rowToInstruction(row).position();
+        final int position = tableModel.rowToInstruction(row).position;
         focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view set focus"), false);
     }
 
@@ -214,7 +215,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         repaint();
     }
 
-    // TODO (mlvdv) Extract the table class
+    // TODO (mlvdv) Extract the table class from the viewer
     private final class BytecodeTable extends InspectorTable {
 
         BytecodeTable(Inspection inspection, InspectorTableModel tableModel, InspectorTableColumnModel tableColumnModel) {
@@ -239,8 +240,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 final BytecodeTableModel bytecodeTableModel = (BytecodeTableModel) getModel();
                 if (selectedRow >= 0 && selectedRow < bytecodeTableModel.getRowCount()) {
                     final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.rowToInstruction(selectedRow);
-                    final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
-                    final int position = bytecodeInstruction.position();
+                    final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress;
+                    final int position = bytecodeInstruction.position;
                     if (targetCodeFirstAddress.isZero()) {
                         focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view"));
                     } else {
@@ -248,6 +249,32 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     }
                 }
             }
+        }
+
+        /**
+         * {@inheritDoc}.
+         * <br>
+         * color text specially if the IP or a call return site is at this row.
+         */
+        @Override
+        public Color cellForegroundColor(int row, int col) {
+            return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
+        }
+
+        /**
+         * @param col TODO
+         * @return Color to be used for the background of all row labels; may have special overrides in future, as for Target Code
+         */
+        public Color cellBackgroundColor(int row, int col) {
+            final int[] searchMatchingRows = getSearchMatchingRows();
+            if (searchMatchingRows != null) {
+                for (int matchingRow : searchMatchingRows) {
+                    if (row == matchingRow) {
+                        return style().searchMatchedBackground();
+                    }
+                }
+            }
+            return table.getBackground();
         }
 
         public boolean updateCodeFocus(MaxCodeLocation codeLocation) {
@@ -288,7 +315,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         BytecodeTableColumnModel(BytecodeViewPreferences instanceViewPreferences) {
             super(BytecodeColumnKind.values().length, instanceViewPreferences);
-            addColumn(BytecodeColumnKind.TAG, new TagRenderer(), null);
+            addColumn(BytecodeColumnKind.TAG, new TagRenderer(inspection), null);
             addColumn(BytecodeColumnKind.NUMBER, new NumberRenderer(), null);
             addColumn(BytecodeColumnKind.POSITION, new PositionRenderer(), null);
             addColumn(BytecodeColumnKind.INSTRUCTION, new InstructionRenderer(), null);
@@ -362,6 +389,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             }
         }
 
+        @Override
+        public String getRowDescription(int row) {
+            return "Instruction " + row + " (" + Bytecodes.nameOf(rowToInstruction(row).opcode) + ")";
+        }
+
         public BytecodeInstruction rowToInstruction(int row) {
             return bytecodeInstructions.get(row);
         }
@@ -372,8 +404,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
          */
         public int findRowAtPosition(int position) {
             for (BytecodeInstruction instruction : bytecodeInstructions) {
-                if (instruction.position() == position) {
-                    return instruction.row();
+                if (instruction.position == position) {
+                    return instruction.row;
                 }
             }
             return -1;
@@ -387,7 +419,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public int findRow(Address address) {
             if (haveTargetCodeAddresses()) {
                 for (BytecodeInstruction instruction : bytecodeInstructions) {
-                    int row = instruction.row();
+                    int row = instruction.row;
                     if (rowContainsAddress(row, address)) {
                         return row;
                     }
@@ -396,29 +428,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             }
             return -1;
         }
-
-    }
-
-    /**
-     * @return the default color to be used for all text labels on the row
-     */
-    private Color getRowTextColor(int row) {
-        return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
-    }
-
-    /**
-     * @return Color to be used for the background of all row labels; may have special overrides in future, as for Target Code
-     */
-    private Color getRowBackgroundColor(int row) {
-        final int[] searchMatchingRows = getSearchMatchingRows();
-        if (searchMatchingRows != null) {
-            for (int matchingRow : searchMatchingRows) {
-                if (row == matchingRow) {
-                    return style().searchMatchedBackground();
-                }
-            }
-        }
-        return table.getBackground();
     }
 
     /**
@@ -435,18 +444,26 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
+    private final class TagRenderer extends InspectorLabel implements TableCellRenderer, TextSearchable, Prober {
+
+        public TagRenderer(Inspection inspection) {
+            super(inspection);
+        }
+
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
-            final StringBuilder toolTipText = new StringBuilder(100);
+            setToolTipPrefix(tableModel.getRowDescription(row));
+            final StringBuilder toolTipSB = new StringBuilder(100);
             final MaxStackFrame stackFrame = stackFrame(row);
             if (stackFrame != null) {
-                toolTipText.append("Stack ");
-                toolTipText.append(stackFrame.position());
-                toolTipText.append(":  0x");
-                toolTipText.append(stackFrame.codeLocation().address().toHexString());
-                toolTipText.append(" thread=");
-                toolTipText.append(inspection.nameDisplay().longName(stackFrame.stack().thread()));
-                toolTipText.append("; ");
+                if (stackFrame.position() == 0) {
+                    toolTipSB.append("<br>IP (stack frame 0) in thread ");
+                } else {
+                    toolTipSB.append("<br>Call return (frame ");
+                    toolTipSB.append(stackFrame.position());
+                    toolTipSB.append(") in thread ");
+                }
+                toolTipSB.append(inspection.nameDisplay().longName(stackFrame.stack().thread()));
+                toolTipSB.append(" points here");
                 if (stackFrame.isTop()) {
                     setIcon(style().debugIPTagIcon());
                     setForeground(style().debugIPTagColor());
@@ -462,8 +479,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             final MaxBreakpoint bytecodeBreakpoint = getBytecodeBreakpointAtRow(row);
             final List<MaxBreakpoint> targetBreakpoints = getTargetBreakpointsAtRow(row);
             if (bytecodeBreakpoint != null) {
-                toolTipText.append(bytecodeBreakpoint);
-                toolTipText.append("; ");
+                toolTipSB.append("<br>breakpont set @");
+                toolTipSB.append(bytecodeBreakpoint);
+                toolTipSB.append("; ");
+                toolTipSB.append(bytecodeBreakpoint.isEnabled() ? ", enabled" : ", disabled");
                 if (bytecodeBreakpoint.isEnabled()) {
                     setBorder(style().debugEnabledBytecodeBreakpointTagBorder());
                 } else {
@@ -472,8 +491,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             } else if (targetBreakpoints.size() > 0) {
                 boolean enabled = false;
                 for (MaxBreakpoint targetBreakpoint : targetBreakpoints) {
-                    toolTipText.append(targetBreakpoint);
-                    toolTipText.append("; ");
+                    toolTipSB.append(targetBreakpoint);
+                    toolTipSB.append("; ");
                     enabled = enabled || targetBreakpoint.isEnabled();
                 }
                 if (enabled) {
@@ -484,13 +503,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             } else {
                 setBorder(null);
             }
-            setToolTipText(toolTipText.toString());
+            setWrappedToolTipText(toolTipSB.toString());
             setBackgroundForRow(this, row);
             return this;
-        }
-
-        public String getSearchableText() {
-            return "";
         }
 
         public void redisplay() {
@@ -507,10 +522,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final BytecodeTable bytecodeTable = (BytecodeTable) table;
             setValue(row);
-            setToolTipText("Instruction no. " + row + "in method");
+            setToolTipText(tableModel.getRowDescription(row));
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            setForeground(bytecodeTable.cellForegroundColor(row, col));
             return this;
         }
     }
@@ -525,13 +541,16 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final BytecodeTable bytecodeTable = (BytecodeTable) table;
             final Integer position = (Integer) value;
             if (this.position != position) {
                 this.position = position;
                 setValue(position);
             }
+            setToolTipPrefix(tableModel.getRowDescription(row) + " location<br>");
+            setToolTipSuffix(" bytes from beginning");
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            setForeground(bytecodeTable.cellForegroundColor(row, col));
             return this;
         }
     }
@@ -543,10 +562,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final BytecodeTable bytecodeTable = (BytecodeTable) table;
             final int opcode = (Integer) value;
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setValue(opcode);
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            setForeground(bytecodeTable.cellForegroundColor(row, col));
             return this;
         }
     }
@@ -557,19 +578,22 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object tableValue, boolean isSelected, boolean hasFocus, int row, int col) {
-            JComponent renderer = null;
-            if (tableValue instanceof JComponent) {
+            final BytecodeTable bytecodeTable = (BytecodeTable) table;
+            InspectorLabel renderer = null;
+            if (tableValue instanceof InspectorLabel) {
                 // BytecodePrinter returns a label component for simple values
-                renderer = (JComponent) tableValue;
-                renderer.setForeground(getRowTextColor(row));
+                renderer = (InspectorLabel) tableValue;
+                renderer.setToolTipPrefix(tableModel.getRowDescription(row) + " operand:<br>");
+                renderer.setForeground(bytecodeTable.cellForegroundColor(row, col));
             } else if (tableValue instanceof Integer) {
                 // BytecodePrinter returns index of a constant pool entry, when that's the operand
                 final int index = ((Integer) tableValue).intValue();
                 renderer =  PoolConstantLabel.make(inspection(), index, localConstantPool(), teleConstantPool(), instanceViewPreferences.operandDisplayMode());
                 if (renderer.getForeground() == null) {
-                    setForeground(getRowTextColor(row));
+                    renderer.setForeground(bytecodeTable.cellForegroundColor(row, col));
                 }
-                setFont(style().bytecodeOperandFont());
+                renderer.setToolTipPrefix(tableModel.getRowDescription(row) + " operand:<br>Constant pool reference = ");
+                renderer.setFont(style().bytecodeOperandFont());
             } else {
                 InspectorError.unexpected("unrecognized table value at row=" + row + ", col=" + col);
             }
@@ -601,14 +625,15 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BytecodeLocation bytecodeLocation = (BytecodeLocation) value;
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             final String sourceFileName = bytecodeLocation.sourceFileName();
             final int lineNumber = bytecodeLocation.sourceLineNumber();
             if (sourceFileName != null && lineNumber >= 0) {
                 setText(String.valueOf(lineNumber));
-                setToolTipText(sourceFileName + ":" + lineNumber);
+                setWrappedToolTipText("Source location =<br>" + sourceFileName + ":" + lineNumber);
             } else {
                 setText("");
-                setToolTipText("Source line not available");
+                setWrappedToolTipText("Source line not available");
             }
             setBackgroundForRow(this, row);
             lastBytecodeLocation = bytecodeLocation;
@@ -623,7 +648,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            final BytecodeTable bytecodeTable = (BytecodeTable) table;
+            setForeground(bytecodeTable.cellForegroundColor(row, col));
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>as bytes = ");
             setValue((byte[]) value);
             return this;
         }

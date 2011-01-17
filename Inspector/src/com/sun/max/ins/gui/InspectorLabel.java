@@ -31,6 +31,8 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A label specialized for use in the {@link Inspector}.
@@ -105,24 +107,150 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     /**
      * An optional string that can be prepended to every label's text.
      */
-    private String textPrefix;
+    private String textPrefix = "";
 
 
     /**
      * An optional string that can be appended to every label's text.
      */
-    private String textSuffix;
+    private String textSuffix = "";
 
     /**
      * An optional string that can be prepended to every label tooltip text.
      */
-    private String toolTipPrefix;
+    private String toolTipPrefix = "";
 
 
     /**
      * An optional string that can be appended to every label tooltip text.
      */
-    private String toolTipSuffix;
+    private String toolTipSuffix = "";
+
+    /**
+     * Translates an int into hex text prefixed with "0x, e.g. "0x4ef".
+     *
+     * @param intValue an int
+     * @return string describing the int as hex with "0x" prefix
+     */
+    public static final String intTo0xHex(int intValue) {
+        return "0x" + Integer.toHexString(intValue);
+    }
+
+    /**
+     * Translates an integer into decimal text with plus/minus, e.g. "-2", "0", or "+3"
+     *
+     * @return integer as a decimal text string with a plus/minus prefix if not zero.
+     */
+    public static final String intToPlusMinusDecimal(int intValue) {
+        return (intValue >= 0 ? "+" : "") + Integer.toString(intValue);
+    }
+
+    /**
+     * Translates an integer into decimal text, followed by prefixed hex equivalent, e.g. "22(0x16)"
+     *
+     * @return string describing the integer in both decimal and hex, with no "+" prefix.
+     */
+    public static final String intToDecimalAndHex(int intValue) {
+        return Integer.toString(intValue) + "(" + intTo0xHex(intValue) + ")";
+    }
+
+    /**
+     * Translates an integer into decimal text with plus/minus, followed by prefixed, unpadded
+     * hex equivalent, e.g. "+22(0x16)"
+     *
+     * @return string describing the relative location in both decimal and hex, with a "+" prefix when non-negative
+     */
+    public static final String intToPlusMinusDecimalAndHex(int intValue) {
+        return intToPlusMinusDecimal(intValue) + "(" + intTo0xHex(intValue) + ")";
+    }
+
+    /**
+     * Translates a long into decimal text with plus/minus, e.g. "-2", "0", or "+3"
+     *
+     * @return long as a decimal text string with a plus/minus prefix if not zero.
+     */
+    public static final String longToPlusMinusDecimal(long longValue) {
+        return (longValue >= 0 ? "+" : "") + Long.toString(longValue);
+    }
+
+    /**
+     * Translates a long into hex text prefixed with "0x, e.g. "0x4ef".
+     *
+     * @param longValue a long
+     * @return string describing the long as hex with "0x" prefix
+     */
+    public static final String longTo0xHex(long longValue) {
+        return "0x" + Long.toHexString(longValue);
+    }
+
+    /**
+     * Translates a long into decimal text, followed by prefixed hex equivalent, e.g. "22(0x16)"
+     *
+     * @return string describing the long in both decimal and hex, with no "+" prefix.
+     */
+    public static final String longToDecimalAndHex(long longValue) {
+        return Long.toString(longValue) + "(" + longTo0xHex(longValue) + ")";
+    }
+
+    /**
+     * Translates a sequence of bytes into space-separated text surrounded by brackets, e.g. "[0F FF A0]"
+     */
+    public static final String bytesToByteString(byte[] bytes) {
+        if (bytes == null) {
+            return "";
+        }
+        final StringBuilder result = new StringBuilder(100);
+        String prefix = "[";
+        for (byte b : bytes) {
+            result.append(prefix);
+            result.append(String.format("%02X", b));
+            prefix = " ";
+        }
+        result.append("]");
+        return result.toString();
+    }
+
+    /**
+     * Translates a {@link Size} into decimal text, followed by prefixed hex equivalent, e.g. "22(0x16)"
+     *
+     * @return string describing the size in both decimal and hex, with no "+" prefix.
+     */
+    public static final String sizeToDecimalAndHex(Size size) {
+        final long longValue = size.toLong();
+        return Long.toString(longValue) + "(" + longTo0xHex(longValue) + ")";
+    }
+
+    /**
+     * Translates a VM {@code Value} into decimal text, followed by prefixed
+     * hex equivalent, e.g. "+22(0x16)"
+     *
+     * @param value
+     * @return string describing the value in both decimal and hex
+     */
+    public static final String valueToDecimalAndHex(Value value) {
+        return Long.toString(value.toLong()) + "(" + value.toWord().to0xHexString() + ")";
+    }
+
+    public static final String valueToFloatText(Value value) {
+        return Float.toString(Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL))) + "f";
+    }
+
+    public static final String valueToDoubleText(Value value) {
+        return Double.toString(Double.longBitsToDouble(value.toLong())) + "d";
+    }
+
+    /**
+     * Translates a string that may legitimately contain the characters '<' and '>',
+     * replacing every instance characters with HTML special character codes so that they
+     * will be displayed correctly.  Should not be used on any string that already contains
+     * HTML tags, because the method does not discriminate.
+     *
+     * @param text a text string
+     * @return a text string with all occurrences of '<' and '>' by HTML special character codes.
+     */
+    public static final String htmlify(String text) {
+        return text.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
 
     /**
      * A label for use in the inspector, by default not opaque.
@@ -193,11 +321,12 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * @see #setWrappedText(String)
      */
     public final void setTextPrefix(String textPrefix) {
-        if (textPrefix == null || textPrefix.equals("")) {
-            this.textPrefix = null;
-        } else {
+        if (textPrefix != null && !textPrefix.equals("")) {
             this.textPrefix = textPrefix + " ";
+        } else {
+            this.textPrefix = "";
         }
+        redisplay();
     }
 
     /**
@@ -208,15 +337,17 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * @see #setWrappedText(String)
      */
     public final void setTextSuffix(String textSuffix) {
-        if (textSuffix == null || textSuffix.equals("")) {
-            this.textSuffix = null;
-        } else {
+        if (textSuffix != null && !textSuffix.equals("")) {
             this.textSuffix = " " + textSuffix;
+        } else {
+            this.textSuffix = "";
         }
+        redisplay();
     }
 
     /**
-     * Sets the label's text to the specified string, but wrapped
+     * Sets the label's text to the specified string, but starting
+     * with an {@code <html>} tag, and wrapped
      * by an optional prefix and an optional suffix.
      *
      * @param text the text to be wrapped and set as the label's text.
@@ -225,25 +356,25 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * @see #setText(String)
      */
     public void setWrappedText(String text) {
-        String wrappedText = text;
-        wrappedText = textPrefix == null ? wrappedText : textPrefix + wrappedText;
-        wrappedText = textSuffix == null ? wrappedText : wrappedText + textSuffix;
-        super.setText(wrappedText);
+        //]System.out.println("<html>" + textPrefix + text + textSuffix);
+        super.setText("<html>" + textPrefix + text + textSuffix);
     }
 
     /**
      * Sets text to be prepended to every subsequently "wrapped" tooltip, with an additional
-     * space inserted between.
+     * space inserted between.  Be sure to set the prefix <i>before</i> an event (such as a
+     * value change) that causes the tool tip text to be regenerated.
      *
      * @param toolTipPrefix prefix for every tooltip display.
      * @see #setWrappedToolTipText(String)
      */
     public final void setToolTipPrefix(String toolTipPrefix) {
-        if (toolTipPrefix == null || toolTipPrefix.equals("")) {
-            this.toolTipPrefix = null;
-        } else {
+        if (toolTipPrefix != null && !toolTipPrefix.equals("")) {
             this.toolTipPrefix = toolTipPrefix + " ";
+        } else {
+            this.toolTipPrefix = "";
         }
+        redisplay();
     }
 
     /**
@@ -254,27 +385,27 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * @see #setWrappedToolTipText(String)
      */
     public final void setToolTipSuffix(String toolTipSuffix) {
-        if (toolTipSuffix == null || toolTipSuffix.equals("")) {
-            this.toolTipSuffix = null;
-        } else {
+        if (toolTipSuffix != null && !toolTipSuffix.equals("")) {
             this.toolTipSuffix = " " + toolTipSuffix;
+        } else {
+            this.toolTipSuffix = "";
         }
+        redisplay();
     }
 
     /**
-     * Sets the label's tool tip text to the specified string, but wrapped
+     * Sets the label's tool tip text to the specified string, but starting
+     * with an {@code <html>} tag, and wrapped
      * by an optional prefix and an optional suffix.
      *
      * @param toolTipText the text to be wrapped and set as the label's tool tip text.
      * @see #setToolTipPrefix(String)
-     * @see #setToolTispSuffix(String)
+     * @see #setToolTipSuffix(String)
      * @see #setToolTipText(String)
      */
     public final void setWrappedToolTipText(String toolTipText) {
-        String wrappedText = toolTipText;
-        wrappedText = toolTipPrefix == null ? wrappedText : toolTipPrefix + wrappedText;
-        wrappedText = toolTipSuffix == null ? wrappedText : wrappedText + toolTipSuffix;
-        super.setToolTipText(wrappedText);
+        //System.out.println("<html>" + toolTipPrefix + toolTipText + toolTipSuffix);
+        super.setToolTipText("<html>" + toolTipPrefix + toolTipText + toolTipSuffix);
     }
 
     /**

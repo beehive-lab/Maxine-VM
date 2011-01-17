@@ -71,7 +71,7 @@ public final class ArrayElementsTable extends InspectorTable {
     private final ObjectViewPreferences instanceViewPreferences;
 
     /**
-     * A {@link JTable} specialized to display VM array elements.
+     * A table specialized for the display VM array elements.
      * This table is somewhat complex so that it can serve for both ordinary array elements
      * as well as the various array subsets (tables) in hybrid objects (hubs).
      *
@@ -101,7 +101,7 @@ public final class ArrayElementsTable extends InspectorTable {
         this.instanceViewPreferences = instanceViewPreferences;
 
         this.tableModel = new ArrayElementsTableModel(inspection, teleObject.origin());
-        this.columnModel = new ArrayElementsTableColumnModel(instanceViewPreferences);
+        this.columnModel = new ArrayElementsTableColumnModel(this, this.tableModel, instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
         setFillsViewportHeight(true);
         updateFocusSelection();
@@ -172,21 +172,34 @@ public final class ArrayElementsTable extends InspectorTable {
     }
 
     /**
+     * @return color the text specially in the row where a watchpoint is triggered
+     */
+    @Override
+    public Color cellForegroundColor(int row, int column) {
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
+        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
+            return style().debugIPTagColor();
+        }
+        return null;
+    }
+
+    /**
      * A column model for array elements, to be used in an {@link ObjectInspector}.
      * Column selection is driven by choices in the parent {@link ObjectInspector}.
      * This implementation cannot update column choices dynamically.
      */
     private final class ArrayElementsTableColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
-        ArrayElementsTableColumnModel(ObjectViewPreferences viewPreferences) {
+        ArrayElementsTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, ObjectViewPreferences viewPreferences) {
             super(ObjectColumnKind.values().length, viewPreferences);
-            addColumn(ObjectColumnKind.TAG, new TagRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.OFFSET, new PositionRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.TYPE, new TypeRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ObjectColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ObjectColumnKind.OFFSET, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ObjectColumnKind.TYPE,  new MemoryContentsTypeTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(ObjectColumnKind.NAME, new NameRenderer(inspection()), null);
             addColumn(ObjectColumnKind.VALUE, new ValueRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.REGION, new RegionRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.BYTES,  new MemoryBytesTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ObjectColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
 
@@ -271,6 +284,17 @@ public final class ArrayElementsTable extends InspectorTable {
             return -1;
         }
 
+        @Override
+        public String getRowDescription(int row) {
+            return "Array element " + row;
+        }
+
+        @Override
+        public TypeDescriptor getRowType(int row) {
+            return elementTypeDescriptor;
+        }
+
+
         public int rowToElementIndex(int row) {
             return rowToElementIndex[row];
         }
@@ -301,91 +325,17 @@ public final class ArrayElementsTable extends InspectorTable {
         }
     }
 
-    /**
-     * @return color the text specially in the row where a watchpoint is triggered
-     */
-    private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
-        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
-        }
-        return null;
-    }
-
-    private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
-
-        TagRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final JLabel renderer = getRenderer(tableModel.getMemoryRegion(row), focus().thread(), tableModel.getWatchpoints(row));
-            renderer.setForeground(getRowTextColor(row));
-            renderer.setBackground(cellBackgroundColor(isSelected));
-            renderer.setOpaque(true);
-            return renderer;
-        }
-    }
-
-    private final class AddressRenderer extends LocationLabel.AsAddressWithByteOffset implements TableCellRenderer {
-
-        AddressRenderer(Inspection inspection) {
-            super(inspection);
-            setToolTipPrefix("Array element memory address");
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(tableModel.getOffset(row), tableModel.getOrigin());
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
-            return this;
-        }
-    }
-
-    private final class PositionRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
-
-        public PositionRenderer(Inspection inspection) {
-            super(inspection);
-            setToolTipPrefix("Array element memory address");
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(tableModel.getOffset(row), tableModel.getOrigin());
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
-            return this;
-        }
-    }
-
-    private final class TypeRenderer extends TypeLabel implements TableCellRenderer {
-
-        public TypeRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setValue(elementTypeDescriptor);
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
-            return this;
-        }
-    }
-
     private final class NameRenderer extends LocationLabel.AsIndex implements TableCellRenderer {
 
         public NameRenderer(Inspection inspection) {
             super(inspection, indexPrefix, 0, Offset.zero(), Address.zero());
-            setToolTipPrefix("Array element address");
             setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>address = ");
             setValue(row, tableModel.getOffset(row), tableModel.getOrigin());
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -457,49 +407,9 @@ public final class ArrayElementsTable extends InspectorTable {
                         }
                     };
                 }
+                labels[elementIndex].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>value = ");
                 labels[elementIndex].setOpaque(true);
 
-            }
-            labels[elementIndex].setBackground(cellBackgroundColor(isSelected));
-            return labels[elementIndex];
-        }
-    }
-
-    private final class RegionRenderer implements TableCellRenderer, Prober {
-
-        private final Inspection inspection;
-
-        public RegionRenderer(Inspection inspection) {
-            this.inspection = inspection;
-        }
-
-        private InspectorLabel[] labels = new InspectorLabel[arrayLength];
-
-        public void refresh(boolean force) {
-            for (InspectorLabel label : labels) {
-                if (label != null) {
-                    label.refresh(force);
-                }
-            }
-        }
-
-        public void redisplay() {
-            for (InspectorLabel label : labels) {
-                if (label != null) {
-                    label.redisplay();
-                }
-            }
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            final int elementIndex = tableModel.rowToElementIndex(row);
-            if (labels[elementIndex] == null) {
-                labels[elementIndex] = new MemoryRegionValueLabel(inspection, "Array element value") {
-                    @Override
-                    public Value fetchValue() {
-                        return vm().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
-                    }
-                };
             }
             labels[elementIndex].setBackground(cellBackgroundColor(isSelected));
             return labels[elementIndex];

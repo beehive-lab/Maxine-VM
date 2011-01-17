@@ -42,6 +42,7 @@ public enum ObjectColumnKind implements ColumnKind {
     TYPE("Type", "Type of field", true, 20),
     NAME("Field", "Field name", true, 20),
     VALUE("Value", "Field value", true, 20),
+    BYTES("As bytes", "Field value as bytes", false, 20),
     REGION("Region", "Memory region pointed to by value", false, 20);
 
     private final String label;

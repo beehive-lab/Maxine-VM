@@ -34,7 +34,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
@@ -56,7 +56,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     public ThreadLocalsAreaTable(Inspection inspection, final MaxThreadLocalsArea tla, ThreadLocalsViewPreferences viewPreferences) {
         super(inspection);
         this.tableModel = new ThreadLocalsAreaTableModel(inspection, tla);
-        this.columnModel = new ThreadLocalsAreaTableColumnModel(viewPreferences);
+        this.columnModel = new ThreadLocalsAreaTableColumnModel(this, this.tableModel, viewPreferences);
         configureMemoryTable(tableModel, columnModel);
     }
 
@@ -124,20 +124,34 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     }
 
     /**
+     * {@inheritDoc}.
+     * <br>
+     * Color the text specially in the row where a watchpoint is triggered
+     */
+    @Override
+    public Color cellForegroundColor(int row, int col) {
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
+        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
+            return style().debugIPTagColor();
+        }
+        return null;
+    }
+
+    /**
      * A column model for thread local values.
      * Column selection is driven by choices in the parent.
      * This implementation cannot update column choices dynamically.
      */
     private final class ThreadLocalsAreaTableColumnModel extends InspectorTableColumnModel<ThreadLocalVariablesColumnKind> {
 
-        ThreadLocalsAreaTableColumnModel(ThreadLocalsViewPreferences viewPreferences) {
+        ThreadLocalsAreaTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, ThreadLocalsViewPreferences viewPreferences) {
             super(ThreadLocalVariablesColumnKind.values().length, viewPreferences);
-            addColumn(ThreadLocalVariablesColumnKind.TAG, new TagRenderer(inspection()), null);
-            addColumn(ThreadLocalVariablesColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
-            addColumn(ThreadLocalVariablesColumnKind.POSITION, new PositionRenderer(inspection()), null);
+            addColumn(ThreadLocalVariablesColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ThreadLocalVariablesColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ThreadLocalVariablesColumnKind.POSITION, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel, inspection().vm().platform().wordSize().toInt()), null);
             addColumn(ThreadLocalVariablesColumnKind.NAME, new NameRenderer(inspection()), null);
             addColumn(ThreadLocalVariablesColumnKind.VALUE, new ValueRenderer(), null);
-            addColumn(ThreadLocalVariablesColumnKind.REGION, new RegionRenderer(), null);
+            addColumn(ThreadLocalVariablesColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
 
@@ -148,10 +162,15 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
     private final class ThreadLocalsAreaTableModel extends InspectorMemoryTableModel {
 
         private final MaxThreadLocalsArea tla;
+        private final String[] threadLocalDescriptions;
 
         public ThreadLocalsAreaTableModel(Inspection inspection, MaxThreadLocalsArea tla) {
             super(inspection, tla.memoryRegion().start());
             this.tla = tla;
+            threadLocalDescriptions = new String[tla.variableCount()];
+            for (int row = 0; row < tla.variableCount(); row++) {
+                threadLocalDescriptions[row] = "Thread local variable " + tla.getThreadLocalVariable(row).variableName();
+            }
         }
 
         public int getColumnCount() {
@@ -169,14 +188,6 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         @Override
         public Class< ? > getColumnClass(int col) {
             return MaxThreadLocalVariable.class;
-        }
-
-        public MaxThread getThread() {
-            return tla.thread();
-        }
-
-        public MaxThreadLocalsArea getTeleThreadLocalValues() {
-            return tla;
         }
 
         @Override
@@ -200,67 +211,21 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
             return threadLocalVariable == null ? -1 : threadLocalVariable.index();
         }
 
+        @Override
+        public String getRowDescription(int row) {
+            return threadLocalDescriptions[row];
+        }
+
+        public MaxThread getThread() {
+            return tla.thread();
+        }
+
+        public MaxThreadLocalsArea getTeleThreadLocalValues() {
+            return tla;
+        }
+
         public Value rowToVariableValue(int row) {
             return tla.getThreadLocalVariable(row).value();
-        }
-    }
-
-    /**
-     * @return color the text specially in the row where a watchpoint is triggered
-     */
-    private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
-        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
-        }
-        return null;
-    }
-
-    private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
-
-        TagRenderer(Inspection inspection) {
-            super(inspection);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(tableModel.getMemoryRegion(row), tableModel.getThread(), tableModel.getWatchpoints(row));
-            renderer.setForeground(getRowTextColor(row));
-            renderer.setBackground(cellBackgroundColor(isSelected));
-            return renderer;
-        }
-    }
-
-    private final class AddressRenderer extends LocationLabel.AsAddressWithByteOffset implements TableCellRenderer {
-
-        AddressRenderer(Inspection inspection) {
-            super(inspection);
-            setToolTipPrefix("Thread local memory address");
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final MaxThreadLocalVariable threadLocalVariable = (MaxThreadLocalVariable) value;
-            setValue(Offset.fromInt(threadLocalVariable.offset()), tableModel.getOrigin());
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
-            return this;
-        }
-    }
-
-    private final class PositionRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
-
-        public PositionRenderer(Inspection inspection) {
-            super(inspection, 0, Address.zero(), Word.size());
-            setToolTipPrefix("Thread local memory address");
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final MaxThreadLocalVariable threadLocalVariable = (MaxThreadLocalVariable) value;
-            setValue(Offset.fromInt(threadLocalVariable.offset()), tableModel.getOrigin());
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
-            return this;
         }
     }
 
@@ -271,14 +236,16 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
             setOpaque(true);
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThreadLocalVariable threadLocalVariable = (MaxThreadLocalVariable) value;
             setValue(threadLocalVariable.variableName());
-            setToolTipText("<html>" + (threadLocalVariable.entityName().length() > 0 ? threadLocalVariable.entityDescription() + "<br>" : "") + "Declaration: " + threadLocalVariable.declaration());
+            setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>" +
+                            "Description = \"" + threadLocalVariable.variableDocumentation() + "\"<br>" +
+                            "Declared in " + threadLocalVariable.declaration());
             if (threadLocalVariable.isReference()) {
                 setForeground(style().wordValidObjectReferenceDataColor());
             } else {
-                setForeground(getRowTextColor(row));
+                setForeground(cellForegroundColor(row, column));
             }
             setBackground(cellBackgroundColor(isSelected));
             return this;
@@ -307,10 +274,9 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, final int column) {
             final MaxThreadLocalVariable threadLocalVariable = (MaxThreadLocalVariable) value;
-            InspectorLabel label = labels[row];
-            if (label == null) {
+            if (labels[row] == null) {
                 final ValueMode valueMode = threadLocalVariable.isReference() ? ValueMode.REFERENCE : ValueMode.WORD;
-                label = new WordValueLabel(inspection(), valueMode, ThreadLocalsAreaTable.this) {
+                labels[row] = new WordValueLabel(inspection(), valueMode, ThreadLocalsAreaTable.this) {
                     @Override
                     public Value fetchValue() {
                         return tableModel.rowToVariableValue(row);
@@ -321,42 +287,8 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
                         ThreadLocalsAreaTable.this.repaint();
                     }
                 };
-                label.setOpaque(true);
-                labels[row] = label;
-            }
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
-        }
-    }
-
-    private final class RegionRenderer implements TableCellRenderer, Prober {
-
-        private InspectorLabel[] labels = new InspectorLabel[tableModel.getRowCount()];
-
-        public void refresh(boolean force) {
-            for (InspectorLabel label : labels) {
-                if (label != null) {
-                    label.refresh(force);
-                }
-            }
-        }
-
-        public void redisplay() {
-            for (InspectorLabel label : labels) {
-                if (label != null) {
-                    label.redisplay();
-                }
-            }
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            if (labels[row] == null) {
-                labels[row] = new MemoryRegionValueLabel(inspection(), "Thread local") {
-                    @Override
-                    public Value fetchValue() {
-                        return tableModel.rowToVariableValue(row);
-                    }
-                };
+                labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
+                labels[row].setOpaque(true);
             }
             labels[row].setBackground(cellBackgroundColor(isSelected));
             return labels[row];

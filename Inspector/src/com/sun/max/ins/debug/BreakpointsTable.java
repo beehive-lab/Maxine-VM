@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -112,6 +112,16 @@ public final class BreakpointsTable extends InspectorTable {
         }
     }
 
+    /**
+     * {@inheritDoc}.
+     * <br>
+     * color the text specially in the row where a triggered breakpoint is displayed
+     */
+    @Override
+    public Color cellForegroundColor(int row, int col) {
+        return (tableModel.get(row).triggerThread() == null) ? null : style().debugIPTagColor();
+    }
+
     private final class BreakpointsColumnModel extends InspectorTableColumnModel<BreakpointsColumnKind>  {
 
         private BreakpointsColumnModel(BreakpointsViewPreferences viewPreferences) {
@@ -185,7 +195,7 @@ public final class BreakpointsTable extends InspectorTable {
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
                         // System.out.println("Reset enabled checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
-                        inspection().announceVMBusyFailure("Breakpont ENABLED setting");
+                        inspection().announceVMBusyFailure("Breakpoint ENABLED setting");
                     }
                     break;
 
@@ -195,7 +205,7 @@ public final class BreakpointsTable extends InspectorTable {
                         breakpointData.setCondition(conditionText);
                         inspection().settings().save();
                     } catch (MaxVMBusyException maxVMBusyException) {
-                        inspection().announceVMBusyFailure("Breakpont condition setting");
+                        inspection().announceVMBusyFailure("Breakpoint condition setting");
                     }
 
                     break;
@@ -281,7 +291,12 @@ public final class BreakpointsTable extends InspectorTable {
             super.refresh();
         }
 
-        private BreakpointData get(int row) {
+        @Override
+        public String getRowDescription(int row) {
+            return get(row).kindName() + " in " + get(row).shortName();
+        }
+
+        BreakpointData get(int row) {
             int count = 0;
             for (BreakpointData breakpointData : breakpoints) {
                 if (count == row) {
@@ -337,13 +352,6 @@ public final class BreakpointsTable extends InspectorTable {
 
     }
 
-    /**
-     * @return color the text specially in the row where a triggered breakpoint is displayed
-     */
-    private Color getRowTextColor(int row) {
-        return (tableModel.get(row).triggerThread() == null) ? null : style().debugIPTagColor();
-    }
-
     private final class TagCellRenderer extends PlainLabel implements TableCellRenderer {
 
         TagCellRenderer(Inspection inspection) {
@@ -355,8 +363,9 @@ public final class BreakpointsTable extends InspectorTable {
             final BreakpointData breakpointData = tableModel.get(row);
             setIcon((breakpointData.triggerThread() == null) ? null : style().debugIPTagIcon());
             setText(breakpointData.kindTag());
-            setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.isEnabled() ? "true" : "false"));
-            setForeground(getRowTextColor(row));
+            setToolTipPrefix(htmlify(tableModel.getRowDescription(row)));
+            setWrappedToolTipText("<br>" + "Enabled=" + (breakpointData.isEnabled() ? "true" : "false"));
+            setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -371,8 +380,10 @@ public final class BreakpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
-            setValue(breakpointData.shortName(), breakpointData.longName());
-            setForeground(getRowTextColor(row));
+            setToolTipPrefix(htmlify(tableModel.getRowDescription(row)));
+            setValue(breakpointData.shortName(), "<br>" + htmlify(breakpointData.longName()));
+            setToolTipSuffix("<br>" + htmlify(breakpointData.locationDescription()));
+            setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -387,9 +398,10 @@ public final class BreakpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
+            setToolTipPrefix(htmlify(tableModel.getRowDescription(row)));
             setText(Integer.toString(breakpointData.location()));
-            setToolTipText("Location: " + breakpointData.locationDescription());
-            setForeground(getRowTextColor(row));
+            setWrappedToolTipText("<br>" + htmlify(breakpointData.locationDescription()));
+            setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -404,10 +416,14 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setToolTipText(tableModel.get(row).conditionStatus());
             final JComponent component = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
+            if (tableModel.isCellEditable(row, column)) {
+                component.setToolTipText("<html>" + InspectorLabel.htmlify(tableModel.getRowDescription(row)) + "<br>Breakpoint condition (editable)");
+            } else {
+                component.setToolTipText("<html>" + InspectorLabel.htmlify(tableModel.getRowDescription(row)) + "<br>Breakpoint conditions not supported");
+            }
+            component.setForeground(cellForegroundColor(row, column));
+            component.setBackground(cellBackgroundColor(isSelected));
             return component;
         }
 
@@ -428,14 +444,15 @@ public final class BreakpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
+            setToolTipPrefix(htmlify(tableModel.getRowDescription(row)));
             if (breakpointData.triggerThread() != null) {
                 setText(breakpointData.triggerThreadName());
-                setToolTipText("Thread \"" + breakpointData.triggerThreadName() + "\" stopped at this breakpoint");
+                setWrappedToolTipText("<br>Thread \"" + breakpointData.triggerThreadName() + "\" stopped at this breakpoint");
             } else {
                 setText("");
-                setToolTipText("No Thread stopped at this breakpoint");
+                setWrappedToolTipText("<br>No Thread stopped at this breakpoint");
             }
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -643,8 +660,8 @@ public final class BreakpointsTable extends InspectorTable {
                     longName = inspection().nameDisplay().longName(externalCode);
                 } else {
                     // Must be an address in an unknown area of native code
-                    shortName = "0x" + address.toHexString();
-                    longName = "unknown native code at 0x" + address.toHexString();
+                    shortName = address.to0xHexString();
+                    longName = "unknown native code at " + address.to0xHexString();
                     codeStart = address;
                     location = 0;
                 }
@@ -740,7 +757,10 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String locationDescription() {
-            return "Bytecodes position=" + location();
+            if (location() > 0) {
+                return "Position = " + location() + " bytes from entry";
+            }
+            return "Position = method entry";
         }
 
     }
