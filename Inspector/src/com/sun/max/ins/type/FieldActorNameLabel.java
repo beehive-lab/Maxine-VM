@@ -58,7 +58,6 @@ public class FieldActorNameLabel extends InspectorLabel {
     public void redisplay() {
         setFont(style().javaNameFont());
         updateText();
-
     }
 
     private void updateText() {
@@ -68,7 +67,7 @@ public class FieldActorNameLabel extends InspectorLabel {
         } else {
             final String fieldName = fieldActor.name.toString();
             setText(fieldName);
-            setToolTipText("Field name=\"" + fieldName + "\" (type=" + fieldActor.descriptor().toJavaString(true) + ")");
+            setWrappedToolTipText("Type=" + fieldActor.descriptor().toJavaString(true));
         }
     }
 

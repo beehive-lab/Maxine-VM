@@ -95,6 +95,20 @@ public final class WatchpointsTable extends InspectorTable {
         }
     }
 
+    /**
+     * {@inheritDoc}.
+     * <br>
+     * Color the text specially in the row where a triggered watchpoint is displayed
+     */
+    @Override
+    public Color cellForegroundColor(int row, int col) {
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
+        if (watchpointEvent != null && tableModel.rowToWatchpoint(row).memoryRegion().contains(watchpointEvent.address())) {
+            return style().debugIPTagColor();
+        }
+        return null;
+    }
+
     private final class WatchpointsColumnModel extends InspectorTableColumnModel<WatchpointsColumnKind> {
 
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
@@ -284,17 +298,6 @@ public final class WatchpointsTable extends InspectorTable {
         }
     }
 
-    /**
-     * @return color the text specially in the row where a triggered watchpoint is displayed
-     */
-    private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
-        if (watchpointEvent != null && tableModel.rowToWatchpoint(row).memoryRegion().contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
-        }
-        return null;
-    }
-
     private final class TagCellRenderer extends JLabel implements TableCellRenderer {
 
         TagCellRenderer(Inspection inspection) {
@@ -411,7 +414,7 @@ public final class WatchpointsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             setValue(watchpoint.memoryRegion().size().toInt());
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -503,7 +506,7 @@ public final class WatchpointsTable extends InspectorTable {
             if (watchpoint.memoryRegion().regionName().equals("RegionWatchpoint - GC removed corresponding Object")) {
                 setForeground(Color.RED);
             } else {
-                setForeground(getRowTextColor(row));
+                setForeground(cellForegroundColor(row, column));
             }
             setBackground(cellBackgroundColor(isSelected));
             return this;
@@ -542,7 +545,7 @@ public final class WatchpointsTable extends InspectorTable {
                 setText("");
                 setToolTipText("No Thread stopped at this watchpoint");
             }
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -566,7 +569,7 @@ public final class WatchpointsTable extends InspectorTable {
                 setText("");
                 setToolTipText("No Thread stopped at this watchpoint");
             }
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -605,7 +608,7 @@ public final class WatchpointsTable extends InspectorTable {
                 setText("");
                 setToolTipText("No Thread stopped at this watchpoint");
             }
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }

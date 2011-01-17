@@ -185,13 +185,13 @@ public abstract class PoolConstantLabel extends InspectorLabel {
     }
 
     protected final void setJavapToolTipText(String kind, String name) {
-        setWrappedToolTipText("#" + Integer.toString(index) + "; //" + kind + " " + name);
+        setWrappedToolTipText("#" + Integer.toString(index) + "<br>" + kind + " " + name);
     }
 
     protected final void setJavapResolvableToolTipText(String kind, String name) {
         final String resolution = telePoolConstant == null ? inspection().nameDisplay().unavailableDataLongText() :
             (isResolved() ? "Resolved" : "Unresolved");
-        setWrappedToolTipText("#" + Integer.toString(index) + "; //" + kind + " " + name + " (" + resolution + ")");
+        setWrappedToolTipText("#" + Integer.toString(index) + "<br>" + kind + " " + name + " (" + resolution + ")");
     }
 
     private InspectorPopupMenu createPopupMenu() {

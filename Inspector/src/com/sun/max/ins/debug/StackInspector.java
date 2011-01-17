@@ -181,29 +181,31 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private MaxStack stack = null;
     private InspectorPanel contentPane = null;
-    private  DefaultListModel stackFrameListModel = null;
+    private DefaultListModel stackFrameListModel = null;
     private JList stackFrameList = null;
     private JSplitPane splitPane = null;
     private JPanel nativeFrame = null;
 
     private final FrameSelectionListener frameSelectionListener = new FrameSelectionListener();
-    private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer();
+    private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer(inspection());
 
     private CompiledStackFramePanel selectedFramePanel;
 
-    private final class StackFrameListCellRenderer extends DefaultListCellRenderer {
+    private final class StackFrameListCellRenderer extends TargetCodeLabel implements ListCellRenderer {
 
-        @Override
+        StackFrameListCellRenderer(Inspection inspection) {
+            super(inspection, "");
+            setOpaque(true);
+        }
+
         public Component getListCellRendererComponent(JList list, Object value, int modelIndex, boolean isSelected, boolean cellHasFocus) {
-
             final MaxStackFrame stackFrame = (MaxStackFrame) value;
-            String name;
+            String methodName = "";
             String toolTip = null;
-            Component component;
             if (stackFrame instanceof MaxStackFrame.Compiled) {
                 final MaxCompiledCode compiledCode = stackFrame.compiledCode();
-                name = inspection().nameDisplay().veryShortName(compiledCode);
-                toolTip = inspection().nameDisplay().longName(compiledCode, stackFrame.ip());
+                methodName += inspection().nameDisplay().veryShortName(compiledCode);
+                toolTip = htmlify(inspection().nameDisplay().longName(compiledCode, stackFrame.ip()));
                 if (compiledCode != null) {
 
                     try {
@@ -211,27 +213,27 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                         try {
                             final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
                             if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
-                                name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+                                methodName += inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
                                 try {
-                                    toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+                                    toolTip += inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
                                 } catch (Exception e) {
                                     // There's corner cases where we can't obtain detailed information for the tool tip (e.g., the method we're trying to get the substitution info about
                                     //  is being constructed. Instead of propagating the exception, just use a default tool tip. [Laurent].
-                                    toolTip = inspection().nameDisplay().unavailableDataLongText();
+                                    toolTip += inspection().nameDisplay().unavailableDataLongText();
                                 }
                             }
                         } finally {
                             vm().releaseLegacyVMAccess();
                         }
                     } catch (MaxVMBusyException e) {
-                        name = inspection().nameDisplay().unavailableDataShortText();
+                        methodName += inspection().nameDisplay().unavailableDataShortText();
                         toolTip = inspection().nameDisplay().unavailableDataLongText();
                     }
                 }
             } else if (stackFrame instanceof TruncatedStackFrame) {
-                name = "*select here to extend the display*";
+                methodName += "*select here to extend the display*";
             } else if (stackFrame instanceof MaxStackFrame.Error) {
-                name = "*a stack walker error occurred*";
+                methodName += "*a stack walker error occurred*";
                 final MaxStackFrame.Error errorStackFrame = (MaxStackFrame.Error) stackFrame;
                 toolTip = errorStackFrame.errorMessage();
             } else {
@@ -240,24 +242,26 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
                 if (externalCode != null) {
                     // native that we know something about
-                    name = inspection().nameDisplay().shortName(externalCode);
+                    methodName += inspection().nameDisplay().shortName(externalCode);
                     toolTip = inspection().nameDisplay().longName(externalCode);
                 } else {
-                    name = "nativeMethod:0x" + instructionPointer.toHexString();
+                    methodName += "nativeMethod:" + instructionPointer.to0xHexString();
                     toolTip = "nativeMethod";
                 }
             }
-            toolTip = "Stack " + modelIndex + ":  " + toolTip;
-            setToolTipText(toolTip);
-            component = super.getListCellRendererComponent(list, name, modelIndex, isSelected, cellHasFocus);
             if (modelIndex == 0) {
-                component.setForeground(style().wordCallEntryPointColor());
+                setToolTipPrefix("IP in frame " + modelIndex + " points at:<br>");
+                setForeground(style().wordCallEntryPointColor());
             } else {
-                component.setForeground(style().wordCallReturnPointColor());
+                setToolTipPrefix("call return in frame " + modelIndex + " points at:<br>");
+                setForeground(style().wordCallReturnPointColor());
             }
-            component.setFont(style().defaultFont());
-            return component;
+            setText(Integer.toString(modelIndex) + ":  " + methodName);
+            setWrappedToolTipText(toolTip);
+            setFont(style().defaultFont());
+            return this;
         }
+
     }
 
     /**
@@ -361,10 +365,19 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             stackFrameList.setCellRenderer(stackFrameListCellRenderer);
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
-            header.add(new TextLabel(inspection(), "start: "));
-            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stack.memoryRegion().start(), contentPane));
-            header.add(new TextLabel(inspection(), "size: "));
-            header.add(new DataLabel.IntAsDecimal(inspection(), stack.memoryRegion().size().toInt()));
+            final TextLabel stackStartLabel = new TextLabel(inspection(), "start: ");
+            stackStartLabel.setToolTipText("Stack memory start location");
+            header.add(stackStartLabel);
+            final WordValueLabel stackStartValueLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stack.memoryRegion().start(), contentPane);
+            stackStartValueLabel.setToolTipPrefix("Stack memory start @ ");
+            header.add(stackStartValueLabel);
+            final TextLabel stackSizeLabel = new TextLabel(inspection(), "size: ");
+            stackSizeLabel.setToolTipText("Stack size");
+            header.add(stackSizeLabel);
+            final DataLabel.IntAsDecimal stackSizeValueLabel = new DataLabel.IntAsDecimal(inspection());
+            stackSizeValueLabel.setToolTipPrefix("Stack size ");
+            stackSizeValueLabel.setValue(stack.memoryRegion().size().toInt());
+            header.add(stackSizeValueLabel);
             SpringUtilities.makeCompactGrid(header, 2);
             contentPane.add(header, BorderLayout.NORTH);
 

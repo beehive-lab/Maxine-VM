@@ -1564,7 +1564,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                             final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
                             focus().setHeapObject(teleObject);
                         } else {
-                            gui().errorMessage("heap object not found at 0x"  + address.toHexString());
+                            gui().errorMessage("heap object not found at "  + address.to0xHexString());
                         }
                     } catch (MaxVMBusyException maxVMBusyException) {
                         inspection().announceVMBusyFailure(name());
@@ -1778,7 +1778,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     final int serial = Integer.parseInt(value, 16);
                     final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(serial);
                     if (teleClassActor == null) {
-                        gui().errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
+                        gui().errorMessage("failed to find classActor for ID:  " + InspectorLabel.intTo0xHex(serial));
                     } else {
                         focus().setHeapObject(teleClassActor);
                     }
@@ -2935,7 +2935,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         try {
                             final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeManager().createMachineCodeLocation(address, "set target breakpoint"));
                             if (breakpoint == null) {
-                                gui().errorMessage("Unable to create breakpoint at: " + "0x" + address.toHexString());
+                                gui().errorMessage("Unable to create breakpoint at: " + address.to0xHexString());
                             } else {
                                 breakpoint.setDescription(description);
                             }
