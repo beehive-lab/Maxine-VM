@@ -38,6 +38,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return JTAbstractRunScheme.class.isAssignableFrom(vmConfiguration.schemeClass(RunScheme.class));
+        return vmConfiguration.schemeImplClassIsSubClass(RunScheme.class, JTAbstractRunScheme.class);
     }
 }

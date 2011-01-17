@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,7 +65,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
      * The Maxine specific implementation of the {@linkplain RiXirGenerator interface} used by C1X
      * to incorporate runtime specific details when translating bytecode methods.
      */
-    public final RiXirGenerator xirGenerator = new MaxXirGenerator();
+    public final RiXirGenerator xirGenerator;
 
     /**
      * The C1X compiler instance configured for the Maxine runtime.
@@ -87,7 +87,13 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     @HOSTED_ONLY
     public C1XCompilerScheme() {
+        this(new MaxXirGenerator());
+    }
+
+    @HOSTED_ONLY
+    protected C1XCompilerScheme(MaxXirGenerator xirGenerator) {
         VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
+        this.xirGenerator = xirGenerator;
     }
 
     @Override

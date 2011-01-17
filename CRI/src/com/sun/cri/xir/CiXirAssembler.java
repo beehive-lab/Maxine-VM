@@ -844,6 +844,24 @@ public abstract class CiXirAssembler {
         temps.add(fixed);
         return fixed;
     }
+    
+    public XirParameter getParameter(String name) {
+        for (XirParameter param : parameters) {
+            if (param.name.toString().equals(name)) {
+                return param;
+            }
+        }
+        throw new IllegalArgumentException("no parameter: " + name);
+    }
+
+    public XirTemp getTemp(String name) {
+        for (XirTemp temp : temps) {
+            if (temp.name.toString().equals(name)) {
+                return temp;
+            }
+        }
+        throw new IllegalArgumentException("no temp: " + name);
+    }
 
     public XirConstant i(int v) {
         return createConstant(CiConstant.forInt(v));
