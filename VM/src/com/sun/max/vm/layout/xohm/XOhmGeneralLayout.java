@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.layout.ohm;
+package com.sun.max.vm.layout.xohm;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -38,16 +38,71 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Origin, Header, Mixed.
+ * A variant of {@link OhmgeneralLayout} with extra header word..
+ * eXtended, Origin, Header, Mixed.
  *
- * Header words in tuples: hub, misc
- * Header words in arrays: hub, misc, length
+ * Header words in tuples: hub, misc, xtra.
+ * Header words in arrays: hub, misc, xtra, length.
  *
- * See the package level documentation for a more detailed description.
- *
- * @author Bernd Mathiske
+ * @author Virendra J. Marathe
+ * @author Du Li
+ * @author Mick Jordan
  */
-public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
+public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
+
+    /**
+     * One more word in the header to record extra info.
+     */
+    public static class XHeaderField extends HeaderField {
+        /**
+         * The header word in which the extra analysis info is encoded.
+         */
+        public static final XHeaderField XTRA = new XHeaderField("XTRA", "extra word");
+
+        public XHeaderField(String name, String description) {
+            super(name, description);
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    /**
+     * These are the equivalents to the similar methods in the {@link Layout} class.
+     */
+    public static class Static {
+        @ACCESSOR(Pointer.class)
+        @INLINE
+        public static Word readXtra(Pointer origin) {
+            return ((XOhmGeneralLayout) Layout.generalLayout()).readXtra(origin);
+        }
+
+        @ACCESSOR(Reference.class)
+        @INLINE
+        public static Word readXtra(Reference reference) {
+            return ((XOhmGeneralLayout) Layout.generalLayout()).readXtra(reference);
+        }
+
+        @ACCESSOR(Pointer.class)
+        @INLINE
+        public static void writeXtra(Pointer origin, Word value) {
+            ((XOhmGeneralLayout) Layout.generalLayout()).writeXtra(origin, value);
+        }
+
+        @ACCESSOR(Reference.class)
+        @INLINE
+        public static void writeXtra(Reference reference, Word value) {
+            ((XOhmGeneralLayout) Layout.generalLayout()).writeXtra(reference, value);
+        }
+
+        @ACCESSOR(Reference.class)
+        @INLINE
+        public static Word compareAndSwapXtra(Reference reference, Word expectedValue, Word newValue) {
+            return ((XOhmGeneralLayout) Layout.generalLayout()).compareAndSwapXtra(reference, expectedValue, newValue);
+        }
+    }
 
     public boolean isTupleLayout() {
         return false;
@@ -67,12 +122,18 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     final int hubOffset = 0;
 
     /**
+     * The offset of the xtra field.
+     */
+    final int xOffset;
+
+    /**
      * The offset of the extras (such as monitor and hashCode info).
      */
     final int miscOffset;
 
-    public OhmGeneralLayout() {
-        this.miscOffset = hubOffset + Word.size();
+    public XOhmGeneralLayout() {
+        miscOffset = hubOffset + Word.size();
+        xOffset = miscOffset + Word.size();
     }
 
     @INLINE
@@ -88,6 +149,8 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     public Offset getOffsetFromOrigin(HeaderField headerField) {
         if (headerField == HeaderField.HUB) {
             return Offset.fromInt(hubOffset);
+        } else if (headerField == XHeaderField.XTRA) {
+            return Offset.fromInt(xOffset);
         } else if (headerField == HeaderField.MISC) {
             return Offset.fromInt(miscOffset);
         }
@@ -151,8 +214,23 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE
-    public final void writeHubReference(Accessor accessor, Reference hub) {
-        accessor.writeReference(hubOffset, hub);
+    public final void writeHubReference(Accessor accessor, Reference referenceClassReference) {
+        accessor.writeReference(hubOffset, referenceClassReference);
+    }
+
+    @INLINE
+    public final Word readXtra(Accessor accessor) {
+        return accessor.readWord(xOffset);
+    }
+
+    @INLINE
+    public final void writeXtra(Accessor accessor, Word value) {
+        accessor.writeWord(xOffset, value);
+    }
+
+    @INLINE
+    public final Word compareAndSwapXtra(Accessor accessor, Word expectedValue, Word newValue) {
+        return accessor.compareAndSwapWord(xOffset, expectedValue, newValue);
     }
 
     @INLINE
@@ -166,8 +244,8 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE
-    public final Word compareAndSwapMisc(Accessor accessor, Word expectedValue, Word newValue) {
-        return accessor.compareAndSwapWord(miscOffset, expectedValue, newValue);
+    public final Word compareAndSwapMisc(Accessor accessor, Word suspectedValue, Word newValue) {
+        return accessor.compareAndSwapWord(miscOffset, suspectedValue, newValue);
     }
 
     @INLINE

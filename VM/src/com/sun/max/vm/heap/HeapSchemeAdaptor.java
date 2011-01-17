@@ -214,6 +214,14 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         return true;
     }
 
+    @INLINE(override = true)
+    public void trackCreation(Pointer cell, Hub hub, boolean isArray) {
+    }
+
+    @INLINE(override = true)
+    public void trackLifetime(Pointer cell) {
+    }
+
     public void disableCustomAllocation() {
         final Pointer etla = ETLA.load(currentTLA());
         CUSTOM_ALLOCATION_ENABLED.store(etla, Word.zero());
