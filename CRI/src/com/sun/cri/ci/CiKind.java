@@ -299,6 +299,8 @@ public enum CiKind {
         switch(this) {
             case Void:
                 return java.lang.Void.TYPE;
+            case Long:
+                return java.lang.Long.TYPE;
             case Int:
                 return java.lang.Integer.TYPE;
             case Byte:

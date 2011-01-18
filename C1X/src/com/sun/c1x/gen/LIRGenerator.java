@@ -43,6 +43,7 @@ import com.sun.c1x.opt.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.value.FrameState.PhiProcedure;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
@@ -2039,6 +2040,20 @@ public abstract class LIRGenerator extends ValueVisitor {
             return "XirSupport<" + current + ">";
         }
 
+    }
+
+    @Override
+    public void visitArrayCopy(ArrayCopy arrayCopy) {
+        Value src = arrayCopy.src();
+        Value dest = arrayCopy.dest();
+        RiType srcType = src.declaredType();
+        RiType destType = dest.declaredType();
+        if (srcType != null && srcType == destType) {
+
+        }
+        Value[] args = new Value[]{arrayCopy.src(), arrayCopy.srcPos(), arrayCopy.dest(), arrayCopy.destPos(), arrayCopy.length()};
+        Invoke invoke = new Invoke(Bytecodes.INVOKESTATIC, CiKind.Void, args, true, arrayCopy.arrayCopyMethod, arrayCopy.stateBefore());
+        visitInvoke(invoke);
     }
 
 }

@@ -806,7 +806,9 @@ public final class GraphBuilder {
 
     void genNewTypeArray(int typeCode) {
         FrameState stateBefore = null; //curState.immutableCopy(bci());
-        apush(append(new NewTypeArray(ipop(), CiKind.fromArrayTypeCode(typeCode), stateBefore)));
+        CiKind kind = CiKind.fromArrayTypeCode(typeCode);
+        RiType elementType = compilation.runtime.getRiType(kind.toJavaClass());
+        apush(append(new NewTypeArray(ipop(), elementType, stateBefore)));
     }
 
     void genNewObjectArray(int cpi) {
@@ -1608,8 +1610,13 @@ public final class GraphBuilder {
         boolean preservesState = true;
         boolean canTrap = false;
 
+        Instruction result = null;
+
         // handle intrinsics differently
         switch (intrinsic) {
+            case java_lang_System$arraycopy:
+                result = new ArrayCopy(args[0], args[1], args[2], args[3], args[4], target, curState.immutableCopy(bci()));
+                break;
             case java_lang_Object$init: // fall through
             case java_lang_String$equals: // fall through
             case java_lang_String$compareTo: // fall through
@@ -1620,7 +1627,6 @@ public final class GraphBuilder {
             case java_lang_Math$pow: // fall through
             case java_lang_Math$exp: // fall through
             case java_nio_Buffer$checkIndex: // fall through
-            case java_lang_System$arraycopy: // fall through
             case java_lang_System$identityHashCode: // fall through
             case java_lang_System$currentTimeMillis: // fall through
             case java_lang_System$nanoTime: // fall through
@@ -1660,7 +1666,9 @@ public final class GraphBuilder {
         }
 
         // create the intrinsic node
-        Intrinsic result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.immutableCopy(bci()), preservesState, canTrap);
+        if (result == null) {
+            result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.immutableCopy(bci()), preservesState, canTrap);
+        }
         pushReturn(resultType, append(result));
         stats.intrinsicCount++;
         return true;

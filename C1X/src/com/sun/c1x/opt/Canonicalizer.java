@@ -872,7 +872,8 @@ public class Canonicalizer extends DefaultValueVisitor {
                 if (type.kind() == CiKind.Object) {
                     setCanonical(new NewObjectArray(type, args[1], i.stateBefore(), '\0', null));
                 } else {
-                    setCanonical(new NewTypeArray(args[1], type.kind(), i.stateBefore()));
+                    RiType elementType = runtime.getRiType(type.kind().toJavaClass());
+                    setCanonical(new NewTypeArray(args[1], elementType, i.stateBefore()));
                 }
                 return;
             }

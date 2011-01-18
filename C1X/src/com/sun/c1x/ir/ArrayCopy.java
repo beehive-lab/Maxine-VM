@@ -27,39 +27,62 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
- * The {@code NewTypeArray} class definition.
+ * Copies a sequence of elements from a source into a destination array.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
+ *
  */
-public final class NewTypeArray extends NewArray {
+public class ArrayCopy extends StateSplit {
 
-    final RiType elementType;
+    private Value src;
+    private Value srcPos;
+    private Value dest;
+    private Value destPos;
+    private Value length;
+    public final RiMethod arrayCopyMethod;
 
-    public NewTypeArray(Value length, RiType elementType, FrameState stateBefore) {
-        super(length, stateBefore);
-        this.elementType = elementType;
+    public ArrayCopy(Value src, Value srcPos, Value dest, Value destPos, Value length, RiMethod arrayCopyMethod, FrameState stateBefore) {
+        super(CiKind.Void, stateBefore);
+        this.arrayCopyMethod = arrayCopyMethod;
+        this.src = src;
+        this.srcPos = srcPos;
+        this.dest = dest;
+        this.destPos = destPos;
+        this.length = length;
     }
 
-    public CiKind elementKind() {
-        return elementType.kind();
+    public Value src() {
+        return src;
+    }
+
+    public Value srcPos() {
+        return srcPos;
+    }
+
+    public Value dest() {
+        return dest;
+    }
+
+    public Value destPos() {
+        return destPos;
+    }
+
+    public Value length() {
+        return length;
     }
 
     @Override
-    public RiType declaredType() {
-        return elementType.arrayOf();
+    public void inputValuesDo(ValueClosure closure) {
+        src = closure.apply(src);
+        srcPos = closure.apply(srcPos);
+        dest = closure.apply(dest);
+        destPos = closure.apply(destPos);
+        length = closure.apply(length);
     }
 
-    @Override
-    public RiType exactType() {
-        return elementType.arrayOf();
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitNewTypeArray(this);
+        v.visitArrayCopy(this);
     }
+
 }
