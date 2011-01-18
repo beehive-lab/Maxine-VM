@@ -838,6 +838,14 @@ public abstract class LIRGenerator extends ValueVisitor {
         setNoResult(x);
     }
 
+    XirArgument toXirArgument(CiValue v) {
+        if (v == null) {
+            return null;
+        }
+
+        return XirArgument.forInternalObject(v);
+    }
+
     XirArgument toXirArgument(Value i) {
         if (i == null) {
             return null;
@@ -1733,7 +1741,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void postGCWriteBarrier(CiValue addr, CiValue newVal) {
-       XirSnippet writeBarrier = xir.genWriteBarrier(XirArgument.forInternalObject(addr));
+       XirSnippet writeBarrier = xir.genWriteBarrier(toXirArgument(addr));
        if (writeBarrier != null) {
            emitXir(writeBarrier, null, null, null, false);
        }
@@ -2015,45 +2023,33 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     }
 
-    public void arrayShift(RiType type, FrameState state, Value src, Value srcPos, Value destPos, Value length) {
-        // Let's check whether srcPos <= destPos
-    }
-
-    public void arrayCopy(RiType type, FrameState state, Value src, Value srcPos, Value dest, Value destPos, Value length) {
-        // src and dest are guaranteed to be different arrays with the same type.
+    public void arrayCopy(RiType type, ArrayCopy arrayCopy, XirSnippet snippet) {
+        emitXir(snippet, arrayCopy, stateFor(arrayCopy), null, false);
     }
 
     @Override
     public void visitArrayCopy(ArrayCopy arrayCopy) {
         Value src = arrayCopy.src();
         Value dest = arrayCopy.dest();
+        Value srcPos = arrayCopy.srcPos();
+        Value destPos = arrayCopy.destPos();
+        Value length = arrayCopy.length();
         RiType srcType = src.declaredType();
         RiType destType = dest.declaredType();
-        if (srcType != null && srcType == destType) {
+        if (srcType != null && srcType == destType && srcType.isArrayClass()) {
             RiType type = srcType;
-            FrameState state = arrayCopy.stateBefore();
-            if (src == dest) {
-                // Source and destination is the same array.
-                arrayShift(type, state, src, arrayCopy.srcPos(), arrayCopy.destPos(), arrayCopy.length());
-            } else if (src.checkFlag(Flag.ResultIsUnique) || dest.checkFlag(Flag.ResultIsUnique)) {
-                // Source and destination are always different arrays.
-                arrayCopy(type, state, src, arrayCopy.srcPos(), dest, arrayCopy.destPos(), arrayCopy.length());
-            } else {
-                // Know nothing about relation of source and destination array.
-                CiValue srcValue = load(src);
-                CiValue destValue = load(dest);
-                Label l = new Label();
-                lir.cmp(Condition.EQ, srcValue, destValue);
-                lir.branch(Condition.EQ, l);
-                arrayShift(type, state, src, arrayCopy.srcPos(), arrayCopy.destPos(), arrayCopy.length());
-                Label end = new Label();
-                lir.branch(Condition.TRUE, end);
-                lir.branchDestination(l);
-                arrayCopy(type, state, src, arrayCopy.srcPos(), dest, arrayCopy.destPos(), arrayCopy.length());
-                lir.branchDestination(end);
-            }
+            boolean inputsSame = (src == dest);
+            boolean inputsDifferent = !inputsSame && (src.checkFlag(Flag.ResultIsUnique) || dest.checkFlag(Flag.ResultIsUnique));
+            // TODO: Make sure to add bounds checks.
+            XirSnippet snippet = xir.genArrayCopy(site(arrayCopy), toXirArgument(src), toXirArgument(srcPos), toXirArgument(dest), toXirArgument(destPos), toXirArgument(length), type.componentType(), inputsSame, inputsDifferent);
+            arrayCopy(type, arrayCopy, snippet);
+            return;
         }
 
+        arrayCopySlow(arrayCopy);
+    }
+
+    private void arrayCopySlow(ArrayCopy arrayCopy) {
         Value[] args = new Value[]{arrayCopy.src(), arrayCopy.srcPos(), arrayCopy.dest(), arrayCopy.destPos(), arrayCopy.length()};
         Invoke invoke = new Invoke(Bytecodes.INVOKESTATIC, CiKind.Void, args, true, arrayCopy.arrayCopyMethod, arrayCopy.stateBefore());
         visitInvoke(invoke);

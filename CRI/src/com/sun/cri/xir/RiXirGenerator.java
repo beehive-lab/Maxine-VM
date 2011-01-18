@@ -85,6 +85,8 @@ public abstract interface RiXirGenerator {
     public XirSnippet genArrayLength(XirSite site, XirArgument array);
 
     public XirSnippet genWriteBarrier(XirArgument object);
+    
+    public XirSnippet genArrayCopy(XirSite site, XirArgument src, XirArgument srcPos, XirArgument dest, XirArgument destPos, XirArgument length, RiType elementType, boolean inputsSame, boolean inputsDifferent);
 
     /**
      * Construct the list of XIR templates using the given XIR assembler.

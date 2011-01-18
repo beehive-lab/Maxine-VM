@@ -127,4 +127,8 @@ public abstract class CiValue {
         }
         return ":" + kind.typeChar;
     }
+
+    public final boolean isConstant0() {
+        return isConstant() && ((CiConstant)this).asInt() == 0;
+    }
 }
