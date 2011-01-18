@@ -227,28 +227,26 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
             lir.move(resultReg, result);
         } else if (opcode == Bytecodes.LMUL) {
-            LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
 
             // right register is destroyed by the long mul, so it must be
             // copied to a new register.
             right.setDestroysRegister();
 
-            left.loadItem();
+            CiValue left = load(x.x());
             right.loadItem();
 
-            arithmeticOpLong(opcode, LMUL_OUT, left.result(), right.result(), null);
+            arithmeticOpLong(opcode, LMUL_OUT, left, right.result(), null);
             CiValue result = createResultVariable(x);
             lir.move(LMUL_OUT, result);
         } else {
-            LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
 
-            left.loadItem();
+            CiValue left = load(x.x());
             // don't load constants to save register
             right.loadNonconstant();
             createResultVariable(x);
-            arithmeticOpLong(opcode, x.operand(), left.result(), right.result(), null);
+            arithmeticOpLong(opcode, x.operand(), left, right.result(), null);
         }
     }
 
@@ -358,29 +356,27 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
                 lir.move(resultReg, result);
         } else if (opcode == Bytecodes.LMUL) {
-            LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
 
             // right register is destroyed by the long mul, so it must be
             // copied to a new register.
             right.setDestroysRegister();
 
-            left.loadItem();
+            CiValue left = load(x.x());
             right.loadItem();
 
             CiValue reg = LMUL_OUT;
-            arithmeticOpLong(opcode, reg, left.result(), right.result(), null);
+            arithmeticOpLong(opcode, reg, left, right.result(), null);
             CiValue result = createResultVariable(x);
             lir.move(reg, result);
         } else {
-            LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
 
-            left.loadItem();
+            CiValue left = load(x.x());
             // don't load constants to save register
             right.loadNonconstant();
             createResultVariable(x);
-            arithmeticOpLong(opcode, x.operand(), left.result(), right.result(), null);
+            arithmeticOpLong(opcode, x.operand(), left, right.result(), null);
         }
     }
 
@@ -412,36 +408,34 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void visitShiftOp(ShiftOp x) {
         // count must always be in rcx
-        LIRItem value = new LIRItem(x.x(), this);
-        LIRItem count = new LIRItem(x.y(), this);
-
-        boolean mustLoadCount = !count.result().isConstant() || x.kind == CiKind.Long;
+        CiValue count = makeOperand(x.y());
+        boolean mustLoadCount = !count.isConstant() || x.kind == CiKind.Long;
         if (mustLoadCount) {
             // count for long must be in register
-            count.loadItemForce(SHIFT_COUNT_IN);
+            count = force(x.y(), SHIFT_COUNT_IN);
         }
 
-        value.loadItem();
+        CiValue value = load(x.x());
         CiValue reg = createResultVariable(x);
 
-        shiftOp(x.opcode, reg, value.result(), count.result(), ILLEGAL);
+        shiftOp(x.opcode, reg, value, count, ILLEGAL);
     }
 
     @Override
     public void visitLogicOp(LogicOp x) {
         trySwap(x);
 
-        LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
 
-        left.loadItem();
+        CiValue left = load(x.x());
         right.loadNonconstant();
         CiValue reg = createResultVariable(x);
 
-        logicOp(x.opcode, reg, left.result(), right.result());
+        logicOp(x.opcode, reg, left, right.result());
     }
 
     private void trySwap(Op2 x) {
+        // (tw) TODO: Check what this is for?
     }
 
     @Override
@@ -488,20 +482,12 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     @Override
     public void visitCompareAndSwap(CompareAndSwap x) {
         CiKind dataKind = x.dataKind;
-        LIRItem pointer = new LIRItem(x.pointer(), this);
-        LIRItem expectedValue = new LIRItem(x.expectedValue(), this);
-        LIRItem newValue = new LIRItem(x.newValue(), this);
-
-
-        assert pointer.instruction.kind.isWord();
-        assert Util.archKindsEqual(expectedValue.instruction.kind, dataKind) : "invalid type";
-        assert Util.archKindsEqual(newValue.instruction.kind, dataKind) : "invalid type";
-
-        pointer.loadItem();
+        CiValue pointer = load(x.pointer());
         CiAddress addr = getAddressForPointerOp(x, dataKind, pointer);
 
-        expectedValue.loadItemForce(AMD64.rax.asValue(dataKind));
-        newValue.loadItem();
+        CiValue expectedValue = force(x.expectedValue(), AMD64.rax.asValue(dataKind));
+        CiValue newValue = load(x.newValue());
+        assert Util.archKindsEqual(newValue.kind, dataKind) : "invalid type";
 
         if (dataKind.isObject()) { // Write-barrier needed for Object fields.
             // Do the pre-write barrier : if any.
@@ -511,19 +497,19 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         CiValue result = createResultVariable(x);
         CiValue resultReg = AMD64.rax.asValue(dataKind);
         if (dataKind.isObject()) {
-            lir.casObj(addr, expectedValue.result(), newValue.result());
+            lir.casObj(addr, expectedValue, newValue);
         } else if (dataKind.isInt()) {
-            lir.casInt(addr, expectedValue.result(), newValue.result());
+            lir.casInt(addr, expectedValue, newValue);
         } else {
             assert dataKind.isLong() || dataKind.isWord();
-            lir.casLong(addr, expectedValue.result(), newValue.result());
+            lir.casLong(addr, expectedValue, newValue);
         }
 
         lir.move(resultReg, result);
 
         if (dataKind.isObject()) { // Write-barrier needed for Object fields.
             // Seems to be precise
-            postGCWriteBarrier(addr, newValue.result());
+            postGCWriteBarrier(addr, newValue);
         }
     }
 
@@ -533,12 +519,10 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         // Argument 0 is the receiver.
         LIRItem obj = new LIRItem(x.argumentAt(1), this); // object
         LIRItem offset = new LIRItem(x.argumentAt(2), this); // offset of field
-        LIRItem cmp = new LIRItem(x.argumentAt(3), this); // value to compare with field
         LIRItem val = new LIRItem(x.argumentAt(4), this); // replace field with val if matches cmp
 
         assert obj.instruction.kind.isObject() : "invalid type";
 
-        assert cmp.instruction.kind == kind : "invalid type";
         assert val.instruction.kind == kind : "invalid type";
 
         // get address of field
@@ -552,8 +536,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         }
 
         // Compare operand needs to be in RAX.
-        CiValue cmpValue = AMD64.rax.asValue(kind);
-        cmp.loadItemForce(cmpValue);
+        CiValue cmp = force(x.argumentAt(3), AMD64.rax.asValue(kind));
         val.loadItem();
 
         CiValue pointer = newVariable(CiKind.Word);
@@ -565,11 +548,11 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         }
 
         if (kind.isObject()) {
-            lir.casObj(pointer, cmp.result(), val.result());
+            lir.casObj(pointer, cmp, val.result());
         } else if (kind.isInt()) {
-            lir.casInt(pointer, cmp.result(), val.result());
+            lir.casInt(pointer, cmp, val.result());
         } else if (kind.isLong()) {
-            lir.casLong(pointer, cmp.result(), val.result());
+            lir.casLong(pointer, cmp, val.result());
         } else {
             Util.shouldNotReachHere();
         }
