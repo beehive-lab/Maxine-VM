@@ -37,6 +37,7 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.opt.*;
@@ -247,9 +248,14 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitArrayLength(ArrayLength x) {
+        emitArrayLength(x);
+    }
+
+    public CiValue emitArrayLength(ArrayLength x) {
         XirArgument array = toXirArgument(x.array());
         XirSnippet snippet = xir.genArrayLength(site(x), array);
         emitXir(snippet, x, x.needsNullCheck() ? stateFor(x) : null, null, true);
+        return x.operand();
     }
 
     @Override
@@ -2009,6 +2015,14 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     }
 
+    public void arrayShift(RiType type, FrameState state, Value src, Value srcPos, Value destPos, Value length) {
+        // Let's check whether srcPos <= destPos
+    }
+
+    public void arrayCopy(RiType type, FrameState state, Value src, Value srcPos, Value dest, Value destPos, Value length) {
+        // src and dest are guaranteed to be different arrays with the same type.
+    }
+
     @Override
     public void visitArrayCopy(ArrayCopy arrayCopy) {
         Value src = arrayCopy.src();
@@ -2017,8 +2031,29 @@ public abstract class LIRGenerator extends ValueVisitor {
         RiType destType = dest.declaredType();
         if (srcType != null && srcType == destType) {
             RiType type = srcType;
-            CiKind kind = type.kind();
+            FrameState state = arrayCopy.stateBefore();
+            if (src == dest) {
+                // Source and destination is the same array.
+                arrayShift(type, state, src, arrayCopy.srcPos(), arrayCopy.destPos(), arrayCopy.length());
+            } else if (src.checkFlag(Flag.ResultIsUnique) || dest.checkFlag(Flag.ResultIsUnique)) {
+                // Source and destination are always different arrays.
+                arrayCopy(type, state, src, arrayCopy.srcPos(), dest, arrayCopy.destPos(), arrayCopy.length());
+            } else {
+                // Know nothing about relation of source and destination array.
+                CiValue srcValue = load(src);
+                CiValue destValue = load(dest);
+                Label l = new Label();
+                lir.cmp(Condition.EQ, srcValue, destValue);
+                lir.branch(Condition.EQ, l);
+                arrayShift(type, state, src, arrayCopy.srcPos(), arrayCopy.destPos(), arrayCopy.length());
+                Label end = new Label();
+                lir.branch(Condition.TRUE, end);
+                lir.branchDestination(l);
+                arrayCopy(type, state, src, arrayCopy.srcPos(), dest, arrayCopy.destPos(), arrayCopy.length());
+                lir.branchDestination(end);
+            }
         }
+
         Value[] args = new Value[]{arrayCopy.src(), arrayCopy.srcPos(), arrayCopy.dest(), arrayCopy.destPos(), arrayCopy.length()};
         Invoke invoke = new Invoke(Bytecodes.INVOKESTATIC, CiKind.Void, args, true, arrayCopy.arrayCopyMethod, arrayCopy.stateBefore());
         visitInvoke(invoke);

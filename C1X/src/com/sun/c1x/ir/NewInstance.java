@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -49,6 +50,7 @@ public final class NewInstance extends StateSplit {
         this.cpi = cpi;
         this.constantPool = constantPool;
         setFlag(Flag.NonNull);
+        setFlag(Flag.ResultIsUnique);
     }
 
     /**

@@ -43,6 +43,7 @@ public abstract class NewArray extends StateSplit {
         super(CiKind.Object, stateBefore);
         this.length = length;
         setFlag(Flag.NonNull);
+        setFlag(Flag.ResultIsUnique);
     }
 
     /**
