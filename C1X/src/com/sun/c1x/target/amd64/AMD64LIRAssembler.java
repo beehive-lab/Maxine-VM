@@ -743,7 +743,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
-        assert Util.archKindsEqual(left.kind, right.kind);
+        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Word && right.kind == CiKind.Int) : "left arch is " + left.kind + " and right arch is " +  right.kind;
         assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
@@ -1122,7 +1122,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
-        assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
+        assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == CiKind.Word && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
         if (opr1.isRegister()) {
             CiRegister reg1 = opr1.asRegister();
             if (opr2.isRegister()) {
@@ -1644,6 +1644,20 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     moveOp(value, dst, inst.kind, (canTrap) ? info : null, false);
                     break;
                 }
+
+                case RepeatMoveBytes:
+                    assert operands[inst.x().index].asRegister().equals(AMD64.rsi) : "wrong input x: " + operands[inst.x().index];
+                    assert operands[inst.y().index].asRegister().equals(AMD64.rdi) : "wrong input y: " + operands[inst.y().index];
+                    assert operands[inst.z().index].asRegister().equals(AMD64.rcx) : "wrong input z: " + operands[inst.z().index];
+                    masm.repeatMoveBytes();
+                    break;
+
+                case RepeatMoveWords:
+                    assert operands[inst.x().index].asRegister().equals(AMD64.rsi) : "wrong input x: " + operands[inst.x().index];
+                    assert operands[inst.y().index].asRegister().equals(AMD64.rdi) : "wrong input y: " + operands[inst.y().index];
+                    assert operands[inst.z().index].asRegister().equals(AMD64.rcx) : "wrong input z: " + operands[inst.z().index];
+                    masm.repeatMoveWords();
+                    break;
 
                 case PointerCAS:
                     break;

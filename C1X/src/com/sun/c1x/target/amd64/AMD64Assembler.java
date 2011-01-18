@@ -2934,7 +2934,7 @@ public class AMD64Assembler extends AbstractAssembler {
             || op == 0xEB // short jmp
             || (op & 0xF0) == 0x70 // short jcc
             || op == 0x0F && (codeBuffer.getByte(branch + 1) & 0xF0) == 0x80 // jcc
-        : "Invalid opcode at patch point";
+        : "Invalid opcode at patch point branch=" + branch + ", branchTarget=" + branchTarget + ", op=" + op;
 
         if (op == 0xEB || (op & 0xF0) == 0x70) {
 

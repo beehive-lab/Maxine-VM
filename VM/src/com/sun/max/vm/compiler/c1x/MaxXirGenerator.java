@@ -1588,7 +1588,11 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genWriteBarrier(XirArgument object) {
-        // TODO: Implement write barrier.
+        return null;
+    }
+
+    @Override
+    public XirSnippet genArrayCopy(XirSite site, XirArgument src, XirArgument srcPos, XirArgument dest, XirArgument destPos, XirArgument length, RiType elementType, boolean inputsDifferent, boolean inputsSame) {
         return null;
     }
 }
