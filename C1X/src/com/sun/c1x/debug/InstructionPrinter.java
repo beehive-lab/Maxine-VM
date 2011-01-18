@@ -821,4 +821,9 @@ public class InstructionPrinter extends ValueVisitor {
     public void visitBreakpointTrap(BreakpointTrap i) {
         out.print("breakpoint_trap");
     }
+
+    @Override
+    public void visitArrayCopy(ArrayCopy arrayCopy) {
+        out.print("arrayCopy");
+    }
 }
