@@ -153,16 +153,28 @@ public abstract class LIRGenerator extends ValueVisitor {
      * @return {@code operand}
      */
     protected CiValue force(Value instruction, CiValue operand) {
-        LIRItem item = new LIRItem(instruction, this);
-        item.loadItemForce(operand);
-        assert item.result() == operand;
+        CiValue result = makeOperand(instruction);
+        if (result != operand) {
+            assert result.kind != CiKind.Illegal;
+            if (!compilation.archKindsEqual(result.kind, operand.kind)) {
+                // moves between different types need an intervening spill slot
+                CiValue tmp = forceToSpill(result, operand.kind, false);
+                lir.move(tmp, operand);
+            } else {
+                lir.move(result, operand);
+            }
+        }
         return operand;
     }
 
     protected CiValue load(Value val) {
-        LIRItem value = new LIRItem(val, this);
-        value.loadItem();
-        return value.result();
+        CiValue result = makeOperand(val);
+        if (!result.isVariableOrRegister()) {
+            CiVariable operand = newVariable(val.kind);
+            lir.move(result, operand);
+            return operand;
+        }
+        return result;
     }
 
     // the range of values in a lookupswitch or tableswitch statement
@@ -417,26 +429,29 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitIfOp(IfOp x) {
-        CiKind xtype = x.x().kind;
-        CiKind ttype = x.trueValue().kind;
+    public void visitIfOp(IfOp i) {
+        Value x = i.x();
+        Value y = i.y();
+        CiKind xtype = x.kind;
+        CiKind ttype = i.trueValue().kind;
         assert xtype.isInt() || xtype.isObject() : "cannot handle others";
         assert ttype.isInt() || ttype.isObject() || ttype.isLong() || ttype.isWord() : "cannot handle others";
-        assert ttype.equals(x.falseValue().kind) : "cannot handle others";
+        assert ttype.equals(i.falseValue().kind) : "cannot handle others";
 
-        LIRItem left = new LIRItem(x.x(), this);
-        LIRItem right = new LIRItem(x.y(), this);
-        left.loadItem();
-        if (!canInlineAsConstant(right.instruction)) {
-            right.loadItem();
+        CiValue left = load(x);
+        CiValue right = null;
+        if (!canInlineAsConstant(y)) {
+            right = load(y);
+        } else {
+            right = makeOperand(y);
         }
 
-        LIRItem tVal = new LIRItem(x.trueValue(), this);
-        LIRItem fVal = new LIRItem(x.falseValue(), this);
-        CiValue reg = createResultVariable(x);
+        CiValue tVal = makeOperand(i.trueValue());
+        CiValue fVal = makeOperand(i.falseValue());
+        CiValue reg = createResultVariable(i);
 
-        lir.cmp(x.condition(), left.result(), right.result());
-        lir.cmove(x.condition(), tVal.result(), fVal.result(), reg);
+        lir.cmp(i.condition(), left, right);
+        lir.cmove(i.condition(), tVal, fVal, reg);
     }
 
     @Override
@@ -600,17 +615,17 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.breakpoint();
     }
 
-    protected CiAddress getAddressForPointerOp(PointerOp x, CiKind kind, LIRItem pointer) {
+    protected CiAddress getAddressForPointerOp(PointerOp x, CiKind kind, CiValue pointer) {
         CiAddress addr;
+        Value offset = x.offset();
+        Value index = x.index();
         if (x.displacement() == null) {
             // address is [pointer + offset]
-            if (x.offset().isConstant() && x.offset().kind.isInt()) {
+            if (offset.isConstant() && offset.kind.isInt()) {
                 int displacement = x.offset().asConstant().asInt();
-                addr = new CiAddress(kind, pointer.result(), displacement);
+                addr = new CiAddress(kind, pointer, displacement);
             } else {
-                LIRItem offset = new LIRItem(x.offset(), this);
-                offset.loadItem();
-                addr = new CiAddress(kind, pointer.result(), offset.result());
+                addr = new CiAddress(kind, pointer, load(offset));
             }
         } else {
             // address is [pointer + disp + (index * scale)]
@@ -619,13 +634,11 @@ public abstract class LIRGenerator extends ValueVisitor {
             int displacement = x.displacement().asConstant().asInt();
             int kindSize = compilation.target.sizeInBytes(kind);
             Scale scale = Scale.fromInt(kindSize);
-            if (x.index().isConstant()) {
-                displacement += x.index().asConstant().asInt() * kindSize;
-                addr = new CiAddress(kind, pointer.result(), displacement);
+            if (index.isConstant()) {
+                displacement += index.asConstant().asInt() * kindSize;
+                addr = new CiAddress(kind, pointer, displacement);
             } else {
-                LIRItem index = new LIRItem(x.index(), this);
-                index.loadItem();
-                addr = new CiAddress(kind, pointer.result(), index.result(), scale, displacement);
+                addr = new CiAddress(kind, pointer, load(index), scale, displacement);
             }
         }
         return addr;
@@ -633,9 +646,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitLoadStackAddress(AllocateStackVariable x) {
-        LIRItem value = new LIRItem(x.value(), this);
-        value.loadItem();
-        CiValue src = forceToSpill(value.result(), x.value().kind, true);
+        CiValue value = load(x.value());
+        CiValue src = forceToSpill(value, x.value().kind, true);
         CiValue dst = createResultVariable(x);
         lir.lea(src, dst);
     }
@@ -643,8 +655,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitLoadPointer(LoadPointer x) {
         LIRDebugInfo info = maybeStateFor(x);
-        LIRItem pointer = new LIRItem(x.pointer(), this);
-        pointer.loadItem();
+        CiValue pointer = load(x.pointer());
         CiValue dst = createResultVariable(x);
         CiAddress src = getAddressForPointerOp(x, x.dataKind, pointer);
         lir.load(src, dst, info);
@@ -653,10 +664,9 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitStorePointer(StorePointer x) {
         LIRDebugInfo info = maybeStateFor(x);
-        LIRItem pointer = new LIRItem(x.pointer(), this);
         LIRItem value = new LIRItem(x.value(), this);
+        CiValue pointer = load(x.pointer());
         value.loadItem(x.dataKind);
-        pointer.loadItem();
         CiAddress dst = getAddressForPointerOp(x, x.dataKind, pointer);
         lir.store(value.result(), dst, info);
     }
@@ -761,8 +771,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitLookupSwitch(LookupSwitch x) {
-        LIRItem tag = new LIRItem(x.value(), this);
-        tag.loadItem();
+        CiValue tag = load(x.value());
         setNoResult(x);
 
         if (x.isSafepoint()) {
@@ -772,13 +781,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         // move values into phi locations
         moveToPhi(x.stateAfter());
 
-        CiValue value = tag.result();
         if (C1XOptions.GenTableRanges) {
-            visitSwitchRanges(createLookupRanges(x), value, x.defaultSuccessor());
+            visitSwitchRanges(createLookupRanges(x), tag, x.defaultSuccessor());
         } else {
             int len = x.numberOfCases();
             for (int i = 0; i < len; i++) {
-                lir.cmp(Condition.EQ, value, x.keyAt(i));
+                lir.cmp(Condition.EQ, tag, x.keyAt(i));
                 lir.branch(Condition.EQ, CiKind.Int, x.suxAt(i));
             }
             lir.jump(x.defaultSuccessor());
@@ -787,14 +795,13 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitNullCheck(NullCheck x) {
-        LIRItem value = new LIRItem(x.object(), this);
         // TODO: this is suboptimal because it may result in an unnecessary move
-        value.loadItem();
+        CiValue value = load(x.object());
         if (x.canTrap()) {
             LIRDebugInfo info = stateFor(x);
-            lir.nullCheck(value.result(), info);
+            lir.nullCheck(value, info);
         }
-        x.setOperand(value.result());
+        x.setOperand(value);
     }
 
     @Override
@@ -818,11 +825,9 @@ public abstract class LIRGenerator extends ValueVisitor {
             lir.returnOp(IllegalValue);
         } else {
             CiValue operand = resultOperandFor(x.kind);
-            LIRItem result = new LIRItem(x.result(), this);
-
-            result.loadItemForce(operand);
+            CiValue result = force(x.result(), operand);
             emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
-            lir.returnOp(result.result());
+            lir.returnOp(result);
         }
         setNoResult(x);
     }
@@ -989,8 +994,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitStoreRegister(StoreRegister x) {
         CiValue reg = x.register.asValue(x.kind);
-        LIRItem src = new LIRItem(x.value(), this);
-        lir.move(src.result(), reg);
+        lir.move(makeOperand(x.value()), reg);
     }
 
     @Override
@@ -1019,8 +1023,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitTableSwitch(TableSwitch x) {
-        LIRItem tag = new LIRItem(x.value(), this);
-        tag.loadItem();
+        CiValue tag = load(x.value());
         setNoResult(x);
 
         if (x.isSafepoint()) {
@@ -1032,12 +1035,11 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         int loKey = x.lowKey();
         int len = x.numberOfCases();
-        CiValue value = tag.result();
         if (C1XOptions.GenTableRanges) {
-            visitSwitchRanges(createLookupRanges(x), value, x.defaultSuccessor());
+            visitSwitchRanges(createLookupRanges(x), tag, x.defaultSuccessor());
         } else {
             for (int i = 0; i < len; i++) {
-                lir.cmp(Condition.EQ, value, i + loKey);
+                lir.cmp(Condition.EQ, tag, i + loKey);
                 lir.branch(Condition.EQ, CiKind.Int, x.suxAt(i));
             }
             lir.jump(x.defaultSuccessor());
@@ -1046,10 +1048,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitThrow(Throw x) {
-        LIRItem exception = new LIRItem(x.exception(), this);
-        exception.loadItem();
         setNoResult(x);
-        CiValue exceptionOpr = exception.result();
+        CiValue exceptionOpr = load(x.exception());
         LIRDebugInfo info = stateFor(x, x.stateAfter());
 
         // check if the instruction has an xhandler in any of the nested scopes
@@ -1087,18 +1087,16 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitUnsafeGetObject(UnsafeGetObject x) {
         CiKind kind = x.unsafeOpKind;
-        LIRItem src = new LIRItem(x.object(), this);
-        LIRItem off = new LIRItem(x.offset(), this);
 
-        off.loadItem();
-        src.loadItem();
+        CiValue off = load(x.offset());
+        CiValue src = load(x.object());
 
         CiValue reg = createResultVariable(x);
 
         if (x.isVolatile()) {
             vma.preVolatileRead();
         }
-        genGetObjectUnsafe(reg, src.result(), off.result(), kind, x.isVolatile());
+        genGetObjectUnsafe(reg, src, off, kind, x.isVolatile());
         if (x.isVolatile()) {
             vma.postVolatileRead();
         }
@@ -1106,10 +1104,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitUnsafeGetRaw(UnsafeGetRaw x) {
-        LIRItem base = new LIRItem(x.base(), this);
         LIRItem idx = new LIRItem(this);
-
-        base.loadItem();
+        CiValue base = load(x.base());
         if (x.hasIndex()) {
             idx.setInstruction(x.index());
             idx.loadNonconstant();
@@ -1125,18 +1121,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         assert !x.hasIndex() || idx.instruction == x.index() : "should match";
 
-        CiValue baseOp = base.result();
-
-        if (is32) {
-            // XXX: what about floats and doubles and objects? (used in OSR)
-            if (x.base().kind.isLong()) {
-                baseOp = newVariable(CiKind.Int);
-                lir.convert(L2I, base.result(), baseOp, null);
-            } else {
-                assert x.base().kind.isInt();
-            }
-        }
-
         CiKind dstKind = x.unsafeOpKind;
         CiValue indexOp = idx.result();
 
@@ -1144,19 +1128,19 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (indexOp.isConstant()) {
             assert log2scale == 0 : "must not have a scale";
             CiConstant constantIndexOp = (CiConstant) indexOp;
-            addr = new CiAddress(dstKind, baseOp, constantIndexOp.asInt());
+            addr = new CiAddress(dstKind, base, constantIndexOp.asInt());
         } else {
 
             if (compilation.target.arch.isX86()) {
-                addr = new CiAddress(dstKind, baseOp, indexOp, CiAddress.Scale.fromInt(2 ^ log2scale), 0);
+                addr = new CiAddress(dstKind, base, indexOp, CiAddress.Scale.fromInt(2 ^ log2scale), 0);
 
             } else if (compilation.target.arch.isSPARC()) {
                 if (indexOp.isIllegal() || log2scale == 0) {
-                    addr = new CiAddress(dstKind, baseOp, indexOp);
+                    addr = new CiAddress(dstKind, base, indexOp);
                 } else {
                     CiValue tmp = newVariable(CiKind.Int);
                     lir.shiftLeft(indexOp, log2scale, tmp);
-                    addr = new CiAddress(dstKind, baseOp, tmp);
+                    addr = new CiAddress(dstKind, base, tmp);
                 }
 
             } else {
@@ -1184,20 +1168,18 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitUnsafePutObject(UnsafePutObject x) {
         CiKind kind = x.unsafeOpKind;
-        LIRItem src = new LIRItem(x.object(), this);
-        LIRItem off = new LIRItem(x.offset(), this);
         LIRItem data = new LIRItem(x.value(), this);
 
-        src.loadItem();
+        CiValue src = load(x.object());
         data.loadItem(kind);
-        off.loadItem();
+        CiValue off = load(x.offset());
 
         setNoResult(x);
 
         if (x.isVolatile()) {
             vma.preVolatileWrite();
         }
-        genPutObjectUnsafe(src.result(), off.result(), data.result(), kind, x.isVolatile());
+        genPutObjectUnsafe(src, off, data.result(), kind, x.isVolatile());
         if (x.isVolatile()) {
             vma.postVolatileWrite();
         }
@@ -1213,11 +1195,10 @@ public abstract class LIRGenerator extends ValueVisitor {
             log2scale = x.log2scale();
         }
 
-        LIRItem base = new LIRItem(x.base(), this);
         LIRItem value = new LIRItem(x.value(), this);
         LIRItem idx = new LIRItem(this);
 
-        base.loadItem();
+        CiValue base = load(x.base());
         if (x.hasIndex()) {
             idx.setInstruction(x.index());
             idx.loadItem();
@@ -1227,17 +1208,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         setNoResult(x);
 
-        CiValue baseOp = base.result();
-
-        if (is32) {
-            // XXX: what about floats and doubles and objects? (used in OSR)
-            if (x.base().kind.isLong()) {
-                baseOp = newVariable(CiKind.Int);
-                lir.convert(L2I, base.result(), baseOp, null);
-            } else {
-                assert x.base().kind.isInt();
-            }
-        }
         CiValue indexOp = idx.result();
         if (log2scale != 0) {
             // temporary fix (platform dependent code without shift on Intel would be better)
@@ -1246,7 +1216,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             lir.shiftLeft(indexOp, log2scale, indexOp);
         }
 
-        CiValue addr = new CiAddress(x.unsafeOpKind, baseOp, indexOp);
+        CiValue addr = new CiAddress(x.unsafeOpKind, base, indexOp);
         lir.move(value.result(), addr);
     }
 
@@ -1360,20 +1330,17 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private void visitFPIntrinsics(Intrinsic x) {
         assert x.numberOfArguments() == 1 : "wrong type";
-        LIRItem value = new LIRItem(x.argumentAt(0), this);
         CiValue reg = createResultVariable(x);
-        value.loadItem();
-        CiValue tmp = forceToSpill(value.result(), x.kind, false);
+        CiValue value = load(x.argumentAt(0));
+        CiValue tmp = forceToSpill(value, x.kind, false);
         lir.move(tmp, reg);
     }
 
     private void visitRegisterFinalizer(Intrinsic x) {
         assert x.numberOfArguments() == 1 : "wrong type";
-        LIRItem receiver = new LIRItem(x.argumentAt(0), this);
-
-        receiver.loadItem();
+        CiValue receiver = load(x.argumentAt(0));
         LIRDebugInfo info = stateFor(x, x.stateBefore());
-        callRuntime(CiRuntimeCall.RegisterFinalizer, info, receiver.result());
+        callRuntime(CiRuntimeCall.RegisterFinalizer, info, receiver);
         setNoResult(x);
     }
 
@@ -1878,11 +1845,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         int j = 0;
         for (Value arg : args) {
             if (arg != null) {
-                LIRItem param = new LIRItem(arg, this);
                 CiValue operand = cc.locations[j++];
                 if (operand.isRegister()) {
-                    param.loadItemForce(operand);
+                    force(arg, operand);
                 } else {
+                    LIRItem param = new LIRItem(arg, this);
                     assert operand.isStackSlot();
                     CiStackSlot slot = (CiStackSlot) operand;
                     assert !slot.inCallerFrame();
@@ -2049,7 +2016,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         RiType srcType = src.declaredType();
         RiType destType = dest.declaredType();
         if (srcType != null && srcType == destType) {
-
+            RiType type = srcType;
+            CiKind kind = type.kind();
         }
         Value[] args = new Value[]{arrayCopy.src(), arrayCopy.srcPos(), arrayCopy.dest(), arrayCopy.destPos(), arrayCopy.length()};
         Invoke invoke = new Invoke(Bytecodes.INVOKESTATIC, CiKind.Void, args, true, arrayCopy.arrayCopyMethod, arrayCopy.stateBefore());

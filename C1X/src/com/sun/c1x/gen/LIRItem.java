@@ -95,27 +95,6 @@ public class LIRItem {
         setInstruction(null);
     }
 
-    /**
-     * Forces the result of this item's {@linkplain #instruction} to be available in a given operand,
-     * inserting move instructions if necessary.
-     *
-     * @param operand the operand in which the result of {@code instruction} must be available
-     */
-    public void loadItemForce(CiValue operand) {
-        CiValue result = result();
-        if (result != operand) {
-            assert result.kind != CiKind.Illegal;
-            if (!gen.compilation.archKindsEqual(result.kind, operand.kind)) {
-                // moves between different types need an intervening spill slot
-                CiValue tmp = gen.forceToSpill(result, operand.kind, false);
-                gen.lir.move(tmp, operand);
-            } else {
-                gen.lir.move(result, operand);
-            }
-            resultOperand = operand;
-        }
-    }
-
     public void loadItem(CiKind kind) {
         if (kind == CiKind.Byte || kind == CiKind.Boolean) {
             loadByteItem();
@@ -211,7 +190,7 @@ public class LIRItem {
         }
     }
 
-    void setResult(CiVariable operand) {
+    private void setResult(CiVariable operand) {
         gen.setResult(instruction, operand);
         resultOperand = operand;
     }
