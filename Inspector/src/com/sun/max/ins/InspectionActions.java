@@ -1165,14 +1165,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, memoryRegion.regionName());
                 inspector.highlight();
             } else  if (address != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().wordSize().times(10)));
+                final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().wordSize().times(10)));
                 inspector.highlight();
             } else {
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory at address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
-                        final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().wordSize().times(10)));
+                        final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().wordSize().times(10)));
                         inspector.highlight();
                     }
                 };
@@ -1564,7 +1564,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                             final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
                             focus().setHeapObject(teleObject);
                         } else {
-                            gui().errorMessage("heap object not found at 0x"  + address.toHexString());
+                            gui().errorMessage("heap object not found at "  + address.to0xHexString());
                         }
                     } catch (MaxVMBusyException maxVMBusyException) {
                         inspection().announceVMBusyFailure(name());
@@ -1778,7 +1778,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     final int serial = Integer.parseInt(value, 16);
                     final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(serial);
                     if (teleClassActor == null) {
-                        gui().errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
+                        gui().errorMessage("failed to find classActor for ID:  " + InspectorLabel.intTo0xHex(serial));
                     } else {
                         focus().setHeapObject(teleClassActor);
                     }
@@ -2935,7 +2935,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         try {
                             final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeManager().createMachineCodeLocation(address, "set target breakpoint"));
                             if (breakpoint == null) {
-                                gui().errorMessage("Unable to create breakpoint at: " + "0x" + address.toHexString());
+                                gui().errorMessage("Unable to create breakpoint at: " + address.to0xHexString());
                             } else {
                                 breakpoint.setDescription(description);
                             }
@@ -3378,7 +3378,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetWordWatchpointAction(Address address, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.memoryRegion = new MemoryWordRegion(vm(), address, 1, vm().wordSize());
+            this.memoryRegion = new MemoryWordRegion(vm(), address, 1, vm().platform().wordSize());
             setEnabled(vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
 
@@ -3387,10 +3387,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (memoryRegion != null) {
                 setWatchpoint(memoryRegion, "");
             } else {
+                final Size wordSize = vm().platform().wordSize();
                 new MemoryRegionInputDialog(inspection(), vm().bootImageStart(), "Watch memory starting at address...", "Watch") {
                     @Override
                     public void entered(Address address, Size size) {
-                        setWatchpoint(new MemoryWordRegion(vm(), address, size.toInt() / Word.size(), Size.fromInt(Word.size())), "User specified region");
+                        setWatchpoint(new MemoryWordRegion(vm(), address, size.toInt() / wordSize.toInt(), wordSize), "User specified region");
                     }
                 };
             }
@@ -3472,7 +3473,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Watch memory...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWatchpoint(new InspectorMemoryRegion(vm(), "", address, vm().wordSize()), "User specified region");
+                        setWatchpoint(new InspectorMemoryRegion(vm(), "", address, vm().platform().wordSize()), "User specified region");
                     }
                 };
             }

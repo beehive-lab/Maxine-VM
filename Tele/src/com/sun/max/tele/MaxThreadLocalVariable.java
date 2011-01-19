@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,6 +58,11 @@ public interface MaxThreadLocalVariable extends MaxEntity<MaxThreadLocalVariable
      * @return the name
      */
     String variableName();
+
+    /**
+     * @return the description of the thread local variable.
+     */
+    String variableDocumentation();
 
     /**
      * Specifies if this thread local variable is a reference type.

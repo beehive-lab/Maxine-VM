@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -130,7 +130,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
-                switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                switch (inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1:
                         handleLeftButtonEvent();
                         break;
@@ -180,25 +180,18 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         updateText();
     }
 
-    private String toolTipPrefix = "";
-
-    public void setToolTipPrefix(String toolTipPrefix) {
-        this.toolTipPrefix = toolTipPrefix;
-        updateText();
-    }
-
     protected final void setJavapText(String kind, String name) {
         setText(prefix + "#" + Integer.toString(index) + "; //" + kind + " " + name);
     }
 
     protected final void setJavapToolTipText(String kind, String name) {
-        setToolTipText(toolTipPrefix + "#" + Integer.toString(index) + "; //" + kind + " " + name);
+        setWrappedToolTipText("#" + Integer.toString(index) + "<br>" + kind + " " + name);
     }
 
     protected final void setJavapResolvableToolTipText(String kind, String name) {
         final String resolution = telePoolConstant == null ? inspection().nameDisplay().unavailableDataLongText() :
             (isResolved() ? "Resolved" : "Unresolved");
-        setToolTipText(toolTipPrefix + "#" + Integer.toString(index) + "; //" + kind + " " + name + " (" + resolution + ")");
+        setWrappedToolTipText("#" + Integer.toString(index) + "<br>" + kind + " " + name + " (" + resolution + ")");
     }
 
     private InspectorPopupMenu createPopupMenu() {

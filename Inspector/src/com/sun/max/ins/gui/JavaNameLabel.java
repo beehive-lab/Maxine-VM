@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,9 @@ import com.sun.max.ins.*;
   */
 public class JavaNameLabel extends InspectorLabel {
 
+    private String name = "";
+    private String toolTipText = "";
+
     public JavaNameLabel(Inspection inspection, String name) {
         super(inspection, name);
         redisplay();
@@ -42,17 +45,20 @@ public class JavaNameLabel extends InspectorLabel {
 
     public JavaNameLabel(Inspection inspection, String name, String toolTipText) {
         this(inspection, name);
-        setToolTipText(toolTipText);
+        this.name = name;
+        this.toolTipText = toolTipText;
+        redisplay();
     }
 
     public void setValue(String name) {
-        setText(name);
-        setToolTipText("");
+        this.name = name;
+        redisplay();
     }
 
     public void setValue(String name, String toolTipText) {
-        setText(name);
-        setToolTipText(toolTipText);
+        this.name = name;
+        this.toolTipText = toolTipText;
+        redisplay();
     }
 
     public void refresh(boolean force) {
@@ -60,6 +66,8 @@ public class JavaNameLabel extends InspectorLabel {
 
     public void redisplay() {
         setFont(style().javaNameFont());
+        setText(name);
+        setWrappedToolTipText(toolTipText);
     }
 
 }

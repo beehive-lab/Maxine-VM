@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,6 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.max.ins.value;
 
 import com.sun.max.ins.*;
@@ -28,18 +29,17 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A textual display label associated with an integer that represents the value of
- * the {@link Actor#flags} field in instances of {@link Actor} in the VM.
+ * A textual display label associated with an integer that represents the value of the {@link Actor#flags} field in
+ * instances of {@link Actor} in the VM.
  *
  * @see TeleActor
  *
  * @author Michael Van De Vanter
-  */
+ */
 public final class ActorFlagsValueLabel extends ValueLabel {
 
     private final TeleActor teleActor;
-    private String flagsAsHex;
-    private String flagsAsString;
+    private int flags = 0;
 
     public ActorFlagsValueLabel(Inspection inspection, TeleActor teleActor) {
         super(inspection);
@@ -50,16 +50,25 @@ public final class ActorFlagsValueLabel extends ValueLabel {
 
     @Override
     protected Value fetchValue() {
-        final int flags = teleActor.getFlags();
-        flagsAsHex = "Flags: 0x" + Integer.toHexString(flags);
-        flagsAsString = teleActor.flagsAsString();
+        flags = teleActor.getFlags();
         return IntValue.from(flags);
     }
 
     @Override
     protected void updateText() {
-        setText(flagsAsHex);
-        setToolTipText(flagsAsString);
+        setText("Flags: " + intTo0xHex(flags));
+        String toolTipText;
+        final String [] flagNames = teleActor.getFlagNames();
+        if (flagNames.length == 0) {
+            toolTipText = htmlify("<no flags set>");
+        } else {
+            final StringBuilder sb = new StringBuilder("Flags set =");
+            for (int index = 0; index < flagNames.length; index++) {
+                sb.append("<br>").append(flagNames[index]);
+            }
+            toolTipText = sb.toString();
+        }
+        setWrappedToolTipText(toolTipText);
     }
 
     public void redisplay() {

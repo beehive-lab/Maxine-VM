@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,37 +103,52 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
             final StackBias bias = stackFrame.bias();
 
             addInspectorLabel(new TextLabel(inspection(), "Size:", "Frame size in bytes (" + frameClassName + ")"));
-            addInspectorLabel(new DataLabel.IntAsDecimal(inspection()) {
+            final DataLabel.IntAsDecimal sizeLabel = new DataLabel.IntAsDecimal(inspection()) {
 
                 @Override
                 public void refresh(boolean force) {
-                    setValue(CompiledStackFramePanel.this.stackFrame.layout().frameSize());
+                    final int frameSize = CompiledStackFramePanel.this.stackFrame.layout().frameSize();
+                    setValue(frameSize);
+                    setWrappedToolTipText(intToDecimalAndHex(frameSize));
                 }
-            });
+            };
+            sizeLabel.setToolTipPrefix("Stack frame size = ");
+            sizeLabel.setToolTipSuffix(" bytes");
+            addInspectorLabel(sizeLabel);
 
             addInspectorLabel(new TextLabel(inspection(), "FP:", "Frame pointer (" + frameClassName + ")"));
-            addInspectorLabel(new DataLabel.BiasedStackAddressAsHex(inspection(), bias) {
+            final DataLabel.BiasedStackAddressAsHex fpValueLabel = new DataLabel.BiasedStackAddressAsHex(inspection(), bias) {
                 @Override
                 public void refresh(boolean force) {
-                    setValue(CompiledStackFramePanel.this.stackFrame.fp());
+                    final Pointer fpValue = CompiledStackFramePanel.this.stackFrame.fp();
+                    setValue(fpValue);
+                    setWrappedToolTipText(fpValue.to0xHexString());
                 }
-            });
+            };
+            fpValueLabel.setToolTipPrefix("Frame pointer for stack frame<br>address= ");
+            addInspectorLabel(fpValueLabel);
 
             addInspectorLabel(new TextLabel(inspection(), "SP:", "Stack pointer (" + frameClassName + ")"));
-            addInspectorLabel(new DataLabel.BiasedStackAddressAsHex(inspection(), bias) {
+            final DataLabel.BiasedStackAddressAsHex spValueLabel = new DataLabel.BiasedStackAddressAsHex(inspection(), bias) {
                 @Override
                 public void refresh(boolean force) {
-                    setValue(CompiledStackFramePanel.this.stackFrame.sp());
+                    final Pointer spValue = CompiledStackFramePanel.this.stackFrame.sp();
+                    setValue(spValue);
+                    setWrappedToolTipText(spValue.to0xHexString());
                 }
-            });
+            };
+            spValueLabel.setToolTipPrefix("Stack pointer for stack frame<br>address= ");
+            addInspectorLabel(spValueLabel);
 
-            addInspectorLabel(new TextLabel(inspection(), "IP:", "Instruction pointer (" + frameClassName + ")"));
-            addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, this) {
+            addInspectorLabel(new TextLabel(inspection(), "IP:", "Instruction pointer for (" + frameClassName + ")"));
+            final WordValueLabel ipValueLabel = new WordValueLabel(inspection, ValueMode.WORD, this) {
                 @Override
                 public Value fetchValue() {
                     return WordValue.from(CompiledStackFramePanel.this.stackFrame.ip());
                 }
-            });
+            };
+            ipValueLabel.setToolTipPrefix("Instruction pointer for stack frame<br>address= ");
+            addInspectorLabel(ipValueLabel);
 
             SpringUtilities.makeCompactGrid(this, 2);
         }

@@ -22,7 +22,6 @@
  */
 package com.sun.max.tele;
 
-import static com.sun.max.platform.Platform.*;
 import static com.sun.max.tele.debug.ProcessState.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -234,6 +233,11 @@ public abstract class TeleVM implements MaxVM {
      * Where the meta-data associated with the target VM is located {@see #vmDirectoryOption}.
      */
     private static File vmDirectory;
+
+    /**
+     * An abstraction description of the VM's platform, suitable for export.
+     */
+    private TelePlatform telePlatform;
 
     /**
      * The options controlling how a tele VM instance is {@linkplain #newAllocator(String...) created}.
@@ -457,10 +461,6 @@ public abstract class TeleVM implements MaxVM {
         return vm;
     }
 
-    public MaxInspectionMode inspectionMode() {
-        return mode;
-    }
-
     public static TargetLocation targetLocation() {
         return targetLocation;
     }
@@ -477,7 +477,7 @@ public abstract class TeleVM implements MaxVM {
         bootImageConfig.loadAndInstantiateSchemes(null);
         final VMConfiguration config = new VMConfiguration(
                         bootImageConfig.buildLevel,
-                        platform(),
+                        Platform.platform(),
                         getInspectorReferencePackage(bootImageConfig.referencePackage),
                         bootImageConfig.layoutPackage,
                         bootImageConfig.heapPackage,
@@ -506,7 +506,7 @@ public abstract class TeleVM implements MaxVM {
         initializeVM(bootImage.vmConfiguration);
 
         TeleVM teleVM = null;
-        final OS os = platform().os;
+        final OS os = Platform.platform().os;
         final String className = "com.sun.max.tele.debug." + os.asPackageName() + "." + os.className + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -709,15 +709,16 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        setTeleChannelProtocol(platform().os);
+        this.telePlatform = new TelePlatform(Platform.platform());
+        setTeleChannelProtocol(Platform.platform().os);
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
 
         // Pre-initialize the disassembler to save time.
-        TeleDisassembler.initialize(platform());
+        TeleDisassembler.initialize(Platform.platform());
 
-        this.wordSize = Size.fromInt(platform().wordWidth().numberOfBytes);
-        this.pageSize = Size.fromInt(platform().pageSize);
+        this.wordSize = Size.fromInt(Platform.platform().wordWidth().numberOfBytes);
+        this.pageSize = Size.fromInt(Platform.platform().pageSize);
         this.programFile = new File(bootImageFile.getParent(), BOOTIMAGE_FILE_NAME);
 
         if (mode == MaxInspectionMode.ATTACH || mode == MaxInspectionMode.ATTACHWAITING) {
@@ -861,6 +862,10 @@ public abstract class TeleVM implements MaxVM {
         return MaxineVM.description();
     }
 
+    public final TelePlatform platform() {
+        return telePlatform;
+    }
+
     public final File vmDirectory() {
         return vmDirectory;
     }
@@ -883,6 +888,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final File programFile() {
         return programFile;
+    }
+
+    public MaxInspectionMode inspectionMode() {
+        return mode;
     }
 
     public TeleClassRegistry classRegistry() {

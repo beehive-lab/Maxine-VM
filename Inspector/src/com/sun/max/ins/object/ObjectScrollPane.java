@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleTupleObject} ; never null;
      */
     public static ObjectScrollPane createFieldsPane(Inspection inspection, TeleTupleObject teleTupleObject, ObjectViewPreferences instanceViewPreferences) {
-        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, teleTupleObject, teleTupleObject.getFieldActors(), instanceViewPreferences);
+        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, "Object", teleTupleObject, teleTupleObject.getFieldActors(), instanceViewPreferences);
         return new ObjectScrollPane(inspection, inspectorTable);
     }
 
@@ -67,7 +67,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleHub} object; never null;
      */
     public static ObjectScrollPane createFieldsPane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
-        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, teleHub, teleHub.getFieldActors(), instanceViewPreferences);
+        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, "Hub", teleHub, teleHub.getFieldActors(), instanceViewPreferences);
         return new ObjectScrollPane(inspection, inspectorTable);
     }
 
