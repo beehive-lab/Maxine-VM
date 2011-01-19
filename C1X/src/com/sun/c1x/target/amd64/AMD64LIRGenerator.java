@@ -720,4 +720,19 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     protected CiValue osrBufferPointer() {
         return Util.nonFatalUnimplemented(null);
     }
+
+    @Override
+    public void visitBoundsCheck(BoundsCheck boundsCheck) {
+        Value x = boundsCheck.index();
+        Value y = boundsCheck.length();
+        CiValue left = load(x);
+        CiValue right = null;
+        if (!canInlineAsConstant(y)) {
+            right = load(y);
+        } else {
+            right = makeOperand(y);
+        }
+        lir.cmp(boundsCheck.condition, left, right);
+        super.visitDeoptimizeIf(boundsCheck);
+    }
 }

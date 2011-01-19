@@ -24,6 +24,7 @@
 package com.sun.c1x;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
@@ -32,6 +33,7 @@ import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -83,6 +85,8 @@ public final class C1XCompilation {
      * traces for independent compilations are not interleaved.
      */
     private ByteArrayOutputStream cfgPrinterBuffer;
+
+    private LIRGenerator lirGenerator;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -338,7 +342,7 @@ public final class C1XCompilation {
 
             initFrameMap(hir.topScope.maxLocks());
 
-            final LIRGenerator lirGenerator = compiler.backend.newLIRGenerator(this);
+            lirGenerator = compiler.backend.newLIRGenerator(this);
             for (BlockBegin begin : hir.linearScanOrder()) {
                 lirGenerator.doBlock(begin);
             }
@@ -361,6 +365,15 @@ public final class C1XCompilation {
 
             // generate exception adapters
             lirAssembler.emitExceptionEntries();
+
+            // generate deoptimization stubs
+            IdentityHashMap<FrameState, Label> deoptimizationStubs = lirGenerator.deoptimizationStubs();
+            if (deoptimizationStubs != null) {
+                for (FrameState state : deoptimizationStubs.keySet()) {
+                    Label label = deoptimizationStubs.get(state);
+                    lirAssembler.emitDeoptizationStub(state, label);
+                }
+            }
 
             // generate traps at the end of the method
             lirAssembler.emitTraps();

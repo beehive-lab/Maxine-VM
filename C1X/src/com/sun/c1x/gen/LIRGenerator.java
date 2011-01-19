@@ -211,6 +211,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private List<CiVariable> variablesForConstants;
     protected LIRList lir;
     final VolatileMemoryAccess vma;
+    private IdentityHashMap<FrameState, Label> deoptimizationStubs;
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
@@ -230,6 +231,30 @@ public abstract class LIRGenerator extends ValueVisitor {
         // mark the liveness of all instructions if it hasn't already been done by the optimizer
         LivenessMarker livenessMarker = new LivenessMarker(ir);
         C1XMetrics.LiveHIRInstructions += livenessMarker.liveCount();
+    }
+
+    public IdentityHashMap<FrameState, Label> deoptimizationStubs() {
+        return deoptimizationStubs;
+    }
+
+    public final void visitDeoptimizeIf(DeoptimizeIf x) {
+        FrameState state = x.stateBefore();
+        assert state != null : "deoptimize instruction always needs a state";
+
+        if (deoptimizationStubs == null) {
+            deoptimizationStubs = new IdentityHashMap<FrameState, Label>();
+        }
+
+        // Try to reuse an existing label if there is one for the same frame state.
+        Label label = null;
+        if (!deoptimizationStubs.containsKey(state)) {
+            label = new Label();
+            deoptimizationStubs.put(state, label);
+        } else {
+            label = deoptimizationStubs.get(state);
+        }
+
+        lir.branch(x.condition, label);
     }
 
     public void doBlock(BlockBegin block) {
@@ -849,7 +874,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         setNoResult(x);
     }
 
-    XirArgument toXirArgument(CiValue v) {
+    private XirArgument toXirArgument(CiValue v) {
         if (v == null) {
             return null;
         }
@@ -857,7 +882,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         return XirArgument.forInternalObject(v);
     }
 
-    XirArgument toXirArgument(Value i) {
+    private XirArgument toXirArgument(Value i) {
         if (i == null) {
             return null;
         }

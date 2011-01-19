@@ -456,6 +456,8 @@ public abstract class LIRAssembler {
 
     protected abstract void emitSlowPath(SlowPath sp);
 
+    public abstract void emitDeoptizationStub(FrameState state, Label label);
+
     protected abstract void emitAlignment();
 
     protected abstract void emitBreakpoint();
