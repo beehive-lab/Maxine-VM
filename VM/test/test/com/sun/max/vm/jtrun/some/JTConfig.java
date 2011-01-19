@@ -485,6 +485,7 @@ public class JTConfig {
         jtt.micro.VarArgs_int01.class,
         jtt.micro.VarArgs_long01.class,
         jtt.micro.VarArgs_short01.class,
+        jtt.optimize.ArrayCopy01.class,
         jtt.optimize.ArrayLength01.class,
         jtt.optimize.BC_idiv_16.class,
         jtt.optimize.BC_idiv_4.class,
