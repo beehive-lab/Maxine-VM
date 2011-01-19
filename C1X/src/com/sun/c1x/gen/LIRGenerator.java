@@ -27,6 +27,7 @@ import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -522,6 +523,16 @@ public abstract class LIRGenerator extends ValueVisitor {
                 genCompareAndSwap(x, CiKind.Long);
                 break;
 
+            case java_lang_Thread$currentThread:
+                snippet = xir.genCurrentThread(site(x));
+                if (snippet == null) {
+                    CiValue result = emitInvokeKnown(x.target(), x.stateBefore());
+                    x.setOperand(result);
+                } else {
+                    emitXir(snippet, x, null, null, true);
+                }
+                break;
+
             default:
                 Util.shouldNotReachHere("Unknown intrinsic: " + x.intrinsic());
                 break;
@@ -608,7 +619,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitLoadRegister(LoadRegister x) {
-        x.setOperand(x.register.asValue(CiKind.Word));
+        x.setOperand(x.register.asValue(x.kind));
     }
 
     @Override
@@ -2050,9 +2061,15 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private void arrayCopySlow(ArrayCopy arrayCopy) {
-        Value[] args = new Value[]{arrayCopy.src(), arrayCopy.srcPos(), arrayCopy.dest(), arrayCopy.destPos(), arrayCopy.length()};
-        Invoke invoke = new Invoke(Bytecodes.INVOKESTATIC, CiKind.Void, args, true, arrayCopy.arrayCopyMethod, arrayCopy.stateBefore());
+        emitInvokeKnown(arrayCopy.arrayCopyMethod, arrayCopy.stateBefore(), arrayCopy.src(), arrayCopy.srcPos(), arrayCopy.dest(), arrayCopy.destPos(), arrayCopy.length());
+    }
+
+    private CiValue emitInvokeKnown(RiMethod method, FrameState stateBefore, Value... args) {
+        boolean isStatic = Modifier.isStatic(method.accessFlags());
+        Invoke invoke = new Invoke(isStatic ? Bytecodes.INVOKESTATIC : Bytecodes.INVOKESPECIAL, method.signature().returnKind(), args, isStatic, method, stateBefore);
         visitInvoke(invoke);
+        return invoke.operand();
+
     }
 
 }
