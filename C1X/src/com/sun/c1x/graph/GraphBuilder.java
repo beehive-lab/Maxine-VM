@@ -28,6 +28,8 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import sun.org.mozilla.classfile.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.ScopeData.ReturnBlock;
@@ -1615,7 +1617,10 @@ public final class GraphBuilder {
         // handle intrinsics differently
         switch (intrinsic) {
             case java_lang_System$arraycopy:
-                result = new ArrayCopy(args[0], args[1], args[2], args[3], args[4], target, curState.immutableCopy(bci()));
+                if (!compilation.runtime.supportsArrayCopyIntrinsic()) {
+                    return false;
+                }
+                result = genArrayCopy(target, args);
                 break;
             case java_lang_Thread$currentThread:
                 break;
@@ -1673,6 +1678,44 @@ public final class GraphBuilder {
         pushReturn(resultType, append(result));
         stats.intrinsicCount++;
         return true;
+    }
+
+    private Instruction genArrayCopy(RiMethod target, Value[] args) {
+        FrameState state = curState.immutableCopy(bci());
+        Instruction result;
+        Value src = args[0];
+        Value srcPos = args[1];
+        Value dest = args[2];
+        Value destPos = args[3];
+        Value length = args[4];
+
+        // Check src start pos.
+        Value srcLength = append(new ArrayLength(src, state));
+
+        // Check dest start pos.
+        Value destLength = srcLength;
+        if (src != dest) {
+            destLength = append(new ArrayLength(dest, state));
+        }
+
+        // Check src end pos.
+        Value srcEndPos = append(new ArithmeticOp(ByteCode.IADD, CiKind.Int, srcPos, length, false, null));
+        append(new BoundsCheck(srcEndPos, srcLength, state, Condition.LE));
+
+        // Check dest end pos.
+        Value destEndPos = srcEndPos;
+        if (destPos != srcPos) {
+            destEndPos = append(new ArithmeticOp(ByteCode.IADD, CiKind.Int, destPos, length, false, null));
+        }
+        append(new BoundsCheck(destEndPos, destLength, state, Condition.LE));
+
+        Value zero = append(Constant.forInt(0));
+        append(new BoundsCheck(length, zero, state, Condition.GE));
+        append(new BoundsCheck(srcPos, zero, state, Condition.GE));
+        append(new BoundsCheck(destPos, zero, state, Condition.GE));
+
+        result = new ArrayCopy(src, srcPos, dest, destPos, length, target, state);
+        return result;
     }
 
     private boolean tryFoldable(RiMethod target, Value[] args) {

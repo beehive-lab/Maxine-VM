@@ -439,7 +439,7 @@ public abstract class LIRAssembler {
             }
 
         } else {
-            throw Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere(src.toString() + ", dest=" + dest.toString() + ", " + kind);
         }
     }
 

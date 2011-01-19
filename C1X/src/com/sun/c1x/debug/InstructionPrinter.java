@@ -824,7 +824,8 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitArrayCopy(ArrayCopy arrayCopy) {
-        out.print("arrayCopy");
+        out.print("arrayCopy ").print(arrayCopy.src()).print(" ").print(arrayCopy.srcPos()).print(" ").
+        print(arrayCopy.dest()).print(" ").print(arrayCopy.destPos()).print(" ").print(arrayCopy.length());
     }
 
     @Override

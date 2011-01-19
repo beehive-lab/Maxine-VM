@@ -31,11 +31,11 @@ import com.sun.cri.ci.*;
  * @author Thomas Wuerthinger
  *
  */
-public abstract class DeoptimizeIf extends StateSplit {
+public abstract class Guard extends StateSplit {
 
     public final Condition condition;
 
-    public DeoptimizeIf(Condition condition, FrameState stateBefore) {
+    public Guard(Condition condition, FrameState stateBefore) {
         super(CiKind.Illegal, stateBefore);
 
         this.condition = condition;

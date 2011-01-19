@@ -727,12 +727,12 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         Value y = boundsCheck.length();
         CiValue left = load(x);
         CiValue right = null;
-        if (!canInlineAsConstant(y)) {
-            right = load(y);
-        } else {
+        if (y.isConstant()) {
             right = makeOperand(y);
+        } else {
+            right = load(y);
         }
-        lir.cmp(boundsCheck.condition, left, right);
-        super.visitDeoptimizeIf(boundsCheck);
+        lir.cmp(boundsCheck.condition.negate(), left, right);
+        emitGuard(boundsCheck);
     }
 }
