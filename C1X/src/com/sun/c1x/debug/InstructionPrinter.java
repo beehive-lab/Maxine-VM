@@ -826,4 +826,10 @@ public class InstructionPrinter extends ValueVisitor {
     public void visitArrayCopy(ArrayCopy arrayCopy) {
         out.print("arrayCopy");
     }
+
+    @Override
+    public void visitBoundsCheck(BoundsCheck boundsCheck) {
+        out.print("boundsCheck ").print(boundsCheck.index()).print(" ").print(boundsCheck.length());
+
+    }
 }

@@ -35,6 +35,7 @@ import static com.sun.cri.ci.CiKind.*;
  */
 public enum CiRuntimeCall {
     UnwindException(Void, Object),
+    Deoptimize(Void),
     RegisterFinalizer(Void, Object),
     HandleException(Void, Object),
     OSRMigrationEnd(Void),

@@ -1611,7 +1611,6 @@ public final class GraphBuilder {
         boolean canTrap = false;
 
         Instruction result = null;
-        CiRegister threadRegister = null;
 
         // handle intrinsics differently
         switch (intrinsic) {
