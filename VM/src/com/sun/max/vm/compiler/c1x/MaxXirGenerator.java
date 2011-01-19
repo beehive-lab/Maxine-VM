@@ -1595,4 +1595,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     public XirSnippet genArrayCopy(XirSite site, XirArgument src, XirArgument srcPos, XirArgument dest, XirArgument destPos, XirArgument length, RiType elementType, boolean inputsDifferent, boolean inputsSame) {
         return null;
     }
+
+    @Override
+    public XirSnippet genCurrentThread(XirSite site) {
+        return null;
+    }
 }
