@@ -1623,6 +1623,8 @@ public final class GraphBuilder {
                 } else {
                     return false;
                 }
+            case java_lang_Object$getClass:
+                break;
             case java_lang_Thread$currentThread:
                 break;
             case java_lang_Object$init: // fall through
@@ -1638,7 +1640,6 @@ public final class GraphBuilder {
             case java_lang_System$identityHashCode: // fall through
             case java_lang_System$currentTimeMillis: // fall through
             case java_lang_System$nanoTime: // fall through
-            case java_lang_Object$getClass: // fall through
             case java_lang_Object$hashCode: // fall through
             case java_lang_Class$isAssignableFrom: // fall through
             case java_lang_Class$isInstance: // fall through

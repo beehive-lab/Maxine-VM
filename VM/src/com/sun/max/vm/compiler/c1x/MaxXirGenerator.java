@@ -1600,4 +1600,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     public XirSnippet genCurrentThread(XirSite site) {
         return null;
     }
+
+    @Override
+    public XirSnippet genGetClass(XirSite site, XirArgument xirArgument) {
+        return null;
+    }
 }
