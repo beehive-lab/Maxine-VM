@@ -28,6 +28,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.util.*;
@@ -456,7 +457,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitSlowPath(SlowPath sp);
 
-    public abstract void emitDeoptizationStub(FrameState state, Label label);
+    public abstract void emitDeoptizationStub(LIRGenerator.DeoptimizationStub stub);
 
     protected abstract void emitAlignment();
 

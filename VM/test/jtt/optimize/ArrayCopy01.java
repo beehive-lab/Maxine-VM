@@ -32,6 +32,7 @@ package jtt.optimize;
  * @Runs: (0,0,2)=0;
  * @Runs: (0,1,2)=!java.lang.ArrayIndexOutOfBoundsException;
  * @Runs: (1,0,2)=!java.lang.ArrayIndexOutOfBoundsException;
+ * @Runs: (1,1,-1)=!java.lang.ArrayIndexOutOfBoundsException;
  */
 public class ArrayCopy01 {
     public static Object[] src = new Object[]{null, null};

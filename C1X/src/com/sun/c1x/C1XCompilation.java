@@ -30,10 +30,10 @@ import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
+import com.sun.c1x.gen.LIRGenerator.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -367,11 +367,10 @@ public final class C1XCompilation {
             lirAssembler.emitExceptionEntries();
 
             // generate deoptimization stubs
-            IdentityHashMap<FrameState, Label> deoptimizationStubs = lirGenerator.deoptimizationStubs();
+            ArrayList<DeoptimizationStub> deoptimizationStubs = lirGenerator.deoptimizationStubs();
             if (deoptimizationStubs != null) {
-                for (FrameState state : deoptimizationStubs.keySet()) {
-                    Label label = deoptimizationStubs.get(state);
-                    lirAssembler.emitDeoptizationStub(state, label);
+                for (DeoptimizationStub stub : deoptimizationStubs) {
+                    lirAssembler.emitDeoptizationStub(stub);
                 }
             }
 

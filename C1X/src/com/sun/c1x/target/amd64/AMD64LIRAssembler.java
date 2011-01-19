@@ -34,12 +34,12 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.gen.LIRGenerator.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
@@ -1892,9 +1892,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    public void emitDeoptizationStub(FrameState state, Label label) {
-        masm.bind(label);
-        masm.directCall(CiRuntimeCall.Deoptimize, new LIRDebugInfo(state, null));
+    public void emitDeoptizationStub(DeoptimizationStub stub) {
+        masm.bind(stub.label);
+        masm.directCall(CiRuntimeCall.Deoptimize, stub.info);
         masm.shouldNotReachHere();
     }
 }

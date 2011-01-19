@@ -16482,6 +16482,18 @@ public class JTRuns {
                         return;
                     }
                 }
+            // (1,1,-1) == !java.lang.ArrayIndexOutOfBoundsException
+                try {
+                    runString = "(1,1,-1)";
+                    jtt.optimize.ArrayCopy01.test(1, 1, -1);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;
