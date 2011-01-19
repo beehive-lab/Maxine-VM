@@ -494,15 +494,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitIntrinsic(Intrinsic x) {
         Value[] vals = x.arguments();
-        XirArgument[] args = new XirArgument[vals.length];
-        for (int i = 0; i < vals.length; i++) {
-            args[i] = toXirArgument(vals[i]);
-        }
-        XirSnippet snippet = xir.genIntrinsic(site(x), args, null);
-        if (snippet != null) {
-            emitXir(snippet, x, x.stateBefore() == null ? null : stateFor(x), null, true);
-            return;
-        }
+        XirSnippet snippet;
 
         switch (x.intrinsic()) {
             case java_lang_Float$intBitsToFloat:
@@ -510,7 +502,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case java_lang_Double$longBitsToDouble:
             case java_lang_Float$floatToRawIntBits: {
                 visitFPIntrinsics(x);
-                break;
+                return;
             }
 
             case java_lang_System$currentTimeMillis: {
@@ -518,7 +510,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 CiValue reg = callRuntimeWithResult(CiRuntimeCall.JavaTimeMillis, null, (CiValue[]) null);
                 CiValue result = createResultVariable(x);
                 lir.move(reg, result);
-                break;
+                return;
             }
 
             case java_lang_System$nanoTime: {
@@ -526,12 +518,12 @@ public abstract class LIRGenerator extends ValueVisitor {
                 CiValue reg = callRuntimeWithResult(CiRuntimeCall.JavaTimeNanos, null, (CiValue[]) null);
                 CiValue result = createResultVariable(x);
                 lir.move(reg, result);
-                break;
+                return;
             }
 
             case java_lang_Object$init:
                 visitRegisterFinalizer(x);
-                break;
+                return;
 
             case java_lang_Math$log:   // fall through
             case java_lang_Math$log10: // fall through
@@ -541,32 +533,46 @@ public abstract class LIRGenerator extends ValueVisitor {
             case java_lang_Math$sin:   // fall through
             case java_lang_Math$cos:
                 genMathIntrinsic(x);
-                break;
+                return;
 
             case sun_misc_Unsafe$compareAndSwapObject:
                 genCompareAndSwap(x, CiKind.Object);
-                break;
+                return;
             case sun_misc_Unsafe$compareAndSwapInt:
                 genCompareAndSwap(x, CiKind.Int);
-                break;
+                return;
             case sun_misc_Unsafe$compareAndSwapLong:
                 genCompareAndSwap(x, CiKind.Long);
-                break;
+                return;
 
             case java_lang_Thread$currentThread:
                 snippet = xir.genCurrentThread(site(x));
-                if (snippet == null) {
-                    CiValue result = emitInvokeKnown(x.target(), x.stateBefore());
-                    x.setOperand(result);
-                } else {
+                if (snippet != null) {
                     emitXir(snippet, x, null, null, true);
+                    return;
                 }
                 break;
 
-            default:
-                Util.shouldNotReachHere("Unknown intrinsic: " + x.intrinsic());
+            case java_lang_Object$getClass:
+                snippet = xir.genGetClass(site(x), toXirArgument(vals[0]));
+                if (snippet != null) {
+                    emitXir(snippet, x, stateFor(x), null, true);
+                    return;
+                }
                 break;
         }
+
+
+        XirArgument[] args = new XirArgument[vals.length];
+        for (int i = 0; i < vals.length; i++) {
+            args[i] = toXirArgument(vals[i]);
+        }
+        snippet = xir.genIntrinsic(site(x), args, x.target());
+        if (snippet != null) {
+            emitXir(snippet, x, x.stateBefore() == null ? null : stateFor(x), null, true);
+            return;
+        }
+        x.setOperand(emitInvokeKnown(x.target(), x.stateBefore(), vals));
     }
 
     @Override
