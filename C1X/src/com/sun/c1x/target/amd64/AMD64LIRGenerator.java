@@ -481,9 +481,12 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitCompareAndSwap(CompareAndSwap x) {
+
+        // (tw) TODO: Factor out common code with genCompareAndSwap.
+
         CiKind dataKind = x.dataKind;
-        CiValue pointer = load(x.pointer());
-        CiAddress addr = getAddressForPointerOp(x, dataKind, pointer);
+        CiValue tempPointer = load(x.pointer());
+        CiAddress addr = getAddressForPointerOp(x, dataKind, tempPointer);
 
         CiValue expectedValue = force(x.expectedValue(), AMD64.rax.asValue(dataKind));
         CiValue newValue = load(x.newValue());
@@ -494,22 +497,24 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             preGCWriteBarrier(addr, false, null);
         }
 
+        CiValue pointer = newVariable(CiKind.Word);
+        lir.lea(addr, pointer);
         CiValue result = createResultVariable(x);
         CiValue resultReg = AMD64.rax.asValue(dataKind);
         if (dataKind.isObject()) {
-            lir.casObj(addr, expectedValue, newValue);
+            lir.casObj(pointer, expectedValue, newValue);
         } else if (dataKind.isInt()) {
-            lir.casInt(addr, expectedValue, newValue);
+            lir.casInt(pointer, expectedValue, newValue);
         } else {
             assert dataKind.isLong() || dataKind.isWord();
-            lir.casLong(addr, expectedValue, newValue);
+            lir.casLong(pointer, expectedValue, newValue);
         }
 
         lir.move(resultReg, result);
 
         if (dataKind.isObject()) { // Write-barrier needed for Object fields.
             // Seems to be precise
-            postGCWriteBarrier(addr, newValue);
+            postGCWriteBarrier(pointer, newValue);
         }
     }
 
