@@ -211,7 +211,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private List<CiVariable> variablesForConstants;
     protected LIRList lir;
     final VolatileMemoryAccess vma;
-    private IdentityHashMap<FrameState, Label> deoptimizationStubs;
+    private ArrayList<DeoptimizationStub> deoptimizationStubs;
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
@@ -233,8 +233,17 @@ public abstract class LIRGenerator extends ValueVisitor {
         C1XMetrics.LiveHIRInstructions += livenessMarker.liveCount();
     }
 
-    public IdentityHashMap<FrameState, Label> deoptimizationStubs() {
+    public ArrayList<DeoptimizationStub> deoptimizationStubs() {
         return deoptimizationStubs;
+    }
+
+    public static class DeoptimizationStub {
+        public final Label label = new Label();
+        public final LIRDebugInfo info;
+
+        public DeoptimizationStub(FrameState state) {
+            info = new LIRDebugInfo(state, null);
+        }
     }
 
     public final void emitGuard(Guard x) {
@@ -242,19 +251,15 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert state != null : "deoptimize instruction always needs a state";
 
         if (deoptimizationStubs == null) {
-            deoptimizationStubs = new IdentityHashMap<FrameState, Label>();
+            deoptimizationStubs = new ArrayList<DeoptimizationStub>();
         }
 
-        // Try to reuse an existing label if there is one for the same frame state.
-        Label label = null;
-        if (!deoptimizationStubs.containsKey(state)) {
-            label = new Label();
-            deoptimizationStubs.put(state, label);
-        } else {
-            label = deoptimizationStubs.get(state);
-        }
+        // (tw) TODO: Try to reuse an existing stub if possible.
+        // It is only allowed if there are no LIR instructions in between that can modify registers.
 
-        lir.branch(x.condition.negate(), label);
+        DeoptimizationStub stub = new DeoptimizationStub(state);
+        deoptimizationStubs.add(stub);
+        lir.branch(x.condition.negate(), stub.label, stub.info);
     }
 
     public void doBlock(BlockBegin block) {

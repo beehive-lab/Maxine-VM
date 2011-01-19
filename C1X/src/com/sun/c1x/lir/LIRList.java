@@ -277,6 +277,10 @@ public final class LIRList {
         append(new LIRBranch(cond, lbl));
     }
 
+    public void branch(Condition cond, Label lbl, LIRDebugInfo info) {
+        append(new LIRBranch(cond, lbl, info));
+    }
+
     public void branch(Condition cond, CiKind kind, BlockBegin block) {
         assert kind != CiKind.Float && kind != CiKind.Double : "no fp comparisons";
         append(new LIRBranch(cond, kind, block));

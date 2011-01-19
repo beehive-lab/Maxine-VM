@@ -1616,12 +1616,13 @@ public final class GraphBuilder {
 
         // handle intrinsics differently
         switch (intrinsic) {
+
             case java_lang_System$arraycopy:
-                if (!compilation.runtime.supportsArrayCopyIntrinsic()) {
+                if (compilation.runtime.supportsArrayCopyIntrinsic()) {
+                    break;
+                } else {
                     return false;
                 }
-                result = genArrayCopy(target, args);
-                break;
             case java_lang_Thread$currentThread:
                 break;
             case java_lang_Object$init: // fall through
@@ -1664,6 +1665,8 @@ public final class GraphBuilder {
             // TODO: preservesState and canTrap for complex intrinsics
         }
 
+
+
         // get the arguments for the intrinsic
         CiKind resultType = returnKind(target);
 
@@ -1671,10 +1674,23 @@ public final class GraphBuilder {
             TTY.println("Inlining intrinsic: " + intrinsic);
         }
 
-        // create the intrinsic node
-        if (result == null) {
+        // Create state before intrinsic.
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i] != null) {
+                curState.push(args[i].kind.stackKind(), args[i]);
+            }
+        }
+
+        // Create the intrinsic node.
+        if (intrinsic == C1XIntrinsic.java_lang_System$arraycopy) {
+            result = genArrayCopy(target, args);
+        } else {
             result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.immutableCopy(bci()), preservesState, canTrap);
         }
+
+        // Pop arguments.
+        curState.popArguments(args.length);
+
         pushReturn(resultType, append(result));
         stats.intrinsicCount++;
         return true;
