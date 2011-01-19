@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,7 +70,7 @@ public abstract class DataLabel extends InspectorLabel {
      */
     public static final class ByteAsDecimal extends DataLabel {
         public ByteAsDecimal(Inspection inspection, byte b) {
-            super(inspection, Byte.toString(b), "byte: 0x" + Integer.toHexString(Byte.valueOf(b).intValue()));
+            super(inspection, Byte.toString(b), "byte: " + intTo0xHex(Byte.valueOf(b).intValue()));
             redisplay();
         }
         @Override
@@ -84,7 +84,7 @@ public abstract class DataLabel extends InspectorLabel {
      */
     public static final class ByteAsHex extends DataLabel {
         public ByteAsHex(Inspection inspection, byte b) {
-            super(inspection, "0x" + Integer.toHexString(Byte.valueOf(b).intValue()), "byte:  " + Byte.toString(b));
+            super(inspection, intTo0xHex(Byte.valueOf(b).intValue()), "byte:  " + Byte.toString(b));
             redisplay();
         }
         @Override
@@ -112,23 +112,15 @@ public abstract class DataLabel extends InspectorLabel {
             updateText();
         }
 
-        protected void setValue(byte[] bytes) {
+        public void setValue(byte[] bytes) {
             this.bytes = bytes;
             updateText();
         }
 
         private void updateText() {
-            if (bytes != null && bytes.length > 0) {
-                final StringBuilder result = new StringBuilder(100);
-                String prefix = "[";
-                for (byte b : bytes) {
-                    result.append(prefix);
-                    result.append(String.format("%02X", b));
-                    prefix = " ";
-                }
-                result.append("]");
-                setText(result.toString());
-            }
+            final String byteString = bytesToByteString(bytes);
+            setText(byteString);
+            setWrappedToolTipText(byteString);
         }
     }
 
@@ -168,7 +160,9 @@ public abstract class DataLabel extends InspectorLabel {
                     prefix = " ";
                 }
                 result.append("]");
-                setText(result.toString());
+                final String labelText = result.toString();
+                setText(labelText);
+                setWrappedToolTipText(labelText);
             }
         }
     }
@@ -208,7 +202,9 @@ public abstract class DataLabel extends InspectorLabel {
                     prefix = " ";
                 }
                 result.append("]");
-                setText(result.toString());
+                final String labelText = result.toString();
+                setText(labelText);
+                setWrappedToolTipText(labelText);
             }
         }
     }
@@ -218,7 +214,7 @@ public abstract class DataLabel extends InspectorLabel {
      */
     public static final class ShortAsDecimal extends DataLabel {
         ShortAsDecimal(Inspection inspection, short n) {
-            super(inspection, Short.toString(n), "short: 0x" + Integer.toHexString(Short.valueOf(n).intValue()));
+            super(inspection, Short.toString(n), "short: " + intTo0xHex(Short.valueOf(n).intValue()));
             redisplay();
         }
         @Override
@@ -234,7 +230,7 @@ public abstract class DataLabel extends InspectorLabel {
         CharAsText(Inspection inspection, char c) {
             super(inspection, "'" + c + "'");
             final int n = Character.getNumericValue(c);
-            setToolTipText("char:  " + Integer.toString(n) + ", 0x" + Integer.toHexString(n));
+            setToolTipText("char:  " + Integer.toString(n) + ", " + intTo0xHex(n));
             redisplay();
         }
         @Override
@@ -249,7 +245,7 @@ public abstract class DataLabel extends InspectorLabel {
     public static final class CharAsDecimal extends DataLabel {
         public CharAsDecimal(Inspection inspection, char c) {
             super(inspection, Integer.toString(Character.getNumericValue(c)));
-            setToolTipText("char:  '" + c + "', 0x" + Integer.toHexString(Character.getNumericValue(c)));
+            setToolTipText("char:  '" + c + "', " + intTo0xHex(Character.getNumericValue(c)));
             redisplay();
         }
         @Override
@@ -281,14 +277,14 @@ public abstract class DataLabel extends InspectorLabel {
             setFont(style().decimalDataFont());
         }
 
-        protected void setValue(int n) {
+        public void setValue(int n) {
             this.n = n;
             updateText();
         }
 
         private void updateText() {
             setText(Integer.toString(n));
-            setToolTipText("int: 0x" + Integer.toHexString(n));
+            setWrappedToolTipText("int: " + intTo0xHex(n));
         }
     }
 
@@ -316,7 +312,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
 
         private void updateText() {
-            setText("0x" + Integer.toHexString(n));
+            setText(intTo0xHex(n));
             setToolTipText("int:  " + Integer.toString(n));
         }
 
@@ -325,8 +321,9 @@ public abstract class DataLabel extends InspectorLabel {
     public static class FloatAsText extends DataLabel {
 
         private float f;
+
         public FloatAsText(Inspection inspection, float f) {
-            super(inspection, Float.toString(f), "0x" + Integer.toHexString(Float.floatToIntBits(f)));
+            super(inspection, Float.toString(f), intTo0xHex(Float.floatToIntBits(f)));
             this.f = f;
             updateText();
             redisplay();
@@ -339,8 +336,9 @@ public abstract class DataLabel extends InspectorLabel {
         }
 
         protected void updateText() {
-            setText(Float.toString(f));
-            setToolTipText("0x" + Integer.toHexString(Float.floatToIntBits(f)));
+            final String labelText = Float.toString(f);
+            setText(labelText);
+            setWrappedToolTipText(labelText);
         }
 
         protected void setValue(float f) {
@@ -354,7 +352,7 @@ public abstract class DataLabel extends InspectorLabel {
      */
     public static final class LongAsDecimal extends DataLabel {
         public LongAsDecimal(Inspection inspection, long n) {
-            super(inspection, Long.toString(n), "int: 0x" + Long.toHexString(n));
+            super(inspection, Long.toString(n), "int: " + longTo0xHex(n));
             redisplay();
         }
         @Override
@@ -368,7 +366,7 @@ public abstract class DataLabel extends InspectorLabel {
      */
     public static final class LongAsHex extends DataLabel {
         public LongAsHex(Inspection inspection, long n) {
-            super(inspection, "0x" + Long.toHexString(n), "long:  " + Long.toString(n));
+            super(inspection, longTo0xHex(n), "long:  " + Long.toString(n));
             redisplay();
         }
         @Override
@@ -394,8 +392,9 @@ public abstract class DataLabel extends InspectorLabel {
         }
 
         private void updateText() {
-            setText(Double.toString(f));
-            setToolTipText("0x" + Long.toHexString(Double.doubleToLongBits(f)));
+            final String labelText = Double.toString(f);
+            setText(labelText);
+            setWrappedToolTipText(labelText);
         }
 
         protected void setValue(double f) {
@@ -424,7 +423,7 @@ public abstract class DataLabel extends InspectorLabel {
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                    switch (inspection().gui().getButton(mouseEvent)) {
                         case MouseEvent.BUTTON3: {
                             final InspectorPopupMenu menu = new InspectorPopupMenu("Address");
                             menu.add(actions().copyWord(address, "Copy address to clipboard"));
@@ -479,7 +478,7 @@ public abstract class DataLabel extends InspectorLabel {
                 return null;
             }
             final long position = address.minus(origin).toLong();
-            return "AsPosition: " + position + ", " +  "0x" + Long.toHexString(position);
+            return "AsPosition: " + position + ", " +  longTo0xHex(position);
         }
 
         private void updateText() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -246,6 +246,11 @@ public abstract class Word {
         }
     }
 
+    /**
+     * Creates a string representation of a {@code Word}.
+     *
+     * @return an unpadded string representation in hex, without "0x" prefix
+     */
     public final String toHexString() {
         String result = Long.toHexString(asAddress().toLong());
         if (width() == 32 && result.length() > 8) {
@@ -254,11 +259,43 @@ public abstract class Word {
         return result;
     }
 
+    /**
+     * Creates a string representation of a {@code Word}.
+     *
+     * @return an unpadded string representation in hex, with "0x" prefix
+     */
+    public final String to0xHexString() {
+        String result = Long.toHexString(asAddress().toLong());
+        if (width() == 32 && result.length() > 8) {
+            result = result.substring(result.length() - 8);
+        }
+        return "0x" + result;
+    }
+
+    /**
+     * Creates a string representation of a {@code Word}.
+     *
+     * @param pad padding character
+     * @return a padded string representation in hex, without "0x" prefix
+     */
     public final String toPaddedHexString(char pad) {
         if (Word.width() == 64) {
             return Longs.toPaddedHexString(asAddress().toLong(), pad);
         }
         return Ints.toPaddedHexString(asAddress().toInt(), pad);
+    }
+
+    /**
+     * Creates a string representation of a {@code Word}.
+     *
+     * @param pad padding character
+     * @return a padded string representation in hex, with "0x" prefix
+     */
+    public final String toPadded0xHexString(char pad) {
+        if (Word.width() == 64) {
+            return "0x" + Longs.toPaddedHexString(asAddress().toLong(), pad);
+        }
+        return "0x" + Ints.toPaddedHexString(asAddress().toInt(), pad);
     }
 
     @Override

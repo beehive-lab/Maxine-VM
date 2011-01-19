@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,9 +28,11 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.type.*;
 
 /**
- * A model for data tables that represent regions of memory in the VM, one region per row.
+ * A model for data tables that represent regions of memory in the VM, one region per row. In some
+ * applications, the contents of each memory region can be expected to contain typed information.
  *
  * @author Michael Van De Vanter
  */
@@ -38,15 +40,12 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
 
     private static final List<MaxWatchpoint> EMPTY_WATCHPOINT_LIST = Collections.emptyList();
 
-    private final Size wordSize;
-
     // Memory location from which to compute offsets
     private Address origin = Address.zero();
 
     public InspectorMemoryTableModel(Inspection inspection, Address origin) {
         super(inspection);
         this.origin = origin;
-        wordSize = inspection.vm().wordSize();
     }
 
     /**
@@ -131,8 +130,24 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      */
     public abstract int findRow(Address address);
 
-    protected Size getWordSize() {
-        return wordSize;
+    /**
+     * Returns the type expected for for data in the memory associated with a row; null if none.
+     */
+    public TypeDescriptor getRowType(int row) {
+        return null;
+    }
+
+    /**
+     * Returns the contents of the memory region as bytes, null if unable to read.
+     */
+    public byte[] getRowBytes(int row) {
+        final byte[] bytes = new byte[getMemoryRegion(row).size().toInt()];
+        try {
+            vm().readFully(getMemoryRegion(row).start(), bytes);
+        } catch (DataIOError dataIOError) {
+            return null;
+        }
+        return bytes;
     }
 
     /**

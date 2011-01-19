@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,49 +20,47 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package com.sun.max.ins.gui;
 
-import com.sun.cri.bytecode.*;
+import javax.swing.table.*;
+
 import com.sun.max.ins.*;
 
+
 /**
- * A label for presenting a Bytecodes instruction mnemonic.
+ * An abstract table cell renderer specialized for use with {@link InspectorTable}s.
  *
  * @author Michael Van De Vanter
  */
-public class BytecodeMnemonicLabel extends InspectorLabel {
+public abstract class InspectorTableCellRenderer extends AbstractInspectionHolder implements TableCellRenderer, Prober {
 
-    private int opcode;
-
-    public BytecodeMnemonicLabel(Inspection inspection, int opcode) {
-        super(inspection, "");
-        this.opcode = opcode;
-        redisplay();
+    /**
+     * An abstract table cell renderer specialized for use with {@link InspectorTable}s.
+     */
+    public InspectorTableCellRenderer(Inspection inspection) {
+        super(inspection);
     }
 
-    public final void redisplay() {
-        setFont(style().bytecodeMnemonicFont());
-        updateText();
-    }
-
-    public final void setValue(int opcode) {
-        this.opcode = opcode;
-        updateText();
-    }
-
-    private void updateText() {
-        try {
-            final String opName = Bytecodes.nameOf(opcode);
-            setText(opName);
-            setWrappedToolTipText("Opcode = " + intTo0xHex(opcode) + " (JVM)");
-        } catch (IllegalArgumentException e) {
-            setText(null);
-            setToolTipText(null);
+    public void refresh(boolean force) {
+        for (InspectorLabel label : getLabels()) {
+            if (label != null) {
+                label.refresh(force);
+            }
         }
     }
 
-    public final void refresh(boolean force) {
-        // no remote data to refresh
+    public void redisplay() {
+        for (InspectorLabel label : getLabels()) {
+            if (label != null) {
+                label.redisplay();
+            }
+        }
     }
+
+    /**
+     * @return the labels being held by the renderer, so that they can be updated when needed.
+     */
+    protected abstract InspectorLabel[] getLabels();
 
 }

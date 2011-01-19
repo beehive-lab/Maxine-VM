@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package com.sun.max.ins.method;
 
-import static com.sun.max.platform.Platform.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
@@ -38,6 +36,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.gui.LocationLabel.AsAddressWithPosition;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
@@ -63,6 +62,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private static final int TRACE_VALUE = 2;
 
+    private final MaxPlatform.ISA isa;
     private final Inspection inspection;
     private final TargetCodeTable table;
     private final TargetCodeTableModel tableModel;
@@ -76,6 +76,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
         super(inspection, parent, machineCode);
         this.inspection = inspection;
+        //inspection.vm().bootImage().header.
+        this.isa = inspection.vm().platform().getISA();
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
         this.tableModel = new TargetCodeTableModel(inspection, machineCode);
@@ -315,7 +317,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         private TargetCodeTableColumnModel(TargetCodeViewPreferences viewPreferences) {
             super(TargetCodeColumnKind.values().length, viewPreferences);
             final Address startAddress = tableModel.rowToInstruction(0).address;
-            addColumn(TargetCodeColumnKind.TAG, new TagRenderer(), null);
+            addColumn(TargetCodeColumnKind.TAG, new TagRenderer(inspection), null);
             addColumn(TargetCodeColumnKind.NUMBER, new NumberRenderer(), null);
             addColumn(TargetCodeColumnKind.ADDRESS, new AddressRenderer(startAddress), null);
             addColumn(TargetCodeColumnKind.POSITION, new PositionRenderer(startAddress), null);
@@ -398,6 +400,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             }
         }
 
+        @Override
+        public String getRowDescription(int row) {
+            return "Instruction " + row + " (" + rowToInstruction(row).mnemonic + ")";
+        }
+
         public TargetCodeInstruction rowToInstruction(int row) {
             return machineCode.instructionMap().instruction(row);
         }
@@ -427,9 +434,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      * this row.
      *
      * @param row the row to check
+     * @param col TODO
      * @return the color to be used
      */
-    private Color getRowTextColor(int row) {
+    public Color cellForegroundColor(int row, int col) {
         return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
     }
 
@@ -460,20 +468,26 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
+    private final class TagRenderer extends InspectorLabel implements TableCellRenderer, TextSearchable, Prober {
+
+        public TagRenderer(Inspection inspection) {
+            super(inspection);
+        }
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
-
-            final StringBuilder toolTipText = new StringBuilder(100);
+            setToolTipPrefix(tableModel.getRowDescription(row));
+            final StringBuilder toolTipSB = new StringBuilder(100);
             final MaxStackFrame stackFrame = stackFrame(row);
             if (stackFrame != null) {
-                toolTipText.append("Stack ");
-                toolTipText.append(stackFrame.position());
-                toolTipText.append(":  0x");
-                toolTipText.append(stackFrame.codeLocation().address().toHexString());
-                toolTipText.append("  thread=");
-                toolTipText.append(inspection.nameDisplay().longName(stackFrame.stack().thread()));
-                toolTipText.append("; ");
+                if (stackFrame.position() == 0) {
+                    toolTipSB.append("<br>IP (stack frame 0) in thread ");
+                } else {
+                    toolTipSB.append("<br>Call return (frame ");
+                    toolTipSB.append(stackFrame.position());
+                    toolTipSB.append(") in thread ");
+                }
+                toolTipSB.append(inspection.nameDisplay().longName(stackFrame.stack().thread()));
+                toolTipSB.append(" points here");
                 if (stackFrame.isTop()) {
                     setIcon(style().debugIPTagIcon());
                     setForeground(style().debugIPTagColor());
@@ -488,7 +502,9 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setText(rowToTagText(row));
             final MaxBreakpoint targetBreakpoint = getTargetBreakpointAtRow(row);
             if (targetBreakpoint != null) {
-                toolTipText.append(targetBreakpoint);
+                toolTipSB.append("<br>breakpoint set @ ");
+                toolTipSB.append(targetBreakpoint.codeLocation().address().to0xHexString());
+                toolTipSB.append(targetBreakpoint.isEnabled() ? ", enabled" : ", disabled");
                 if (targetBreakpoint.isEnabled()) {
                     setBorder(style().debugEnabledTargetBreakpointTagBorder());
                 } else {
@@ -499,11 +515,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             } else {
                 setBorder(null);
             }
-            setToolTipText(toolTipText.toString());
+            setWrappedToolTipText(toolTipSB.toString());
             setBackgroundForRow(this, row);
             return this;
         }
 
+        @Override
         public String getSearchableText() {
             return "";
         }
@@ -521,17 +538,17 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             super(inspection, "");
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setValue(row);
-            setToolTipText("Instruction no. " + row + "in method");
+            setToolTipText(tableModel.getRowDescription(row));
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
             setBorderForRow(this, row);
             return this;
         }
     }
 
-    private final class AddressRenderer extends LocationLabel.AsAddressWithPosition implements TableCellRenderer {
+    private final class AddressRenderer extends AsAddressWithPosition implements TableCellRenderer {
 
         private final Address entryAddress;
 
@@ -540,11 +557,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             this.entryAddress = entryAddress;
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final Address address = (Address) value;
-            setValue(address.minus(entryAddress).toInt());
+            setToolTipPrefix(tableModel.getRowDescription(row) + " location<br>address= ");
+            setValue(address.minus(entryAddress).asSize().toInt());
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
             setBorderForRow(this, row);
             return this;
         }
@@ -558,14 +576,15 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             this.position = 0;
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final Integer position = (Integer) value;
             if (this.position != position) {
                 this.position = position;
                 setValue(position);
             }
+            setToolTipPrefix(tableModel.getRowDescription(row) + " location<br>address= ");
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
             setBorderForRow(this, row);
             return this;
         }
@@ -578,9 +597,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setOpaque(true);
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final Integer position = (Integer) tableModel.getValueAt(row, TargetCodeColumnKind.POSITION.ordinal());
             setLocation(value.toString(), position);
+            setWrappedToolTipText(tableModel.getRowDescription(row));
             setFont(style().defaultFont());
             setBackgroundForRow(this, row);
             //setForeground(getRowTextColor(row));
@@ -603,11 +623,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setOpaque(true);
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
-            final String string = value.toString();
-            setValue(string, null);
+            setForeground(cellForegroundColor(row, column));
+            final String instructionName = value.toString();
+            setText(instructionName);
+            setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>ISA = " + isa.name());
             setBorderForRow(this, row);
             return this;
         }
@@ -625,7 +646,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     return new WordValue(vm().readWord(literalAddress, 0));
                 }
             };
-            wordValueLabel.setPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")));
+            wordValueLabel.setTextPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")));
             wordValueLabel.setToolTipSuffix(" from RIP " + literalLoadText.substring(literalLoadText.indexOf("["), literalLoadText.length()));
             wordValueLabel.updateText();
             return wordValueLabel;
@@ -640,7 +661,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     return new WordValue(vm().readWord(literalAddress, 0));
                 }
             };
-            wordValueLabel.setSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
+            wordValueLabel.setTextSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
             wordValueLabel.setToolTipSuffix(" from " + literalLoadText.substring(0, literalLoadText.indexOf(",")));
             wordValueLabel.updateText();
             return wordValueLabel;
@@ -648,7 +669,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        ISA isa = platform().isa;
         switch (isa) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;
@@ -713,18 +733,19 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BytecodeLocation bytecodeLocation = instructionMap().bytecodeLocation(row);
             setText("");
-            setToolTipText("Source line not available");
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
+            setWrappedToolTipText("Source location not available");
             setBackgroundForRow(this, row);
             if (bytecodeLocation != null) {
                 final StackTraceElement stackTraceElement = bytecodeLocation.toStackTraceElement();
-                final StringBuilder stackTrace = new StringBuilder("<html><table cellpadding=\"1%\"><tr><td></td><td>").append(toolTipText(stackTraceElement)).append("</td></tr>");
+                final StringBuilder stackTrace = new StringBuilder("<table cellpadding=\"1%\"><tr><td></td><td>").append(toolTipText(stackTraceElement)).append("</td></tr>");
                 StackTraceElement top = stackTraceElement;
                 for (BytecodeLocation parent = bytecodeLocation.parent(); parent != null; parent = parent.parent()) {
                     StackTraceElement parentSTE = parent.toStackTraceElement();
                     stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parentSTE)).append("</td></tr>");
                     top = parentSTE;
                 }
-                setToolTipText(stackTrace.append("</table>").toString());
+                setWrappedToolTipText("Source location = " + stackTrace.append("</table>").toString());
                 setText(String.valueOf(top.getLineNumber()));
             }
             lastBytecodeLocation = bytecodeLocation;
@@ -755,36 +776,42 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             targetCodeLabel.redisplay();
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int column) {
             InspectorLabel renderer = inspectorLabels[row];
             if (renderer == null) {
                 final TargetCodeInstruction targetCodeInstruction = tableModel.rowToInstruction(row);
                 final String text = targetCodeInstruction.operands;
                 if (targetCodeInstruction.targetAddress != null && !machineCode().contains(targetCodeInstruction.targetAddress)) {
                     renderer = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction.targetAddress, table);
+                    renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
                     inspectorLabels[row] = renderer;
                 } else if (targetCodeInstruction.literalSourceAddress != null) {
                     final Address literalAddress = targetCodeInstruction.literalSourceAddress.asAddress();
                     renderer = literalRenderer.render(inspection, text, literalAddress);
+                    renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
                     inspectorLabels[row] = renderer;
                 } else if (instructionMap().calleeConstantPoolIndex(row) >= 0 && targetCodeInstruction.mnemonic.contains("call")) {
                     final PoolConstantLabel poolConstantLabel =
                         PoolConstantLabel.make(inspection, instructionMap().calleeConstantPoolIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
                     poolConstantLabel.setToolTipPrefix(text);
+                    poolConstantLabel.redisplay();
                     renderer = poolConstantLabel;
-                    renderer.setForeground(getRowTextColor(row));
+                    renderer.setForeground(cellForegroundColor(row, column));
                 } else {
                     if (instructionMap().isNativeCall(row)) {
-                        final TextLabel textLabel = new TextLabel(inspection, "<native function>", text);
-                        renderer = textLabel;
-                        renderer.setForeground(getRowTextColor(row));
+                        renderer = new TextLabel(inspection, "<native function>");
+                        renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
+                        renderer.setWrappedToolTipText("<br>operands = " + text);
+                        renderer.setForeground(cellForegroundColor(row, column));
                     } else {
                         renderer = targetCodeLabel;
+                        renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
                         renderer.setText(text);
-                        renderer.setToolTipText(null);
-                        renderer.setForeground(getRowTextColor(row));
+                        renderer.setWrappedToolTipText("<br>operands = " + text);
+                        renderer.setForeground(cellForegroundColor(row, column));
                     }
                 }
+
             }
             setBackgroundForRow(renderer, row);
             setBorderForRow(renderer, row);
@@ -798,9 +825,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             super(inspection, null);
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>as bytes = ");
             setValue((byte[]) value);
             setBorderForRow(this, row);
             return this;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,11 +31,18 @@ import com.sun.max.ins.*;
  */
 public final class BytecodeOperandLabel extends InspectorLabel {
 
+    private final String toolTipText;
+
+    /**
+     * Creates a label suitable for displaying a bytecode operand field.
+     *
+     * @param inspection
+     * @param text the text to display in the label
+     * @param toolTipText the text to display in the tooltip
+     */
     public BytecodeOperandLabel(Inspection inspection, String text, String toolTipText) {
         super(inspection, text);
-        if (toolTipText != null) {
-            setToolTipText(toolTipText);
-        }
+        this.toolTipText = toolTipText == null ? "" : toolTipText;
         redisplay();
     }
 
@@ -44,7 +51,7 @@ public final class BytecodeOperandLabel extends InspectorLabel {
     }
 
     public BytecodeOperandLabel(Inspection inspection, int n) {
-        this(inspection, Integer.toString(n), "0x" + Integer.toHexString(n));
+        this(inspection, Integer.toString(n), intTo0xHex(n));
     }
 
     public void refresh(boolean force) {
@@ -52,6 +59,7 @@ public final class BytecodeOperandLabel extends InspectorLabel {
     }
 
     public void redisplay() {
+        setWrappedToolTipText(toolTipText);
         setFont(style().bytecodeOperandFont());
     }
 

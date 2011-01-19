@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,40 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+
+package com.sun.max.ins.value;
 
 import com.sun.max.ins.*;
-import com.sun.max.tele.*;
+
 
 /**
- * A label that displays the allocation percentage of a known VM memory region and acts as a drag source.
+ * A value label that does nothing, displays nothing.
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryRegionSizeLabel extends AbstractMemoryRegionLabel implements Prober {
+public final class NullValueLabel extends ValueLabel {
 
     /**
-     * Returns a that displays the name of a known VM memory region
-     * and acts as a drag source.
+     * Create a label that behaves as a {@link ValueLabel}, but
+     * never displays anything.
      *
      * @param inspection
-     * @param memoryRegion a memory region in the VM
+     * @see ValueLabel
      */
-    public MemoryRegionSizeLabel(Inspection inspection, MaxMemoryRegion memoryRegion) {
-        super(inspection, memoryRegion);
-        redisplay();
+    public NullValueLabel(Inspection inspection) {
+        super(inspection);
     }
 
     public void redisplay() {
-        setFont(style().hexDataFont());
-        refresh(true);
     }
 
-    public void refresh(boolean force) {
-        final long size = memoryRegion.size().toLong();
-        final String hexSize = longTo0xHex(size);
-        setText(hexSize);
-        setWrappedToolTipText(hexSize + "(" + size + ")");
+    @Override
+    protected void updateText() {
     }
+
 }
-

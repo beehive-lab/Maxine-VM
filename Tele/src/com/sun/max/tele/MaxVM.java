@@ -64,14 +64,9 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     String getDescription();
 
     /**
-     * @return size of a word in the VM.
+     * @return information about the platform on which the VM is running.
      */
-    Size wordSize();
-
-    /**
-     * @return size a memory page in the VM
-     */
-    Size pageSize();
+    MaxPlatform platform();
 
     /**
      * @return the boot image from which this VM instance was created.

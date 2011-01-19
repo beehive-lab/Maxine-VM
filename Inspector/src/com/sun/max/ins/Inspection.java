@@ -24,7 +24,6 @@ package com.sun.max.ins;
 
 import static com.sun.max.tele.debug.ProcessState.*;
 
-import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -38,7 +37,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -58,19 +56,6 @@ import com.sun.max.vm.classfile.*;
 public final class Inspection implements InspectionHolder {
 
     private static final int TRACE_VALUE = 1;
-
-    public static int mouseButtonWithModifiers(MouseEvent mouseEvent) {
-        if (OS.current() == OS.DARWIN && mouseEvent.getButton() == MouseEvent.BUTTON1) {
-            if (mouseEvent.isControlDown()) {
-                if (!mouseEvent.isAltDown()) {
-                    return MouseEvent.BUTTON3;
-                }
-            } else if (mouseEvent.isAltDown()) {
-                return MouseEvent.BUTTON2;
-            }
-        }
-        return mouseEvent.getButton();
-    }
 
     /**
      * Initializes the UI system to a specified L&F.

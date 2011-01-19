@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,6 @@ public class FieldActorNameLabel extends InspectorLabel {
     public void redisplay() {
         setFont(style().javaNameFont());
         updateText();
-
     }
 
     private void updateText() {
@@ -66,8 +65,9 @@ public class FieldActorNameLabel extends InspectorLabel {
             setText("");
             setToolTipText("");
         } else {
-            setText(fieldActor.name.toString());
-            setToolTipText("Type: " + fieldActor.descriptor().toJavaString(true) + " in " + fieldActor.holder().qualifiedName());
+            final String fieldName = fieldActor.name.toString();
+            setText(fieldName);
+            setWrappedToolTipText("Type=" + fieldActor.descriptor().toJavaString(true));
         }
     }
 
