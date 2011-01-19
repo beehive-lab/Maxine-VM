@@ -1611,11 +1611,14 @@ public final class GraphBuilder {
         boolean canTrap = false;
 
         Instruction result = null;
+        CiRegister threadRegister = null;
 
         // handle intrinsics differently
         switch (intrinsic) {
             case java_lang_System$arraycopy:
                 result = new ArrayCopy(args[0], args[1], args[2], args[3], args[4], target, curState.immutableCopy(bci()));
+                break;
+            case java_lang_Thread$currentThread:
                 break;
             case java_lang_Object$init: // fall through
             case java_lang_String$equals: // fall through
@@ -1632,7 +1635,6 @@ public final class GraphBuilder {
             case java_lang_System$nanoTime: // fall through
             case java_lang_Object$getClass: // fall through
             case java_lang_Object$hashCode: // fall through
-            case java_lang_Thread$currentThread: // fall through
             case java_lang_Class$isAssignableFrom: // fall through
             case java_lang_Class$isInstance: // fall through
             case java_lang_Class$getModifiers: // fall through
