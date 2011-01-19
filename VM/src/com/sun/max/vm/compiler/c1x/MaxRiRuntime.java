@@ -352,4 +352,9 @@ public class MaxRiRuntime implements RiRuntime {
     public int getCustomStackAreaSize() {
         return 0;
     }
+
+    @Override
+    public boolean supportsArrayCopyIntrinsic() {
+        return false;
+    }
 }

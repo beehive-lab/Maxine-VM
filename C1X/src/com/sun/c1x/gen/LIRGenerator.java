@@ -237,7 +237,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         return deoptimizationStubs;
     }
 
-    public final void visitDeoptimizeIf(DeoptimizeIf x) {
+    public final void emitGuard(Guard x) {
         FrameState state = x.stateBefore();
         assert state != null : "deoptimize instruction always needs a state";
 
@@ -254,7 +254,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             label = deoptimizationStubs.get(state);
         }
 
-        lir.branch(x.condition, label);
+        lir.branch(x.condition.negate(), label);
     }
 
     public void doBlock(BlockBegin block) {
@@ -2076,7 +2076,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             RiType type = srcType;
             boolean inputsSame = (src == dest);
             boolean inputsDifferent = !inputsSame && (src.checkFlag(Flag.ResultIsUnique) || dest.checkFlag(Flag.ResultIsUnique));
-            // TODO: Make sure to add bounds checks.
             XirSnippet snippet = xir.genArrayCopy(site(arrayCopy), toXirArgument(src), toXirArgument(srcPos), toXirArgument(dest), toXirArgument(destPos), toXirArgument(length), type.componentType(), inputsSame, inputsDifferent);
             arrayCopy(type, arrayCopy, snippet);
             return;

@@ -218,4 +218,6 @@ public interface RiRuntime {
      * @return the size of the custom area in bytes
      */
     int getCustomStackAreaSize();
+    
+    boolean supportsArrayCopyIntrinsic();
 }

@@ -88,6 +88,22 @@ public enum Condition {
         this.operator = operator;
     }
 
+    public boolean check(int left, int right) {
+        switch (this) {
+            case EQ: return left == right;
+            case NE: return left != right;
+            case LT: return left < right;
+            case LE: return left <= right;
+            case GT: return left > right;
+            case GE: return left >= right;
+            case BT: return (left & 0xffffffffL) < (right & 0xffffffffL);
+            case BE: return (left & 0xffffffffL) <= (right & 0xffffffffL);
+            case AT: return (left & 0xffffffffL) > (right & 0xffffffffL);
+            case AE: return (left & 0xffffffffL) >= (right & 0xffffffffL);
+        }
+        throw new IllegalArgumentException();
+    }
+
     /**
      * Negate this conditional.
      * @return the condition that represents the negation

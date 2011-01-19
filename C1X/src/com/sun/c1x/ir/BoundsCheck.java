@@ -31,13 +31,13 @@ import com.sun.cri.ci.*;
  * @author Thomas Wuerthinger
  *
  */
-public final class BoundsCheck extends DeoptimizeIf {
+public final class BoundsCheck extends Guard {
 
     Value index;
     Value length;
 
-    public BoundsCheck(Value index, Value length, FrameState stateBefore) {
-        super(Condition.AE, stateBefore);
+    public BoundsCheck(Value index, Value length, FrameState stateBefore, Condition condition) {
+        super(condition, stateBefore);
         this.index = index;
         this.length = length;
         assert index.kind == CiKind.Int;
@@ -50,6 +50,12 @@ public final class BoundsCheck extends DeoptimizeIf {
 
     public Value length() {
         return length;
+    }
+
+    @Override
+    public void inputValuesDo(ValueClosure closure) {
+        index = closure.apply(index);
+        length = closure.apply(length);
     }
 
     @Override

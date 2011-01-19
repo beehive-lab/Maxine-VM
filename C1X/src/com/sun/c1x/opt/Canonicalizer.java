@@ -1363,6 +1363,21 @@ public class Canonicalizer extends DefaultValueVisitor {
         return result;
     }
 
+    @Override
+    public void visitBoundsCheck(BoundsCheck b) {
+        Value index = b.index();
+        Value length = b.length();
+
+        if (index.isConstant() && length.isConstant()) {
+            int i = index.asConstant().asInt();
+            int l = index.asConstant().asInt();
+            Condition c = b.condition;
+            if (c.check(i, l)) {
+                setCanonical(null);
+            }
+        }
+    }
+
     private RiType asRiType(Value x) {
         if (x.isConstant()) {
             Object o = x.asConstant().asObject();
