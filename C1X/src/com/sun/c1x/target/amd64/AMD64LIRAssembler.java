@@ -1127,7 +1127,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
         if (opr1.isConstant()) {
             // Use scratch register
-            CiValue newOpr1 = AMD64.r10.asValue(opr1.kind);
+            CiValue newOpr1 = compilation.registerConfig.getScratchRegister().asValue(opr1.kind);
             const2reg(opr1, newOpr1, null);
             opr1 = newOpr1;
         }
