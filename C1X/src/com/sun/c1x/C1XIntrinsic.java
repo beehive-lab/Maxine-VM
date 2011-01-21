@@ -52,6 +52,9 @@ public enum C1XIntrinsic {
     java_lang_Class$getSuperclass    ("java.lang.Class", "getSuperclass", "()Ljava/lang/Class;"),
     java_lang_Class$getComponentType ("java.lang.Class", "getComponentType", "()Ljava/lang/Class;"),
 
+    // java.util.Arrays
+    java_util_Arrays$copyOf ("java.util.Arrays", "copyOf", "([Ljava/lang/Object;I)[Ljava/lang/Object;"),
+
     // java.lang.String
     java_lang_String$compareTo ("java.lang.String", "compareTo", "(Ljava/lang/String;)I"),
     java_lang_String$indexOf   ("java.lang.String", "indexOf", "(Ljava/lang/String;)I"),

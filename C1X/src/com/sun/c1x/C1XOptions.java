@@ -22,8 +22,6 @@
  */
 package com.sun.c1x;
 
-import java.util.*;
-
 import com.sun.c1x.debug.TTY.*;
 
 /**

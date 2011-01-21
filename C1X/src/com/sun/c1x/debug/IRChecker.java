@@ -913,6 +913,11 @@ public class IRChecker extends ValueVisitor {
         }
     }
 
+    @Override
+    public void visitNewObjectArrayClone(NewObjectArrayClone i) {
+        throw Util.unimplemented();
+    }
+
     /**
      * Typechecks the NewObjectArray instruction.
      * @param i the NewObjectArray instruction to be checked
@@ -1115,6 +1120,11 @@ public class IRChecker extends ValueVisitor {
 
     @Override
     public void visitBoundsCheck(BoundsCheck boundsCheck) {
+        throw Util.unimplemented();
+    }
+
+    @Override
+    public void visitTypeEqualityCheck(TypeEqualityCheck boundsCheck) {
         throw Util.unimplemented();
     }
 

@@ -816,7 +816,7 @@ public final class GraphBuilder {
     void genNewObjectArray(int cpi) {
         RiType type = constantPool().lookupType(cpi, ANEWARRAY);
         FrameState stateBefore = null; //curState.immutableCopy(bci());
-        NewArray n = new NewObjectArray(type, ipop(), stateBefore, cpi, constantPool());
+        NewArray n = new NewObjectArray(type, ipop(), stateBefore);
         apush(append(n));
     }
 
@@ -1095,7 +1095,7 @@ public final class GraphBuilder {
 
     private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, int cpi, RiConstantPool constantPool) {
         CiKind resultType = returnKind(target);
-        Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target, null));
+        Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target, target.signature().returnType(compilation.method.holder()), null));
         pushReturn(resultType, result);
     }
 
@@ -1618,7 +1618,7 @@ public final class GraphBuilder {
         switch (intrinsic) {
 
             case java_lang_System$arraycopy:
-                if (compilation.runtime.supportsArrayCopyIntrinsic()) {
+                if (compilation.runtime.supportsArrayIntrinsics()) {
                     break;
                 } else {
                     return false;
@@ -1627,6 +1627,12 @@ public final class GraphBuilder {
                 break;
             case java_lang_Thread$currentThread:
                 break;
+            case java_util_Arrays$copyOf:
+                if (args[0].declaredType() != null && args[0].declaredType().isArrayClass() && compilation.runtime.supportsArrayIntrinsics()) {
+                    break;
+                } else {
+                    return false;
+                }
             case java_lang_Object$init: // fall through
             case java_lang_String$equals: // fall through
             case java_lang_String$compareTo: // fall through
@@ -1685,6 +1691,8 @@ public final class GraphBuilder {
         // Create the intrinsic node.
         if (intrinsic == C1XIntrinsic.java_lang_System$arraycopy) {
             result = genArrayCopy(target, args);
+        } else if (intrinsic == C1XIntrinsic.java_util_Arrays$copyOf) {
+            result = genArrayClone(target, args);
         } else {
             result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.immutableCopy(bci()), preservesState, canTrap);
         }
@@ -1695,6 +1703,20 @@ public final class GraphBuilder {
         pushReturn(resultType, append(result));
         stats.intrinsicCount++;
         return true;
+    }
+
+    private Instruction genArrayClone(RiMethod target, Value[] args) {
+        FrameState state = curState.immutableCopy(bci());
+        Value array = args[0];
+        RiType type = array.declaredType();
+        assert type != null && type.isResolved() && type.isArrayClass();
+        Value newLength = args[1];
+
+        Value oldLength = append(new ArrayLength(array, state));
+        Value newArray = append(new NewObjectArrayClone(newLength, array, state));
+        Value copyLength = append(new IfOp(newLength, Condition.LT, oldLength, newLength, oldLength));
+        append(new ArrayCopy(array, Constant.forInt(0), newArray, Constant.forInt(0), copyLength, null, null));
+        return (Instruction) newArray;
     }
 
     private Instruction genArrayCopy(RiMethod target, Value[] args) {

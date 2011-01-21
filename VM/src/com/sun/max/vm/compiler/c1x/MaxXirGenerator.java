@@ -1605,4 +1605,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     public XirSnippet genGetClass(XirSite site, XirArgument xirArgument) {
         return null;
     }
+
+    @Override
+    public XirSnippet genNewObjectArrayClone(XirSite site, XirArgument newLength, XirArgument referenceArray) {
+        return null;
+    }
 }

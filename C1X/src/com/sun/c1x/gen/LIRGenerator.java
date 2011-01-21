@@ -394,6 +394,14 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
+    public void visitNewObjectArrayClone(NewObjectArrayClone x) {
+        XirArgument length = toXirArgument(x.length());
+        XirArgument referenceArray = toXirArgument(x.referenceArray());
+        XirSnippet snippet = xir.genNewObjectArrayClone(site(x), length, referenceArray);
+        emitXir(snippet, x, stateFor(x), null, true);
+    }
+
+    @Override
     public void visitNewMultiArray(NewMultiArray x) {
         XirArgument[] dims = new XirArgument[x.dimensions().length];
 
@@ -893,7 +901,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         return XirArgument.forInternalObject(v);
     }
 
-    private XirArgument toXirArgument(Value i) {
+    protected XirArgument toXirArgument(Value i) {
         if (i == null) {
             return null;
         }
@@ -911,8 +919,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else if (op instanceof XirTemp) {
             return newVariable(op.kind);
         } else {
-            System.out.println(op);
-            System.out.println(op.getClass());
             Util.shouldNotReachHere();
             return null;
         }
@@ -953,7 +959,11 @@ public abstract class LIRGenerator extends ValueVisitor {
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
-                outputOperand = createResultVariable(instruction);
+                if (setInstructionResult) {
+                    outputOperand = newVariable(instruction.kind);
+                } else {
+                    outputOperand = newVariable(resultOperand.kind);
+                }
                 assert operands[resultOperand.index] == null;
             }
             operands[resultOperand.index] = outputOperand;
@@ -2083,15 +2093,22 @@ public abstract class LIRGenerator extends ValueVisitor {
         Value length = arrayCopy.length();
         RiType srcType = src.declaredType();
         RiType destType = dest.declaredType();
-        if (srcType != null && srcType == destType && srcType.isArrayClass()) {
-            RiType type = srcType;
+        if ((srcType != null && srcType.isArrayClass()) || (destType != null && destType.isArrayClass())) {
+            RiType type = (srcType == null) ? destType : srcType;
+            if (srcType == null || destType == null || srcType.kind() != destType.kind()) {
+                TypeEqualityCheck typeCheck = new TypeEqualityCheck(src, dest, arrayCopy.stateBefore(), Condition.EQ);
+                visitTypeEqualityCheck(typeCheck);
+            }
             boolean inputsSame = (src == dest);
             boolean inputsDifferent = !inputsSame && (src.checkFlag(Flag.ResultIsUnique) || dest.checkFlag(Flag.ResultIsUnique));
+            boolean needsStoreCheck = type.componentType().kind() == CiKind.Object && destType != srcType;
+            if (!needsStoreCheck) {
+                arrayCopy.setFlag(Flag.NoStoreCheck);
+            }
             XirSnippet snippet = xir.genArrayCopy(site(arrayCopy), toXirArgument(src), toXirArgument(srcPos), toXirArgument(dest), toXirArgument(destPos), toXirArgument(length), type.componentType(), inputsSame, inputsDifferent);
             arrayCopy(type, arrayCopy, snippet);
             return;
         }
-
         arrayCopySlow(arrayCopy);
     }
 
@@ -2101,10 +2118,20 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private CiValue emitInvokeKnown(RiMethod method, FrameState stateBefore, Value... args) {
         boolean isStatic = Modifier.isStatic(method.accessFlags());
-        Invoke invoke = new Invoke(isStatic ? Bytecodes.INVOKESTATIC : Bytecodes.INVOKESPECIAL, method.signature().returnKind(), args, isStatic, method, stateBefore);
+        Invoke invoke = new Invoke(isStatic ? Bytecodes.INVOKESTATIC : Bytecodes.INVOKESPECIAL, method.signature().returnKind(), args, isStatic, method, null, stateBefore);
         visitInvoke(invoke);
         return invoke.operand();
+    }
 
+    @Override
+    public void visitTypeEqualityCheck(TypeEqualityCheck typeEqualityCheck) {
+        Value x = typeEqualityCheck.left();
+        Value y = typeEqualityCheck.right();
+
+        CiValue leftValue = emitXir(xir.genGetClass(site(typeEqualityCheck), toXirArgument(x)), typeEqualityCheck, stateFor(typeEqualityCheck), null, false);
+        CiValue rightValue = emitXir(xir.genGetClass(site(typeEqualityCheck), toXirArgument(y)), typeEqualityCheck, stateFor(typeEqualityCheck), null, false);
+        lir.cmp(typeEqualityCheck.condition.negate(), leftValue, rightValue);
+        emitGuard(typeEqualityCheck);
     }
 
 }

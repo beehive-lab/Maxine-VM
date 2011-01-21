@@ -57,6 +57,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
         XirOperand fixedRCX = null;
         XirOperand fixedRSI = null;
         XirOperand fixedRDI = null;
+        HashSet<XirLabel> boundLabels = new HashSet<XirLabel>();
 
         for (XirInstruction i : instructions) {
             boolean appended = false;
@@ -164,6 +165,8 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case Bind:
                     XirLabel label = (XirLabel) i.extra;
                     currentList = label.inline ? fastPath : slowPath;
+                    assert !boundLabels.contains(label) : "label may be bound only once";
+                    boundLabels.add(label);
                     break;
                 case Safepoint:
                 case Align:
@@ -183,6 +186,9 @@ public class AMD64XirAssembler extends CiXirAssembler {
             if (!appended) {
                 currentList.add(i);
             }
+        }
+        for (XirLabel label : labels) {
+            assert boundLabels.contains(label) : "label " + label.name + " is not bound!";
         }
         XirInstruction[] fp = fastPath.toArray(new XirInstruction[fastPath.size()]);
         XirInstruction[] sp = slowPath.size() > 0 ? slowPath.toArray(new XirInstruction[slowPath.size()]) : null;

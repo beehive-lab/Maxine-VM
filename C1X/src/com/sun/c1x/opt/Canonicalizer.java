@@ -870,7 +870,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             RiType type = asRiType(args[0]);
             if (type != null) {
                 if (type.kind() == CiKind.Object) {
-                    setCanonical(new NewObjectArray(type, args[1], i.stateBefore(), '\0', null));
+                    setCanonical(new NewObjectArray(type, args[1], i.stateBefore()));
                 } else {
                     RiType elementType = runtime.getRiType(type.kind().toJavaClass());
                     setCanonical(new NewTypeArray(args[1], elementType, i.stateBefore()));
@@ -1361,6 +1361,13 @@ public class Canonicalizer extends DefaultValueVisitor {
             C1XMetrics.MethodsFolded++;
         }
         return result;
+    }
+
+    @Override
+    public void visitTypeEqualityCheck(TypeEqualityCheck i) {
+        if (i.condition == Condition.EQ && i.left() == i.right()) {
+            setCanonical(null);
+        }
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,11 +28,11 @@ import com.sun.cri.ri.*;
 /**
  * The {@code NewObjectArray} instruction represents an allocation of an object array.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
  */
-public final class NewObjectArray extends NewArray {
+public final class NewObjectArrayClone extends NewArray {
 
-    final RiType elementClass;
+    final Value referenceArray;
 
     /**
      * Constructs a new NewObjectArray instruction.
@@ -42,17 +42,9 @@ public final class NewObjectArray extends NewArray {
      * @param cpi the constant pool index
      * @param constantPool the constant pool
      */
-    public NewObjectArray(RiType elementClass, Value length, FrameState stateBefore) {
+    public NewObjectArrayClone(Value length, Value referenceArray, FrameState stateBefore) {
         super(length, stateBefore);
-        this.elementClass = elementClass;
-    }
-
-    /**
-     * Gets the type of the elements of the array.
-     * @return the element type of the array
-     */
-    public RiType elementClass() {
-        return elementClass;
+        this.referenceArray = referenceArray;
     }
 
     /**
@@ -61,12 +53,16 @@ public final class NewObjectArray extends NewArray {
      */
     @Override
     public RiType exactType() {
-        return elementClass.arrayOf();
+        return referenceArray.exactType();
     }
 
     @Override
     public RiType declaredType() {
-        return exactType();
+        return referenceArray.declaredType();
+    }
+
+    public Value referenceArray() {
+        return referenceArray;
     }
 
     /**
@@ -75,6 +71,6 @@ public final class NewObjectArray extends NewArray {
      */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitNewObjectArray(this);
+        v.visitNewObjectArrayClone(this);
     }
 }

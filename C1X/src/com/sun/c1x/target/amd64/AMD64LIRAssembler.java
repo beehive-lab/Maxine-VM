@@ -461,7 +461,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (op.cond() == Condition.TRUE) {
             if (op.info != null) {
                 asm.recordImplicitException(codePos(), op.info);
-                System.out.println("Condition is TRUE");
             }
             masm.jmp(op.label());
         } else {
@@ -1139,7 +1138,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     case Object  : masm.cmpq(reg1, opr2.asRegister()); break;
                     case Float   : masm.ucomiss(reg1, asXmmFloatReg(opr2)); break;
                     case Double  : masm.ucomisd(reg1, asXmmDoubleReg(opr2)); break;
-                    default      : throw Util.shouldNotReachHere();
+                    default      : throw Util.shouldNotReachHere(opr1.kind.toString());
                 }
             } else if (opr2.isStackSlot()) {
                 // register - stack
