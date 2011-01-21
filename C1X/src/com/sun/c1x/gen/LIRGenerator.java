@@ -912,7 +912,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private CiValue allocateOperand(XirSnippet snippet, XirOperand op) {
         if (op instanceof XirParameter)  {
             XirParameter param = (XirParameter) op;
-            return allocateOperand(snippet.arguments[param.parameterIndex], op);
+            return allocateOperand(snippet.arguments[param.parameterIndex], op, param.canBeConstant);
         } else if (op instanceof XirRegister) {
             XirRegister reg = (XirRegister) op;
             return reg.register;
@@ -924,7 +924,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    private CiValue allocateOperand(XirArgument arg, XirOperand var) {
+    private CiValue allocateOperand(XirArgument arg, XirOperand var, boolean canBeConstant) {
         if (arg.constant != null) {
             return arg.constant;
         } else {
@@ -934,8 +934,12 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
             assert arg.object instanceof LIRItem;
             LIRItem item = (LIRItem) arg.object;
-            item.loadItem(var.kind);
-            return item.result();
+            if (canBeConstant) {
+                return item.instruction.operand();
+            } else {
+                item.loadItem(var.kind);
+                return item.result();
+            }
         }
     }
 

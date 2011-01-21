@@ -23,6 +23,7 @@
 package com.sun.cri.ci;
 
 import static com.sun.cri.ci.CiRegister.*;
+import static com.sun.cri.ci.CiValue.*;
 
 /**
  * Represents an address in target machine memory, specified via some combination of a base register, an index register,
@@ -97,6 +98,13 @@ public final class CiAddress extends CiValue {
     public CiAddress(CiKind kind, CiValue base, CiValue index, Scale scale, int displacement) {
         super(kind);
         this.base = base;
+
+        if (index.isConstant()) {
+            displacement += ((CiConstant) index).asInt() * scale.value;
+            index = IllegalValue;
+            scale = Scale.Times1;
+        }
+        
         this.index = index;
         this.scale = scale;
         this.displacement = displacement;

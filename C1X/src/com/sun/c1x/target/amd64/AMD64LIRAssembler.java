@@ -41,6 +41,7 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
@@ -1123,6 +1124,14 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
         assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == CiKind.Word && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
+
+        if (opr1.isConstant()) {
+            // Use scratch register
+            CiValue newOpr1 = AMD64.r10.asValue(opr1.kind);
+            const2reg(opr1, newOpr1, null);
+            opr1 = newOpr1;
+        }
+
         if (opr1.isRegister()) {
             CiRegister reg1 = opr1.asRegister();
             if (opr2.isRegister()) {
@@ -1189,7 +1198,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 throw Util.shouldNotReachHere();
             }
         } else {
-            throw Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere(opr1.toString() + " opr2 = " + opr2);
         }
     }
 

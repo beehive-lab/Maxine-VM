@@ -190,10 +190,13 @@ public abstract class CiXirAssembler {
          * Unique id in range {@code 0} to {@code parameters.Size()  - 1}.
          */
         public final int parameterIndex;
+        
+        public final boolean canBeConstant;
 
-        XirParameter(CiXirAssembler asm, String name, CiKind kind) {
+        XirParameter(CiXirAssembler asm, String name, CiKind kind, boolean canBeConstant) {
             super(asm, name, kind);
             this.parameterIndex = asm.parameters.size();
+            this.canBeConstant = canBeConstant;
             asm.parameters.add(this);
         }
 
@@ -201,7 +204,7 @@ public abstract class CiXirAssembler {
 
     public static class XirConstantParameter extends XirParameter implements XirConstantOperand {
         XirConstantParameter(CiXirAssembler asm, String name, CiKind kind) {
-            super(asm, name, kind);
+            super(asm, name, kind, true);
         }
 
         public int getIndex() {
@@ -210,8 +213,8 @@ public abstract class CiXirAssembler {
     }
 
     public static class XirVariableParameter extends XirParameter {
-        XirVariableParameter(CiXirAssembler asm, String name, CiKind kind) {
-            super(asm, name, kind);
+        XirVariableParameter(CiXirAssembler asm, String name, CiKind kind, boolean canBeConstant) {
+            super(asm, name, kind, canBeConstant);
         }
     }
 
@@ -816,9 +819,13 @@ public abstract class CiXirAssembler {
      * @param kind the parameter kind
      * @return the  {@link XirVariableParameter}
      */
-    public XirVariableParameter createInputParameter(String name, CiKind kind) {
+    public XirVariableParameter createInputParameter(String name, CiKind kind, boolean canBeConstant) {
         assert !finished;
-        return new XirVariableParameter(this, name, kind);
+        return new XirVariableParameter(this, name, kind, canBeConstant);
+    }
+    
+    public XirVariableParameter createInputParameter(String name, CiKind kind) {
+        return createInputParameter(name, kind, false);
     }
 
     /**
