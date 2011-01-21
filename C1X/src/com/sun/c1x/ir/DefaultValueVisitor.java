@@ -42,9 +42,11 @@ public class DefaultValueVisitor extends ValueVisitor {
 
     // Checkstyle: stop
     @Override public void visitArithmeticOp(ArithmeticOp i) { visit(i); }
+    @Override public void visitArrayCopy(ArrayCopy i) { visit(i); }
     @Override public void visitArrayLength(ArrayLength i) { visit(i); }
     @Override public void visitBase(Base i) { visit(i); }
     @Override public void visitBlockBegin(BlockBegin i) { visit(i); }
+    @Override public void visitBoundsCheck(BoundsCheck i) { visit(i); }
     @Override public void visitBreakpointTrap(BreakpointTrap i) {visit(i); }
     @Override public void visitCheckCast(CheckCast i) { visit(i); }
     @Override public void visitCompareOp(CompareOp i) { visit(i); }
@@ -77,6 +79,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitNewInstance(NewInstance i) { visit(i); }
     @Override public void visitNewMultiArray(NewMultiArray i) { visit(i); }
     @Override public void visitNewObjectArray(NewObjectArray i) { visit(i); }
+    @Override public void visitNewObjectArrayClone(NewObjectArrayClone i) { visit(i); }
     @Override public void visitNewTypeArray(NewTypeArray i) { visit(i); }
     @Override public void visitNullCheck(NullCheck i) { visit(i); }
     @Override public void visitOsrEntry(OsrEntry i) { visit(i); }
@@ -92,6 +95,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitStorePointer(StorePointer i) { visit(i); }
     @Override public void visitStoreRegister(StoreRegister i) { visit(i); }
     @Override public void visitTableSwitch(TableSwitch i) { visit(i); }
+    @Override public void visitTypeEqualityCheck(TypeEqualityCheck i) { visit(i); }
     @Override public void visitThrow(Throw i) { visit(i); }
     @Override public void visitUnsafeCast(UnsafeCast i) { visit(i); }
     @Override public void visitUnsafeGetObject(UnsafeGetObject i) { visit(i); }
@@ -101,8 +105,6 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitUnsafePutObject(UnsafePutObject i) { visit(i); }
     @Override public void visitUnsafePutRaw(UnsafePutRaw i) { visit(i); }
     @Override public void visitUnsignedCompareOp(UnsignedCompareOp i) { visit(i); }
-    @Override public void visitArrayCopy(ArrayCopy i) { visit(i); }
-    @Override public void visitBoundsCheck(BoundsCheck i) { visit(i); }
    // Checkstyle: resume
 
 

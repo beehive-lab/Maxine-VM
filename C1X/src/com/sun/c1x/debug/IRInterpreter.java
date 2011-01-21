@@ -1244,6 +1244,11 @@ public class IRInterpreter {
         }
 
         @Override
+        public void visitNewObjectArrayClone(NewObjectArrayClone newObjectArrayClone) {
+            throw Util.unimplemented();
+        }
+
+        @Override
         public void visitNewObjectArray(NewObjectArray i) {
             int length = environment.lookup(i.length()).asInt();
             if (length < 0) {

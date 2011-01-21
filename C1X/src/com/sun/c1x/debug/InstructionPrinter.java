@@ -618,6 +618,11 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
+    public void visitNewObjectArrayClone(NewObjectArrayClone newObjectArrayClone) {
+        out.print("new object array [").print(newObjectArrayClone.length()).print("] ").print(newObjectArrayClone.referenceArray());
+    }
+
+    @Override
     public void visitNewTypeArray(NewTypeArray newTypeArray) {
         out.print("new ").print(newTypeArray.elementKind().name()).print(" array [").print(newTypeArray.length()).print(']');
     }
@@ -831,6 +836,10 @@ public class InstructionPrinter extends ValueVisitor {
     @Override
     public void visitBoundsCheck(BoundsCheck boundsCheck) {
         out.print("boundsCheck ").print(boundsCheck.index()).print(" ").print(boundsCheck.length());
+    }
 
+    @Override
+    public void visitTypeEqualityCheck(TypeEqualityCheck typeEqualityCheck) {
+        out.print("typeEqualityCheck ").print(typeEqualityCheck.left()).print(" ").print(typeEqualityCheck.right());
     }
 }

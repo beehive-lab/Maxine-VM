@@ -71,6 +71,8 @@ public abstract interface RiXirGenerator {
     public XirSnippet genNewInstance(XirSite site, RiType type);
 
     public XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType);
+    
+    public XirSnippet genNewObjectArrayClone(XirSite site, XirArgument newLength, XirArgument referenceArray);
 
     public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type);
 

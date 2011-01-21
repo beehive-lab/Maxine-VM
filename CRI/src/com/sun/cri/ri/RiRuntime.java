@@ -219,5 +219,5 @@ public interface RiRuntime {
      */
     int getCustomStackAreaSize();
     
-    boolean supportsArrayCopyIntrinsic();
+    boolean supportsArrayIntrinsics();
 }
