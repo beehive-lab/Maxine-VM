@@ -2095,7 +2095,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         RiType destType = dest.declaredType();
         if ((srcType != null && srcType.isArrayClass()) || (destType != null && destType.isArrayClass())) {
             RiType type = (srcType == null) ? destType : srcType;
-            if (srcType == null || destType == null || srcType.kind() != destType.kind()) {
+            if ((srcType == null || destType == null || srcType.kind() != destType.kind()) && type.kind() != CiKind.Object) {
                 TypeEqualityCheck typeCheck = new TypeEqualityCheck(src, dest, arrayCopy.stateBefore(), Condition.EQ);
                 visitTypeEqualityCheck(typeCheck);
             }

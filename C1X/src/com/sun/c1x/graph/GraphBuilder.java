@@ -1065,6 +1065,8 @@ public final class GraphBuilder {
                 }
                 invokeDirect(leaf, args, null, cpi, constantPool);
                 return;
+            } else if (C1XOptions.PrintAssumptions) {
+                TTY.println("Could not make leaf method assumption for target=" + target + " leaf=" + leaf + " receiver.declaredType=" + receiver.declaredType());
             }
             // 3. check if the either of the holder or declared type of receiver can be assumed to be a leaf
             exact = getAssumedLeafType(klass, receiver);
@@ -1076,6 +1078,8 @@ public final class GraphBuilder {
                 // either the holder class is exact, or the receiver object has an exact type
                 invokeDirect(targetMethod, args, exact, cpi, constantPool);
                 return;
+            } else if (C1XOptions.PrintAssumptions) {
+                TTY.println("Could not make leaf type assumption for type " + klass);
             }
         }
         // devirtualization failed, produce an actual invokevirtual
@@ -1792,7 +1796,6 @@ public final class GraphBuilder {
                     log.println("|");
                 }
             }
-
             if (!inlineWithBoundAccessor(target, args, forcedInline)) {
                 inline(target, args, forcedInline);
             }
@@ -2859,6 +2862,10 @@ public final class GraphBuilder {
                     }
                     compilation.assumptions.recordConcreteMethod(method, assumed);
                     return assumed;
+                } else {
+                    if (C1XOptions.PrintAssumptions) {
+                        TTY.println("Did not find unique concrete method for " + method);
+                    }
                 }
             }
         }
