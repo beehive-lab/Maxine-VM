@@ -533,6 +533,10 @@ public abstract class CiXirAssembler {
          */
         Jlteq,
         /**
+         * Decreases the input by one and jumps to the target if the input is not 0
+         */
+        DecAndJumpNotZero,
+        /**
          * Bind the {@link XirLabel label} identified by {@code extra} to the current instruction and update any references to it.
          * A label may be bound more than once to the same location.
          */
@@ -690,6 +694,10 @@ public abstract class CiXirAssembler {
 
     public void jmp(XirLabel l) {
         append(new XirInstruction(CiKind.Void, l, Jmp, null));
+    }
+
+    public void decAndJumpNotZero(XirLabel l, XirOperand val) {
+        append(new XirInstruction(CiKind.Void, l, DecAndJumpNotZero, null, val));
     }
 
     public void jmpRuntime(Object rt) {

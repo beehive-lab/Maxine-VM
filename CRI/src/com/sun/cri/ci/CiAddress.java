@@ -23,7 +23,6 @@
 package com.sun.cri.ci;
 
 import static com.sun.cri.ci.CiRegister.*;
-import static com.sun.cri.ci.CiValue.*;
 
 /**
  * Represents an address in target machine memory, specified via some combination of a base register, an index register,

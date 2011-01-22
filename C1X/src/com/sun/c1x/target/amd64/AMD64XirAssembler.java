@@ -95,7 +95,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     }
 
                     XirOperand yOp = i.y();
-                    if (i.op == XirOp.Shl || i.op == XirOp.Shr) {
+                    if ((i.op == XirOp.Shl || i.op == XirOp.Shr) && (!(i.y() instanceof XirConstantOperand))) {
                         // Special treatment to make sure that the shift count is always in RCX
                         if (fixedRCX == null) {
                             fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, AMD64.rcx);
@@ -160,6 +160,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case Jugteq:
                 case Jlt:
                 case Jlteq:
+                case DecAndJumpNotZero:
                     flags |= HAS_CONTROL_FLOW.mask;
                     break;
                 case Bind:
