@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
@@ -56,8 +58,9 @@ import com.sun.max.vm.thread.*;
  * @author Hannes Payer
  * @author Laurent Daynes
  * @Author Mick Jordan
+ * @author Du Li
  */
-public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisitor {
+public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisitor {
 
     public static final String FROM_REGION_NAME = "Heap-From";
     public static final String TO_REGION_NAME = "Heap-To";
@@ -66,7 +69,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     public static final String LINEAR_GROW_POLICY_NAME = "Linear";
     public static final String DOUBLE_GROW_POLICY_NAME = "Double";
     public static final String NO_GROW_POLICY_NAME = "None";
-
 
     /**
      * A VM option for specifying amount of memory to be reserved for allocating and raising an
@@ -145,6 +147,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      */
     private Address top;
 
+
     private final ResetTLAB resetTLAB = new ResetTLAB(){
         @Override
         protected void doBeforeReset(Pointer etla, Pointer tlabMark, Pointer tlabEnd) {
@@ -200,6 +203,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 Heap.enableImmortalMemoryAllocation();
                 fromSpace = new LinearAllocationMemoryRegion(FROM_REGION_NAME);
                 toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
+
             } finally {
                 Heap.disableImmortalMemoryAllocation();
             }
@@ -220,7 +224,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
             // From now on we can allocate
 
-            InspectableHeapInfo.init(toSpace, fromSpace);
+            InspectableHeapInfo.init(true, toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
             if (growPolicy.equals(DOUBLE_GROW_POLICY_NAME)) {
@@ -434,6 +438,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 verifyObjectSpaces("after GC");
 
                 HeapScheme.Inspect.notifyGCCompleted();
+                enableImmortalMemoryAllocation();
 
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();
@@ -572,6 +577,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
                 Log.println(" bytes]");
                 Log.unlock(lockDisabledSafepoints);
             }
+
+            trackLifetime(fromCell);
 
             Memory.copyBytes(fromCell, toCell, size);
 
@@ -782,7 +789,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
      * @param size the size of the cell being copied
      * @return the start of the allocated cell in 'to space'
      */
-    private Pointer gcAllocate(Size size) {
+    public Pointer gcAllocate(Size size) {
         Pointer cell = allocationMark().asPointer();
         if (DebugHeap.isTagging()) {
             cell = cell.plusWords(1);
@@ -811,6 +818,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         Pointer tlab = retryAllocate(tlabSize, false);
         refillTLAB(etla, tlab, tlabSize);
     }
+
+    @Override
+    protected Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag) {
+        // Default is to use the immortal heap.
+        return ImmortalHeap.allocate(size, true);
+    }
+
     /**
      * Handling of TLAB Overflow. This may refill the TLAB or allocate memory directly from the underlying heap.
      * This will always be taken when not using TLABs which is fine as the cost of the
@@ -952,16 +966,16 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
     public void runFinalization() {
     }
 
-    @INLINE
+    @INLINE(override = true)
     public boolean pin(Object object) {
         return false;
     }
 
-    @INLINE
+    @INLINE(override = true)
     public void unpin(Object object) {
     }
 
-    @INLINE
+    @INLINE(override = true)
     public boolean isPinned(Object object) {
         return false;
     }
@@ -1125,7 +1139,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
         return growHeap.result;
     }
 
-    @INLINE
+    @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
     }
@@ -1170,24 +1184,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cel
 
         void setAmount(Size amount) {
             this.amount = amount.toInt();
-        }
-    }
-
-    @Override
-    public void disableImmortalMemoryAllocation() {
-        final Pointer etla = ETLA.load(currentTLA());
-        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.zero());
-        if (usesTLAB()) {
-            super.disableImmortalMemoryAllocation();
-        }
-    }
-
-    @Override
-    public void enableImmortalMemoryAllocation() {
-        final Pointer etla = ETLA.load(currentTLA());
-        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.allOnes());
-        if (usesTLAB()) {
-            super.enableImmortalMemoryAllocation();
         }
     }
 

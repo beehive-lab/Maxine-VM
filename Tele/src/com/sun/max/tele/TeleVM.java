@@ -1,26 +1,27 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.tele;
 
-import static com.sun.max.platform.Platform.*;
 import static com.sun.max.tele.debug.ProcessState.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
@@ -45,7 +46,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.tcp.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
+import com.sun.max.tele.debug.TeleBytecodeBreakpoint.BytecodeBreakpointManager;
 import com.sun.max.tele.debug.no.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
@@ -63,7 +64,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
@@ -118,35 +118,17 @@ public abstract class TeleVM implements MaxVM {
 
     private static final int TRACE_VALUE = 1;
 
-    private static final String PROGRAM_NAME = "maxvm";
+    /**
+     * The of the binary file in which the VM executable is stored.
+     */
+    private static final String BOOTIMAGE_FILE_NAME = "maxvm";
 
+    /**
+     * The name of the native library that supports the Inspector.
+     */
     public static final String TELE_LIBRARY_NAME = "tele";
 
     private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
-
-    /**
-     * Modes in which the Inspector operates, which require different startup behavior.
-     */
-    public enum Mode {
-        /**
-         * Create and start a new process to execute the VM, passing arguments.
-         */
-        CREATE,
-        /**
-         * Attach to an existing VM process that is already running or core-dumped.
-         */
-        ATTACH,
-        /**
-         * Attach to an existing VM process that is waiting to be started.
-         * I.e., the process exists, the arguments have been supplied, but it
-         * has not executed the VM, but it waiting for the Inspector to release it.
-          */
-        ATTACHWAITING,
-        /**
-         * Browse a VM image as produced by the {@link BootImageGenerator}.
-         */
-        IMAGE,
-    }
 
     /**
      * Defines whether the target VM running locally or on a remote machine, or is core-dump.
@@ -216,7 +198,7 @@ public abstract class TeleVM implements MaxVM {
             } else {
                 TeleError.unexpected("usage: " + options.targetKindOption.getHelp());
             }
-            if (mode == Mode.ATTACH || mode == Mode.ATTACHWAITING) {
+            if (mode == MaxInspectionMode.ATTACH || mode == MaxInspectionMode.ATTACHWAITING) {
                 if (kind == Kind.FILE) {
                     // must have a dump file, if not provided put up a dialog to get it.
                     if (target == null) {
@@ -238,9 +220,9 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
-     * The mode the Inspector is running in.
+     * The mode of the inspection, which require different startup behavior.
      */
-    private static Mode mode;
+    private static MaxInspectionMode mode;
 
     /**
      * Information about where the (running/dumped) target VM is located.
@@ -251,6 +233,11 @@ public abstract class TeleVM implements MaxVM {
      * Where the meta-data associated with the target VM is located {@see #vmDirectoryOption}.
      */
     private static File vmDirectory;
+
+    /**
+     * An abstraction description of the VM's platform, suitable for export.
+     */
+    private TelePlatform telePlatform;
 
     /**
      * The options controlling how a tele VM instance is {@linkplain #newAllocator(String...) created}.
@@ -305,11 +292,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public static boolean isAttaching() {
-        return mode == Mode.ATTACH;
+        return mode == MaxInspectionMode.ATTACH;
     }
 
     public static boolean isDump() {
-        return mode == Mode.ATTACH && targetLocation.kind == TargetLocation.Kind.FILE;
+        return mode == MaxInspectionMode.ATTACH && targetLocation.kind == TargetLocation.Kind.FILE;
     }
 
     /**
@@ -319,7 +306,7 @@ public abstract class TeleVM implements MaxVM {
      * @param os
      */
     private void setTeleChannelProtocol(OS os) {
-        if (mode == Mode.IMAGE) {
+        if (mode == MaxInspectionMode.IMAGE) {
             teleChannelProtocol = new ReadOnlyTeleChannelProtocol();
             return;
         }
@@ -368,7 +355,7 @@ public abstract class TeleVM implements MaxVM {
      * @return a new VM instance
      */
     public static TeleVM create(Options options) throws BootImageException {
-        mode = Mode.valueOf(options.modeOption.getValue().toUpperCase());
+        mode = MaxInspectionMode.valueOf(options.modeOption.getValue().toUpperCase());
 
         TargetLocation.set(options);
 
@@ -474,10 +461,6 @@ public abstract class TeleVM implements MaxVM {
         return vm;
     }
 
-    public static Mode mode() {
-        return mode;
-    }
-
     public static TargetLocation targetLocation() {
         return targetLocation;
     }
@@ -494,7 +477,7 @@ public abstract class TeleVM implements MaxVM {
         bootImageConfig.loadAndInstantiateSchemes(null);
         final VMConfiguration config = new VMConfiguration(
                         bootImageConfig.buildLevel,
-                        platform(),
+                        Platform.platform(),
                         getInspectorReferencePackage(bootImageConfig.referencePackage),
                         bootImageConfig.layoutPackage,
                         bootImageConfig.heapPackage,
@@ -523,7 +506,7 @@ public abstract class TeleVM implements MaxVM {
         initializeVM(bootImage.vmConfiguration);
 
         TeleVM teleVM = null;
-        final OS os = platform().os;
+        final OS os = Platform.platform().os;
         final String className = "com.sun.max.tele.debug." + os.asPackageName() + "." + os.className + "TeleVM";
         try {
             final Class< ? > klass = Class.forName(className);
@@ -683,24 +666,6 @@ public abstract class TeleVM implements MaxVM {
 
     private final Classpath sourcepath;
 
-    /**
-     * Classes, possibly not loaded, available on the classpath.
-     * Lazily initialized; can re re-initialized.
-     * @see #updateLoadableTypeDescriptorsFromClasspath()
-     */
-    private Set<TypeDescriptor> typesOnClasspath;
-
-    /**
-     * @return classes, possibly loaded, not available on the classpath.
-     */
-    private Set<TypeDescriptor> typesOnClasspath() {
-        if (typesOnClasspath == null) {
-            // Delayed initialization, because this can take some time.
-            updateLoadableTypeDescriptorsFromClasspath();
-        }
-        return typesOnClasspath;
-    }
-
     private int interpreterUseLevel = 0;
 
     private TeleClassRegistry teleClassRegistry;
@@ -744,18 +709,19 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        setTeleChannelProtocol(platform().os);
+        this.telePlatform = new TelePlatform(Platform.platform());
+        setTeleChannelProtocol(Platform.platform().os);
 
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating all");
 
         // Pre-initialize the disassembler to save time.
-        TeleDisassembler.initialize(platform());
+        TeleDisassembler.initialize(Platform.platform());
 
-        this.wordSize = Size.fromInt(platform().wordWidth().numberOfBytes);
-        this.pageSize = Size.fromInt(platform().pageSize);
-        this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
+        this.wordSize = Size.fromInt(Platform.platform().wordWidth().numberOfBytes);
+        this.pageSize = Size.fromInt(Platform.platform().pageSize);
+        this.programFile = new File(bootImageFile.getParent(), BOOTIMAGE_FILE_NAME);
 
-        if (mode == Mode.ATTACH || mode == Mode.ATTACHWAITING) {
+        if (mode == MaxInspectionMode.ATTACH || mode == MaxInspectionMode.ATTACHWAITING) {
             this.teleProcess = attachToTeleProcess();
         } else {
             this.teleProcess = createTeleProcess(commandLineArguments);
@@ -889,11 +855,15 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final String getVersion() {
-        return MaxineVM.VERSION;
+        return MaxineVM.VERSION_STRING;
     }
 
     public final String getDescription() {
         return MaxineVM.description();
+    }
+
+    public final TelePlatform platform() {
+        return telePlatform;
     }
 
     public final File vmDirectory() {
@@ -918,6 +888,14 @@ public abstract class TeleVM implements MaxVM {
 
     public final File programFile() {
         return programFile;
+    }
+
+    public MaxInspectionMode inspectionMode() {
+        return mode;
+    }
+
+    public TeleClassRegistry classRegistry() {
+        return teleClassRegistry;
     }
 
     public final TeleHeap heap() {
@@ -1378,7 +1356,7 @@ public abstract class TeleVM implements MaxVM {
      * @throws InvalidReferenceException when the location does <strong>not</strong> point
      * at a valid heap object.
      */
-    private void checkReference(Reference reference) throws InvalidReferenceException {
+    public void checkReference(Reference reference) throws InvalidReferenceException {
         if (!isValidOrigin(reference.toOrigin())) {
             throw new InvalidReferenceException(reference);
         }
@@ -1512,80 +1490,6 @@ public abstract class TeleVM implements MaxVM {
         return regions;
     }
 
-    /**
-     * Gets a canonical local {@link ClassActor} for the named class, creating one if needed by loading the class from
-     * the classpath using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
-     *
-     * @param name the name of a class
-     * @return Local {@link ClassActor} corresponding to the class, possibly created by loading it from classpath.
-     * @throws ClassNotFoundException if not already loaded and unavailable on the classpath.
-     */
-    private ClassActor makeClassActor(String name) throws ClassNotFoundException {
-        // The VM registry includes all ClassActors for classes loaded locally
-        // using the prototype class loader
-        HostedBootClassLoader classLoader = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
-        synchronized (classLoader) {
-            ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString(name));
-            if (classActor == null) {
-                // Try to load the class from the local classpath.
-                if (name.endsWith("[]")) {
-                    classActor = ClassActorFactory.createArrayClassActor(makeClassActor(name.substring(0, name.length() - 2)));
-                } else {
-                    classActor = classLoader.makeClassActor(
-                                    JavaTypeDescriptor.getDescriptorForWellFormedTupleName(name));
-                }
-            }
-            return classActor;
-        }
-    }
-
-    /**
-     * Gets the canonical local {@link ClassActor} corresponding to a
-     * {@link ClassActor} in the VM, creating it if needed.
-     * Creation is done by loading the class, either from the classpath if present, or
-     * by copying the classfile from the VM.  In either case the class is loaded by the
-     * {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
-     *
-     * @param classActorReference  a {@link ClassActor} in the VM.
-     * @return Local, canonical, equivalent {@link ClassActor} created by loading the same class.
-     * @throws InvalidReferenceException if the argument does not point to a valid heap object in the VM.
-     * @throws NoClassDefFoundError if the classfile is not on the classpath and the copy from the VM fails.
-     * @throws TeleError if a classfile copied from the VM is cannot be loaded
-     */
-    public final ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
-        checkReference(classActorReference);
-        final Reference utf8ConstantReference = teleFields().Actor_name.readReference(classActorReference);
-        checkReference(utf8ConstantReference);
-        final Reference stringReference = teleFields().Utf8Constant_string.readReference(utf8ConstantReference);
-        final String name = getString(stringReference);
-        try {
-            return makeClassActor(name);
-        } catch (ClassNotFoundException classNotFoundException) {
-            // Not loaded and not available on local classpath; load by copying classfile from the VM
-            final Reference byteArrayReference = teleFields().ClassActor_classfile.readReference(classActorReference);
-            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) heap().makeTeleObject(byteArrayReference);
-            if (teleByteArrayObject == null) {
-                throw new NoClassDefFoundError(String.format("Could not retrieve class file from VM for %s%nTry using '%s' VM option to access generated class files.",
-                    name, ClassfileReader.saveClassDir));
-            }
-            final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
-            try {
-                return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.makeClassActor(name, classfile);
-            } catch (ClassFormatError classFormatError) {
-                final String msg = "in " + tracePrefix() + " unable to load classfile copied from VM, error message follows:\n   " + classFormatError;
-                TeleError.unexpected(msg, null);
-                return null;
-            }
-        }
-    }
-
-    public final ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException {
-        checkReference(objectReference);
-        final Reference hubReference = wordToReference(Layout.readHubReferenceAsWord(objectReference));
-        final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
-        return makeClassActor(classActorReference);
-    }
-
     public final Value getElementValue(Kind kind, Reference reference, int index) throws InvalidReferenceException {
         switch (kind.asEnum) {
             case BYTE:
@@ -1648,49 +1552,6 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    public final TeleClassActor findTeleClassActor(int id) {
-        return teleClassRegistry.findTeleClassActorByID(id);
-    }
-
-    public final TeleClassActor findTeleClassActor(TypeDescriptor typeDescriptor) {
-        return teleClassRegistry.findTeleClassActorByType(typeDescriptor);
-    }
-
-    public final TeleClassActor findTeleClassActor(Class javaClass) {
-        return teleClassRegistry.findTeleClassActorByClass(javaClass);
-    }
-
-    public final Set<TypeDescriptor> typeDescriptors() {
-        return teleClassRegistry.typeDescriptors();
-    }
-
-    public final synchronized Iterable<TypeDescriptor> loadableTypeDescriptors() {
-        final SortedSet<TypeDescriptor> typeDescriptors = new TreeSet<TypeDescriptor>();
-        for (TypeDescriptor typeDescriptor : teleClassRegistry.typeDescriptors()) {
-            typeDescriptors.add(typeDescriptor);
-        }
-        typeDescriptors.addAll(typesOnClasspath());
-        return typeDescriptors;
-    }
-
-    public final void updateLoadableTypeDescriptorsFromClasspath() {
-        final Set<TypeDescriptor> typesOnClasspath = new TreeSet<TypeDescriptor>();
-        Trace.begin(TRACE_VALUE, tracePrefix() + "searching classpath for class files");
-        new ClassSearch() {
-            @Override
-            protected boolean visitClass(String className) {
-                if (!className.endsWith("package-info")) {
-                    final String typeDescriptorString = "L" + className.replace('.', '/') + ";";
-                    typesOnClasspath.add(JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString));
-                }
-                return true;
-            }
-        }.run(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath());
-        Trace.end(TRACE_VALUE, tracePrefix() + "searching classpath for class files ["
-                + typesOnClasspath.size() + " types found]");
-        this.typesOnClasspath = typesOnClasspath;
-    }
-
     public final List<MaxCodeLocation> inspectableMethods() {
         final List<MaxCodeLocation> methods = new ArrayList<MaxCodeLocation>(teleMethods.clientInspectableMethods());
         methods.addAll(heap.inspectableMethods());
@@ -1698,7 +1559,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final <TeleMethodActor_Type extends TeleMethodActor> TeleMethodActor_Type findTeleMethodActor(Class<TeleMethodActor_Type> teleMethodActorType, MethodActor methodActor) {
-        final TeleClassActor teleClassActor = teleClassRegistry.findTeleClassActorByType(methodActor.holder().typeDescriptor);
+        final TeleClassActor teleClassActor = teleClassRegistry.findTeleClassActor(methodActor.holder().typeDescriptor);
         if (teleClassActor != null) {
             for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
                 if (teleMethodActor.methodActor().equals(methodActor)) {
@@ -2411,7 +2272,7 @@ public abstract class TeleVM implements MaxVM {
             // Always fake the Object class, otherwise try to find a class in the
             // Maxine VM that matches the signature.
             if (!klass.equals(Object.class)) {
-                referenceTypeProvider = TeleVM.this.findTeleClassActor(klass);
+                referenceTypeProvider = TeleVM.this.classRegistry().findTeleClassActor(klass);
             }
 
             // If no class was found within the Maxine VM, create a faked reference
@@ -2436,9 +2297,9 @@ public abstract class TeleVM implements MaxVM {
             // Try to find a matching class actor that lives within the VM based on
             // the signature.
             final List<ReferenceTypeProvider> result = new LinkedList<ReferenceTypeProvider>();
-            for (TypeDescriptor typeDescriptor : TeleVM.this.typeDescriptors()) {
+            for (TypeDescriptor typeDescriptor : TeleVM.this.classRegistry().typeDescriptors()) {
                 if (typeDescriptor.toString().equals(signature)) {
-                    final TeleClassActor teleClassActor = TeleVM.this.findTeleClassActor(typeDescriptor);
+                    final TeleClassActor teleClassActor = TeleVM.this.classRegistry().findTeleClassActor(typeDescriptor);
 
                     // Do not include array types, there should always be faked in
                     // order to be able to call newInstance on them. Arrays that are

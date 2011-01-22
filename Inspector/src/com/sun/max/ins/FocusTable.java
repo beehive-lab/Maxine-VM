@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins;
 
@@ -195,6 +197,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             // Don't use cell values; all interaction is driven by row number.
             return null;
         }
+
+        @Override
+        public String getRowDescription(int row) {
+            return FocusRowKind.values()[row].label();
+        }
     }
 
     /**
@@ -209,7 +216,8 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final FocusRowKind focusRowKind = FocusRowKind.values()[row];
             setText(focusRowKind.label());
-            setToolTipText(focusRowKind.toolTipText());
+            setToolTipPrefix(tableModel.getRowDescription(row));
+            setWrappedToolTipText("<br>" + focusRowKind.toolTipText());
             return this;
         }
     }
@@ -219,103 +227,138 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
      */
     private final class ValueCellRenderer  implements TableCellRenderer, Prober {
 
+        final int rowCount = FocusRowKind.values().length;
+
         // A "value" label per row, each suitable for the particular kind of value.
-        private InspectorLabel[] labels = new InspectorLabel[FocusRowKind.values().length];
+        private InspectorLabel[] labels = new InspectorLabel[rowCount];
 
         public ValueCellRenderer(final Inspection inspection) {
-            labels[FocusRowKind.THREAD.ordinal()] = new JavaNameLabel(inspection, "") {
-                @Override
-                public void refresh(boolean force) {
-                    final MaxThread thread = focus().thread();
-                    if (thread == null) {
-                        setValue(null, "No thread focus");
-                    } else {
-                        final String longName = inspection.nameDisplay().longNameWithState(thread);
-                        setValue(longName, "Thread focus = " + longName);
-                    }
+            for (int row = 0; row < rowCount; row++) {
+                InspectorLabel label = null;
+                switch(FocusRowKind.values()[row]) {
+                    case THREAD:
+                        label = new JavaNameLabel(inspection, "") {
+                            @Override
+                            public void refresh(boolean force) {
+                                final MaxThread thread = focus().thread();
+                                if (thread == null) {
+                                    setValue(null);
+                                    setWrappedToolTipText(htmlify("<none>"));
+                                } else {
+                                    final String longName = inspection.nameDisplay().longNameWithState(thread);
+                                    setValue(longName);
+                                    setWrappedToolTipText(longName);
+                                }
+                            }
+                        };
+                        break;
+                    case FRAME:
+                        label = new PlainLabel(inspection, "") {
+                            @Override
+                            public void refresh(boolean force) {
+                                final MaxStackFrame stackFrame = focus().stackFrame();
+                                if (stackFrame == null) {
+                                    setValue(null);
+                                    setWrappedToolTipText(htmlify("<none>"));
+                                } else {
+                                    final MaxCompiledCode compiledCode = stackFrame.compiledCode();
+                                    final String name = compiledCode == null ? "nativeMethod: " + stackFrame.codeLocation().address().to0xHexString() : compiledCode.entityName();
+                                    setValue(name);
+                                    setWrappedToolTipText(htmlify(name));
+                                }
+                            }
+                        };
+                        break;
+                    case CODE:
+                        label = new PlainLabel(inspection, "") {
+                            @Override
+                            public void refresh(boolean force) {
+                                final MaxCodeLocation codeLocation = focus().codeLocation();
+                                if (codeLocation == null) {
+                                    setValue(null);
+                                    setWrappedToolTipText(htmlify("<none>"));
+                                } else {
+                                    final String longName = inspection().nameDisplay().longName(codeLocation);
+                                    setValue(longName);
+                                    setWrappedToolTipText(htmlify(longName));
+                                }
+                            }
+                        };
+                        break;
+                    case BREAKPOINT:
+                        label = new PlainLabel(inspection, "") {
+                            @Override
+                            public void refresh(boolean force) {
+                                final MaxBreakpoint breakpoint = focus().breakpoint();
+                                if (breakpoint == null) {
+                                    setValue(null);
+                                    setWrappedToolTipText(htmlify("<none>"));
+                                } else {
+                                    final String longName = inspection().nameDisplay().longName(breakpoint.codeLocation());
+                                    setValue(longName);
+                                    setWrappedToolTipText(htmlify(longName));
+                                }
+                            }
+                        };
+                        break;
+                    case WATCHPOINT:
+                        label = new PlainLabel(inspection, "") {
+                            @Override
+                            public void refresh(boolean force) {
+                                final MaxWatchpoint watchpoint = focus().watchpoint();
+                                if (watchpoint == null) {
+                                    setValue(null);
+                                    setWrappedToolTipText(htmlify("<none>"));
+                                } else {
+                                    final String longName = watchpoint.toString();
+                                    setValue(longName);
+                                    setWrappedToolTipText(htmlify(longName));
+                                }
+                            }
+                        };
+                        break;
+                    case ADDRESS:
+                        label = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, FocusTable.this) {
+                            @Override
+                            public Value fetchValue() {
+                                Address address = focus().address();
+                                if (address == null) {
+                                    address = Address.zero();
+                                }
+                                return new WordValue(address);
+                            }
+                        };
+                        break;
+                    case OBJECT:
+                        label = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, FocusTable.this) {
+                            @Override
+                            public Value fetchValue() {
+                                final TeleObject teleObject = focus().heapObject();
+                                Address address = Address.zero();
+                                if (teleObject != null) {
+                                    address = teleObject.origin();
+                                }
+                                return new WordValue(address);
+                            }
+                        };
+                        break;
+                    case REGION:
+                        label = new PlainLabel(inspection, "") {
+                            @Override
+                            public void refresh(boolean force) {
+                                final MaxMemoryRegion memoryRegion = focus().memoryRegion();
+                                if (memoryRegion == null) {
+                                    setValue(null, "No memory region focus");
+                                } else {
+                                    setValue(memoryRegion.regionName(), "Memory region focus = " + memoryRegion.regionName());
+                                }
+                            }
+                        };
+                        break;
                 }
-            };
-            labels[FocusRowKind.FRAME.ordinal()] = new PlainLabel(inspection, "") {
-                @Override
-                public void refresh(boolean force) {
-                    final MaxStackFrame stackFrame = focus().stackFrame();
-                    if (stackFrame == null) {
-                        setValue(null, "No stack frame focus");
-                    } else {
-                        final MaxCompiledCode compiledCode = stackFrame.compiledCode();
-                        final String name = compiledCode == null ? "nativeMethod: 0x" + stackFrame.codeLocation().address().toHexString() : compiledCode.entityName();
-                        setValue(name, "Stack frame focus = " + name);
-                    }
-                }
-            };
-            labels[FocusRowKind.CODE.ordinal()] = new PlainLabel(inspection, "") {
-                @Override
-                public void refresh(boolean force) {
-                    final MaxCodeLocation codeLocation = focus().codeLocation();
-                    if (codeLocation == null) {
-                        setValue(null, "No code location focus");
-                    } else {
-                        final String longName = inspection().nameDisplay().longName(codeLocation);
-                        setValue(longName, "Code location focus = " + longName);
-                    }
-                }
-            };
-            labels[FocusRowKind.BREAKPOINT.ordinal()] = new PlainLabel(inspection, "") {
-                @Override
-                public void refresh(boolean force) {
-                    final MaxBreakpoint breakpoint = focus().breakpoint();
-                    if (breakpoint == null) {
-                        setValue(null, "No breakpoint focus");
-                    } else {
-                        final String longName = inspection().nameDisplay().longName(breakpoint.codeLocation());
-                        setValue(longName, "Breakpoint focus = " + longName);
-                    }
-                }
-            };
-            labels[FocusRowKind.WATCHPOINT.ordinal()] = new PlainLabel(inspection, "") {
-                @Override
-                public void refresh(boolean force) {
-                    final MaxWatchpoint watchpoint = focus().watchpoint();
-                    if (watchpoint == null) {
-                        setValue(null, "No watchpoint focus");
-                    } else {
-                        final String longName = watchpoint.toString();
-                        setValue(longName, "Watchpoint focus = " + longName);
-                    }
-                }
-            };
-            labels[FocusRowKind.ADDRESS.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, FocusTable.this) {
-                @Override
-                public Value fetchValue() {
-                    Address address = focus().address();
-                    if (address == null) {
-                        address = Address.zero();
-                    }
-                    return new WordValue(address);
-                }
-            };
-            labels[FocusRowKind.OBJECT.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, FocusTable.this) {
-                @Override
-                public Value fetchValue() {
-                    final TeleObject teleObject = focus().heapObject();
-                    Address address = Address.zero();
-                    if (teleObject != null) {
-                        address = teleObject.origin();
-                    }
-                    return new WordValue(address);
-                }
-            };
-            labels[FocusRowKind.REGION.ordinal()] = new PlainLabel(inspection, "") {
-                @Override
-                public void refresh(boolean force) {
-                    final MaxMemoryRegion memoryRegion = focus().memoryRegion();
-                    if (memoryRegion == null) {
-                        setValue(null, "No memory region focus");
-                    } else {
-                        setValue(memoryRegion.regionName(), "Memory region focus = " + memoryRegion.regionName());
-                    }
-                }
-            };
+                label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Focus = ");
+                labels[row] = label;
+            }
         }
 
         public void refresh(boolean force) {

@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins.debug;
 
@@ -179,29 +181,31 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private MaxStack stack = null;
     private InspectorPanel contentPane = null;
-    private  DefaultListModel stackFrameListModel = null;
+    private DefaultListModel stackFrameListModel = null;
     private JList stackFrameList = null;
     private JSplitPane splitPane = null;
     private JPanel nativeFrame = null;
 
     private final FrameSelectionListener frameSelectionListener = new FrameSelectionListener();
-    private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer();
+    private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer(inspection());
 
     private CompiledStackFramePanel selectedFramePanel;
 
-    private final class StackFrameListCellRenderer extends DefaultListCellRenderer {
+    private final class StackFrameListCellRenderer extends TargetCodeLabel implements ListCellRenderer {
 
-        @Override
+        StackFrameListCellRenderer(Inspection inspection) {
+            super(inspection, "");
+            setOpaque(true);
+        }
+
         public Component getListCellRendererComponent(JList list, Object value, int modelIndex, boolean isSelected, boolean cellHasFocus) {
-
             final MaxStackFrame stackFrame = (MaxStackFrame) value;
-            String name;
+            String methodName = "";
             String toolTip = null;
-            Component component;
             if (stackFrame instanceof MaxStackFrame.Compiled) {
                 final MaxCompiledCode compiledCode = stackFrame.compiledCode();
-                name = inspection().nameDisplay().veryShortName(compiledCode);
-                toolTip = inspection().nameDisplay().longName(compiledCode, stackFrame.ip());
+                methodName += inspection().nameDisplay().veryShortName(compiledCode);
+                toolTip = htmlify(inspection().nameDisplay().longName(compiledCode, stackFrame.ip()));
                 if (compiledCode != null) {
 
                     try {
@@ -209,27 +213,27 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                         try {
                             final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
                             if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
-                                name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+                                methodName += inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
                                 try {
-                                    toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+                                    toolTip += inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
                                 } catch (Exception e) {
                                     // There's corner cases where we can't obtain detailed information for the tool tip (e.g., the method we're trying to get the substitution info about
                                     //  is being constructed. Instead of propagating the exception, just use a default tool tip. [Laurent].
-                                    toolTip = inspection().nameDisplay().unavailableDataLongText();
+                                    toolTip += inspection().nameDisplay().unavailableDataLongText();
                                 }
                             }
                         } finally {
                             vm().releaseLegacyVMAccess();
                         }
                     } catch (MaxVMBusyException e) {
-                        name = inspection().nameDisplay().unavailableDataShortText();
+                        methodName += inspection().nameDisplay().unavailableDataShortText();
                         toolTip = inspection().nameDisplay().unavailableDataLongText();
                     }
                 }
             } else if (stackFrame instanceof TruncatedStackFrame) {
-                name = "*select here to extend the display*";
+                methodName += "*select here to extend the display*";
             } else if (stackFrame instanceof MaxStackFrame.Error) {
-                name = "*a stack walker error occurred*";
+                methodName += "*a stack walker error occurred*";
                 final MaxStackFrame.Error errorStackFrame = (MaxStackFrame.Error) stackFrame;
                 toolTip = errorStackFrame.errorMessage();
             } else {
@@ -238,24 +242,26 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 final MaxExternalCode externalCode = vm().codeCache().findExternalCode(instructionPointer);
                 if (externalCode != null) {
                     // native that we know something about
-                    name = inspection().nameDisplay().shortName(externalCode);
+                    methodName += inspection().nameDisplay().shortName(externalCode);
                     toolTip = inspection().nameDisplay().longName(externalCode);
                 } else {
-                    name = "nativeMethod:0x" + instructionPointer.toHexString();
+                    methodName += "nativeMethod:" + instructionPointer.to0xHexString();
                     toolTip = "nativeMethod";
                 }
             }
-            toolTip = "Stack " + modelIndex + ":  " + toolTip;
-            setToolTipText(toolTip);
-            component = super.getListCellRendererComponent(list, name, modelIndex, isSelected, cellHasFocus);
             if (modelIndex == 0) {
-                component.setForeground(style().wordCallEntryPointColor());
+                setToolTipPrefix("IP in frame " + modelIndex + " points at:<br>");
+                setForeground(style().wordCallEntryPointColor());
             } else {
-                component.setForeground(style().wordCallReturnPointColor());
+                setToolTipPrefix("call return in frame " + modelIndex + " points at:<br>");
+                setForeground(style().wordCallReturnPointColor());
             }
-            component.setFont(style().defaultFont());
-            return component;
+            setText(Integer.toString(modelIndex) + ":  " + methodName);
+            setWrappedToolTipText(toolTip);
+            setFont(style().defaultFont());
+            return this;
         }
+
     }
 
     /**
@@ -359,10 +365,19 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             stackFrameList.setCellRenderer(stackFrameListCellRenderer);
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
-            header.add(new TextLabel(inspection(), "start: "));
-            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stack.memoryRegion().start(), contentPane));
-            header.add(new TextLabel(inspection(), "size: "));
-            header.add(new DataLabel.IntAsDecimal(inspection(), stack.memoryRegion().size().toInt()));
+            final TextLabel stackStartLabel = new TextLabel(inspection(), "start: ");
+            stackStartLabel.setToolTipText("Stack memory start location");
+            header.add(stackStartLabel);
+            final WordValueLabel stackStartValueLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stack.memoryRegion().start(), contentPane);
+            stackStartValueLabel.setToolTipPrefix("Stack memory start @ ");
+            header.add(stackStartValueLabel);
+            final TextLabel stackSizeLabel = new TextLabel(inspection(), "size: ");
+            stackSizeLabel.setToolTipText("Stack size");
+            header.add(stackSizeLabel);
+            final DataLabel.IntAsDecimal stackSizeValueLabel = new DataLabel.IntAsDecimal(inspection());
+            stackSizeValueLabel.setToolTipPrefix("Stack size ");
+            stackSizeValueLabel.setValue(stack.memoryRegion().size().toInt());
+            header.add(stackSizeValueLabel);
             SpringUtilities.makeCompactGrid(header, 2);
             contentPane.add(header, BorderLayout.NORTH);
 
@@ -374,7 +389,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    switch(Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                    switch(inspection().gui().getButton(mouseEvent)) {
                         case MouseEvent.BUTTON3:
                             int index = stackFrameList.locationToIndex(mouseEvent.getPoint());
                             if (index >= 0 && index < stackFrameList.getModel().getSize()) {

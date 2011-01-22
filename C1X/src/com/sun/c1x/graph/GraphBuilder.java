@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.c1x.graph;
 
@@ -823,14 +825,16 @@ public final class GraphBuilder {
     }
 
     void genGetField(int cpi, RiField field) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        // Must copy the state here, because the field holder must still be on the stack.
+        FrameState stateBefore = curState.immutableCopy(bci());
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
         LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded);
         appendOptimizedLoadField(field.kind(), load);
     }
 
     void genPutField(int cpi, RiField field) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        // Must copy the state here, because the field holder must still be on the stack.
+        FrameState stateBefore = curState.immutableCopy(bci());
         boolean isLoaded = !C1XOptions.TestPatching && field.isResolved();
         Value value = pop(field.kind().stackKind());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded));
@@ -1248,8 +1252,10 @@ public final class GraphBuilder {
             lockAddress = new MonitorAddress(lockNumber);
             append(lockAddress);
         }
-        appendWithoutOptimization(new MonitorEnter(x, lockAddress, lockNumber, null), bci);
+        MonitorEnter monitorEnter = new MonitorEnter(x, lockAddress, lockNumber, null);
+        appendWithoutOptimization(monitorEnter, bci);
         curState.lock(scope(), x, lockNumber + 1);
+        monitorEnter.setStateAfter(curState.immutableCopy(bci));
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
@@ -1418,7 +1424,7 @@ public final class GraphBuilder {
 
         if (x instanceof StateSplit) {
             StateSplit stateSplit = (StateSplit) x;
-            if (!stateSplit.isStateCleared()) {
+            if (!stateSplit.isStateCleared() && stateSplit.stateBefore() == null) {
                 stateSplit.setStateBefore(curState.immutableCopy(bci));
             }
         }
@@ -1435,21 +1441,25 @@ public final class GraphBuilder {
         return x instanceof Invoke || x instanceof Intrinsic && !((Intrinsic) x).preservesState() || x instanceof ResolveClass;
     }
 
-    private BlockBegin blockAt(int bci) {
+    private BlockBegin blockAtOrNull(int bci) {
         return scopeData.blockAt(bci);
+    }
+
+    private BlockBegin blockAt(int bci) {
+        BlockBegin result = blockAtOrNull(bci);
+        assert result != null : "Expected a block to begin at " + bci;
+        return result;
     }
 
     boolean tryInlineJsr(int jsrStart) {
         // start a new continuation point.
         // all ret instructions will be replaced with gotos to this point
         BlockBegin cont = blockAt(nextBCI());
-        assert cont != null : "continuation must exist";
 
         // push callee scope
         pushScopeForJsr(cont, jsrStart);
 
         BlockBegin jsrStartBlock = blockAt(jsrStart);
-        assert jsrStartBlock != null;
         assert !jsrStartBlock.wasVisited();
         Goto gotoSub = new Goto(jsrStartBlock, null, false);
         gotoSub.setStateAfter(curState.immutableCopy(bci()));
@@ -1702,7 +1712,7 @@ public final class GraphBuilder {
 
         // Introduce a new callee continuation point. All return instructions
         // in the callee will be transformed to Goto's to the continuation
-        BlockBegin continuationBlock = blockAt(nextBCI());
+        BlockBegin continuationBlock = blockAtOrNull(nextBCI());
         boolean continuationExisted = true;
         if (continuationBlock == null) {
             // there was not already a block starting at the next BCI
@@ -1978,7 +1988,7 @@ public final class GraphBuilder {
         boolean blockStart = true;
 
         while (bci < endBCI) {
-            BlockBegin nextBlock = blockAt(bci);
+            BlockBegin nextBlock = blockAtOrNull(bci);
             if (bci == 0 && inliningIntoCurrentBlock) {
                 if (!nextBlock.isParserLoopHeader()) {
                     // Ignore the block boundary of the entry block of a method

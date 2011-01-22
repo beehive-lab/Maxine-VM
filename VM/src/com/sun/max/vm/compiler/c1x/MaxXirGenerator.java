@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.vm.compiler.c1x;
 
@@ -84,8 +86,8 @@ public class MaxXirGenerator implements RiXirGenerator {
     private static final int MAX_MULTIANEWARRAY_RANK = 6;
 
     static class XirPair {
-        final XirTemplate resolved;
-        final XirTemplate unresolved;
+        public final XirTemplate resolved;
+        public final XirTemplate unresolved;
 
         XirPair(XirTemplate resolved, XirTemplate unresolved) {
             this.resolved = resolved;
@@ -102,8 +104,8 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
     }
 
-    static class InvokeSpecialTemplates extends XirPair {
-        final XirTemplate resolvedNullCheckEliminated;
+    public static class InvokeSpecialTemplates extends XirPair {
+        public final XirTemplate resolvedNullCheckEliminated;
 
         public InvokeSpecialTemplates(XirTemplate resolved, XirTemplate unresolved, XirTemplate resolvedNullCheckEliminated) {
             super(resolved, unresolved);
@@ -126,7 +128,11 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirPair invokeStaticTemplates;
     private XirPair[] newArrayTemplates;
     private XirTemplate[] arrayLoadTemplates;
+    private XirTemplate[] arrayLoadNoBoundsCheckTemplates;
     private XirTemplate[] arrayStoreTemplates;
+    private XirTemplate[] arrayStoreNoBoundsCheckTemplates;
+    private XirTemplate arrayStoreNoStoreCheckTemplate;
+    private XirTemplate arrayStoreNoBoundsOrStoreCheckTemplate;
 
     private DynamicHub[] arrayHubs;
 
@@ -172,7 +178,13 @@ public class MaxXirGenerator implements RiXirGenerator {
     public MaxXirGenerator() {
     }
 
-    private CiXirAssembler asm;
+    private static Class<? extends RuntimeCalls> runtimeCalls = RuntimeCalls.class;
+
+    protected static void setRuntimeCalls(Class<? extends RuntimeCalls> rtc) {
+        runtimeCalls = rtc;
+    }
+
+    protected CiXirAssembler asm;
 
     @Override
     public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
@@ -190,6 +202,10 @@ public class MaxXirGenerator implements RiXirGenerator {
         newArrayTemplates = new XirPair[kinds.length];
         arrayLoadTemplates = new XirTemplate[kinds.length];
         arrayStoreTemplates = new XirTemplate[kinds.length];
+        arrayLoadNoBoundsCheckTemplates = new XirTemplate[kinds.length];
+        arrayStoreNoBoundsCheckTemplates = new XirTemplate[kinds.length];
+        arrayStoreNoBoundsOrStoreCheckTemplate = buildArrayStore(CiKind.Object, asm, false, false, true);
+        arrayStoreNoStoreCheckTemplate = buildArrayStore(CiKind.Object, asm, true, false, true);
 
         arrayHubs = new DynamicHub[kinds.length];
 
@@ -210,12 +226,14 @@ public class MaxXirGenerator implements RiXirGenerator {
                 continue;
             }
             if (kind != CiKind.Void) {
-                putFieldTemplates[index] = buildPutFieldTemplate(kind, kind == CiKind.Object, false);
-                getFieldTemplates[index] = buildGetFieldTemplate(kind, false);
-                putStaticFieldTemplates[index] = buildPutFieldTemplate(kind, kind == CiKind.Object, true);
-                getStaticFieldTemplates[index] = buildGetFieldTemplate(kind, true);
+                putFieldTemplates[index] = buildPutFieldTemplates(kind, kind == CiKind.Object, false);
+                getFieldTemplates[index] = buildGetFieldTemplates(kind, false);
+                putStaticFieldTemplates[index] = buildPutFieldTemplates(kind, kind == CiKind.Object, true);
+                getStaticFieldTemplates[index] = buildGetFieldTemplates(kind, true);
                 arrayLoadTemplates[index] = buildArrayLoad(kind, asm, true);
+                arrayLoadNoBoundsCheckTemplates[index] = buildArrayLoad(kind, asm, false);
                 arrayStoreTemplates[index] = buildArrayStore(kind, asm, true, kind == CiKind.Object, kind == CiKind.Object);
+                arrayStoreNoBoundsCheckTemplates[index] = buildArrayStore(kind, asm, false, kind == CiKind.Object, kind == CiKind.Object);
                 newArrayTemplates[index] = buildNewArray(kind);
             }
         }
@@ -515,13 +533,35 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genArrayLoad(XirSite site, XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType) {
-        XirTemplate template = arrayLoadTemplates[elementKind.ordinal()];
+        XirTemplate template;
+        if (site.requiresBoundsCheck()) {
+            template = arrayLoadTemplates[elementKind.ordinal()];
+        } else {
+            template = arrayLoadNoBoundsCheckTemplates[elementKind.ordinal()];
+        }
         return new XirSnippet(template, array, index);
     }
 
     @Override
     public XirSnippet genArrayStore(XirSite site, XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType) {
-        XirTemplate template = arrayStoreTemplates[elementKind.ordinal()];
+        XirTemplate template;
+        if (elementKind.isObject()) {
+            if (site.requiresBoundsCheck() && site.requiresArrayStoreCheck()) {
+                template = arrayStoreTemplates[CiKind.Object.ordinal()];
+            } else if (site.requiresArrayStoreCheck()) {
+                // no bounds check
+                template = arrayStoreNoBoundsCheckTemplates[CiKind.Object.ordinal()];
+            } else if (site.requiresBoundsCheck()) {
+                // no store check
+                template = arrayStoreNoStoreCheckTemplate;
+            } else {
+                template = arrayStoreNoBoundsOrStoreCheckTemplate;
+            }
+        } else if (site.requiresBoundsCheck()) {
+            template = arrayStoreTemplates[elementKind.ordinal()];
+        } else {
+            template = arrayStoreNoBoundsCheckTemplates[elementKind.ordinal()];
+        }
         return new XirSnippet(template, array, index, value);
     }
 
@@ -540,7 +580,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         return makeResolutionGuard(f.constantPool, f.cpi, snippet);
     }
 
-    private ResolutionGuard guardFor(RiMethod unresolvedMethod, ResolutionSnippet snippet) {
+    protected ResolutionGuard guardFor(RiMethod unresolvedMethod, ResolutionSnippet snippet) {
         UnresolvedMethod m = (UnresolvedMethod) unresolvedMethod;
         return makeResolutionGuard(m.constantPool, m.cpi, snippet);
     }
@@ -609,7 +649,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private XirTemplate buildArrayStore(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck, boolean genStoreCheck, boolean genWriteBarrier) {
+    protected XirTemplate buildArrayStore(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck, boolean genStoreCheck, boolean genWriteBarrier) {
         asm.restart(CiKind.Void);
         XirParameter array = asm.createInputParameter("array", CiKind.Object);
         XirParameter index = asm.createInputParameter("index", CiKind.Int);
@@ -656,7 +696,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private XirTemplate buildArrayLoad(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck) {
+    protected XirTemplate buildArrayLoad(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck) {
         XirOperand result = asm.restart(kind);
         XirParameter array = asm.createInputParameter("array", CiKind.Object);
         XirParameter index = asm.createInputParameter("index", CiKind.Int);
@@ -944,10 +984,14 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private XirPair buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier, boolean isStatic) {
-        XirTemplate resolved;
-        XirTemplate unresolved;
-        {
+    protected XirPair buildPutFieldTemplates(CiKind kind, boolean genWriteBarrier, boolean isStatic) {
+        return new XirPair(buildPutFieldTemplate(kind, genWriteBarrier, isStatic, true), buildPutFieldTemplate(kind, genWriteBarrier, isStatic, false));
+    }
+
+    @HOSTED_ONLY
+    protected XirTemplate buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier, boolean isStatic, boolean resolved) {
+        XirTemplate xirTemplate;
+        if (resolved) {
             // resolved case
             asm.restart(CiKind.Void);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
@@ -957,8 +1001,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 addWriteBarrier(asm, object, value);
             }
-            resolved = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">");
-        } {
+            xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">");
+        } else {
             // unresolved case
             asm.restart(CiKind.Void);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
@@ -974,24 +1018,27 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 addWriteBarrier(asm, object, value);
             }
-            unresolved = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
+            xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
-        return new XirPair(resolved, unresolved);
+        return xirTemplate;
     }
 
     @HOSTED_ONLY
-    private XirPair buildGetFieldTemplate(CiKind kind, boolean isStatic) {
-        XirTemplate resolved;
-        XirTemplate unresolved;
-        {
+    protected XirPair buildGetFieldTemplates(CiKind kind, boolean isStatic) {
+        return new XirPair(buildGetFieldTemplate(kind, isStatic, true), buildGetFieldTemplate(kind, isStatic, false));
+    }
+
+    @HOSTED_ONLY
+    protected XirTemplate buildGetFieldTemplate(CiKind kind, boolean isStatic, boolean resolved) {
+        XirTemplate xirTemplate;
+        if (resolved) {
             // resolved case
             XirOperand result = asm.restart(kind);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter fieldOffset = asm.createConstantInputParameter("fieldOffset", CiKind.Int);
             asm.pload(kind, result, object, fieldOffset, true);
-            resolved = finishTemplate(asm, "getfield<" + kind + ">");
-        }
-        {
+            xirTemplate = finishTemplate(asm, "getfield<" + kind + ">");
+        } else {
             // unresolved case
             XirOperand result = asm.restart(kind);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
@@ -1003,9 +1050,9 @@ public class MaxXirGenerator implements RiXirGenerator {
                 callRuntimeThroughStub(asm, "resolveGetField", fieldOffset, guard);
             }
             asm.pload(kind, result, object, fieldOffset, true);
-            unresolved = finishTemplate(asm, "getfield<" + kind + ">-unresolved");
+            xirTemplate = finishTemplate(asm, "getfield<" + kind + ">-unresolved");
         }
-        return new XirPair(resolved, unresolved);
+        return xirTemplate;
     }
 
     @HOSTED_ONLY
@@ -1225,7 +1272,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {
+    protected XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {
         final XirTemplate template = asm.finishTemplate(result, name);
         if (C1XOptions.PrintXirTemplates) {
             template.print(Log.out);
@@ -1233,7 +1280,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         return template;
     }
 
-    private XirTemplate finishTemplate(CiXirAssembler asm, String name) {
+    protected XirTemplate finishTemplate(CiXirAssembler asm, String name) {
         final XirTemplate template = asm.finishTemplate(name);
         if (C1XOptions.PrintXirTemplates) {
             template.print(Log.out);
@@ -1246,11 +1293,11 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private void callRuntimeThroughStub(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
+    protected void callRuntimeThroughStub(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
         XirTemplate stub = runtimeCallStubs.get(method);
         if (stub == null) {
             // search for the runtime call and create the stub
-            for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
+            for (Method m : runtimeCalls.getMethods()) {
                 int flags = m.getModifiers();
                 if (Modifier.isStatic(flags) && Modifier.isPublic(flags) && m.getName().equals(method)) {
                     // runtime call found. create a global stub that calls the runtime method
@@ -1297,7 +1344,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         RiMethod rtMethod = runtimeMethods.get(method);
         if (rtMethod == null) {
             // search for the runtime call and create the stub
-            for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
+            for (Method m : runtimeCalls.getMethods()) {
                 int flags = m.getModifiers();
                 if (Modifier.isStatic(flags) && Modifier.isPublic(flags) && m.getName().equals(method)) {
                     // runtime call found. create a global stub that calls the runtime method
