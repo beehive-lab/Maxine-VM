@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.tele.object;
 
@@ -108,6 +110,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
     private final Map<Class, Constructor> classToTeleTupleObjectConstructor = new HashMap<Class, Constructor>();
 
     private final Object statsPrinter = new Object() {
+        private int previousTeleObjectCount = 0;
+
         @Override
         public String toString() {
             final int currentTeleObjectCount = referenceToTeleObject.size();
@@ -118,6 +122,11 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
             return msg.toString();
         }
     };
+
+    /**
+     * The number of references in the table that point to an object.
+     */
+    private int liveObjectCount = 0;
 
     private TeleObjectFactory(TeleVM teleVM, long processEpoch) {
         super(teleVM);
@@ -188,6 +197,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         updateTracer.begin();
         assert vm().lockHeldByCurrentThread();
         TimerPerType timePerType = new TimerPerType();
+        liveObjectCount = 0;
 
         // Make a copy to prevent ConcurrentModificationExceptions while iterating
         ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
@@ -195,6 +205,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
             if (teleObjectRef != null) {
                 TeleObject teleObject = teleObjectRef.get();
                 if (teleObject != null) {
+                    liveObjectCount++;
                     Class type = teleObject.getClass();
                     long[] time = timePerType.get(type);
                     long s = System.currentTimeMillis();
@@ -212,6 +223,20 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
                 Trace.line(TRACE_VALUE, "Excessive refresh time for " + entry.getKey() + ": " + time + "ms");
             }
         }
+    }
+
+    /**
+     * @return the number of {@linkplain Reference references} in the table.
+     */
+    public int referenceCount() {
+        return referenceToTeleObject.size();
+    }
+
+    /**
+     * @return the number of {@linkplain Reference references} in the table that point to live objects.
+     */
+    public int liveObjectCount() {
+        return liveObjectCount;
     }
 
     private Constructor getConstructor(Class clazz) {
@@ -284,7 +309,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
             // meta-information necessary to understanding how to access information in the object.
             hubReference = vm().wordToReference(Layout.readHubReferenceAsWord(reference));
             classActorReference = vm().teleFields().Hub_classActor.readReference(hubReference);
-            classActor = vm().makeClassActor(classActorReference);
+            classActor = vm().classRegistry().makeClassActor(classActorReference);
         } catch (InvalidReferenceException invalidReferenceException) {
             Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
                             " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
@@ -295,7 +320,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         // Must check for the static tuple case first; it doesn't follow the usual rules
         final Reference hubhubReference = vm().wordToReference(Layout.readHubReferenceAsWord(hubReference));
         final Reference hubClassActorReference = vm().teleFields().Hub_classActor.readReference(hubhubReference);
-        final ClassActor hubClassActor = vm().makeClassActor(hubClassActorReference);
+        final ClassActor hubClassActor = vm().classRegistry().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
             //teleObject = new TeleStaticTuple(teleVM(), reference);       ?????????
@@ -376,8 +401,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         WeakReference<TeleObject> teleObject = oidToTeleObject.get(id);
         return teleObject == null ? null : teleObject.get();
     }
-
-    private int previousTeleObjectCount = 0;
 
     static class MutableLong {
         long value;

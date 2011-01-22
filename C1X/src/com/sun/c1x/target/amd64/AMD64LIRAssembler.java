@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.c1x.target.amd64;
 
@@ -40,6 +42,7 @@ import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
 import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
@@ -162,6 +165,13 @@ public class AMD64LIRAssembler extends LIRAssembler {
             }
         } else {
             masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
+        }
+    }
+
+    @Override
+    public void emitTraps() {
+        for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
+            masm.int3();
         }
     }
 
@@ -497,6 +507,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
             case L2I:
                 moveRegs(srcRegister, dest.asRegister());
+                masm.andl(dest.asRegister(), 0xFFFFFFFF);
                 break;
 
             case I2B:
@@ -534,7 +545,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 masm.cvttss2sil(dest.asRegister(), srcRegister);
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
@@ -544,7 +555,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 masm.cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
@@ -563,7 +574,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 masm.mov64(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
                 break;
             }
@@ -574,7 +585,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 masm.mov64(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
-                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
                 break;
             }
@@ -1370,14 +1381,14 @@ public class AMD64LIRAssembler extends LIRAssembler {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
-            masm.callGlobalStub(op.globalStub, null, asXmmFloatReg(dest), asXmmFloatReg(dest));
+            masm.callGlobalStub(op.globalStub, null, asXmmFloatReg(dest), dest);
 
         } else if (dest.kind.isDouble()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
 
-            masm.callGlobalStub(op.globalStub, null, asXmmDoubleReg(dest), asXmmDoubleReg(dest));
+            masm.callGlobalStub(op.globalStub, null, asXmmDoubleReg(dest), dest);
         } else {
             CiRegister lreg = left.asRegister();
             CiRegister dreg = dest.asRegister();
@@ -1476,6 +1487,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
     public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, CiValue[] operands, Map<XirMark, Mark> marks) {
         LIRDebugInfo info = xir == null ? null : xir.info;
+        LIRDebugInfo infoAfter = xir == null ? null : xir.infoAfter;
 
         for (XirInstruction inst : instructions) {
             switch (inst.op) {
@@ -1490,8 +1502,9 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case Div:
                     if (inst.kind == CiKind.Int) {
                         arithmeticIdiv(LIROpcode.Idiv, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
+                    } else {
+                        emitArithOp(LIROpcode.Div, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     }
-                    emitArithOp(LIROpcode.Div, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     break;
 
                 case Mul:
@@ -1563,6 +1576,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
                 case PointerLoadDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
+                    boolean canTrap = addressInformation.canTrap;
 
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
@@ -1583,7 +1597,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         src = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(src, result, inst.kind, info, false);
+                    moveOp(src, result, inst.kind, (canTrap) ? info : null, false);
                     break;
                 }
 
@@ -1606,6 +1620,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
 
                 case PointerStoreDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
+                    boolean canTrap = addressInformation.canTrap;
 
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
@@ -1626,7 +1641,7 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         dst = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
 
-                    moveOp(value, dst, inst.kind, info, false);
+                    moveOp(value, dst, inst.kind, (canTrap) ? info : null, false);
                     break;
                 }
 
@@ -1639,9 +1654,9 @@ public class AMD64LIRAssembler extends LIRAssembler {
                     if (inst.result != null) {
                         result = operands[inst.result.index].asRegister();
                     }
-                    Object[] args = new Object[inst.arguments.length];
+                    CiValue[] args = new CiValue[inst.arguments.length];
                     for (int i = 0; i < args.length; i++) {
-                        args[i] = asRegisterOrConstant(operands[inst.arguments[i].index]);
+                        args[i] = operands[inst.arguments[i].index];
                     }
                     masm.callGlobalStub(stubId, info, result, args);
                     break;
@@ -1661,7 +1676,8 @@ public class AMD64LIRAssembler extends LIRAssembler {
                         }
                     }
 
-                    masm.directCall(inst.extra, info);
+                    RuntimeCallInformation runtimeCallInformation = (RuntimeCallInformation) inst.extra;
+                    masm.directCall(runtimeCallInformation.target, (runtimeCallInformation.useInfoAfter) ? infoAfter : info);
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.registerConfig.getReturnRegister(inst.result.kind);
@@ -1756,6 +1772,12 @@ public class AMD64LIRAssembler extends LIRAssembler {
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
                     masm.decrementq(AMD64.rsp, frameSize); // does not emit code for frameSize == 0
+                    if (C1XOptions.ZapStackOnMethodEntry) {
+                        final int intSize = 4;
+                        for (int i = 0; i < frameSize / intSize; ++i) {
+                            masm.movl(new CiAddress(CiKind.Int, AMD64.rsp.asValue(), i * intSize), 0xC1C1C1C1);
+                        }
+                    }
                     CiCalleeSaveArea csa = compilation.registerConfig.getCalleeSaveArea();
                     if (csa.size != 0) {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();

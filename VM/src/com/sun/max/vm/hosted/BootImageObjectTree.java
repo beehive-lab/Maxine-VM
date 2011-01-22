@@ -1,27 +1,38 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.vm.hosted;
 
+import java.awt.Color;
+import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+
+import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+
+import javax.swing.*;
+import javax.swing.tree.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -36,6 +47,7 @@ import com.sun.max.vm.object.*;
  * causality spanning-tree of the object graph in an {@linkplain BootImageGenerator image}.
  *
  * @author Doug Simon
+ * @author Michael Haupt
  */
 public final class BootImageObjectTree {
 
@@ -225,6 +237,28 @@ public final class BootImageObjectTree {
             }
             return sb.toString();
         }
+
+        /**
+         * Create a piece of GUI tree for this node and all of its children.
+         * @param radix the number radix for representing addresses
+         * @param relocation a value to add to addresses for relocation
+         * @return a JTree instance representing the object tree starting at this node
+         */
+        public DefaultMutableTreeNode buildTree(int radix, long relocation) {
+            if (++btc % 100000 == 0) {
+                Trace.line(1, "node: " + btc);
+            }
+            DefaultMutableTreeNode n = new DefaultMutableTreeNode(this.toString(radix, relocation));
+            addressToNodeMap().put(address, n);
+            if (children != null) {
+                for (Node child : children) {
+                    n.add(child.buildTree(radix, relocation));
+                }
+            }
+            return n;
+        }
+
+        private static int btc = 0;
     }
 
     /**
@@ -418,6 +452,8 @@ public final class BootImageObjectTree {
            "show lines (instead of indentation only) to indicate relationships between nodes");
     private static final Option<Boolean> HELP = options.newBooleanOption("help", false,
            "show help message and exits.");
+    private static final Option<Boolean> GUI = options.newBooleanOption("view", false,
+            "view the object tree graphically instead of generating text");
 
     /**
      * Gets the default file name to which to output the image object tree.
@@ -452,22 +488,6 @@ public final class BootImageObjectTree {
         final Set<Node> roots = loadTree(dataInputStream);
         inputStream.close();
 
-        final File outputFile = OUTPUT_FILE.getValue();
-        final Writer writer = new FileWriter(outputFile);
-        final PrintWriter printWriter = new PrintWriter(new BufferedWriter(writer)) {
-
-            private int counter;
-
-            @Override
-            public void println(String s) {
-                if (++counter % 100000 == 0) {
-                    Trace.line(1, "node: " + counter);
-                }
-                super.println(s);
-            }
-
-        };
-
         if (FILTER.getValue() != null) {
             final String filter = FILTER.getValue();
             final Set<Node> prunedRoots = new HashSet<Node>(roots.size());
@@ -484,6 +504,147 @@ public final class BootImageObjectTree {
             roots.clear();
             roots.addAll(prunedRoots);
         }
+
+        if (GUI.getValue()) {
+            viewInGUI(roots);
+        } else {
+            writeOutputFile(roots);
+        }
+
+    }
+
+    /**
+     * Create and show a GUI for viewing the object tree.
+     */
+    private static void viewInGUI(final Set<Node> roots) {
+        // build tree and make the root objects shown
+        DefaultMutableTreeNode treeRoot = new DefaultMutableTreeNode("roots");
+        final JTree tree = new JTree(treeRoot);
+        for (Node root : roots) {
+            treeRoot.add(root.buildTree(RADIX.getValue(), RELOC.getValue()));
+        }
+        tree.expandRow(0);
+        tree.expandRow(1);
+        // open GUI
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                JFrame frame = new JFrame("Object Tree");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.add(new ObjectTreeView(tree));
+                frame.setBounds(GraphicsEnvironment.
+                                getLocalGraphicsEnvironment().
+                                getDefaultScreenDevice().
+                                getDefaultConfiguration().
+                                getBounds());
+                frame.setVisible(true);
+            }
+        });
+    }
+
+    private static HashMap<Integer, DefaultMutableTreeNode> addressToNode;
+
+    private static HashMap<Integer, DefaultMutableTreeNode> addressToNodeMap() {
+        if (addressToNode == null) {
+            addressToNode = new HashMap<Integer, DefaultMutableTreeNode>();
+        }
+        return addressToNode;
+    }
+
+    /**
+     * GUI class.
+     */
+    private static class ObjectTreeView extends JPanel {
+        ObjectTreeView(final JTree tree) {
+            setLayout(new GridBagLayout());
+            GridBagConstraints c = new GridBagConstraints();
+            c.gridwidth = GridBagConstraints.REMAINDER;
+            // navigation controls
+            JPanel navigation = new JPanel();
+            navigation.setLayout(new BoxLayout(navigation, BoxLayout.X_AXIS));
+            navigation.add(new JLabel("object address (decimal or 0x... hexadecimal): "));
+            final JTextField addressField = new JTextField(10);
+            navigation.add(addressField);
+            navigation.add(new JButton(new AbstractAction("navigate to object") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    addressField.setBackground(Color.WHITE);
+                    int address = 0;
+                    boolean error = false;
+                    try {
+                        if (addressField.getText().startsWith("0x")) {
+                            address = Integer.parseInt(addressField.getText().substring(2), 16);
+                        } else {
+                            address = Integer.parseInt(addressField.getText());
+                        }
+                    } catch (NumberFormatException nfe) {
+                        error = true;
+                    }
+                    TreeNode node = null;
+                    if (!error) {
+                        node = addressToNodeMap().get(address);
+                        if (node == null) {
+                            error = true;
+                        }
+                    }
+                    if (!error) {
+                        Vector<TreeNode> path = new Vector<TreeNode>();
+                        path.add(node);
+                        do {
+                            node = node.getParent();
+                            path.add(0, node);
+                        } while (node.getParent() != null);
+                        TreePath treePath = new TreePath(path.toArray());
+                        tree.setSelectionPath(treePath);
+                    } else {
+                        addressField.setBackground(Color.RED);
+                    }
+                }
+            }));
+            // control for resetting tree (back to start view)
+            navigation.add(new JSeparator(SwingConstants.VERTICAL));
+            navigation.add(new JButton(new AbstractAction("reset tree view") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    for (int i = 2; i < tree.getRowCount(); i++) {
+                        tree.collapseRow(i);
+                    }
+                    tree.expandRow(0);
+                    tree.expandRow(1);
+                    tree.setSelectionPath(null);
+                }
+            }));
+            // assemble
+            c.fill = GridBagConstraints.HORIZONTAL;
+            add(navigation, c);
+            c.fill = GridBagConstraints.BOTH;
+            c.weightx = 1.0;
+            c.weighty = 1.0;
+            add(new JScrollPane(tree), c);
+        }
+    }
+
+    /**
+     * Write the object tree to a file.
+     *
+     * @param roots
+     * @throws IOException
+     */
+    private static void writeOutputFile(final Set<Node> roots) throws IOException {
+        final File outputFile = OUTPUT_FILE.getValue();
+        final Writer writer = new FileWriter(outputFile);
+        final PrintWriter printWriter = new PrintWriter(new BufferedWriter(writer)) {
+
+            private int counter;
+
+            @Override
+            public void println(String s) {
+                if (++counter % 100000 == 0) {
+                    Trace.line(1, "node: " + counter);
+                }
+                super.println(s);
+            }
+
+        };
 
         Trace.begin(1, "writing boot image object tree text file: " + outputFile.getAbsolutePath());
         for (final Iterator<Node> iterator = roots.iterator(); iterator.hasNext();) {

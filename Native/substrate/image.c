@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 /**
  * @author Bernd Mathiske
@@ -44,12 +46,15 @@
 #define MIN_CACHE_ALIGNMENT 8
 
 #define IMAGE_IDENTIFICATION             0xcafe4dad
-#define IMAGE_VERSION                    1
+/*
+ * Image format version checked against com.sun.max.vm.hosted.BootImage.BOOT_IMAGE_FORMAT_VERSION
+ */
+#define IMAGE_FORMAT_VERSION                    2
 #define DEFAULT_RELOCATION_SCHEME        0
 
-#if os_GUESTVMXEN
+#if os_MAXVE
 #define MEMORY_IMAGE 1
-#include <guestvmXen.h>
+#include <maxve.h>
 #include <string.h>
 #else
 #define MEMORY_IMAGE 0
@@ -182,7 +187,7 @@ static void readStringInfo(int fd) {
         log_exit(2, "could not read string info");
     }
 #else
-    keyValueCount = *((int *) &maxvm_image_start + sizeof(struct image_Header));
+    keyValueCount = *((int *) ((char *) &maxvm_image_start + sizeof(struct image_Header)));
     keyValueData = ((char *) &maxvm_image_start + sizeof(struct image_Header) + 4);
 #endif
 #if log_LOADER
@@ -224,8 +229,8 @@ static void checkImage(void) {
     if (theHeader->identification != (jint) IMAGE_IDENTIFICATION) {
         log_exit(2, "not a valid Maxine VM boot image file");
     }
-    if (theHeader->version != IMAGE_VERSION) {
-        log_exit(2, "wrong image format version - expected: %d, found: %d", IMAGE_VERSION, theHeader->version);
+    if (theHeader->bootImageFormatVersion != IMAGE_FORMAT_VERSION) {
+        log_exit(2, "wrong image format version - expected: %d, found: %d", IMAGE_FORMAT_VERSION, theHeader->bootImageFormatVersion);
     }
     if ((theHeader->wordSize == 8) != word_64_BITS) {
         log_exit(2, "image has wrong word size - expected: %d bits, found: %d bits", word_64_BITS ? 64 : 32, theHeader->wordSize * 8);
@@ -275,7 +280,7 @@ static void checkTrailer(int fd) {
     trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_start) + trailerOffset);
 #endif
 
-    if (trailerStructPtr->identification != theHeader->identification || trailerStructPtr->version != theHeader->version || trailerStructPtr->randomID != theHeader->randomID) {
+    if (trailerStructPtr->identification != theHeader->identification || trailerStructPtr->bootImageFormatVersion != theHeader->bootImageFormatVersion || trailerStructPtr->randomID != theHeader->randomID) {
         log_println("inconsistent trailer");
 #if !MEMORY_IMAGE
         offset = lseek(fd, -sizeof(trailerStruct), SEEK_END);
@@ -289,7 +294,7 @@ static void checkTrailer(int fd) {
 #else
         trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_end) - sizeof(trailerStruct));
 #endif
-        if (trailerStructPtr->identification == theHeader->identification && trailerStructPtr->version == theHeader->version && trailerStructPtr->randomID == theHeader->randomID) {
+        if (trailerStructPtr->identification == theHeader->identification && trailerStructPtr->bootImageFormatVersion == theHeader->bootImageFormatVersion && trailerStructPtr->randomID == theHeader->randomID) {
             log_println("FYI, found valid trailer at end of file");
         }
         exit(2);
@@ -347,9 +352,9 @@ static void mapHeapAndCode(int fd) {
 #else
     c_UNIMPLEMENTED();
 #endif
-#if os_GUESTVMXEN
+#if os_MAXVE
     // boot heap and code must be mapped together (the method offsets in boot image are relative to heap base)
-    theHeap = guestvmXen_remap_boot_code_region(theHeap, heapAndCodeSize);
+    theHeap = maxve_remap_boot_code_region(theHeap, heapAndCodeSize);
 #endif
 #if log_LOADER
     log_println("boot heap mapped at %p", theHeap);

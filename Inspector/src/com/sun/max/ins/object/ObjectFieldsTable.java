@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins.object;
 
@@ -49,6 +51,11 @@ import com.sun.max.vm.value.*;
  */
 public final class ObjectFieldsTable extends InspectorTable {
 
+    /**
+     * information prefix to identify the kind of field, e.g. "Hub" or "Object"
+     */
+    private final String fieldKindPrefix;
+
     private final TeleObject teleObject;
     private final FieldActor[] fieldActors;
     private final boolean isTeleActor;
@@ -64,13 +71,17 @@ public final class ObjectFieldsTable extends InspectorTable {
     private final ObjectViewPreferences instanceViewPreferences;
 
     /**
-     * A {@link JTable} specialized to display object fields.
+     * A table specialized to display object fields.
      *
-     * @param objectInspector parent that contains this panel
+     * @param inspection
+     * @param fieldKindPrefix information prefix to identify the kind of field, e.g. "Hub" or "Object"
+     * @param teleObject the VM object that holds the fields
      * @param fieldActors description of the fields to be displayed
+     * @param instanceViewPreferences
      */
-    public ObjectFieldsTable(Inspection inspection, TeleObject teleObject, Collection<FieldActor> fieldActors, ObjectViewPreferences instanceViewPreferences) {
+    public ObjectFieldsTable(Inspection inspection, String fieldKindPrefix, TeleObject teleObject, Collection<FieldActor> fieldActors, ObjectViewPreferences instanceViewPreferences) {
         super(inspection);
+        this.fieldKindPrefix = fieldKindPrefix;
         this.teleObject = teleObject;
         this.instanceViewPreferences = instanceViewPreferences;
         this.isTeleActor = teleObject instanceof TeleActor;
@@ -93,7 +104,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             endOffset = 0;
         }
         this.tableModel = new ObjectFieldsTableModel(inspection, teleObject.origin());
-        this.columnModel = new ObjectFieldsTableColumnModel(instanceViewPreferences);
+        this.columnModel = new ObjectFieldsTableColumnModel(this, this.tableModel, instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
         updateFocusSelection();
     }
@@ -164,21 +175,36 @@ public final class ObjectFieldsTable extends InspectorTable {
     }
 
     /**
+     * {@inheritDoc}.
+     * <br>
+     * Color the text specially in the row where a watchpoint is triggered
+     */
+    @Override
+    public Color cellForegroundColor(int row, int col) {
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
+        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
+            return style().debugIPTagColor();
+        }
+        return null;
+    }
+
+    /**
      * A column model for object headers, to be used in an {@link ObjectInspector}.
      * Column selection is driven by choices in the parent {@link ObjectInspector}.
      * This implementation cannot update column choices dynamically.
      */
     private final class ObjectFieldsTableColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
-        ObjectFieldsTableColumnModel(ObjectViewPreferences viewPreferences) {
+        ObjectFieldsTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, ObjectViewPreferences viewPreferences) {
             super(ObjectColumnKind.values().length, viewPreferences);
-            addColumn(ObjectColumnKind.TAG, new TagRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.OFFSET, new PositionRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.TYPE, new TypeRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ObjectColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ObjectColumnKind.OFFSET, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ObjectColumnKind.TYPE, new MemoryContentsTypeTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(ObjectColumnKind.NAME, new NameRenderer(inspection()), null);
             addColumn(ObjectColumnKind.VALUE, new ValueRenderer(inspection()), null);
-            addColumn(ObjectColumnKind.REGION, new RegionRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.BYTES,  new MemoryBytesTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(ObjectColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
 
@@ -245,94 +271,24 @@ public final class ObjectFieldsTable extends InspectorTable {
             return -1;
         }
 
-        FieldActor rowToFieldActor(int row) {
-            return fieldActors[row];
+        @Override
+        public String getRowDescription(int row) {
+            return fieldKindPrefix + " field \"" + fieldActors[row].name.string + "\"";
         }
 
-        TypeDescriptor rowToType(int row) {
+        @Override
+        public TypeDescriptor getRowType(int row) {
             return fieldActors[row].descriptor();
         }
 
-        String rowToName(int row) {
-            return fieldActors[row].name.string;
+        FieldActor rowToFieldActor(int row) {
+            return fieldActors[row];
         }
 
         @Override
         public void refresh() {
             setOrigin(teleObject.origin());
             super.refresh();
-        }
-    }
-
-    /**
-     * @return color the text specially in the row where a watchpoint is triggered
-     */
-    private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
-        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
-        }
-        return null;
-    }
-
-    private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
-
-        TagRenderer(Inspection inspection) {
-            super(inspection);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final JLabel renderer = getRenderer(tableModel.getMemoryRegion(row), focus().thread(), tableModel.getWatchpoints(row));
-            renderer.setOpaque(true);
-            renderer.setForeground(getRowTextColor(row));
-            renderer.setBackground(cellBackgroundColor(isSelected));
-            return renderer;
-        }
-
-    }
-
-    private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
-
-        AddressRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(tableModel.getOffset(row), tableModel.getOrigin());
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
-            return this;
-        }
-    }
-
-    private final class PositionRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
-
-        public PositionRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(tableModel.getOffset(row), tableModel.getOrigin());
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
-            return this;
-        }
-    }
-
-    private final class TypeRenderer extends TypeLabel implements TableCellRenderer {
-
-        public TypeRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setValue(tableModel.rowToType(row));
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
-            return this;
         }
     }
 
@@ -343,10 +299,11 @@ public final class ObjectFieldsTable extends InspectorTable {
             setOpaque(true);
         }
 
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final FieldActor fieldActor = (FieldActor) value;
+            setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setValue(fieldActor);
-            setForeground(getRowTextColor(row));
+            setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -376,80 +333,42 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            InspectorLabel label = labels[row];
-            if (label == null) {
+            if (labels[row] == null) {
                 final FieldActor fieldActor = (FieldActor) value;
                 if (fieldActor.kind.isReference) {
-                    label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
+                    labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return teleObject.readFieldValue(fieldActor);
                         }
                     };
+                    labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
                 } else if (fieldActor.kind.isWord) {
-                    label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
+                    labels[row] = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return teleObject.readFieldValue(fieldActor);
                         }
                     };
+                    labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
                 } else if (isTeleActor && fieldActor.name.toString().equals("flags")) {
                     final TeleActor teleActor = (TeleActor) teleObject;
-                    label = new ActorFlagsValueLabel(inspection(), teleActor);
+                    labels[row] = new ActorFlagsValueLabel(inspection(), teleActor);
+                    labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
                 } else {
-                    label = new PrimitiveValueLabel(inspection(), fieldActor.kind) {
+                    labels[row] = new PrimitiveValueLabel(inspection(), fieldActor.kind) {
                         @Override
                         public Value fetchValue() {
                             return teleObject.readFieldValue(fieldActor);
                         }
                     };
+                    labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value = ");
                 }
-                label.setOpaque(true);
-                labels[row] = label;
+
+                labels[row].setOpaque(true);
             }
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
-        }
-    }
-
-    private final class RegionRenderer implements TableCellRenderer, Prober {
-
-        public RegionRenderer(Inspection inspection) {
-        }
-
-        private InspectorLabel[] labels = new InspectorLabel[fieldActors.length];
-
-        public void refresh(boolean force) {
-            for (InspectorLabel label : labels) {
-                if (label != null) {
-                    label.refresh(force);
-                }
-            }
-        }
-
-        public void redisplay() {
-            for (InspectorLabel label : labels) {
-                if (label != null) {
-                    label.redisplay();
-                }
-            }
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            InspectorLabel label = labels[row];
-            if (label == null) {
-                final FieldActor fieldActor = (FieldActor) value;
-                label = new MemoryRegionValueLabel(inspection()) {
-                    @Override
-                    public Value fetchValue() {
-                        return teleObject.readFieldValue(fieldActor);
-                    }
-                };
-                label.setOpaque(true);
-                labels[row] = label;
-            }
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
+            labels[row].setBackground(cellBackgroundColor(isSelected));
+            return labels[row];
         }
     }
 

@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins.memory;
 
@@ -54,9 +56,9 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
-        heapSchemeName = vmConfig().heapScheme().getClass().getSimpleName();
-        tableModel = new MemoryRegionsTableModel(inspection);
-        columnModel = new MemoryRegionsColumnModel(viewPreferences);
+        this.heapSchemeName = vmConfig().heapScheme().getClass().getSimpleName();
+        this.tableModel = new MemoryRegionsTableModel(inspection);
+        this.columnModel = new MemoryRegionsColumnModel(this, this.tableModel, viewPreferences);
         configureDefaultTable(tableModel, columnModel);
     }
 
@@ -96,6 +98,20 @@ public final class MemoryRegionsTable extends InspectorTable {
     }
 
     /**
+     * {@inheritDoc}.
+     * <br>
+     * Color the text specially in the row where a watchpoint is triggered
+     */
+    @Override
+    public Color cellForegroundColor(int row, int col) {
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
+        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
+            return style().debugIPTagColor();
+        }
+        return null;
+    }
+
+    /**
      * Sets a display filter that will cause only the specified rows
      * to be displayed.
      *
@@ -107,9 +123,9 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     private final class MemoryRegionsColumnModel extends InspectorTableColumnModel<MemoryRegionsColumnKind> {
 
-        private MemoryRegionsColumnModel(MemoryRegionsViewPreferences viewPreferences) {
+        private MemoryRegionsColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, MemoryRegionsViewPreferences viewPreferences) {
             super(MemoryRegionsColumnKind.values().length, viewPreferences);
-            addColumn(MemoryRegionsColumnKind.TAG, new TagCellRenderer(inspection()), null);
+            addColumn(MemoryRegionsColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(MemoryRegionsColumnKind.NAME, new NameCellRenderer(), null);
             addColumn(MemoryRegionsColumnKind.START, new StartAddressCellRenderer(), null);
             addColumn(MemoryRegionsColumnKind.END, new EndAddressCellRenderer(), null);
@@ -191,6 +207,11 @@ public final class MemoryRegionsTable extends InspectorTable {
             return -1;
         }
 
+        @Override
+        public String getRowDescription(int row) {
+            return "Memory region \"" + getMemoryRegion(row).regionName() + "\"";
+        }
+
         /**
          * Find the row, if any, whose memory region specifies the same region
          * of VM memory as the one specified.
@@ -218,33 +239,6 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
     }
 
-    /**
-     * @return foreground color for row; color the text specially in the row where a watchpoint is triggered
-     */
-    private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
-        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
-        }
-        return null;
-    }
-
-    private final class TagCellRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
-
-        TagCellRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(tableModel.getMemoryRegion(row), focus().thread(), tableModel.getWatchpoints(row));
-            renderer.setForeground(getRowTextColor(row));
-            renderer.setBackground(cellBackgroundColor(isSelected));
-            return renderer;
-        }
-
-    }
-
     private final class NameCellRenderer implements TableCellRenderer, Prober  {
 
         // The labels have important user interaction state, so create one per memory region and keep them around,
@@ -258,7 +252,7 @@ public final class MemoryRegionsTable extends InspectorTable {
                 label = new MemoryRegionNameLabel(inspection(), memoryRegion);
                 regionToLabel.put(memoryRegion, label);
             }
-            label.setForeground(getRowTextColor(row));
+            label.setForeground(cellForegroundColor(row, column));
             label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
@@ -293,6 +287,7 @@ public final class MemoryRegionsTable extends InspectorTable {
                         return WordValue.from(memoryRegion.start());
                     }
                 };
+                label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Starts @");
                 label.setOpaque(true);
                 regionToLabel.put(memoryRegion, label);
             }
@@ -333,6 +328,7 @@ public final class MemoryRegionsTable extends InspectorTable {
                 label.setOpaque(true);
                 regionToLabel.put(memoryRegion, label);
             }
+            label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Ends @");
             label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
@@ -361,7 +357,10 @@ public final class MemoryRegionsTable extends InspectorTable {
                 label = new MemoryRegionSizeLabel(inspection(), memoryRegion);
                 regionToLabel.put(memoryRegion, label);
             }
-            label.setForeground(getRowTextColor(row));
+            // Can't set the prefix (row description) permanently on the label, as they
+            // are cached by location and may not always be displayed on the same row.
+            label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Size = ");
+            label.setForeground(cellForegroundColor(row, column));
             label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
@@ -390,7 +389,8 @@ public final class MemoryRegionsTable extends InspectorTable {
                 label = new MemoryRegionAllocationLabel(inspection(), memoryRegion, MemoryRegionsTable.this);
                 regionToLabel.put(memoryRegion, label);
             }
-            label.setForeground(getRowTextColor(row));
+            label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Alloc = ");
+            label.setForeground(cellForegroundColor(row, column));
             label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }

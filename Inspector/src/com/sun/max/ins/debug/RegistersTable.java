@@ -1,24 +1,28 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins.debug;
+
+
 
 import java.awt.*;
 
@@ -40,11 +44,13 @@ public final class RegistersTable extends InspectorTable {
 
     private static final Color[] ageColors = {Color.RED, Color.MAGENTA, Color.BLUE};
 
+    private final String isaName;
     private final RegistersTableModel tableModel;
     private RegistersColumnModel columnModel;
 
     public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
+        this.isaName = inspection.vm().platform().getISA().name();
         tableModel = new RegistersTableModel(inspection, thread);
         columnModel = new RegistersColumnModel(viewPreferences);
         configureMemoryTable(tableModel, columnModel);
@@ -77,6 +83,7 @@ public final class RegistersTable extends InspectorTable {
 
         private final RegisterHistory[] registerHistories;
         private final WordValueLabel.ValueMode[] displayModes;
+        private final String[] registerDescriptions;
 
         RegistersTableModel(Inspection inspection, MaxThread thread) {
             super(inspection);
@@ -85,25 +92,31 @@ public final class RegistersTable extends InspectorTable {
             nRegisters = registers.allRegisters().size();
             registerHistories = new RegisterHistory[nRegisters];
             displayModes = new WordValueLabel.ValueMode[nRegisters];
+            registerDescriptions = new String[nRegisters];
             int row = 0;
             for (MaxRegister register : registers.integerRegisters()) {
                 registerHistories[row] = new RegisterHistory(register);
                 displayModes[row] = WordValueLabel.ValueMode.INTEGER_REGISTER;
+                registerDescriptions[row] = "Integer register (" + isaName + ") \"" + register.name() + "\"";
                 row++;
             }
             for (MaxRegister register : registers.floatingPointRegisters()) {
                 registerHistories[row] = new RegisterHistory(register);
                 displayModes[row] = WordValueLabel.ValueMode.FLOATING_POINT;
+                registerDescriptions[row] = "Float register (" + isaName + ") \"" + register.name() + "\"";
                 row++;
             }
             for (MaxRegister register : registers.stateRegisters()) {
                 registerHistories[row] = new RegisterHistory(register);
                 if (register.isFlagsRegister()) {
                     displayModes[row] = WordValueLabel.ValueMode.FLAGS_REGISTER;
+                    registerDescriptions[row] = "Flags register (" + isaName + ") \"" + register.name() + "\"";
                 } else if (register.isInstructionPointerRegister()) {
                     displayModes[row] = WordValueLabel.ValueMode.CALL_ENTRY_POINT;
+                    registerDescriptions[row] = "IP register (" + isaName + ") \"" + register.name() + "\"";
                 } else {
                     displayModes[row] = WordValueLabel.ValueMode.INTEGER_REGISTER;
+                    registerDescriptions[row] = "Other register (" + isaName + ") \"" + register.name() + "\"";
                 }
                 row++;
             }
@@ -139,13 +152,17 @@ public final class RegistersTable extends InspectorTable {
             super.refresh();
         }
 
+        @Override
+        public String getRowDescription(int row) {
+            return registerDescriptions[row];
+        }
+
         /**
          * @return the appropriate display mode for the value of the register at this row
          */
         public WordValueLabel.ValueMode getValueMode(int row) {
             return displayModes[row];
         }
-
     }
 
     private final class NameCellRenderer extends TargetCodeLabel implements TableCellRenderer {
@@ -157,7 +174,8 @@ public final class RegistersTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final RegisterHistory registerHistory = (RegisterHistory) value;
             final String name = registerHistory.name();
-            setValue(name, "Register " + name);
+            setText(name);
+            setToolTipText(tableModel.getRowDescription(row));
             final int age = registerHistory.age();
             if (age < 0 || age >= ageColors.length) {
                 setForeground(null);
@@ -177,15 +195,15 @@ public final class RegistersTable extends InspectorTable {
             labels = new WordValueLabel[tableModel.getRowCount()];
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 final RegisterHistory registerHistory = (RegisterHistory) tableModel.getValueAt(row, 0);
-                final WordValueLabel label = new WordValueLabel(inspection, tableModel.getValueMode(row), RegistersTable.this) {
+                labels[row] = new WordValueLabel(inspection, tableModel.getValueMode(row), RegistersTable.this) {
 
                     @Override
                     protected Value fetchValue() {
                         return registerHistory.value();
                     }
                 };
-                label.setOpaque(true);
-                labels[row] = label;
+                labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>value = ");
+                labels[row].setOpaque(true);
             }
         }
 
@@ -214,7 +232,7 @@ public final class RegistersTable extends InspectorTable {
 
     private final class RegionCellRenderer implements TableCellRenderer, Prober {
 
-        private MemoryRegionValueLabel[] labels = new MemoryRegionValueLabel[tableModel.getRowCount()];
+        private ValueLabel[] labels = new ValueLabel[tableModel.getRowCount()];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -234,15 +252,27 @@ public final class RegistersTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final RegisterHistory registerHistory = (RegisterHistory) value;
-            MemoryRegionValueLabel label = labels[row];
-            if (label == null) {
-                label = new MemoryRegionValueLabel(inspection());
-                label.setOpaque(true);
-                labels[row] = label;
+            if (labels[row] == null) {
+                switch(tableModel.getValueMode(row)) {
+                    case WORD:
+                    case REFERENCE:
+                    case LITERAL_REFERENCE:
+                    case INTEGER_REGISTER:
+                    case CALL_ENTRY_POINT:
+                    case CALL_RETURN_POINT:
+                        labels[row] = new MemoryRegionValueLabel(inspection());
+                        break;
+                    default:
+                        // Don't even try to figure what region some register values might
+                        // point into, for example floats.  This suppresses the default tooltip,
+                        // which announces that the value points into no known region.
+                        labels[row] = new NullValueLabel(inspection());
+                }
             }
-            label.setValue(registerHistory.value());
-            label.setBackground(cellBackgroundColor(isSelected));
-            return label;
+            labels[row].setValue(registerHistory.value());
+            labels[row].setToolTipPrefix(tableModel.getRowDescription(row) + " value = " + registerHistory.value().asWord().toHexString() + "<br>");
+            labels[row].setBackground(cellBackgroundColor(isSelected));
+            return labels[row];
         }
     }
 }

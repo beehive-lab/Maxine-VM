@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins.memory;
 
@@ -197,8 +199,8 @@ public final class MemoryWordsInspector extends Inspector {
         Trace.line(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
 
         inspectors.add(this);
-        wordSize = inspection.vm().wordSize();
-        pageSize = inspection.vm().pageSize();
+        wordSize = inspection.vm().platform().wordSize();
+        pageSize = inspection.vm().platform().pageSize();
         wordsInPage = pageSize.dividedBy(wordSize).toInt();
 
         if (instanceViewPreferences == null) {
@@ -368,7 +370,7 @@ public final class MemoryWordsInspector extends Inspector {
      * mode set to {@link ViewMode#PAGE}.
      */
     public MemoryWordsInspector(Inspection inspection, Address address) {
-        this(inspection, new InspectorMemoryRegion(inspection.vm(), "", address, inspection.vm().pageSize()), null, address, ViewMode.PAGE, null);
+        this(inspection, new InspectorMemoryRegion(inspection.vm(), "", address, inspection.vm().platform().pageSize()), null, address, ViewMode.PAGE, null);
     }
 
     @Override

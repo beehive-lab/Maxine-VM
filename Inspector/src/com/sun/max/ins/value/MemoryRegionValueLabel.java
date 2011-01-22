@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins.value;
 
@@ -31,15 +33,18 @@ import com.sun.max.vm.value.*;
 
 /**
  * A label that displays the name of the {@linkplain MaxMemoryRegion memory region} to which a {@link Value}
- * might point; blank if no such region.  Updated with every refresh.
+ * might point, blank if it points into no known region.
+ * <br>
+ * The tooltip starts with an optionally set prefix, which is intended to allow specification of what
+ * sort of value is being used, followed by "points into ", followed by the name of the region.
+ * <br>
+ * Updated every refresh.
  *
  * @author Michael Van De Vanter
  */
 public class MemoryRegionValueLabel extends ValueLabel {
 
-    private Address address;
     private String regionName;
-    private String toolTipText;
     private MaxMemoryRegion memoryRegion = null;
 
     private final class MemoryRegionMouseClickAdapter extends InspectorMouseClickAdapter {
@@ -51,7 +56,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
         @Override
         public void procedure(MouseEvent mouseEvent) {
             if (memoryRegion != null) {
-                switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                switch (inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
                         focus().setMemoryRegion(memoryRegion);
                         break;
@@ -71,33 +76,83 @@ public class MemoryRegionValueLabel extends ValueLabel {
         }
     }
 
-    public MemoryRegionValueLabel(Inspection inspection) {
+    /**
+     * Creates an opaque label that displays which, if any, memory region into which an address points.
+     * <br>
+     * The address is set by overriding {@link ValueLabel#initializeValue()}.
+     * <br>
+     * The address can be updated dynamically if {@link ValueLabel#fetchValue()} is overridden.
+     *
+     * @param inspection the current inspection
+     * @param toolTipPrefix optional prefix for every tooltip display
+     * @see ValueLabel
+     */
+    public MemoryRegionValueLabel(Inspection inspection, String toolTipPrefix) {
         super(inspection);
+        setToolTipPrefix(toolTipPrefix);
+        setOpaque(true);
         initializeValue();
         addMouseListener(new MemoryRegionMouseClickAdapter(inspection));
         redisplay();
     }
 
-    public MemoryRegionValueLabel(Inspection inspection, Address address) {
+    /**
+     * Creates an opaque label that displays which, if any, memory region into which an address points.
+     * <br>
+     * The address is set by overriding {@link ValueLabel#initializeValue()}.
+     * <br>
+     * The address can be updated dynamically if {@link ValueLabel#fetchValue()} is overridden.
+     *
+     * @param inspection the current inspection
+     * @see ValueLabel
+     */
+    public MemoryRegionValueLabel(Inspection inspection) {
+        this(inspection, "");
+    }
+
+    /**
+     * Creates an opaque label that displays which, if any, memory region into which an address points.
+     * <br>
+     * The address can be updated dynamically if {@link ValueLabel#fetchValue()} is overridden.
+     *
+     * @param inspection the current inspection
+     * @param address a location in VM memory
+     * @param toolTipPrefix optional prefix for every tooltip display
+     */
+    public MemoryRegionValueLabel(Inspection inspection, Address address, String toolTipPrefix) {
         super(inspection, new WordValue(address));
+        setToolTipPrefix(toolTipPrefix);
+        setOpaque(true);
         addMouseListener(new MemoryRegionMouseClickAdapter(inspection));
+    }
+
+    /**
+     * Creates an opaque label that displays which, if any, memory region into which an address points.
+     * <br>
+     * The address can be updated dynamically if {@link ValueLabel#fetchValue()} is overridden.
+     *
+     * @param inspection the current inspection
+     * @param address a location in VM memory.
+     * @see ValueLabel
+     */
+    public MemoryRegionValueLabel(Inspection inspection, Address address) {
+        this(inspection, address, "");
     }
 
     @Override
     protected void updateText() {
         memoryRegion = null;
-        regionName = null;
-        toolTipText = null;
-        if (value() != null) {
-            address = value().toWord().asAddress();
-            memoryRegion = vm().findMemoryRegion(address);
-        }
-        if (memoryRegion != null) {
-            regionName = inspection().nameDisplay().shortName(memoryRegion);
-            toolTipText = inspection().nameDisplay().longName(memoryRegion);
+        regionName = "";
+        String toolTipText = "Points into no known memory region";
+        if (value() != null && value() != VoidValue.VOID) {
+            memoryRegion = vm().findMemoryRegion(value().toWord().asAddress());
+            if (memoryRegion != null) {
+                regionName = inspection().nameDisplay().shortName(memoryRegion);
+                toolTipText = "Points into " + inspection().nameDisplay().longName(memoryRegion);
+            }
         }
         setText(regionName);
-        setToolTipText(toolTipText);
+        setWrappedToolTipText(toolTipText);
     }
 
     public void redisplay() {

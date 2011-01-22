@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins.gui;
 
@@ -237,13 +239,13 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return debugCallReturnTagIcon;
     }
 
-    private final Icon debugPauseButtonIcon = createImageIcon("image/NB3Pause.gif", "Continue");
-    private final Icon debugContinueButtonIcon = createImageIcon("image/NB3Continue.gif", "Continue");
-    private final Icon debugRunToCursorButtonIcon = createImageIcon("image/NB3RunToCursor.gif", "Continue");
-    private final Icon debugStepInButtonIcon = createImageIcon("image/NB3StepIn.gif", "Step In");
-    private final Icon debugStepOutButtonIcon = createImageIcon("image/NB3StepOut.gif", "Step In");
-    private final Icon debugStepOverButtonIcon = createImageIcon("image/NB3StepOver.gif", "Step In");
-    private final Icon debugToggleBreakpointButtonIcon = createImageIcon("image/NB3ToggleBreakpoint.gif", "Step In");
+    private final Icon debugPauseButtonIcon = createImageIcon("/NB3Pause.gif", "Continue");
+    private final Icon debugContinueButtonIcon = createImageIcon("/NB3Continue.gif", "Continue");
+    private final Icon debugRunToCursorButtonIcon = createImageIcon("/NB3RunToCursor.gif", "Continue");
+    private final Icon debugStepInButtonIcon = createImageIcon("/NB3StepIn.gif", "Step In");
+    private final Icon debugStepOutButtonIcon = createImageIcon("/NB3StepOut.gif", "Step In");
+    private final Icon debugStepOverButtonIcon = createImageIcon("/NB3StepOver.gif", "Step In");
+    private final Icon debugToggleBreakpointButtonIcon = createImageIcon("/NB3ToggleBreakpoint.gif", "Step In");
     public Icon debugPauseButtonIcon() {
         return debugPauseButtonIcon;
     }

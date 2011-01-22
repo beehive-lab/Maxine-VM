@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.c1x.alloc;
 
@@ -495,7 +497,7 @@ public class LinearScan {
 
                         CiValue fromLocation = interval.location();
                         CiValue toLocation = canonicalSpillOpr(interval);
-                        assert fromLocation.isRegister() : "from operand must be a register";
+                        assert fromLocation.isRegister() : "from operand must be a register but is: " + fromLocation;
                         assert toLocation.isStackSlot() : "to operand must be a stack slot";
 
                         insertionBuffer.move(j, fromLocation, toLocation, null);
@@ -2016,21 +2018,20 @@ public class LinearScan {
         return attributes(operand.asRegister()).isCallerSave;
     }
 
-    void computeOopMap(IntervalWalker iw, LIRInstruction op, CiBitMap frameRefMap, CiBitMap regRefMap) {
-        assert op.info != null : "no oop map needed";
-        computeOopMap(iw, op, op.info, op.hasCall(), frameRefMap, regRefMap);
+    void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, CiBitMap frameRefMap, CiBitMap regRefMap) {
+        computeOopMap(iw, op, info, op.hasCall(), frameRefMap, regRefMap);
         if (op instanceof LIRCall) {
             List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
             if (pointerSlots != null) {
                 for (CiValue v : pointerSlots) {
-                    op.info.setOop(v, compilation, frameRefMap, regRefMap);
+                    info.setOop(v, compilation, frameRefMap, regRefMap);
                 }
             }
         } else if (op instanceof LIRXirInstruction) {
             List<CiValue> pointerSlots = ((LIRXirInstruction) op).pointerSlots;
             if (pointerSlots != null) {
                 for (CiValue v : pointerSlots) {
-                    op.info.setOop(v, compilation, frameRefMap, regRefMap);
+                    info.setOop(v, compilation, frameRefMap, regRefMap);
                 }
             }
         }
@@ -2130,7 +2131,18 @@ public class LinearScan {
 
     void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
         assert iw != null : "interval walker needed for debug information";
-        LIRDebugInfo info = op.info;
+        computeDebugInfo(iw, op, op.info);
+
+        if (op instanceof LIRXirInstruction) {
+            LIRXirInstruction xir = (LIRXirInstruction) op;
+            if (xir.infoAfter != null) {
+                computeDebugInfo(iw, op, xir.infoAfter);
+            }
+        }
+    }
+
+
+    void computeDebugInfo(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info) {
         if (info != null) {
             if (info.debugInfo == null) {
                 int frameSize = compilation.frameMap().frameSize();
@@ -2138,7 +2150,7 @@ public class LinearScan {
                 CiBitMap frameRefMap = new CiBitMap(frameWords);
                 CiBitMap regRefMap = !op.hasCall() ? new CiBitMap(compilation.target.arch.registerReferenceMapBitCount) : null;
                 Frame frame = computeFrame(info.state, op.id, frameRefMap);
-                computeOopMap(iw, op, frameRefMap, regRefMap);
+                computeOopMap(iw, op, info, frameRefMap, regRefMap);
                 info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);
             } else if (C1XOptions.DetailedAsserts) {
                 assert info.debugInfo.frame().equals(computeFrame(info.state, op.id, new CiBitMap(info.debugInfo.frameRefMap.size())));

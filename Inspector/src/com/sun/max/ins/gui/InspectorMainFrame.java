@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins.gui;
 
@@ -183,6 +185,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
+    private interface MouseButtonMapper {
+        int getButton(MouseEvent mouseEvent);
+    }
+
     private final Inspection inspection;
     private final String tracePrefix;
     private final InspectorNameDisplay nameDisplay;
@@ -198,6 +204,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * Location in absolute screen coordinates of the most recent mouse location of interest.
      */
     private Point mostRecentMouseLocation = DEFAULT_LOCATION;
+
+    /**
+     * Platform-specific way to handle mouse clicks.
+     */
+    private final MouseButtonMapper mouseButtonMapper;
 
     /**
      * Creates a new main window frame for the VM inspection session.
@@ -218,6 +229,31 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
         setDefaultLookAndFeelDecorated(true);
         Toolkit.getDefaultToolkit().addAWTEventListener(new MouseLocationListener(), AWTEvent.MOUSE_EVENT_MASK);
+
+        if (inspection.vm().platform().getOS() == MaxPlatform.OS.DARWIN) {
+            // For Darwin, make sure alternate mouse buttons get mapped properly
+            mouseButtonMapper = new MouseButtonMapper() {
+                public int getButton(MouseEvent mouseEvent) {
+                    if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
+                        if (mouseEvent.isControlDown()) {
+                            if (!mouseEvent.isAltDown()) {
+                                return MouseEvent.BUTTON3;
+                            }
+                        } else if (mouseEvent.isAltDown()) {
+                            return MouseEvent.BUTTON2;
+                        }
+                    }
+                    return mouseEvent.getButton();
+                }
+            };
+        } else {
+            // For all other platforms, use the standard mouse event mapping.
+            mouseButtonMapper = new MouseButtonMapper() {
+                public int getButton(MouseEvent mouseEvent) {
+                    return mouseEvent.getButton();
+                }
+            };
+        }
 
         // Set default geometry; may get overridden by settings when initialized
         setMinimumSize(inspection.geometry().inspectorFrameMinSize());
@@ -267,7 +303,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopPane.addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
-                if (Inspection.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                if (InspectorMainFrame.this.inspection.gui().getButton(mouseEvent) == MouseEvent.BUTTON3) {
                     desktopMenu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                 }
             }
@@ -389,6 +425,10 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     public void postToClipboard(String text) {
         final StringSelection selection = new StringSelection(text);
         getToolkit().getSystemClipboard().setContents(selection, selection);
+    }
+
+    public int getButton(MouseEvent mouseEvent) {
+        return mouseButtonMapper.getButton(mouseEvent);
     }
 
     public void setLocationRelativeToMouse(Inspector inspector) {

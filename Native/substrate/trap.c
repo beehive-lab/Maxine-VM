@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /**
@@ -55,7 +57,7 @@
 static Address theJavaTrapStub;
 static boolean traceTraps = false;
 
-#if !os_GUESTVMXEN
+#if !os_MAXVE
 
 /**
  * All signals.
@@ -78,7 +80,7 @@ static sigset_t vmAndDefaultSignals;
 int getTrapNumber(int signal) {
     switch (signal) {
     case SIGSEGV:
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     case SIGBUS:
 #endif
         return MEMORY_FAULT;
@@ -86,7 +88,7 @@ int getTrapNumber(int signal) {
         return ILLEGAL_INSTRUCTION;
     case SIGFPE:
         return ARITHMETIC_EXCEPTION;
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     case SIGUSR1:
         return ASYNC_INTERRUPT;
 #endif
@@ -102,7 +104,7 @@ int getTrapNumber(int signal) {
 #endif
 
 void setCurrentThreadSignalMask(boolean isVmOperationThread) {
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     if (isVmOperationThread) {
         thread_setSignalMask(SIG_SETMASK, &vmAndDefaultSignals, NULL);
     } else {
@@ -113,8 +115,8 @@ void setCurrentThreadSignalMask(boolean isVmOperationThread) {
 }
 
 void* setSignalHandler(int signal, SignalHandlerFunction handler) {
-#if os_GUESTVMXEN
-	guestvmXen_register_fault_handler(signal, handler);
+#if os_MAXVE
+	maxve_register_fault_handler(signal, handler);
 	return NULL;
 #else
 
@@ -163,7 +165,7 @@ static Address getInstructionPointer(UContext *ucontext) {
 #   endif
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rip;
-#elif os_GUESTVMXEN
+#elif os_MAXVE
         return ucontext->rip;
 #else
         c_UNIMPLEMENTED();
@@ -184,7 +186,7 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #   elif isa_IA32
      ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
 #   endif
-#elif os_GUESTVMXEN
+#elif os_MAXVE
     ucontext->rip = (unsigned long) stub;
 #else
     c_UNIMPLEMENTED();
@@ -194,7 +196,7 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #if (os_DARWIN || os_SOLARIS || os_LINUX )
     return (Address) sigInfo->si_addr;
-#elif (os_GUESTVMXEN)
+#elif (os_MAXVE)
     return (Address) sigInfo;
 #endif
 }
@@ -208,7 +210,7 @@ char *vmSignalName(int signal) {
     case SIGSEGV: return "SIGSEGV";
     case SIGFPE: return "SIGFPE";
     case SIGILL: return "SIGILL";
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     case SIGUSR1: return "SIGUSR1";
     case SIGBUS: return "SIGBUS";
 #endif
@@ -217,8 +219,8 @@ char *vmSignalName(int signal) {
 }
 
 static void blueZoneTrap(NativeThreadLocals ntl) {
-#if os_GUESTVMXEN
-	guestvmXen_blue_zone_trap(ntl);
+#if os_MAXVE
+	maxve_blue_zone_trap(ntl);
 #endif
 }
 
@@ -255,7 +257,7 @@ static boolean handleDivideOverflow(UContext *ucontext) {
         Address dividend = ucontext->uc_mcontext.gregs[REG_RAX];
 #elif os_DARWIN
         Address dividend = ucontext->uc_mcontext->__ss.__rax;
-#elif os_GUESTVMXEN
+#elif os_MAXVE
         Address dividend = ucontext->rax;
 #else
         c_UNIMPLEMENTED();
@@ -280,7 +282,7 @@ static boolean handleDivideOverflow(UContext *ucontext) {
             ucontext->uc_mcontext.gregs[REG_RDX] = 0;
 #elif os_DARWIN
             ucontext->uc_mcontext->__ss.__rdx = 0;
-#elif os_GUESTVMXEN
+#elif os_MAXVE
             ucontext->rdx = 0;
 #else
             c_UNIMPLEMENTED();
@@ -431,7 +433,7 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #elif isa_AMD64 && os_DARWIN
     tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext->__ss.__r14);
     ucontext->uc_mcontext->__ss.__r14 = (Address) dtla;
-#elif isa_AMD64 && os_GUESTVMXEN
+#elif isa_AMD64 && os_MAXVE
     tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->r14);
     ucontext->r14 = (Address) dtla;
 #else
@@ -464,7 +466,7 @@ void nativeTrapInitialize(Address javaTrapStub) {
     setSignalHandler(SIGILL, (SignalHandlerFunction) vmSignalHandler);
     setSignalHandler(SIGFPE, (SignalHandlerFunction) vmSignalHandler);
 
-#if !os_GUESTVMXEN
+#if !os_MAXVE
     setSignalHandler(SIGBUS, (SignalHandlerFunction) vmSignalHandler);
     setSignalHandler(SIGUSR1, (SignalHandlerFunction) vmSignalHandler);
 

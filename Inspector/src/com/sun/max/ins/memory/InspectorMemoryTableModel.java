@@ -1,22 +1,24 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
- * that is described in this document. In particular, and without limitation, these intellectual property
- * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
- * more additional patents or pending patent applications in the U.S. and in other countries.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * U.S. Government Rights - Commercial software. Government users are subject to the Sun
- * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
- * supplements.
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
- * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
- * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
- * U.S. and other countries.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
- * Company, Ltd.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.max.ins.memory;
 
@@ -26,9 +28,11 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.type.*;
 
 /**
- * A model for data tables that represent regions of memory in the VM, one region per row.
+ * A model for data tables that represent regions of memory in the VM, one region per row. In some
+ * applications, the contents of each memory region can be expected to contain typed information.
  *
  * @author Michael Van De Vanter
  */
@@ -36,15 +40,12 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
 
     private static final List<MaxWatchpoint> EMPTY_WATCHPOINT_LIST = Collections.emptyList();
 
-    private final Size wordSize;
-
     // Memory location from which to compute offsets
     private Address origin = Address.zero();
 
     public InspectorMemoryTableModel(Inspection inspection, Address origin) {
         super(inspection);
         this.origin = origin;
-        wordSize = inspection.vm().wordSize();
     }
 
     /**
@@ -129,8 +130,24 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      */
     public abstract int findRow(Address address);
 
-    protected Size getWordSize() {
-        return wordSize;
+    /**
+     * Returns the type expected for for data in the memory associated with a row; null if none.
+     */
+    public TypeDescriptor getRowType(int row) {
+        return null;
+    }
+
+    /**
+     * Returns the contents of the memory region as bytes, null if unable to read.
+     */
+    public byte[] getRowBytes(int row) {
+        final byte[] bytes = new byte[getMemoryRegion(row).size().toInt()];
+        try {
+            vm().readFully(getMemoryRegion(row).start(), bytes);
+        } catch (DataIOError dataIOError) {
+            return null;
+        }
+        return bytes;
     }
 
     /**
