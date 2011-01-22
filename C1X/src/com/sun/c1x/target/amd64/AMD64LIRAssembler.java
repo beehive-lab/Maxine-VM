@@ -41,7 +41,6 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
@@ -395,7 +394,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         assert src.isAddress();
-        assert dest.isRegister();
+        assert dest.isRegister() : "dest=" + dest;
 
         CiAddress addr = (CiAddress) src;
         if (info != null) {
@@ -744,7 +743,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
-        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Word && right.kind == CiKind.Int) : "left arch is " + left.kind + " and right arch is " +  right.kind;
+        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Word && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +  right.kind;
         assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
@@ -1283,6 +1282,14 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         masm.nop();
     }
 
+    private void emitXIRShiftOp(LIROpcode code, CiValue left, CiValue count, CiValue dest) {
+        if (count.isConstant()) {
+            emitShiftOp(code, left, ((CiConstant) count).asInt(), dest);
+        } else {
+            emitShiftOp(code, left, count, dest, IllegalValue);
+        }
+    }
+
     @Override
     protected void emitShiftOp(LIROpcode code, CiValue left, CiValue count, CiValue dest, CiValue tmp) {
         // optimized version for linear scan:
@@ -1529,15 +1536,15 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     break;
 
                 case Shl:
-                    emitShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
+                    emitXIRShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Sar:
-                    emitShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
+                    emitXIRShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case Shr:
-                    emitShiftOp(LIROpcode.Ushr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], IllegalValue);
+                    emitXIRShiftOp(LIROpcode.Ushr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
 
                 case And:
@@ -1716,6 +1723,18 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     } else {
                         masm.directJmp(inst.extra);
                     }
+                    break;
+                }
+                case DecAndJumpNotZero: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    CiValue value = operands[inst.x().index];
+                    if (value.kind == CiKind.Long) {
+                        masm.decq(value.asRegister());
+                    } else {
+                        assert value.kind == CiKind.Int;
+                        masm.decl(value.asRegister());
+                    }
+                    masm.jcc(ConditionFlag.notZero, label);
                     break;
                 }
                 case Jeq: {
