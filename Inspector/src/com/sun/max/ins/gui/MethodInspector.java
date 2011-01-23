@@ -67,14 +67,16 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
 
                     @Override
                     public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
-                        try {
-                            final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), codeLocation, interactiveForNative);
-                            if (methodInspector != null) {
-                                methodInspector.setCodeLocationFocus();
-                                methodInspector.highlightIfNotVisible();
+                        if (codeLocation  != null) {
+                            try {
+                                final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), codeLocation, interactiveForNative);
+                                if (methodInspector != null) {
+                                    methodInspector.setCodeLocationFocus();
+                                    methodInspector.highlightIfNotVisible();
+                                }
+                            } catch (MaxVMBusyException maxVMBusyException) {
+                                inspection.announceVMBusyFailure("Can't view method");
                             }
-                        } catch (MaxVMBusyException maxVMBusyException) {
-                            inspection.announceVMBusyFailure("Can't view method");
                         }
                     }
                 });
