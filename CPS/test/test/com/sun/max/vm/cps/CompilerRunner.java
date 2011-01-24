@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.ir.*;
@@ -81,7 +82,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
 
     private static final Option<Integer> irTraceLevel = options.newIntegerOption("ir-trace", 3, "The detail level for IR tracing.");
     private static final Option<Boolean> cirGui = options.newBooleanOption("cir-gui", false, "Enable the CIR visualizer.");
-    private static final Option<Boolean> useJit = options.newBooleanOption("use-jit", false, "Compile with the JIT compiler.");
+    private static final Option<Boolean> useBaseline = options.newBooleanOption("use-baseline", false, "Compile with the baseline compiler.");
     private static final Option<Boolean> help = options.newBooleanOption("help", false, "Show help message and exits.");
 
     private static final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
@@ -186,7 +187,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
                 return 1;
             }
             public void run(TestResult result) {
-                final CompilerTestCase compilerTestCase = useJit.getValue() ? new JitCompilerTestCase(name) {} : new CompilerTestCase(name) {};
+                final CompilerTestCase compilerTestCase = useBaseline.getValue() ? new JitCompilerTestCase(name) {} : new CompilerTestCase(name) {};
                 if (signature != null) {
                     Trace.stream().println("Compiling " + javaClass.getName() + "." + methodName + signature);
                     compilerTestCase.compileMethod(javaClass, methodName, signature);
@@ -208,7 +209,8 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
     }
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
-        final JitCompiler jitScheme = (JitCompiler) vmConfig().jitCompilerScheme();
+        AdaptiveCompilationScheme adc = (AdaptiveCompilationScheme) vmConfig().compilationScheme();
+        final JitCompiler jitScheme = (JitCompiler) adc.baselineCompiler;
         return jitScheme;
     }
 

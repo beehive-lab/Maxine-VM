@@ -23,8 +23,6 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.max.config.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
 
 /**
  * The package class that describes the C1X packages to the Maxine configurator.
@@ -33,14 +31,4 @@ import com.sun.max.vm.compiler.*;
  * @author Ben L. Titzer
  */
 public class Package extends BootImagePackage {
-    public Package() {
-        registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return true;
-        // even when C1X is not the compiler scheme, it evidently must be included.
-        // return vmConfiguration.schemeImplClassIsSubClass(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
-    }
 }

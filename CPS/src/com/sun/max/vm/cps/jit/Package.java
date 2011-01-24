@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,9 @@
 package com.sun.max.vm.cps.jit;
 
 import com.sun.max.config.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * @author Bernd Mathiske
@@ -35,6 +37,9 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.optCompilerPackage.isSubPackageOf(this) || vmConfiguration.jitCompilerPackage.isSubPackageOf(this);
+        if (CompilationScheme.baselineCompilerOption.getValue() != null && Classes.getPackageName(CompilationScheme.baselineCompilerOption.getValue()).startsWith(this.name())) {
+            return true;
+        }
+        return false;
     }
 }

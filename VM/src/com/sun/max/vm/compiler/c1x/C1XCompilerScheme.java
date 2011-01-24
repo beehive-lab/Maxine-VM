@@ -49,7 +49,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Doug Simon
  */
-public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompilerScheme {
+public class C1XCompilerScheme implements RuntimeCompiler {
 
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
