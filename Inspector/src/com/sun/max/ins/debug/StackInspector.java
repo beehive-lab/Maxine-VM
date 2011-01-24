@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.debug;
 
+import static com.sun.max.tele.MaxProcessState.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -39,7 +41,6 @@ import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -593,7 +594,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void watchpointSetChanged() {
-        if (vm().state().processState() == ProcessState.STOPPED) {
+        if (vm().state().processState() == STOPPED) {
             refreshView(true);
         }
     }

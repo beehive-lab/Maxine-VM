@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.object;
 
+import static com.sun.max.tele.MaxProcessState.*;
+
 import java.awt.*;
 
 import javax.swing.*;
@@ -31,7 +33,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
@@ -227,7 +228,7 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void watchpointSetChanged() {
         // TODO (mlvdv)  patch for concurrency issue; not completely safe
-        if (vm().state().processState() == ProcessState.STOPPED) {
+        if (vm().state().processState() == STOPPED) {
             refreshView(true);
         }
     }

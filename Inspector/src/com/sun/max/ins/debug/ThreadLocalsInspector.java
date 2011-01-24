@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.debug;
 
+import static com.sun.max.tele.MaxProcessState.*;
+
 import java.awt.*;
 import java.awt.print.*;
 import java.text.*;
@@ -31,12 +33,11 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
@@ -115,7 +116,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
                 // Refresh a newly exposed pane to be sure it is current
                 public void stateChanged(ChangeEvent event) {
                     // TODO (mlvdv)  Data reading PATCH, there should be a more systematic way of handling this.
-                    if (vm().state().processState() == ProcessState.TERMINATED) {
+                    if (vm().state().processState() == MaxProcessState.TERMINATED) {
                         return;
                     }
                     final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) tabbedPane.getSelectedComponent();
@@ -235,7 +236,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     public void watchpointSetChanged() {
-        if (vm().state().processState() != ProcessState.TERMINATED) {
+        if (vm().state().processState() != TERMINATED) {
             refreshView(true);
         }
     }
