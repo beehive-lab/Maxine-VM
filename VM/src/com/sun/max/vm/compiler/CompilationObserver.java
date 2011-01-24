@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ public interface CompilationObserver {
      * @param classMethodActor the method being compiled
      * @param compiler the compiler performing the compilation
      */
-    void observeBeforeCompilation(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler);
+    void observeBeforeCompilation(ClassMethodActor classMethodActor, RuntimeCompiler compiler);
 
     /**
      * This method allows an observer to be notified after the compilation of a method completes.
@@ -46,5 +46,5 @@ public interface CompilationObserver {
      * @param compiler the compiler performing the compilation
      * @param targetMethod the target method produced by the compilation; {@code null} if the compilation
      */
-    void observeAfterCompilation(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler, TargetMethod targetMethod);
+    void observeAfterCompilation(ClassMethodActor classMethodActor, RuntimeCompiler compiler, TargetMethod targetMethod);
 }

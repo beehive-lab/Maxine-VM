@@ -30,6 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.run.java.*;
 
@@ -65,11 +66,9 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         if (actor == null) {
             return;
         }
-        if (BootImageGenerator.calleeJit) {
-            CompiledPrototype.registerJitClass(javaClass);
-        }
-        if (BootImageGenerator.calleeC1X) {
-            CompiledPrototype.registerC1XClass(javaClass);
+
+        if (BootImageGenerator.calleeBaseline) {
+            AdaptiveCompilationScheme.compileWithBaseline.add(javaClass);
         }
         if (COMPILE_ALL_TEST_METHODS) {
             // add all virtual and static methods to the image
@@ -108,8 +107,8 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
     private void registerClasses() {
         if (!classesRegistered) {
             classesRegistered = true;
-            if (BootImageGenerator.callerJit) {
-                CompiledPrototype.registerJitClass(JTRuns.class);
+            if (BootImageGenerator.callerBaseline) {
+                AdaptiveCompilationScheme.compileWithBaseline.add(JTRuns.class);
             }
             Class[] list = getClassList();
             for (Class<?> testClass : list) {

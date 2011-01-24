@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.cps.b.c.d.*;
 import com.sun.max.vm.cps.hotpath.*;
 import com.sun.max.vm.cps.hotpath.compiler.*;
 import com.sun.max.vm.cps.hotpath.compiler.Console.*;
@@ -152,6 +153,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
 
     protected static void createVMConfiguration() {
         Platform.set(platform().constrainedByInstructionSet(ISA.SPARC));
-        VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.Package());
+        CompilationScheme.optimizingCompilerOption.setValue(BcdCompiler.class.getName());
+        VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

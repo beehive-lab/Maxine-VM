@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.runtime.*;
 
-public abstract class IrGenerator<CompilerScheme_Type extends RuntimeCompilerScheme, IrMethod_Type extends IrMethod> {
+public abstract class IrGenerator<CompilerScheme_Type extends RuntimeCompiler, IrMethod_Type extends IrMethod> {
 
     private long numberOfCompilations = 0L;
 

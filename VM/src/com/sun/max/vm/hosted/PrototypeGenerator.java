@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import static com.sun.max.vm.VMConfiguration.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.CompilationScheme.Mode;
 import com.sun.max.vm.type.*;
 
 /**
@@ -64,11 +63,7 @@ public final class PrototypeGenerator {
      * @param tree a boolean indicating whether to record an object tree, which is useful for debugging
      * @return the final graph prototype of the VM
      */
-    public GraphPrototype createGraphPrototype(final boolean tree, boolean prototypeJit) {
-        if (prototypeJit) {
-            vmConfig().compilationScheme().setMode(Mode.PROTOTYPE_JIT);
-        }
-
+    public GraphPrototype createGraphPrototype(final boolean tree) {
         GraphPrototype graphPrototype;
         int numberOfClassActors = 0;
         int numberOfCompilationThreads = threadsOption.getValue();
@@ -100,8 +95,8 @@ public final class PrototypeGenerator {
      * @param tree a boolean indicating whether to produce an object tree
      * @return a completed data prototype
      */
-    DataPrototype createDataPrototype(boolean tree, boolean prototypeJit) {
-        final GraphPrototype graphPrototype = createGraphPrototype(tree, prototypeJit);
+    DataPrototype createDataPrototype(boolean tree) {
+        final GraphPrototype graphPrototype = createGraphPrototype(tree);
         final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null, threadsOption.getValue());
         return dataPrototype;
     }

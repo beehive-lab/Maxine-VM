@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -69,12 +68,8 @@ public class CompiledPrototype extends Prototype {
     private final HashMap<ClassActor, ClassInfo> classActorInfo = new HashMap<ClassActor, ClassInfo>();
     private final HashMap<MethodActor, Set<ClassActor>> anonymousClasses = new HashMap<MethodActor, Set<ClassActor>>();
 
-    private static final HashMap<MethodActor, RuntimeCompilerScheme> recommendedCompiler = new HashMap<MethodActor, RuntimeCompilerScheme>();
-
     private final HashMap<MethodActor, Link> methodActors = new HashMap<MethodActor, Link>();
     private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
-
-    private static RuntimeCompilerScheme c1xCompiler;
 
     /**
      * The link from a <i>referrer</i> method to a <i>referent</i> method where the referrer caused the referent to be
@@ -148,10 +143,6 @@ public class CompiledPrototype extends Prototype {
 
     public Collection<Link> links() {
         return methodActors.values();
-    }
-
-    public RuntimeCompilerScheme jitScheme() {
-        return vmConfig().jitCompilerScheme();
     }
 
     private ClassInfo lookupInfo(ClassActor classActor) {
@@ -367,17 +358,6 @@ public class CompiledPrototype extends Prototype {
             return false;
         }
 
-        if (methodActor.isAnnotationPresent(BOOT_IMAGE_DIRECTIVE.class)) {
-            final BOOT_IMAGE_DIRECTIVE annotation = methodActor.getAnnotation(BOOT_IMAGE_DIRECTIVE.class);
-            if (annotation.keepUnlinked()) {
-                // if there is an annotation to keep this method unlinked, add to the unlinked methods set
-            } else if (annotation.useJitCompiler()) {
-                // if there is an explicit annotation to use the JIT compiler
-                registerJitMethod(methodActor);
-            } else if (annotation.exclude()) {
-                return false;
-            }
-        }
         if (Actor.isDeclaredFoldable(methodActor.flags())) {
             // All foldable methods must have their stubs precompiled in the image
             final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
@@ -392,56 +372,6 @@ public class CompiledPrototype extends Prototype {
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             processNewTargetMethod(targetMethod);
         }
-    }
-
-    public static void registerJitClass(Class javaClass) {
-        ClassActor classActor = ClassActor.fromJava(javaClass);
-        for (MethodActor methodActor : classActor.getLocalMethodActors()) {
-            recommendedCompiler.put(methodActor, vmConfig().jitCompilerScheme());
-        }
-    }
-
-    public static void registerC1XClass(Class javaClass) {
-        ClassActor classActor = ClassActor.fromJava(javaClass);
-        RuntimeCompilerScheme compiler = c1xCompilerScheme();
-        for (MethodActor methodActor : classActor.getLocalMethodActors()) {
-            recommendedCompiler.put(methodActor, compiler);
-        }
-    }
-
-    public static boolean forbidCPSCompile(ClassMethodActor classMethodActor) {
-        // check whether the method has been recommended to be compiled with another compiler
-        return recommendedCompiler.get(classMethodActor) != null;
-    }
-
-    public static void registerJitMethod(MethodActor methodActor) {
-        recommendedCompiler.put(methodActor, vmConfig().jitCompilerScheme());
-    }
-
-    public static void registerC1XMethod(MethodActor methodActor) {
-        recommendedCompiler.put(methodActor, c1xCompilerScheme());
-    }
-
-    private static synchronized RuntimeCompilerScheme c1xCompilerScheme() {
-        if (c1xCompiler == null) {
-            RuntimeCompilerScheme compiler = vmConfig().optCompilerScheme();
-            if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
-                compiler = vmConfig().jitCompilerScheme();
-                if (!compiler.getClass().getSimpleName().equals("C1XCompilerScheme")) {
-                    try {
-                        // TODO: remove reflective dependency here!
-                        Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
-                        Constructor constructor = type.getConstructor();
-                        compiler = (RuntimeCompilerScheme) constructor.newInstance();
-                        compiler.initialize(Phase.BOOTSTRAPPING);
-                    } catch (Exception e) {
-                        throw ProgramError.unexpected(e);
-                    }
-                }
-            }
-            c1xCompiler = compiler;
-        }
-        return c1xCompiler;
     }
 
     /**
@@ -553,8 +483,7 @@ public class CompiledPrototype extends Prototype {
             while (!worklist.isEmpty()) {
                 final MethodActor methodActor = worklist.removeFirst();
                 if (hasCode(methodActor)) {
-                    RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
-                    TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
+                    TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor);
                     processNewTargetMethod(targetMethod);
                     ++totalCompilations;
                     if (totalCompilations % 200 == 0) {
@@ -576,8 +505,7 @@ public class CompiledPrototype extends Prototype {
                         compilationCompletionService.submit(new Callable<TargetMethod>() {
                             public TargetMethod call() throws Exception {
                                 try {
-                                    RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
-                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
+                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor);
                                     assert result != null;
                                     return result;
                                 } catch (Throwable error) {

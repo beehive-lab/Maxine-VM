@@ -422,8 +422,6 @@ public class BootImage {
             LAYOUT(BootImagePackage.class),
             HEAP(BootImagePackage.class),
             MONITOR(BootImagePackage.class),
-            OPT(BootImagePackage.class),
-            JIT(BootImagePackage.class),
             COMPILATION(BootImagePackage.class),
             RUN(BootImagePackage.class);
 
@@ -478,8 +476,6 @@ public class BootImage {
             put(Key.LAYOUT, vmConfig.layoutPackage);
             put(Key.HEAP, vmConfig.heapPackage);
             put(Key.MONITOR, vmConfig.monitorPackage);
-            put(Key.OPT, vmConfig.optCompilerPackage);
-            put(Key.JIT, vmConfig.jitCompilerPackage);
             put(Key.COMPILATION, vmConfig.compilationPackage);
             put(Key.RUN, vmConfig.runPackage);
         }
@@ -627,8 +623,6 @@ public class BootImage {
                                                       stringInfo.bootImagePackage(Key.LAYOUT),
                                                       stringInfo.bootImagePackage(Key.HEAP),
                                                       stringInfo.bootImagePackage(Key.MONITOR),
-                                                      stringInfo.bootImagePackage(Key.OPT),
-                                                      stringInfo.bootImagePackage(Key.JIT),
                                                       stringInfo.bootImagePackage(Key.COMPILATION),
                                                       stringInfo.bootImagePackage(Key.RUN));
 

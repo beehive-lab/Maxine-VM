@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@
  * directly by Maxine, e.g., {@link com.sun.max.vm.actor.member.MethodActor}.
  * <p>
  * This package defines {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme} which implements
- * {@link com.sun.max.vm.compiler.RuntimeCompilerScheme} and conforms to the standard API for schemes in Maxine. In
+ * {@link com.sun.max.vm.compiler.RuntimeCompiler} and conforms to the standard API for schemes in Maxine. In
  * particular it implements the {@link com.sun.max.vm.VMScheme#initialize} method that is called during VM startup with
  * the startup phase as argument. Note that this includes the special
  * {@link com.sun.max.vm.MaxineVM.Phase#BOOTSTRAPPING bootstrapping} phase which is used when the VM image is being
@@ -50,10 +50,10 @@
  * {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xTarget} and
  * {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xXirGenerator} .
  * </ul>
- * The compilation entry method in {@link com.sun.max.vm.compiler.RuntimeCompilerScheme} is
- * {@link com.sun.max.vm.compiler.RuntimeCompilerScheme#compile} which returns a
+ * The compilation entry method in {@link com.sun.max.vm.compiler.RuntimeCompiler} is
+ * {@link com.sun.max.vm.compiler.RuntimeCompiler#compile} which returns a
  * {@link com.sun.max.vm.compiler.target.TargetMethod}. The {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme}
- * implementation of {@link com.sun.max.vm.compiler.RuntimeCompilerScheme#compile} first gets an
+ * implementation of {@link com.sun.max.vm.compiler.RuntimeCompiler#compile} first gets an
  * {@link com.sun.cri.ri.RiMethod} for the {@link com.sun.max.vm.actor.member.ClassMethodActor} using
  * {@link com.sun.max.vm.compiler.c1x.C1XCompilerScheme#c1xRuntime} and then calls
  * {@link com.sun.c1x.C1XCompiler#compileMethod}. The result is {@code null} if the compilation failed, otherwise an

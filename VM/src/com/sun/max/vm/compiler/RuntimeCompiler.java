@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,15 +27,20 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
- * This interface specifies the interface between a dynamic compiler
- * and the rest of the virtual machine, including methods to create
- * entries for vtables, compile methods, and stack walking.
+ * The interface implemented by a compiler that translates {@link ClassMethodActor}s into {@link TargetMethod}s.
  *
  * @author Laurent Daynes
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public interface RuntimeCompilerScheme extends VMScheme {
+public interface RuntimeCompiler {
+
+    /**
+     * Performs any specific initialization when entering a given VM phase.
+     *
+     * @param phase the VM phase that has just been entered
+     */
+    void initialize(MaxineVM.Phase phase);
 
     /**
      * Compiles a method to an internal representation.
