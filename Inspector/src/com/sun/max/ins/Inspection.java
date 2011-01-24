@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins;
 
+import static com.sun.max.ins.MaxineInspector.*;
+import static com.sun.max.tele.MaxInspectionMode.*;
 import static com.sun.max.tele.MaxProcessState.*;
 
 import java.io.*;
@@ -231,13 +233,20 @@ public final class Inspection implements InspectionHolder {
      */
     public String currentInspectionTitle() {
         final StringBuilder sb = new StringBuilder(50);
-        sb.append(MaxineInspector.NAME);
-        sb.append(" (VM ");
-        sb.append(vm().state() == null ? "<?>" : vm().state().processState());
-        if (vm().state().isInGC()) {
-            sb.append(" in GC");
+        sb.append(NAME);
+        sb.append(" (mode=").append(vm().inspectionMode().toString()).append(")");
+        if (vm().inspectionMode() != IMAGE) {
+            sb.append(" VM Process ");
+            final MaxVMState vmState = vm().state();
+            if (vmState == null) {
+                sb.append(UNKNOWN.label());
+            } else {
+                sb.append(vmState.processState().label());
+                if (vmState.isInGC()) {
+                    sb.append(" in GC");
+                }
+            }
         }
-        sb.append(") ");
         return sb.toString();
     }
 
