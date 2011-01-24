@@ -196,7 +196,6 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
         StackFrameListCellRenderer(Inspection inspection) {
             super(inspection, "");
-            setOpaque(true);
         }
 
         public Component getListCellRendererComponent(JList list, Object value, int modelIndex, boolean isSelected, boolean cellHasFocus) {
@@ -260,6 +259,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             setText(Integer.toString(modelIndex) + ":  " + methodName);
             setWrappedToolTipText(toolTip);
             setFont(style().defaultFont());
+            setBackground(isSelected ? stackFrameList.getSelectionBackground() : stackFrameList.getBackground());
             return this;
         }
 
