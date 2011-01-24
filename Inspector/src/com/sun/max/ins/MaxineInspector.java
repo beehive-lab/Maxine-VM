@@ -43,6 +43,7 @@ public final class MaxineInspector {
     public static final int MAJOR_VERSION = 1;
     public static final int MINOR_VERSION = 0;
     public static final String VERSION_STRING = Integer.toString(MAJOR_VERSION) + "." + Integer.toString(MINOR_VERSION);
+    public static final String HOME_URL = "http://labs.oracle.com/projects/maxine/";
     private static final int TRACE_VALUE = 1;
 
     private static final String tracePrefix = "[Inspector] ";
@@ -83,5 +84,10 @@ public final class MaxineInspector {
         }
         Trace.end(TRACE_VALUE, tracePrefix + "Initializing", startTimeMillis);
     }
+
+    public static String description() {
+        return "The " + NAME + " Ver. " + VERSION_STRING + "  <" + HOME_URL + ">";
+    }
+
 
 }
