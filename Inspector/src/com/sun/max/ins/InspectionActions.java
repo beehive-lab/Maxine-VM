@@ -42,8 +42,8 @@ import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
-import com.sun.max.tele.debug.TeleWatchpoint.DuplicateWatchpointException;
-import com.sun.max.tele.debug.TeleWatchpoint.TooManyWatchpointsException;
+import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
+import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -3406,9 +3406,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 } else {
                     focus().setWatchpoint(watchpoint);
                 }
-            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+            } catch (MaxTooManyWatchpointsException tooManyWatchpointsException) {
                 gui().errorMessage(tooManyWatchpointsException.getMessage());
-            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+            } catch (MaxDuplicateWatchpointException duplicateWatchpointException) {
                 gui().errorMessage(duplicateWatchpointException.getMessage());
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -3488,9 +3488,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 } else {
                     focus().setWatchpoint(watchpoint);
                 }
-            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+            } catch (MaxTooManyWatchpointsException tooManyWatchpointsException) {
                 gui().errorMessage(tooManyWatchpointsException.getMessage());
-            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+            } catch (MaxDuplicateWatchpointException duplicateWatchpointException) {
                 gui().errorMessage(duplicateWatchpointException.getMessage());
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -3551,9 +3551,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 } else {
                     focus().setWatchpoint(watchpoint);
                 }
-            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+            } catch (MaxTooManyWatchpointsException tooManyWatchpointsException) {
                 gui().errorMessage(tooManyWatchpointsException.getMessage());
-            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+            } catch (MaxDuplicateWatchpointException duplicateWatchpointException) {
                 gui().errorMessage(duplicateWatchpointException.getMessage());
             } catch (MaxVMBusyException maxVMBusyException) {
                 InspectorWarning.message("Watchpoint creation failed", maxVMBusyException);
@@ -3608,9 +3608,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 } else {
                     focus().setWatchpoint(watchpoint);
                 }
-            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+            } catch (MaxTooManyWatchpointsException tooManyWatchpointsException) {
                 gui().errorMessage(tooManyWatchpointsException.getMessage());
-            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+            } catch (MaxDuplicateWatchpointException duplicateWatchpointException) {
                 gui().errorMessage(duplicateWatchpointException.getMessage());
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -3674,9 +3674,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 } else {
                     focus().setWatchpoint(watchpoint);
                 }
-            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+            } catch (MaxTooManyWatchpointsException tooManyWatchpointsException) {
                 gui().errorMessage(tooManyWatchpointsException.getMessage());
-            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+            } catch (MaxDuplicateWatchpointException duplicateWatchpointException) {
                 gui().errorMessage(duplicateWatchpointException.getMessage());
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -3735,9 +3735,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 } else {
                     focus().setWatchpoint(watchpoint);
                 }
-            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+            } catch (MaxTooManyWatchpointsException tooManyWatchpointsException) {
                 gui().errorMessage(tooManyWatchpointsException.getMessage());
-            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+            } catch (MaxDuplicateWatchpointException duplicateWatchpointException) {
                 gui().errorMessage(duplicateWatchpointException.getMessage());
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -3791,9 +3791,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 } else {
                     focus().setWatchpoint(watchpoint);
                 }
-            } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+            } catch (MaxTooManyWatchpointsException tooManyWatchpointsException) {
                 gui().errorMessage(tooManyWatchpointsException.getMessage());
-            } catch (DuplicateWatchpointException duplicateWatchpointException) {
+            } catch (MaxDuplicateWatchpointException duplicateWatchpointException) {
                 gui().errorMessage(duplicateWatchpointException.getMessage());
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());

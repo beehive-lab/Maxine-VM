@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package test.com.sun.max.vm.compiler.c1x;
 
-import static com.sun.max.lang.Classes.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
@@ -46,6 +45,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.hosted.*;
 
@@ -175,9 +175,6 @@ public class C1XTest {
 
         Trace.on(traceOption.getValue());
 
-        String c1xPackage = getPackageName(C1XCompilerScheme.class);
-        vmConfigurator.optScheme.setValue(c1xPackage);
-        vmConfigurator.jitScheme.setValue(c1xPackage);
         vmConfigurator.create(true);
 
         // create the prototype
@@ -191,7 +188,7 @@ public class C1XTest {
 
         // create MaxineRuntime
         VMConfiguration configuration = vmConfig();
-        final RuntimeCompilerScheme compilerScheme = configuration.optCompilerScheme();
+        final RuntimeCompiler compilerScheme = ((AdaptiveCompilationScheme) configuration.compilationScheme()).optimizingCompiler;
 
 
         String searchCp = searchCpOption.getValue();
@@ -212,7 +209,7 @@ public class C1XTest {
         System.exit(progress.failed());
     }
 
-    private static void doCompile(RuntimeCompilerScheme compilerScheme, List<MethodActor> methods, ProgressPrinter progress) {
+    private static void doCompile(RuntimeCompiler compilerScheme, List<MethodActor> methods, ProgressPrinter progress) {
         if (timingOption.getValue() > 0) {
             // do a timing run
             int max = timingOption.getValue();
@@ -259,7 +256,7 @@ public class C1XTest {
         }
     }
 
-    private static void doTimingRun(RuntimeCompilerScheme compilerScheme, List<MethodActor> methods) {
+    private static void doTimingRun(RuntimeCompiler compilerScheme, List<MethodActor> methods) {
         C1XTimers.reset();
         long start = System.nanoTime();
         totalBytes = 0;
@@ -290,7 +287,7 @@ public class C1XTest {
         }
     }
 
-    private static void doWarmup(RuntimeCompilerScheme compilerScheme, List<MethodActor> methods) {
+    private static void doWarmup(RuntimeCompiler compilerScheme, List<MethodActor> methods) {
         // compile all the methods in the list some number of times first to warmup the host VM
         int max = warmupOption.getValue();
         if (max > 0) {
@@ -298,22 +295,16 @@ public class C1XTest {
             for (int i = 0; i < max; i++) {
                 out.print(".");
                 out.flush();
-                if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
-                    C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
-                    for (MethodActor actor : methods) {
-                        compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, actor, false, false);
-                    }
-                } else {
-                    for (MethodActor actor : methods) {
-                        compile(compilerScheme, actor, false, false);
-                    }
+                C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
+                for (MethodActor actor : methods) {
+                    compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, actor, false, false);
                 }
             }
             out.println();
         }
     }
 
-    private static boolean compile(RuntimeCompilerScheme compilerScheme, MethodActor method, boolean printBailout, boolean timing) {
+    private static boolean compile(RuntimeCompiler compilerScheme, MethodActor method, boolean printBailout, boolean timing) {
         // compile a single method
         ClassMethodActor classMethodActor = (ClassMethodActor) method;
         Throwable thrown = null;

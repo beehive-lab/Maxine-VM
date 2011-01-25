@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,9 @@ import com.sun.max.lang.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.ir.*;
 
-public abstract class TargetGenerator extends IrGenerator<RuntimeCompilerScheme, CPSTargetMethod> {
+public abstract class TargetGenerator extends IrGenerator<RuntimeCompiler, CPSTargetMethod> {
 
-    public TargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, ISA isa) {
+    public TargetGenerator(RuntimeCompiler dynamicCompilerScheme, ISA isa) {
         super(dynamicCompilerScheme, isa.name());
     }
 }

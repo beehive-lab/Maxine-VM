@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.config.*;
-import com.sun.max.ide.*;
 import com.sun.max.lang.ISA.Category;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -60,10 +59,6 @@ public final class VMConfigurator {
             VMConfigurator.defaultHeapScheme());
     public final Option<String> monitorScheme = schemeOption("monitor", MonitorScheme.class, "Specifies the monitor scheme for the target.",
             VMConfigurator.defaultMonitorScheme());
-    public final Option<String> optScheme = schemeOption("opt", RuntimeCompilerScheme.class, "Specifies the optimizing compiler scheme for the target.",
-            VMConfigurator.defaultOptCompilerScheme());
-    public final Option<String> jitScheme = schemeOption("jit", RuntimeCompilerScheme.class, "Specifies the JIT scheme for the target.",
-            VMConfigurator.defaultJitCompilerScheme());
     public final Option<String> compScheme = schemeOption("comp", CompilationScheme.class, "Specifies the compilation scheme for the target.",
             VMConfigurator.defaultCompilationScheme());
     public final Option<String> runScheme = schemeOption("run", RunScheme.class, "Specifies the run scheme for the target.",
@@ -99,8 +94,6 @@ public final class VMConfigurator {
                                     vm(layoutScheme),
                                     vm(heapScheme),
                                     vm(monitorScheme),
-                                    vm(optScheme),
-                                    vm(jitScheme),
                                     vm(compScheme),
                                     vm(runScheme));
         MaxineVM vm = new MaxineVM(config);
@@ -109,32 +102,6 @@ public final class VMConfigurator {
             config.loadAndInstantiateSchemes(null);
         }
         return vm;
-    }
-
-    /**
-     * Gets the package providing the default {@link VMConfiguration#optCompilerScheme()}.
-     */
-    public static BootImagePackage defaultOptCompilerScheme() {
-        switch (platform().isa) {
-            case AMD64:
-                return new com.sun.max.vm.compiler.c1x.Package();
-            default:
-                throw FatalError.unexpected(platform().isa.toString());
-        }
-    }
-
-    /**
-     * Gets the package providing the default {@link VMConfiguration#jitCompilerScheme()}.
-     */
-    public static BootImagePackage defaultJitCompilerScheme() {
-        switch (platform().isa) {
-            case AMD64:
-                BootImagePackage def = BootImagePackage.fromName("com.sun.max.vm.cps.jit.amd64");
-                assert def != null : "need to modify class path to include " + JavaProject.findWorkspaceDirectory() + "/CPS/bin";
-                return def;
-            default:
-                throw FatalError.unimplemented();
-        }
     }
 
     /**
@@ -205,18 +172,8 @@ public final class VMConfigurator {
      * except for a supplied build level.
      */
     public static void installStandard(BuildLevel buildLevel) {
-        installStandard(buildLevel, defaultOptCompilerScheme());
-    }
-
-    /**
-     * Creates and {@linkplain MaxineVM#set(MaxineVM) installs} a VM using all the defaults
-     * except for a supplied compiler scheme implementation and build level.
-     */
-    public static void installStandard(BuildLevel buildLevel, BootImagePackage optPackage) {
         VMConfigurator vmConfigurator = new VMConfigurator(null);
         vmConfigurator.buildLevel.setValue(buildLevel);
-        vmConfigurator.optScheme.setValue(optPackage.name());
-        vmConfigurator.jitScheme.setValue(null);
         vmConfigurator.create(true);
     }
 

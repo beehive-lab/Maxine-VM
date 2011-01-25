@@ -22,7 +22,9 @@
  */
 package com.sun.max.ins;
 
-import static com.sun.max.tele.debug.ProcessState.*;
+import static com.sun.max.ins.MaxineInspector.*;
+import static com.sun.max.tele.MaxInspectionMode.*;
+import static com.sun.max.tele.MaxProcessState.*;
 
 import java.io.*;
 import java.net.*;
@@ -40,7 +42,6 @@ import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -232,13 +233,20 @@ public final class Inspection implements InspectionHolder {
      */
     public String currentInspectionTitle() {
         final StringBuilder sb = new StringBuilder(50);
-        sb.append(MaxineInspector.NAME);
-        sb.append(" (VM ");
-        sb.append(vm().state() == null ? "<?>" : vm().state().processState());
-        if (vm().state().isInGC()) {
-            sb.append(" in GC");
+        sb.append(NAME);
+        sb.append(" (mode=").append(vm().inspectionMode().toString()).append(")");
+        if (vm().inspectionMode() != IMAGE) {
+            sb.append(" VM Process ");
+            final MaxVMState vmState = vm().state();
+            if (vmState == null) {
+                sb.append(UNKNOWN.label());
+            } else {
+                sb.append(vmState.processState().label());
+                if (vmState.isInGC()) {
+                    sb.append(" in GC");
+                }
+            }
         }
-        sb.append(") ");
         return sb.toString();
     }
 
@@ -307,14 +315,14 @@ public final class Inspection implements InspectionHolder {
      * @return Is the Inspector in debugging mode with a legitimate process?
      */
     public boolean hasProcess() {
-        final ProcessState processState = vm().state().processState();
+        final MaxProcessState processState = vm().state().processState();
         return !(processState == UNKNOWN || processState == TERMINATED);
     }
 
     /**
      * Is the VM running, as of the most recent direct (synchronous) notification by the VM?
      *
-     * @return VM state == {@link ProcessState#RUNNING}.
+     * @return VM state == {@link MaxProcessState#RUNNING}.
      */
     public boolean isVMRunning() {
         return vm().state().processState() == RUNNING;
@@ -323,7 +331,7 @@ public final class Inspection implements InspectionHolder {
     /**
      * Is the VM available to start running, as of the most recent direct (synchronous) notification by the VM?
      *
-     * @return VM state == {@link ProcessState#STOPPED}.
+     * @return VM state == {@link MaxProcessState#STOPPED}.
      */
     public boolean isVMReady() {
         return vm().state().processState() == STOPPED;
@@ -375,6 +383,7 @@ public final class Inspection implements InspectionHolder {
                 // Be sure all process-sensitive actions are disabled.
                 inspectionActions.refresh(false);
                 break;
+            case NONE:
             case UNKNOWN:
                 break;
         }

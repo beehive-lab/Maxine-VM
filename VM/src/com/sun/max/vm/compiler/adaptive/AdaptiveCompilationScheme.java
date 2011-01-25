@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,12 @@
 package com.sun.max.vm.compiler.adaptive;
 
 import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
 
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -45,6 +45,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Ben L. Titzer
  * @author Michael Van De Vanter
+ * @author Doug Simon
  */
 public class AdaptiveCompilationScheme extends AbstractVMScheme implements CompilationScheme {
 
@@ -67,14 +68,14 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     protected final LinkedList<Compilation> pending = new LinkedList<Compilation>();
 
     /**
-     * The baseline (JIT) compiler.
+     * The baseline compiler.
      */
-    protected final RuntimeCompilerScheme jitCompiler;
+    public final RuntimeCompiler baselineCompiler;
 
     /**
      * The optimizing compiler.
      */
-    protected final RuntimeCompilerScheme optCompiler;
+    public final RuntimeCompiler optimizingCompiler;
 
     /**
      * List of attached Compilation observers.
@@ -82,47 +83,76 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     @RESET
     protected LinkedList<CompilationObserver> observers;
 
-    private static boolean jit;
+    private static boolean baseline;
     private static boolean opt;
     private static int RCT = DEFAULT_RECOMPILATION_THRESHOLD;
     private static boolean GCOnRecompilation;
     private static boolean FailOverCompilation = true;
 
     static {
-        addFieldOption("-X", "jit", "Select JIT only mode, with no recompilation.");
-        addFieldOption("-X", "opt", "Select optimizing-only compilation.");
+        addFieldOption("-X", "baseline", "Select baseline compiler whenever possible (disables recompilation).");
+        addFieldOption("-X", "opt", "Select optimizing-only compilation whenever possible.");
         addFieldOption("-XX:", "RCT", "Set the recompilation threshold for methods.");
         addFieldOption("-XX:", "GCOnRecompilation", "Force GC before every re-compilation.");
         addFieldOption("-XX:", "FailOverCompilation", "Retry failed compilations with another compiler (if available).");
     }
 
     /**
+     * An enum that selects between different runtime behavior of the compilation scheme.
+     */
+    public enum Mode {
+        /**
+         * Use the baseline compiler whenever possible.
+         */
+        BASELINE,
+
+        /**
+         * Use the optimizing compiler whenever possible.
+         */
+        OPTIMIZED,
+
+        /**
+         * Use both compilers according to dynamic feedback.
+         */
+        MIXED;
+    }
+
+    /**
      * The (dynamically selected) compilation mode.
      */
-    private Mode mode = Mode.JIT;
+    private Mode mode = Mode.MIXED;
+
     private static final boolean BACKGROUND_COMPILATION = false;
 
-    public Mode mode() {
-        return mode;
+    public boolean needsAdapters() {
+        return baselineCompiler != optimizingCompiler;
     }
 
     /**
-     * Set the compilation mode of this compilation scheme, which determines which compilers to select at runtime.
-     */
-    public void setMode(Mode mode) {
-        this.mode = mode;
-    }
-
-    /**
-     * The constructor for this class initializes a new adaptive compilation system with the specified VM configuration,
-     * configuring itself according to the compiler(s) selected in the VM configuration.
-     *
-     * @param vmConfiguration the configuration of the virtual machine
+     * The constructor for this class initializes a new adaptive compilation.
      */
     @HOSTED_ONLY
     public AdaptiveCompilationScheme() {
-        optCompiler = vmConfig().optCompilerScheme();
-        jitCompiler = vmConfig().jitCompilerScheme();
+        assert CompilationScheme.optimizingCompilerOption.getValue() != null;
+        optimizingCompiler = instantiateCompiler(CompilationScheme.optimizingCompilerOption.getValue());
+        if (!CompilationScheme.optimizingCompilerOption.getValue().equals(CompilationScheme.baselineCompilerOption.getValue()) && CompilationScheme.baselineCompilerOption.getValue() != null) {
+            baselineCompiler = instantiateCompiler(CompilationScheme.baselineCompilerOption.getValue());
+        } else {
+            baselineCompiler = optimizingCompiler;
+        }
+    }
+
+    @HOSTED_ONLY
+    private static RuntimeCompiler instantiateCompiler(String compilerClassName) {
+        try {
+            return (RuntimeCompiler) Classes.forName(compilerClassName).newInstance();
+        } catch (Exception e) {
+            throw FatalError.unexpected("Error instantiating compiler " + compilerClassName, e);
+        }
+    }
+
+    public String description() {
+        return "compilation: " + mode.name().toLowerCase();
     }
 
     /**
@@ -134,6 +164,11 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        optimizingCompiler.initialize(phase);
+        if (optimizingCompiler != baselineCompiler) {
+            baselineCompiler.initialize(phase);
+        }
+
         if (isHosted()) {
             if (BACKGROUND_COMPILATION) {
                 // launch a compiler thread if background compilation is supported (currently no)
@@ -142,16 +177,16 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 compilationThread.start();
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
-            if (jit) {
+            if (baseline) {
                 defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
-                setMode(Mode.JIT);
+                this.mode = Mode.BASELINE;
             } else if (opt) {
                 defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
-                setMode(Mode.OPTIMIZED);
+                this.mode = Mode.OPTIMIZED;
             } else {
                 defaultRecompilationThreshold0 = RCT;
                 MethodInstrumentation.enable(defaultRecompilationThreshold0);
-                setMode(Mode.MIXED);
+                this.mode = Mode.MIXED;
             }
 
             if (BACKGROUND_COMPILATION) {
@@ -170,14 +205,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return the target method that results from compiling the specified method
      */
     public TargetMethod synchronousCompile(ClassMethodActor classMethodActor) {
-        return synchronousCompileHelper(classMethodActor, null);
-    }
-
-    public TargetMethod synchronousCompile(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler) {
-        return synchronousCompileHelper(classMethodActor, compiler);
-    }
-
-    private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme recommendedCompiler) {
         boolean retrying = false;
         while (true) {
             Compilation compilation;
@@ -187,7 +214,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 Object targetState = classMethodActor.targetState;
                 if (targetState == null) {
                     // this is the first compilation.
-                    RuntimeCompilerScheme compiler = !retrying ? selectCompiler(classMethodActor, true, recommendedCompiler) : optCompiler;
+                    RuntimeCompiler compiler = !retrying ? selectCompiler(classMethodActor, true) : optimizingCompiler;
                     compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
                 } else if (targetState instanceof Compilation) {
@@ -196,7 +223,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     doCompile = false;
                 } else {
                     // this method has already been compiled once
-                    RuntimeCompilerScheme compiler = !retrying ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, recommendedCompiler) : optCompiler;
+                    RuntimeCompiler compiler = !retrying ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0) : optimizingCompiler;
                     TargetMethod targetMethod = classMethodActor.currentTargetMethod();
                     if (targetMethod != null && compiler.compiledType() == targetMethod.getClass()) {
                         return targetMethod;
@@ -216,8 +243,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
                 Log.println(errorMessage);
                 t.printStackTrace(Log.out);
-                if (compilation.compiler != optCompiler && FailOverCompilation) {
-                    Log.println("Retrying with " + optCompiler + "...");
+                if (compilation.compiler != optimizingCompiler && FailOverCompilation) {
+                    Log.println("Retrying with " + optimizingCompiler + "...");
                     retrying = true;
                 } else {
                     throw (InternalError) new InternalError(errorMessage).initCause(t);
@@ -257,6 +284,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         throw FatalError.unimplemented();
     }
 
+    @HOSTED_ONLY
+    public static final HashSet<Class> compileWithBaseline = new HashSet<Class>();
+
     /**
      * Select the appropriate compiler based on the current state of the method.
      *
@@ -265,7 +295,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @param recommendedCompiler the compiler recommended for use
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    RuntimeCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile, RuntimeCompilerScheme recommendedCompiler) {
+    RuntimeCompiler selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile) {
 
         int flags = classMethodActor.flags() | classMethodActor.compilee().flags();
         if (Actor.isUnsafe(flags)) {
@@ -279,44 +309,41 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 // Templates must be compiled with the CPS compiled
                 return CPSCompiler.Static.compiler();
             }
-            return optCompiler;
+            return optimizingCompiler;
         }
 
-        RuntimeCompilerScheme compiler;
+        RuntimeCompiler compiler;
 
-        // use the recommended compiler
-        if (recommendedCompiler != null) {
-            compiler = recommendedCompiler;
-        } else if (isHosted()) {
-            if (classMethodActor.getAnnotation(SNIPPET.class) != null) {
+        if (isHosted()) {
+            if (compileWithBaseline.contains(classMethodActor.holder().javaClass())) {
+                compiler = baselineCompiler;
+            } else if (classMethodActor.getAnnotation(SNIPPET.class) != null) {
                 // snippets must be compiled with the opt compiler
-                compiler = optCompiler;
+                compiler = optimizingCompiler;
             } else if (Builtin.builtinInvocationStubClasses.contains(classMethodActor.holder())) {
                 // Invocation stubs for builtins must be compiled with CPS.
                 compiler = CPSCompiler.Static.compiler();
-            } else if (mode == Mode.PROTOTYPE_JIT) {
-                compiler = jitCompiler;
             } else {
                 // at prototyping time, default to the opt compiler
-                compiler = optCompiler;
+                compiler = optimizingCompiler;
             }
         } else {
             // in optimized mode, default to the optimizing compiler
             if (mode == Mode.OPTIMIZED) {
                 if (classMethodActor.isSynthetic() && firstCompile) {
-                    // we must at first use the JIT for reflective invocation stubs,
+                    // we must at first use the baseline for reflective invocation stubs,
                     // otherwise the CPS compiler may not terminate
-                    compiler = jitCompiler;
+                    compiler = baselineCompiler;
                 } else {
-                    compiler = optCompiler;
+                    compiler = optimizingCompiler;
                 }
             } else {
-                // use the jit if the first compile or in JIT mode
-                if (firstCompile || mode == Mode.JIT) {
-                    compiler = jitCompiler;
+                // use the baseline if the first compile or in baseline mode
+                if (firstCompile || mode == Mode.BASELINE) {
+                    compiler = baselineCompiler;
                 } else {
                     // not the first compile, use the optimizing compiler
-                    compiler = optCompiler;
+                    compiler = optimizingCompiler;
                 }
             }
         }

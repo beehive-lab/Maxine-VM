@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import junit.framework.*;
 import test.com.sun.max.vm.cps.cir.*;
 
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.b.c.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.hosted.*;
@@ -44,6 +45,7 @@ public class CirTranslatorTestSetup extends CirCompilerTestSetup {
     @Override
     protected void initializeVM() {
         BcCompiler.disableOptimizing();
-        VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.Package());
+        CompilationScheme.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.BcCompiler.class.getName());
+        VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

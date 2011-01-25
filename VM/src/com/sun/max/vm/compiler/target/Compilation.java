@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,7 +73,7 @@ public class Compilation implements Future<TargetMethod> {
     private static long compilationTime;
 
     public final CompilationScheme compilationScheme;
-    public final RuntimeCompilerScheme compiler;
+    public final RuntimeCompiler compiler;
     public final ClassMethodActor classMethodActor;
     public final Compilation parent;
     @INSPECTED
@@ -88,7 +88,7 @@ public class Compilation implements Future<TargetMethod> {
     public boolean done;
 
     public Compilation(CompilationScheme compilationScheme,
-                       RuntimeCompilerScheme compiler,
+                       RuntimeCompiler compiler,
                        ClassMethodActor classMethodActor,
                        Object previousTargetState, Thread compilingThread) {
         this.parent = COMPILATION.get();
@@ -171,7 +171,7 @@ public class Compilation implements Future<TargetMethod> {
      * @return the target method that is the result of the compilation
      */
     public TargetMethod compile(List<CompilationObserver> observers) {
-        RuntimeCompilerScheme compiler = this.compiler;
+        RuntimeCompiler compiler = this.compiler;
         TargetMethod targetMethod = null;
 
         // notify any compilation observers
@@ -268,11 +268,11 @@ public class Compilation implements Future<TargetMethod> {
         }
     }
 
-    private void logCompilationError(Throwable error, RuntimeCompilerScheme compiler, String methodString) {
+    private void logCompilationError(Throwable error, RuntimeCompiler compiler, String methodString) {
         if (verboseOption.verboseCompilation) {
             Log.printCurrentThread(false);
             Log.print(": ");
-            Log.print(compiler.name());
+            Log.print(compiler.getClass().getSimpleName());
             Log.print(": Failed ");
             Log.println(methodString);
         }
@@ -282,24 +282,24 @@ public class Compilation implements Future<TargetMethod> {
         throw (RuntimeException) error;
     }
 
-    private String logBeforeCompilation(RuntimeCompilerScheme compiler) {
+    private String logBeforeCompilation(RuntimeCompiler compiler) {
         String methodString = null;
         if (verboseOption.verboseCompilation) {
             methodString = classMethodActor.format("%H.%n(%p)");
             Log.printCurrentThread(false);
             Log.print(": ");
-            Log.print(compiler.name());
+            Log.print(compiler.getClass().getSimpleName());
             Log.print(": Compiling ");
             Log.println(methodString);
         }
         return methodString;
     }
 
-    private void logAfterCompilation(RuntimeCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
+    private void logAfterCompilation(RuntimeCompiler compiler, TargetMethod targetMethod, String methodString) {
         if (verboseOption.verboseCompilation) {
             Log.printCurrentThread(false);
             Log.print(": ");
-            Log.print(compiler.name());
+            Log.print(compiler.getClass().getSimpleName());
             Log.print(": Compiled  ");
             Log.print(methodString);
             Log.print(" @ ");
@@ -310,14 +310,14 @@ public class Compilation implements Future<TargetMethod> {
         }
     }
 
-    private void observeBeforeCompilation(List<CompilationObserver> observers, RuntimeCompilerScheme compiler) {
+    private void observeBeforeCompilation(List<CompilationObserver> observers, RuntimeCompiler compiler) {
         if (observers != null) {
             for (CompilationObserver observer : observers) {
                 observer.observeBeforeCompilation(classMethodActor, compiler);
             }
         }
     }
-    private void observeAfterCompilation(List<CompilationObserver> observers, RuntimeCompilerScheme compiler, TargetMethod result) {
+    private void observeAfterCompilation(List<CompilationObserver> observers, RuntimeCompiler compiler, TargetMethod result) {
         if (observers != null) {
             for (CompilationObserver observer : observers) {
                 observer.observeAfterCompilation(classMethodActor, compiler, result);

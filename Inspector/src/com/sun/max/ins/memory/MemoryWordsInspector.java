@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.memory;
 
+import static com.sun.max.tele.MaxProcessState.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -33,7 +35,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -785,7 +786,7 @@ public final class MemoryWordsInspector extends Inspector {
 
     @Override
     public void watchpointSetChanged() {
-        if (vm().state().processState() != ProcessState.TERMINATED) {
+        if (vm().state().processState() != TERMINATED) {
             refreshView(true);
         }
     }

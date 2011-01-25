@@ -653,7 +653,7 @@ public final class JDK_java_lang_System {
 
         setIfAbsent(properties, "java.vm.name", MaxineVM.name());
         setIfAbsent(properties, "java.vm.version", MaxineVM.VERSION_STRING);
-        setIfAbsent(properties, "java.vm.info", vmConfig().compilationScheme().mode().name().toLowerCase() + " mode");
+        setIfAbsent(properties, "java.vm.info", vmConfig().compilationScheme().description());
 
         setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width()));
         setIfAbsent(properties, "sun.cpu.endian", Word.endianness().name().toLowerCase());
