@@ -102,10 +102,9 @@ public final class VMConfiguration {
          * in a scheme instance, need to ask questions about the configuration we are constructing.
          * Valid questions concern the values (names) of the scheme packages and the classes
          * registered as the scheme implementations. Since the schemes have not be instantiated
-         * at this stage, the scheme instances cannot be used. I.e., one must use {@link Class#isAssignableFrom}
-         * rather than {@code instanceof}. The method {@link #schemeClass} is used to get the
-         * actual scheme class for a given scheme. We can assert that a scheme package will return true to
-         * {@code isPartOfMaxineVM}.
+         * at this stage, scheme instances cannot be used. i.e., one must use {@link Class#isAssignableFrom}
+         * rather than {@code instanceof}. The method {@link #schemeImplClassIsSubClass} can be used to
+         * check whether a given class is the same as or a subclass of the registered class for a given scheme.
          */
         addSchemePackage(referencePackage);
         addSchemePackage(layoutPackage);
