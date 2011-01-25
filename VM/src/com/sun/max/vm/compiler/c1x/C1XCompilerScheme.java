@@ -72,6 +72,12 @@ public class C1XCompilerScheme implements RuntimeCompiler {
      */
     private C1XCompiler compiler;
 
+    /**
+     * Set to true once the C1X options are set (to allow subclasses of this scheme to coexist in the same image).
+     */
+    @HOSTED_ONLY
+    private static boolean optionsRegistered;
+
     public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 1,
         "Set the optimization level of C1X.") {
             @Override
@@ -92,7 +98,10 @@ public class C1XCompilerScheme implements RuntimeCompiler {
 
     @HOSTED_ONLY
     protected C1XCompilerScheme(MaxXirGenerator xirGenerator) {
-        VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
+        if (!optionsRegistered) {
+            VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
+            optionsRegistered = true;
+        }
         this.xirGenerator = xirGenerator;
     }
 
