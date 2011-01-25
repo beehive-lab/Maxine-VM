@@ -2366,7 +2366,7 @@ public final class GraphBuilder {
     }
 
     private void genStackAllocate() {
-        Value size = pop(CiKind.Word);
+        Value size = pop(CiKind.Int);
         wpush(append(new StackAllocate(size)));
     }
 
