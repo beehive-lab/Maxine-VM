@@ -59,7 +59,7 @@ public abstract class Op2 extends Instruction {
      * Gets the first input to this instruction.
      * @return the first input to this instruction
      */
-    public Value x() {
+    public final Value x() {
         return x;
     }
 
@@ -67,7 +67,7 @@ public abstract class Op2 extends Instruction {
      * Gets the second input to this instruction.
      * @return the second input to this instruction
      */
-    public Value y() {
+    public final Value y() {
         return y;
     }
 

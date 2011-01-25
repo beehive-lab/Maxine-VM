@@ -288,7 +288,7 @@ public abstract class LIRInstruction {
      *
      * @return return the result operand
      */
-    public CiValue result() {
+    public final CiValue result() {
         return result.value(this);
     }
 
@@ -395,11 +395,11 @@ public abstract class LIRInstruction {
         return allocatorOperands.size() > 0;
     }
 
-    public boolean hasCall() {
+    public final boolean hasCall() {
         return hasCall;
     }
 
-    public int operandCount(OperandMode mode) {
+    public final int operandCount(OperandMode mode) {
         if (mode == OperandMode.Output) {
             return outputCount;
         } else if (mode == OperandMode.Input) {
@@ -410,7 +410,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public CiValue operandAt(OperandMode mode, int index) {
+    public final CiValue operandAt(OperandMode mode, int index) {
         if (mode == OperandMode.Output) {
             assert index < outputCount;
             return allocatorOperands.get(index);
@@ -424,7 +424,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public void setOperandAt(OperandMode mode, int index, CiValue location) {
+    public final void setOperandAt(OperandMode mode, int index, CiValue location) {
         assert index < operandCount(mode);
         assert location.kind != CiKind.Illegal;
         if (mode == OperandMode.Output) {
@@ -440,7 +440,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public List<ExceptionHandler> exceptionEdges() {
+    public final List<ExceptionHandler> exceptionEdges() {
         if (info != null && info.exceptionHandlers != null) {
             return info.exceptionHandlers;
         }

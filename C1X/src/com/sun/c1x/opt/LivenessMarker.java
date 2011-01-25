@@ -34,7 +34,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class LivenessMarker {
+public final class LivenessMarker {
 
     final IR ir;
 
@@ -108,7 +108,7 @@ public class LivenessMarker {
         }
     }
 
-    private class InstructionMarker implements ValueClosure {
+    private final class InstructionMarker implements ValueClosure {
         final Value.Flag reason;
         Link head;
         Link tail;

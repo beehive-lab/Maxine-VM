@@ -36,12 +36,7 @@ public abstract class StateSplit extends Instruction {
     /**
      * Sentinel denoting an explicitly cleared state.
      */
-    private static final FrameState CLEARED_STATE = new MutableFrameState(null, -5, 0, 0) {
-        @Override
-        public String toString() {
-            return "CLEARED_STATE";
-        };
-    };
+    private static final FrameState CLEARED_STATE = new MutableFrameState(null, -5, 0, 0);
 
     private FrameState stateBefore;
 

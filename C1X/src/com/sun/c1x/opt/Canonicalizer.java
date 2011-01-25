@@ -857,7 +857,7 @@ public class Canonicalizer extends DefaultValueVisitor {
     private void reduceIntrinsic(Intrinsic i) {
         Value[] args = i.arguments();
         C1XIntrinsic intrinsic = i.intrinsic();
-        if (C1XOptions.IntrinsifyClassOps && intrinsic == C1XIntrinsic.java_lang_Class$isInstance) {
+        if (intrinsic == C1XIntrinsic.java_lang_Class$isInstance) {
             // try to convert a call to Class.isInstance() into an InstanceOf
             RiType type = asRiType(args[0]);
             if (type != null) {
@@ -865,14 +865,15 @@ public class Canonicalizer extends DefaultValueVisitor {
                 return;
             }
         }
-        if (C1XOptions.IntrinsifyArrayOps && intrinsic == C1XIntrinsic.java_lang_reflect_Array$newArray) {
+        if (intrinsic == C1XIntrinsic.java_lang_reflect_Array$newArray) {
             // try to convert a call to Array.newInstance() into a NewObjectArray or NewTypeArray
             RiType type = asRiType(args[0]);
             if (type != null) {
                 if (type.kind() == CiKind.Object) {
-                    setCanonical(new NewObjectArray(type, args[1], i.stateBefore(), '\0', null));
+                    setCanonical(new NewObjectArray(type, args[1], i.stateBefore()));
                 } else {
-                    setCanonical(new NewTypeArray(args[1], type.kind(), i.stateBefore()));
+                    RiType elementType = runtime.getRiType(type.kind().toJavaClass());
+                    setCanonical(new NewTypeArray(args[1], elementType, i.stateBefore()));
                 }
                 return;
             }
@@ -1360,6 +1361,28 @@ public class Canonicalizer extends DefaultValueVisitor {
             C1XMetrics.MethodsFolded++;
         }
         return result;
+    }
+
+    @Override
+    public void visitTypeEqualityCheck(TypeEqualityCheck i) {
+        if (i.condition == Condition.EQ && i.left() == i.right()) {
+            setCanonical(null);
+        }
+    }
+
+    @Override
+    public void visitBoundsCheck(BoundsCheck b) {
+        Value index = b.index();
+        Value length = b.length();
+
+        if (index.isConstant() && length.isConstant()) {
+            int i = index.asConstant().asInt();
+            int l = index.asConstant().asInt();
+            Condition c = b.condition;
+            if (c.check(i, l)) {
+                setCanonical(null);
+            }
+        }
     }
 
     private RiType asRiType(Value x) {

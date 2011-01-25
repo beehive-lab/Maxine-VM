@@ -52,6 +52,14 @@ public abstract class TypeCheck extends StateSplit {
     }
 
     /**
+     * Gets the instruction that loads the target class object that is used by this checkcast.
+     * @return the target class instruction
+     */
+    public Value targetClassInstruction() {
+        return targetClassInstruction;
+    }
+
+    /**
      * Gets the target class, i.e. the class being cast to, or the class being tested against.
      * @return the target class
      */

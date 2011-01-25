@@ -107,7 +107,7 @@ public class C1XTest {
 
     static {
         // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "C1X", C1XOptions.helpMap);
+        options.addFieldOptions(C1XOptions.class, "C1X", C1XCompilerScheme.getHelpMap());
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -219,8 +219,6 @@ public class C1XTest {
                     resetMetrics();
                 }
                 doTimingRun(compilerScheme, methods);
-                // only aggressively resolve on the first run
-                C1XOptions.NormalCPEResolution = false;
             }
         } else {
             // compile all the methods and report progress

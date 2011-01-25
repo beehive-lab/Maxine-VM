@@ -475,6 +475,7 @@ final class LinearScanWalker extends IntervalWalker {
             // the whole interval is never used, so spill it entirely to memory
             if (C1XOptions.TraceLinearScanLevel >= 2) {
                 TTY.println("      spilling entire interval because split pos is at beginning of interval");
+                TTY.println("      use positions: " + interval.usePosList().size());
             }
             assert interval.firstUsage(RegisterPriority.ShouldHaveRegister) > currentPosition : "interval must not have use position before currentPosition";
 

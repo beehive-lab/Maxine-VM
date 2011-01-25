@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,42 +24,20 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 /**
- * The {@code NewTypeArray} class definition.
+ * Calls the deoptimization runtime method if the condition is met.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
+ *
  */
-public final class NewTypeArray extends NewArray {
+public abstract class Guard extends StateSplit {
 
-    final RiType elementType;
+    public final Condition condition;
 
-    public NewTypeArray(Value length, RiType elementType, FrameState stateBefore) {
-        super(length, stateBefore);
-        this.elementType = elementType;
-    }
+    public Guard(Condition condition, FrameState stateBefore) {
+        super(CiKind.Illegal, stateBefore);
 
-    public CiKind elementKind() {
-        return elementType.kind();
-    }
-
-    @Override
-    public RiType declaredType() {
-        return elementType.arrayOf();
-    }
-
-    @Override
-    public RiType exactType() {
-        return elementType.arrayOf();
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitNewTypeArray(this);
+        this.condition = condition;
     }
 }

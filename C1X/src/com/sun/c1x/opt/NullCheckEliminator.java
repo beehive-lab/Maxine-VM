@@ -278,14 +278,15 @@ public class NullCheckEliminator extends DefaultValueVisitor {
 
     private void propagate(BlockInfo pred, CiBitMap bitMap, BlockBegin succ) {
         boolean changed;
-        propagateFlowSensitive(pred, bitMap, succ);
         BlockInfo succInfo = getBlockInfo(succ);
         if (succInfo.localIn == null) {
             // this is the first time this block is being iterated
             succInfo.localIn = bitMap.copy();
+            propagateFlowSensitive(pred, succInfo.localIn, succ, false);
             changed = true;
         } else {
             // perform intersection with previous map
+            bitMap = propagateFlowSensitive(pred, bitMap, succ, true);
             changed = succInfo.localIn.setIntersect(bitMap);
         }
         if (changed && !isMarked(succInfo)) {
@@ -294,13 +295,17 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         }
     }
 
-    private void propagateFlowSensitive(BlockInfo pred, CiBitMap bitMap, BlockBegin succ) {
+    private CiBitMap propagateFlowSensitive(BlockInfo pred, CiBitMap bitMap, BlockBegin succ, boolean copy) {
         if (C1XOptions.OptFlowSensitiveNCE) {
             if (pred.ifEdge != null && pred.ifEdge.succ == succ) {
+                if (copy) {
+                    bitMap = bitMap.copy();
+                }
                 // there is a special if edge between these blocks, add the checked instruction
                 setValue(pred.ifEdge.checked, bitMap);
             }
         }
+        return bitMap;
     }
 
     private void reprocessUses(CiBitMap in, List<Value> uses) {
@@ -489,14 +494,17 @@ public class NullCheckEliminator extends DefaultValueVisitor {
     private void compareAgainstNull(If i, Value use) {
         if (i.condition() == Condition.EQ) {
             propagateNonNull(i, use, i.falseSuccessor());
-        }
-        if (i.condition() == Condition.NE) {
+        } else if (i.condition() == Condition.NE) {
             propagateNonNull(i, use, i.trueSuccessor());
         }
     }
 
     private void propagateNonNull(If i, Value use, BlockBegin succ) {
-        getBlockInfo(i.begin()).ifEdge = new IfEdge(i.begin(), succ, use);
+        BlockInfo info = getBlockInfo(i.begin());
+        if (info.ifEdge == null) {
+            // Only use one if edge.
+            info.ifEdge = new IfEdge(i.begin(), succ, use);
+        }
     }
 
     private ValueInfo getValueInfo(Value value) {

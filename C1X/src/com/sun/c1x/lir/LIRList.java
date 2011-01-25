@@ -46,7 +46,7 @@ import com.sun.cri.xir.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public class LIRList {
+public final class LIRList {
 
     private List<LIRInstruction> operations;
     private final LIRGenerator generator;
@@ -277,6 +277,10 @@ public class LIRList {
         append(new LIRBranch(cond, lbl));
     }
 
+    public void branch(Condition cond, Label lbl, LIRDebugInfo info) {
+        append(new LIRBranch(cond, lbl, info));
+    }
+
     public void branch(Condition cond, CiKind kind, BlockBegin block) {
         assert kind != CiKind.Float && kind != CiKind.Double : "no fp comparisons";
         append(new LIRBranch(cond, kind, block));
@@ -379,19 +383,19 @@ public class LIRList {
         append(new LIROp2(isUnorderedLess ? LIROpcode.Ucmpfd2i : LIROpcode.Cmpfd2i, left, right, dst));
     }
 
-    public void casLong(CiAddress addr, CiValue cmpValue, CiValue newValue) {
+    public void casLong(CiValue addr, CiValue cmpValue, CiValue newValue) {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
         append(new LIRCompareAndSwap(LIROpcode.CasLong, addr, cmpValue, newValue));
     }
 
-    public void casObj(CiAddress addr, CiValue cmpValue, CiValue newValue) {
+    public void casObj(CiValue addr, CiValue cmpValue, CiValue newValue) {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
         append(new LIRCompareAndSwap(LIROpcode.CasObj, addr, cmpValue, newValue));
     }
 
-    public void casInt(CiAddress addr, CiValue cmpValue, CiValue newValue) {
+    public void casInt(CiValue addr, CiValue cmpValue, CiValue newValue) {
         // Compare and swap produces condition code "zero" if contentsOf(addr) == cmpValue,
         // implying successful swap of newValue into addr
         append(new LIRCompareAndSwap(LIROpcode.CasInt, addr, cmpValue, newValue));

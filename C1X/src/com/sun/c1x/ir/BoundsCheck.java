@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,42 +24,43 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 /**
- * The {@code NewTypeArray} class definition.
+ * Performs a bounds check on the index variable given a length. Deoptimizes on index < 0 || index >= length.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
+ *
  */
-public final class NewTypeArray extends NewArray {
+public final class BoundsCheck extends Guard {
 
-    final RiType elementType;
+    Value index;
+    Value length;
 
-    public NewTypeArray(Value length, RiType elementType, FrameState stateBefore) {
-        super(length, stateBefore);
-        this.elementType = elementType;
+    public BoundsCheck(Value index, Value length, FrameState stateBefore, Condition condition) {
+        super(condition, stateBefore);
+        this.index = index;
+        this.length = length;
+        assert index.kind == CiKind.Int;
+        assert length.kind == CiKind.Int;
     }
 
-    public CiKind elementKind() {
-        return elementType.kind();
+    public Value index() {
+        return index;
+    }
+
+    public Value length() {
+        return length;
     }
 
     @Override
-    public RiType declaredType() {
-        return elementType.arrayOf();
+    public void inputValuesDo(ValueClosure closure) {
+        index = closure.apply(index);
+        length = closure.apply(length);
     }
 
-    @Override
-    public RiType exactType() {
-        return elementType.arrayOf();
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitNewTypeArray(this);
+        v.visitBoundsCheck(this);
     }
+
 }

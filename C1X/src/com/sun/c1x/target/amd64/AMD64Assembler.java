@@ -1785,13 +1785,18 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(0x90);
     }
 
-    // copies data from [esi] to [edi] using X86.rcx pointer sized words
-    // generic
-    public final void repMov() {
+    // Copies data from [X86.rsi] to [X86.rdi] using X86.rcx heap words.
+    public final void repeatMoveWords() {
         emitByte(0xF3);
-        // MOVSQ
         emitByte(Prefix.REXW);
         emitByte(0xA5);
+    }
+
+    // Copies data from [X86.rsi] to [X86.rdi] using X86.rcx bytes.
+    public final void repeatMoveBytes() {
+        emitByte(0xF3);
+        emitByte(Prefix.REXW);
+        emitByte(0xA4);
     }
 
     // sets X86.rcx pointer sized words with X86.rax, value at [edi]
@@ -2929,7 +2934,7 @@ public class AMD64Assembler extends AbstractAssembler {
             || op == 0xEB // short jmp
             || (op & 0xF0) == 0x70 // short jcc
             || op == 0x0F && (codeBuffer.getByte(branch + 1) & 0xF0) == 0x80 // jcc
-        : "Invalid opcode at patch point";
+        : "Invalid opcode at patch point branch=" + branch + ", branchTarget=" + branchTarget + ", op=" + op;
 
         if (op == 0xEB || (op & 0xF0) == 0x70) {
 

@@ -34,7 +34,7 @@ import com.sun.cri.ci.*;
  * @author Thomas Wuerthinger
  *
  */
-public class ComputeLinearScanOrder {
+public final class ComputeLinearScanOrder {
 
     private final int maxBlockId; // the highest blockId of a block
     private int numBlocks; // total number of blocks (smaller than maxBlockId)

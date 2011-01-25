@@ -190,10 +190,13 @@ public abstract class CiXirAssembler {
          * Unique id in range {@code 0} to {@code parameters.Size()  - 1}.
          */
         public final int parameterIndex;
+        
+        public final boolean canBeConstant;
 
-        XirParameter(CiXirAssembler asm, String name, CiKind kind) {
+        XirParameter(CiXirAssembler asm, String name, CiKind kind, boolean canBeConstant) {
             super(asm, name, kind);
             this.parameterIndex = asm.parameters.size();
+            this.canBeConstant = canBeConstant;
             asm.parameters.add(this);
         }
 
@@ -201,7 +204,7 @@ public abstract class CiXirAssembler {
 
     public static class XirConstantParameter extends XirParameter implements XirConstantOperand {
         XirConstantParameter(CiXirAssembler asm, String name, CiKind kind) {
-            super(asm, name, kind);
+            super(asm, name, kind, true);
         }
 
         public int getIndex() {
@@ -210,8 +213,8 @@ public abstract class CiXirAssembler {
     }
 
     public static class XirVariableParameter extends XirParameter {
-        XirVariableParameter(CiXirAssembler asm, String name, CiKind kind) {
-            super(asm, name, kind);
+        XirVariableParameter(CiXirAssembler asm, String name, CiKind kind, boolean canBeConstant) {
+            super(asm, name, kind, canBeConstant);
         }
     }
 
@@ -289,7 +292,7 @@ public abstract class CiXirAssembler {
      * arguments, respectively. Only the {@link XirOp#CallStub} and {@link XirOp#CallRuntime} instructions can have more than three arguments.
      *
      */
-    public static class XirInstruction {
+    public static final class XirInstruction {
         /**
          * The {@link CiKind kind} of values the instruction operates on.
          */
@@ -478,6 +481,14 @@ public abstract class CiXirAssembler {
          */
         PointerStoreDisp,
         /**
+         * Repeat move from {@code x} to {@code y} using {@code z} words.
+         */
+        RepeatMoveWords,
+        /**
+         * Repeat move from {@code x} to {@code y} using {@code z} words.
+         */
+        RepeatMoveBytes,
+        /**
          * TBD.
          */
         PointerCAS,
@@ -521,6 +532,10 @@ public abstract class CiXirAssembler {
          * If {@code x <= y}, transfer control to the instruction at the {@link XirLabel label} identified by {@code extra}.
          */
         Jlteq,
+        /**
+         * Decreases the input by one and jumps to the target if the input is not 0
+         */
+        DecAndJumpNotZero,
         /**
          * Bind the {@link XirLabel label} identified by {@code extra} to the current instruction and update any references to it.
          * A label may be bound more than once to the same location.
@@ -660,6 +675,14 @@ public abstract class CiXirAssembler {
     public void lea(XirOperand result, XirOperand pointer, XirOperand index, int disp, Scale scale) {
         append(new XirInstruction(CiKind.Word, new AddressAccessInformation(false, disp, scale), LoadEffectiveAddress, result, pointer, index));
     }
+    
+    public void repmov(XirOperand src, XirOperand dest, XirOperand length) {
+        append(new XirInstruction(CiKind.Word, null, RepeatMoveWords, null, src, dest, length));
+    }
+    
+    public void repmovb(XirOperand src, XirOperand dest, XirOperand length) {
+        append(new XirInstruction(CiKind.Word, null, RepeatMoveBytes, null, src, dest, length));
+    }
 
     public void pstore(CiKind kind, XirOperand pointer, XirOperand index, XirOperand value, int disp, Scale scale, boolean canTrap) {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, disp, scale), PointerStoreDisp, VOID, pointer, index, value));
@@ -671,6 +694,10 @@ public abstract class CiXirAssembler {
 
     public void jmp(XirLabel l) {
         append(new XirInstruction(CiKind.Void, l, Jmp, null));
+    }
+
+    public void decAndJumpNotZero(XirLabel l, XirOperand val) {
+        append(new XirInstruction(CiKind.Void, l, DecAndJumpNotZero, null, val));
     }
 
     public void jmpRuntime(Object rt) {
@@ -800,9 +827,13 @@ public abstract class CiXirAssembler {
      * @param kind the parameter kind
      * @return the  {@link XirVariableParameter}
      */
-    public XirVariableParameter createInputParameter(String name, CiKind kind) {
+    public XirVariableParameter createInputParameter(String name, CiKind kind, boolean canBeConstant) {
         assert !finished;
-        return new XirVariableParameter(this, name, kind);
+        return new XirVariableParameter(this, name, kind, canBeConstant);
+    }
+    
+    public XirVariableParameter createInputParameter(String name, CiKind kind) {
+        return createInputParameter(name, kind, false);
     }
 
     /**

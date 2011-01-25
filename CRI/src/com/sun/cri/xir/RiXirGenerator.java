@@ -71,6 +71,8 @@ public abstract interface RiXirGenerator {
     public XirSnippet genNewInstance(XirSite site, RiType type);
 
     public XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType);
+    
+    public XirSnippet genNewObjectArrayClone(XirSite site, XirArgument newLength, XirArgument referenceArray);
 
     public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type);
 
@@ -84,6 +86,14 @@ public abstract interface RiXirGenerator {
 
     public XirSnippet genArrayLength(XirSite site, XirArgument array);
 
+    public XirSnippet genWriteBarrier(XirArgument object);
+    
+    public XirSnippet genArrayCopy(XirSite site, XirArgument src, XirArgument srcPos, XirArgument dest, XirArgument destPos, XirArgument length, RiType elementType, boolean inputsSame, boolean inputsDifferent);
+
+    public XirSnippet genCurrentThread(XirSite site);
+
+    public XirSnippet genGetClass(XirSite site, XirArgument xirArgument);
+    
     /**
      * Construct the list of XIR templates using the given XIR assembler.
      * 

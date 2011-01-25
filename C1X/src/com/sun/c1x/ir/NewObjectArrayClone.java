@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,35 +23,46 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
- * The {@code NewTypeArray} class definition.
+ * The {@code NewObjectArray} instruction represents an allocation of an object array.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
  */
-public final class NewTypeArray extends NewArray {
+public final class NewObjectArrayClone extends NewArray {
 
-    final RiType elementType;
+    final Value referenceArray;
 
-    public NewTypeArray(Value length, RiType elementType, FrameState stateBefore) {
+    /**
+     * Constructs a new NewObjectArray instruction.
+     * @param elementClass the class of elements in this array
+     * @param length the instruction producing the length of the array
+     * @param stateBefore the state before the allocation
+     * @param cpi the constant pool index
+     * @param constantPool the constant pool
+     */
+    public NewObjectArrayClone(Value length, Value referenceArray, FrameState stateBefore) {
         super(length, stateBefore);
-        this.elementType = elementType;
+        this.referenceArray = referenceArray;
     }
 
-    public CiKind elementKind() {
-        return elementType.kind();
+    /**
+     * Gets the exact type of this instruction.
+     * @return the exact type of this instruction
+     */
+    @Override
+    public RiType exactType() {
+        return referenceArray.exactType();
     }
 
     @Override
     public RiType declaredType() {
-        return elementType.arrayOf();
+        return referenceArray.declaredType();
     }
 
-    @Override
-    public RiType exactType() {
-        return elementType.arrayOf();
+    public Value referenceArray() {
+        return referenceArray;
     }
 
     /**
@@ -60,6 +71,6 @@ public final class NewTypeArray extends NewArray {
      */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitNewTypeArray(this);
+        v.visitNewObjectArrayClone(this);
     }
 }

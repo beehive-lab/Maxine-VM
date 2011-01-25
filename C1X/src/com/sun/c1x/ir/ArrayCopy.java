@@ -24,52 +24,65 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * The {@code NewArray} class is the base of all instructions that allocate arrays.
+ * Copies a sequence of elements from a source into a destination array.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
+ *
  */
-public abstract class NewArray extends StateSplit {
+public class ArrayCopy extends StateSplit {
 
-    Value length;
+    private Value src;
+    private Value srcPos;
+    private Value dest;
+    private Value destPos;
+    private Value length;
+    public final RiMethod arrayCopyMethod;
 
-    /**
-     * Constructs a new NewArray instruction.
-     * @param length the instruction that produces the length for this allocation
-     * @param stateBefore the state before the allocation
-     */
-    NewArray(Value length, FrameState stateBefore) {
-        super(CiKind.Object, stateBefore);
+    public ArrayCopy(Value src, Value srcPos, Value dest, Value destPos, Value length, RiMethod arrayCopyMethod, FrameState stateBefore) {
+        super(CiKind.Void, stateBefore);
+        this.arrayCopyMethod = arrayCopyMethod;
+        this.src = src;
+        this.srcPos = srcPos;
+        this.dest = dest;
+        this.destPos = destPos;
         this.length = length;
-        setFlag(Flag.NonNull);
-        setFlag(Flag.ResultIsUnique);
     }
 
-    /**
-     * Gets the instruction that produces the length of this array.
-     * @return the instruction that produces the length
-     */
+    public Value src() {
+        return src;
+    }
+
+    public Value srcPos() {
+        return srcPos;
+    }
+
+    public Value dest() {
+        return dest;
+    }
+
+    public Value destPos() {
+        return destPos;
+    }
+
     public Value length() {
         return length;
     }
 
-    /**
-     * Checks whether this instruction can trap.
-     * @return <true>true</code>, conservatively assuming that this instruction can throw such
-     * exceptions as {@code OutOfMemoryError}
-     */
-    @Override
-    public boolean canTrap() {
-        return true;
-    }
-
-    /**
-     * Applies the specified closure to all input values of this instruction.
-     * @param closure the closure to apply
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
+        src = closure.apply(src);
+        srcPos = closure.apply(srcPos);
+        dest = closure.apply(dest);
+        destPos = closure.apply(destPos);
         length = closure.apply(length);
     }
+
+    @Override
+    public void accept(ValueVisitor v) {
+        v.visitArrayCopy(this);
+    }
+
 }

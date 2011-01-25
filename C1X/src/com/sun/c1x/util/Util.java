@@ -316,28 +316,14 @@ public class Util {
         return val;
     }
 
-    public static int nonFatalUnimplemented(int val) {
-        if (C1XOptions.FatalUnimplemented) {
-            throw new Error("unimplemented");
-        }
-        return val;
-    }
-
-    public static boolean nonFatalUnimplemented(boolean val) {
-        if (C1XOptions.FatalUnimplemented) {
-            throw new Error("unimplemented");
-        }
-        return val;
-    }
-
-    public static boolean isShiftCount(int x) {
-        return 0 <= x && x < 32;
-    }
-
     public static void nonFatalUnimplemented() {
         if (C1XOptions.FatalUnimplemented) {
             throw new Error("unimplemented");
         }
+    }
+
+    public static boolean isShiftCount(int x) {
+        return 0 <= x && x < 32;
     }
 
     public static boolean isByte(int x) {

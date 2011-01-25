@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,42 +24,43 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 /**
- * The {@code NewTypeArray} class definition.
+ * Checks the types of the two input values and deoptimizes if the condition does not hold.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
+ *
  */
-public final class NewTypeArray extends NewArray {
+public final class TypeEqualityCheck extends Guard {
 
-    final RiType elementType;
+    Value left;
+    Value right;
 
-    public NewTypeArray(Value length, RiType elementType, FrameState stateBefore) {
-        super(length, stateBefore);
-        this.elementType = elementType;
+    public TypeEqualityCheck(Value left, Value right, FrameState stateBefore, Condition condition) {
+        super(condition, stateBefore);
+        this.left = left;
+        this.right = right;
+        assert left.kind == CiKind.Object;
+        assert right.kind == CiKind.Object;
     }
 
-    public CiKind elementKind() {
-        return elementType.kind();
+    public Value left() {
+        return left;
+    }
+
+    public Value right() {
+        return right;
     }
 
     @Override
-    public RiType declaredType() {
-        return elementType.arrayOf();
+    public void inputValuesDo(ValueClosure closure) {
+        left = closure.apply(left);
+        right = closure.apply(right);
     }
 
-    @Override
-    public RiType exactType() {
-        return elementType.arrayOf();
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitNewTypeArray(this);
+        v.visitTypeEqualityCheck(this);
     }
+
 }

@@ -30,7 +30,7 @@ import com.sun.cri.ci.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class BitMap2D {
+public final class BitMap2D {
 
     private CiBitMap map;
     private final int bitsPerSlot;

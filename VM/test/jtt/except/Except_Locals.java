@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,46 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.ir;
-
-import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-
-/**
- * The {@code NewTypeArray} class definition.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: (null,null) = 1; ("",null) = 2; ("","") = -1
  */
-public final class NewTypeArray extends NewArray {
+package jtt.except;
 
-    final RiType elementType;
-
-    public NewTypeArray(Value length, RiType elementType, FrameState stateBefore) {
-        super(length, stateBefore);
-        this.elementType = elementType;
-    }
-
-    public CiKind elementKind() {
-        return elementType.kind();
-    }
-
-    @Override
-    public RiType declaredType() {
-        return elementType.arrayOf();
-    }
-
-    @Override
-    public RiType exactType() {
-        return elementType.arrayOf();
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitNewTypeArray(this);
+public class Except_Locals {
+    public static int test(String a, String b) {
+        int x = 0;
+        try {
+            x = 1;
+            a.toString();
+            x = 2;
+            b.toString();
+        } catch (NullPointerException e) {
+            System.out.println(x);
+            return x;
+        }
+        return -1;
     }
 }

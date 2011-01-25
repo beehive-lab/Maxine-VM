@@ -152,7 +152,8 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public int basicObjectLockOffsetInBytes() {
-        return Util.nonFatalUnimplemented(0);
+        // Must not be called if the size of the lock object is 0.
+        throw Util.shouldNotReachHere();
     }
 
     public int sizeOfBasicObjectLock() {
@@ -350,5 +351,10 @@ public class MaxRiRuntime implements RiRuntime {
     @Override
     public int getCustomStackAreaSize() {
         return 0;
+    }
+
+    @Override
+    public boolean supportsArrayIntrinsics() {
+        return false;
     }
 }

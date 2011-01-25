@@ -41,7 +41,7 @@ public final class Interval {
     /**
      * A pair of intervals.
      */
-    static class Pair {
+    static final class Pair {
         public final Interval first;
         public final Interval second;
         public Pair(Interval first, Interval second) {
@@ -53,7 +53,7 @@ public final class Interval {
     /**
      * A set of interval lists, one per {@linkplain RegisterBinding binding} type.
      */
-    static class RegisterBindingLists {
+    static final class RegisterBindingLists {
 
         /**
          * List of intervals whose binding is currently {@link RegisterBinding#Fixed}.

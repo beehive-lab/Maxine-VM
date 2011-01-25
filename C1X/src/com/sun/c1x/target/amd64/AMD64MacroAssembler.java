@@ -473,11 +473,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         // testl needs to be implemented first)
     }
 
-    void getThread(CiRegister javaThread) {
-        // Platform-specific! Solaris / Windows / Linux
-        Util.nonFatalUnimplemented();
-    }
-
     void signExtendByte(CiRegister reg) {
         if (reg.isByte()) {
             movsxb(reg, reg); // movsxb

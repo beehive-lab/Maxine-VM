@@ -26,6 +26,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.cri.ci.*;
@@ -90,9 +91,51 @@ public class C1XCompilerScheme implements RuntimeCompiler {
         this(new MaxXirGenerator());
     }
 
+    /**
+     * A map from option field names to some text describing the meaning and
+     * usage of the corresponding C1X option.
+     */
+    private static Map<String, String> helpMap;
+
+    public static Map<String, String> getHelpMap() {
+        if (helpMap == null) {
+            HashMap<String, String> map = new HashMap<String, String>();
+            map.put("PrintFilter",
+                    "Filter compiler tracing to methods whose fully qualified name " +
+                    "matches <arg>. If <arg> starts with \"~\", then <arg> (without " +
+                    "the \"~\") is interpreted as a regular expression. Otherwise, " +
+                    "<arg> is interpreted as a simple substring.");
+
+            map.put("TraceBytecodeParserLevel",
+                    "Trace frontend bytecode parser at level <n> where 0 means no " +
+                    "tracing, 1 means instruction tracing and 2 means instruction " +
+                    "plus frame state tracing.");
+
+            map.put("DetailedAsserts",
+                    "Turn on detailed error checking that has a noticeable performance impact.");
+
+            map.put("GenSpecialDivChecks",
+                    "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
+                    "instead of detecting these cases via instruction decoding in a trap handler.");
+
+            map.put("UseStackMapTableLiveness",
+                    "Use liveness information derived from StackMapTable class file attribute.");
+
+            for (String name : map.keySet()) {
+                try {
+                    C1XOptions.class.getField(name);
+                } catch (Exception e) {
+                    throw new InternalError("The name '" + name + "' does not denote a field in " + C1XOptions.class);
+                }
+            }
+            helpMap = Collections.unmodifiableMap(map);
+        }
+        return helpMap;
+    }
+
     @HOSTED_ONLY
     protected C1XCompilerScheme(MaxXirGenerator xirGenerator) {
-        VMOptions.addFieldOptions("-C1X:", C1XOptions.class, C1XOptions.helpMap);
+        VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
         this.xirGenerator = xirGenerator;
     }
 

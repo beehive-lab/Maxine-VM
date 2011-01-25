@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,46 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.c1x.ir;
+package jtt.optimize;
 
-import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-
-/**
- * The {@code NewTypeArray} class definition.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: null=null
  */
-public final class NewTypeArray extends NewArray {
+public class NCE_FlowSensitive05 {
 
-    final RiType elementType;
+    public static String test(Object arg) {
 
-    public NewTypeArray(Value length, RiType elementType, FrameState stateBefore) {
-        super(length, stateBefore);
-        this.elementType = elementType;
-    }
+        // An artificial loop to trigger iterative NCE.
+        while (arg != null) {
+            System.out.println(arg);
+        }
 
-    public CiKind elementKind() {
-        return elementType.kind();
-    }
-
-    @Override
-    public RiType declaredType() {
-        return elementType.arrayOf();
-    }
-
-    @Override
-    public RiType exactType() {
-        return elementType.arrayOf();
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitNewTypeArray(this);
+        // The upcast must still include the null check.
+        return (String) arg;
     }
 }

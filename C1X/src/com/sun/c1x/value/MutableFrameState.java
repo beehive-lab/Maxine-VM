@@ -42,7 +42,7 @@ import com.sun.cri.ci.*;
  *
  * @author Michael Duller
  */
-public class MutableFrameState extends FrameState {
+public final class MutableFrameState extends FrameState {
 
     public MutableFrameState(IRScope irScope, int bci, int maxLocals, int maxStack) {
         super(irScope, bci, maxLocals, maxStack);
