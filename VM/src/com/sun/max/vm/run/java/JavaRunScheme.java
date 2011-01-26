@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,7 +93,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     public static void registerClassForReInit(String className) {
         CompiledPrototype.registerVMEntryPoint(className + ".<clinit>");
         MaxineVM.registerKeepClassInit(className);
-        Trace.line(1, "registering "  +  className + " for reinitialization");
+        Trace.line(2, "registering "  +  className + " for reinitialization");
         reinitClasses.add(className);
     }
 
