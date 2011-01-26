@@ -93,7 +93,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     public static void registerClassForReInit(String className) {
         CompiledPrototype.registerVMEntryPoint(className + ".<clinit>");
         MaxineVM.registerKeepClassInit(className);
-        Trace.line(1, "registering "  +  className + " for reinitialization");
+        Trace.line(2, "registering "  +  className + " for reinitialization");
         reinitClasses.add(className);
     }
 
