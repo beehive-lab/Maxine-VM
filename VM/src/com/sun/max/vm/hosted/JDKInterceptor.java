@@ -304,6 +304,7 @@ public final class JDKInterceptor {
             fieldMap = new HashMap<String, InterceptedField>();
             interceptedFieldMap.put(className, fieldMap);
         }
+        Trace.line(2, "registering "  +  className + "." + fieldName + " for reset to default value");
         fieldMap.put(fieldName, new ZeroField(fieldName, true));
     }
 
