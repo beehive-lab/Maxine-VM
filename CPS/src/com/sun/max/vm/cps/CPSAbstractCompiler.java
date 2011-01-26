@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ import com.sun.max.vm.thread.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class CPSAbstractCompiler extends AbstractVMScheme implements CPSCompiler {
+public abstract class CPSAbstractCompiler implements CPSCompiler {
 
     public CPSAbstractCompiler() {
         if (MaxineVM.isHosted()) {
@@ -73,8 +73,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements CP
 
     @Override
     public void initialize(Phase phase) {
-        super.initialize(phase);
-
         if (phase == Phase.BOOTSTRAPPING || phase == Phase.STARTING) {
             IrObserverConfiguration.attach(irGenerators());
         }

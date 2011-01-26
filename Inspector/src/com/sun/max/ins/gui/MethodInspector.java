@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.gui;
 
+import static com.sun.max.tele.MaxProcessState.*;
+
 import java.util.*;
 
 import javax.swing.*;
@@ -31,7 +33,6 @@ import com.sun.max.ins.method.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -67,14 +68,16 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
 
                     @Override
                     public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
-                        try {
-                            final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), codeLocation, interactiveForNative);
-                            if (methodInspector != null) {
-                                methodInspector.setCodeLocationFocus();
-                                methodInspector.highlightIfNotVisible();
+                        if (codeLocation  != null) {
+                            try {
+                                final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), codeLocation, interactiveForNative);
+                                if (methodInspector != null) {
+                                    methodInspector.setCodeLocationFocus();
+                                    methodInspector.highlightIfNotVisible();
+                                }
+                            } catch (MaxVMBusyException maxVMBusyException) {
+                                inspection.announceVMBusyFailure("Can't view method");
                             }
-                        } catch (MaxVMBusyException maxVMBusyException) {
-                            inspection.announceVMBusyFailure("Can't view method");
                         }
                     }
                 });
@@ -306,7 +309,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     @Override
     public void breakpointStateChanged() {
         // TODO (mlvdv)  Data reading PATCH, there should be a more systematic way of handling this.
-        if (vm().state().processState() != ProcessState.TERMINATED) {
+        if (vm().state().processState() != TERMINATED) {
             refreshView(true);
         }
     }

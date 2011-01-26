@@ -50,7 +50,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Doug Simon
  */
-public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompilerScheme {
+public class C1XCompilerScheme implements RuntimeCompiler {
 
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
@@ -72,6 +72,12 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
      * The C1X compiler instance configured for the Maxine runtime.
      */
     private C1XCompiler compiler;
+
+    /**
+     * Set to true once the C1X options are set (to allow subclasses of this scheme to coexist in the same image).
+     */
+    @HOSTED_ONLY
+    private static boolean optionsRegistered;
 
     public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 1,
         "Set the optimization level of C1X.") {
@@ -135,7 +141,10 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     @HOSTED_ONLY
     protected C1XCompilerScheme(MaxXirGenerator xirGenerator) {
-        VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
+        if (!optionsRegistered) {
+            VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
+            optionsRegistered = true;
+        }
         this.xirGenerator = xirGenerator;
     }
 

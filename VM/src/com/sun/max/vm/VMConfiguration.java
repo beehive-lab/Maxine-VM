@@ -63,8 +63,6 @@ public final class VMConfiguration {
     @HOSTED_ONLY public final BootImagePackage layoutPackage;
     @HOSTED_ONLY public final BootImagePackage heapPackage;
     @HOSTED_ONLY public final BootImagePackage monitorPackage;
-    @HOSTED_ONLY public final BootImagePackage optCompilerPackage;
-    @HOSTED_ONLY public final BootImagePackage jitCompilerPackage;
     @HOSTED_ONLY public final BootImagePackage compilationPackage;
     @HOSTED_ONLY public final BootImagePackage runPackage;
     @HOSTED_ONLY public final List<BootImagePackage> bootImagePackages;
@@ -77,8 +75,6 @@ public final class VMConfiguration {
     @CONSTANT_WHEN_NOT_ZERO private LayoutScheme layoutScheme;
     @CONSTANT_WHEN_NOT_ZERO private HeapScheme heapScheme;
     @CONSTANT_WHEN_NOT_ZERO private MonitorScheme monitorScheme;
-    @CONSTANT_WHEN_NOT_ZERO private RuntimeCompilerScheme jitCompilerScheme;
-    @CONSTANT_WHEN_NOT_ZERO private RuntimeCompilerScheme optCompilerScheme;
     @CONSTANT_WHEN_NOT_ZERO private CompilationScheme compilationScheme;
     @CONSTANT_WHEN_NOT_ZERO private RunScheme runScheme;
 
@@ -88,18 +84,13 @@ public final class VMConfiguration {
                            BootImagePackage layoutPackage,
                            BootImagePackage heapPackage,
                            BootImagePackage monitorPackage,
-                           BootImagePackage optCompilerPackage,
-                           BootImagePackage jitCompilerPackage,
                            BootImagePackage compilationPackage,
                            BootImagePackage runPackage) {
-        assert optCompilerPackage != null;
         this.buildLevel = buildLevel;
         this.referencePackage = referencePackage;
         this.layoutPackage = layoutPackage;
         this.heapPackage = heapPackage;
         this.monitorPackage = monitorPackage;
-        this.optCompilerPackage = optCompilerPackage;
-        this.jitCompilerPackage = jitCompilerPackage == null ? optCompilerPackage : jitCompilerPackage;
         this.compilationPackage = compilationPackage;
         this.runPackage = runPackage;
         /**
@@ -111,17 +102,14 @@ public final class VMConfiguration {
          * in a scheme instance, need to ask questions about the configuration we are constructing.
          * Valid questions concern the values (names) of the scheme packages and the classes
          * registered as the scheme implementations. Since the schemes have not be instantiated
-         * at this stage, the scheme instances cannot be used. I.e., one must use {@link Class#isAssignableFrom}
-         * rather than {@code instanceof}. The method {@link #schemeClass} is used to get the
-         * actual scheme class for a given scheme. We can assert that a scheme package will return true to
-         * {@code isPartOfMaxineVM}.
+         * at this stage, scheme instances cannot be used. i.e., one must use {@link Class#isAssignableFrom}
+         * rather than {@code instanceof}. The method {@link #schemeImplClassIsSubClass} can be used to
+         * check whether a given class is the same as or a subclass of the registered class for a given scheme.
          */
         addSchemePackage(referencePackage);
         addSchemePackage(layoutPackage);
         addSchemePackage(heapPackage);
         addSchemePackage(monitorPackage);
-        addSchemePackage(optCompilerPackage);
-        addSchemePackage(jitCompilerPackage);
         addSchemePackage(compilationPackage);
         addSchemePackage(runPackage);
 
@@ -146,8 +134,6 @@ public final class VMConfiguration {
     @INLINE public LayoutScheme          layoutScheme()      { return layoutScheme;      }
     @INLINE public HeapScheme            heapScheme()        { return heapScheme;        }
     @INLINE public MonitorScheme         monitorScheme()     { return monitorScheme;     }
-    @INLINE public RuntimeCompilerScheme jitCompilerScheme() { return jitCompilerScheme; }
-    @INLINE public RuntimeCompilerScheme optCompilerScheme() { return optCompilerScheme; }
     @INLINE public CompilationScheme     compilationScheme() { return compilationScheme; }
     @INLINE public RunScheme             runScheme()         { return runScheme;         }
 
@@ -159,8 +145,6 @@ public final class VMConfiguration {
             heapPackage,
             monitorPackage,
             compilationPackage,
-            optCompilerPackage,
-            jitCompilerPackage,
             runPackage});
     }
 
@@ -238,12 +222,7 @@ public final class VMConfiguration {
         layoutScheme = loadAndInstantiateScheme(loadedSchemes, layoutPackage, LayoutScheme.class);
         monitorScheme = loadAndInstantiateScheme(loadedSchemes, monitorPackage, MonitorScheme.class);
         heapScheme = loadAndInstantiateScheme(loadedSchemes, heapPackage, HeapScheme.class);
-        optCompilerScheme = loadAndInstantiateScheme(loadedSchemes, optCompilerPackage, RuntimeCompilerScheme.class);
-        if (jitCompilerPackage != optCompilerPackage) {
-            jitCompilerScheme = loadAndInstantiateScheme(loadedSchemes, jitCompilerPackage, RuntimeCompilerScheme.class);
-        } else {
-            jitCompilerScheme = optCompilerScheme;
-        }
+        compilationScheme = loadAndInstantiateScheme(loadedSchemes, compilationPackage, CompilationScheme.class);
 
         if (loadedSchemes == null) {
             // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
@@ -258,7 +237,6 @@ public final class VMConfiguration {
             }
         }
 
-        compilationScheme = loadAndInstantiateScheme(loadedSchemes, compilationPackage, CompilationScheme.class);
         runScheme = loadAndInstantiateScheme(loadedSchemes, runPackage, RunScheme.class);
         areSchemesLoadedAndInstantiated = true;
     }
@@ -269,7 +247,7 @@ public final class VMConfiguration {
      * to adapt the arguments when a call crosses a calling convention boundary.
      */
     public boolean needsAdapters() {
-        return optCompilerScheme.calleeEntryPoint() != jitCompilerScheme.calleeEntryPoint();
+        return compilationScheme.needsAdapters();
     }
 
     public void initializeSchemes(MaxineVM.Phase phase) {
@@ -281,7 +259,6 @@ public final class VMConfiguration {
     /**
      * Convenience method for accessing the configuration associated with the
      * current {@linkplain MaxineVM#vm() VM} context.
-     * @return
      */
     @FOLD
     public static VMConfiguration vmConfig() {
@@ -310,5 +287,4 @@ public final class VMConfiguration {
     public boolean debugging() {
         return buildLevel == BuildLevel.DEBUG;
     }
-
 }

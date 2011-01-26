@@ -111,8 +111,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("heap scheme:", new JavaNameLabel(inspection(), vmConfiguration.heapScheme().name(), vmConfiguration.heapScheme().getClass().getName()), null);
             addRow("monitor scheme:", new JavaNameLabel(inspection(), vmConfiguration.monitorScheme().name(), vmConfiguration.monitorScheme().getClass().getName()), null);
             addRow("compilation scheme:", new JavaNameLabel(inspection(), vmConfiguration.compilationScheme().name(), vmConfiguration.compilationScheme().getClass().getName()), null);
-            addRow("opt compiler scheme:", new JavaNameLabel(inspection(), vmConfiguration.optCompilerScheme().name(), vmConfiguration.optCompilerScheme().getClass().getName()), null);
-            addRow("jit compiler scheme:", new JavaNameLabel(inspection(), vmConfiguration.jitCompilerScheme().name(), vmConfiguration.jitCompilerScheme().getClass().getName()), null);
             addRow("run scheme:", new JavaNameLabel(inspection(), vmConfiguration.runScheme().name(), vmConfiguration.runScheme().getClass().getName()), null);
 
             addRow("relocation data size:", new DataLabel.IntAsHex(inspection(), header.relocationDataSize), null);

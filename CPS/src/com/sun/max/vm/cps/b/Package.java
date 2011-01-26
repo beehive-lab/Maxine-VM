@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,10 +32,6 @@ import com.sun.max.vm.compiler.*;
  * @author Bernd Mathiske
  */
 public class Package extends BootImagePackage {
-    public Package() {
-        registerScheme(RuntimeCompilerScheme.class, BCompiler.class);
-    }
-
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return CPSCompiler.Static.isCompilerPackage(vmConfiguration, this);

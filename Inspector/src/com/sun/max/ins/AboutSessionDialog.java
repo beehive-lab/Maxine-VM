@@ -99,31 +99,44 @@ public final class AboutSessionDialog extends InspectorDialog {
         final long lastModified = vm().bootImageFile().lastModified();
         final Date bootImageDate = lastModified == 0 ? null : new Date(lastModified);
         final boolean verbose = verboseRadioButton.isSelected();
+        final MaxVMState state = vm().state();
         if (verbose) {
-            stream.print(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION_STRING + "\n");
-            stream.print(INDENT + "Mode: " + vm().inspectionMode().name() + ",  " + vm().inspectionMode().description() + "\n");
-            stream.print("\nVM:\n");
+            stream.print(MaxineInspector.NAME + ":\n");
+            stream.print(INDENT + MaxineInspector.description() + "\n");
+            stream.print(INDENT + "Inspection mode: " + vm().inspectionMode().name() + ",  " + vm().inspectionMode().description() + "\n");
+            stream.println();
+            stream.print(vm().entityName() + ":\n");
             stream.print(INDENT + vm().getDescription() + "\n");
+            stream.print(INDENT + "Process state: ");
+            if (state == null) {
+                stream.print("none\n");
+            } else {
+                stream.print(state.processState().label() + ", " + state.processState().description() + "\n");
+            }
             stream.print(INDENT + "Boot image: " + vm().bootImageFile().getAbsolutePath().toString() + "\n");
             stream.print(INDENT + "Last modified: " + bootImageDate.toString() + "\n");
             stream.print(INDENT + "See also: View->Boot image info\n");
         } else {
-            stream.print(MaxineInspector.NAME + " Ver. " + MaxineInspector.VERSION_STRING + " mode=" + vm().inspectionMode().name() + "\n");
-            stream.print("\nVM:\n");
-            stream.print(INDENT + vm().entityName() + " Ver. " + vm().getVersion() + "\n");
+            stream.print(MaxineInspector.NAME + ": Ver. " + MaxineInspector.VERSION_STRING + " mode=" + vm().inspectionMode().name() + "\n");
+            stream.println();
+            stream.print(vm().entityName() + ": Ver. " + vm().getVersion() + ", state=" + (state == null ? "none" : state.processState().toString() + "\n"));
             stream.print(INDENT + vm().bootImageFile().getAbsolutePath().toString() + "\n");
-            stream.print(INDENT + bootImageDate.toString() + "\n");
+            stream.print(INDENT + "built: " + bootImageDate.toString() + "\n");
         }
-        stream.print("\nSESSION OPTIONS: \n");
-        inspection().options().printValues(stream, indent, verbose);
 
+        stream.println();
         final MaxHeap heap = vm().heap();
-        stream.print("\n" + heap.entityName().toString().toUpperCase() + ":\n");
+        stream.print(heap.entityName().toString().toUpperCase() + ":\n");
         heap.printStats(stream, indent, verbose);
 
+        stream.println();
         final MaxClassRegistry classRegistry = vm().classRegistry();
-        stream.print("\n" + classRegistry.entityName().toString().toUpperCase() + ":\n");
+        stream.print(classRegistry.entityName().toString().toUpperCase() + ":\n");
         classRegistry.printSessionStats(stream, indent, verbose);
+
+        stream.println();
+        stream.print("SESSION OPTIONS: \n");
+        inspection().options().printValues(stream, indent, verbose);
 
         textArea.setText(byteArrayOutputStream.toString());
         textArea.setCaretPosition(0);

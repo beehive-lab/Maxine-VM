@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Laurent Daynes
  */
-public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCompilerScheme {
+public abstract class JitCompiler implements RuntimeCompiler {
 
     @HOSTED_ONLY
     private boolean isInitialized;
@@ -57,7 +57,6 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        super.initialize(phase);
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.COMPILING) {
             init();
         }

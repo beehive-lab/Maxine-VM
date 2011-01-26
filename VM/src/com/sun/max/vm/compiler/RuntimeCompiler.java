@@ -20,27 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.sun.max.vm.compiler;
 
-import com.sun.max.config.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
- * The package class that describes the C1X packages to the Maxine configurator.
- * @see com.sun.max.config.MaxPackage
+ * The interface implemented by a compiler that translates {@link ClassMethodActor}s into {@link TargetMethod}s.
  *
+ * @author Laurent Daynes
  * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
  */
-public class Package extends BootImagePackage {
-    public Package() {
-        registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
-    }
+public interface RuntimeCompiler {
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return true;
-        // even when C1X is not the compiler scheme, it evidently must be included.
-        // return vmConfiguration.schemeImplClassIsSubClass(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
-    }
+    /**
+     * Performs any specific initialization when entering a given VM phase.
+     *
+     * @param phase the VM phase that has just been entered
+     */
+    void initialize(MaxineVM.Phase phase);
+
+    /**
+     * Compiles a method to an internal representation.
+     *
+     * @param classMethodActor the method to compile
+     * @return a reference to the target method created by this compiler for {@code classMethodActor}
+     */
+    TargetMethod compile(ClassMethodActor classMethodActor);
+
+    /**
+     * Gets the exact subtype of {@link TargetMethod} produces by this compiler.
+     *
+     * @param <Type> the exact type of the object returned by {@link #compile(ClassMethodActor)}
+     */
+    <Type extends TargetMethod> Class<Type> compiledType();
+
+    CallEntryPoint calleeEntryPoint();
 }

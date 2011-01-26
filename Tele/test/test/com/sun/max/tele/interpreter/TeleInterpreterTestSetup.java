@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.b.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
@@ -56,10 +57,10 @@ public class TeleInterpreterTestSetup extends CompilerTestSetup<ActorIrMethod> {
 
     @Override
     protected void initializeVM() {
+        CompilationScheme.optimizingCompilerOption.setValue(BCompiler.class.getName());
+        CompilationScheme.baselineCompilerOption.setValue(null);
         VMConfigurator vmConfigurator = new VMConfigurator(null);
         vmConfigurator.buildLevel.setValue(BuildLevel.DEBUG);
-        vmConfigurator.optScheme.setValue(getPackageName(BCompiler.class));
-        vmConfigurator.jitScheme.setValue(null);
         vmConfigurator.referenceScheme.setValue(getPackageName(HostedReference.class));
         vmConfigurator.create(true);
     }
