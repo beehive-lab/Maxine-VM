@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,12 +30,59 @@ package com.sun.max.tele;
  */
 public abstract class MaxException extends Exception {
 
-    protected MaxException() {
+    /**
+     * {@inheritDoc}
+     * <br>
+     * Creates a checked exception that can be
+     * thrown when access to the VM fails for
+     * some non-standard reason.
+     *
+     * @see Exception#Exception()
+     */    protected MaxException() {
         super("");
     }
 
+    /**
+     * {@inheritDoc}
+     * <br>
+     * Creates a checked exception that can be
+     * thrown when access to the VM fails for
+     * some non-standard reason.
+     *
+     * @param message a human readable explanation for the exception
+     * @see Exception#Exception(String)
+     */
     protected MaxException(String message) {
         super(message);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <br>
+     * Creates a checked exception that can be
+     * thrown when access to the VM fails for
+     * some non-standard reason.
+     *
+     * @param message a human readable explanation for the exception
+     * @param cause the cause of the exception
+     * @see Exception#Exception(String, Throwable)
+     */
+    protected MaxException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <br>
+     * Creates a checked exception that can be
+     * thrown when access to the VM fails for
+     * some non-standard reason.
+     *
+     * @param cause the cause of the exception
+     * @see Exception#Exception(Throwable)
+     */
+    protected MaxException(Throwable cause) {
+        super(cause);
     }
 }
 
