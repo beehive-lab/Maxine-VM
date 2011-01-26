@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -304,6 +304,7 @@ public final class JDKInterceptor {
             fieldMap = new HashMap<String, InterceptedField>();
             interceptedFieldMap.put(className, fieldMap);
         }
+        Trace.line(2, "registering "  +  className + "." + fieldName + " for reset to default value");
         fieldMap.put(fieldName, new ZeroField(fieldName, true));
     }
 
