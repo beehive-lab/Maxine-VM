@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -227,12 +227,14 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
         return codeRegistry.getExternalCode(address);
     }
 
-    public TeleExternalCode createExternalCode(Address codeStart, Size codeSize, String name) throws MaxVMBusyException {
+    // TODO (mlvdv) fix
+    public TeleExternalCode createExternalCode(Address codeStart, Size codeSize, String name) throws MaxVMBusyException, MaxInvalidAddressException {
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
         try {
-            return TeleExternalCode.create(vm(), codeStart, codeSize, name);
+            TeleExternalCode create = TeleExternalCode.create(vm(), codeStart, codeSize, name);
+            return create;
         } finally {
             vm().unlock();
         }
@@ -254,6 +256,12 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
         return bootCodeRegionName;
     }
 
+    /**
+     * Adds a region of native code to the coded registry, indexed by code address.
+     *
+     * @param teleExternalCode
+     * @throws IllegalArgumentException when the memory region of {@link teleTargetMethod} overlaps one already in this registry.
+     */
     public void register(TeleExternalCode teleExternalCode) {
         codeRegistry.add(teleExternalCode);
 

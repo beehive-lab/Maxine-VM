@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -216,8 +216,9 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      * @return a newly created surrogate for a block of native code discovered in the VM
      * about which little more is known than its location.  The location must not overlap any code
      * region already known.
+     * @throws MaxInvalidAddressException if memory cannot be read
      */
-    public static TeleExternalCode create(TeleVM teleVM, Address codeStart, Size codeSize, String name) {
+    public static TeleExternalCode create(TeleVM teleVM, Address codeStart, Size codeSize, String name) throws MaxInvalidAddressException {
         assert teleVM.lockHeldByCurrentThread();
         TeleExternalCode teleExternalCode = null;
         try {
@@ -237,10 +238,25 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
     private List<MachineCodeLocation> instructionLocations;
     private CodeLocation codeStartLocation = null;
 
-    private TeleExternalCode(TeleVM teleVM, Address start, Size size, String name) {
+    /**
+     * Creates a representation of a block of native code about which little is known.
+     *
+     * @param teleVM
+     * @param start starting location of code in memory
+     * @param size length of code in memory
+     * @param name the name to assign to the block of code in the registry
+     * @throws IllegalArgumentException if the range overlaps one already in the registry
+     * @throws MaxInvalidAddressException if unable to read memory.
+     */
+    private TeleExternalCode(TeleVM teleVM, Address start, Size size, String name) throws MaxInvalidAddressException {
         super(teleVM);
         this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(teleVM, this, name, start, size);
-        this.instructionMap = new ExternalCodeInstructionMap();
+
+        try {
+            this.instructionMap = new ExternalCodeInstructionMap();
+        } catch (DataIOError dataIOError) {
+            throw new MaxInvalidAddressException(start);
+        }
         // Register so that it can be located by address.
         vm().codeCache().register(this);
     }
