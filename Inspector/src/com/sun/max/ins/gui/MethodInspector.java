@@ -128,6 +128,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                             inspection.gui().errorMessage("Specified external code range overlaps region already registered in Inpsector");
                         } catch (MaxVMBusyException maxVMBusyException) {
                             inspection.announceVMBusyFailure("inspect native code");
+                        } catch (MaxInvalidAddressException e) {
+                            inspection.gui().errorMessage("Unable to read memory at " + nativeAddress.to0xHexString());
+                            e.printStackTrace();
                         }
                     }
                     @Override
