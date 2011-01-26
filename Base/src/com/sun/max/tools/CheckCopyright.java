@@ -149,7 +149,13 @@ public class CheckCopyright {
         }
 
         static int getModifiedYearIndex(String fileContent) {
-            return fileContent.indexOf("20", fileContent.indexOf("20") + 4);
+            int firstYearIndex = fileContent.indexOf("20");
+            assert firstYearIndex >= 0;
+            int secondYearIndex = fileContent.indexOf("20", firstYearIndex + 4);
+            if (secondYearIndex == -1) {
+                return firstYearIndex;
+            }
+            return secondYearIndex;
         }
     }
 
@@ -170,7 +176,7 @@ public class CheckCopyright {
     private static final Option<Boolean> EXHAUSTIVE = options.newBooleanOption("exhaustive", false, "check all hg managed files");
     private static final Option<Boolean> FIX = options.newBooleanOption("fix", false, "fix copyright errors");
     private static final Option<String> FILE_PATTERN = options.newStringOption("filepattern", null, "append additiional file patterns for copyright checks");
-    private static final Option<Boolean> REPORT_ERRORS = options.newBooleanOption("reporterrors", false, "report non-fatal errors");
+    private static final Option<Boolean> REPORT_ERRORS = options.newBooleanOption("reporterrors", true, "report non-fatal errors");
     private static final Option<Boolean> CONTINUE_ON_ERROR = options.newBooleanOption("continueonerror", false, "continue after normally fatal error");
     private static boolean error;
     private static File workSpaceDirectory;
