@@ -308,12 +308,12 @@ public final class JDK_java_lang_System {
         if (fromArray == toArray) {
             if (fromIndex < toIndex) {
                 if (fromIndex < 0 || length < 0 || toIndex + length > ArrayAccess.readArrayLength(fromArray)) {
-                    throw new IndexOutOfBoundsException();
+                    throw new ArrayIndexOutOfBoundsException();
                 }
                 arrayCopyBackward(kind, fromArray, fromIndex, fromArray, toIndex, length);
             } else if (fromIndex != toIndex) {
                 if (toIndex < 0 || length < 0 || fromIndex + length > ArrayAccess.readArrayLength(fromArray)) {
-                    throw new IndexOutOfBoundsException();
+                    throw new ArrayIndexOutOfBoundsException();
                 }
                 arrayCopyForward(kind, fromArray, fromIndex, fromArray, toIndex, length, null);
             }
@@ -324,7 +324,7 @@ public final class JDK_java_lang_System {
             if (fromIndex < 0 || toIndex < 0 || length < 0 ||
                     fromIndex + length > ArrayAccess.readArrayLength(fromArray) ||
                     toIndex + length > ArrayAccess.readArrayLength(toArray)) {
-                throw new IndexOutOfBoundsException();
+                throw new ArrayIndexOutOfBoundsException();
             }
             arrayCopyForward(kind, fromArray, fromIndex, toArray, toIndex, length, null);
         } else {
@@ -339,7 +339,7 @@ public final class JDK_java_lang_System {
             if (fromIndex < 0 || toIndex < 0 || length < 0 ||
                     fromIndex + length > ArrayAccess.readArrayLength(fromArray) ||
                     toIndex + length > ArrayAccess.readArrayLength(toArray)) {
-                throw new IndexOutOfBoundsException();
+                throw new ArrayIndexOutOfBoundsException();
             }
             arrayCopyForward(kind, fromArray, fromIndex, toArray, toIndex, length, toComponentClassActor);
         }
