@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="NB3Buttons"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Assembler"/>
@@ -12,6 +11,7 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Tele"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JDWP"/>
 	<classpathentry kind="lib" path="jlfgr-1_0.jar"/>
+	<classpathentry kind="lib" path="NB3B.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CPS"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

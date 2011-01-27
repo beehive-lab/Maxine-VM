@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/*
- * @Harness: java
- * @Runs: (null,null) = 1; ("",null) = 2; ("","") = -1
- */
-package jtt.except;
 
-public class Except_Locals {
-    public static int test(String a, String b) {
-        int x = 0;
-        try {
-            x = 1;
-            a.toString();
-            x = 2;
-            b.toString();
-        } catch (NullPointerException e) {
-            System.out.println(x);
-            return x;
-        }
-        return -1;
+package com.sun.max.tele;
+
+import com.sun.max.unsafe.*;
+
+/**
+ * Attempt was made to access VM memory with an address that could not be read.
+ *
+ * @author  Michael Van De Vanter
+ */
+public final class MaxInvalidAddressException extends MaxException {
+
+    private final Address address;
+
+    public MaxInvalidAddressException(Address address) {
+        super();
+        this.address = address;
+    }
+
+    public Address getAddress() {
+        return address;
     }
 }

@@ -28,8 +28,6 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import sun.org.mozilla.classfile.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.ScopeData.ReturnBlock;
@@ -1742,13 +1740,13 @@ public final class GraphBuilder {
         }
 
         // Check src end pos.
-        Value srcEndPos = append(new ArithmeticOp(ByteCode.IADD, CiKind.Int, srcPos, length, false, null));
+        Value srcEndPos = append(new ArithmeticOp(IADD, CiKind.Int, srcPos, length, false, null));
         append(new BoundsCheck(srcEndPos, srcLength, state, Condition.LE));
 
         // Check dest end pos.
         Value destEndPos = srcEndPos;
         if (destPos != srcPos) {
-            destEndPos = append(new ArithmeticOp(ByteCode.IADD, CiKind.Int, destPos, length, false, null));
+            destEndPos = append(new ArithmeticOp(IADD, CiKind.Int, destPos, length, false, null));
         }
         append(new BoundsCheck(destEndPos, destLength, state, Condition.LE));
 
