@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ public final class LoadRegister extends Instruction {
     public final CiRegister register;
 
     /**
-     * Creates a new LoadPointer instance.
+     * Creates a new LoadRegister instance.
      * @param kind the kind of value loaded from the register
      * @param register the register to load
      */

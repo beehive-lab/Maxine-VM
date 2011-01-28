@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,7 +145,7 @@ public final class SignalDispatcher extends Thread {
      * @return {@code true} if the update succeeded, {@code false} otherwise
      */
     @VM_ENTRY_POINT
-    @NO_SAFEPOINTS("executes inside a native signal handler")
+    @UNINTERRUPTIBLE("executes inside a native signal handler")
     private static boolean tryPostSignal(int signal) {
         int n = PendingSignals.get(signal);
         return PendingSignals.compareAndSet(signal, n, n + 1);

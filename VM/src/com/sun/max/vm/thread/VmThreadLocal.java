@@ -290,9 +290,9 @@ public class VmThreadLocal {
         = new VmThreadLocal("STACK_REFERENCE_SIZE", false, "size of stack reference map");
 
     /**
-     * Threads allocates primarily via their TLAB, which is refilled by default from a default heap.
+     * Threads allocate primarily via a TLAB, which is refilled by default from a default heap.
      * Occasionally, a thread may need to allocate outside of this allocator.
-     * This thread local is used to indicate that an custom allocator is to be used on next TLAB overflow
+     * This thread local is used to indicate that a custom allocator is to be used on next TLAB overflow
      * events. These can be provoked artificially to force bypassing TLABs and route execution to the custom allocator.
      * The value stored in the thread local is specific to a heap scheme.
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -890,8 +890,8 @@ public final class ClassfileReader {
                             ensureSignatureIsPrimitive(descriptor, VM_ENTRY_POINT.class);
                             ProgramError.check(isStatic(flags), "Cannot apply " + VM_ENTRY_POINT.class.getName() + " to a non-native method: " + memberString(name, descriptor));
                             flags |= VM_ENTRY_POINT;
-                        } else if (annotation.annotationType() == NO_SAFEPOINTS.class) {
-                            flags |= NO_SAFEPOINTS;
+                        } else if (annotation.annotationType() == UNINTERRUPTIBLE.class) {
+                            flags |= UNINTERRUPTIBLE;
                         } else if (annotation.annotationType() == BUILTIN.class) {
                             flags |= BUILTIN | UNSAFE;
                         } else if (annotation.annotationType() == ACCESSOR.class) {

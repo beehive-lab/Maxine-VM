@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Suppresses the emission of safepoints in the body of the annotated method.
+ * Suppresses the insertion of safepoints and stack overflow checks in the body of the annotated method.
  *
  * ATTENTION: callees of the method may still contain safepoints.
  *
@@ -33,10 +33,10 @@ import java.lang.annotation.*;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface NO_SAFEPOINTS {
+public @interface UNINTERRUPTIBLE {
 
     /**
-     * Documents the reason why we use this annotation!
+     * Documents the reason why the annotated code must be uninterruptible.
      */
     String value();
 

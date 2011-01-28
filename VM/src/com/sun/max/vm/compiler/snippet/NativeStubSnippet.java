@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -169,7 +169,7 @@ public abstract class NativeStubSnippet extends Snippet {
          * This methods spins in a busy loop while the current thread is {@linkplain VmOperation frozen}.
          */
         @INLINE
-        @NO_SAFEPOINTS("Cannot take a trap while frozen")
+        @UNINTERRUPTIBLE("Cannot take a trap while frozen")
         private static void spinWhileFrozen(Pointer etla) {
             if (UseCASBasedThreadFreezing) {
                 while (true) {

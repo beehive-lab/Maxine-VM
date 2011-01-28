@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,9 +37,10 @@ public final class Return extends BlockEnd {
      * Constructs a new Return instruction.
      * @param result the instruction producing the result for this return; {@code null} if this
      * is a void return
+     * @param isSafepoint {@code true} if this instruction is a safepoint instruction
      */
-    public Return(Value result) {
-        super(result == null ? CiKind.Void : result.kind, null, true);
+    public Return(Value result, boolean isSafepoint) {
+        super(result == null ? CiKind.Void : result.kind, null, isSafepoint);
         this.result = result;
     }
 
