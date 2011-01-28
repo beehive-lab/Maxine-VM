@@ -23,6 +23,7 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.io.*;
 import java.math.*;
 import java.text.*;
 import java.util.*;
