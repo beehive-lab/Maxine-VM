@@ -410,7 +410,6 @@ public final class ArrayElementsTable extends InspectorTable {
                 labels[elementIndex].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>value = ");
                 labels[elementIndex].setOpaque(true);
 
-            }
             labels[elementIndex].setBackground(cellBackgroundColor(isSelected));
             return labels[elementIndex];
         }

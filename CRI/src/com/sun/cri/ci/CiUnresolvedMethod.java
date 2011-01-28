@@ -90,6 +90,11 @@ public class CiUnresolvedMethod implements RiMethod {
     public RiMethod uniqueConcreteMethod() {
         throw unresolved("uniqueConcreteMethod()");
     }
+    
+    @Override
+    public RiMethod uniqueConcreteMethod() {
+        throw unresolved("uniqueConcreteMethod()");
+    }
 
     public boolean isClassInitializer() {
         throw unresolved("maxStackSize()");
