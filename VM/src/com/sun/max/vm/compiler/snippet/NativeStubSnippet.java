@@ -169,7 +169,7 @@ public abstract class NativeStubSnippet extends Snippet {
          * This methods spins in a busy loop while the current thread is {@linkplain VmOperation frozen}.
          */
         @INLINE
-        @NO_SAFEPOINTS("Cannot take a trap while frozen")
+        @UNINTERRUPTIBLE("Cannot take a trap while frozen")
         private static void spinWhileFrozen(Pointer etla) {
             if (UseCASBasedThreadFreezing) {
                 while (true) {

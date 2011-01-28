@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.graph;
 
+import static com.sun.c1x.graph.ScopeData.Flag.*;
 import static com.sun.c1x.graph.ScopeData.ReturnBlock.*;
 
 import java.util.*;
@@ -41,6 +42,26 @@ import com.sun.cri.ri.*;
 public class ScopeData {
     // XXX: refactor and split this class into ScopeData, JsrScopeData, and InlineScopeData
 
+    /**
+     * An enumeration of flags describing scope attributes.
+     */
+    public enum Flag {
+        /**
+         * Scope is protected by an exception handler.
+         * This attribute is inherited by nested scopes.
+         */
+        HasHandler,
+
+        /**
+         * Code in scope is uninterruptible (i.e. cannot contain safepoints or stack overflow checks).
+         * This attribute is inherited by nested scopes.
+         */
+        Uninterruptible;
+
+        public final int mask = 1 << ordinal();
+    }
+
+
     final ScopeData parent;
     // the IR scope
     final IRScope scope;
@@ -50,14 +71,17 @@ public class ScopeData {
     final BytecodeStream stream;
     // the constant pool
     final RiConstantPool constantPool;
-    // whether this scope or any parent scope has exception handlers
-    boolean hasHandler;
     // the worklist of blocks, managed like a sorted list
     BlockBegin[] workList;
     // the current position in the worklist
     int workListIndex;
     // maximum inline size for this scope
     int maxInlineSize;
+
+    /**
+     * Mask of {@link Flag} values.
+     */
+    int flags;
 
     // Exception handler list
     List<ExceptionHandler> exceptionHandlers;
@@ -121,9 +145,17 @@ public class ScopeData {
             if (maxInlineSize < C1XOptions.MaximumTrivialSize) {
                 maxInlineSize = C1XOptions.MaximumTrivialSize;
             }
-            hasHandler = parent.hasHandler;
+            if (parent.hasHandler()) {
+                flags |= HasHandler.mask;
+            }
+            if (parent.isUninterruptible() || scope.method.isUninterruptible()) {
+                flags |= Uninterruptible.mask;
+            }
         } else {
             maxInlineSize = C1XOptions.MaximumInlineSize;
+            if (scope.method.isUninterruptible()) {
+                flags |= Uninterruptible.mask;
+            }
         }
         RiExceptionHandler[] handlers = scope.method.exceptionHandlers();
         if (handlers != null && handlers.length > 0) {
@@ -133,7 +165,7 @@ public class ScopeData {
                 h.setEntryBlock(blockAt(h.handler.handlerBCI()));
                 exceptionHandlers.add(h);
             }
-            hasHandler = true;
+            flags |= HasHandler.mask;
         }
     }
 
@@ -163,7 +195,12 @@ public class ScopeData {
         if (maxInlineSize < C1XOptions.MaximumTrivialSize) {
             maxInlineSize = C1XOptions.MaximumTrivialSize;
         }
-        hasHandler = parent.hasHandler;
+        if (parent.hasHandler()) {
+            flags |= HasHandler.mask;
+        }
+        if (parent.isUninterruptible()) {
+            flags |= Uninterruptible.mask;
+        }
         // duplicate the parent scope's exception handlers, if any
         List<ExceptionHandler> handlers = parent.exceptionHandlers();
         if (handlers != null && handlers.size() > 0) {
@@ -182,7 +219,7 @@ public class ScopeData {
                 }
                 exceptionHandlers.add(h);
             }
-            assert hasHandler;
+            assert hasHandler();
         }
     }
 
@@ -215,11 +252,18 @@ public class ScopeData {
     }
 
     /**
-     * Checks whether this ScopeData has any handlers.
+     * Checks whether this scope has any handlers.
      * @return {@code true} if there are any exception handlers
      */
     public boolean hasHandler() {
-        return hasHandler;
+        return (flags & Flag.HasHandler.mask) != 0;
+    }
+
+    /**
+     * Checks whether this scope is uninterruptible (i.e. cannot contain safepoints or stack overflow checks).
+     */
+    public boolean isUninterruptible() {
+        return (flags & Flag.Uninterruptible.mask) != 0;
     }
 
     /**
@@ -394,7 +438,7 @@ public class ScopeData {
         }
         assert !parsingJsr() : "jsr scope should already have all the handlers it needs";
         exceptionHandlers.add(handler);
-        hasHandler = true;
+        flags |= HasHandler.mask;
     }
 
     /**

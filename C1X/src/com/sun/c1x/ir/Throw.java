@@ -40,9 +40,10 @@ public final class Throw extends BlockEnd {
      * Creates a new Throw instruction.
      * @param exception the instruction that generates the exception to throw
      * @param stateAfter the state before the exception is thrown but after the exception object has been popped
+     * @param isSafepoint {@code true} if this instruction is a safepoint instruction
      */
-    public Throw(Value exception, FrameState stateAfter) {
-        super(CiKind.Illegal, null, true);
+    public Throw(Value exception, FrameState stateAfter, boolean isSafepoint) {
+        super(CiKind.Illegal, null, isSafepoint);
         this.stateBefore = stateAfter;
         this.exception = exception;
     }

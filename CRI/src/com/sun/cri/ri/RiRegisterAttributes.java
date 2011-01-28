@@ -54,16 +54,15 @@ public class RiRegisterAttributes {
      * Denotes a register guaranteed to be non-zero if read in compiled Java code.
      * For example, a register dedicated to holding the current thread.
      */
-    public final boolean isNonZero;
+    public boolean isNonZero;
     
-    public RiRegisterAttributes(boolean isCallerSave, boolean isCalleeSave, boolean isAllocatable, boolean isNonZero) {
+    public RiRegisterAttributes(boolean isCallerSave, boolean isCalleeSave, boolean isAllocatable) {
         this.isCallerSave = isCallerSave;
         this.isCalleeSave = isCalleeSave;
         this.isAllocatable = isAllocatable;
-        this.isNonZero = isNonZero;
     }
     
-    public static final RiRegisterAttributes NONE = new RiRegisterAttributes(false, false, false, false);
+    public static final RiRegisterAttributes NONE = new RiRegisterAttributes(false, false, false);
     
     /**
      * Creates a map from register {@linkplain CiRegister#number numbers} to register
@@ -82,8 +81,7 @@ public class RiRegisterAttributes {
                 RiRegisterAttributes attr = new RiRegisterAttributes(
                                 Arrays.asList(registerConfig.getCallerSaveRegisters()).contains(reg),
                                 Arrays.asList(registerConfig.getCalleeSaveArea().registers).contains(reg),
-                                Arrays.asList(registerConfig.getAllocatableRegisters()).contains(reg),
-                                false);
+                                Arrays.asList(registerConfig.getAllocatableRegisters()).contains(reg));
                 if (map.length <= reg.number) {
                     map = Arrays.copyOf(map, reg.number + 1);
                 }

@@ -31,6 +31,7 @@ import java.util.*;
 
 import com.sun.c1x.globalstub.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -148,6 +149,9 @@ public class RegisterConfigs {
                                 EMPTY,               // no callee save
                                 allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
+
+                RiRegisterAttributes latchAttr = standard.getAttributesMap()[r14.number];
+                latchAttr.isNonZero = true;
 
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, rbx, rbp, r12, r13, r14, r15));
                 CiRegisterConfig globalStub = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, allRegisters));

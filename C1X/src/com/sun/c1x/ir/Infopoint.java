@@ -52,6 +52,9 @@ public final class Infopoint extends Instruction {
         this.opcode = opcode;
         this.state = state;
         setFlag(Flag.LiveSideEffect); // ensure this instruction is not eliminated
+        if (opcode == SAFEPOINT) {
+            setFlag(Value.Flag.IsSafepoint);
+        }
     }
 
     /**

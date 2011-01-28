@@ -103,6 +103,10 @@ public class CiUnresolvedMethod implements RiMethod {
         throw unresolved("maxStackSize()");
     }
 
+    public boolean isUninterruptible() {
+        throw unresolved("isUninterruptible()");
+    }
+    
     public RiMethodProfile methodData() {
         throw unresolved("maxStackSize()");
     }

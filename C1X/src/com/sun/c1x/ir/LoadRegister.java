@@ -36,7 +36,7 @@ public final class LoadRegister extends Instruction {
     public final CiRegister register;
 
     /**
-     * Creates a new LoadPointer instance.
+     * Creates a new LoadRegister instance.
      * @param kind the kind of value loaded from the register
      * @param register the register to load
      */

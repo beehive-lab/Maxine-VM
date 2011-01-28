@@ -186,7 +186,7 @@ public class ControlFlowAnalyzer extends ControlFlowAdapter {
                 toBlock.addPredecessor(fallingThrough);
             }
 
-            if (jump.toAddress < jump.fromAddress && !classMethodActor.noSafepoints()) {
+            if (jump.toAddress < jump.fromAddress && !classMethodActor.isUninterruptible()) {
                 // Backwards branch detected, provision a safepoint at its target:
                 toBlock.haveSafepoint();
             }
