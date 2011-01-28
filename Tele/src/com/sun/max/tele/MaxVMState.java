@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,8 @@ import com.sun.max.tele.debug.*;
  * A (mostly) immutable summary of the Maxine VM state at some point in time, thread-safe and suitable for safe sharing between GUI and execution threads.</p>
  * <p>
  * The typical progression of process states is
- * { {@linkplain ProcessState.STOPPED STOPPED} -> {@linkplain ProcessState.RUNNING RUNNING} }* -> {@linkplain ProcessState.TERMINATED TERMINATED}.
- * When there is no live process being used, then the state is always {@linkplain ProcessState.NO_PROCESS NO_PROCESS}.</p>
+ * { {@linkplain MaxProcessState.STOPPED STOPPED} -> {@linkplain MaxProcessState.RUNNING RUNNING} }* -> {@linkplain MaxProcessState.TERMINATED TERMINATED}.
+ * When there is no live process being used, then the state is always {@linkplain MaxProcessState.NONE NONE}.</p>
  * <p>
  * The serial id counter is at 0 for the first state in the history; it has no predecessor.
  * States are linked backwards; a new summary is prepended (and the serial id incremented) each time a new state instance is created.</p>
@@ -48,9 +48,8 @@ public interface MaxVMState  {
      * The new state of the VM at this state transition.
      *
      * @return VM process state.
-     * @see TeleProcess#processState().
      */
-    ProcessState processState();
+    MaxProcessState processState();
 
     /**
      * Generation counter in the history of VM state transitions.

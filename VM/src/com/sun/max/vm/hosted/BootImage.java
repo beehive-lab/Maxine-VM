@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,7 +71,7 @@ import com.sun.max.vm.type.*;
  *
  * The 'pad' member in the image exists so that in-memory images can be supported. That is, if the
  * VM obtains the image from a memory location as opposed to loading it from a file, then the
- * page-alignment requirement for the heap and code sections in the image will be satisifed if the
+ * page-alignment requirement for the heap and code sections in the image will be satisfied if the
  * image itself starts at a page-aligned address.
  *
  * @author Bernd Mathiske
@@ -85,9 +85,9 @@ public class BootImage {
     public static final int IDENTIFICATION = 0xcafe4dad;
 
     /**
-     * A version number of Maxine.
+     * A version number of the boot image file layout, checked against IMAGE_FORMAT_VERSION in Native/substrate/image.c .
      */
-    public static final int VERSION = 1;
+    public static final int BOOT_IMAGE_FORMAT_VERSION = 2;
 
     /**
      * A field section in a boot image is described by the {@code public final} and {@code final}
@@ -191,7 +191,7 @@ public class BootImage {
         public final int isBigEndian;
 
         public final int identification;
-        public final int version;
+        public final int bootImageFormatVersion;
         public final int randomID;
 
         public final int wordSize;
@@ -278,7 +278,7 @@ public class BootImage {
             isBigEndian = endian.ordinal();
 
             identification = endian.readInt(dataInputStream);
-            version = endian.readInt(dataInputStream);
+            bootImageFormatVersion = endian.readInt(dataInputStream);
             randomID = endian.readInt(dataInputStream);
 
             wordSize = endian.readInt(dataInputStream);
@@ -337,7 +337,7 @@ public class BootImage {
             final VMConfiguration vmConfiguration = vmConfig();
             isBigEndian = endianness() == Endianness.LITTLE ? 0 : 0xffffffff;
             identification = IDENTIFICATION;
-            version = VERSION;
+            bootImageFormatVersion = BOOT_IMAGE_FORMAT_VERSION;
             randomID = UUID.randomUUID().hashCode();
             wordSize = platform().wordWidth().numberOfBytes;
             cacheAlignment = platform().dataModel.cacheAlignment;
@@ -383,7 +383,7 @@ public class BootImage {
 
         public void check() throws BootImageException {
             BootImageException.check(identification == IDENTIFICATION, "not a MaxineVM VM boot image file, wrong identification: " + identification);
-            BootImageException.check(version == VERSION, "wrong version: " + version);
+            BootImageException.check(bootImageFormatVersion == BOOT_IMAGE_FORMAT_VERSION, "wrong version: " + bootImageFormatVersion);
             BootImageException.check(wordSize == 4 || wordSize == 8, "illegal word size: " + wordSize);
             BootImageException.check(cacheAlignment > 4 && Ints.isPowerOfTwoOrZero(cacheAlignment), "implausible alignment size: " + cacheAlignment);
             BootImageException.check(pageSize >= Longs.K && pageSize % Longs.K == 0, "implausible page size: " + pageSize);
@@ -422,8 +422,6 @@ public class BootImage {
             LAYOUT(BootImagePackage.class),
             HEAP(BootImagePackage.class),
             MONITOR(BootImagePackage.class),
-            OPT(BootImagePackage.class),
-            JIT(BootImagePackage.class),
             COMPILATION(BootImagePackage.class),
             RUN(BootImagePackage.class);
 
@@ -478,8 +476,6 @@ public class BootImage {
             put(Key.LAYOUT, vmConfig.layoutPackage);
             put(Key.HEAP, vmConfig.heapPackage);
             put(Key.MONITOR, vmConfig.monitorPackage);
-            put(Key.OPT, vmConfig.optCompilerPackage);
-            put(Key.JIT, vmConfig.jitCompilerPackage);
             put(Key.COMPILATION, vmConfig.compilationPackage);
             put(Key.RUN, vmConfig.runPackage);
         }
@@ -539,26 +535,26 @@ public class BootImage {
      */
     public static final class Trailer extends IntSection {
         public final int randomID;
-        public final int version;
+        public final int bootImageFormatVersion;
         public final int identification;
 
         private Trailer(Header header, InputStream inputStream, int offset) throws IOException {
             super(header.endianness(), offset);
             randomID = endianness().readInt(inputStream);
-            version = endianness().readInt(inputStream);
+            bootImageFormatVersion = endianness().readInt(inputStream);
             identification = endianness().readInt(inputStream);
         }
 
         private Trailer(Header header, int offset) {
             super(header.endianness(), offset);
             randomID = header.randomID;
-            version = header.version;
+            bootImageFormatVersion = header.bootImageFormatVersion;
             identification = header.identification;
         }
 
         public void check(Header header) throws BootImageException {
             BootImageException.check(identification == header.identification, "inconsistent trailer identififcation");
-            BootImageException.check(version == header.version, "inconsistent trailer version");
+            BootImageException.check(bootImageFormatVersion == header.bootImageFormatVersion, "inconsistent trailer version");
             BootImageException.check(randomID == header.randomID, "inconsistent trailer random ID");
         }
     }
@@ -627,8 +623,6 @@ public class BootImage {
                                                       stringInfo.bootImagePackage(Key.LAYOUT),
                                                       stringInfo.bootImagePackage(Key.HEAP),
                                                       stringInfo.bootImagePackage(Key.MONITOR),
-                                                      stringInfo.bootImagePackage(Key.OPT),
-                                                      stringInfo.bootImagePackage(Key.JIT),
                                                       stringInfo.bootImagePackage(Key.COMPILATION),
                                                       stringInfo.bootImagePackage(Key.RUN));
 

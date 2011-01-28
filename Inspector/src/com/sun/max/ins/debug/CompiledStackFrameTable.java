@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,11 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.tele.*;
-import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
+import com.sun.max.vm.stack.CompiledStackFrameLayout.Slot;
+import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
 import com.sun.max.vm.value.*;
 
 /**
@@ -58,14 +58,15 @@ public class CompiledStackFrameTable extends InspectorTable {
      * A table specialized to display the slots in a Java method stack frame in the VM.
      * <br>
      * Each slot is assumed to occupy one word in memory.
-     * @param thread TODO
+     *
+     * @param thread the thread that owns the stack
      */
     public CompiledStackFrameTable(Inspection inspection, MaxStackFrame.Compiled compiledStackFrame, CompiledStackFrameViewPreferences viewPreferences) {
         super(inspection);
         this.compiledStackFrame = compiledStackFrame;
         this.viewPreferences = viewPreferences;
         this.tableModel = new CompiledStackFrameTableModel(inspection, compiledStackFrame);
-        this.columnModel = new CompiledStackFrameTableColumnModel(viewPreferences);
+        this.columnModel = new CompiledStackFrameTableColumnModel(this, this.tableModel, viewPreferences);
         configureMemoryTable(tableModel, columnModel);
     }
 
@@ -139,21 +140,35 @@ public class CompiledStackFrameTable extends InspectorTable {
     }
 
     /**
+     * {@inheritDoc}.
+     * <br>
+     * Color the text specially in the row where a watchpoint is triggered
+     */
+    @Override
+    public Color cellForegroundColor(int row, int col) {
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
+        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
+            return style().debugIPTagColor();
+        }
+        return null;
+    }
+
+    /**
      * A column model for Java stack frames.
      * Column selection is driven by choices in the parent.
      * This implementation cannot update column choices dynamically.
      */
     private final class CompiledStackFrameTableColumnModel extends InspectorTableColumnModel<CompiledStackFrameColumnKind> {
 
-        CompiledStackFrameTableColumnModel(CompiledStackFrameViewPreferences viewPreferences) {
+        CompiledStackFrameTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, CompiledStackFrameViewPreferences viewPreferences) {
             super(CompiledStackFrameColumnKind.values().length, viewPreferences);
-            addColumn(CompiledStackFrameColumnKind.TAG, new TagRenderer(inspection()), null);
+            addColumn(CompiledStackFrameColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(CompiledStackFrameColumnKind.NAME, new NameRenderer(inspection()), null);
-            addColumn(CompiledStackFrameColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
+            addColumn(CompiledStackFrameColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(CompiledStackFrameColumnKind.OFFSET_SP, new OffsetSPRenderer(inspection()), null);
             addColumn(CompiledStackFrameColumnKind.OFFSET_FP, new OffsetFPRenderer(inspection()), null);
             addColumn(CompiledStackFrameColumnKind.VALUE, new ValueRenderer(inspection()), null);
-            addColumn(CompiledStackFrameColumnKind.REGION, new RegionRenderer(inspection()), null);
+            addColumn(CompiledStackFrameColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
 
@@ -170,6 +185,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         private final int frameSize;
         private final Slots slots;
         private final MaxMemoryRegion[] regions;
+        private final String[] slotDescriptions;
 
         public CompiledStackFrameTableModel(Inspection inspection,  MaxStackFrame.Compiled javaStackFrame) {
             super(inspection, javaStackFrame.slotBase());
@@ -177,9 +193,11 @@ public class CompiledStackFrameTable extends InspectorTable {
             frameSize = javaStackFrame.layout().frameSize();
             slots = javaStackFrame.layout().slots();
             regions = new MaxMemoryRegion[slots.size()];
+            slotDescriptions = new String[slots.size()];
             int index = 0;
             for (Slot slot : slots) {
-                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().wordSize());
+                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().platform().wordSize());
+                slotDescriptions[index] = "Stack frame slot \"" + slot.name + "\"";
                 index++;
             }
         }
@@ -203,7 +221,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         @Override
         public int findRow(Address address) {
-            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().wordSize()).toInt();
+            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().platform().wordSize()).toInt();
             return (wordOffset >= 0 && wordOffset < slots.size()) ? wordOffset : -1;
         }
 
@@ -216,6 +234,11 @@ public class CompiledStackFrameTable extends InspectorTable {
         public Offset getOffset(int row) {
             // Slot offsets are relative to Stack Pointer
             return Offset.fromInt(slots.slot(row).offset);
+        }
+
+        @Override
+        public String getRowDescription(int row) {
+            return slotDescriptions[row];
         }
 
         /**
@@ -246,39 +269,18 @@ public class CompiledStackFrameTable extends InspectorTable {
             return getOffset(row).minus(frameSize);
         }
 
+        public String getSlotName(int row) {
+            return slots.slot(row).name;
+        }
+
         /**
          * Gets the Java source variable name (if any) for a given slot.
          *
          * @param row the slot for which the Java source variable name is being requested
          * @return the Java source name for {@code slot} or null if a name is not available
          */
-        public String sourceVariableName(int row) {
+        public String getSourceVariableName(int row) {
             return javaStackFrame.sourceVariableName(row);
-        }
-    }
-
-    /**
-     * @return foreground color for row; color the text specially in the row where a watchpoint is triggered
-     */
-    private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
-        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
-            return style().debugIPTagColor();
-        }
-        return null;
-    }
-
-    private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
-
-        TagRenderer(Inspection inspection) {
-            super(inspection);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(tableModel.getMemoryRegion(row), focus().thread(), tableModel.getWatchpoints(row));
-            renderer.setForeground(getRowTextColor(row));
-            renderer.setBackground(cellBackgroundColor(isSelected));
-            return renderer;
         }
     }
 
@@ -291,35 +293,20 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Slot slot = (Slot) value;
-            setText(slot.name);
-            //setToolTipText("Stack frame name=" + slot.name);
+            setText(slot.name);            //
 
             String otherInfo = "";
             if (viewPreferences.biasSlotOffsets()) {
                 final Offset biasedOffset = tableModel.getFPOffset(row, viewPreferences.biasSlotOffsets());
                 otherInfo = String.format("(%%fp %+d)", biasedOffset.toInt());
             }
-            final String sourceVariableName = tableModel.sourceVariableName(row);
+            final String sourceVariableName = tableModel.getSourceVariableName(row);
             final int offset = tableModel.getSPOffset(row, false).toInt();
             final String toolTipText = String.format("SP %+d%s%s", offset, otherInfo, sourceVariableName == null ? "" : " [" + sourceVariableName + "]");
-            setToolTipText(toolTipText);
-            setForeground(getRowTextColor(row));
+            setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>" + toolTipText);
+            setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor(isSelected));
-            return this;
-        }
-    }
 
-    private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
-
-        AddressRenderer(Inspection inspection) {
-            super(inspection, 0, tableModel.getOrigin());
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(tableModel.getOffset(row), tableModel.getOrigin());
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -328,12 +315,14 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         public OffsetSPRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Slot memory address");
             setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(tableModel.getSPOffset(row, viewPreferences.biasSlotOffsets()), tableModel.getOrigin());
-            setForeground(getRowTextColor(row));
+            setToolTipPrefix("Stack frame slot \"" + tableModel.getSlotName(row) + "\" SP-relative location<br>Address= ");
+            setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -343,12 +332,14 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         public OffsetFPRenderer(Inspection inspection) {
             super(inspection);
+            setToolTipPrefix("Slot memory address");
             setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(tableModel.getFPOffset(row, viewPreferences.biasSlotOffsets()), tableModel.getAddress(0));
-            setForeground(getRowTextColor(row));
+            setToolTipPrefix("Stack frame slot \"" + tableModel.getSlotName(row) + "\" FP-relative location<br>Address= ");
+            setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -377,6 +368,7 @@ public class CompiledStackFrameTable extends InspectorTable {
                     }
                 };
                 label.setOpaque(true);
+                label.setToolTipPrefix(tableModel.getRowDescription(row) + " value = ");
                 addressToLabelMap.put(address.toLong(), label);
             }
             label.setBackground(cellBackgroundColor(isSelected));
@@ -396,28 +388,6 @@ public class CompiledStackFrameTable extends InspectorTable {
                 if (label != null) {
                     label.refresh(force);
                 }
-            }
-        }
-    }
-
-    private final class RegionRenderer extends MemoryRegionValueLabel implements TableCellRenderer {
-        // Designed so that we only read memory lazily, for words that are visible
-        // This label has no state, so we only need one.
-        RegionRenderer(Inspection inspection) {
-            super(inspection);
-            setOpaque(true);
-        }
-
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            try {
-                final Word word = vm().readWord(tableModel.getAddress(row));
-                setValue(WordValue.from(word));
-                setBackground(cellBackgroundColor(isSelected));
-                return this;
-            } catch (InvalidReferenceException invalidReferenceException) {
-                return gui().getUnavailableDataTableCellRenderer();
-            } catch (DataIOError dataIOError) {
-                return gui().getUnavailableDataTableCellRenderer();
             }
         }
     }

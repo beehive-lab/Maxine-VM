@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,11 +24,13 @@
 package com.sun.c1x;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
+import com.sun.c1x.gen.LIRGenerator.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
@@ -41,7 +43,7 @@ import com.sun.cri.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class C1XCompilation {
+public final class C1XCompilation {
 
     private static ThreadLocal<C1XCompilation> currentCompilation = new ThreadLocal<C1XCompilation>();
 
@@ -52,6 +54,7 @@ public class C1XCompilation {
     public final RiRegisterConfig registerConfig;
     public final CiStatistics stats;
     public final int osrBCI;
+    public final CiAssumptions assumptions = new CiAssumptions();
 
     private boolean hasExceptionHandlers;
 
@@ -82,6 +85,8 @@ public class C1XCompilation {
      * traces for independent compilations are not interleaved.
      */
     private ByteArrayOutputStream cfgPrinterBuffer;
+
+    private LIRGenerator lirGenerator;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -337,7 +342,7 @@ public class C1XCompilation {
 
             initFrameMap(hir.topScope.maxLocks());
 
-            final LIRGenerator lirGenerator = compiler.backend.newLIRGenerator(this);
+            lirGenerator = compiler.backend.newLIRGenerator(this);
             for (BlockBegin begin : hir.linearScanOrder()) {
                 lirGenerator.doBlock(begin);
             }
@@ -361,10 +366,21 @@ public class C1XCompilation {
             // generate exception adapters
             lirAssembler.emitExceptionEntries();
 
+            // generate deoptimization stubs
+            ArrayList<DeoptimizationStub> deoptimizationStubs = lirGenerator.deoptimizationStubs();
+            if (deoptimizationStubs != null) {
+                for (DeoptimizationStub stub : deoptimizationStubs) {
+                    lirAssembler.emitDeoptizationStub(stub);
+                }
+            }
+
             // generate traps at the end of the method
             lirAssembler.emitTraps();
 
             CiTargetMethod targetMethod = masm().finishTargetMethod(method, runtime, lirAssembler.registerRestoreEpilogueOffset, false);
+            if (assumptions.count() > 0) {
+                targetMethod.setAssumptions(assumptions);
+            }
 
             if (cfgPrinter() != null) {
                 cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);

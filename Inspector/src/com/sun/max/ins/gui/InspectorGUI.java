@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 
@@ -106,6 +107,19 @@ public interface InspectorGUI {
      * Posts a string to the system clipboard.
      */
     void postToClipboard(String text);
+
+    /**
+     * Gets the mouse button that just clicked, translating mouse click events specially for Darwin.
+     * <br>control click -> button 3 (right);
+     * <br>alt click -> button 2 (middle).
+     * <br
+     * Defaults to the standard on other platforms.
+     *
+     * @param mouseEvent
+     * @return the button that should be understood by a mouse click.
+     * @see MouseEvent#getButton()
+     */
+    int getButton(MouseEvent mouseEvent);
 
     /**
      * Sets Inspector frame location to a point displaced by a default amount from the most recently known mouse position.

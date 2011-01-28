@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,12 +67,30 @@ public abstract class InspectorTableModel extends AbstractTableModel implements 
     }
 
     /**
+     * Returns a human-readable text string describing the identity of a row
+     * in the table, suitable for the prologue of a tool tip text over each
+     * cell.  The prologue identifies the row, to be followed by any additional
+     * information, if available, about the particular table cell under the cursor.
+     * <br>
+     * The default is the string "Row n".
+     *
+     * @param row index of a row in the table
+     * @return a human-readable string describing the particular row.
+     */
+    public String getRowDescription(int row) {
+        return "Row " + row;
+    }
+
+    /**
      * @return default prefix text for trace messages; identifies the class being traced.
      */
     protected String tracePrefix() {
         return tracePrefix;
     }
 
+    /**
+     * Updates any clients of the table data, notifying them that some contents have changed.
+     */
     public void refresh() {
         fireTableDataChanged();
     }

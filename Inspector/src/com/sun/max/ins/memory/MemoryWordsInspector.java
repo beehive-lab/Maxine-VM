@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.memory;
 
+import static com.sun.max.tele.MaxProcessState.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -33,7 +35,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -199,8 +200,8 @@ public final class MemoryWordsInspector extends Inspector {
         Trace.line(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
 
         inspectors.add(this);
-        wordSize = inspection.vm().wordSize();
-        pageSize = inspection.vm().pageSize();
+        wordSize = inspection.vm().platform().wordSize();
+        pageSize = inspection.vm().platform().pageSize();
         wordsInPage = pageSize.dividedBy(wordSize).toInt();
 
         if (instanceViewPreferences == null) {
@@ -370,7 +371,7 @@ public final class MemoryWordsInspector extends Inspector {
      * mode set to {@link ViewMode#PAGE}.
      */
     public MemoryWordsInspector(Inspection inspection, Address address) {
-        this(inspection, new InspectorMemoryRegion(inspection.vm(), "", address, inspection.vm().pageSize()), null, address, ViewMode.PAGE, null);
+        this(inspection, new InspectorMemoryRegion(inspection.vm(), "", address, inspection.vm().platform().pageSize()), null, address, ViewMode.PAGE, null);
     }
 
     @Override
@@ -785,7 +786,7 @@ public final class MemoryWordsInspector extends Inspector {
 
     @Override
     public void watchpointSetChanged() {
-        if (vm().state().processState() != ProcessState.TERMINATED) {
+        if (vm().state().processState() != TERMINATED) {
             refreshView(true);
         }
     }

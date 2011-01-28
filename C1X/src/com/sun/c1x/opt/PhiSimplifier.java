@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class PhiSimplifier implements BlockClosure {
+public final class PhiSimplifier implements BlockClosure {
 
     final IR ir;
     final InstructionSubstituter subst;

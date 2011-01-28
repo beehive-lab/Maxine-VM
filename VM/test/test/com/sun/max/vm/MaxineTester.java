@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,9 +80,6 @@ public class MaxineTester {
     private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 500,
                     "The maximum number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
-    private static final Option<Integer> jtLoadTimeOutOption = options.newIntegerOption("jtload-timeout", 30,
-                    "The maximum number of seconds to wait for the target VM to complete before " +
-                    "timing out and killing it when the JTLoad tester.");
     private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 10,
                     "The scaling factor for automatically computing the timeout for running user programs " +
                     "from how long the program took on the reference VM.");
@@ -192,9 +189,6 @@ public class MaxineTester {
                 } else if ("javatester".equals(test)) {
                     // run the JTImage tests
                     new JTImageHarness().run();
-                } else if ("jtload".equals(test)) {
-                    // run the JTLoad tests
-                    new JTLoadHarness().run();
                 } else if ("dacapo2006".equals(test)) {
                     // run the DaCapo 2006 tests
                     new DaCapo2006Harness(MaxineTesterConfiguration.zeeDacapo2006Tests).run();
@@ -1331,41 +1325,6 @@ public class MaxineTester {
                 Logs logs = new Logs(imageDir, "IMAGEGEN", config);
                 out.println("  -> see: " + fileRef(logs.get(STDOUT)));
                 out.println("  -> see: " + fileRef(logs.get(STDERR)));
-            }
-        }
-    }
-
-    /**
-     * This class implements a harness that runs the JTT tests on the Maxine VM by running the
-     * {@link test.com.sun.max.vm.jtrun.JTMaxine} class on the "java" Maxine VM configuration.
-     * {@link test.com.sun.max.vm.jtrun.JTMaxine} dynamically loads and compiles all the tests.
-     */
-    public static class JTLoadHarness implements Harness {
-        public void run() {
-            String config = imageConfigs[0];
-            final File outputDir = new File(outputDirOption.getValue(), config);
-            final File imageDir = generateJavaRunSchemeImage(config);
-            if (imageDir != null) {
-                final PrintStream out = out();
-                for (String run : MaxineTesterConfiguration.jtLoadParams.keySet()) {
-                    out.println("JTLoad: Started " + run);
-
-                    JavaCommand javaCommand = new JavaCommand(test.com.sun.max.vm.jtrun.JTMaxine.class);
-                    javaCommand.addArgument("-native-tests");
-                    javaCommand.addArguments(MaxineTesterConfiguration.jtLoadParams.get(run));
-                    javaCommand.addClasspath(System.getProperty("java.class.path"));
-
-                    Logs logs = new Logs(outputDir, "JTLoad_" + run, "std");
-                    ExternalCommand extCommand = createMaxvmCommand("std", imageDir, javaCommand, outputDir, null, logs);
-                    ExternalCommand.Result result = extCommand.exec(false, jtLoadTimeOutOption.getValue());
-
-                    if (!result.completed() || result.exitValue != 0) {
-                        out.println("(JTLoad " + run + " failed )");
-                        out.println("  -> see: " + fileRef(logs.get(STDOUT)));
-                        out.println("  -> see: " + fileRef(logs.get(STDERR)));
-                        return;
-                    }
-                }
             }
         }
     }

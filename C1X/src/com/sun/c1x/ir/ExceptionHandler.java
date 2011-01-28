@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.sun.cri.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class ExceptionHandler {
+public final class ExceptionHandler {
 
     public static final List<ExceptionHandler> ZERO_HANDLERS = Collections.emptyList();
 
@@ -78,7 +78,7 @@ public class ExceptionHandler {
      * including the bytecode ranges.
      * @return the compiler interface exception handler
      */
-    public final RiExceptionHandler handler() {
+    public RiExceptionHandler handler() {
         return handler;
     }
 
@@ -95,7 +95,7 @@ public class ExceptionHandler {
      * @param bci the bytecode index to check
      * @return {@code true} if this exception handler covers the specified bytecode
      */
-    public final boolean covers(int bci) {
+    public boolean covers(int bci) {
         return handler.startBCI() <= bci && bci < handler.endBCI();
     }
 
@@ -103,7 +103,7 @@ public class ExceptionHandler {
      * Gets the entry block for this exception handler.
      * @return the entry block
      */
-    public final BlockBegin entryBlock() {
+    public BlockBegin entryBlock() {
         return entryBlock;
     }
 
@@ -112,11 +112,11 @@ public class ExceptionHandler {
      * the runtime to forward exception points to their catch sites.
      * @return the pc offset of the handler entrypoint
      */
-    public final int entryCodeOffset() {
+    public int entryCodeOffset() {
         return entryCodeOffset;
     }
 
-    public final int phiOperand() {
+    public int phiOperand() {
         return phiOperand;
     }
 
@@ -124,19 +124,19 @@ public class ExceptionHandler {
         return scopeCount;
     }
 
-    public final void setEntryBlock(BlockBegin entry) {
+    public void setEntryBlock(BlockBegin entry) {
         entryBlock = entry;
     }
 
-    public final void setEntryCodeOffset(int pco) {
+    public void setEntryCodeOffset(int pco) {
         entryCodeOffset = pco;
     }
 
-    public final void setPhiOperand(int phi) {
+    public void setPhiOperand(int phi) {
         phiOperand = phi;
     }
 
-    public final void setScopeCount(int count) {
+    public void setScopeCount(int count) {
         scopeCount = count;
     }
 

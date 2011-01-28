@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,6 +67,7 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     @Override
     protected void initializeVM() {
         Platform.set(platform().constrainedByInstructionSet(ISA.AMD64));
-        VMConfigurator.installStandard(BuildLevel.DEBUG, new com.sun.max.vm.cps.b.c.d.e.amd64.Package());
+        CompilationScheme.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.d.e.amd64.BcdeAMD64Compiler.class.getName());
+        VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

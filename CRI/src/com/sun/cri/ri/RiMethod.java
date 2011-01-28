@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,6 +117,14 @@ public interface RiMethod {
      * @return {@code true} if the method is a leaf method (that is, is final or private)
      */
     boolean isLeafMethod();
+    
+
+    /**
+     * Gets the unique concrete method that is presumably called.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the unique concrete method
+     */
+    RiMethod uniqueConcreteMethod();
 
     /**
      * Checks whether this method is a class initializer (that is, <code> &lt;clinit&gt;</code>).

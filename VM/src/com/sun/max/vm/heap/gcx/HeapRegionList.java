@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,9 @@
 
 package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -51,7 +54,7 @@ public final class HeapRegionList {
         ACCOUNTING;
 
         HeapRegionList createList() {
-            Pointer base = Reference.fromJava(listsStorage[ordinal()]).toOrigin().plus(Layout.arrayLayout().getElementOffsetInCell(0));
+            Pointer base = Reference.fromJava(listsStorage[ordinal()]).toOrigin().plus(Layout.intArrayLayout().getElementOffsetInCell(0));
             return new HeapRegionList(base);
         }
     }
@@ -59,6 +62,7 @@ public final class HeapRegionList {
     private static final int [][] listsStorage = new int[RegionListUse.values().length][];
 
     static void initializeListStorage(RegionListUse use, int [] storage) {
+        Arrays.fill(storage, INVALID_REGION_ID);
         listsStorage[use.ordinal()] = storage;
     }
 
@@ -115,11 +119,11 @@ public final class HeapRegionList {
         return nextFieldPointer(elem).plus(fieldNumberOfBytes);
     }
 
-    private int next(int elem) {
+    int next(int elem) {
         return listStorage.getInt(nextFieldIndex(elem));
     }
 
-    private int prev(int elem) {
+    int prev(int elem) {
         return listStorage.getInt(prevFieldIndex(elem));
     }
 
@@ -155,6 +159,14 @@ public final class HeapRegionList {
 
     public int size() {
         return size;
+    }
+
+    public int head() {
+        return head;
+    }
+
+    public int tail() {
+        return tail;
     }
 
     public boolean isEmpty() {
@@ -270,6 +282,5 @@ public final class HeapRegionList {
         }
         head = list.head;
     }
-
 }
 

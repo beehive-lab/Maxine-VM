@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ public enum ObjectColumnKind implements ColumnKind {
     TYPE("Type", "Type of field", true, 20),
     NAME("Field", "Field name", true, 20),
     VALUE("Value", "Field value", true, 20),
+    BYTES("As bytes", "Field value as bytes", false, 20),
     REGION("Region", "Memory region pointed to by value", false, 20);
 
     private final String label;

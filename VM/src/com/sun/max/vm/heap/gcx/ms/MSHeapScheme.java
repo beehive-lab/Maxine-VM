@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,7 +121,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
-            objectSpace.hostInitialize();
+            LinearSpaceAllocator.hostInitialize();
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
@@ -200,8 +200,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
         }
 
-        // From now on, we can allocate. The followsingdoes this because of the var-arg arguments.
-        InspectableHeapInfo.init(markedSpace);
+        // From now on, we can allocate. The following does this because of the var-arg arguments.
+        InspectableHeapInfo.init(true, markedSpace);
     }
 
     @Override
@@ -490,6 +490,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             Log.unlock(lockDisabledSafepoints);
         }
         refillTLAB(etla, tlab, effectiveSize);
+    }
+
+    @Override
+    protected Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag) {
+        // Default is to use the immortal heap.
+        return ImmortalHeap.allocate(size, true);
     }
 
     @Override

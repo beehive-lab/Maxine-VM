@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,6 +97,13 @@ public final class CiAddress extends CiValue {
     public CiAddress(CiKind kind, CiValue base, CiValue index, Scale scale, int displacement) {
         super(kind);
         this.base = base;
+
+        if (index.isConstant()) {
+            displacement += ((CiConstant) index).asInt() * scale.value;
+            index = IllegalValue;
+            scale = Scale.Times1;
+        }
+        
         this.index = index;
         this.scale = scale;
         this.displacement = displacement;

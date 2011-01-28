@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,7 @@ class ButtonTabComponent<Inspector_Type extends Inspector> extends InspectorPane
 
             @Override
             public void procedure(MouseEvent mouseEvent) {
-                switch(Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                switch(inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1:
                         // Default left button behavior; for some reason we have to do it by hand
                         tabbedInspector.setSelected(ButtonTabComponent.this.inspector);

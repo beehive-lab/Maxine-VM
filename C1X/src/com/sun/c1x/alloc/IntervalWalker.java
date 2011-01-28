@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -206,7 +206,7 @@ public class IntervalWalker {
             boolean isActive = current.from() <= toOpId;
             int opId = isActive ? current.from() : toOpId;
 
-            if (C1XOptions.TraceLinearScanLevel >= 2) {
+            if (C1XOptions.TraceLinearScanLevel >= 2 && !TTY.isSuppressed()) {
                 if (currentPosition < opId) {
                     TTY.println();
                     TTY.println("walkTo(%d) *", opId);
@@ -234,10 +234,10 @@ public class IntervalWalker {
         }
     }
 
-    void intervalMoved(Interval interval, RegisterBinding kind, State from, State to) {
+    private void intervalMoved(Interval interval, RegisterBinding kind, State from, State to) {
         // intervalMoved() is called whenever an interval moves from one interval list to another.
         // In the implementation of this method it is prohibited to move the interval to any list.
-        if (C1XOptions.TraceLinearScanLevel >= 4) {
+        if (C1XOptions.TraceLinearScanLevel >= 4 && !TTY.isSuppressed()) {
             TTY.print(from.toString() + " to " + to.toString());
             TTY.fillTo(23);
             TTY.out().println(interval.logString(allocator));

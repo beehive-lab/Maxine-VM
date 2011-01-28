@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,8 +101,9 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
      * @return a newly created TeleExternalCode
      * @throws MaxVMBusyException if the VM is unavailable
+     * @throws MaxInvalidAddressException if he address cannot be read
      */
-    MaxExternalCode createExternalCode(Address codeStart, Size codeSize, String name) throws MaxVMBusyException;
+    MaxExternalCode createExternalCode(Address codeStart, Size codeSize, String name) throws MaxVMBusyException, MaxInvalidAddressException;
 
     /**
      * Writes a textual summary describing all instances of {@link MaxMachineCode} known to the VM.

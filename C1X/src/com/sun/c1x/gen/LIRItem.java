@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,27 +93,6 @@ public class LIRItem {
     public LIRItem(LIRGenerator gen) {
         this.gen = gen;
         setInstruction(null);
-    }
-
-    /**
-     * Forces the result of this item's {@linkplain #instruction} to be available in a given operand,
-     * inserting move instructions if necessary.
-     *
-     * @param operand the operand in which the result of {@code instruction} must be available
-     */
-    public void loadItemForce(CiValue operand) {
-        CiValue result = result();
-        if (result != operand) {
-            assert result.kind != CiKind.Illegal;
-            if (!gen.compilation.archKindsEqual(result.kind, operand.kind)) {
-                // moves between different types need an intervening spill slot
-                CiValue tmp = gen.forceToSpill(result, operand.kind, false);
-                gen.lir.move(tmp, operand);
-            } else {
-                gen.lir.move(result, operand);
-            }
-            resultOperand = operand;
-        }
     }
 
     public void loadItem(CiKind kind) {
@@ -211,7 +190,7 @@ public class LIRItem {
         }
     }
 
-    void setResult(CiVariable operand) {
+    private void setResult(CiVariable operand) {
         gen.setResult(instruction, operand);
         resultOperand = operand;
     }

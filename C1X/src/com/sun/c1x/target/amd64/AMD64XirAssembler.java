@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,9 +52,12 @@ public class AMD64XirAssembler extends CiXirAssembler {
 
         List<XirInstruction> currentList = fastPath;
 
-        XirOperand divModTemp = null;
-        XirOperand divModLeftInput = null;
-        XirOperand fixedShiftLocation = null;
+        XirOperand fixedRDX = null;
+        XirOperand fixedRAX = null;
+        XirOperand fixedRCX = null;
+        XirOperand fixedRSI = null;
+        XirOperand fixedRDI = null;
+        HashSet<XirLabel> boundLabels = new HashSet<XirLabel>();
 
         for (XirInstruction i : instructions) {
             boolean appended = false;
@@ -75,15 +78,15 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     // Convert to two operand form
                     XirOperand xOp = i.x();
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
-                        if (divModTemp == null) {
-                            divModTemp = createRegisterTemp("divModTemp", CiKind.Int, AMD64.rdx);
+                        if (fixedRDX == null) {
+                            fixedRDX = createRegisterTemp("divModTemp", CiKind.Int, AMD64.rdx);
                         }
                         // Special treatment to make sure that the left input of % and / is in RAX
-                        if (divModLeftInput == null) {
-                            divModLeftInput = createRegisterTemp("divModLeftInput", CiKind.Int, AMD64.rax);
+                        if (fixedRAX == null) {
+                            fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, AMD64.rax);
                         }
-                        currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, divModLeftInput, i.x()));
-                        xOp = divModLeftInput;
+                        currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, fixedRAX, i.x()));
+                        xOp = fixedRAX;
                     } else {
                         if (i.result != i.x()) {
                             currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, i.result, i.x()));
@@ -92,13 +95,13 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     }
 
                     XirOperand yOp = i.y();
-                    if (i.op == XirOp.Shl || i.op == XirOp.Shr) {
+                    if ((i.op == XirOp.Shl || i.op == XirOp.Shr) && (!(i.y() instanceof XirConstantOperand))) {
                         // Special treatment to make sure that the shift count is always in RCX
-                        if (fixedShiftLocation == null) {
-                            fixedShiftLocation = createRegisterTemp("fixedShiftCount", i.y().kind, AMD64.rcx);
+                        if (fixedRCX == null) {
+                            fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, AMD64.rcx);
                         }
-                        currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedShiftLocation, i.y()));
-                        yOp = fixedShiftLocation;
+                        currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedRCX, i.y()));
+                        yOp = fixedRCX;
                     } else if (i.op == XirOp.Mul && (i.y() instanceof XirConstantOperand)) {
                         // Cannot multiply directly with a constant, so introduce a new temporary variable
                         XirOperand tempLocation = createTemp("mulTempLocation", i.y().kind);
@@ -111,6 +114,24 @@ public class AMD64XirAssembler extends CiXirAssembler {
                         currentList.add(new XirInstruction(i.result.kind, i.op, i.result, xOp, yOp));
                         appended = true;
                     }
+                    break;
+
+                case RepeatMoveWords:
+                case RepeatMoveBytes:
+                    if (fixedRSI == null) {
+                        fixedRSI = createRegisterTemp("fixedRSI", CiKind.Word, AMD64.rsi);
+                    }
+                    if (fixedRDI == null) {
+                        fixedRDI = createRegisterTemp("fixedRDI", CiKind.Word, AMD64.rdi);
+                    }
+                    if (fixedRCX == null) {
+                        fixedRCX = createRegisterTemp("fixedRCX", CiKind.Word, AMD64.rcx);
+                    }
+                    currentList.add(new XirInstruction(CiKind.Word, XirOp.Mov, fixedRSI, i.x()));
+                    currentList.add(new XirInstruction(CiKind.Word, XirOp.Mov, fixedRDI, i.y()));
+                    currentList.add(new XirInstruction(CiKind.Word, XirOp.Mov, fixedRCX, i.z()));
+                    currentList.add(new XirInstruction(CiKind.Illegal, i.op, i.result, fixedRSI, fixedRDI, fixedRCX));
+                    appended = true;
                     break;
 
                 case NullCheck:
@@ -139,11 +160,14 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case Jugteq:
                 case Jlt:
                 case Jlteq:
+                case DecAndJumpNotZero:
                     flags |= HAS_CONTROL_FLOW.mask;
                     break;
                 case Bind:
                     XirLabel label = (XirLabel) i.extra;
                     currentList = label.inline ? fastPath : slowPath;
+                    assert !boundLabels.contains(label) : "label may be bound only once";
+                    boundLabels.add(label);
                     break;
                 case Safepoint:
                 case Align:
@@ -163,6 +187,9 @@ public class AMD64XirAssembler extends CiXirAssembler {
             if (!appended) {
                 currentList.add(i);
             }
+        }
+        for (XirLabel label : labels) {
+            assert boundLabels.contains(label) : "label " + label.name + " is not bound!";
         }
         XirInstruction[] fp = fastPath.toArray(new XirInstruction[fastPath.size()]);
         XirInstruction[] sp = slowPath.size() > 0 ? slowPath.toArray(new XirInstruction[slowPath.size()]) : null;

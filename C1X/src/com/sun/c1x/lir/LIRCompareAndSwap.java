@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @param expectedValue
      * @param newValue
      */
-    public LIRCompareAndSwap(LIROpcode opcode, CiAddress addr, CiValue expectedValue, CiValue newValue) {
+    public LIRCompareAndSwap(LIROpcode opcode, CiValue addr, CiValue expectedValue, CiValue newValue) {
         super(opcode, CiValue.IllegalValue, null, false, 0, 0, addr, expectedValue, newValue);
     }
 
@@ -47,8 +47,8 @@ public class LIRCompareAndSwap extends LIRInstruction {
      *
      * @return the address
      */
-    public CiAddress address() {
-        return (CiAddress) operand(0);
+    public CiValue address() {
+        return operand(0);
     }
 
     /**

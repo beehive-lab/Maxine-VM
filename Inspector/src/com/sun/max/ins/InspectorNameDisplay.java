@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -295,7 +296,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     private String positionString(MaxCompiledCode compiledCode, Address address) {
         final Address entry = compiledCode.getCodeStart();
         final long position = address.minus(entry).toLong();
-        return position == 0 ? "" : "+0x" + Long.toHexString(position);
+        return position == 0 ? "" : "+" + InspectorLabel.longTo0xHex(position);
     }
 
     private static String name(TargetMethod targetMethod) {
@@ -379,7 +380,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      */
     public String longName(MaxExternalCode externalCode) {
         final String title = externalCode.entityName();
-        return title == null ? "Native code @0x" + externalCode.getCodeStart().toHexString() : "Native code: " + title;
+        return title == null ? "Native code @" + externalCode.getCodeStart().to0xHexString() : "Native code: " + title;
     }
 
     /**
@@ -408,7 +409,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final StringBuilder name = new StringBuilder();
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
-            name.append("Target{0x").append(address.toHexString());
+            name.append("Target{").append(address.to0xHexString());
             if (vm().codeCache().findExternalCode(address) != null) {
                 // a native routine that's already been registered.
                 name.append("}");
@@ -439,38 +440,38 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
         // Is it a heap region?
         if (memoryRegion.sameAs(vm().heap().bootHeapRegion().memoryRegion())) {
-            return "Boot heap region";
+            return "boot heap region";
         }
         for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {
             if (memoryRegion.sameAs(heapRegion.memoryRegion())) {
-                return "Dynamic heap region:  " + regionName + heapSchemeSuffix;
+                return "dynamic heap region \"" + regionName + heapSchemeSuffix + "\"";
             }
         }
         final MaxHeapRegion immortalHeapRegion = vm().heap().immortalHeapRegion();
         if (immortalHeapRegion != null && memoryRegion.sameAs(immortalHeapRegion.memoryRegion())) {
-            return "Immortal heap: " + regionName;
+            return "immortal heap \"" + regionName + "\"";
         }
         if (memoryRegion.sameAs(vm().heap().rootsMemoryRegion())) {
-            return "Inspector roots region: " + regionName;
+            return "inspector roots region \"" + regionName + "\"";
         }
 
         // Is it a compiled code region?
         if (memoryRegion.sameAs(vm().codeCache().bootCodeRegion().memoryRegion())) {
-            return "Boot code region: " + regionName;
+            return "boot code region \"" + regionName + "\"";
         }
         for (MaxCompiledCodeRegion codeRegion : vm().codeCache().compiledCodeRegions()) {
             if (memoryRegion.sameAs(codeRegion.memoryRegion())) {
-                return "Dynamic code region: " + regionName;
+                return "dynamic code region \"" + regionName + "\"";
             }
         }
 
         // Is it a thread-related region?
         for (MaxThread thread : vm().threadManager().threads()) {
             if (memoryRegion.sameAs(thread.stack().memoryRegion())) {
-                return "Thread stack region: " + longName(thread);
+                return "stack region for thread: " + longName(thread);
             }
             if (memoryRegion.sameAs(thread.localsBlock().memoryRegion())) {
-                return "Thread locals region: " + longName(thread);
+                return "locals region for thread: " + longName(thread);
             }
         }
         return regionName;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.util.*;
@@ -439,7 +440,7 @@ public abstract class LIRAssembler {
             }
 
         } else {
-            throw Util.shouldNotReachHere();
+            throw Util.shouldNotReachHere(src.toString() + ", dest=" + dest.toString() + ", " + kind);
         }
     }
 
@@ -455,6 +456,8 @@ public abstract class LIRAssembler {
     protected abstract void doPeephole(LIRList list);
 
     protected abstract void emitSlowPath(SlowPath sp);
+
+    public abstract void emitDeoptizationStub(LIRGenerator.DeoptimizationStub stub);
 
     protected abstract void emitAlignment();
 

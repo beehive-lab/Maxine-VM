@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
+import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
@@ -185,6 +186,11 @@ public class C1XRuntimeCalls {
     public static double runtimeArithmeticSin(double v) {
         verifyRefMaps();
         return Math.sin(v);
+    }
+
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Deoptimize)
+    public static void deoptimize() {
+        throw Util.unimplemented();
     }
 
     private static void registerMethod(Method selectedMethod, CiRuntimeCall call) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,47 +69,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         void columnPreferenceChanged();
     }
 
-    private final Inspection inspection;
-    private final String tracePrefix;
-
-    /**
-     * Should selection be highlighted by a box around the selected row(s)?
-     * If not, use default background shading.
-     */
-    private boolean showSelectionWithBox = false;
-
-    /**
-     * Creates a new {@link JTable} for use in the {@link Inspection}.
-     * <br>
-     * Used only at this time by the two code viewers, all of which is
-     * subject to further refactoring.
-     *
-     * @param model a model for the table
-     * @param tableColumnModel a column model for the table
-     */
-    protected InspectorTable(Inspection inspection, InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
-        super(inspectorTableModel, inspectorTableColumnModel);
-        this.showSelectionWithBox = true;
-        this.inspection = inspection;
-        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
-        getTableHeader().setFont(style().defaultFont());
-        addMouseListener(new InspectorTableMouseListener());
-        setDragEnabled(true);
-        setTransferHandler(new InspectorTableTransferHandler());
-    }
-
-    /**
-     * Creates a new {@link JTable} for use in the {@link Inspection}.
-     */
-    protected InspectorTable(Inspection inspection) {
-        this.inspection = inspection;
-        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
-        getTableHeader().setFont(style().defaultFont());
-        addMouseListener(new InspectorTableMouseListener());
-        setDragEnabled(true);
-        setTransferHandler(new InspectorTableTransferHandler());
-    }
-
     /**
      * Support for allowing table cells to be sources for Drag and Drop.
      * <br>
@@ -158,9 +117,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
             final int col = columnAtPoint(p);
             final int modelCol = getColumnModel().getColumn(col).getModelIndex();
             final int row = rowAtPoint(p);
-            //System.out.println("(" + row + "," + col + ")");
             if ((col != -1) && (row != -1)) {
-                switch(Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                switch(inspection().gui().getButton(mouseEvent)) {
                     case MouseEvent.BUTTON1:
                         // Give subclass an opportunity to handle a left-click specially.
                         mouseButton1Clicked(row, modelCol, mouseEvent);
@@ -186,6 +144,280 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
                 }
             }
         }
+    }
+
+    private final Inspection inspection;
+    private final String tracePrefix;
+
+    /**
+     * Should selection be highlighted by a box around the selected row(s)?
+     * If not, use default background shading.
+     */
+    private boolean showSelectionWithBox = false;
+
+    private Set<ColumnChangeListener> columnChangeListeners = CiUtil.newIdentityHashSet();
+
+    private MaxVMState lastRefreshedState;
+
+    /**
+     * Creates a new {@link JTable} for use in the {@link Inspection}.
+     * <br>
+     * Used only at this time by the two code viewers, all of which is
+     * subject to further refactoring.
+     *
+     * @param model a model for the table
+     * @param tableColumnModel a column model for the table
+     */
+    protected InspectorTable(Inspection inspection, InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
+        super(inspectorTableModel, inspectorTableColumnModel);
+        this.showSelectionWithBox = true;
+        this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
+        getTableHeader().setFont(style().defaultFont());
+        addMouseListener(new InspectorTableMouseListener());
+        setDragEnabled(true);
+        setTransferHandler(new InspectorTableTransferHandler());
+    }
+
+    /**
+     * Creates a new {@link JTable} for use in the {@link Inspection}.
+     */
+    protected InspectorTable(Inspection inspection) {
+        this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
+        getTableHeader().setFont(style().defaultFont());
+        addMouseListener(new InspectorTableMouseListener());
+        setDragEnabled(true);
+        setTransferHandler(new InspectorTableTransferHandler());
+    }
+
+    public final Inspection inspection() {
+        return inspection;
+    }
+
+    public final MaxVM vm() {
+        return inspection.vm();
+    }
+
+    public final InspectorGUI gui() {
+        return inspection.gui();
+    }
+
+    public final InspectorStyle style() {
+        return inspection.style();
+    }
+
+    public final InspectionFocus focus() {
+        return inspection.focus();
+    }
+
+    public final InspectionActions actions() {
+        return inspection.actions();
+    }
+
+    @Override
+    public final void paintChildren(Graphics g) {
+        super.paintChildren(g);
+        if (showSelectionWithBox && getRowSelectionAllowed()) {
+            // Draw a box around the selected row in the table
+            final int row = getSelectedRow();
+            if (row >= 0) {
+                g.setColor(style().memorySelectedAddressBorderColor());
+                g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
+            }
+        }
+    }
+
+    public final void refresh(boolean force) {
+        MaxVMState maxVMState = vm().state();
+        if (maxVMState.newerThan(lastRefreshedState) || force) {
+            getInspectorTableModel().refresh();
+            getInspectorTableColumnModel().refresh(force);
+            lastRefreshedState = maxVMState;
+            invalidate();
+            repaint();
+        }
+        updateFocusSelection();
+    }
+
+    public final void redisplay() {
+        getInspectorTableColumnModel().redisplay();
+        invalidate();
+        repaint();
+    }
+
+    /**
+     * Adds a listener for view update when column visibility changes.
+     */
+    public final void addColumnChangeListener(ColumnChangeListener listener) {
+        columnChangeListeners.add(listener);
+    }
+
+    /**
+     * Remove a listener for view update when column visibility changed.
+     */
+    public final void removeColumnChangeListener(ColumnChangeListener listener) {
+        columnChangeListeners.remove(listener);
+    }
+
+    public final InspectorTableColumnModel getInspectorTableColumnModel() {
+        return (InspectorTableColumnModel) getColumnModel();
+    }
+
+    public final InspectorTableModel getInspectorTableModel() {
+        return (InspectorTableModel) getModel();
+    }
+
+    /**
+     * Scrolls the table to display the first row.
+     */
+    public final void scrollToBeginning() {
+        scrollToRows(0, 0);
+    }
+
+    /**
+     * Scrolls the table to display the last row.
+     */
+    public final void scrollToEnd() {
+        final int lastRow = getRowCount() - 1;
+        scrollToRows(lastRow, lastRow);
+    }
+
+    /**
+     * Scrolls the table to display the specified range (with a few rows before or after if possible).
+     * @param firstRow first row of the range that should be made visible
+     * @param lastRow last row of the range that should be made visible
+     */
+    public final void scrollToRows(int firstRow, int lastRow) {
+        assert firstRow <= lastRow;
+        final int tableWidth = getWidth() - 2;
+        final int rowHeight = getRowHeight() - 2;
+        // Create a rectangle in the table view to use as a scroll target; include
+        // the row immediately before and the row immediately after so that the row of interest
+        // doesn't land at the very beginning or very end of the view, if possible.
+        final int rowCount = lastRow - firstRow + 1 + 2;
+        final Rectangle rectangle = new Rectangle(0, (firstRow - 1) * getRowHeight(), tableWidth, rowCount * rowHeight);
+        // System.out.println("row=" + firstRow + " rect=" + rectangle);
+        scrollRectToVisible(rectangle);
+    }
+
+    /**
+     * Notifies listeners that the column visibility preferences for the table have changed.
+     */
+    public final void fireColumnPreferenceChanged() {
+        ColumnChangeListener[] copy = columnChangeListeners.toArray(new ColumnChangeListener[columnChangeListeners.size()]);
+        for (ColumnChangeListener listener : copy) {
+            listener.columnPreferenceChanged();
+        }
+    }
+
+    /**
+     * Add tool tip text to the column headers, as specified by the column model.
+     */
+    @Override
+    protected final JTableHeader createDefaultTableHeader() {
+        return new JTableHeader(getColumnModel()) {
+            @Override
+            public String getToolTipText(java.awt.event.MouseEvent mouseEvent) {
+                final Point p = mouseEvent.getPoint();
+                final InspectorTableColumnModel inspectorTableColumnModel = getInspectorTableColumnModel();
+                final int index = inspectorTableColumnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = inspectorTableColumnModel.getColumn(index).getModelIndex();
+                return inspectorTableColumnModel.toolTipTextForColumn(modelIndex);
+            }
+        };
+    }
+
+    /**
+     * Sets up default view configuration for tables.
+     */
+    protected final void configureDefaultTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
+        setModel(inspectorTableModel);
+        setColumnModel(inspectorTableColumnModel);
+        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
+        setShowVerticalLines(style().defaultTableShowVerticalLines());
+        setIntercellSpacing(style().defaultTableIntercellSpacing());
+        setRowHeight(style().defaultTableRowHeight());
+        setRowSelectionAllowed(true);
+        setColumnSelectionAllowed(false);
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        refresh(true);
+        JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
+        updateFocusSelection();
+    }
+
+    /**
+     * Sets up standard view configuration for tables used to show memory in one way or another.
+     */
+    protected final void configureMemoryTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
+        showSelectionWithBox = true;
+        setModel(inspectorTableModel);
+        setColumnModel(inspectorTableColumnModel);
+        setFillsViewportHeight(true);
+        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
+        setShowVerticalLines(style().memoryTableShowVerticalLines());
+        setIntercellSpacing(style().memoryTableIntercellSpacing());
+        setRowHeight(style().memoryTableRowHeight());
+        setRowSelectionAllowed(true);
+        setColumnSelectionAllowed(false);
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        refresh(true);
+        JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
+        updateFocusSelection();
+    }
+
+    /**
+     * Updates table state to display a new request for row
+     * selection; clears table selection if -1.
+     */
+    protected final void updateSelection(int row) {
+        if (row < 0) {
+            clearSelection();
+        } else  if (row != getSelectedRow()) {
+            setRowSelectionInterval(row, row);
+        }
+    }
+
+    /**
+     * Notification that some focus state of interest has changed, typically
+     * causing the table's row selection to follow the new focus.
+     */
+    public void updateFocusSelection() {
+    }
+
+    /**
+     * Gets the appropriate background color for rendering a table cell, depending on the selection.
+     * If the alternate selection highlighting choice is enabled (painting a box around the row(s)),
+     * then only return the default background shading.
+     *
+     * @param isSelected whether the cell being rendered is part of the current selection
+     * @return the appropriate, default background color for the cell.
+     */
+    public Color cellBackgroundColor(boolean isSelected) {
+        return (isSelected && getRowSelectionAllowed() && !showSelectionWithBox) ? getSelectionBackground() : getBackground();
+    }
+
+    /**
+     * Gets the appropriate foreground color for rendering a table cell, depending on the cell.
+     * The default is null, which will default to the toolkit' settings
+     *
+     * @param row
+     * @param column
+     * @return a color to be used for foreground
+     */
+    public Color cellForegroundColor(int row, int column) {
+        return null;
+    }
+
+    /**
+     * Determines if a row should be treated as a "boundary", and an extra border be
+     * drawn at the top of any cell rendered in that row.
+     *
+     * @param row a row in the table
+     * @return whether the ros should be rendered as a boundary.
+     */
+    public boolean isBoundaryRow(int row) {
+        return false;
     }
 
     /**
@@ -231,93 +463,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     /**
-     * Sets up default view configuration for tables.
-     */
-    protected void configureDefaultTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
-        setModel(inspectorTableModel);
-        setColumnModel(inspectorTableColumnModel);
-        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
-        setShowVerticalLines(style().defaultTableShowVerticalLines());
-        setIntercellSpacing(style().defaultTableIntercellSpacing());
-        setRowHeight(style().defaultTableRowHeight());
-        setRowSelectionAllowed(true);
-        setColumnSelectionAllowed(false);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
-        updateFocusSelection();
-    }
-
-    /**
-     * Sets up standard view configuration for tables used to show memory in one way or another.
-     */
-    protected void configureMemoryTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
-        showSelectionWithBox = true;
-        setModel(inspectorTableModel);
-        setColumnModel(inspectorTableColumnModel);
-        setFillsViewportHeight(true);
-        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
-        setShowVerticalLines(style().memoryTableShowVerticalLines());
-        setIntercellSpacing(style().memoryTableIntercellSpacing());
-        setRowHeight(style().memoryTableRowHeight());
-        setRowSelectionAllowed(true);
-        setColumnSelectionAllowed(false);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
-        updateFocusSelection();
-    }
-
-    public InspectorTableColumnModel getInspectorTableColumnModel() {
-        return (InspectorTableColumnModel) getColumnModel();
-    }
-
-    public InspectorTableModel getInspectorTableModel() {
-        return (InspectorTableModel) getModel();
-    }
-
-    /**
-     * Gets the appropriate background color for rendering a table cell, depending on the selection.
-     * If the alternate selection highlighting choice is enabled (painting a box around the row(s)),
-     * then only return the default background shading.
-     *
-     * @param isSelected whether the cell being rendered is part of the current selection
-     * @return the appropriate, default background color for the cell.
-     */
-    protected Color cellBackgroundColor(boolean isSelected) {
-        return (isSelected && getRowSelectionAllowed() && !showSelectionWithBox) ? getSelectionBackground() : getBackground();
-    }
-
-    /**
-     * Updates table state to display a new request for row
-     * selection; clears table selection if -1.
-     */
-    protected void updateSelection(int row) {
-        if (row < 0) {
-            clearSelection();
-        } else  if (row != getSelectedRow()) {
-            setRowSelectionInterval(row, row);
-        }
-    }
-
-    /**
-     * Add tool tip text to the column headers, as specified by the column model.
-     */
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        return new JTableHeader(getColumnModel()) {
-            @Override
-            public String getToolTipText(java.awt.event.MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final InspectorTableColumnModel inspectorTableColumnModel = getInspectorTableColumnModel();
-                final int index = inspectorTableColumnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = inspectorTableColumnModel.getColumn(index).getModelIndex();
-                return inspectorTableColumnModel.toolTipTextForColumn(modelIndex);
-            }
-        };
-    }
-
-    /**
      * Delegates the request for something that can be transferred from a table cell (via drag
      * and drop - copy only) to the renderer for that cell.
      *
@@ -337,129 +482,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
             }
         }
         return null;
-    }
-
-    @Override
-    public void paintChildren(Graphics g) {
-        super.paintChildren(g);
-        if (showSelectionWithBox && getRowSelectionAllowed()) {
-            // Draw a box around the selected row in the table
-            final int row = getSelectedRow();
-            if (row >= 0) {
-                g.setColor(style().memorySelectedAddressBorderColor());
-                g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
-            }
-        }
-    }
-
-    public final Inspection inspection() {
-        return inspection;
-    }
-
-    public final MaxVM vm() {
-        return inspection.vm();
-    }
-
-    public final InspectorGUI gui() {
-        return inspection.gui();
-    }
-
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
-    public final InspectionFocus focus() {
-        return inspection.focus();
-    }
-
-    public final InspectionActions actions() {
-        return inspection.actions();
-    }
-
-    private Set<ColumnChangeListener> columnChangeListeners = CiUtil.newIdentityHashSet();
-
-    /**
-     * Adds a listener for view update when column visibility changes.
-     */
-    public void addColumnChangeListener(ColumnChangeListener listener) {
-        columnChangeListeners.add(listener);
-    }
-
-    /**
-     * Remove a listener for view update when column visibility changed.
-     */
-    public void removeColumnChangeListener(ColumnChangeListener listener) {
-        columnChangeListeners.remove(listener);
-    }
-
-    /**
-     * Notifies listeners that the column visibility preferences for the table have changed.
-     */
-    public void fireColumnPreferenceChanged() {
-        ColumnChangeListener[] copy = columnChangeListeners.toArray(new ColumnChangeListener[columnChangeListeners.size()]);
-        for (ColumnChangeListener listener : copy) {
-            listener.columnPreferenceChanged();
-        }
-    }
-
-    /**
-     * Notification that some focus state of interest has changed, typically
-     * causing the table's row selection to follow the new focus.
-     */
-    public void updateFocusSelection() {
-    }
-
-    private MaxVMState lastRefreshedState;
-
-    public void refresh(boolean force) {
-        MaxVMState maxVMState = vm().state();
-        if (maxVMState.newerThan(lastRefreshedState) || force) {
-            getInspectorTableModel().refresh();
-            getInspectorTableColumnModel().refresh(force);
-            lastRefreshedState = maxVMState;
-            invalidate();
-            repaint();
-        }
-        updateFocusSelection();
-    }
-
-    public void redisplay() {
-        getInspectorTableColumnModel().redisplay();
-        invalidate();
-        repaint();
-    }
-
-    /**
-     * Scrolls the table to display the first row.
-     */
-    public void scrollToBeginning() {
-        scrollToRows(0, 0);
-    }
-
-    /**
-     * Scrolls the table to display the last row.
-     */
-    public void scrollToEnd() {
-        final int lastRow = getRowCount() - 1;
-        scrollToRows(lastRow, lastRow);
-    }
-
-    /**
-     * Scrolls the table to display the specified range (with a few rows before or after if possible).
-     * @param firstRow first row of the range that should be made visible
-     * @param lastRow last row of the range that should be made visible
-     */
-    public void scrollToRows(int firstRow, int lastRow) {
-        assert firstRow <= lastRow;
-        final int tableWidth = getWidth() - 2;
-        final int rowHeight = getRowHeight() - 2;
-        // Create a rectangle in the table view to use as a scroll target; include
-        // the row immediately before and the row immediately after so that the row of interest
-        // doesn't land at the very beginning or very end of the view, if possible.
-        final int rowCount = lastRow - firstRow + 1 + 2;
-        final Rectangle rectangle = new Rectangle(0, (firstRow - 1) * getRowHeight(), tableWidth, rowCount * rowHeight);
-        // System.out.println("row=" + firstRow + " rect=" + rectangle);
-        scrollRectToVisible(rectangle);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ package com.sun.cri.ci;
  *
  * @author Doug Simon
  */
-public class CiVariable extends CiValue {
+public final class CiVariable extends CiValue {
 
     /**
      * The identifier of the variable. This is a non-zero index in a contiguous 0-based name space.

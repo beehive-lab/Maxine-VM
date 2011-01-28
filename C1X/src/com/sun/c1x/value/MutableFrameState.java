@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ import com.sun.cri.ci.*;
  *
  * @author Michael Duller
  */
-public class MutableFrameState extends FrameState {
+public final class MutableFrameState extends FrameState {
 
     public MutableFrameState(IRScope irScope, int bci, int maxLocals, int maxStack) {
         super(irScope, bci, maxLocals, maxStack);

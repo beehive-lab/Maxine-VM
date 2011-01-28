@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,7 +65,9 @@ public abstract class Value {
         LiveStore,          // instruction is a store
         PhiDead,            // phi is illegal because local is dead
         PhiCannotSimplify,  // phi cannot be simplified
-        PhiVisited;         // phi has been visited during simplification
+        PhiVisited,         // phi has been visited during simplification
+
+        ResultIsUnique;     // the result of this instruction is guaranteed to be unique (e.g. a new object)
 
         public final int mask = 1 << ordinal();
     }

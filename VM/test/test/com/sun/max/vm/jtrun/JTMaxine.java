@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,8 @@ import java.util.*;
 
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 
 /**
  * The {@code JTMaxine} class implements a main program for running the generated Java tester tests
@@ -46,12 +44,6 @@ public class JTMaxine {
 
     private static final Option<String> packageOption = options.newStringOption("package", "all",
         "Selects the package which contains the generated tester runs to run.");
-    private static final Option<String> callerOption = options.newStringOption("caller", "",
-        "Selects the compiler that will compile the caller of the test methods. When left blank," +
-        "the default VM compiler will be used. \"cps\" selects the VM's CPS compiler, \"jit\" " +
-        "selects the VM's JIT compiler, and otherwise a class name can be specified.");
-    private static final Option<String> calleeOption = options.newStringOption("callee", "",
-        "Selects the compiler that will compile the callee test methods.");
     private static final Option<Boolean> nativeTestsOption = options.newBooleanOption("native-tests", false,
         "Causes the testing framework to load the 'javatest' native library, which is needed by " +
         "JNI tests.");
@@ -104,38 +96,30 @@ public class JTMaxine {
     }
 
     private static void compileMethods(JTClasses jtclasses) {
-        RuntimeCompilerScheme callerCompiler = getCompiler(callerOption.getValue());
-        RuntimeCompilerScheme calleeCompiler = getCompiler(calleeOption.getValue());
-
-        if (callerCompiler != null) {
-            List<ClassMethodActor> methods = new ArrayList<ClassMethodActor>(100);
-            addMethods(methods, jtclasses.testRunClass);
-            ProgressPrinter printer = new ProgressPrinter(System.out, methods.size(), 1, false);
-            if (verboseOption.getValue() == 3) {
-                printer.setVerbose(2);
-            }
-            System.out.println("Compiling caller methods with " + callerCompiler.getClass() + "...");
-            for (ClassMethodActor method : methods) {
-                printer.begin(method.toString());
-                vmConfig().compilationScheme().synchronousCompile(method, callerCompiler);
-                printer.pass();
-            }
+        List<ClassMethodActor> methods = new ArrayList<ClassMethodActor>(100);
+        addMethods(methods, jtclasses.testRunClass);
+        ProgressPrinter printer = new ProgressPrinter(System.out, methods.size(), 1, false);
+        if (verboseOption.getValue() == 3) {
+            printer.setVerbose(2);
         }
-        if (calleeCompiler != null) {
-            List<ClassMethodActor> methods = new ArrayList<ClassMethodActor>(100);
-            for (Class c : jtclasses.testClasses) {
-                addMethods(methods, c);
-            }
-            ProgressPrinter printer = new ProgressPrinter(System.out, methods.size(), 1, false);
-            if (verboseOption.getValue() == 3) {
-                printer.setVerbose(2);
-            }
-            System.out.println("Compiling callee methods with " + calleeCompiler.getClass() + "...");
-            for (ClassMethodActor method : methods) {
-                printer.begin(method.toString());
-                vmConfig().compilationScheme().synchronousCompile(method, calleeCompiler);
-                printer.pass();
-            }
+        for (ClassMethodActor method : methods) {
+            printer.begin(method.toString());
+            vmConfig().compilationScheme().synchronousCompile(method);
+            printer.pass();
+        }
+        methods.clear();
+        for (Class c : jtclasses.testClasses) {
+            addMethods(methods, c);
+        }
+        printer = new ProgressPrinter(System.out, methods.size(), 1, false);
+        if (verboseOption.getValue() == 3) {
+            printer.setVerbose(2);
+        }
+        System.out.println("Compiling callee methods...");
+        for (ClassMethodActor method : methods) {
+            printer.begin(method.toString());
+            vmConfig().compilationScheme().synchronousCompile(method);
+            printer.pass();
         }
 
         if (gcOption.getValue()) {
@@ -160,40 +144,6 @@ public class JTMaxine {
                 list.add((ClassMethodActor) methodActor);
             }
         }
-    }
-
-    static RuntimeCompilerScheme getCompiler(String name) {
-        VMConfiguration vmConfiguration = vmConfig();
-        if ("".equals(name)) {
-            return null;
-        } else if ("cps".equals(name)) {
-            return CPSCompiler.Static.compiler();
-        } else if ("jit".equals(name)) {
-            return vmConfiguration.jitCompilerScheme();
-        }
-        try {
-            Class<?> compilerSchemeClass = Class.forName(name);
-            Constructor constructor = compilerSchemeClass.getConstructor(VMConfiguration.class);
-            RuntimeCompilerScheme compiler = (RuntimeCompilerScheme) constructor.newInstance(vmConfiguration);
-            compiler.initialize(MaxineVM.Phase.BOOTSTRAPPING);
-            return compiler;
-        } catch (ClassNotFoundException e) {
-            System.out.println("Could not find compiler scheme class: " + name);
-            System.exit(-1);
-        } catch (NoSuchMethodException e) {
-            System.out.println("Could not find constructor in: " + name);
-            System.exit(-1);
-        } catch (IllegalAccessException e) {
-            System.out.println("Could not access constructor in: " + name);
-            System.exit(-1);
-        }  catch (InvocationTargetException e) {
-            System.out.println("Constructor threw exception: " + e);
-            System.exit(-1);
-        } catch (InstantiationException e) {
-            System.out.println("Could not instantiate: " + name);
-            System.exit(-1);
-        }
-        return null;
     }
 
     static boolean run(JTClasses jtclasses) {

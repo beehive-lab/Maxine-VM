@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -913,6 +913,11 @@ public class IRChecker extends ValueVisitor {
         }
     }
 
+    @Override
+    public void visitNewObjectArrayClone(NewObjectArrayClone i) {
+        throw Util.unimplemented();
+    }
+
     /**
      * Typechecks the NewObjectArray instruction.
      * @param i the NewObjectArray instruction to be checked
@@ -1106,6 +1111,21 @@ public class IRChecker extends ValueVisitor {
             checkPointerOpOffsetOrIndex(i.index());
             assertKind(i.displacement(), CiKind.Int);
         }
+    }
+
+    @Override
+    public void visitArrayCopy(ArrayCopy arrayCopy) {
+        throw Util.unimplemented();
+    }
+
+    @Override
+    public void visitBoundsCheck(BoundsCheck boundsCheck) {
+        throw Util.unimplemented();
+    }
+
+    @Override
+    public void visitTypeEqualityCheck(TypeEqualityCheck boundsCheck) {
+        throw Util.unimplemented();
     }
 
     @Override

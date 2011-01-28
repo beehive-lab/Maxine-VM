@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * The {@code NewTypeArray} class definition.
@@ -32,15 +33,25 @@ import com.sun.cri.ci.*;
  */
 public final class NewTypeArray extends NewArray {
 
-    final CiKind elementType;
+    final RiType elementType;
 
-    public NewTypeArray(Value length, CiKind elementType, FrameState stateBefore) {
+    public NewTypeArray(Value length, RiType elementType, FrameState stateBefore) {
         super(length, stateBefore);
         this.elementType = elementType;
     }
 
     public CiKind elementKind() {
-        return elementType;
+        return elementType.kind();
+    }
+
+    @Override
+    public RiType declaredType() {
+        return elementType.arrayOf();
+    }
+
+    @Override
+    public RiType exactType() {
+        return elementType.arrayOf();
     }
 
     /**

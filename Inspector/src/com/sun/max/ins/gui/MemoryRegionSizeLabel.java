@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,18 +42,18 @@ public final class MemoryRegionSizeLabel extends AbstractMemoryRegionLabel imple
     public MemoryRegionSizeLabel(Inspection inspection, MaxMemoryRegion memoryRegion) {
         super(inspection, memoryRegion);
         redisplay();
-        refresh(true);
     }
 
     public void redisplay() {
         setFont(style().hexDataFont());
+        refresh(true);
     }
 
     public void refresh(boolean force) {
         final long size = memoryRegion.size().toLong();
-        final String hexSize = "0x" + Long.toHexString(size);
+        final String hexSize = longTo0xHex(size);
         setText(hexSize);
-        setToolTipText(memoryRegion.regionName() + " size=" + hexSize + "(" + size + ")");
+        setWrappedToolTipText(hexSize + "(" + size + ")");
     }
 }
 

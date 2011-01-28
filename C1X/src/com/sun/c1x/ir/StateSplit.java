@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,12 +36,7 @@ public abstract class StateSplit extends Instruction {
     /**
      * Sentinel denoting an explicitly cleared state.
      */
-    private static final FrameState CLEARED_STATE = new MutableFrameState(null, -5, 0, 0) {
-        @Override
-        public String toString() {
-            return "CLEARED_STATE";
-        };
-    };
+    private static final FrameState CLEARED_STATE = new MutableFrameState(null, -5, 0, 0);
 
     private FrameState stateBefore;
 

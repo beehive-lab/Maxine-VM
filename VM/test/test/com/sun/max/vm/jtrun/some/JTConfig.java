@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -296,6 +296,7 @@ public class JTConfig {
         jtt.except.Catch_Two01.class,
         jtt.except.Catch_Two02.class,
         jtt.except.Catch_Two03.class,
+        jtt.except.Except_Locals.class,
         jtt.except.Except_Synchronized01.class,
         jtt.except.Except_Synchronized02.class,
         jtt.except.Except_Synchronized03.class,
@@ -484,6 +485,7 @@ public class JTConfig {
         jtt.micro.VarArgs_int01.class,
         jtt.micro.VarArgs_long01.class,
         jtt.micro.VarArgs_short01.class,
+        jtt.optimize.ArrayCopy01.class,
         jtt.optimize.ArrayLength01.class,
         jtt.optimize.BC_idiv_16.class,
         jtt.optimize.BC_idiv_4.class,
@@ -526,6 +528,7 @@ public class JTConfig {
         jtt.optimize.NCE_FlowSensitive02.class,
         jtt.optimize.NCE_FlowSensitive03.class,
         jtt.optimize.NCE_FlowSensitive04.class,
+        jtt.optimize.NCE_FlowSensitive05.class,
         jtt.optimize.Narrow_byte01.class,
         jtt.optimize.Narrow_byte02.class,
         jtt.optimize.Narrow_byte03.class,

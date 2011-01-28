@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,9 @@
  */
 package com.sun.max.tele.debug.no;
 
-import static com.sun.max.platform.Platform.*;
-
 import java.io.*;
 
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -53,7 +52,7 @@ public final class ReadOnlyTeleVM extends TeleVM {
 
     @Override
     protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments) throws BootImageException {
-        return new ReadOnlyTeleProcess(this, platform(), programFile());
+        return new ReadOnlyTeleProcess(this, Platform.platform(), programFile());
     }
 
     @Override

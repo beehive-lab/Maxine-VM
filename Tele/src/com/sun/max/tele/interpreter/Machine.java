@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -214,7 +214,7 @@ public final class Machine extends AbstractTeleVMHolder{
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
         if (vm() != null) {
             final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-            final TeleClassActor teleClassActor = vm().findTeleClassActor(fieldActor.holder().typeDescriptor);
+            final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(fieldActor.holder().typeDescriptor);
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
             final Reference staticTupleReference = teleStaticTuple.reference();
 
@@ -383,7 +383,7 @@ public final class Machine extends AbstractTeleVMHolder{
             return remoteReference;
         }
 
-        final ClassActor remoteReferenceClassActor = vm().makeClassActorForTypeOf(remoteReference);
+        final ClassActor remoteReferenceClassActor = vm().classRegistry().makeClassActorForTypeOf(remoteReference);
 
         if (remoteReferenceClassActor.typeDescriptor.equals(JavaTypeDescriptor.STRING)) {
             return Reference.fromJava(vm().getString(remoteReference));

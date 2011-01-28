@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,11 +71,8 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
      */
     final int miscOffset;
 
-    final int arrayLengthOffset;
-
     public OhmGeneralLayout() {
         this.miscOffset = hubOffset + Word.size();
-        this.arrayLengthOffset = miscOffset + Word.size();
     }
 
     @INLINE

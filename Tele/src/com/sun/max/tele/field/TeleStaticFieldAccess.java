@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ public class TeleStaticFieldAccess extends TeleFieldAccess {
      * Gets a reference to the static tuple holding the value of this field.
      */
     public Reference staticTupleReference(TeleVM teleVM) {
-        final TeleClassActor teleClassActor = teleVM.findTeleClassActor(fieldActor().holder().typeDescriptor);
+        final TeleClassActor teleClassActor = teleVM.classRegistry().findTeleClassActor(fieldActor().holder().typeDescriptor);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
         return teleStaticTuple.reference();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,19 @@ public final class Intrinsic extends StateSplit {
                      FrameState stateBefore, boolean preservesState, boolean canTrap) {
         super(kind, stateBefore);
         this.intrinsic = intrinsic;
-        this.arguments = args;
+        int nonNullArgs = 0;
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i] != null) {
+                nonNullArgs++;
+            }
+        }
+        this.arguments = new Value[nonNullArgs];
+        int z = 0;
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i] != null) {
+                arguments[z++] = args[i];
+            }
+        }
         this.target = target;
         initFlag(Flag.IsStatic, isStatic);
         // Preserves state means that the intrinsic preserves register state across all cases,

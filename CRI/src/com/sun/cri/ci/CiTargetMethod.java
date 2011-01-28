@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -128,6 +128,7 @@ public class CiTargetMethod implements Serializable {
             if (debugInfo != null) {
                 appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
                 appendRefMap(sb, "registerMap", debugInfo.registerRefMap);
+                appendDebugInfo(sb, debugInfo);
             }
 
             return sb.toString();
@@ -231,11 +232,16 @@ public class CiTargetMethod implements Serializable {
     private int registerRestoreEpilogueOffset = -1;
     private byte[] targetCode;
     private int targetCodeSize;
+    private CiAssumptions assumptions;
 
     /**
      * Constructs a new target method.
      */
     public CiTargetMethod() {
+    }
+    
+    public void setAssumptions(CiAssumptions assumptions) {
+        this.assumptions = assumptions;
     }
 
     /**
@@ -384,8 +390,18 @@ public class CiTargetMethod implements Serializable {
     public int targetCodeSize() {
         return targetCodeSize;
     }
+    
 
-    static void appendRefMap(StringBuilder sb, String name, CiBitMap map) {
+    private static void appendDebugInfo(StringBuilder sb, CiDebugInfo info) {
+        if (info != null && info.hasFrame()) {
+            sb.append(" #locals=").append(info.frame().numLocals).append(" #expr=").append(info.frame().numStack);
+            if (info.frame().numLocks > 0) {
+                sb.append(" #locks=").append(info.frame().numLocks);
+            }
+        }
+    }
+
+    private static void appendRefMap(StringBuilder sb, String name, CiBitMap map) {
         if (map != null) {
             sb.append(' ').append(name).append('[').append(map.toBinaryString(-1)).append(']');
         }

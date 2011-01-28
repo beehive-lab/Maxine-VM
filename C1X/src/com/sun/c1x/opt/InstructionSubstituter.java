@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.sun.c1x.graph.IR;
  *
  * @author Ben L. Titzer
  */
-public class InstructionSubstituter implements BlockClosure, ValueClosure {
+public final class InstructionSubstituter implements BlockClosure, ValueClosure {
 
     final IR ir;
     boolean hasSubstitution;

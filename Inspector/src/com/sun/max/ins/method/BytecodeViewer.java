@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -254,7 +254,7 @@ public abstract class BytecodeViewer extends CodeViewer {
             if (breakpoint.isBytecodeBreakpoint()) {
                 final MaxCodeLocation breakpointLocation = breakpoint.codeLocation();
                 // the direction of key comparison is significant
-                if (methodKey.equals(breakpointLocation.methodKey()) &&  bytecodeInstructions().get(row).position() == breakpointLocation.bytecodePosition()) {
+                if (methodKey.equals(breakpointLocation.methodKey()) &&  bytecodeInstructions().get(row).position == breakpointLocation.bytecodePosition()) {
                     return breakpoint;
                 }
             }
@@ -267,40 +267,63 @@ public abstract class BytecodeViewer extends CodeViewer {
         return "";
     }
 
+    /**
+     * A representation of a bytecode instruction, suitable for displaying
+     * different aspects of it.
+     *
+     * @author Michael Van De Vanter
+     */
     protected class BytecodeInstruction {
 
-        int position;
+        /**
+         * offset from method beginning of the first byte of this instruction.
+         */
+        public final int position;
 
-        /** AsPosition of first byte of bytecode instruction. */
-        int position() {
-            return position;
-        }
 
-        /** bytes constituting this bytecode instruction. */
-        byte[] instructionBytes;
+        /**
+         * the bytes constituting this instruction.
+         */
+        public final byte[] instructionBytes;
 
-        private int row;
+        /**
+         * index of this instruction in the method.
+         */
+        public final int row;
 
-        /** index of this bytecode instruction in the method. */
-        int row() {
-            return row;
-        }
+        /**
+         * index of the first target code instruction implementing this bytecode (Jit only for now).
+         */
+        public final int targetCodeRow;
 
-        /** index of the first target code instruction implementing this bytecode (Jit only for now). */
-        int targetCodeRow;
+        /**
+         * address of the first byte in the target code instructions implementing this bytecode (Jit only for now).
+         */
+        public final Address targetCodeFirstAddress;
 
-        private Address targetCodeFirstAddress;
-
-        /** address of the first byte in the target code instructions implementing this bytecode (Jit only for now. */
-        Address targetCodeFirstAddress() {
-            return targetCodeFirstAddress;
-        }
-
-        int opcode;
+        /**
+         * the code of the operation for this instruction.
+         */
+        public final int opcode;
 
         // * Either a rendering component or an index into the constant pool if a reference kind. */
-        Object operand1;
-        Object operand2;
+        /**
+         * The first operand of this instruction:
+         * <ul>
+         * <li>if the operand is a reference kind, returns an {@link Integer} index into the {@link ConstantPool}</li>
+         * <li>if the operand is not a reference kind, returns a {@link BytecodeOperandLabel} that can render the operand.
+         * </ul>
+         */
+        public final Object operand1;
+
+        /**
+         * The second operand of this instruction:
+         * <ul>
+         * <li>if the operand is a reference kind, returns an {@link Integer} index into the {@link ConstantPool}</li>
+         * <li>if the operand is not a reference kind, returns a {@link BytecodeOperandLabel} that can render the operand.
+         * </ul>
+         */
+        public final Object operand2;
 
         BytecodeInstruction(int bytecodeRow, int position, byte[] bytes, int opcode, Object operand1, Object operand2, int targetCodeRow, Address targetCodeFirstAddress) {
             this.row = bytecodeRow;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ public final class TeleMSHeapScheme extends AbstractTeleVMHolder implements Tele
 
     public Offset gcForwardingPointerOffset() {
         // MS is a non-moving collector. Doesn't do any forwarding.
-        return null;
+        return Offset.zero();
     }
 
     public Pointer getForwardedOrigin(Pointer origin) {

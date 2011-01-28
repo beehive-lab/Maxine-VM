@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -214,14 +214,22 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         return true;
     }
 
-    public void disableImmortalMemoryAllocation() {
-        final Pointer etla = ETLA.load(currentTLA());
-        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.zero());
+    @INLINE(override = true)
+    public void trackCreation(Pointer cell, Hub hub, boolean isArray) {
     }
 
-    public void enableImmortalMemoryAllocation() {
+    @INLINE(override = true)
+    public void trackLifetime(Pointer cell) {
+    }
+
+    public void disableCustomAllocation() {
         final Pointer etla = ETLA.load(currentTLA());
-        IMMORTAL_ALLOCATION_ENABLED.store(etla, Word.allOnes());
+        CUSTOM_ALLOCATION_ENABLED.store(etla, Word.zero());
+    }
+
+    public void enableCustomAllocation(Address customAllocator) {
+        final Pointer etla = ETLA.load(currentTLA());
+        CUSTOM_ALLOCATION_ENABLED.store(etla, customAllocator);
     }
 
     public long maxObjectInspectionAge() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,8 +31,8 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpoint.WatchpointSettings;
-import com.sun.max.tele.debug.TeleWatchpoint.DuplicateWatchpointException;
-import com.sun.max.tele.debug.TeleWatchpoint.TooManyWatchpointsException;
+import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
+import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -350,9 +350,9 @@ public final class Watchpoints {
         private void setWatchpoint(MaxThreadLocalVariable threadLocalVariable) {
             try {
                 inspection.vm().watchpointManager().createVmThreadLocalWatchpoint(description, threadLocalVariable, watchpointSettings);
-            } catch (TooManyWatchpointsException e) {
+            } catch (MaxTooManyWatchpointsException e) {
                 e.printStackTrace();
-            } catch (DuplicateWatchpointException e) {
+            } catch (MaxDuplicateWatchpointException e) {
                 // ignore
             } catch (MaxVMBusyException e) {
                 inspection.announceVMBusyFailure("Watchpoint for thread local \"" +  threadLocalVariable.variableName() + "\"");

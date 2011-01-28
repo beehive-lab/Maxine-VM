@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,9 @@ public enum C1XIntrinsic {
     java_lang_Class$isPrimitive      ("java.lang.Class", "isPrimitive", "()Z"),
     java_lang_Class$getSuperclass    ("java.lang.Class", "getSuperclass", "()Ljava/lang/Class;"),
     java_lang_Class$getComponentType ("java.lang.Class", "getComponentType", "()Ljava/lang/Class;"),
+
+    // java.util.Arrays
+    java_util_Arrays$copyOf ("java.util.Arrays", "copyOf", "([Ljava/lang/Object;I)[Ljava/lang/Object;"),
 
     // java.lang.String
     java_lang_String$compareTo ("java.lang.String", "compareTo", "(Ljava/lang/String;)I"),

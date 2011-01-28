@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
@@ -58,7 +59,7 @@ public final class HeapRegionConstants {
         log2RegionSizeInBytes = Integer.numberOfTrailingZeros(regionSizeInBytes);
         FatalError.check(regionSizeInBytes == (1 << log2RegionSizeInBytes), "Heap region size must be a power of 2");
         regionSizeInWords = regionSizeInBytes >> Word.widthValue().log2numberOfBytes;
-        log2RegionSizeInWords = log2RegionSizeInBytes + Word.widthValue().log2numberOfBytes;
+        log2RegionSizeInWords = log2RegionSizeInBytes - Word.widthValue().log2numberOfBytes;
         regionAlignmentMask = regionSizeInBytes - 1;
     }
 
@@ -70,4 +71,17 @@ public final class HeapRegionConstants {
         return address.and(regionAlignmentMask);
     }
 
+    /**
+     * Compute the number of regions needed to hold the number of bytes.
+     * @param sizeInBytes size in bytes
+     * @return a number of regions.
+     */
+    static int numberOfRegions(Size sizeInBytes) {
+        return sizeInBytes.roundedUpBy(regionSizeInBytes).unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+    }
+
+    static void validate() {
+        FatalError.check((regionSizeInBytes == (1 << log2RegionSizeInBytes)) && ((regionSizeInBytes % Platform.getPageSize()) == 0),
+            "Region size must be a power of 2 and an integral number of platform pages");
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -575,7 +575,7 @@ public final class Heap {
     }
 
     public static void enableImmortalMemoryAllocation() {
-        heapScheme().enableImmortalMemoryAllocation();
+        heapScheme().enableCustomAllocation(Word.allOnes().asAddress());
         if (ImmortalHeap.TraceImmortal) {
             Log.printCurrentThread(false);
             Log.println(": immortal heap allocation enabled");
@@ -583,7 +583,7 @@ public final class Heap {
     }
 
     public static void disableImmortalMemoryAllocation() {
-        heapScheme().disableImmortalMemoryAllocation();
+        heapScheme().disableCustomAllocation();
         if (ImmortalHeap.TraceImmortal) {
             Log.printCurrentThread(false);
             Log.println(": immortal heap allocation disabled");
@@ -597,7 +597,7 @@ public final class Heap {
      * @return true if the address points to one of the root regions of the heap.
      */
     public static boolean isInHeapRootRegion(Address address) {
-        return bootHeapRegion.contains(address) || Code.contains(address) || ImmortalHeap.getImmortalHeap().contains(address);
+        return bootHeapRegion.contains(address) || Code.contains(address) || ImmortalHeap.contains(address);
     }
 
     public static boolean isValidRef(Reference ref) {
@@ -605,7 +605,7 @@ public final class Heap {
             return true;
         }
         Pointer origin = ref.toOrigin();
-        if (!bootHeapRegion.contains(origin) && !heapScheme().contains(origin) && !Code.contains(origin) && !ImmortalHeap.getImmortalHeap().contains(origin)) {
+        if (!bootHeapRegion.contains(origin) && !heapScheme().contains(origin) && !Code.contains(origin) && !ImmortalHeap.contains(origin)) {
             return false;
         }
         if (DebugHeap.isTagging()) {

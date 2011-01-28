@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -299,6 +299,8 @@ public enum CiKind {
         switch(this) {
             case Void:
                 return java.lang.Void.TYPE;
+            case Long:
+                return java.lang.Long.TYPE;
             case Int:
                 return java.lang.Integer.TYPE;
             case Byte:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,11 @@ public class LIRBranch extends LIRInstruction {
      */
     private BlockBegin unorderedBlock;
 
+
+    public LIRBranch(Condition cond, Label label) {
+        this(cond, label, null);
+    }
+
     /**
      * Creates a new LIRBranch instruction.
      *
@@ -54,8 +59,8 @@ public class LIRBranch extends LIRInstruction {
      * @param label target label
      *
      */
-    public LIRBranch(Condition cond, Label label) {
-        super(LIROpcode.Branch, CiValue.IllegalValue, null, false);
+    public LIRBranch(Condition cond, Label label, LIRDebugInfo info) {
+        super(LIROpcode.Branch, CiValue.IllegalValue, info, false);
         this.cond = cond;
         this.label = label;
     }

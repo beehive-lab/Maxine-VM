@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -475,6 +475,7 @@ final class LinearScanWalker extends IntervalWalker {
             // the whole interval is never used, so spill it entirely to memory
             if (C1XOptions.TraceLinearScanLevel >= 2) {
                 TTY.println("      spilling entire interval because split pos is at beginning of interval");
+                TTY.println("      use positions: " + interval.usePosList().size());
             }
             assert interval.firstUsage(RegisterPriority.ShouldHaveRegister) > currentPosition : "interval must not have use position before currentPosition";
 

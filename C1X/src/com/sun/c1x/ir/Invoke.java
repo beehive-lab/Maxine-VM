@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ public final class Invoke extends StateSplit {
     public final int opcode;
     public final Value[] arguments;
     public final RiMethod target;
+    public final RiType returnType;
 
     /**
      * Constructs a new Invoke instruction.
@@ -48,11 +49,12 @@ public final class Invoke extends StateSplit {
      * @param target the target method being called
      * @param stateBefore the state before executing the invocation
      */
-    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, RiMethod target, FrameState stateBefore) {
+    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, RiMethod target, RiType returnType, FrameState stateBefore) {
         super(result, stateBefore);
         this.opcode = opcode;
         this.arguments = args;
         this.target = target;
+        this.returnType = returnType;
         if (isStatic) {
             setFlag(Flag.IsStatic);
             eliminateNullCheck();
@@ -75,6 +77,11 @@ public final class Invoke extends StateSplit {
      */
     public boolean isStatic() {
         return checkFlag(Flag.IsStatic);
+    }
+
+    @Override
+    public RiType declaredType() {
+        return returnType;
     }
 
     /**

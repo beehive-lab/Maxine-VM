@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -289,8 +289,20 @@ public class VmThreadLocal {
     public static final VmThreadLocal STACK_REFERENCE_MAP_SIZE
         = new VmThreadLocal("STACK_REFERENCE_SIZE", false, "size of stack reference map");
 
-    public static final VmThreadLocal IMMORTAL_ALLOCATION_ENABLED
-        = new VmThreadLocal("IMMORTAL_ALLOCATION_ENABLED", false, "Non-zero if thread is allocating on the immortal heap", Nature.Single);
+    /**
+     * Threads allocates primarily via their TLAB, which is refilled by default from a default heap.
+     * Occasionally, a thread may need to allocate outside of this allocator.
+     * This thread local is used to indicate that an custom allocator is to be used on next TLAB overflow
+     * events. These can be provoked artificially to force bypassing TLABs and route execution to the custom allocator.
+     * The value stored in the thread local is specific to a heap scheme.
+     */
+    public static final VmThreadLocal CUSTOM_ALLOCATION_ENABLED
+        = new VmThreadLocal("CUSTOM_ALLOCATION_ENABLED", false, "Non-zero to bypass TLAB allocation and use an alternate allocator", Nature.Single);
+
+    /**
+     * Slot for use by the object analysis framework.
+     */
+    public static final VmThreadLocal OBJECT_ANALYSIS = new VmThreadLocal("OBJECT_ANALYSIS", false, "For use by object analysis framework");
 
     private static VmThreadLocal[] valuesNeedingInitialization;
 

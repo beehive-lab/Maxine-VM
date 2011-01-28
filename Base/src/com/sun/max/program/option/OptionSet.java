@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -541,6 +541,40 @@ public class OptionSet {
     }
 
     /**
+     * Prints a textual listing of these options and their values
+     * to the specified output stream.
+     * @param stream the output stream to which to write the text
+     * @param indent the number of spaces to indent
+     * @param verbose add each option's description when true
+     */
+    public void printValues(PrintStream stream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        for (Option<?> option : getSortedOptions()) {
+            if (option.type == OptionTypes.BLANK_BOOLEAN_TYPE && option instanceof FieldOption) {
+                FieldOption fopt = (FieldOption) option;
+                try {
+                    if (!fopt.nullValue.equals(fopt.field.getBoolean(null))) {
+                        // Don't show message for "-XX:+<opt>" option if the default is represented by the
+                        // "-XX:-<opt>" option instead (and vice versa).
+                        continue;
+                    }
+                } catch (Exception e) {
+                }
+            }
+
+
+            final Option<Object> opt = Utils.cast(option);
+            stream.print(indentation + opt.getName() + ": " + opt.getValue());
+            if (verbose) {
+                stream.println(opt.isAssigned() ? "" : " (default)");
+                stream.println("        " + opt.getHelp());
+                stream.println("        " + getUsage(opt));
+            }
+            stream.println();
+        }
+    }
+
+    /**
      * This method gets a usage string for a particular option that describes
      * the range of valid string values that it accepts.
      * @param option the option for which to get usage
@@ -586,7 +620,7 @@ public class OptionSet {
      * @param name the name of the option
      * @param object the object containing the field (if the field is not static)
      * @param field the field to store the value
-     * @param help the help text for the option   @return a new option that will mod?ify the field when parsed
+     * @param help the help text for the option   @return a new option that will modify the field when parsed
      * @return the option created
      */
     @SuppressWarnings("unchecked")

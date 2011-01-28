@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,10 @@
  */
 package com.sun.max.ins;
 
-import static com.sun.max.tele.debug.ProcessState.*;
+import static com.sun.max.ins.MaxineInspector.*;
+import static com.sun.max.tele.MaxInspectionMode.*;
+import static com.sun.max.tele.MaxProcessState.*;
 
-import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -38,10 +39,9 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -56,22 +56,7 @@ import com.sun.max.vm.classfile.*;
  */
 public final class Inspection implements InspectionHolder {
 
-    private static final String INSPECTOR_NAME = "Maxine Inspector";
-
     private static final int TRACE_VALUE = 1;
-
-    public static int mouseButtonWithModifiers(MouseEvent mouseEvent) {
-        if (OS.current() == OS.DARWIN && mouseEvent.getButton() == MouseEvent.BUTTON1) {
-            if (mouseEvent.isControlDown()) {
-                if (!mouseEvent.isAltDown()) {
-                    return MouseEvent.BUTTON3;
-                }
-            } else if (mouseEvent.isAltDown()) {
-                return MouseEvent.BUTTON2;
-            }
-        }
-        return mouseEvent.getButton();
-    }
 
     /**
      * Initializes the UI system to a specified L&F.
@@ -121,6 +106,8 @@ public final class Inspection implements InspectionHolder {
 
     private final String bootImageFileName;
 
+    private final OptionSet options;
+
     private final InspectorNameDisplay nameDisplay;
 
     private final InspectionFocus focus;
@@ -138,10 +125,11 @@ public final class Inspection implements InspectionHolder {
 
     private NotepadManager notepadManager;
 
-    public Inspection(MaxVM vm) {
+    public Inspection(MaxVM vm, OptionSet options) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
         this.vm = vm;
+        this.options = options;
         this.bootImageFileName = vm.bootImageFile().getAbsolutePath().toString();
         this.nameDisplay = new InspectorNameDisplay(this);
         this.focus = new InspectionFocus(this);
@@ -161,7 +149,7 @@ public final class Inspection implements InspectionHolder {
             vm.watchpointManager().addListener(new WatchpointListener());
         }
 
-        inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
+        inspectorMainFrame = new InspectorMainFrame(this, MaxineInspector.NAME, nameDisplay, settings, inspectionActions);
 
         MethodInspector.Manager.make(this);
         objectInspectorFactory = ObjectInspectorFactory.make(this);
@@ -236,19 +224,29 @@ public final class Inspection implements InspectionHolder {
         return inspectionActions;
     }
 
+    public OptionSet options() {
+        return options;
+    }
+
     /**
      * Updates the string appearing the outermost window frame: program name, process state, boot image filename.
      */
     public String currentInspectionTitle() {
         final StringBuilder sb = new StringBuilder(50);
-        sb.append(INSPECTOR_NAME);
-        sb.append(" (");
-        sb.append(vm().state() == null ? "" : vm().state().processState());
-        if (vm().state().isInGC()) {
-            sb.append(" in GC");
+        sb.append(NAME);
+        sb.append(" (mode=").append(vm().inspectionMode().toString()).append(")");
+        if (vm().inspectionMode() != IMAGE) {
+            sb.append(" VM Process ");
+            final MaxVMState vmState = vm().state();
+            if (vmState == null) {
+                sb.append(UNKNOWN.label());
+            } else {
+                sb.append(vmState.processState().label());
+                if (vmState.isInGC()) {
+                    sb.append(" in GC");
+                }
+            }
         }
-        sb.append(") ");
-        sb.append(bootImageFileName);
         return sb.toString();
     }
 
@@ -317,14 +315,14 @@ public final class Inspection implements InspectionHolder {
      * @return Is the Inspector in debugging mode with a legitimate process?
      */
     public boolean hasProcess() {
-        final ProcessState processState = vm().state().processState();
+        final MaxProcessState processState = vm().state().processState();
         return !(processState == UNKNOWN || processState == TERMINATED);
     }
 
     /**
      * Is the VM running, as of the most recent direct (synchronous) notification by the VM?
      *
-     * @return VM state == {@link ProcessState#RUNNING}.
+     * @return VM state == {@link MaxProcessState#RUNNING}.
      */
     public boolean isVMRunning() {
         return vm().state().processState() == RUNNING;
@@ -333,7 +331,7 @@ public final class Inspection implements InspectionHolder {
     /**
      * Is the VM available to start running, as of the most recent direct (synchronous) notification by the VM?
      *
-     * @return VM state == {@link ProcessState#STOPPED}.
+     * @return VM state == {@link MaxProcessState#STOPPED}.
      */
     public boolean isVMReady() {
         return vm().state().processState() == STOPPED;
@@ -385,6 +383,7 @@ public final class Inspection implements InspectionHolder {
                 // Be sure all process-sensitive actions are disabled.
                 inspectionActions.refresh(false);
                 break;
+            case NONE:
             case UNKNOWN:
                 break;
         }
@@ -497,7 +496,7 @@ public final class Inspection implements InspectionHolder {
      *         otherwise the generic name of the inspector.
      */
     public String currentActionTitle() {
-        return currentAction != null ? currentAction.name() : INSPECTOR_NAME;
+        return currentAction != null ? currentAction.name() : MaxineInspector.NAME;
     }
 
     private Set<InspectionListener> inspectionListeners = CiUtil.newIdentityHashSet();

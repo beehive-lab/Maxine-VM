@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -173,17 +173,17 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      */
     final int log2BytesCoveredPerBit;
     /**
-     * Log 2 to get bitmap word index from an address.
+     * Log 2 to compute the bitmap word index from an offset from the beginning of the covered area.
      */
     final int log2BitmapWord;
 
     /**
-     * Start of the heap area covered by the mark bitmap.
+     * Start of the contiguous range of addresses covered by the mark bitmap.
      */
     Address coveredAreaStart;
 
     /**
-     * End of the heap area covered by the mark bitmap.
+     * End of the contiguous range of addresses  covered by the mark bitmap.
      */
     Address coveredAreaEnd;
 
@@ -1049,6 +1049,21 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             return heapMarker.bitmapWordIndex(endOfRightmostVisitedObject());
         }
 
+        public void visitGreyObjects(int rangeLeftmostWordIndex, int rangeRightmostBitmapWordIndex) {
+            // TODO
+            FatalError.unimplemented();
+        }
+
+        public void visitGreyObjects(HeapRegionRangeIterable regions, int log2RegionToBitmapWord) {
+            while (regions.hasNext()) {
+                final RegionRange regionRange = regions.next();
+                final int firstRegion = regionRange.firstRegion();
+                final int rangeLeftmostWordIndex = firstRegion << log2RegionToBitmapWord;
+                final int rangeRightmostBitmapWordIndex = (firstRegion + regionRange.numRegions()) << log2RegionToBitmapWord;
+                visitGreyObjects(rangeLeftmostWordIndex, rangeRightmostBitmapWordIndex);
+            }
+        }
+
         @Override
         public void visitGreyObjects() {
             final Pointer colorMapBase = heapMarker.base.asPointer();
@@ -1721,6 +1736,28 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
     /**
+     * Visit all objects marked grey during root marking that resides in list of memory region ranges.
+     * Regions are numbered from 0, where in the address to the first bytes of region 0 coincide with
+     * the covered area's start address.
+     *
+     * @param regions an ordered list of region ranges
+     * @param log2RegionSizeInBytes the power of 2 of the size of the regions
+     */
+    void visitAllGreyObjects(HeapRegionRangeIterable regions, int log2RegionSizeInBytes) {
+        forwardScanState.rightmost = rootCellVisitor.rightmost;
+        forwardScanState.finger = rootCellVisitor.leftmost;
+        forwardScanState.numMarkinkgStackOverflow = 0;
+        overflowLinearScanState.numMarkinkgStackOverflow = 0;
+        currentScanState = forwardScanState;
+        overflowScanState.markingStackFlusher().setScanState(currentScanState);
+
+        // For simplicity, we disallow region smaller than 1 << log2BitmapWord (i.e., 512 bytes if word is 8 bytes).
+        FatalError.check(log2RegionSizeInBytes >= log2BitmapWord, "Region size too small for heap marker");
+        final int log2RegionToBitmapWord = log2RegionSizeInBytes - log2BitmapWord;
+        forwardScanState.visitGreyObjects(regions, log2RegionToBitmapWord);
+    }
+
+    /**
      * Visit all objects marked grey during root marking.
      */
     void visitAllGreyObjects() {
@@ -1921,6 +1958,36 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
         verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
     }
+
+    /**
+     * Mark all live objects that resides in the heap regions enumerated by the iterable region range.
+     * @param heapRegions
+     * @param log2RegionSize
+     */
+    public void markAll(HeapRegionRangeIterable heapRegions, int log2RegionSize) {
+        traceGCTimes = Heap.traceGCTime();
+        if (traceGCTimes) {
+            recoveryScanTimer.reset();
+        }
+
+        clearColorMap();
+        if (MaxineVM.isDebug()) {
+            FatalError.check(markingStack.isEmpty(), "Marking stack must be empty");
+        }
+        markRoots();
+        if (Heap.traceGCPhases()) {
+            Log.println("Tracing grey objects...");
+        }
+        startTimer(heapMarkingTimer);
+        visitAllGreyObjects(heapRegions, log2RegionSize);
+        stopTimer(heapMarkingTimer);
+        if (traceGCTimes) {
+            totalRecoveryScanCount += recoveryScanTimer.getCount();
+            totalRecoveryElapsedTime += recoveryScanTimer.getElapsedTime();
+        }
+        verifyHasNoGreyMarks(coveredAreaStart, forwardScanState.endOfRightmostVisitedObject());
+    }
+
 
     private static final class RefForwarder implements SpecialReferenceManager.ReferenceForwarder {
         final TricolorHeapMarker heapMarker;

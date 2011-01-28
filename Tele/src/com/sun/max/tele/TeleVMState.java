@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ public final class TeleVMState implements MaxVMState {
         (TeleWatchpointEvent) null,
         false, (TeleVMState) null);
 
-    private final ProcessState processState;
+    private final MaxProcessState processState;
     private final long serialID;
     private final long epoch;
     private final List<MaxMemoryRegion> memoryRegions;
@@ -89,7 +89,19 @@ public final class TeleVMState implements MaxVMState {
                     List<TeleBreakpointEvent> breakpointEvents,
                     TeleWatchpointEvent teleWatchpointEvent,
                     boolean isInGC, TeleVMState previous) {
-        this.processState = processState;
+        switch(processState) {
+            case RUNNING:
+                this.processState = MaxProcessState.RUNNING;
+                break;
+            case STOPPED:
+                this.processState = MaxProcessState.STOPPED;
+                break;
+            case TERMINATED:
+                this.processState = MaxProcessState.TERMINATED;
+                break;
+            default:
+                this.processState = MaxProcessState.UNKNOWN;
+        }
         this.serialID = previous == null ? 0 : previous.serialID() + 1;
         this.epoch = epoch;
 
@@ -137,7 +149,7 @@ public final class TeleVMState implements MaxVMState {
         }
     }
 
-    public ProcessState processState() {
+    public MaxProcessState processState() {
         return processState;
     }
 
@@ -201,7 +213,7 @@ public final class TeleVMState implements MaxVMState {
         if (previous == null) {
             sb.append("null");
         } else {
-            sb.append(previous.processState().toString());
+            sb.append(previous.processState().label());
         }
         sb.append(")");
         return sb.toString();
@@ -212,7 +224,7 @@ public final class TeleVMState implements MaxVMState {
         while (state != null) {
             final StringBuilder sb = new StringBuilder(100);
             sb.append(Long.toString(state.serialID())).append(":  ");
-            sb.append("proc=(").append(state.processState().toString()).append(", ").append(Long.toString(state.epoch())).append(") ");
+            sb.append("proc=(").append(state.processState().label()).append(", ").append(Long.toString(state.epoch())).append(") ");
             sb.append("gc=").append(state.isInGC()).append(" ");
             printStream.println(sb.toString());
             if (state.singleStepThread() != null) {

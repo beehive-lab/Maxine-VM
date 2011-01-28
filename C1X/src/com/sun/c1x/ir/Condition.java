@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,6 +86,22 @@ public enum Condition {
 
     private Condition(String operator) {
         this.operator = operator;
+    }
+
+    public boolean check(int left, int right) {
+        switch (this) {
+            case EQ: return left == right;
+            case NE: return left != right;
+            case LT: return left < right;
+            case LE: return left <= right;
+            case GT: return left > right;
+            case GE: return left >= right;
+            case BT: return (left & 0xffffffffL) < (right & 0xffffffffL);
+            case BE: return (left & 0xffffffffL) <= (right & 0xffffffffL);
+            case AT: return (left & 0xffffffffL) > (right & 0xffffffffL);
+            case AE: return (left & 0xffffffffL) >= (right & 0xffffffffL);
+        }
+        throw new IllegalArgumentException();
     }
 
     /**

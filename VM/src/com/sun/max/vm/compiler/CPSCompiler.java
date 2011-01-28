@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.sun.max.vm.runtime.*;
  * @author Doug Simon
  * @author Ben L. Titzer
  */
-public interface CPSCompiler extends RuntimeCompilerScheme {
+public interface CPSCompiler extends RuntimeCompiler {
 
     public static class Static {
 
@@ -50,6 +50,19 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
             switch (platform().isa) {
                 case AMD64:
                     return BootImagePackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
+                default:
+                    throw FatalError.unexpected(platform().isa.toString());
+            }
+        }
+
+        /**
+         * Gets the package providing the platform specific CPS compiler.
+         */
+        @HOSTED_ONLY
+        public static String defaultCPSCompilerClassName() {
+            switch (platform().isa) {
+                case AMD64:
+                    return "com.sun.max.vm.cps.b.c.d.e.amd64.target.AMD64CPSCompiler";
                 default:
                     throw FatalError.unexpected(platform().isa.toString());
             }
@@ -73,10 +86,15 @@ public interface CPSCompiler extends RuntimeCompilerScheme {
 
         @HOSTED_ONLY
         public static boolean isCompiler(VMConfiguration vmConfiguration) {
-            final boolean result =
-                vmConfiguration.optCompilerPackage.name().startsWith("com.sun.max.vm.cps") ||
-                vmConfiguration.jitCompilerPackage.name().startsWith("com.sun.max.vm.cps");
-            return result;
+            String value = CompilationScheme.optimizingCompilerOption.getValue();
+            if (value.startsWith("com.sun.max.vm.cps")) {
+                return true;
+            }
+            value = CompilationScheme.baselineCompilerOption.getValue();
+            if (value != null && value.startsWith("com.sun.max.vm.cps")) {
+                return true;
+            }
+            return false;
         }
 
         @HOSTED_ONLY

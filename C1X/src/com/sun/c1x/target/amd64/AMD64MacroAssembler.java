@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -471,11 +471,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         // Note: should probably use testl(X86Register.rax, new Address(reg, 0));
         // may be shorter code (however, this version of
         // testl needs to be implemented first)
-    }
-
-    void getThread(CiRegister javaThread) {
-        // Platform-specific! Solaris / Windows / Linux
-        Util.nonFatalUnimplemented();
     }
 
     void signExtendByte(CiRegister reg) {

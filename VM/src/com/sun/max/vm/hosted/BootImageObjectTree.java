@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,14 @@
  */
 package com.sun.max.vm.hosted;
 
-import java.awt.Color;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-
+import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.tree.*;
 
 import com.sun.max.lang.*;
@@ -244,11 +242,11 @@ public final class BootImageObjectTree {
          * @param relocation a value to add to addresses for relocation
          * @return a JTree instance representing the object tree starting at this node
          */
-        public DefaultMutableTreeNode buildTree(int radix, long relocation) {
+        public ObjectTreeNode buildTree(int radix, long relocation) {
             if (++btc % 100000 == 0) {
                 Trace.line(1, "node: " + btc);
             }
-            DefaultMutableTreeNode n = new DefaultMutableTreeNode(this.toString(radix, relocation));
+            ObjectTreeNode n = new ObjectTreeNode(this);
             addressToNodeMap().put(address, n);
             if (children != null) {
                 for (Node child : children) {
@@ -525,27 +523,30 @@ public final class BootImageObjectTree {
         }
         tree.expandRow(0);
         tree.expandRow(1);
+        tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         // open GUI
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 JFrame frame = new JFrame("Object Tree");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.add(new ObjectTreeView(tree));
+                ObjectTreeView otv = new ObjectTreeView(tree);
+                frame.add(otv);
                 frame.setBounds(GraphicsEnvironment.
                                 getLocalGraphicsEnvironment().
                                 getDefaultScreenDevice().
                                 getDefaultConfiguration().
                                 getBounds());
                 frame.setVisible(true);
+                otv.split.setDividerLocation(0.75);
             }
         });
     }
 
-    private static HashMap<Integer, DefaultMutableTreeNode> addressToNode;
+    private static HashMap<Integer, ObjectTreeNode> addressToNode;
 
-    private static HashMap<Integer, DefaultMutableTreeNode> addressToNodeMap() {
+    private static HashMap<Integer, ObjectTreeNode> addressToNodeMap() {
         if (addressToNode == null) {
-            addressToNode = new HashMap<Integer, DefaultMutableTreeNode>();
+            addressToNode = new HashMap<Integer, ObjectTreeNode>();
         }
         return addressToNode;
     }
@@ -554,49 +555,77 @@ public final class BootImageObjectTree {
      * GUI class.
      */
     private static class ObjectTreeView extends JPanel {
-        ObjectTreeView(final JTree tree) {
+
+        JTextArea info;
+        JPanel navigation;
+        JTextField addressField;
+        JSplitPane split;
+        JTree tree;
+
+        ObjectTreeView(final JTree t) {
+            tree = t;
             setLayout(new GridBagLayout());
             GridBagConstraints c = new GridBagConstraints();
             c.gridwidth = GridBagConstraints.REMAINDER;
+            // enable info display
+            info = new JTextArea(10, 0);
+            info.setText("Select a tree node to have its information shown here.");
+            // handle selection
+            tree.addTreeSelectionListener(new TreeSelectionListener() {
+                @Override
+                public void valueChanged(TreeSelectionEvent e) {
+                    DefaultMutableTreeNode n = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+                    if (n == null) {
+                        return;
+                    }
+                    if (n == tree.getModel().getRoot()) {
+                        info.setText(n.toString());
+                    } else {
+                        info.setText(((ObjectTreeNode) n).getDetails());
+                    }
+                }
+            });
             // navigation controls
-            JPanel navigation = new JPanel();
+            // controls for address and node inspection
+            navigation = new JPanel();
             navigation.setLayout(new BoxLayout(navigation, BoxLayout.X_AXIS));
             navigation.add(new JLabel("object address (decimal or 0x... hexadecimal): "));
-            final JTextField addressField = new JTextField(10);
+            addressField = new JTextField(10);
+            addressField.addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+                    // empty
+                }
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        jumpToNode();
+                    }
+                }
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    // empty
+                }
+            });
             navigation.add(addressField);
             navigation.add(new JButton(new AbstractAction("navigate to object") {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    addressField.setBackground(Color.WHITE);
-                    int address = 0;
-                    boolean error = false;
-                    try {
-                        if (addressField.getText().startsWith("0x")) {
-                            address = Integer.parseInt(addressField.getText().substring(2), 16);
-                        } else {
-                            address = Integer.parseInt(addressField.getText());
-                        }
-                    } catch (NumberFormatException nfe) {
-                        error = true;
+                    jumpToNode();
+                }
+            }));
+            // control for jumping to a node's parent
+            navigation.add(new JSeparator(SwingConstants.VERTICAL));
+            navigation.add(new JButton(new AbstractAction("jump to parent") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (tree.getSelectionPath() == null) {
+                        return;
                     }
-                    TreeNode node = null;
-                    if (!error) {
-                        node = addressToNodeMap().get(address);
-                        if (node == null) {
-                            error = true;
-                        }
-                    }
-                    if (!error) {
-                        Vector<TreeNode> path = new Vector<TreeNode>();
-                        path.add(node);
-                        do {
-                            node = node.getParent();
-                            path.add(0, node);
-                        } while (node.getParent() != null);
-                        TreePath treePath = new TreePath(path.toArray());
-                        tree.setSelectionPath(treePath);
-                    } else {
-                        addressField.setBackground(Color.RED);
+                    TreePath path = tree.getSelectionPath().getParentPath();
+                    if (path != null) {
+                        tree.setSelectionPath(path);
+                        tree.scrollPathToVisible(path);
                     }
                 }
             }));
@@ -605,12 +634,13 @@ public final class BootImageObjectTree {
             navigation.add(new JButton(new AbstractAction("reset tree view") {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    for (int i = 2; i < tree.getRowCount(); i++) {
+                    for (int i = tree.getRowCount() - 1; i >= 0; i--) {
                         tree.collapseRow(i);
                     }
                     tree.expandRow(0);
                     tree.expandRow(1);
                     tree.setSelectionPath(null);
+                    info.setText("");
                 }
             }));
             // assemble
@@ -619,8 +649,83 @@ public final class BootImageObjectTree {
             c.fill = GridBagConstraints.BOTH;
             c.weightx = 1.0;
             c.weighty = 1.0;
-            add(new JScrollPane(tree), c);
+            split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(tree), new JScrollPane(info));
+            add(split, c);
         }
+
+        void jumpToNode() {
+            addressField.setBackground(Color.WHITE);
+            int address = 0;
+            boolean error = false;
+            try {
+                if (addressField.getText().startsWith("0x")) {
+                    address = Integer.parseInt(addressField.getText().substring(2), 16);
+                } else {
+                    address = Integer.parseInt(addressField.getText());
+                }
+            } catch (NumberFormatException nfe) {
+                error = true;
+            }
+            TreeNode node = null;
+            if (!error) {
+                node = addressToNodeMap().get(address);
+                if (node == null) {
+                    error = true;
+                }
+            }
+            if (!error) {
+                Vector<TreeNode> path = new Vector<TreeNode>();
+                path.add(node);
+                do {
+                    node = node.getParent();
+                    path.add(0, node);
+                } while (node.getParent() != null);
+                TreePath treePath = new TreePath(path.toArray());
+                tree.setSelectionPath(treePath);
+                tree.scrollPathToVisible(treePath);
+            } else {
+                addressField.setBackground(Color.RED);
+            }
+        }
+
+    }
+
+    /**
+     * Class for representing object tree nodes in the GUI.
+     */
+    private static class ObjectTreeNode extends DefaultMutableTreeNode {
+
+        Node node;
+        String treeStringRep;
+        String detailStringRep;
+
+        ObjectTreeNode(Node node) {
+            this.node = node;
+        }
+
+        @Override
+        public String toString() {
+            if (treeStringRep == null) {
+                treeStringRep = new StringBuffer(node.className).
+                    append(" @ ").
+                    append(Long.toString(node.address + RELOC.getValue(), 10)).
+                    append(", 0x").
+                    append(Long.toString(node.address + RELOC.getValue(), 16)).
+                    toString();
+            }
+            return treeStringRep;
+        }
+
+        String getDetails() {
+            if (detailStringRep == null) {
+                detailStringRep = String.format(
+                                "class: %s\naddress (decimal): %s\naddress (hexadecimal): %s\nsize: %d bytes\naggregate size: %d bytes",
+                                node.className, Long.toString(node.address + RELOC.getValue(), 10), Long.toString(node.address + RELOC.getValue(), 16),
+                                node.size, node.aggregateSize);
+            }
+            return detailStringRep;
+        }
+
     }
 
     /**

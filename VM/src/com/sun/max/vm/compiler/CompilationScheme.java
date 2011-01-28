@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,11 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.c1x.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
@@ -37,9 +39,9 @@ import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 
 /**
- * This interface represents a compilation system that coordinations compilation and
- * recompilation between multiple compilers for the rest of the VM, e.g. in response
- * to dynamic feedback.
+ * Encapsulates the mechanism (or mechanisms) by which methods are prepared for execution.
+ * Normally this means compiling (or recompiling) a method or creating an interpreter
+ * stub.
  *
  * @author Ben L. Titzer
  */
@@ -52,46 +54,20 @@ public interface CompilationScheme extends VMScheme {
      */
     boolean CODE_PATCHING_ALIGMMENT_IS_GUARANTEED = System.getProperty("non-constant value to fool Eclipse") != null;
 
-    /**
-     * An enum that selects between different runtime behavior of the compilation scheme.
-     */
-    public enum Mode {
-        /**
-         * Use the JIT compiler only (except for unsafe code).
-         */
-        JIT,
-
-        /**
-         * Use the interpreter only (except for unsafe code).
-         */
-        INTERPRETED,
-
-        /**
-         * Use the optimizing compiler only (except for some invocation stubs).
-         */
-        OPTIMIZED,
-
-        /**
-         * Use both compilers according to dynamic feedback.
-         */
-        MIXED,
-
-        /**
-         * Use the JIT compiler if possible when creating the boot image.
-         */
-        PROTOTYPE_JIT
-    }
+    @HOSTED_ONLY
+    OptionSet compilers = new OptionSet();
 
     /**
-     * @return the operation mode in effect
+     * The option whose value (if non-null) specifies the class name of the optimizing compiler to use.
      */
-    Mode mode();
+    @HOSTED_ONLY
+    Option<String> optimizingCompilerOption = compilers.newStringOption("opt", C1XCompilerScheme.class.getName(), "Specifies the optimizing compiler class.");
 
     /**
-     * Set the operating mode for this compilation scheme.
-     * @param mode the new mode
+     * The option whose value (if non-null) specifies the class name of the baseline compiler to use.
      */
-    void setMode(Mode mode);
+    @HOSTED_ONLY
+    Option<String> baselineCompilerOption = compilers.newStringOption("baseline", "com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler", "Specifies the baseline compiler class.");
 
     /**
      * This method makes a target method for the specified method actor. If the method is already compiled, it will
@@ -109,8 +85,6 @@ public interface CompilationScheme extends VMScheme {
      */
     TargetMethod synchronousCompile(ClassMethodActor classMethodActor);
 
-    TargetMethod synchronousCompile(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler);
-
     /**
      * This method queries whether this compilation scheme is currently performing a compilation or has queued
      * compilations. This is necessary, for example, during bootstrapping to ensure that all compilations have
@@ -119,6 +93,8 @@ public interface CompilationScheme extends VMScheme {
      * @return true if there are any methods that are scheduled to be compiled that have not been completed yet
      */
     boolean isCompiling();
+
+    boolean needsAdapters();
 
     /**
      * Adds a compilation observer to this compilation scheme. The observer will be notified before and after each
@@ -135,6 +111,8 @@ public interface CompilationScheme extends VMScheme {
      *
      */
     void removeObserver(CompilationObserver observer);
+
+    String description();
 
     /**
      * This class provides a facade for the {@code CompilationScheme} interface, simplifying usage. It provides a number
@@ -200,27 +178,15 @@ public interface CompilationScheme extends VMScheme {
          *
          * @param classMethodActor the method for which to reset the method state
          */
+        @HOSTED_ONLY
         public static void resetMethodState(ClassMethodActor classMethodActor) {
             classMethodActor.targetState = null;
-        }
-
-        /**
-         * Reset the method state and force a recompile of the specified method. This method is NOT RECOMMENDED
-         * FOR GENERAL USE.
-         *
-         * @param classMethodActor the method to recompile
-         * @return the new target method for specified method
-         */
-        public static TargetMethod forceFreshCompile(ClassMethodActor classMethodActor) {
-            resetMethodState(classMethodActor);
-            compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-            return getCurrentTargetMethod(classMethodActor);
         }
 
         public static void instrumentationCounterOverflow(MethodProfile mpo, int mpoIndex) {
             ClassMethodActor classMethodActor = (ClassMethodActor) mpo.method;
             TargetMethod oldMethod = TargetState.currentTargetMethod(classMethodActor.targetState);
-            TargetMethod newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor, vmConfig().optCompilerScheme());
+            TargetMethod newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor);
             if (newMethod != oldMethod) {
                 oldMethod.forwardTo(newMethod);
             }

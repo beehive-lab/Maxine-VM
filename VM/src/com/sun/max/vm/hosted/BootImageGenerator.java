@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -72,44 +73,26 @@ public final class BootImageGenerator {
     private final Option<File> vmDirectoryOption = options.newFileOption("vmdir", getDefaultVMDirectory(),
             "The output directory for the binary image generator.");
 
-    private final Option<Boolean> testCallerJit = options.newBooleanOption("test-caller-jit", false,
+    private final Option<Boolean> testCallerBaseline = options.newBooleanOption("test-caller-baseline", false,
             "For the Java tester, this option specifies that each test case's harness should be compiled " +
-            "with the JIT compiler (helpful for testing JIT->JIT and JIT->opt calls).");
+            "with the baseline compiler (helpful for testing baseline->baseline and baseline->opt calls).");
 
-    private final Option<Boolean> testCalleeJit = options.newBooleanOption("test-callee-jit", false,
+    private final Option<Boolean> testCalleeBaseline = options.newBooleanOption("test-callee-baseline", false,
             "For the Java tester, this option specifies that each test case's method should be compiled " +
-            "with the JIT compiler (helpful for testing JIT->JIT and opt->JIT calls).");
-
-    private final Option<Boolean> testCalleeC1X = options.newBooleanOption("test-callee-c1x", false,
-            "For the Java tester, this option specifies that each test case's method should be compiled " +
-            "with the C1X compiler (helpful for testing C1X->C1X and opt->C1X calls).");
+            "with the baseline compiler (helpful for testing baseline->baseline and opt->baseline calls).");
 
     private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
-    public final Option<Boolean> prototypeJit = options.newBooleanOption("prototype-jit", false,
-        "Selects JIT as the default for building the boot image.");
+    /**
+     * Used in the Java tester to indicate whether to compile the testing harness itself with the baseline compiler.
+     */
+    public static boolean callerBaseline = false;
 
     /**
-     * Used in the Java tester to indicate whether to test the resolution and linking mechanism for
-     * test methods.
+     * Used by the Java tester to indicate whether to compile the tests themselves with the baseline compiler.
      */
-    public static boolean unlinked = false;
-
-    /**
-     * Used in the Java tester to indicate whether to compile the testing harness itself with the JIT.
-     */
-    public static boolean callerJit = false;
-
-    /**
-     * Used by the Java tester to indicate whether to compile the tests themselves with the JIT.
-     */
-    public static boolean calleeJit = false;
-
-    /**
-     * Used by the Java tester to indicate whether to compile the tests themselves with the JIT.
-     */
-    public static boolean calleeC1X = false;
+    public static boolean calleeBaseline = false;
 
     /**
      * Used by the Java tester to indicate that testing requires dynamically loading native libraries.
@@ -184,6 +167,8 @@ public final class BootImageGenerator {
             PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
+            options.addOptions(CompilationScheme.compilers);
+
             programArguments = VMOption.extractVMArgs(programArguments);
             options.parseArguments(programArguments);
 
@@ -197,9 +182,8 @@ public final class BootImageGenerator {
                 System.setProperty(JavaPrototype.EXTRA_CLASSES_AND_PACKAGES_PROPERTY_NAME, Utils.toString(extraClassesAndPackages, " "));
             }
 
-            BootImageGenerator.calleeC1X = testCalleeC1X.getValue();
-            BootImageGenerator.calleeJit = testCalleeJit.getValue();
-            BootImageGenerator.callerJit = testCallerJit.getValue();
+            BootImageGenerator.calleeBaseline = testCalleeBaseline.getValue();
+            BootImageGenerator.callerBaseline = testCallerBaseline.getValue();
             BootImageGenerator.nativeTests = testNative.getValue();
 
             final File vmDirectory = vmDirectoryOption.getValue();
@@ -210,7 +194,7 @@ public final class BootImageGenerator {
             // Initialize the Java prototype
             JavaPrototype.initialize(true);
 
-            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
+            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
 

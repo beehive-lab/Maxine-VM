@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -152,7 +152,8 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public int basicObjectLockOffsetInBytes() {
-        return Util.nonFatalUnimplemented(0);
+        // Must not be called if the size of the lock object is 0.
+        throw Util.shouldNotReachHere();
     }
 
     public int sizeOfBasicObjectLock() {
@@ -350,5 +351,10 @@ public class MaxRiRuntime implements RiRuntime {
     @Override
     public int getCustomStackAreaSize() {
         return 0;
+    }
+
+    @Override
+    public boolean supportsArrayIntrinsics() {
+        return false;
     }
 }

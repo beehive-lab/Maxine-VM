@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,12 @@ package com.sun.max.tele;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
+import java.io.*;
 import java.math.*;
+import java.text.*;
 import java.util.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
@@ -118,6 +121,8 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                 teleHeapScheme = new TeleSemiSpaceHeapScheme(teleVM);
             } else if (heapSchemeName.equals("MSHeapScheme")) {
                 teleHeapScheme = new TeleMSHeapScheme(teleVM);
+            } else if (heapSchemeName.equals("MSEHeapScheme")) {
+                teleHeapScheme = new TeleMSEHeapScheme(teleVM);
             } else {
                 teleHeapScheme = new TeleUnknownHeapScheme(teleVM);
                 TeleWarning.message("Unable to locate implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
@@ -582,6 +587,19 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
 
     public Pointer getForwardedOrigin(Pointer origin) {
         return teleHeapScheme.getForwardedOrigin(origin);
+    }
+
+    public void printStats(PrintStream printStream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        final NumberFormat formatter = NumberFormat.getInstance();
+        Size totalHeapSize = Size.zero();
+        for (MaxHeapRegion region : allHeapRegions) {
+            totalHeapSize = totalHeapSize.plus(region.memoryRegion().size());
+        }
+        printStream.print(indentation + "No. regions: " + allHeapRegions.size() +
+                        " (" + "total size: " + formatter.format(totalHeapSize.toLong()) + " bytes\n");
+        printStream.print(indentation + "Inspection references: " + formatter.format(teleObjectFactory.referenceCount()) +
+                        " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live)\n");
     }
 
 }

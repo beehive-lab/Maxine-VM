@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,7 @@ public class TypeLabel extends InspectorLabel {
 
         @Override
         public void procedure(MouseEvent mouseEvent) {
-            switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
+            switch (inspection().gui().getButton(mouseEvent)) {
                 case MouseEvent.BUTTON1: {
                     if (teleClassActor != null) {
                         if (mouseEvent.isControlDown()) {
@@ -66,11 +66,11 @@ public class TypeLabel extends InspectorLabel {
                     final InspectorPopupMenu menu = new InspectorPopupMenu();
                     final boolean enabled = teleClassActor != null;
 
-                    final InspectorAction inspectActorAction = actions().inspectObject(teleClassActor, "Inspect ClassActor (Left-Button)");
+                    final InspectorAction inspectActorAction = actions().inspectObject(teleClassActor, "Inspect ClassActor for this type (Left-Button)");
                     inspectActorAction.setEnabled(enabled);
                     menu.add(inspectActorAction);
 
-                    final InspectorAction inspectMemoryWordsAction = actions().inspectObjectMemoryWords(teleClassActor, "Inspect ClassActor memory words");
+                    final InspectorAction inspectMemoryWordsAction = actions().inspectObjectMemoryWords(teleClassActor, "Inspect memory for this type's ClassActor");
                     inspectMemoryWordsAction.setEnabled(enabled);
                     menu.add(inspectMemoryWordsAction);
 
@@ -111,7 +111,7 @@ public class TypeLabel extends InspectorLabel {
             teleClassActor = null;
         } else {
             // Might be null if class not yet known in VM
-            teleClassActor = vm().findTeleClassActor(typeDescriptor);
+            teleClassActor = vm().classRegistry().findTeleClassActor(typeDescriptor);
         }
     }
 
@@ -123,15 +123,16 @@ public class TypeLabel extends InspectorLabel {
     private void updateText() {
         if (typeDescriptor == null) {
             setText("");
-            setToolTipText("");
+            setWrappedToolTipText(htmlify("<no type available>"));
         } else {
             final Class javaType = typeDescriptor.resolveType(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER);
-            setText(javaType.getSimpleName());
+            final String typeName = javaType.getSimpleName();
+            setText(typeName);
             if (teleClassActor == null) {
                 setForeground(style().javaUnresolvedNameColor());
-                setToolTipText("<unloaded>" +  javaType.getName());
+                setWrappedToolTipText(htmlify("<unloaded>") +  javaType.getName());
             } else {
-                setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
+                setWrappedToolTipText(typeDescriptor.toJavaString(true) + "<br>ClassActor = " + htmlify(inspection().nameDisplay().referenceToolTipText(teleClassActor)) + ")");
             }
         }
     }

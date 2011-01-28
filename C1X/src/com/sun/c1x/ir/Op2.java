@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,7 @@ public abstract class Op2 extends Instruction {
      * Gets the first input to this instruction.
      * @return the first input to this instruction
      */
-    public Value x() {
+    public final Value x() {
         return x;
     }
 
@@ -67,7 +67,7 @@ public abstract class Op2 extends Instruction {
      * Gets the second input to this instruction.
      * @return the second input to this instruction
      */
-    public Value y() {
+    public final Value y() {
         return y;
     }
 

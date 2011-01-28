@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -148,7 +148,7 @@ public final class Throw {
      * atomic from the perspective of the garbage collector. To achieve this, safepoints are
      * {@linkplain Safepoint#disable() disabled} here and must be {@linkplain Safepoint#enable() re-enabled} just prior
      * jumping to the exception handler. The latter is the responsibility of every implementation of
-     * {@link RuntimeCompilerScheme#walkFrame(com.sun.max.vm.stack.Cursor,com.sun.max.vm.stack.Cursor,com.sun.max.vm.stack.StackFrameWalker.Purpose, Object)}
+     * {@link RuntimeCompiler#walkFrame(com.sun.max.vm.stack.Cursor,com.sun.max.vm.stack.Cursor,com.sun.max.vm.stack.StackFrameWalker.Purpose, Object)}
      * .
      *
      * @param throwable throwable the object to be passed to the exception handler. If this value is null, then a

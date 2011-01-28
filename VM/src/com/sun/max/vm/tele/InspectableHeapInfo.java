@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -125,21 +125,25 @@ public final class InspectableHeapInfo {
      * in the dynamic heap.
      * <br>
      * No-op when VM is not being inspected.
-     *
+     * @param useImmortalMemory TODO
      * @param memoryRegions regions allocated by the heap implementation
      */
-    public static void init(MemoryRegion... memoryRegions) {
+    public static void init(boolean useImmortalMemory, MemoryRegion... memoryRegions) {
         if (Inspectable.isVmInspected()) {
             InspectableHeapInfo.dynamicHeapMemoryRegions = memoryRegions;
 
             // Create the roots region, but allocate the descriptor object
             // in non-collected memory so that we don't lose track of it
             // during GC.
-            try {
-                Heap.enableImmortalMemoryAllocation();
+            if (useImmortalMemory) {
+                try {
+                    Heap.enableImmortalMemoryAllocation();
+                    rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
+                } finally {
+                    Heap.disableImmortalMemoryAllocation();
+                }
+            } else {
                 rootTableMemoryRegion = new RootTableMemoryRegion("Heap-TeleRoots");
-            } finally {
-                Heap.disableImmortalMemoryAllocation();
             }
 
             final Size size = Size.fromInt(Pointer.size() * MAX_NUMBER_OF_ROOTS);

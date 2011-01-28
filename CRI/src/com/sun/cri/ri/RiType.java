@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -209,6 +209,13 @@ public interface RiType {
      * @return the exact type of this type, if it exists; {@code null} otherwise
      */
     RiType exactType();
+    
+    /**
+     * Attempts to get the unique concrete subtype of this type.
+     * NOTE: ONLY AVAILABLE ON RESOLVED TYPES.
+     * @return the exact type of this type, if it exists; {@code null} otherwise
+     */
+    RiType uniqueConcreteSubtype();
 
     /**
      * Resolves the method implementation for virtual dispatches on objects
