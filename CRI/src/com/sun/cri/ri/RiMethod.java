@@ -125,6 +125,14 @@ public interface RiMethod {
      * @return the unique concrete method
      */
     RiMethod uniqueConcreteMethod();
+    
+
+    /**
+     * Gets the unique concrete method that is presumably called.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the unique concrete method
+     */
+    RiMethod uniqueConcreteMethod();
 
     /**
      * Checks whether this method is a class initializer (that is, <code> &lt;clinit&gt;</code>).

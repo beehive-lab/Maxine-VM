@@ -659,7 +659,6 @@ public abstract class TeleVM implements MaxVM {
     private final VMConfiguration vmConfiguration;
 
     private final Classpath sourcepath;
-
     private int interpreterUseLevel = 0;
 
     private TeleClassRegistry teleClassRegistry;
@@ -857,6 +856,8 @@ public abstract class TeleVM implements MaxVM {
 
     public final TelePlatform platform() {
         return telePlatform;
+    }
+
     }
 
     public final File vmDirectory() {
