@@ -459,7 +459,7 @@ SignalHandlerFunction userSignalHandler = (SignalHandlerFunction) userSignalHand
  */
 void nativeTrapInitialize(Address javaTrapStub) {
     /* This function must be called on the primordial thread. */
-    c_ASSERT(tla_load(int, tla_current(), ID) == 0);
+    c_ASSERT(tla_load(int, tla_current(), ID) == PRIMORDIAL_THREAD_ID);
 
     theJavaTrapStub = javaTrapStub;
     setSignalHandler(SIGSEGV, (SignalHandlerFunction) vmSignalHandler);

@@ -170,9 +170,9 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
     private int numThreads;
 
     @Override
-    public int gatherThreads(long tlaList, long primordialETLA) {
+    public int gatherThreads(long tlaList) {
         List<TeleNativeThread> threads = new ArrayList<TeleNativeThread>();
-        impl.gatherThreads(teleProcess, threads, tlaList, primordialETLA);
+        impl.gatherThreads(teleProcess, threads, tlaList);
         numThreads = threads.size();
         TeleChannelDataIOProtocol.GatherThreadData[] data = new TeleChannelDataIOProtocol.GatherThreadData[numThreads];
         int index = 0;

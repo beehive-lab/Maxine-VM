@@ -170,12 +170,12 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
     }
 
     @Override
-    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long tlaList, long primordialETLA) {
-        return darwinDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, tlaList, primordialETLA);
+    public boolean gatherThreads(Object teleProcessObject, Object threadList, long tlaList) {
+        return darwinDumpThreadAccess.gatherThreads(teleProcessObject, threadList, tlaList);
     }
 
     @Override
-    public int gatherThreads(long tlaList, long primordialETLA) {
+    public int gatherThreads(long tlaList) {
         inappropriate("gatherThreads");
         return 0;
     }

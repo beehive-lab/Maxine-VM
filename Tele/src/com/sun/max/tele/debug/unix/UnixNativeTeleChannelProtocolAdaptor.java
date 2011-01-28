@@ -225,14 +225,14 @@ public class UnixNativeTeleChannelProtocolAdaptor implements TeleChannelProtocol
     }
 
     @Override
-    public boolean gatherThreads(Object teleDomain, Object threadSequence, long tlaList, long primordialETLA) {
-        natives.gatherThreads(processHandle, teleDomain, threadSequence, tlaList, primordialETLA);
+    public boolean gatherThreads(Object teleDomain, Object threadList, long tlaList) {
+        natives.gatherThreads(processHandle, teleDomain, threadList, tlaList);
         return true;
     }
 
 
     @Override
-    public int gatherThreads(long tlaList, long primordialETLA) {
+    public int gatherThreads(long tlaList) {
         TeleError.unexpected("TeleChannelProtocol.gatherThreads(int, int) should not be called in this configuration");
         return 0;
     }

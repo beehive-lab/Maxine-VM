@@ -28,6 +28,11 @@
 #include "word.h"
 #include "threadLocals.h"
 
+/**
+ * The thread on which the VM is started. That is, the thread on which 'maxine(int argc, char** argv)' is called.
+ */
+#define PRIMORDIAL_THREAD_ID 1
+
 /*
  * The constants must be in sync with the static variables of the same name in VmThread.java
  */
@@ -79,6 +84,7 @@ typedef void (*VmThreadDetachMethod)(Address tla);
  */
 extern jboolean thread_sleep(jlong numberOfMilliSeconds);
 
+void *thread_run(void *arg);
 int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon);
 int thread_detachCurrent();
 

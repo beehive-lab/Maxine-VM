@@ -35,7 +35,6 @@ package com.sun.max.tele.channel.natives;
  * For generality both of these are declared as {@code long}.
  *
  * @author Mick Jordan
- *
  */
 public class TeleChannelNatives {
     // from TeleProcess
@@ -47,7 +46,7 @@ public class TeleChannelNatives {
     public native boolean suspend(long processHandle);
     public native boolean resume(long processHandle);
     public native int waitUntilStopped(long processHandle);
-    public native void gatherThreads(long processHandle, Object teleProcess, Object threadList, long tlaList, long primordialETLA);
+    public native void gatherThreads(long processHandle, Object teleProcess, Object threadList, long tlaList);
     public native int readBytes(long processHandle, long src, Object dst, boolean isDirectByteBuffer, int offset, int length);
     public native int writeBytes(long processHandle, long dst, Object src, boolean isDirectByteBuffer, int offset, int length);
     public native boolean activateWatchpoint(long processHandle, long start, long size, boolean after, boolean read, boolean write, boolean exec);

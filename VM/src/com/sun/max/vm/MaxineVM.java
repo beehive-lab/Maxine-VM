@@ -42,11 +42,9 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.hosted.BootImage.Header;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -112,14 +110,8 @@ public final class MaxineVM {
     private static MaxineVM vm;
 
     /**
-     * The {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA of the primordial thread.
-     *
-     * The address of this field is exposed to native code via {@link Header#primordialETLAOffset}
-     * so that it can be initialized by the C substrate. It also enables a debugger attached to
-     * the VM to find it (as it's not part of the thread list).
+     * The exit code returned by the VM process.
      */
-    private static Pointer primordialETLA;
-
     private static int exitCode = 0;
 
     private static long startupTime;
@@ -425,32 +417,27 @@ public final class MaxineVM {
     }
 
     /**
-     * Entry point called by the substrate.
+     * VM initialization point called by the substrate.
      *
      * ATTENTION: this signature must match 'VMRunMethod' in "Native/substrate/maxine.c"
      *
-     * VM startup, initialization and exit code reporting routine running in the primordial native thread.
+     * VM startup, initialization and exit code reporting routine running in the VM startup native thread.
      *
      * This must work without having established a valid Java 'Thread' or 'VmThread'. Hence, no JNI callbacks are
      * supported in this routine.
      *
      * Also, there is no heap at first. In this early phase, we cannot allocate any objects.
      *
-     * @return zero if everything works so far or an exit code if something goes wrong
+     * @return 0 indicating initialization succeeded, non-0 if not
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer bootHeapRegionStart, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
+    public static int run(Pointer etla, Pointer bootHeapRegionStart, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
-        Pointer tla = primordialETLA;
-
-        Safepoint.setLatchRegister(tla);
-
-        // The primordial thread should never allocate from the heap
-        Heap.disableAllocationForCurrentThread();
+        Safepoint.setLatchRegister(etla);
 
         // The dynamic linker must be initialized before linking critical native methods
         DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);
@@ -473,11 +460,8 @@ public final class MaxineVM {
         MaxineVM vm = vm();
         vm.phase = Phase.PRISTINE;
 
-        if (VMOptions.parsePristine(argc, argv)) {
-            if (!VMOptions.earlyVMExitRequested()) {
-                VmThread.createAndRunMainThread();
-            }
-        }
+        VMOptions.parsePristine(argc, argv);
+
         return exitCode;
     }
 
