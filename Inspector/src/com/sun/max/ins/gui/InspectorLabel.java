@@ -32,6 +32,7 @@ import com.sun.max.ins.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.value.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A label specialized for use in the {@link Inspector}.
@@ -239,6 +240,16 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      */
     public static final String htmlify(String text) {
         return text == null ? null : text.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+
+    /**
+     * HTML tags, because the method does not discriminate.
+     *
+     * @param text a text string
+     * @return a text string with all occurrences of '<' and '>' by HTML special character codes.
+     */
+    public static final String htmlify(String text) {
+        return text.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
     }
 
     /**
