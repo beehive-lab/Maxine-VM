@@ -506,7 +506,12 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 menu.add(new InspectorAction(inspection(), "Open external code dialog...") {
                     @Override
                     protected void procedure() {
-                        focus().setCodeLocation(stackFrame.codeLocation(), true);
+                        MaxCodeLocation codeLocation = stackFrame.codeLocation();
+                        if (codeLocation == null) {
+                            gui().errorMessage("Stack frame has no code location");
+                        } else {
+                            focus().setCodeLocation(codeLocation, true);
+                        }
                     }
                 });
             }
@@ -581,7 +586,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
-        if (selectedFramePanel != null) {
+        if (selectedFramePanel != null && codeLocation != null) {
             // TODO (mlvdv)  This call is a no-op at present.  What should happen?
             selectedFramePanel.instructionPointerFocusChanged(codeLocation.address().asPointer());
         }

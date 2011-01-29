@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,7 +103,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Selects a code location that is of immediate visual interest to the user.
      * This is view state only, not necessarily related to VM execution.
      *
-     * @param codeLocation a location in code in the VM
+     * @param codeLocation a location in code in the VM, possibly null which means no code location
      * @param interactiveForNative should user be prompted interactively if in native code without
      * any meta information?
      */
@@ -118,7 +118,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                     listener.codeLocationFocusSet(codeLocation, interactiveForNative);
                 }
                 // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
-                if (thread != null && codeLocation.hasAddress()) {
+                if (thread != null && codeLocation != null && codeLocation.hasAddress()) {
                     for (MaxStackFrame maxStackFrame : thread.stack().frames()) {
                         if (codeLocation.isSameAs(maxStackFrame.codeLocation())) {
                             setStackFrame(stackFrame, false);
