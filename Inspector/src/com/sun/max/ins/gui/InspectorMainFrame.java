@@ -280,6 +280,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             }
         };
         desktopPane.setOpaque(true);
+        desktopPane.setBackground(inspection.style().vmStoppedBackgroundColor(true));
         scrollPane = new InspectorScrollPane(inspection, desktopPane);
         setContentPane(scrollPane);
         menuBar = new InspectorMainMenuBar(actions);
@@ -549,14 +550,17 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                     if (maxVMState.isInGC()) {
                         menuBar.setStateColor(inspection.style().vmStoppedinGCBackgroundColor(invalidReferenceDetected));
                     } else {
+                        desktopPane.setBackground(inspection.style().vmStoppedBackgroundColor(invalidReferenceDetected));
                         menuBar.setStateColor(inspection.style().vmStoppedBackgroundColor(invalidReferenceDetected));
                     }
                     break;
                 case RUNNING:
                 case UNKNOWN:
+                    desktopPane.setBackground(inspection.style().vmRunningBackgroundColor());
                     menuBar.setStateColor(inspection.style().vmRunningBackgroundColor());
                     break;
                 case TERMINATED:
+                    desktopPane.setBackground(inspection.style().vmTerminatedBackgroundColor());
                     menuBar.setStateColor(inspection.style().vmTerminatedBackgroundColor());
                     break;
                 default:
