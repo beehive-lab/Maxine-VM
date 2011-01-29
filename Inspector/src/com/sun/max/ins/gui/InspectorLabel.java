@@ -249,7 +249,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * @return a text string with all occurrences of '<' and '>' by HTML special character codes.
      */
     public static final String htmlify(String text) {
-        return text.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+        return text == null ? null : text.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
     }
 
     /**
