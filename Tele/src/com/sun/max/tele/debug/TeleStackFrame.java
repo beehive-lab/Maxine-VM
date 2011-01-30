@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -232,8 +232,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return stackFrame.slotBase();
         }
 
-        public Offset biasedFPOffset(Offset offset) {
-            return stackFrame.biasedFPOffset(offset);
+        public int biasedFPOffset(int offset) {
+            return stackFrame.biasedFPOffset(Offset.fromInt(offset)).toInt();
         }
 
         public StackBias bias() {

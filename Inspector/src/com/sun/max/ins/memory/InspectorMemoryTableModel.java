@@ -120,7 +120,7 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      * @return location of the memory for this row, specified in a byte offset from an origin in VM memory
      * @see InspectorMemoryTableModel#getOrigin()
      */
-    public abstract Offset getOffset(int row);
+    public abstract int getOffset(int row);
 
     /**
      * Locates the row, if any, that represent a range of memory that includes a specific location in VM memory.

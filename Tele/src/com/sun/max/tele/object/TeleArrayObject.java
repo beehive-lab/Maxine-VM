@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,6 +82,10 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     public Kind componentKind() {
         return componentKind;
+    }
+
+    public int arrayOffsetFromOrigin() {
+        return componentKind().arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0).toInt();
     }
 
     @Override

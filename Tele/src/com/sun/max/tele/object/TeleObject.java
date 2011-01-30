@@ -396,11 +396,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * @param headerField identifies a header field in the object layout
      * @return the location of the header field relative to object origin
      */
-    public final Offset headerOffset(HeaderField headerField) {
+    public final int headerOffset(HeaderField headerField) {
         if (headerField != HeaderField.LENGTH) {
-            return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
+            return layoutScheme.generalLayout.getOffsetFromOrigin(headerField).toInt();
         } else {
-            return layoutScheme.arrayLayout.getOffsetFromOrigin(headerField);
+            return layoutScheme.arrayLayout.getOffsetFromOrigin(headerField).toInt();
         }
     }
 
