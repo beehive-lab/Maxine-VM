@@ -50,7 +50,7 @@ public final class MemoryWordsTable extends InspectorTable {
     private final MemoryWordsTableModel tableModel;
     private final MemoryWordsColumnModel columnModel;
     private final InspectorAction setOriginToSelectionAction;
-    private final Size wordSize;
+    private final int nBytesInWord;
 
     MemoryWordsTable(Inspection inspection,
         MemoryWordRegion memoryWordRegion,
@@ -58,7 +58,7 @@ public final class MemoryWordsTable extends InspectorTable {
         TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences,
         InspectorAction setOriginToSelectionAction) {
         super(inspection);
-        this.wordSize = inspection.vm().platform().wordSize();
+        this.nBytesInWord = inspection.vm().platform().nBytesInWord();
         this.tableModel = new MemoryWordsTableModel(inspection, memoryWordRegion, origin);
         this.columnModel = new MemoryWordsColumnModel(this, this.tableModel, instanceViewPreferences);
         this.setOriginToSelectionAction = setOriginToSelectionAction;
@@ -232,7 +232,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
         @Override
         public void setOrigin(Address origin) {
-            assert origin.isAligned(wordSize.toInt());
+            assert origin.isAligned(nBytesInWord);
             super.setOrigin(origin);
         }
 
@@ -243,7 +243,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
         @Override
         protected void update() {
-            positionBias = memoryWordRegion.start().minus(getOrigin()).dividedBy(wordSize).toInt();
+            positionBias = memoryWordRegion.start().minus(getOrigin()).dividedBy(nBytesInWord).toInt();
             fireTableDataChanged();
         }
 
@@ -252,7 +252,12 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return memoryWordRegion == null ? 0 : memoryWordRegion.wordCount;
+            if (memoryWordRegion == null) {
+                return 0;
+            }
+            long nWords = memoryWordRegion.nWords();
+            assert nWords < Integer.MAX_VALUE;
+            return (int) nWords;
         }
 
         public Object getValueAt(int row, int col) {
@@ -274,7 +279,7 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = memoryWordRegion.getAddressAt(row);
             MaxMemoryRegion rowMemoryRegion = addressToMemoryRegion.get(address.toLong());
             if (rowMemoryRegion == null) {
-                rowMemoryRegion = new MemoryWordRegion(vm(), address, 1, wordSize);
+                rowMemoryRegion = new MemoryWordRegion(vm(), address, 1);
                 addressToMemoryRegion.put(address.toLong(), rowMemoryRegion);
             }
             return rowMemoryRegion;
@@ -282,7 +287,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
         @Override
         public Offset getOffset(int row) {
-            return Offset.fromInt((row  + positionBias) * wordSize.toInt());
+            return Offset.fromInt((row  + positionBias) * nBytesInWord);
         }
 
         @Override
@@ -429,7 +434,7 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as chars = ");
-            final byte[] bytes = new byte[vm().platform().wordSize().toInt()];
+            final byte[] bytes = new byte[vm().platform().nBytesInWord()];
             vm().readFully(address, bytes);
             if (isBoundaryRow(row)) {
                 setBorder(style().defaultPaneTopBorder());
@@ -452,7 +457,7 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Value as Unicode = ");
-            final byte[] bytes = new byte[vm().platform().wordSize().toInt()];
+            final byte[] bytes = new byte[vm().platform().nBytesInWord()];
             vm().readFully(address, bytes);
             if (isBoundaryRow(row)) {
                 setBorder(style().defaultPaneTopBorder());

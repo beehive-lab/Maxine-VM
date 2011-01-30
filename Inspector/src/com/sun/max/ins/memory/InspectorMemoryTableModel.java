@@ -141,7 +141,9 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      * Returns the contents of the memory region as bytes, null if unable to read.
      */
     public byte[] getRowBytes(int row) {
-        final byte[] bytes = new byte[getMemoryRegion(row).size().toInt()];
+        long nBytes = getMemoryRegion(row).nBytes();
+        assert nBytes < Integer.MAX_VALUE;
+        final byte[] bytes = new byte[(int) nBytes];
         try {
             vm().readFully(getMemoryRegion(row).start(), bytes);
         } catch (DataIOError dataIOError) {

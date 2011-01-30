@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,7 +84,7 @@ public final class OrderedMemoryRegionList<MemoryRegion_Type extends MaxMemoryRe
             final MemoryRegion_Type middleRegion = memoryRegions[middle];
             if (middleRegion.start().greaterThan(address)) {
                 right = middle;
-            } else if (middleRegion.start().plus(middleRegion.size()).greaterThan(address)) {
+            } else if (middleRegion.start().plus(middleRegion.nBytes()).greaterThan(address)) {
                 return middleRegion;
             } else {
                 left = middle + 1;
@@ -101,7 +101,7 @@ public final class OrderedMemoryRegionList<MemoryRegion_Type extends MaxMemoryRe
      * Since we cannot have the implementation of 'equals()' declared in the *interface* 'MemoryRegion', we nail it down here.
      */
     private boolean equals(MemoryRegion_Type m1, MemoryRegion_Type m2) {
-        return m1.start().equals(m2.start()) && m1.size().equals(m2.size());
+        return m1.start().equals(m2.start()) && m1.nBytes() == m2.nBytes();
     }
 
     /**

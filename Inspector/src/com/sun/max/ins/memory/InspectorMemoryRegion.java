@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,14 +45,14 @@ public class InspectorMemoryRegion implements MaxMemoryRegion {
     /**
      * Default size, as of creation time.
      */
-    private final Size size;
+    private final long nBytes;
 
     private MemoryUsage memoryUsage = null;
 
-    public InspectorMemoryRegion(MaxVM maxVM, String regionName, Address start, Size size) {
+    public InspectorMemoryRegion(MaxVM maxVM, String regionName, Address start, long nBytes) {
         this.vm = maxVM;
         this.start = start;
-        this.size = size;
+        this.nBytes = nBytes;
         this.regionName = regionName;
     }
 
@@ -68,12 +68,12 @@ public class InspectorMemoryRegion implements MaxMemoryRegion {
         return start;
     }
 
-    public final Size size() {
-        return size;
+    public final long nBytes() {
+        return nBytes;
     }
 
     public final Address end() {
-        return start().plus(size());
+        return start().plus(nBytes);
     }
 
     public final void setDescription(String regionName) {

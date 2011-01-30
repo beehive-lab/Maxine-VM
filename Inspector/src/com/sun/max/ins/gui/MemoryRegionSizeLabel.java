@@ -50,10 +50,10 @@ public final class MemoryRegionSizeLabel extends AbstractMemoryRegionLabel imple
     }
 
     public void refresh(boolean force) {
-        final long size = memoryRegion.size().toLong();
-        final String hexSize = longTo0xHex(size);
+        final long nBytes = memoryRegion.nBytes();
+        final String hexSize = longTo0xHex(nBytes);
         setText(hexSize);
-        setWrappedToolTipText(hexSize + "(" + size + ")");
+        setWrappedToolTipText(hexSize + "(" + nBytes + ")");
     }
 }
 

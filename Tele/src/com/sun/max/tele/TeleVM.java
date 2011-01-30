@@ -1482,7 +1482,7 @@ public abstract class TeleVM implements MaxVM {
                 RemoteTeleReference regionReference = createTemporaryRemoteTeleReference(regionReferenceWord);
                 final Address address = regionReference.readWord(teleFields.MemoryRegion_start.fieldActor().offset()).asAddress();
                 final int size = regionReference.readInt(teleFields.MemoryRegion_size.fieldActor().offset());
-                regions.add(new TeleFixedMemoryRegion(vm(), "Fake", address, Size.fromInt(size)));
+                regions.add(new TeleFixedMemoryRegion(vm(), "Fake", address, size));
             }
         }
         return regions;

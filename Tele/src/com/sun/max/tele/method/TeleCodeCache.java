@@ -228,12 +228,12 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     }
 
     // TODO (mlvdv) fix
-    public TeleExternalCode createExternalCode(Address codeStart, Size codeSize, String name) throws MaxVMBusyException, MaxInvalidAddressException {
+    public TeleExternalCode createExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException {
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
         try {
-            TeleExternalCode create = TeleExternalCode.create(vm(), codeStart, codeSize, name);
+            TeleExternalCode create = TeleExternalCode.create(vm(), codeStart, nBytes, name);
             return create;
         } finally {
             vm().unlock();

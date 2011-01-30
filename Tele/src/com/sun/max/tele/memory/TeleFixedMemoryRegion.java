@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,8 +43,11 @@ public class TeleFixedMemoryRegion extends TeleMemoryRegion {
         this.regionName = regionName;
     }
 
-    public TeleFixedMemoryRegion(TeleVM teleVM, String regionName, TeleMemoryRegion memoryRegion) {
-        this(teleVM, regionName, memoryRegion.start(), memoryRegion.size());
+    public TeleFixedMemoryRegion(TeleVM teleVM, String regionName, Address start, long nBytes) {
+        super(teleVM);
+        this.start = start;
+        this.size = Size.fromLong(nBytes);
+        this.regionName = regionName;
     }
 
     public final String regionName() {
@@ -57,6 +60,7 @@ public class TeleFixedMemoryRegion extends TeleMemoryRegion {
     }
 
     // TODO (mlvdv) make final when all sorted out
+    @Override
     public Size size() {
         return size;
     }

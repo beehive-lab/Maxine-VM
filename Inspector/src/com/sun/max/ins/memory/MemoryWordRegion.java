@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,22 +34,20 @@ import com.sun.max.unsafe.*;
  */
 public class MemoryWordRegion extends InspectorMemoryRegion {
 
-    public final int wordCount;
-    private final Size wordSize;
+    private final long nWords;
 
     /**
      * Creates a memory region containing only aligned, whole words.
      *
      * @param start address at beginning of region, must be word aligned
-     * @param wordCount number of words to include in the region
-     * @param wordSize size of word in target platform.
+     * @param nWords number of words to include in the region
      */
-    public MemoryWordRegion(MaxVM vm, Address start, int wordCount, Size wordSize) {
-        super(vm, null, start, wordSize.times(wordCount));
-        this.wordCount = wordCount;
-        this.wordSize = wordSize;
-        InspectorError.check(start.isAligned(wordSize.toInt()));
+    public MemoryWordRegion(MaxVM vm, Address start, long nWords) {
+        super(vm, null, start, vm.platform().nBytesInWord() * nWords);
+        this.nWords = nWords;
+        InspectorError.check(start.isAligned(vm.platform().nBytesInWord()));
     }
+
 
     /**
      * Address of the specified word in the region.
@@ -58,8 +56,8 @@ public class MemoryWordRegion extends InspectorMemoryRegion {
      * @return the address of the specified word
      */
     public Address getAddressAt(int index) {
-        assert index >= 0 && index < wordCount;
-        return start().plus(wordSize.times(index));
+        assert index >= 0 && index < nWords();
+        return start().plus(vm().platform().nBytesInWord() * index);
     }
 
     /**
@@ -68,9 +66,17 @@ public class MemoryWordRegion extends InspectorMemoryRegion {
     public int indexAt(Address address) {
         assert address != null;
         if (contains(address)) {
-            return address.minus(start()).dividedBy(wordSize).toInt();
+            return address.minus(start()).dividedBy(vm().platform().nBytesInWord()).toInt();
         }
         return -1;
+    }
+
+
+    /**
+     * @return the number of words in the region
+     */
+    public long nWords() {
+        return nWords;
     }
 
 }

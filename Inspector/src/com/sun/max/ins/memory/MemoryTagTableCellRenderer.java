@@ -93,7 +93,7 @@ public final class MemoryTagTableCellRenderer extends InspectorTableCellRenderer
             for (MaxWatchpoint watchpoint : watchpointsInRegion) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("<br>Watchpoint set @ ").append(watchpoint.memoryRegion().start().to0xHexString());
-                sb.append(", size=").append(InspectorLabel.sizeToDecimalAndHex(watchpoint.memoryRegion().size())).append("bytes, ");
+                sb.append(", size=").append(InspectorLabel.longToDecimalAndHex(watchpoint.memoryRegion().nBytes())).append("bytes, ");
                 sb.append(watchpoint.isEnabled() ? "enabled" : "disabled");
                 toolTipText += sb.toString();
                 if (watchpoint.isEnabled()) {

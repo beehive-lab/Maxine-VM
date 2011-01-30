@@ -1165,14 +1165,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, memoryRegion.regionName());
                 inspector.highlight();
             } else  if (address != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().wordSize().times(10)));
+                final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10));
                 inspector.highlight();
             } else {
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory at address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
-                        final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().wordSize().times(10)));
+                        final Inspector inspector = new MemoryWordsInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10));
                         inspector.highlight();
                     }
                 };
@@ -3378,7 +3378,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         SetWordWatchpointAction(Address address, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.memoryRegion = new MemoryWordRegion(vm(), address, 1, vm().platform().wordSize());
+            this.memoryRegion = new MemoryWordRegion(vm(), address, 1);
             setEnabled(vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
 
@@ -3387,11 +3387,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (memoryRegion != null) {
                 setWatchpoint(memoryRegion, "");
             } else {
-                final Size wordSize = vm().platform().wordSize();
+                final int nBytesInWord = vm().platform().nBytesInWord();
                 new MemoryRegionInputDialog(inspection(), vm().bootImageStart(), "Watch memory starting at address...", "Watch") {
                     @Override
-                    public void entered(Address address, Size size) {
-                        setWatchpoint(new MemoryWordRegion(vm(), address, size.toInt() / wordSize.toInt(), wordSize), "User specified region");
+                    public void entered(Address address, long nBytes) {
+                        setWatchpoint(new MemoryWordRegion(vm(), address, nBytes / nBytesInWord), "User specified region");
                     }
                 };
             }
@@ -3473,7 +3473,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Watch memory...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWatchpoint(new InspectorMemoryRegion(vm(), "", address, vm().platform().wordSize()), "User specified region");
+                        setWatchpoint(new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord()), "User specified region");
                     }
                 };
             }
@@ -3658,7 +3658,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             this.index = index;
             this.indexPrefix = indexPrefix;
             final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
-            this.memoryRegion = new InspectorMemoryRegion(vm(), "", address, Size.fromInt(elementKind.width.numberOfBytes));
+            this.memoryRegion = new InspectorMemoryRegion(vm(), "", address, elementKind.width.numberOfBytes);
             refresh(true);
         }
 

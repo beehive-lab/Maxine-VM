@@ -277,7 +277,7 @@ public abstract class LocationLabel extends InspectorLabel {
 
         @Override
         protected void updateText() {
-            final int wordOffset = value / vm().platform().wordSize().toInt();
+            final int wordOffset = value / vm().platform().nBytesInWord();
             setWrappedToolTipText(origin.plus(value).to0xHexString() + "<br>offset= " + intToPlusMinusDecimalAndHex(wordOffset) + " words from origin)");
             setText(intToPlusMinusDecimal(wordOffset));
         }

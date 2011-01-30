@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,10 +34,10 @@ import com.sun.max.unsafe.*;
 
 /**
  * Dialog for entering information about areas in VM memory that are generally
- * unknown to the VM and Inspector:  starting location, size (optional), and
+ * unknown to the VM and Inspector:  starting location, size in bytes (optional), and
  * a description useful for debugging.
  * <br>
- * The dialog works in two modes:  one that includes address, size, and description
+ * The dialog works in two modes:  one that includes address, size in bytes, and description
  * fields and one that includes just address and description.
  *
  * @author Mick Jordan
@@ -52,8 +52,9 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
     // Most recently entered and validated value in the address field; null if current entry is not valid.
     private Address address;
 
-    // Most recently entered and validated value in the size field; null if current entry is not valid.
-    private Size size;
+    // Most recently entered and validated value in the size field; -1 if current entry is not valid.
+    private long nBytes;
+
     // Should the dialog display a size field?
     private final boolean getSizeInput;
 
@@ -65,10 +66,10 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
      * results when the dialog is complete and if all field values are valid.
      *
      * @param address valid address entered
-     * @param size valid size entered
+     * @param nBytes valid size in bytes entered
      * @param title description entered
      */
-    public void entered(Address address, Size size, String description) {
+    public void entered(Address address, long nBytes, String description) {
     }
 
     /**
@@ -83,22 +84,22 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
 
     /**
      * Creates a dialog for entering information about a region of otherwise unknown memory in the VM.
-     * Calls {@link #entered(Address, Size, String)} when completed with valid values.
+     * Calls {@link #entered(Address, long, String)} when completed with valid values.
      * <br>
      * Override {@link #isValidAddress(Address)} for additional validation on the address field.
      * <br>
-     * Override {@link #isValidSize(Size)} for additional validation on the size field.
+     * Override {@link #isValidSize(long)} for additional validation on the size field.
      * <br>
      * @param inspection
      * @param frameTitle optional title to appear in the window frame of the dialog
      * @param address initial value for the address input field
-     * @param size initial value for the size input field
+     * @param nBytes initial value for the size input field
      * @param description initial value for the description input field
      */
-    public NativeLocationInputDialog(Inspection inspection, String frameTitle, Address address, Size size, String description) {
+    public NativeLocationInputDialog(Inspection inspection, String frameTitle, Address address, long nBytes, String description) {
         super(inspection, frameTitle == null ? "Native Location Description" : frameTitle, true);
         this.address = address == null ? Address.zero() : address;
-        this.size = size == null ? Size.zero() : size;
+        this.nBytes = nBytes;
         this.getSizeInput = true;
         this.description = description;
         createDialog();
@@ -118,7 +119,7 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
     public NativeLocationInputDialog(Inspection inspection, String frameTitle, Address address, String description) {
         super(inspection, frameTitle == null ? "Native Location Description" : frameTitle, true);
         this.address = address == null ? Address.zero() : address;
-        this.size = null;
+        this.nBytes = -1;
         this.getSizeInput = false;
         this.description = description;
         createDialog();
@@ -148,15 +149,17 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
         if (getSizeInput) {
             final JLabel sizeFieldLabel = new JLabel("Size:", JLabel.TRAILING);
             fieldsPanel.add(sizeFieldLabel);
-            sizeInputField = new AddressInputField.Decimal(inspection(), size) {
+            // Using an address entry field here for historical reasons, even though something simpler would do.
+            final Address initialSize = nBytes == -1 ? Address.zero() : Address.fromLong(nBytes);
+            sizeInputField = new AddressInputField.Decimal(inspection(), initialSize) {
 
                 @Override
                 public void update(Address address) {
-                    final Size size = Size.fromLong(address.toLong());
-                    if (isValidSize(size)) {
-                        NativeLocationInputDialog.this.size = size;
+                    final long nBytes = address.toLong();
+                    if (isValidSize(nBytes)) {
+                        NativeLocationInputDialog.this.nBytes = nBytes;
                     } else {
-                        NativeLocationInputDialog.this.size = null;
+                        NativeLocationInputDialog.this.nBytes = -1;
                     }
                 }
             };
@@ -200,7 +203,7 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
         return true;
     }
 
-    protected boolean isValidSize(Size size) {
+    protected boolean isValidSize(long nBytes) {
         return true;
     }
 
@@ -218,7 +221,7 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
             }
             if (getSizeInput) {
                 sizeInputField.attemptUpdate();
-                if (NativeLocationInputDialog.this.size == null) {
+                if (NativeLocationInputDialog.this.nBytes == -1) {
                     gui().errorMessage("Invalid size");
                     return;
                 }
@@ -226,7 +229,7 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
             description = descriptionInputField.getText();
             dispose();
             if (getSizeInput) {
-                entered(address, size, description);
+                entered(address, nBytes, description);
             } else {
                 entered(address, description);
             }

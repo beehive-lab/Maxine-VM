@@ -115,13 +115,13 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                 final String defaultDescription = "Native code @0x" + address.toHexString();
                 new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxExternalCode.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
                     @Override
-                    public void entered(Address nativeAddress, Size codeSize, String enteredName) {
+                    public void entered(Address nativeAddress, long nBytes, String enteredName) {
                         try {
                             String name = enteredName;
                             if (name == null || name.equals("")) {
                                 name = defaultDescription;
                             }
-                            final MaxExternalCode externalCode = vm().codeCache().createExternalCode(nativeAddress, codeSize, name);
+                            final MaxExternalCode externalCode = vm().codeCache().createExternalCode(nativeAddress, nBytes, name);
                             result.setValue(MethodInspector.make(inspection, externalCode));
                             // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                         } catch (IllegalArgumentException illegalArgumentException) {
@@ -134,8 +134,8 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                         }
                     }
                     @Override
-                    public boolean isValidSize(Size size) {
-                        return size.greaterThan(0);
+                    public boolean isValidSize(long nBytes) {
+                        return nBytes > 0;
                     }
                 };
                 methodInspector = result.value();

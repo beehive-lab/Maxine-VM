@@ -111,7 +111,7 @@ public abstract class TeleActor extends TeleTupleObject {
     public final String[] getFlagNames() {
         final int flagsValue = getFlags();
         int nextFlagIndex = 0;
-        final String[] flags = new String[vm().platform().wordSize().toInt()];
+        final String[] flags = new String[vm().platform().nBytesInWord()];
         if ((flagsValue & Actor.ACC_PUBLIC) != 0) {
             // 0x00000001
             flags[nextFlagIndex++] = "ACC_PUBLIC";
