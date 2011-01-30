@@ -213,7 +213,7 @@ public final class ArrayElementsTable extends InspectorTable {
      */
     private final class ArrayElementsTableModel extends InspectorMemoryTableModel {
 
-        private final int elementSize;
+        private final int nBytesInElement;
 
         /** Maps display rows to element rows (indexes) in the table. */
         private int[] rowToElementIndex;
@@ -221,7 +221,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public ArrayElementsTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
-            this.elementSize = elementKind.width.numberOfBytes;
+            this.nBytesInElement = elementKind.width.numberOfBytes;
 
             // Initialize map so that all elements will display
             this.rowToElementIndex = new int[arrayLength];
@@ -255,12 +255,12 @@ public final class ArrayElementsTable extends InspectorTable {
 
         @Override
         public MaxMemoryRegion getMemoryRegion(int row) {
-            return new InspectorMemoryRegion(vm(), "", getAddress(row), Size.fromInt(elementSize));
+            return new InspectorMemoryRegion(vm(), "", getAddress(row), nBytesInElement);
         }
 
         @Override
         public Offset getOffset(int row) {
-            return startOffset.plus(rowToElementIndex[row] * elementSize);
+            return startOffset.plus(rowToElementIndex[row] * nBytesInElement);
         }
 
         /**
@@ -272,8 +272,8 @@ public final class ArrayElementsTable extends InspectorTable {
         public int findRow(Address address) {
             if (!address.isZero()) {
                 final int offset = address.minus(getOrigin()).minus(startOffset).toInt();
-                if (offset >= 0 && offset < arrayLength * elementSize) {
-                    final int elementRow = offset / elementSize;
+                if (offset >= 0 && offset < arrayLength * nBytesInElement) {
+                    final int elementRow = offset / nBytesInElement;
                     for (int row = 0; row < visibleElementCount; row++) {
                         if (rowToElementIndex[row] == elementRow) {
                             return elementRow;

@@ -213,14 +213,14 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
 
         // We know specifically about the boot heap region.
         final Pointer bootHeapStart = vm().bootImageStart();
-        final Size bootHeapSize = Size.fromInt(vm().bootImage().header.heapSize);
+        final int bootHeapSize = vm().bootImage().header.heapSize;
         final TeleFixedHeapRegion fakeBootHeapRegion =
             new TeleFixedHeapRegion(vm, "Fake Heap-boot region", bootHeapStart, bootHeapSize, true);
         heapRegions.add(fakeBootHeapRegion);
         // There might be dynamically allocated regions in a dumped image or when attaching to a running VM
         for (MaxMemoryRegion dynamicHeapRegion : vm.getDynamicHeapRegionsUnsafe()) {
             final TeleFixedHeapRegion fakeDynamicHeapRegion =
-                new TeleFixedHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.size(), false);
+                new TeleFixedHeapRegion(vm, dynamicHeapRegion.regionName(), dynamicHeapRegion.start(), dynamicHeapRegion.nBytes(), false);
             heapRegions.add(fakeDynamicHeapRegion);
         }
         this.allHeapRegions = Collections.unmodifiableList(heapRegions);
@@ -592,12 +592,12 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
     public void printStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
-        Size totalHeapSize = Size.zero();
+        long totalHeapSize = 0;
         for (MaxHeapRegion region : allHeapRegions) {
-            totalHeapSize = totalHeapSize.plus(region.memoryRegion().size());
+            totalHeapSize += region.memoryRegion().nBytes();
         }
         printStream.print(indentation + "No. regions: " + allHeapRegions.size() +
-                        " (" + "total size: " + formatter.format(totalHeapSize.toLong()) + " bytes\n");
+                        " (" + "total size: " + formatter.format(totalHeapSize) + " bytes\n");
         printStream.print(indentation + "Inspection references: " + formatter.format(teleObjectFactory.referenceCount()) +
                         " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live)\n");
     }

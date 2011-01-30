@@ -31,7 +31,6 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -208,16 +207,6 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
         }
         result.append("]");
         return result.toString();
-    }
-
-    /**
-     * Translates a {@link Size} into decimal text, followed by prefixed hex equivalent, e.g. "22(0x16)"
-     *
-     * @return string describing the size in both decimal and hex, with no "+" prefix.
-     */
-    public static final String sizeToDecimalAndHex(Size size) {
-        final long longValue = size.toLong();
-        return Long.toString(longValue) + "(" + longTo0xHex(longValue) + ")";
     }
 
     /**

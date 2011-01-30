@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,9 +53,9 @@ public interface MaxMemoryRegion {
     Address start();
 
     /**
-     * @return size of the region.
+     * @return number of bytes in the region.
      */
-    Size size();
+    long nBytes();
 
     /**
      * @return address just past the last location in the region.
@@ -149,7 +149,7 @@ public interface MaxMemoryRegion {
             if (right == null) {
                 return false;
             }
-            return left.start().equals(right.start()) && left.size().equals(right.size());
+            return left.start().equals(right.start()) && left.nBytes() == right.nBytes();
 
         }
 
@@ -159,7 +159,7 @@ public interface MaxMemoryRegion {
          * {@link MemoryUsage#getMax()} are "undefined".
          */
         public static MemoryUsage defaultUsage(MaxMemoryRegion memoryRegion) {
-            return new MemoryUsage(-1, memoryRegion.size().toLong(), memoryRegion.size().toLong(), -1);
+            return new MemoryUsage(-1, memoryRegion.nBytes(), memoryRegion.nBytes(), -1);
         }
 
         /**

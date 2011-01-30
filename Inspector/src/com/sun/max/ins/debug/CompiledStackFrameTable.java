@@ -196,7 +196,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             slotDescriptions = new String[slots.size()];
             int index = 0;
             for (Slot slot : slots) {
-                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().platform().wordSize());
+                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().platform().nBytesInWord());
                 slotDescriptions[index] = "Stack frame slot \"" + slot.name + "\"";
                 index++;
             }
@@ -221,7 +221,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         @Override
         public int findRow(Address address) {
-            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().platform().wordSize()).toInt();
+            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().platform().nBytesInWord()).toInt();
             return (wordOffset >= 0 && wordOffset < slots.size()) ? wordOffset : -1;
         }
 

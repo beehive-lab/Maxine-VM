@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,14 +45,14 @@ public abstract class MemoryRegionInputDialog extends InspectorDialog {
     // Most recently entered/updated address from the input field, if valid; null if not valid.
     //private MemoryRegion memoryRegion;
     private Address address = null;
-    private Size size = null;
+    private long nBytes = 0;
 
     /**
      * Notifies subclasses that the dialog is closing with a valid address entered.
      *
      * @param address valid address entered.
      */
-    public abstract void entered(Address address, Size size);
+    public abstract void entered(Address address, long nBytes);
 
     /**
      * Action that attempts to close the dialog; fails if input value not valid.
@@ -67,9 +67,9 @@ public abstract class MemoryRegionInputDialog extends InspectorDialog {
             try {
                 addressInputField.attemptUpdate();
                 sizeField.attemptUpdate();
-                if (MemoryRegionInputDialog.this.address != null && MemoryRegionInputDialog.this.size != null) {
+                if (MemoryRegionInputDialog.this.address != null && MemoryRegionInputDialog.this.nBytes != 0) {
                     dispose();
-                    entered(MemoryRegionInputDialog.this.address, MemoryRegionInputDialog.this.size);
+                    entered(MemoryRegionInputDialog.this.address, MemoryRegionInputDialog.this.nBytes);
                 }
             } catch (NumberFormatException numberFormatException) {
                 gui().errorMessage("Badly formed address: " + numberFormatException.getMessage());
@@ -145,10 +145,10 @@ public abstract class MemoryRegionInputDialog extends InspectorDialog {
             @Override
             public void update(long value) {
                 if (value == 0) {
-                    MemoryRegionInputDialog.this.size = null;
+                    MemoryRegionInputDialog.this.nBytes = 0;
                     JOptionPane.showMessageDialog(dialogPanel, "Insert valid size in dec or hex (0x...).", "Invalid Size", JOptionPane.ERROR_MESSAGE);
                 } else {
-                    MemoryRegionInputDialog.this.size = Size.fromLong(value);
+                    MemoryRegionInputDialog.this.nBytes = value;
                 }
             }
         };

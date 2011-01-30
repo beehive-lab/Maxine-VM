@@ -60,8 +60,8 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
         private MaxExternalCode owner;
 
-        private ExternalCodeMemoryRegion(TeleVM vm, MaxExternalCode owner, String name, Address start, Size size) {
-            super(vm, name, start, size);
+        private ExternalCodeMemoryRegion(TeleVM vm, MaxExternalCode owner, String name, Address start, long nBytes) {
+            super(vm, name, start, nBytes);
             this.owner = owner;
         }
 
@@ -212,18 +212,20 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      * <br>
      * Must be called in thread with the VM lock held.
      *
+     * @param codeStart starting memory location of the code in VM memory
+     * @param nBytes size of the region in bytes
      * @param name a name for the region
-     * @return a newly created surrogate for a block of native code discovered in the VM
+     *  @return a newly created surrogate for a block of native code discovered in the VM
      * about which little more is known than its location.  The location must not overlap any code
      * region already known.
      * @throws MaxInvalidAddressException if memory cannot be read
      */
-    public static TeleExternalCode create(TeleVM teleVM, Address codeStart, Size codeSize, String name) throws MaxInvalidAddressException {
+    public static TeleExternalCode create(TeleVM teleVM, Address codeStart, long nBytes, String name) throws MaxInvalidAddressException {
         assert teleVM.lockHeldByCurrentThread();
         TeleExternalCode teleExternalCode = null;
         try {
-            // Fail if the region specified by 'address' and 'size' overlaps an existing native entry
-            teleExternalCode = new TeleExternalCode(teleVM, codeStart, codeSize, name);
+            // Fail if the region specified by 'address' and 'nBytes' overlaps an existing native entry
+            teleExternalCode = new TeleExternalCode(teleVM, codeStart, nBytes, name);
         } catch (IllegalArgumentException illegalArgumentException) {
             TeleError.unexpected("External native code region is overlapping an existing code region");
         }
@@ -243,14 +245,14 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      *
      * @param teleVM
      * @param start starting location of code in memory
-     * @param size length of code in memory
+     * @param nBytes length in bytes of code in memory
      * @param name the name to assign to the block of code in the registry
      * @throws IllegalArgumentException if the range overlaps one already in the registry
      * @throws MaxInvalidAddressException if unable to read memory.
      */
-    private TeleExternalCode(TeleVM teleVM, Address start, Size size, String name) throws MaxInvalidAddressException {
+    private TeleExternalCode(TeleVM teleVM, Address start, long nBytes, String name) throws MaxInvalidAddressException {
         super(teleVM);
-        this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(teleVM, this, name, start, size);
+        this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(teleVM, this, name, start, nBytes);
 
         try {
             this.instructionMap = new ExternalCodeInstructionMap();
@@ -265,7 +267,9 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         if (instructions == null && vm().tryLock()) {
             byte[] code = null;
             try {
-                code = vm().dataAccess().readFully(getCodeStart(), externalCodeMemoryRegion.size().toInt());
+                final long nBytes = externalCodeMemoryRegion.nBytes();
+                assert nBytes < Integer.MAX_VALUE;
+                code = vm().dataAccess().readFully(getCodeStart(), (int) nBytes);
             } finally {
                 vm().unlock();
             }

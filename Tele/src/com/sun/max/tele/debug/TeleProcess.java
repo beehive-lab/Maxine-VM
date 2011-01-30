@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1000,9 +1000,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
         assert state >= 0 && state < MaxThreadState.values().length : state;
         TeleNativeThread thread = handleToThreadMap.get(localHandle);
 
-        final TeleFixedMemoryRegion stackRegion = new TeleFixedMemoryRegion(vm(), "stack region", Address.fromLong(stackBase), Size.fromLong(stackSize));
+        final TeleFixedMemoryRegion stackRegion = new TeleFixedMemoryRegion(vm(), "stack region", Address.fromLong(stackBase), stackSize);
         TeleFixedMemoryRegion threadLocalsRegion =
-            (tlb == 0) ? null :  new TeleFixedMemoryRegion(vm(), "thread locals region", Address.fromLong(tlb), Size.fromLong(tlbSize));
+            (tlb == 0) ? null :  new TeleFixedMemoryRegion(vm(), "thread locals region", Address.fromLong(tlb), tlbSize);
 
         Params params = new Params();
         params.id = id;

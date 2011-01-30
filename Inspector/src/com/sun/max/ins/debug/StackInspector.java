@@ -375,9 +375,9 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             final TextLabel stackSizeLabel = new TextLabel(inspection(), "size: ");
             stackSizeLabel.setToolTipText("Stack size");
             header.add(stackSizeLabel);
-            final DataLabel.IntAsDecimal stackSizeValueLabel = new DataLabel.IntAsDecimal(inspection());
+            final DataLabel.LongAsDecimal stackSizeValueLabel = new DataLabel.LongAsDecimal(inspection());
             stackSizeValueLabel.setToolTipPrefix("Stack size ");
-            stackSizeValueLabel.setValue(stack.memoryRegion().size().toInt());
+            stackSizeValueLabel.setValue(stack.memoryRegion().nBytes());
             header.add(stackSizeValueLabel);
             SpringUtilities.makeCompactGrid(header, 2);
             contentPane.add(header, BorderLayout.NORTH);
@@ -495,7 +495,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             final MaxStackFrame.Compiled javaStackFrame = (MaxStackFrame.Compiled) stackFrame;
             final int frameSize = javaStackFrame.layout().frameSize();
             final Pointer stackPointer = javaStackFrame.sp();
-            final MaxMemoryRegion memoryRegion = new InspectorMemoryRegion(vm(), "", stackPointer, Size.fromInt(frameSize));
+            final MaxMemoryRegion memoryRegion = new InspectorMemoryRegion(vm(), "", stackPointer, frameSize);
             final String frameName = javaStackFrameName(javaStackFrame);
             menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
         }

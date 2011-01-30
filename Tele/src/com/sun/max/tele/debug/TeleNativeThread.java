@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -526,7 +526,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             sb.append(",ip=0x").append(teleRegisterSet.instructionPointer().toHexString());
             if (isJava()) {
                 sb.append(",stack_start=0x").append(stack().memoryRegion().start().toHexString());
-                sb.append(",stack_size=").append(stack().memoryRegion().size().toLong());
+                sb.append(",stack_size=").append(stack().memoryRegion().nBytes());
             }
         }
         sb.append("]");

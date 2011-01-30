@@ -148,7 +148,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
             super(ThreadLocalVariablesColumnKind.values().length, viewPreferences);
             addColumn(ThreadLocalVariablesColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
             addColumn(ThreadLocalVariablesColumnKind.ADDRESS, new MemoryAddressLocationTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(ThreadLocalVariablesColumnKind.POSITION, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel, inspection().vm().platform().wordSize().toInt()), null);
+            addColumn(ThreadLocalVariablesColumnKind.POSITION, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel, inspection().vm().platform().nBytesInWord()), null);
             addColumn(ThreadLocalVariablesColumnKind.NAME, new NameRenderer(inspection()), null);
             addColumn(ThreadLocalVariablesColumnKind.VALUE, new ValueRenderer(), null);
             addColumn(ThreadLocalVariablesColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);

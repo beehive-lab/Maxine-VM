@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,10 @@ public abstract class TeleMemoryRegion implements MaxMemoryRegion {
         return teleVM;
     }
 
+    public final long nBytes() {
+        return size().toLong();
+    }
+
     public final Address end() {
         return start().plus(size());
     }
@@ -76,6 +80,11 @@ public abstract class TeleMemoryRegion implements MaxMemoryRegion {
         }
         return memoryUsage;
     }
+
+    /**
+     * @return the size of the region.
+     */
+    public abstract Size size();
 
     @Override
     public String toString() {

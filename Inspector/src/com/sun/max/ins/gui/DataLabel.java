@@ -348,16 +348,30 @@ public abstract class DataLabel extends InspectorLabel {
     }
 
     /**
-     * A label that displays the decimal value of an unchanging long; a ToolTip displays the value in hex.
+     * A label that displays the decimal value of a long; a ToolTip displays the value in hex.
      */
-    public static final class LongAsDecimal extends DataLabel {
+    public static class LongAsDecimal extends DataLabel {
+        long n;
         public LongAsDecimal(Inspection inspection, long n) {
-            super(inspection, Long.toString(n), "int: " + longTo0xHex(n));
+            super(inspection, "");
+            this.n = n;
+            updateText();
             redisplay();
+        }
+        public LongAsDecimal(Inspection inspection) {
+            this(inspection, 0);
         }
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
+        }
+        public void setValue(long n) {
+            this.n = n;
+            updateText();
+        }
+        private void updateText() {
+            setText(Long.toString(n));
+            setWrappedToolTipText("long: " + longTo0xHex(n));
         }
     }
 

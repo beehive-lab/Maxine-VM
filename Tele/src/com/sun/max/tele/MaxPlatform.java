@@ -23,9 +23,6 @@
 
 package com.sun.max.tele;
 
-import com.sun.max.unsafe.*;
-
-
 
 /**
  * Descriptors for various platforms on which the VM may be running.
@@ -109,11 +106,11 @@ public interface MaxPlatform {
     /**
      * @return size of a word in the VM.
      */
-    Size wordSize();
+    int nBytesInWord();
 
     /**
      * @return size a memory page in the VM
      */
-    Size pageSize();
+    int nBytesInPage();
 
 }
