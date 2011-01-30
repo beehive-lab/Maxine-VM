@@ -201,8 +201,8 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         }
 
         @Override
-        public Offset getOffset(int row) {
-            return Offset.fromInt(tla.getThreadLocalVariable(row).offset());
+        public int getOffset(int row) {
+            return tla.getThreadLocalVariable(row).offset();
         }
 
         @Override

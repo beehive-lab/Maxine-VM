@@ -59,7 +59,7 @@ public final class ArrayElementsTable extends InspectorTable {
     private final TeleObject teleObject;
     private final Kind elementKind;
     private final TypeDescriptor elementTypeDescriptor;
-    private final Offset startOffset;
+    private final int startOffset;
     private final int startIndex;
     private final int arrayLength;
     private final String indexPrefix;
@@ -87,7 +87,7 @@ public final class ArrayElementsTable extends InspectorTable {
      */
     ArrayElementsTable(Inspection inspection,
         TeleObject teleObject, final Kind elementKind, final TypeDescriptor elementTypeDescriptor,
-        final Offset startOffset, int startIndex, int length, final String indexPrefix,
+        final int startOffset, int startIndex, int length, final String indexPrefix,
         WordValueLabel.ValueMode wordValueMode, ObjectViewPreferences instanceViewPreferences) {
         super(inspection);
         this.teleObject = teleObject;
@@ -259,8 +259,8 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         @Override
-        public Offset getOffset(int row) {
-            return startOffset.plus(rowToElementIndex[row] * nBytesInElement);
+        public int getOffset(int row) {
+            return startOffset + (rowToElementIndex[row] * nBytesInElement);
         }
 
         /**
@@ -328,7 +328,7 @@ public final class ArrayElementsTable extends InspectorTable {
     private final class NameRenderer extends LocationLabel.AsIndex implements TableCellRenderer {
 
         public NameRenderer(Inspection inspection) {
-            super(inspection, indexPrefix, 0, Offset.zero(), Address.zero());
+            super(inspection, indexPrefix, 0, 0, Address.zero());
             setOpaque(true);
         }
 

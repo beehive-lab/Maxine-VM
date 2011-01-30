@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,11 +32,13 @@ import com.sun.max.unsafe.*;
 public interface TeleHeapScheme extends TeleScheme {
 
     /**
-     * Location, relative to object origin, of the word used by GC to store a forwarding pointer.
+     * Location, relative to object origin, of the word used by GC to store a forwarding pointer,
+     * -1 if unknown or if GC doesn't forward.
      *
-     * @return offset from object origin to word that might contain a forwarding pointer.
+     * @return offset from object origin to word that might contain a forwarding pointer,
+     * -1 if no forwarding done or if unknown.
      */
-    Offset gcForwardingPointerOffset();
+    int gcForwardingPointerOffset();
 
     /**
      * Checks whether a location is in a live area of the VM's heap.

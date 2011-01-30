@@ -286,8 +286,8 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         @Override
-        public Offset getOffset(int row) {
-            return Offset.fromInt((row  + positionBias) * nBytesInWord);
+        public int getOffset(int row) {
+            return (row  + positionBias) * nBytesInWord;
         }
 
         @Override

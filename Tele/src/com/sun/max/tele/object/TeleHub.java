@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -90,8 +89,8 @@ public abstract class TeleHub extends TeleHybridObject {
     /**
      * @return memory offset, relative to object origin, of the start of the vTable.
      */
-    public Offset vTableOffset() {
-        return Layout.wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex());
+    public int vTableOffset() {
+        return Layout.wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex()).toInt();
     }
 
     /**
@@ -124,8 +123,8 @@ public abstract class TeleHub extends TeleHybridObject {
     /**
      * @return memory offset, relative to object origin, of the start of the iTable.
      */
-    public Offset iTableOffset() {
-        return Layout.wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex());
+    public int iTableOffset() {
+        return Layout.wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex()).toInt();
     }
 
     /**
@@ -161,8 +160,8 @@ public abstract class TeleHub extends TeleHybridObject {
     /**
      * @return memory offset, relative to object origin, of the start of the mTable.
      */
-    public Offset mTableOffset() {
-        return Layout.intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex());
+    public int mTableOffset() {
+        return Layout.intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex()).toInt();
     }
 
     /**
@@ -198,8 +197,8 @@ public abstract class TeleHub extends TeleHybridObject {
     /**
      * @return memory offset, relative to object origin, of the start of the reference map.
      */
-    public Offset referenceMapOffset() {
-        return Layout.intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex());
+    public int referenceMapOffset() {
+        return Layout.intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex()).toInt();
     }
 
     /**

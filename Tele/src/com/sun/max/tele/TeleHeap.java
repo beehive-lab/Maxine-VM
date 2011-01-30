@@ -565,7 +565,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         return inspectableMethods;
     }
 
-    public Offset gcForwardingPointerOffset() {
+    public int gcForwardingPointerOffset() {
         return teleHeapScheme.gcForwardingPointerOffset();
     }
 

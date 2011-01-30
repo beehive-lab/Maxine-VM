@@ -218,7 +218,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         @Override
-        public Offset getOffset(int row) {
+        public int getOffset(int row) {
             return teleObject.headerOffset(headerFields[row]);
         }
 

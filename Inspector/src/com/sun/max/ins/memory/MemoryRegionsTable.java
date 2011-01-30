@@ -187,8 +187,8 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         @Override
-        public Offset getOffset(int row) {
-            return Offset.fromLong(getAddress(row).toLong());
+        public int getOffset(int row) {
+            return getAddress(row).toInt();
         }
 
         /**

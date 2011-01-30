@@ -501,10 +501,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
     /**
      * Abstraction for watchpoints covering some or all of an object, and which will
      * be relocated to follow the absolute location of the object whenever it is relocated by GC.
-     */
-    /**
-     * @author Michael Van De Vanter
      *
+     * @author Michael Van De Vanter
      */
     private abstract static class TeleObjectWatchpoint extends TeleWatchpoint {
 
@@ -523,7 +521,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         /**
          * Starting location of the watchpoint, relative to the origin of the object.
          */
-        private final Offset offset;
+        private final int offset;
 
         /**
          * A hidden (system) watchpoint set on the object's field that the GC uses to store forwarding
@@ -531,7 +529,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         private TeleWatchpoint relocationWatchpoint = null;
 
-        private TeleObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, Offset offset, Size size, WatchpointSettings settings)
+        private TeleObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, int offset, Size size, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException  {
             super(kind, watchpointManager, description, teleObject.origin().plus(offset), size.toLong(), settings);
             TeleError.check(teleObject.isLive(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
@@ -668,7 +666,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
         private TeleWholeObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, Offset.zero(), teleObject.objectMemoryRegion().size(), settings);
+            super(kind, watchpointManager, description, teleObject, 0, teleObject.objectMemoryRegion().size(), settings);
         }
     }
 
@@ -679,7 +677,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
         private TeleFieldWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, Offset.fromInt(fieldActor.offset()), teleObject.fieldSize(fieldActor), settings);
+            super(kind, watchpointManager, description, teleObject, fieldActor.offset(), teleObject.fieldSize(fieldActor), settings);
         }
     }
 
@@ -688,9 +686,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleArrayElementWatchpoint extends TeleObjectWatchpoint {
 
-        private TeleArrayElementWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+        private TeleArrayElementWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes), Size.fromInt(elementKind.width.numberOfBytes), settings);
+            super(kind, watchpointManager, description, teleObject, arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes), Size.fromInt(elementKind.width.numberOfBytes), settings);
         }
     }
 
@@ -903,7 +901,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public TeleWatchpoint createArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+        public TeleWatchpoint createArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException {
             if (!vm().tryLock()) {
                 throw new MaxVMBusyException();
@@ -915,7 +913,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
                     amendedDescription = amendedDescription + " (non-live object))";
-                    final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
+                    final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
                     final TeleFixedMemoryRegion region = new TeleFixedMemoryRegion(vm(), "", address, elementKind.width.numberOfBytes);
                     teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
                 }

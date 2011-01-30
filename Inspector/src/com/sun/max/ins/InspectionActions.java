@@ -3645,19 +3645,19 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Watch array element";
         private final TeleObject teleObject;
         private final Kind elementKind;
-        private final Offset arrayOffsetFromOrigin;
+        private final int arrayOffsetFromOrigin;
         private final int index;
         private final String indexPrefix;
         private final MaxMemoryRegion memoryRegion;
 
-        SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
+        SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleObject = teleObject;
             this.elementKind = elementKind;
             this.arrayOffsetFromOrigin = arrayOffsetFromOrigin;
             this.index = index;
             this.indexPrefix = indexPrefix;
-            final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
+            final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
             this.memoryRegion = new InspectorMemoryRegion(vm(), "", address, elementKind.width.numberOfBytes);
             refresh(true);
         }
@@ -3702,7 +3702,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @param actionTitle a name for the action, use default name if null
      * @return an Action that will set an array element watchpoint.
      */
-    public final InspectorAction setArrayElementWatchpoint(TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
+    public final InspectorAction setArrayElementWatchpoint(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
         return new SetArrayElementWatchpointAction(teleObject, elementKind, arrayOffsetFromOrigin, index, indexPrefix, actionTitle);
     }
 
