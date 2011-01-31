@@ -85,11 +85,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     MaxInspectionMode inspectionMode();
 
     /**
-     * @return the mode in which the inspection is taking place.
-     */
-    MaxInspectionMode inspectionMode();
-
-    /**
      * @return access to the VM's class registry and related information.
      */
     MaxClassRegistry classRegistry();

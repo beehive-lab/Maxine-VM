@@ -241,11 +241,6 @@ public class CompiledStackFrameTable extends InspectorTable {
             return slotDescriptions[row];
         }
 
-        @Override
-        public String getRowDescription(int row) {
-            return slotDescriptions[row];
-        }
-
         /**
          * Offset of the slot relative to the Stack Pointer.
          *
@@ -272,10 +267,6 @@ public class CompiledStackFrameTable extends InspectorTable {
                 return javaStackFrame.biasedFPOffset(getOffset(row));
             }
             return getOffset(row) - frameSize;
-        }
-
-        public String getSlotName(int row) {
-            return slots.slot(row).name;
         }
 
         public String getSlotName(int row) {
@@ -315,6 +306,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>" + toolTipText);
             setForeground(cellForegroundColor(row, col));
             setBackground(cellBackgroundColor(isSelected));
+
             return this;
         }
     }
