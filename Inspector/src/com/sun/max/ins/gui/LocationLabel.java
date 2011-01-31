@@ -212,9 +212,7 @@ public abstract class LocationLabel extends InspectorLabel {
             redisplay();
         }
 
-            this.indexScalingFactor = 0;
-            redisplay();
-        public void setValue(int offset, Address origin) {
+        public AsOffset(Inspection inspection) {
             super(inspection, 0, Address.zero());
             this.indexScalingFactor = 0;
             redisplay();

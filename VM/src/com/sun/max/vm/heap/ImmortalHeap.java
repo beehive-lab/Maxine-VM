@@ -81,10 +81,6 @@ public final class ImmortalHeap {
         return immortalHeap.contains(address);
     }
 
-    public static boolean contains(Address address) {
-        return immortalHeap.contains(address);
-    }
-
     /**
      * Returns the immortal heap memory.
      * @return immortal heap
