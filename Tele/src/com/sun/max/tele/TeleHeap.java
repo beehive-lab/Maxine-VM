@@ -330,7 +330,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                     final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) makeTeleObject(teleRootsRegionReference);
                     if (maybeAllocatedRegion != null && maybeAllocatedRegion.isAllocated()) {
                         teleRootsRegion = maybeAllocatedRegion;
-                        rootsRegion = new TeleFixedMemoryRegion(vm(), maybeAllocatedRegion.getRegionName(), maybeAllocatedRegion.getRegionStart(), maybeAllocatedRegion.getRegionSize());
+                        rootsRegion = new TeleFixedMemoryRegion(vm(), maybeAllocatedRegion.getRegionName(), maybeAllocatedRegion.getRegionStart(), maybeAllocatedRegion.getRegionNBytes());
                     }
                 }
             }
@@ -452,9 +452,9 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
-        final Size wordSize = vm().wordSize();
+        final int wordSize = vm().platform().nBytesInWord();
         if (maxSearchExtent > 0) {
-            wordSearchExtent = maxSearchExtent / wordSize.toInt();
+            wordSearchExtent = maxSearchExtent / wordSize;
         }
         try {
             Pointer origin = cellAddress.asPointer();
@@ -473,9 +473,9 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
-        final Size wordSize = vm().wordSize();
+        final int wordSize = vm().platform().nBytesInWord();
         if (maxSearchExtent > 0) {
-            wordSearchExtent = maxSearchExtent / wordSize.toInt();
+            wordSearchExtent = maxSearchExtent / wordSize;
         }
         try {
             Pointer origin = cellAddress.asPointer();

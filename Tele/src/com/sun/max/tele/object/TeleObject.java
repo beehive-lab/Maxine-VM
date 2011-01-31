@@ -335,7 +335,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     /**
      * @return the size of the memory occupied by this object in the VM, including header.
      */
-    protected abstract Size objectSize();
+    protected abstract int objectSize();
 
     /**
      * Gets the current area of memory in which the object is stored.
@@ -381,13 +381,13 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     }
 
     /**
-     * The size of a field in the object's header.
+     * The size in bytes of a field in the object's header.
      *
      * @param headerField identifies a header field in the object layout
      * @return the size of the header field
      */
-    public final Size headerSize(HeaderField headerField) {
-        return Size.fromInt(headerType(headerField).toKind().width.numberOfBytes);
+    public final int headerSize(HeaderField headerField) {
+        return headerType(headerField).toKind().width.numberOfBytes;
     }
 
     /**
@@ -422,8 +422,8 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      */
     public final TeleFixedMemoryRegion headerMemoryRegion(HeaderField headerField) {
         final Address address = headerAddress(headerField);
-        final Size size = headerSize(headerField);
-        return new TeleFixedMemoryRegion(vm(), "Current memory for header field " + headerField.name, address, size);
+        final int nBytes = headerSize(headerField);
+        return new TeleFixedMemoryRegion(vm(), "Current memory for header field " + headerField.name, address, nBytes);
     }
 
     /**
@@ -482,12 +482,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     public abstract Address fieldAddress(FieldActor fieldActor);
 
     /**
-     * The size of a field in the object.
+     * The size in bytes of a field in the object.
      *
      * @param fieldActor descriptor for a field in this class
      * @return the memory size of the field
      */
-    public abstract Size fieldSize(FieldActor fieldActor);
+    public abstract int fieldSize(FieldActor fieldActor);
 
     /**
      * The memory region in which field in the object is stored, subject to change by GC relocation.
@@ -497,8 +497,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      */
     public final TeleFixedMemoryRegion fieldMemoryRegion(FieldActor fieldActor) {
         final Pointer start = origin().plus(fieldActor.offset());
-        final Size size = fieldSize(fieldActor);
-        return new TeleFixedMemoryRegion(vm(), "", start, size);
+        return new TeleFixedMemoryRegion(vm(), "", start, fieldSize(fieldActor));
     }
 
     /**

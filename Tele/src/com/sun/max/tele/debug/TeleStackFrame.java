@@ -61,8 +61,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
         private final TeleStackFrame teleStackFrame;
 
-        private StackFrameMemoryRegion(TeleVM teleVM, TeleStackFrame teleStackFrame, String regionName, Address start, Size size) {
-            super(teleVM, regionName, start, size);
+        private StackFrameMemoryRegion(TeleVM teleVM, TeleStackFrame teleStackFrame, String regionName, Address start, long nBytes) {
+            super(teleVM, regionName, start, nBytes);
             this.teleStackFrame = teleStackFrame;
         }
 
@@ -204,7 +204,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         protected CompiledFrame(TeleVM teleVM, TeleStack teleStack, int position, CompiledStackFrame compiledStackFrame) {
             super(teleVM, teleStack, position, compiledStackFrame);
             final String description = teleStack.thread().entityName() + " frame(" + position() + ")";
-            this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), Size.fromInt(layout().frameSize()));
+            this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), layout().frameSize());
             this.entityDescription = "Stack frame " + position() + " in the " + vm().entityName() + " for " + teleStack.thread().entityName();
         }
 

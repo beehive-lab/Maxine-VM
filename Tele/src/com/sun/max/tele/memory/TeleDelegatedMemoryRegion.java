@@ -51,9 +51,8 @@ public abstract class TeleDelegatedMemoryRegion extends TeleMemoryRegion {
         return teleRuntimeMemoryRegion.getRegionStart();
     }
 
-    @Override
-    public Size size() {
-        return teleRuntimeMemoryRegion.getRegionSize();
+    public final long nBytes() {
+        return teleRuntimeMemoryRegion.getRegionNBytes();
     }
 
     @Override

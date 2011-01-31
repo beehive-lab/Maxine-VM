@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,14 +58,14 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         private TeleStack teleStack;
         private MaxVMState lastUpdatedState = null;
 
-        private StackMemoryRegion(TeleVM teleVM, TeleStack owner, String regionName, Address start, Size size) {
-            super(teleVM, regionName, start, size);
+        private StackMemoryRegion(TeleVM teleVM, TeleStack owner, String regionName, Address start, long nBytes) {
+            super(teleVM, regionName, start, nBytes);
             this.teleStack = owner;
         }
 
         @Override
         public MemoryUsage getUsage() {
-            return new MemoryUsage(-1, end().minus(teleStack.thread().registers().stackPointer()).toLong(), size().toLong(), -1);
+            return new MemoryUsage(-1, end().minus(teleStack.thread().registers().stackPointer()).toLong(), nBytes(), -1);
         }
 
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {
@@ -128,11 +128,11 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
      * @param teleNativeThread the thread that owns the teleStack
      * @param teleFixedMemoryRegion description of the memory occupied by the teleStack
      */
-    public TeleStack(TeleVM teleVM, TeleNativeThread teleNativeThread, String name, Address start, Size size) {
+    public TeleStack(TeleVM teleVM, TeleNativeThread teleNativeThread, String name, Address start, long nBytes) {
         super(teleVM);
         this.teleNativeThread = teleNativeThread;
         this.entityDescription = "The stack in " + vm().entityName() + " for " + teleNativeThread.entityName();
-        this.stackMemoryRegion = new StackMemoryRegion(teleVM, this, name, start, size);
+        this.stackMemoryRegion = new StackMemoryRegion(teleVM, this, name, start, nBytes);
         this.offsetToReturnPC = platform().isa.offsetToReturnPC;
     }
 
