@@ -34,6 +34,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
+import com.sun.max.ins.memory.MemoryTagTableCellRenderer;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
@@ -409,7 +410,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 }
                 labels[elementIndex].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>value = ");
                 labels[elementIndex].setOpaque(true);
-
+            }
             labels[elementIndex].setBackground(cellBackgroundColor(isSelected));
             return labels[elementIndex];
         }
