@@ -22,8 +22,6 @@
  */
 package com.sun.max.ins;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -46,13 +44,8 @@ import com.sun.max.vm.compiler.target.*;
  */
 public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
-    private final String heapSchemeSuffix;
-
     public InspectorNameDisplay(Inspection inspection) {
         super(inspection);
-
-        heapSchemeSuffix = "{" + vmConfig().heapScheme().getClass().getSimpleName() + "}";
-
         referenceRenderers.put(TeleArrayObject.class, new ArrayReferenceRenderer());
         referenceRenderers.put(TeleHub.class, new HubReferenceRenderer());
         referenceRenderers.put(TeleTupleObject.class, new TupleObjectReferenceRenderer());
@@ -444,7 +437,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
         for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {
             if (memoryRegion.sameAs(heapRegion.memoryRegion())) {
-                return "dynamic heap region \"" + regionName + heapSchemeSuffix + "\"";
+                return "dynamic heap region \"" + regionName + "\"";
             }
         }
         final MaxHeapRegion immortalHeapRegion = vm().heap().immortalHeapRegion();

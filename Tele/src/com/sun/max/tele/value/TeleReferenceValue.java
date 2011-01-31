@@ -23,8 +23,6 @@
 /*VCSID=e74ecb84-ca6a-4129-a3b6-b9f3408cec81*/
 package com.sun.max.tele.value;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -146,7 +144,7 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public Word toWord() {
-        return vmConfig().referenceScheme().toOrigin(reference);
+        return teleVM.referenceScheme().toOrigin(reference);
     }
 
     @Override
