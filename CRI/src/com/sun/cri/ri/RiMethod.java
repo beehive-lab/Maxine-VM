@@ -118,15 +118,6 @@ public interface RiMethod {
      */
     boolean isLeafMethod();
     
-
-    /**
-     * Gets the unique concrete method that is presumably called.
-     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return the unique concrete method
-     */
-    RiMethod uniqueConcreteMethod();
-    
-
     /**
      * Gets the unique concrete method that is presumably called.
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.

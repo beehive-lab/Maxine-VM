@@ -20578,22 +20578,6 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_optimize_LLE_01() {
-            begin("jtt.optimize.LLE_01");
-            String runString = null;
-            try {
-            // (0) == 0
-                runString = "(0)";
-                if (0 != jtt.optimize.LLE_01.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
         static void jtt_optimize_List_reorder_bug() {
             begin("jtt.optimize.List_reorder_bug");
             String runString = null;

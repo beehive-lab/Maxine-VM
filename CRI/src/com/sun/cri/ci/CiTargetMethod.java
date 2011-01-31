@@ -376,22 +376,6 @@ public class CiTargetMethod implements Serializable {
     public void setCustomStackAreaOffset(int bytes) {
         customStackAreaOffset = bytes;
     }
-    
-    /**
-     * Offset in bytes for the custom stack area (relative to sp)
-     * @return the offset in bytes
-     */
-    public int customStackAreaOffset() {
-        return customStackAreaOffset;
-    }
-    
-    /**
-     * @see #customStackAreaOffset()
-     * @param bytes
-     */
-    public void setCustomStackAreaOffset(int bytes) {
-        customStackAreaOffset = bytes;
-    }
 
     /**
      * @return the machine code generated for this method

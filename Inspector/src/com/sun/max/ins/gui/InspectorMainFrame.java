@@ -432,10 +432,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return mouseButtonMapper.getButton(mouseEvent);
     }
 
-    public int getButton(MouseEvent mouseEvent) {
-        return mouseButtonMapper.getButton(mouseEvent);
-    }
-
     public void setLocationRelativeToMouse(Inspector inspector) {
         setLocationRelativeToMouse(inspector, inspection.geometry().defaultNewFrameXOffset(), inspection.geometry().defaultNewFrameYOffset());
     }
