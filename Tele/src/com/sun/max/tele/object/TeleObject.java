@@ -397,11 +397,21 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * @return the location of the header field relative to object origin
      */
     public final int headerOffset(HeaderField headerField) {
-        if (headerField != HeaderField.LENGTH) {
-            return layoutScheme.generalLayout.getOffsetFromOrigin(headerField).toInt();
-        } else {
+        if (headerField == HeaderField.LENGTH) {
             return layoutScheme.arrayLayout.getOffsetFromOrigin(headerField).toInt();
+        } else {
+            return layoutScheme.generalLayout.getOffsetFromOrigin(headerField).toInt();
         }
+    }
+
+    /**
+     * Address of a field in the object's header.
+     *
+     * @param headerField identifies a header field in the object layout
+     * @return the location of the header in VM memory
+     */
+    public Address headerAddress(HeaderField headerField) {
+        return origin().plus(headerOffset(headerField));
     }
 
     /**
@@ -411,9 +421,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * @return current memory region occupied by a header field in this object in the VM
      */
     public final TeleFixedMemoryRegion headerMemoryRegion(HeaderField headerField) {
-        final Pointer start = origin().plus(headerOffset(headerField));
+        final Address address = headerAddress(headerField);
         final Size size = headerSize(headerField);
-        return new TeleFixedMemoryRegion(vm(), "Current memory for header field " + headerField.name, start, size);
+        return new TeleFixedMemoryRegion(vm(), "Current memory for header field " + headerField.name, address, size);
     }
 
     /**
