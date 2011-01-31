@@ -23,7 +23,6 @@
 package com.sun.max.tele;
 
 import static com.sun.max.tele.debug.ProcessState.*;
-import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -65,6 +64,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -662,6 +662,8 @@ public abstract class TeleVM implements MaxVM {
         return teleMethods;
     }
 
+    private final VMConfiguration vmConfiguration;
+
     private final Classpath sourcepath;
 
     private int interpreterUseLevel = 0;
@@ -706,6 +708,7 @@ public abstract class TeleVM implements MaxVM {
         tracer.begin();
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
+
         this.sourcepath = sourcepath;
         this.telePlatform = new TelePlatform(Platform.platform());
         setTeleChannelProtocol(Platform.platform().os);
@@ -725,8 +728,8 @@ public abstract class TeleVM implements MaxVM {
             this.teleProcess = createTeleProcess(commandLineArguments);
         }
         this.bootImageStart = loadBootImage();
-
-        final TeleReferenceScheme teleReferenceScheme = (TeleReferenceScheme) vmConfig().referenceScheme();
+        this.vmConfiguration = VMConfiguration.vmConfig();
+        final TeleReferenceScheme teleReferenceScheme = (TeleReferenceScheme) this.vmConfiguration.referenceScheme();
         teleReferenceScheme.setTeleVM(this);
 
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
@@ -1184,8 +1187,12 @@ public abstract class TeleVM implements MaxVM {
         teleFields().Trace_threshold.writeLong(this, newThreshold);
     }
 
-    public TeleReferenceScheme teleReferenceScheme() {
-        return (TeleReferenceScheme) VMConfiguration.vmConfig().referenceScheme();
+    public TeleReferenceScheme referenceScheme() {
+        return (TeleReferenceScheme) vmConfiguration.referenceScheme();
+    }
+
+    public HeapScheme heapScheme() {
+        return vmConfiguration.heapScheme();
     }
 
     /**
@@ -1208,15 +1215,15 @@ public abstract class TeleVM implements MaxVM {
     }
 
     private RemoteTeleReference createTemporaryRemoteTeleReference(Word rawReference) {
-        return teleReferenceScheme().createTemporaryRemoteTeleReference(rawReference.asAddress());
+        return referenceScheme().createTemporaryRemoteTeleReference(rawReference.asAddress());
     }
 
     private RemoteTeleReference temporaryRemoteTeleReferenceFromOrigin(Word origin) {
-        return teleReferenceScheme().temporaryRemoteTeleReferenceFromOrigin(origin);
+        return referenceScheme().temporaryRemoteTeleReferenceFromOrigin(origin);
     }
 
     public final Reference originToReference(final Pointer origin) {
-        return vmConfig().referenceScheme().fromOrigin(origin);
+        return vmConfiguration.referenceScheme().fromOrigin(origin);
     }
 
     public final Reference bootClassRegistryReference() {
@@ -1357,7 +1364,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Reference wordToReference(Word word) {
-        return teleReferenceScheme().fromOrigin(word.asPointer());
+        return referenceScheme().fromOrigin(word.asPointer());
     }
 
     /**
@@ -1367,7 +1374,7 @@ public abstract class TeleVM implements MaxVM {
      * @return a reference to a location in VM memory that is not safe across GC
      */
     public final Reference wordToTemporaryReference(Address address) {
-        return teleReferenceScheme().createTemporaryRemoteTeleReference(address);
+        return referenceScheme().createTemporaryRemoteTeleReference(address);
     }
 
     /**
