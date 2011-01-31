@@ -40,7 +40,6 @@ import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -53,7 +52,7 @@ import com.sun.max.vm.value.*;
 public final class ObjectHeaderTable extends InspectorTable {
 
     private final TeleObject teleObject;
-    private final Layout.HeaderField[] headerFields;
+    private final HeaderField[] headerFields;
 
     private final ObjectHeaderTableModel tableModel;
     private final ObjectHeaderColumnModel columnModel;
@@ -298,7 +297,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                             if (teleHub == null) {
                                 return WordValue.ZERO;
                             }
-                            final Address hubFieldAddress = teleObject.origin().plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB));
+                            final Address hubFieldAddress = teleObject.headerAddress(HeaderField.HUB);
                             return WordValue.from(vm().readWord(hubFieldAddress).asPointer());
                         }
                     };
@@ -338,7 +337,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
                         @Override
                         public Value fetchValue() {
-                            final Address headerFieldAddress = teleObject.origin().plus(Layout.generalLayout().getOffsetFromOrigin(finalHeaderField));
+                            final Address headerFieldAddress = teleObject.headerAddress(finalHeaderField);
                             return  WordValue.from(vm().readWord(headerFieldAddress).asPointer());
                         }
                     };
