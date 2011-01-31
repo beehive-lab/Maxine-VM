@@ -81,6 +81,29 @@ static void deallocateThreadLocalBlock(Address tlBlock, Size tlBlockSize) {
 }
 
 /**
+ * Commits the memory reserved for the stack of the initial thread.
+ * This is necessary to place the guard pages via mprotect on OSes that
+ * lazily commit memory reserved for the initial thread's stack.
+ */
+static void commitStackMemoryForInitialThread(Address base, int pageSize) {
+#if os_LINUX
+    /* Writing to the bottom page of the reserved stack (appears) not to be
+     * sufficient on Linux. Using alloca() to allocate a chunk approximately
+     * the size of the remaining stack seems to fix it. */
+    size_t s = (size_t) &base - (size_t) base;
+    alloca(s);
+    volatile char *p = (volatile char *) base;
+    p[0] = p[0];
+#elif os_SOLARIS
+    /* Writing to the bottom page of the reserved stack (appears) to be sufficient on Solaris. */
+    volatile char *p = (volatile char *) base;
+    p[0] = p[0];
+#elif os_DARWIN
+    /* Mac OS X appears to commit the whole stack. */
+#endif
+}
+
+/**
  * Allocates and/or initializes a thread locals block.
  *
  * @param id  > 0: the identifier reserved in the thread map for the thread being started
@@ -166,10 +189,9 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
         startGuardZone = ntl->stackRedZone;
         guardZonePages = STACK_YELLOW_ZONE_PAGES + STACK_RED_ZONE_PAGES;
 
-#if os_SOLARIS || os_LINUX
-        /* Need to write to the guard page to fault it in so that the mprotect below works. */
-        *((int *) ntl->stackBase) = 0;
-#endif
+        if (id == PRIMORDIAL_THREAD_ID) {
+            commitStackMemoryForInitialThread(ntl->stackBase, pageSize);
+        }
     }
 
     tla_store(etla, ETLA, etla);
@@ -201,15 +223,6 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
 
     ntl->stackBlueZone = ntl->stackYellowZone;  // default is no blue zone
 
-    if (guardZonePages != 0) {
-#if os_MAXVE
-        // custom stack initialization
-        maxve_initStack(ntl);
-#else
-        virtualMemory_protectPages(startGuardZone, guardZonePages);
-#endif
-    }
-
 #if log_THREADS
     log_println("thread %3d: stackEnd     = %p", id, ntl->stackBase + ntl->stackSize);
     log_println("thread %3d: sp           ~ %p", id, &id);
@@ -227,6 +240,14 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
     log_println("thread %3d: refMapSize   = %d (%p)", id, refMapSize, refMapSize);
 #endif
 
+    if (guardZonePages != 0) {
+#if os_MAXVE
+        // custom stack initialization
+        maxve_initStack(ntl);
+#else
+        virtualMemory_protectPages(startGuardZone, guardZonePages);
+#endif
+    }
     /* Protect the first page of the TL block (which contains the first word of the triggered thread locals) */
     virtualMemory_protectPages(tlBlock, 1);
 
