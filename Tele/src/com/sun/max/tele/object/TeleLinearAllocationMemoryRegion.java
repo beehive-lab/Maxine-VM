@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,7 +70,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
     public MemoryUsage getUsage() {
         if (memoryUsage == null) {
             if (isAllocated() && !mark.isZero()) {
-                memoryUsage = new MemoryUsage(-1, mark.minus(getRegionStart()).toLong(), getRegionSize().toLong(), -1);
+                memoryUsage = new MemoryUsage(-1, mark.minus(getRegionStart()).toLong(), getRegionNBytes(), -1);
             }
         }
         if (memoryUsage != null) {

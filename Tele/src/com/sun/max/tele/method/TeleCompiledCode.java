@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -243,7 +243,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
             }
             case LOCAL_STACK_SLOT: {
                 final TargetLocation.LocalStackSlot localStackSlot = (TargetLocation.LocalStackSlot) targetLocation;
-                return  "fp[" + (localStackSlot.index() * vm().wordSize().toInt()) + "]";
+                return  "fp[" + (localStackSlot.index() * vm().platform().nBytesInWord()) + "]";
             }
             default: {
                 return targetLocation.toString();

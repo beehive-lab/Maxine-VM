@@ -46,7 +46,7 @@ import com.sun.max.vm.value.*;
 public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     /**
-     * 
+     *
      */
     private static final HashSet<FieldActor> EMPTY_FIELD_ACTOR_SET = new HashSet<FieldActor>();
 
@@ -94,8 +94,8 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    public Size objectSize() {
-        return Layout.getArraySize(componentKind(), length);
+    public int objectSize() {
+        return Layout.getArraySize(componentKind(), length).toInt();
     }
 
     @Override
@@ -121,7 +121,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    public Size fieldSize(FieldActor fieldActor) {
+    public int fieldSize(FieldActor fieldActor) {
         throw TeleError.unexpected("Maxine Array objects don't contain fields");
     }
 

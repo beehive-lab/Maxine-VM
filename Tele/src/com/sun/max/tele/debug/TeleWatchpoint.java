@@ -315,7 +315,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         sb.append(", ").append(isEnabled() ? "enabled" : "disabled");
         sb.append(", ").append(isActive() ? "active" : "inactive");
         sb.append(", 0x").append(memoryRegion.start().toHexString());
-        sb.append(", size=").append(memoryRegion.size().toString());
+        sb.append(", size=").append(memoryRegion.nBytes());
         sb.append(", \"").append(description).append("\"");
         sb.append("}");
         return sb.toString();
@@ -346,11 +346,13 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      * Future usage: e.g. for conditional Watchpoints
      */
     private void updateMemoryCache() {
-        if (memoryCache == null || memoryCache.length != memoryRegion().size().toInt()) {
-            memoryCache = new byte[memoryRegion().size().toInt()];
+        long nBytes = memoryRegion().nBytes();
+        assert nBytes < Integer.MAX_VALUE;
+        if (memoryCache == null || memoryCache.length != nBytes) {
+            memoryCache = new byte[(int) nBytes];
         }
         try {
-            memoryCache = watchpointManager.vm().dataAccess().readFully(memoryRegion().start(), memoryRegion().size().toInt());
+            memoryCache = watchpointManager.vm().dataAccess().readFully(memoryRegion().start(), (int) nBytes);
         } catch (DataIOError e) {
             // Must be a watchpoint in an address space that doesn't (yet?) exist in the VM process.
             memoryCache = null;
@@ -529,9 +531,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         private TeleWatchpoint relocationWatchpoint = null;
 
-        private TeleObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, int offset, Size size, WatchpointSettings settings)
+        private TeleObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, int offset, long nBytes, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException  {
-            super(kind, watchpointManager, description, teleObject.origin().plus(offset), size.toLong(), settings);
+            super(kind, watchpointManager, description, teleObject.origin().plus(offset), nBytes, settings);
             TeleError.check(teleObject.isLive(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
             this.teleObject = teleObject;
             this.offset = offset;
@@ -666,7 +668,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
         private TeleWholeObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, 0, teleObject.objectMemoryRegion().size(), settings);
+            super(kind, watchpointManager, description, teleObject, 0, teleObject.objectMemoryRegion().nBytes(), settings);
         }
     }
 
@@ -688,7 +690,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
         private TeleArrayElementWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
             throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes), Size.fromInt(elementKind.width.numberOfBytes), settings);
+            super(kind, watchpointManager, description, teleObject, arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes), elementKind.width.numberOfBytes, settings);
         }
     }
 

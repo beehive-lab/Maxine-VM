@@ -34,19 +34,12 @@ public class TeleFixedMemoryRegion extends TeleMemoryRegion {
 
     private final String regionName;
     private final Address start;
-    private final Size size;
-
-    public TeleFixedMemoryRegion(TeleVM teleVM, String regionName, Address start, Size size) {
-        super(teleVM);
-        this.start = start;
-        this.size = size;
-        this.regionName = regionName;
-    }
+    private final long nBytes;
 
     public TeleFixedMemoryRegion(TeleVM teleVM, String regionName, Address start, long nBytes) {
         super(teleVM);
         this.start = start;
-        this.size = Size.fromLong(nBytes);
+        this.nBytes = nBytes;
         this.regionName = regionName;
     }
 
@@ -54,15 +47,12 @@ public class TeleFixedMemoryRegion extends TeleMemoryRegion {
         return regionName;
     }
 
-    // TODO (mlvdv)  make final when all sorted out concerning code regions
-    public Address start() {
+    public final Address start() {
         return start;
     }
 
-    // TODO (mlvdv) make final when all sorted out
-    @Override
-    public Size size() {
-        return size;
+    public final long nBytes() {
+        return nBytes;
     }
 
 }

@@ -45,12 +45,8 @@ public abstract class TeleMemoryRegion implements MaxMemoryRegion {
         return teleVM;
     }
 
-    public final long nBytes() {
-        return size().toLong();
-    }
-
     public final Address end() {
-        return start().plus(size());
+        return start().plus(nBytes());
     }
 
     public final boolean contains(Address address) {
@@ -80,11 +76,6 @@ public abstract class TeleMemoryRegion implements MaxMemoryRegion {
         }
         return memoryUsage;
     }
-
-    /**
-     * @return the size of the region.
-     */
-    public abstract Size size();
 
     @Override
     public String toString() {

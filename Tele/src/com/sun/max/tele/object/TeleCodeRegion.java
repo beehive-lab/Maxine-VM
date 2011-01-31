@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -110,14 +109,14 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     @Override
-    public Size getRegionSize() {
+    public long getRegionNBytes() {
         if (isBootCodeRegion()) {
             // The explicit representation of the boot {@link CodeRegion} gets "trimmed" by setting its size
             // to the amount allocated within the region.  Other regions don't have this happen.
             // Return the size allocated for the whole region, as recorded in the boot image.
-            return Size.fromInt(vm().bootImage().header.codeSize);
+            return vm().bootImage().header.codeSize;
         }
-        return super.getRegionSize();
+        return super.getRegionNBytes();
     }
 
     /**

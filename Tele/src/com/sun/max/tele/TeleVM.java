@@ -575,10 +575,6 @@ public abstract class TeleVM implements MaxVM {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
 
-    private final Size wordSize;
-
-    private final Size pageSize;
-
     private final BootImage bootImage;
 
     private final File bootImageFile;
@@ -718,8 +714,6 @@ public abstract class TeleVM implements MaxVM {
         // Pre-initialize the disassembler to save time.
         TeleDisassembler.initialize(Platform.platform());
 
-        this.wordSize = Size.fromInt(Platform.platform().wordWidth().numberOfBytes);
-        this.pageSize = Size.fromInt(Platform.platform().pageSize);
         this.programFile = new File(bootImageFile.getParent(), BOOTIMAGE_FILE_NAME);
 
         if (mode == MaxInspectionMode.ATTACH || mode == MaxInspectionMode.ATTACHWAITING) {
@@ -869,14 +863,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final File vmDirectory() {
         return vmDirectory;
-    }
-
-    public final Size wordSize() {
-        return wordSize;
-    }
-
-    public final Size pageSize() {
-        return pageSize;
     }
 
     public final BootImage bootImage() {

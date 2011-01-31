@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,8 +66,8 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
 
         private final TeleThreadLocalsArea teleThreadLocalsArea;
 
-        private ThreadLocalsAreaMemoryRegion(TeleVM teleVM, TeleThreadLocalsArea owner, String regionName, Address start, Size size) {
-            super(teleVM, regionName, start, size);
+        private ThreadLocalsAreaMemoryRegion(TeleVM teleVM, TeleThreadLocalsArea owner, String regionName, Address start, int nBytes) {
+            super(teleVM, regionName, start, nBytes);
             this.teleThreadLocalsArea = owner;
         }
 
@@ -118,10 +118,10 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         this.safepointState = safepointState;
         final String entityName = teleNativeThread.entityName() + " locals(" + safepointState + ")";
         this.tlaMemoryRegion =
-            new ThreadLocalsAreaMemoryRegion(teleVM, this, entityName, start.asAddress(), VmThreadLocal.tlaSize());
+            new ThreadLocalsAreaMemoryRegion(teleVM, this, entityName, start.asAddress(), VmThreadLocal.tlaSize().toInt());
         this.threadLocalAreaVariableCount = VmThreadLocal.values().size();
         this.threadLocalVariables = new TeleThreadLocalVariable[threadLocalAreaVariableCount];
-        final Size wordSize = teleNativeThread.vm().wordSize();
+        final int wordSize = teleNativeThread.vm().platform().nBytesInWord();
         for (VmThreadLocal vmThreadLocal : VmThreadLocal.values()) {
             final TeleThreadLocalVariable teleThreadLocalVariable =
                 new TeleThreadLocalVariable(vmThreadLocal, teleNativeThread, safepointState, start.plus(vmThreadLocal.offset), wordSize);
@@ -190,7 +190,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
     public TeleThreadLocalVariable findThreadLocalVariable(Address address) {
         if (!address.isZero()) {
             if (memoryRegion().contains(address)) {
-                final int index = address.minus(memoryRegion().start()).dividedBy(vm().wordSize()).toInt();
+                final int index = address.minus(memoryRegion().start()).dividedBy(vm().platform().nBytesInWord()).toInt();
                 return threadLocalVariables[index];
             }
         }

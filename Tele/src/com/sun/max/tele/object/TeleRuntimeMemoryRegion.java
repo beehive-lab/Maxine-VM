@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
 
     private Address regionStart = Address.zero();
-    private Size regionSize = Size.zero();
+    private long nBytes = 0L;
     private String regionName = null;
     private MemoryUsage memoryUsage = null;
 
@@ -72,7 +72,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
             return;
         }
         try {
-            final Size newRegionSize = vm().teleFields().MemoryRegion_size.readWord(reference()).asSize();
+            this.nBytes = vm().teleFields().MemoryRegion_size.readWord(reference()).asSize().toLong();
 
             final Reference regionNameStringReference = vm().teleFields().MemoryRegion_regionName.readReference(reference());
             final TeleString teleString = (TeleString) heap().makeTeleObject(regionNameStringReference);
@@ -91,10 +91,8 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
                 Trace.line(TRACE_VALUE, tracePrefix() + "zero start address read from VM for region " + this);
             }
             this.regionStart = newRegionStart;
-            this.regionSize = newRegionSize;
             this.regionName = newRegionName;
-            final long sizeAsLong = this.regionSize.toLong();
-            this.memoryUsage = new MemoryUsage(-1, sizeAsLong, sizeAsLong, -1);
+            this.memoryUsage = new MemoryUsage(-1, nBytes, nBytes, -1);
         } catch (DataIOError dataIOError) {
             TeleWarning.message("TeleRuntimeMemoryRegion dataIOError:", dataIOError);
             dataIOError.printStackTrace();
@@ -119,10 +117,10 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     }
 
     /**
-     * @return the size of the VM memory, as described by the memory region object in the VM.
+     * @return the size of the VM memory in bytes, as described by the memory region object in the VM.
      */
-    public Size getRegionSize() {
-        return regionSize;
+    public long getRegionNBytes() {
+        return nBytes;
     }
 
     /**
@@ -143,14 +141,14 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
             return false;
         }
         // Default:  is the address anywhere in the region
-        return address.greaterEqual(getRegionStart()) && address.lessThan(getRegionStart().plus(getRegionSize()));
+        return address.greaterEqual(getRegionStart()) && address.lessThan(getRegionStart().plus(getRegionNBytes()));
     }
 
     /**
      * @return whether memory has been allocated yet in the VM for this region.
      */
     public final boolean isAllocated() {
-        return !getRegionStart().isZero() && !getRegionSize().isZero();
+        return !getRegionStart().isZero() && getRegionNBytes() > 0;
     }
 
     /**
