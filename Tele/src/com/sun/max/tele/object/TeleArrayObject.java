@@ -45,6 +45,11 @@ import com.sun.max.vm.value.*;
   */
 public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
+    /**
+     * 
+     */
+    private static final HashSet<FieldActor> EMPTY_FIELD_ACTOR_SET = new HashSet<FieldActor>();
+
     private static final Logger LOGGER = Logger.getLogger(TeleArrayObject.class.getName());
 
     private int length = -1;
@@ -95,7 +100,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public Set<FieldActor> getFieldActors() {
-        return new HashSet<FieldActor>();
+        return EMPTY_FIELD_ACTOR_SET;
     }
 
     /**
