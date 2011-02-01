@@ -66,7 +66,7 @@ public final class Inspection implements InspectionHolder {
         String lookAndFeelName = UIManager.getSystemLookAndFeelClassName();
 
         // Some optional overrides of the platform default
-        lookAndFeelName = "javax.swing.plaf.metal.MetalLookAndFeel";
+//      lookAndFeelName = "javax.swing.plaf.metal.MetalLookAndFeel";
 //      lookAndFeelName = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
 //      lookAndFeelName = "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
 //      lookAndFeelName = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
