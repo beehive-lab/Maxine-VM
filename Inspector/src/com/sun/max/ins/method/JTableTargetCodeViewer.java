@@ -643,7 +643,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
                 @Override
                 public Value fetchValue() {
-                    return new WordValue(vm().readWord(literalAddress));
+                    return vm().readWordValue(literalAddress);
                 }
             };
             wordValueLabel.setTextPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")));
@@ -658,7 +658,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
                 @Override
                 public Value fetchValue() {
-                    return new WordValue(vm().readWord(literalAddress));
+                    return vm().readWordValue(literalAddress);
                 }
             };
             wordValueLabel.setTextSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));

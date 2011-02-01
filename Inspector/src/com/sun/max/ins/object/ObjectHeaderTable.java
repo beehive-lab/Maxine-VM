@@ -298,7 +298,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                                 return WordValue.ZERO;
                             }
                             final Address hubFieldAddress = teleObject.headerAddress(HeaderField.HUB);
-                            return WordValue.from(vm().readWord(hubFieldAddress).asPointer());
+                            return vm().readWordValue(hubFieldAddress);
                         }
                     };
                 } else if (headerField == HeaderField.MISC) {
@@ -338,7 +338,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                         @Override
                         public Value fetchValue() {
                             final Address headerFieldAddress = teleObject.headerAddress(finalHeaderField);
-                            return  WordValue.from(vm().readWord(headerFieldAddress).asPointer());
+                            return  vm().readWordValue(headerFieldAddress);
                         }
                     };
                 }
