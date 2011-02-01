@@ -1188,12 +1188,12 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.dataAccess();
     }
 
-    public final Word readWord(Address address) {
-        return teleProcess.dataAccess().readWord(address);
+    public final Value readWordValue(Address address) {
+        return WordValue.from(dataAccess().readWord(address));
     }
 
-    public final void readFully(Address address, byte[] bytes) {
-        teleProcess.dataAccess().readFully(address, bytes);
+    public final void readBytes(Address address, byte[] bytes) {
+        dataAccess().readFully(address, bytes);
     }
 
     private RemoteTeleReference createTemporaryRemoteTeleReference(Word rawReference) {
@@ -1452,7 +1452,7 @@ public abstract class TeleVM implements MaxVM {
         final Pointer dynamicHeapRegionsArrayFieldPointer = bootImageStart.plus(bootImage.header.dynamicHeapRegionsArrayFieldOffset);
 
         // Value of the field, possibly a pointer to an array of dynamically allocated heap regions
-        final Word fieldValue = readWord(dynamicHeapRegionsArrayFieldPointer.asAddress());
+        final Word fieldValue = dataAccess().readWord(dynamicHeapRegionsArrayFieldPointer.asAddress());
 
         if (!fieldValue.isZero()) {
             // Assert that this points to an array of references, read as words
@@ -2161,7 +2161,7 @@ public abstract class TeleVM implements MaxVM {
 
         public byte[] accessMemory(long start, int length) {
             final byte[] bytes = new byte[length];
-            TeleVM.this.readFully(Address.fromLong(start), bytes);
+            TeleVM.this.dataAccess().readFully(Address.fromLong(start), bytes);
             return bytes;
         }
 

@@ -283,14 +283,14 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void setVMTraceThreshold(long newThreshold);
 
     /**
-     * Low-level read of a word from memory of the VM.
+     * Low-level read of a word as a generic boxed value from memory of the VM.
      */
-    Word readWord(Address address);
+    Value readWordValue(Address address);
 
     /**
      * Low-level read of bytes from memory of the VM.
      */
-    void readFully(Address address, byte[] bytes);
+    void readBytes(Address address, byte[] bytes);
 
     /**
      * @param origin current absolute location of the beginning of a heap object's memory in the VM,

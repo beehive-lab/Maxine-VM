@@ -364,7 +364,7 @@ public class CompiledStackFrameTable extends InspectorTable {
                 label = new WordValueLabel(inspection, ValueMode.INTEGER_REGISTER, CompiledStackFrameTable.this) {
                     @Override
                     public Value fetchValue() {
-                        return new WordValue(vm().readWord(address));
+                        return vm().readWordValue(address);
                     }
                 };
                 label.setOpaque(true);

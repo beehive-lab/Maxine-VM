@@ -70,7 +70,7 @@ public final class MemoryRegionPointerTableCellRenderer extends InspectorTableCe
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
         Value memoryValue = null;
         try {
-            memoryValue = WordValue.from(vm().readWord(tableModel.getAddress(row)).asPointer());
+            memoryValue = vm().readWordValue(tableModel.getAddress(row));
         } catch (InvalidReferenceException invalidReferenceException) {
             return gui().getUnavailableDataTableCellRenderer();
         } catch (DataIOError dataIOError) {
