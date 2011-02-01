@@ -157,7 +157,7 @@ extern TLA tla_current(void);
 /**
  * Gets the size of a thread locals area.
  */
-extern int tlaSize();
+extern int tlaSize(void);
 
 /**
  * Sets the value of a specified thread local.
