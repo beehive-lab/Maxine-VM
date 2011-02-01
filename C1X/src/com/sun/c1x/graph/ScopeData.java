@@ -53,10 +53,10 @@ public class ScopeData {
         HasHandler,
 
         /**
-         * Code in scope is uninterruptible (i.e. cannot contain safepoints or stack overflow checks).
+         * Code in scope is cannot contain safepoints.
          * This attribute is inherited by nested scopes.
          */
-        Uninterruptible;
+        NoSafepoints;
 
         public final int mask = 1 << ordinal();
     }
@@ -148,13 +148,13 @@ public class ScopeData {
             if (parent.hasHandler()) {
                 flags |= HasHandler.mask;
             }
-            if (parent.isUninterruptible() || scope.method.isUninterruptible()) {
-                flags |= Uninterruptible.mask;
+            if (parent.noSafepoints() || scope.method.noSafepoints()) {
+                flags |= NoSafepoints.mask;
             }
         } else {
             maxInlineSize = C1XOptions.MaximumInlineSize;
-            if (scope.method.isUninterruptible()) {
-                flags |= Uninterruptible.mask;
+            if (scope.method.noSafepoints()) {
+                flags |= NoSafepoints.mask;
             }
         }
         RiExceptionHandler[] handlers = scope.method.exceptionHandlers();
@@ -198,8 +198,8 @@ public class ScopeData {
         if (parent.hasHandler()) {
             flags |= HasHandler.mask;
         }
-        if (parent.isUninterruptible()) {
-            flags |= Uninterruptible.mask;
+        if (parent.noSafepoints()) {
+            flags |= NoSafepoints.mask;
         }
         // duplicate the parent scope's exception handlers, if any
         List<ExceptionHandler> handlers = parent.exceptionHandlers();
@@ -260,10 +260,10 @@ public class ScopeData {
     }
 
     /**
-     * Checks whether this scope is uninterruptible (i.e. cannot contain safepoints or stack overflow checks).
+     * Checks whether this scope can contain safepoints.
      */
-    public boolean isUninterruptible() {
-        return (flags & Flag.Uninterruptible.mask) != 0;
+    public boolean noSafepoints() {
+        return (flags & Flag.NoSafepoints.mask) != 0;
     }
 
     /**

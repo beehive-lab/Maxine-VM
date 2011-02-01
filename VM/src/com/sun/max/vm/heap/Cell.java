@@ -47,7 +47,7 @@ public class Cell {
      * @param length the number of elements in the array
      */
     @INLINE
-    @UNINTERRUPTIBLE("avoid inconsistent object contents")
+    @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantArray(Pointer cell, Size size, DynamicHub hub, int length) {
         DebugHeap.writeCellTag(cell);
         final Pointer origin = Layout.arrayCellToOrigin(cell);
@@ -64,7 +64,7 @@ public class Cell {
      * @param length the number of elements in the array
      */
     @INLINE
-    @UNINTERRUPTIBLE("avoid inconsistent object contents")
+    @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantArray(Pointer cell, DynamicHub hub, int length) {
         final Size size = Layout.getArraySize(hub.classActor.componentClassActor().kind, length);
         return plantArray(cell, size, hub, length);
@@ -74,7 +74,7 @@ public class Cell {
      * Write an initial tuple object image into an existing cell.
      */
     @INLINE
-    @UNINTERRUPTIBLE("avoid inconsistent object contents")
+    @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantTuple(Pointer cell, Hub hub) {
         DebugHeap.writeCellTag(cell);
         final Pointer origin = Layout.tupleCellToOrigin(cell);
@@ -86,7 +86,7 @@ public class Cell {
      * Write an initial hybrid object image into an existing cell.
      */
     @INLINE
-    @UNINTERRUPTIBLE("avoid inconsistent object contents")
+    @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantHybrid(Pointer cell, Size size, DynamicHub hub) {
         DebugHeap.writeCellTag(cell);
         final Pointer origin = Layout.hybridCellToOrigin(cell);
@@ -100,7 +100,7 @@ public class Cell {
      * array part.
      */
     @INLINE
-    @UNINTERRUPTIBLE("avoid inconsistent object contents")
+    @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Hybrid plantExpandedHybrid(Pointer cell, Size size, Hybrid hybrid, int length) {
         DebugHeap.writeCellTag(cell);
         final Pointer oldOrigin = Reference.fromJava(hybrid).toOrigin();
@@ -116,7 +116,7 @@ public class Cell {
     /**
      * Write a shallow copy of the given object into an existing cell.
      */
-    @UNINTERRUPTIBLE("avoid inconsistent object contents")
+    @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantClone(Pointer cell, Size size, Object object) {
         DebugHeap.writeCellTag(cell);
         Memory.copyBytes(Layout.originToCell(Reference.fromJava(object).toOrigin()), cell, size);
@@ -128,7 +128,7 @@ public class Cell {
     /**
      * Write a shallow copy of the given object into an existing cell.
      */
-    @UNINTERRUPTIBLE("avoid inconsistent object contents")
+    @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantClone(Pointer cell, Object object) {
         return plantClone(cell, Layout.size(Reference.fromJava(object)), object);
     }

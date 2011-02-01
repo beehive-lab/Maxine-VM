@@ -172,8 +172,8 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     @INLINE
-    public final boolean isUninterruptible() {
-        return isUninterruptible(flags());
+    public final boolean noSafepoints() {
+        return noSafepoints(flags());
     }
 
     /**

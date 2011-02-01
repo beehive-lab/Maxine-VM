@@ -148,13 +148,11 @@ public interface RiMethod {
     boolean isOverridden();
 
     /**
-     * Checks whether the compiler can insert code in this method possibly causing thread switching.
-     * In particular, this can be used to prevent the compiler from inserting safepoints
-     * and stack overflow checks.
+     * Checks whether the compiler can insert safepoints in this method.
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method cannot have potentially thread switching code inserted
+     * @return {@code true} if the method cannot have safepoints inserted
      */
-    boolean isUninterruptible();
+    boolean noSafepoints();
     
     /**
      * Gets a map from bytecode indexes to bit maps denoting the live locals at that position.

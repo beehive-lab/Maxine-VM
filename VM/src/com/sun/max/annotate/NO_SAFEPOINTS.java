@@ -25,7 +25,7 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Suppresses the insertion of safepoints and stack overflow checks in the body of the annotated method.
+ * Suppresses the insertion of safepoints in the body of the annotated method.
  *
  * ATTENTION: callees of the method may still contain safepoints.
  *
@@ -33,10 +33,10 @@ import java.lang.annotation.*;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface UNINTERRUPTIBLE {
+public @interface NO_SAFEPOINTS {
 
     /**
-     * Documents the reason why the annotated code must be uninterruptible.
+     * Documents the reason why the annotated code must have no safepoints.
      */
     String value();
 

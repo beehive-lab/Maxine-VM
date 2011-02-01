@@ -87,7 +87,7 @@ public abstract class Actor {
     public static final int ACC_STRICT =       0x00000800;
 
     // VM-internal flags for methods:
-    public static final int UNINTERRUPTIBLE =      0x00004000;
+    public static final int NO_SAFEPOINTS =        0x00004000;
     public static final int INLINE_AFTER_SNIPPETS_ARE_COMPILED =
                                                    0x00010000;
     public static final int TEMPLATE =             0x00200000;
@@ -125,7 +125,7 @@ public abstract class Actor {
         C_FUNCTION |
         VM_ENTRY_POINT |
         LOCAL_SUBSTITUTE |
-        UNINTERRUPTIBLE;
+        NO_SAFEPOINTS;
 
     /**
      * Mask of the flags defined for classes in Table 4.1 of the JVM specification.
@@ -451,8 +451,8 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isUninterruptible(int flags) {
-        return (flags & UNINTERRUPTIBLE) != 0;
+    public static boolean noSafepoints(int flags) {
+        return (flags & NO_SAFEPOINTS) != 0;
     }
 
     @INLINE

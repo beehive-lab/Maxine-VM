@@ -707,7 +707,7 @@ public final class GraphBuilder {
     }
 
     void genGoto(int fromBCI, int toBCI) {
-        boolean isSafepoint = !scopeData.isUninterruptible() && toBCI <= fromBCI;
+        boolean isSafepoint = !scopeData.noSafepoints() && toBCI <= fromBCI;
         append(new Goto(blockAt(toBCI), null, isSafepoint));
     }
 
@@ -715,7 +715,7 @@ public final class GraphBuilder {
         BlockBegin tsucc = blockAt(stream().readBranchDest());
         BlockBegin fsucc = blockAt(stream().nextBCI());
         int bci = stream().currentBCI();
-        boolean isSafepoint = !scopeData.isUninterruptible() && tsucc.bci() <= bci || fsucc.bci() <= bci;
+        boolean isSafepoint = !scopeData.noSafepoints() && tsucc.bci() <= bci || fsucc.bci() <= bci;
         append(new If(x, cond, false, y, tsucc, fsucc, isSafepoint ? stateBefore : null, isSafepoint));
     }
 
@@ -742,7 +742,7 @@ public final class GraphBuilder {
 
     void genThrow(int bci) {
         FrameState stateBefore = curState.immutableCopy(bci());
-        Throw t = new Throw(apop(), stateBefore, !scopeData.isUninterruptible());
+        Throw t = new Throw(apop(), stateBefore, !scopeData.noSafepoints());
         appendWithoutOptimization(t, bci);
     }
 
@@ -1274,7 +1274,7 @@ public final class GraphBuilder {
             append(new MonitorExit(rootMethodSynchronizedObject, lockAddress, lockNumber, stateBefore));
             curState.unlock();
         }
-        append(new Return(x, !scopeData.isUninterruptible()));
+        append(new Return(x, !scopeData.noSafepoints()));
     }
 
     /**
@@ -1351,7 +1351,7 @@ public final class GraphBuilder {
         int offset = ts.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        boolean isSafepoint = isBackwards && !scopeData.isUninterruptible();
+        boolean isSafepoint = isBackwards && !scopeData.noSafepoints();
         FrameState stateBefore = isSafepoint ? curState.immutableCopy(bci()) : null;
         append(new TableSwitch(ipop(), list, ts.lowKey(), stateBefore, isSafepoint));
     }
@@ -1373,7 +1373,7 @@ public final class GraphBuilder {
         int offset = ls.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        boolean isSafepoint = isBackwards && !scopeData.isUninterruptible();
+        boolean isSafepoint = isBackwards && !scopeData.noSafepoints();
         FrameState stateBefore = isSafepoint ? curState.immutableCopy(bci()) : null;
         append(new LookupSwitch(ipop(), list, keys, stateBefore, isSafepoint));
     }
@@ -2638,7 +2638,7 @@ public final class GraphBuilder {
     private void genInfopoint(int opcode, boolean inclFrame) {
         // TODO: create slimmer frame state if inclFrame is false
         FrameState state = curState.immutableCopy(bci());
-        assert opcode != SAFEPOINT || !scopeData.isUninterruptible() : "cannot place explicit safepoint in uninterruptible code scope";
+        assert opcode != SAFEPOINT || !scopeData.noSafepoints() : "cannot place explicit safepoint in uninterruptible code scope";
         Value result = append(new Infopoint(opcode, state));
         if (!result.kind.isVoid()) {
             push(result.kind, result);
