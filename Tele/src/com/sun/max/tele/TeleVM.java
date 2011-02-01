@@ -670,7 +670,7 @@ public abstract class TeleVM implements MaxVM {
 
     private final InvalidReferencesLogger invalidReferencesLogger;
 
-    public InvalidReferencesLogger invalidReferencesLogger() {
+    public final InvalidReferencesLogger invalidReferencesLogger() {
         return invalidReferencesLogger;
     }
 
@@ -877,11 +877,11 @@ public abstract class TeleVM implements MaxVM {
         return programFile;
     }
 
-    public MaxInspectionMode inspectionMode() {
+    public final MaxInspectionMode inspectionMode() {
         return mode;
     }
 
-    public TeleClassRegistry classRegistry() {
+    public final TeleClassRegistry classRegistry() {
         return teleClassRegistry;
     }
 
@@ -924,35 +924,35 @@ public abstract class TeleVM implements MaxVM {
         vmStateListeners.remove(listener);
     }
 
-    public void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
+    public final void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
         gcStartedListeners.add(listener, teleProcess);
     }
 
-    public void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
+    public final void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
         gcStartedListeners.remove(listener);
     }
 
-    public void addThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException {
+    public final void addThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException {
         threadEntryListeners.add(listener, teleProcess);
     }
 
-    public void addThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException {
+    public final void addThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException {
         threadDetachListeners.add(listener, teleProcess);
     }
 
-    public void removeThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException {
+    public final void removeThreadEnterListener(MaxVMThreadEntryListener listener) throws MaxVMBusyException {
         threadEntryListeners.remove(listener);
     }
 
-    public void removeThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException {
+    public final void removeThreadDetachedListener(MaxVMThreadDetachedListener listener) throws MaxVMBusyException {
         threadDetachListeners.remove(listener);
     }
 
-    public void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
+    public final void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
         gcCompletedListeners.add(listener, teleProcess);
     }
 
-    public void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
+    public final void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
         gcCompletedListeners.remove(listener);
     }
 
@@ -1027,13 +1027,13 @@ public abstract class TeleVM implements MaxVM {
 
     private static final int DEFAULT_MAX_LOCK_TRIALS = 100;
 
-    public void acquireLegacyVMAccess() throws MaxVMBusyException {
+    public final void acquireLegacyVMAccess() throws MaxVMBusyException {
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             throw new MaxVMBusyException();
         }
     }
 
-    public void releaseLegacyVMAccess() {
+    public final void releaseLegacyVMAccess() {
         assert lockHeldByCurrentThread();
         unlock();
     }
@@ -1173,11 +1173,11 @@ public abstract class TeleVM implements MaxVM {
         teleFields().Trace_threshold.writeLong(this, newThreshold);
     }
 
-    public TeleReferenceScheme referenceScheme() {
+    public final TeleReferenceScheme referenceScheme() {
         return (TeleReferenceScheme) vmConfiguration.referenceScheme();
     }
 
-    public HeapScheme heapScheme() {
+    public final HeapScheme heapScheme() {
         return vmConfiguration.heapScheme();
     }
 
@@ -1190,10 +1190,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final Word readWord(Address address) {
         return teleProcess.dataAccess().readWord(address);
-    }
-
-    public final Word readWord(Address address, int offset) {
-        return teleProcess.dataAccess().readWord(address, offset);
     }
 
     public final void readFully(Address address, byte[] bytes) {
@@ -1343,7 +1339,7 @@ public abstract class TeleVM implements MaxVM {
      * @throws InvalidReferenceException when the location does <strong>not</strong> point
      * at a valid heap object.
      */
-    public void checkReference(Reference reference) throws InvalidReferenceException {
+    public final void checkReference(Reference reference) throws InvalidReferenceException {
         if (!isValidOrigin(reference.toOrigin())) {
             throw new InvalidReferenceException(reference);
         }
