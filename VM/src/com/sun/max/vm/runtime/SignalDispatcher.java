@@ -145,7 +145,7 @@ public final class SignalDispatcher extends Thread {
      * @return {@code true} if the update succeeded, {@code false} otherwise
      */
     @VM_ENTRY_POINT
-    @UNINTERRUPTIBLE("executes inside a native signal handler")
+    @NO_SAFEPOINTS("executes inside a native signal handler")
     private static boolean tryPostSignal(int signal) {
         int n = PendingSignals.get(signal);
         return PendingSignals.compareAndSet(signal, n, n + 1);

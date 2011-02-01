@@ -251,7 +251,7 @@ public class LinearSpaceAllocator {
      * @param size size requested in bytes.
      * @return
      */
-    @UNINTERRUPTIBLE("object allocation and initialization must be atomic")
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public final Pointer allocateCleared(Size size) {
         if (MaxineVM.isDebug()) {
             FatalError.check(size.isWordAligned(), "Size must be word aligned");
