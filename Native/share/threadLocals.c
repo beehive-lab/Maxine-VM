@@ -118,6 +118,11 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
     const int tlaSize = s;
     const int pageSize = virtualMemory_getPageSize();
     const jboolean attaching = id < 0 || id == PRIMORDIAL_THREAD_ID;
+    jboolean haveRedZone = false;
+#if os_MAXVE
+    haveRedZone = true;
+#endif
+
 
     Address stackBase = 0;
     if (stackSize == 0) {
@@ -168,7 +173,7 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
 
     Address startGuardZone;
     int guardZonePages;
-    if (!attaching) {
+    if (!attaching || haveRedZone) {
         /* Thread library creates a red-zone guard page just below the stack */
         ntl->stackRedZone = ntl->stackBase - (STACK_RED_ZONE_PAGES * pageSize);
         ntl->stackRedZoneIsProtectedByVM = false;
