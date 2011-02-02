@@ -342,7 +342,6 @@ static void logTrap(int signal, Address ip, Address fault, TLA dtla) {
  * The handler for signals dealt with by Stubs.trapStub.
  */
 static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
-    int primordial = 0;
     int trapNumber = getTrapNumber(signal);
     Address ip = getInstructionPointer(ucontext);
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
@@ -377,20 +376,11 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
         trapLogged = true;
     }
 
-    if (tla_load(int, tla, ID) == 0) {
-        log_println("Trap taken on primordial thread (this is usually bad)!");
-        if (!trapLogged) {
-	        logTrap(signal, ip, faultAddress, dtla);
-	        trapLogged = true;
-	    }
-        primordial = 1;
-    }
-
     if (dtla == 0) {
         log_exit(-21, "could not find DTLA in trap handler");
     }
 
-    if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize && !primordial) {
+    if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize) {
         if (faultAddress < ntl->stackYellowZone) {
             /* The faultAddress is in the red zone; we shouldn't be alive */
             if (ntl->stackRedZoneIsProtectedByVM) {
