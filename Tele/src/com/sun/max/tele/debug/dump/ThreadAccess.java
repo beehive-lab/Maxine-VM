@@ -31,6 +31,7 @@ import java.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.thread.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.thread.*;
 
@@ -44,7 +45,6 @@ import com.sun.max.vm.thread.*;
 public abstract class ThreadAccess {
     protected TeleChannelDataIOProtocol protocol;
     private static final int MAXINE_THREAD_ID = 40;
-    private static final int NATIVE_THREAD_LOCALS_STRUCT_SIZE = 72;
     protected int tlaSize;
     protected List<ThreadInfo> currentThreadList;
 
@@ -89,7 +89,7 @@ public abstract class ThreadAccess {
     @SuppressWarnings("unchecked")
     public boolean gatherThreads(Object teleProcessObject, Object threadList, long tlaList) {
         final ByteBuffer tla = ByteBuffer.allocate(tlaSize).order(ByteOrder.LITTLE_ENDIAN);
-        final ByteBuffer nativeThreadLocals = ByteBuffer.allocate(NATIVE_THREAD_LOCALS_STRUCT_SIZE).order(ByteOrder.LITTLE_ENDIAN);
+        final ByteBuffer nativeThreadLocals = ByteBuffer.allocate(NativeThreadLocal.SIZE).order(ByteOrder.LITTLE_ENDIAN);
 
         currentThreadList = new ArrayList<ThreadInfo>();
         gatherOSThreads(currentThreadList);
@@ -150,7 +150,7 @@ public abstract class ThreadAccess {
         int n = protocol.readBytes(tl, tlCopy.array(), 0, tlaSize);
         assert n == tlaSize;
         final long ntl = getFromStruct(tlCopy, NATIVE_THREAD_LOCALS.offset);
-        n = protocol.readBytes(ntl, ntlCopy.array(), 0, NATIVE_THREAD_LOCALS_STRUCT_SIZE);
+        n = protocol.readBytes(ntl, ntlCopy.array(), 0, NativeThreadLocal.SIZE);
         final long stackBase = ntlCopy.getLong(STACKBASE.offset);
         final long stackSize = ntlCopy.getLong(STACKSIZE.offset);
         return stackBase <= stackPointer && stackPointer < (stackBase + stackSize);
