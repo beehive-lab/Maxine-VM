@@ -291,11 +291,12 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.rawBytes(os.toByteArray());
         }
 
-        asm.pushFrame();
-
         if (!callee.isVmEntryPoint()) {
             asm.stackOverflowCheck();
         }
+
+        asm.pushFrame();
+
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
 
