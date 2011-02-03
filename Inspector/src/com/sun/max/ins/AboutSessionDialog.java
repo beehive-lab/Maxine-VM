@@ -127,7 +127,7 @@ public final class AboutSessionDialog extends InspectorDialog {
         stream.println();
         final MaxHeap heap = vm().heap();
         stream.print(heap.entityName().toString().toUpperCase() + ":\n");
-        heap.printStats(stream, indent, verbose);
+        heap.printSessionStats(stream, indent, verbose);
 
         stream.println();
         final MaxClassRegistry classRegistry = vm().classRegistry();
