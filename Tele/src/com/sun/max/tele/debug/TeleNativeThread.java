@@ -72,6 +72,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
     private final TimedTrace updateTracer;
 
+    private long lastUpdateEpoch = -1L;
+
     private static final Logger LOGGER = Logger.getLogger(TeleNativeThread.class.getName());
 
     private final TeleProcess teleProcess;
@@ -161,11 +163,16 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
         tracer.end(null);
     }
 
-    public void updateCache() {
-        Trace.line(TRACE_VALUE + 1, tracePrefix() + "refresh thread=" + this);
-        if (state.allowsDataAccess()) {
-            refreshBreakpoint();
-            threadLocalsBlock.updateCache();
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refresh thread=" + this);
+            if (state.allowsDataAccess()) {
+                refreshBreakpoint();
+                threadLocalsBlock.updateCache(epoch);
+            }
+            lastUpdateEpoch = epoch;
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
         }
     }
 
@@ -296,17 +303,17 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
      * @return the most currently refreshed frames on the thread's stack, never null.
      */
     final List<StackFrame> frames() {
-        final long currentProcessEpoch = teleProcess().epoch();
-        if (framesRefreshedEpoch < currentProcessEpoch) {
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + currentProcessEpoch + ") for " + this);
-            threadLocalsBlock.updateCache();
+        final long epoch = teleProcess().epoch();
+        if (framesRefreshedEpoch < epoch) {
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + epoch + ") for " + this);
+            threadLocalsBlock.updateCache(epoch);
             final List<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.vm(), this).frames();
             assert !newFrames.isEmpty();
             // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
             // frame may have changed.
             if (newFrames.size() != this.frames.size()) {
                 // Clear structural change; lengths are different
-                framesLastChangedEpoch = currentProcessEpoch;
+                framesLastChangedEpoch = epoch;
             } else {
                 // Lengths are the same; see if any frames differ.
                 final Iterator<StackFrame> oldFramesIterator = this.frames.iterator();
@@ -315,13 +322,13 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                     final StackFrame oldFrame = oldFramesIterator.next();
                     final StackFrame newFrame = newFramesIterator.next();
                     if (!oldFrame.isSameFrame(newFrame)) {
-                        framesLastChangedEpoch = currentProcessEpoch;
+                        framesLastChangedEpoch = epoch;
                         break;
                     }
                 }
             }
             this.frames = newFrames;
-            framesRefreshedEpoch = currentProcessEpoch;
+            framesRefreshedEpoch = epoch;
         }
         return frames;
     }
@@ -424,10 +431,10 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
      * Update the current list of frames, and notice if the structure of the stack has changed.
      */
     private synchronized void refreshFrames() {
-        final long processEpoch = teleProcess().epoch();
-        if (framesRefreshedEpoch < processEpoch) {
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
-            threadLocalsBlock.updateCache();
+        final long epoch = teleProcess().epoch();
+        if (epoch > framesRefreshedEpoch) {
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + epoch + ") for " + this);
+            threadLocalsBlock.updateCache(epoch);
             final TeleVM teleVM = teleProcess.vm();
             final List<StackFrame> newFrames = new TeleStackFrameWalker(teleVM, this).frames();
             assert !newFrames.isEmpty();
@@ -435,7 +442,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             // frame may have changed.
             if (newFrames.size() != this.frames.size()) {
                 // Clear structural change; lengths are different
-                framesLastChangedEpoch = processEpoch;
+                framesLastChangedEpoch = epoch;
             } else {
                 final Iterator<StackFrame> oldFramesIterator = this.frames.iterator();
                 final Iterator<StackFrame> newFramesIterator = newFrames.iterator();
@@ -443,13 +450,13 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                     final StackFrame oldFrame = oldFramesIterator.next();
                     final StackFrame newFrame = newFramesIterator.next();
                     if (!oldFrame.isSameFrame(newFrame)) {
-                        framesLastChangedEpoch = processEpoch;
+                        framesLastChangedEpoch = epoch;
                         break;
                     }
                 }
             }
             this.frames = newFrames;
-            framesRefreshedEpoch = processEpoch;
+            framesRefreshedEpoch = epoch;
         }
     }
 

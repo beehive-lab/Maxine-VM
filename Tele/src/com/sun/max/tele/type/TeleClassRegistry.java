@@ -68,6 +68,8 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
 
     private final TimedTrace updateTracer;
 
+    private long lastUpdateEpoch = -1L;
+
     // TODO (mlvdv)  Generalize to map either  (TypeDescriptor, ClassLoader) -> ClassActor Reference *or*  TypeDescriptor -> ClassActor Reference*
     private final Map<TypeDescriptor, Reference> typeDescriptorToClassActorReference = new HashMap<TypeDescriptor, Reference>();
 
@@ -127,17 +129,19 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
      * Create a registry that contains summary information about all classes known to have been
      * loaded into the VM, initialized at registry creation with classes pre-loaded
      * into the boot image and supplemented with dynamically loaded classes with each
-     * call to {@link #updateCache()}.
+     * call to {@link #updateCache(long)}.
+     *
      * @param vm
+     * @param epoch
      */
-    public TeleClassRegistry(TeleVM vm) {
+    public TeleClassRegistry(TeleVM vm, long epoch) {
         super(vm);
         assert vm().lockHeldByCurrentThread();
         final TimedTrace initTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         initTracer.begin();
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
         this.entityDescription = "Class loading and management for the " + vm().entityName();
-
+        this.lastUpdateEpoch = epoch;
         int count = 0;
         try {
             final Reference classRegistryReference = vm.bootClassRegistryReference();
@@ -191,29 +195,33 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
         initTracer.end(statsPrinter);
     }
 
-    public void updateCache() {
-        // Adds information to the registry about any newly loaded classes in the VM.
-        updateTracer.begin();
-        assert vm().lockHeldByCurrentThread();
-        final Reference teleClassInfoStaticTupleReference = vm().teleFields().InspectableClassInfo_classActorCount.staticTupleReference(vm());
-        final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(vm().teleFields().InspectableClassInfo_classActorCount.fieldActor().offset());
-        final int newLoadedClassCount = vm().dataAccess().readInt(loadedClassCountPointer);
-        if (dynamicallyLoadedClassCount < newLoadedClassCount) {
-            final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(vm().teleFields().InspectableClassInfo_classActors.fieldActor().offset());
-            final Reference loadedClassActorsArrayReference = vm().wordToReference(vm().dataAccess().readWord(loadedClassActorsPointer));
-            while (dynamicallyLoadedClassCount < newLoadedClassCount) {
-                final Reference classActorReference = vm().getElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, dynamicallyLoadedClassCount).asReference();
-                try {
-                    addToRegistry(classActorReference);
-                } catch (InvalidReferenceException e) {
-                    e.printStackTrace();
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            // Adds information to the registry about any newly loaded classes in the VM.
+            updateTracer.begin();
+            assert vm().lockHeldByCurrentThread();
+            final Reference teleClassInfoStaticTupleReference = vm().teleFields().InspectableClassInfo_classActorCount.staticTupleReference(vm());
+            final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(vm().teleFields().InspectableClassInfo_classActorCount.fieldActor().offset());
+            final int newLoadedClassCount = vm().dataAccess().readInt(loadedClassCountPointer);
+            if (dynamicallyLoadedClassCount < newLoadedClassCount) {
+                final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(vm().teleFields().InspectableClassInfo_classActors.fieldActor().offset());
+                final Reference loadedClassActorsArrayReference = vm().wordToReference(vm().dataAccess().readWord(loadedClassActorsPointer));
+                while (dynamicallyLoadedClassCount < newLoadedClassCount) {
+                    final Reference classActorReference = vm().getElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, dynamicallyLoadedClassCount).asReference();
+                    try {
+                        addToRegistry(classActorReference);
+                    } catch (InvalidReferenceException e) {
+                        e.printStackTrace();
+                    }
+                    dynamicallyLoadedClassCount++;
                 }
-                dynamicallyLoadedClassCount++;
             }
+            lastUpdateEpoch = epoch;
+            updateTracer.end(statsPrinter);
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
         }
-        updateTracer.end(statsPrinter);
     }
-
 
     public String entityName() {
         return entityName;

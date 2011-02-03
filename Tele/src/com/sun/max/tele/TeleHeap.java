@@ -80,6 +80,8 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
 
     private final TimedTrace updateTracer;
 
+    private long lastUpdateEpoch = -1L;
+
     protected static TeleHeap teleHeap;
 
     public static long heapAddressOption() {
@@ -239,7 +241,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
     /**
      * Lazy initialization; try to keep data reading out of constructor.
      */
-    public void initialize() {
+    public void initialize(long epoch) {
         assert vm().lockHeldByCurrentThread();
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " initializing");
         tracer.begin();
@@ -256,22 +258,25 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         final int teleRootsOffset = vm().teleFields().InspectableHeapInfo_rootsPointer.fieldActor().offset();
         this.teleRootsPointer = vm().teleFields().InspectableHeapInfo_rootsPointer.staticTupleReference(vm()).toOrigin().plus(teleRootsOffset);
 
-        updateCache();
+        updateCache(epoch);
         tracer.end(statsPrinter);
     }
 
-    public void updateObjectCache() {
-        teleObjectFactory.updateCache();
+    public void updateObjectCache(long epoch) {
+        teleObjectFactory.updateCache(epoch);
     }
 
-    public void updateCache() {
+    public void updateCache(long epoch) {
         // Replaces local cache of information about heap regions in the VM.
         // During this update, any method calls to check heap containment are handled specially.
-        updateTracer.begin();
+
         assert vm().lockHeldByCurrentThread();
         if (!isInitialized()) {
-            updateTracer.end("not initialized yet");
+            Trace.line(TRACE_VALUE, tracePrefix() + "not initialized yet");
+        } else if (epoch <= lastUpdateEpoch) {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant udpate epoch=" + epoch + ": " + this);
         } else {
+            updateTracer.begin();
             // Check GC status and update references if a GC has completed since last time we checked
             final long oldGcStartedCount = gcStartedCount;
             gcStartedCount = vm().teleFields().InspectableHeapInfo_gcStartedCounter.readLong(vm());
@@ -286,7 +291,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                 // we checked, so cached reference data is out of date
                 // Sanity check; collection count increases monotonically
                 assert oldGcStartedCount < gcStartedCount;
-                vm().referenceScheme().refresh();
+                vm().referenceScheme().updateCache(epoch);
             } else {
                 // oldGcStartedCount == gcStartedCount == gcCompletedCount
                 // GC is not in progress, and no new GCs have happened, so cached reference data is up to date
@@ -349,6 +354,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                 heapRegions.add(immortalHeapRegion);
             }
             allHeapRegions = Collections.unmodifiableList(heapRegions);
+            lastUpdateEpoch = epoch;
             updateTracer.end(statsPrinter);
         }
     }

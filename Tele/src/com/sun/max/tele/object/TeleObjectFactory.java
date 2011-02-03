@@ -76,6 +76,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
 
     private final TimedTrace updateTracer;
 
+    private long lastUpdateEpoch = -1L;
+
     private static TeleObjectFactory teleObjectFactory;
 
     /**
@@ -193,35 +195,40 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         tracer.end(statsPrinter);
     }
 
-    public void updateCache() {
-        updateTracer.begin();
-        assert vm().lockHeldByCurrentThread();
-        TimerPerType timePerType = new TimerPerType();
-        liveObjectCount = 0;
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            updateTracer.begin();
+            assert vm().lockHeldByCurrentThread();
+            TimerPerType timePerType = new TimerPerType();
+            liveObjectCount = 0;
 
-        // Make a copy to prevent ConcurrentModificationExceptions while iterating
-        ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
-        for (WeakReference<TeleObject> teleObjectRef : teleObjectRefs) {
-            if (teleObjectRef != null) {
-                TeleObject teleObject = teleObjectRef.get();
-                if (teleObject != null) {
-                    liveObjectCount++;
-                    Class type = teleObject.getClass();
-                    long[] time = timePerType.get(type);
-                    long s = System.currentTimeMillis();
-                    teleObject.updateCache();
-                    time[0] += System.currentTimeMillis() - s;
+            // Make a copy to prevent ConcurrentModificationExceptions while iterating
+            ArrayList<WeakReference<TeleObject>> teleObjectRefs = new ArrayList<WeakReference<TeleObject>>(referenceToTeleObject.values());
+            for (WeakReference<TeleObject> teleObjectRef : teleObjectRefs) {
+                if (teleObjectRef != null) {
+                    TeleObject teleObject = teleObjectRef.get();
+                    if (teleObject != null) {
+                        liveObjectCount++;
+                        Class type = teleObject.getClass();
+                        long[] time = timePerType.get(type);
+                        long s = System.currentTimeMillis();
+                        teleObject.updateCache(epoch);
+                        time[0] += System.currentTimeMillis() - s;
+                    }
                 }
             }
-        }
-        updateTracer.end(statsPrinter);
+            lastUpdateEpoch = epoch;
+            updateTracer.end(statsPrinter);
 
-        // Check that we haven't stumbled into a very bad update situation with an object.
-        for (Map.Entry<Class, long[]> entry : timePerType.entrySet()) {
-            long time = entry.getValue()[0];
-            if (time > 100) {
-                Trace.line(TRACE_VALUE, "Excessive refresh time for " + entry.getKey() + ": " + time + "ms");
+            // Check that we haven't stumbled into a very bad update situation with an object.
+            for (Map.Entry<Class, long[]> entry : timePerType.entrySet()) {
+                long time = entry.getValue()[0];
+                if (time > 100) {
+                    Trace.line(TRACE_VALUE, "Excessive refresh time for " + entry.getKey() + ": " + time + "ms");
+                }
             }
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
         }
     }
 
@@ -373,7 +380,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         assert oidToTeleObject.containsKey(teleObject.getOID());
 
         referenceToTeleObject.put(reference,  new WeakReference<TeleObject>(teleObject));
-        teleObject.updateCache();
+        teleObject.updateCache(vm().teleProcess().epoch());
         return teleObject;
     }
 

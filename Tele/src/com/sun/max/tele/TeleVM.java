@@ -414,7 +414,7 @@ public abstract class TeleVM implements MaxVM {
                 vm = create(bootImageFile, sourcepath, commandLineArguments);
                 vm.lock();
                 try {
-                    vm.updateVMCaches();
+                    vm.updateVMCaches(0L);
                     vm.teleProcess().initializeState();
                     vm.modifyInspectableFlags(Inspectable.INSPECTED, true);
                 } finally {
@@ -441,7 +441,7 @@ public abstract class TeleVM implements MaxVM {
                 vm = create(bootImageFile, sourcepath, null);
                 vm.lock();
                 try {
-                    vm.updateVMCaches();
+                    vm.updateVMCaches(0L);
                     vm.teleProcess().initializeStateOnAttach();
                 } finally {
                     vm.unlock();
@@ -450,7 +450,7 @@ public abstract class TeleVM implements MaxVM {
 
             case IMAGE:
                 vm = createReadOnly(bootImageFile, sourcepath);
-                vm.updateVMCaches();
+                vm.updateVMCaches(0L);
         }
 
         final File commandFile = options.commandFileOption.getValue();
@@ -786,11 +786,11 @@ public abstract class TeleVM implements MaxVM {
      * be achieved.
      * <br>
      * Some lazy initialization is done, in order to avoid cycles during startup.
-     *
+     * @param epoch the number of times the process has run so far
      * @throws TeleError if unable to acquire the VM lock
      * @see #lock
      */
-    public final void updateVMCaches() {
+    public final void updateVMCaches(long epoch) {
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
             TeleError.unexpected("TeleVM unable to acquire VM lock for update");
         }
@@ -802,26 +802,26 @@ public abstract class TeleVM implements MaxVM {
                  * we hit the first execution breakpoint; otherwise addresses won't have been relocated.
                  * This depends on the {@link TeleHeap} already existing.
                  */
-                teleClassRegistry = new TeleClassRegistry(this);
+                teleClassRegistry = new TeleClassRegistry(this, epoch);
                 /*
                  *  Can only fully initialize the {@link TeleHeap} once
                  *  the {@TeleClassRegistry} is fully created, otherwise there's a cycle.
                  */
-                heap.initialize();
+                heap.initialize(epoch);
 
                 // Now set up the map of the compiled code cache
                 teleCodeCache = new TeleCodeCache(this);
-                teleCodeCache.initialize();
+                teleCodeCache.initialize(epoch);
                 if (isAttaching()) {
                     // Check that the target was run with option MakeInspectable otherwise the dynamic heap info will not be available
                     TeleError.check((teleFields().Inspectable_flags.readInt(this) & Inspectable.INSPECTED) != 0, "target VM was not run with -XX:+MakeInspectable option");
                     teleClassRegistry.processAttachFixupList();
                 }
             }
-            heap.updateCache();
-            teleClassRegistry.updateCache();
-            heap.updateObjectCache();
-            teleCodeCache.updateCache();
+            heap.updateCache(epoch);
+            teleClassRegistry.updateCache(epoch);
+            heap.updateObjectCache(epoch);
+            teleCodeCache.updateCache(epoch);
             updateTracer.end(null);
         } finally {
             unlock();
@@ -910,6 +910,14 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Returns the most recently notified VM state.  Note that this
+     * isn't updated until the very end of a refresh cycle after VM
+     * halt, so it should be considered out of date until the refresh
+     * cycle is complete.  This is especially important when making
+     * decisions concerning the process epoch.
+     * Use {@link TeleProcess#epoch()} directly during the refresh
+     * cycle, which is updated at the beginning of the refresh cycle.
+     *
      * @return VM state; thread safe.
      */
     public final TeleVMState state() {
@@ -1104,6 +1112,21 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
+    /**
+     * Notifies all registered listeners that the state of the process has changed,
+     * for example started, stopped, or terminated.  Gathers up summary information
+     * and creates a (top-level) immutable record of the state to accompany the notification.
+     *
+     * @param processState the new process state
+     * @param epoch
+     * @param singleStepThread the thread, if any, that just completed a single step
+     * @param threads currently existing threads
+     * @param threadsStarted threads newly created since last notification
+     * @param threadsDied threads newly died since last notification
+     * @param breakpointEvents breakpoint events, if any, that caused this state change
+     * @param teleWatchpointEvent watchpoint, if any, that caused this state change
+     * @see ProcessState
+     */
     public final void notifyStateChange(
                     ProcessState processState,
                     long epoch,

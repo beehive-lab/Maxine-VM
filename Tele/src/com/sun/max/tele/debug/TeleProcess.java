@@ -163,7 +163,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     }
 
                     // Read VM memory and update various bits of cached state about the VM state
-                    updateVMCaches(request);
+                    updateVMCaches(request, epoch);
                     updateCache(request);
 
                     targetBreakpointManager().setActiveAll(false);
@@ -266,16 +266,21 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
 
         private void updateCache(TeleEventRequest request) {
             try {
-                TeleProcess.this.updateCache();
+                TeleProcess.this.updateCache(epoch);
             } catch (Exception e) {
                 e.printStackTrace();
                 ThrowableDialog.showLater(e, null, tracePrefix() + "Uncaught exception updating cache while processing " + request);
             }
         }
 
-        private void updateVMCaches(TeleEventRequest request) {
+        /**
+         * Requests the update of all state cached from the VM.
+         * @param request
+         * @param epoch the number of times the process has run
+         */
+        private void updateVMCaches(TeleEventRequest request, long epoch) {
             try {
-                vm().updateVMCaches();
+                vm().updateVMCaches(epoch);
             } catch (Exception e) {
                 e.printStackTrace();
                 ThrowableDialog.showLater(e, null, tracePrefix() + "Uncaught exception updating VM caches while processing " + request);
@@ -484,14 +489,14 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
 
         updateState(processState);
         epoch++;
-        updateCache();
+        updateCache(epoch);
         // now update state to reflect the discovered threads, all of which will appear as STARTED
         updateState(STOPPED);
 
         tracer.end(statsPrinter);
     }
 
-    public void updateCache() {
+    public void updateCache(long epoch) {
         updateTracer.begin();
         assert vm().lockHeldByCurrentThread();
 
@@ -507,7 +512,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
         for (TeleNativeThread thread : currentThreads) {
 
             // Refresh the thread
-            thread.updateCache();
+            thread.updateCache(epoch);
 
             newHandleToThreadMap.put(thread.localHandle(), thread);
             final TeleNativeThread oldThread = handleToThreadMap.get(thread.localHandle());
@@ -713,6 +718,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
 
     /**
      * Gets the current process epoch: the number of requested execution steps of the process since it was created.
+     * <br>
+     * This counter is updated directly after the process halts, and so is correct throughout the VM refresh cycle,
+     * unlike the {@linkplain TeleVM#state() VM state cache}, which is updated only at the end of the refresh cycle
+     * when external clients are notified.
      * <br>
      * Note that this is different from the number of execution requests made by clients, since the process
      * may be run several times in the execution of such a request.

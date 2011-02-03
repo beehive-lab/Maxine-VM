@@ -137,7 +137,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         // Exception to the general policy of not performing VM i/o during object
         // construction.  This is needed for the code registry.
         // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
-        updateCache();
+        updateCache(vm.teleProcess().epoch());
         // Register every method compilation, so that they can be located by code address.
         vm.codeCache().register(this);
     }

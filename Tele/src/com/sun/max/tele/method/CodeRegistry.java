@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,8 @@ final class CodeRegistry extends AbstractTeleVMHolder implements TeleVMCache {
 
     private final TimedTrace updateTracer;
 
+    private long lastUpdateEpoch = -1L;
+
     private final OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>> machineCodeMemoryRegions =
         new OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>>();
 
@@ -81,17 +83,26 @@ final class CodeRegistry extends AbstractTeleVMHolder implements TeleVMCache {
         tracer.end(statsPrinter);
     }
 
-    public void updateCache() {
-        updateTracer.begin();
-        assert vm().lockHeldByCurrentThread();
-        for (MaxEntityMemoryRegion< ? extends MaxMachineCode> memoryRegion : unallocatedMachineCodeMemoryRegions) {
-            if (!memoryRegion.start().isZero()) {
-                unallocatedMachineCodeMemoryRegions.remove(memoryRegion);
-                Trace.line(TRACE_VALUE, tracePrefix() + " formerly unallocated code memory region promoted to registry: " + memoryRegion.owner().entityName());
-                machineCodeMemoryRegions.add(memoryRegion);
+    /**
+     * Looks for any previously unallocated code regions that have become allocated and updates
+     * list of allocated code regions.
+     */
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            updateTracer.begin();
+            assert vm().lockHeldByCurrentThread();
+            for (MaxEntityMemoryRegion< ? extends MaxMachineCode> memoryRegion : unallocatedMachineCodeMemoryRegions) {
+                if (!memoryRegion.start().isZero()) {
+                    unallocatedMachineCodeMemoryRegions.remove(memoryRegion);
+                    Trace.line(TRACE_VALUE, tracePrefix() + " formerly unallocated code memory region promoted to registry: " + memoryRegion.owner().entityName());
+                    machineCodeMemoryRegions.add(memoryRegion);
+                }
             }
+            lastUpdateEpoch = epoch;
+            updateTracer.end(statsPrinter);
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
         }
-        updateTracer.end(statsPrinter);
     }
 
 
