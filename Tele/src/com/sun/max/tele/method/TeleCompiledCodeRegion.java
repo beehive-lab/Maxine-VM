@@ -131,10 +131,6 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
         return compiledCodeRegionMemoryRegion.isBootRegion();
     }
 
-    public List<TeleTargetMethod> teleTargetMethods() {
-        return teleCodeRegion.teleTargetMethods();
-    }
-
     public int compilationCount() {
         return teleCodeRegion.teleTargetMethods().size();
     }
@@ -148,5 +144,13 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
             }
         }
         return Collections.unmodifiableList(compilations);
+    }
+
+    public List<TeleTargetMethod> teleTargetMethods() {
+        return teleCodeRegion.teleTargetMethods();
+    }
+
+    public int loadedCompilationCount() {
+        return teleCodeRegion.methodLoadedCount();
     }
 }

@@ -42,6 +42,9 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for several possible kinds of compilation of a Java {@link ClassMethod} in the VM.
+ * <br>
+ * Creation of this surrogate requires knowing the location of the compilation in the VM, but nothing about
+ * its contents.  Contents are loaded lazily by deep copying from the VM, and cached as a local instances of {@link TargetMethod}.
  *
  * @author Michael Van De Vanter
  */
@@ -142,6 +145,16 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         vm.codeCache().register(this);
     }
 
+    /**
+     * @return whether a copy of the {@link TargetMethod} in the VM has been made and cached.
+     */
+    public final boolean isLoaded() {
+        return targetMethod != null;
+    }
+
+    /**
+     * @return a lazily created local copy of the {@link TargetMethod} in the VM.
+     */
     public final TargetMethod targetMethod() {
         if (targetMethod == null) {
             targetMethod = (TargetMethod) deepCopy();

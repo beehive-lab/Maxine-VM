@@ -110,4 +110,13 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      */
     void writeSummary(PrintStream printStream);
 
+    /**
+     * Writes current statistics concerning inspection of VM's code cache.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
+     */
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
+
 }
