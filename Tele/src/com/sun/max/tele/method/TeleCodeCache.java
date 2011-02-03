@@ -23,8 +23,10 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.text.*;
 import java.util.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
@@ -245,6 +247,20 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
             return create;
         } finally {
             vm().unlock();
+        }
+    }
+
+    public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        final NumberFormat formatter = NumberFormat.getInstance();
+        printStream.print(indentation + "Compilations registered: " + formatter.format(codeRegistry.size()) + "\n");
+        if (bootCodeRegion != null) {
+            printStream.print(indentation + "Compilations loaded from " + bootCodeRegion.entityName() + ": " + formatter.format(bootCodeRegion.compilationCount())
+                            + " (loaded: " + formatter.format(bootCodeRegion.loadedCompilationCount()) + ")\n");
+        }
+        if (dynamicCodeRegion != null) {
+            printStream.print(indentation + "Compilations loaded from " + dynamicCodeRegion.entityName() + ": " + formatter.format(dynamicCodeRegion.compilationCount())
+                            + " (loaded: " + formatter.format(dynamicCodeRegion.loadedCompilationCount()) + ")\n");
         }
     }
 

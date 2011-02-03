@@ -35,6 +35,9 @@ import com.sun.max.unsafe.*;
  * A cache of information about machine code (both compilations and external code) in the VM,
  * organized for efficient lookup by memory address.
  * <br>
+ * Membership in this cache does not necessarily imply that the compilation itself has been copied
+ * into the inspection memory.
+ * <br>
  * In the case where the the representation of a compilation exists, but has not yet been allocated
  * memory space in the VM's code cache (distinguished by a starting address equal to zero), the
  * entries are set aside and checked upon each refresh to see if they have since been allocated
@@ -154,6 +157,14 @@ final class CodeRegistry extends AbstractTeleVMHolder implements TeleVMCache {
             }
         }
         return null;
+    }
+
+    /**
+     * Gets the current count of compiled methods whose location in VM memory is known.
+     * @return the number of registered compiled code regions in VM memory
+     */
+    public int size() {
+        return machineCodeMemoryRegions.size();
     }
 
     public void writeSummary(PrintStream printStream) {

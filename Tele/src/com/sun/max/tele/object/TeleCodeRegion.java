@@ -127,4 +127,17 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     public List<TeleTargetMethod> teleTargetMethods() {
         return teleTargetMethods;
     }
+
+    /**
+     * @return the number of method compilations that are copied and cached locally.
+     */
+    public int methodLoadedCount() {
+        int count = 0;
+        for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
+            if (teleTargetMethod.isLoaded()) {
+                count++;
+            }
+        }
+        return count;
+    }
 }

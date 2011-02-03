@@ -135,6 +135,11 @@ public final class AboutSessionDialog extends InspectorDialog {
         classRegistry.printSessionStats(stream, indent, verbose);
 
         stream.println();
+        final MaxCodeCache codeCache = vm().codeCache();
+        stream.print(codeCache.entityName().toString().toUpperCase() + ":\n");
+        codeCache.printSessionStats(stream, indent, verbose);
+
+        stream.println();
         stream.print("SESSION OPTIONS: \n");
         inspection().options().printValues(stream, indent, verbose);
 
