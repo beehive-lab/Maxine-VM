@@ -593,7 +593,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         return teleHeapScheme.getForwardedOrigin(origin);
     }
 
-    public void printStats(PrintStream printStream, int indent, boolean verbose) {
+    public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
         final String indentation = Strings.times(' ', indent);
         final NumberFormat formatter = NumberFormat.getInstance();
         long totalHeapSize = 0;

@@ -133,6 +133,6 @@ public interface MaxHeap extends MaxEntity<MaxHeap> {
      * @param indent number of spaces to indent each line
      * @param verbose possibly write extended information when true
      */
-    void printStats(PrintStream printStream, int indent, boolean verbose);
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 
 }
