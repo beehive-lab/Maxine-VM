@@ -55,12 +55,15 @@ public final class JDKInterceptor {
      * These are the properties that are to be remembered from the host VM on which the image was built.
      */
     public static final String[] REMEMBERED_PROPERTY_NAMES = {
+        "awt.toolkit",
         "java.specification.version",
         "java.specification.name",
         "java.class.version",
         "java.vendor",
         "java.vendor.url",
         "java.vendor.url.bug",
+        "java.awt.graphicsenv",
+        "java.awt.printerjob",
         "file.encoding.pkg",
         "file.separator",
         "path.separator",
