@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,9 @@ import com.sun.max.unsafe.*;
  * A cache of information about machine code (both compilations and external code) in the VM,
  * organized for efficient lookup by memory address.
  * <br>
+ * Membership in this cache does not necessarily imply that the compilation itself has been copied
+ * into the inspection memory.
+ * <br>
  * In the case where the the representation of a compilation exists, but has not yet been allocated
  * memory space in the VM's code cache (distinguished by a starting address equal to zero), the
  * entries are set aside and checked upon each refresh to see if they have since been allocated
@@ -47,6 +50,8 @@ final class CodeRegistry extends AbstractTeleVMHolder implements TeleVMCache {
     private static final int TRACE_VALUE = 1;
 
     private final TimedTrace updateTracer;
+
+    private long lastUpdateEpoch = -1L;
 
     private final OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>> machineCodeMemoryRegions =
         new OrderedMemoryRegionList<MaxEntityMemoryRegion<? extends MaxMachineCode>>();
@@ -81,17 +86,26 @@ final class CodeRegistry extends AbstractTeleVMHolder implements TeleVMCache {
         tracer.end(statsPrinter);
     }
 
-    public void updateCache() {
-        updateTracer.begin();
-        assert vm().lockHeldByCurrentThread();
-        for (MaxEntityMemoryRegion< ? extends MaxMachineCode> memoryRegion : unallocatedMachineCodeMemoryRegions) {
-            if (!memoryRegion.start().isZero()) {
-                unallocatedMachineCodeMemoryRegions.remove(memoryRegion);
-                Trace.line(TRACE_VALUE, tracePrefix() + " formerly unallocated code memory region promoted to registry: " + memoryRegion.owner().entityName());
-                machineCodeMemoryRegions.add(memoryRegion);
+    /**
+     * Looks for any previously unallocated code regions that have become allocated and updates
+     * list of allocated code regions.
+     */
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            updateTracer.begin();
+            assert vm().lockHeldByCurrentThread();
+            for (MaxEntityMemoryRegion< ? extends MaxMachineCode> memoryRegion : unallocatedMachineCodeMemoryRegions) {
+                if (!memoryRegion.start().isZero()) {
+                    unallocatedMachineCodeMemoryRegions.remove(memoryRegion);
+                    Trace.line(TRACE_VALUE, tracePrefix() + " formerly unallocated code memory region promoted to registry: " + memoryRegion.owner().entityName());
+                    machineCodeMemoryRegions.add(memoryRegion);
+                }
             }
+            lastUpdateEpoch = epoch;
+            updateTracer.end(statsPrinter);
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
         }
-        updateTracer.end(statsPrinter);
     }
 
 
@@ -143,6 +157,14 @@ final class CodeRegistry extends AbstractTeleVMHolder implements TeleVMCache {
             }
         }
         return null;
+    }
+
+    /**
+     * Gets the current count of compiled methods whose location in VM memory is known.
+     * @return the number of registered compiled code regions in VM memory
+     */
+    public int size() {
+        return machineCodeMemoryRegions.size();
     }
 
     public void writeSummary(PrintStream printStream) {

@@ -24,6 +24,7 @@ package com.sun.max.tele.debug;
 
 import java.util.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.util.*;
@@ -94,6 +95,8 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         }
     }
 
+    private long lastUpdateEpoch = -1L;
+
     private final String entityDescription;
     private final ThreadLocalsAreaMemoryRegion tlaMemoryRegion;
     private final TeleNativeThread teleNativeThread;
@@ -131,26 +134,31 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " when in state " + safepointState + " in the " + teleVM.entityName();
     }
 
-    public void updateCache() {
-        int offset = 0;
-        final DataAccess dataAccess = vm().teleProcess().dataAccess();
-        for (VmThreadLocal vmThreadLocalVariable : VmThreadLocal.values()) {
-            final int index = vmThreadLocalVariable.index;
-            if (offset == 0 && safepointState == State.TRIGGERED) {
-                threadLocalVariables[index].setValue(VoidValue.VOID);
-            } else {
-                try {
-                    final Word word = dataAccess.readWord(memoryRegion().start(), offset);
-                    threadLocalVariables[index].setValue(new WordValue(word));
-                } catch (DataIOError dataIOError) {
-                    final String msg =
-                        "Could not read value of " + vmThreadLocalVariable + " from safepoints-" +
-                        safepointState.name().toLowerCase() + " VM thread locals: ";
-                    TeleWarning.message(msg, dataIOError);
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            int offset = 0;
+            final DataAccess dataAccess = vm().teleProcess().dataAccess();
+            for (VmThreadLocal vmThreadLocalVariable : VmThreadLocal.values()) {
+                final int index = vmThreadLocalVariable.index;
+                if (offset == 0 && safepointState == State.TRIGGERED) {
                     threadLocalVariables[index].setValue(VoidValue.VOID);
+                } else {
+                    try {
+                        final Word word = dataAccess.readWord(memoryRegion().start(), offset);
+                        threadLocalVariables[index].setValue(new WordValue(word));
+                    } catch (DataIOError dataIOError) {
+                        final String msg =
+                            "Could not read value of " + vmThreadLocalVariable + " from safepoints-" +
+                            safepointState.name().toLowerCase() + " VM thread locals: ";
+                        TeleWarning.message(msg, dataIOError);
+                        threadLocalVariables[index].setValue(VoidValue.VOID);
+                    }
                 }
+                offset += Word.size();
             }
-            offset += Word.size();
+            lastUpdateEpoch = epoch;
+        } else {
+            Trace.line(TRACE_LEVEL, tracePrefix() + "redundant refresh epoch=" + epoch + ": " + this);
         }
     }
 

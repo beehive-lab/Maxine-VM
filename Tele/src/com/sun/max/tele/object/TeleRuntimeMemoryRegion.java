@@ -55,7 +55,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
     TeleRuntimeMemoryRegion(TeleVM vm, Reference runtimeMemoryRegionReference) {
         super(vm, runtimeMemoryRegionReference);
-        updateCache();
+        updateCache(vm.teleProcess().epoch());
     }
 
     @Override

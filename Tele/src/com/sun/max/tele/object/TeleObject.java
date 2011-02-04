@@ -138,6 +138,8 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
 
     private TimedTrace updateTracer = null;
 
+    private long lastUpdateEpoch = -1L;
+
     private TeleReference reference;
     private final LayoutScheme layoutScheme;
     private final SpecificLayout specificLayout;
@@ -175,7 +177,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
         return updateTracer;
     }
 
-    public final void updateCache() {
+    public final void updateCache(long epoch) {
         // Note that this method gets called automatically as part of instance creation
         // in {@link TeleObjectFactory#make(Reference)}
 
@@ -187,9 +189,15 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
         // want to contribute to the tracing statistics, and since we want to
         // selectively trace certain subclasses.
         tracer().begin(getObjectUpdateTraceValue());
-        updateObjectCache(statsPrinter);
-        tracer().end(getObjectUpdateTraceValue(), statsPrinter);
 
+        if (epoch > lastUpdateEpoch) {
+            updateObjectCache(statsPrinter);
+            lastUpdateEpoch = epoch;
+        } else {
+            statsPrinter.addStat("Redundant update skipped");
+            Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + " redundant update epoch=" + epoch + ": " + this);
+        }
+        tracer().end(getObjectUpdateTraceValue(), statsPrinter);
         /*
          * if (reference.toOrigin().equals(Pointer.zero())) { live = false; }
          */
@@ -198,7 +206,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     /**
      * Gets the level at which to present a trace of individual object updates, specified
      * here as the default.  Subclasses should override to lower the level for specific types,
-     * since producing traces for every object update would generate an unworkably large amound
+     * since producing traces for every object update would generate an unworkably large amount
      * of output.
      *
      * @return the trace level that should bye used by this object during updates

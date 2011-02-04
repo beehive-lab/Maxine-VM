@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,8 +107,8 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
         }
     }
 
-    public void updateCache() {
-        teleCodeRegion.updateCache();
+    public void updateCache(long epoch) {
+        teleCodeRegion.updateCache(epoch);
     }
 
     public String entityName() {
@@ -131,10 +131,6 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
         return compiledCodeRegionMemoryRegion.isBootRegion();
     }
 
-    public List<TeleTargetMethod> teleTargetMethods() {
-        return teleCodeRegion.teleTargetMethods();
-    }
-
     public int compilationCount() {
         return teleCodeRegion.teleTargetMethods().size();
     }
@@ -148,5 +144,13 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
             }
         }
         return Collections.unmodifiableList(compilations);
+    }
+
+    public List<TeleTargetMethod> teleTargetMethods() {
+        return teleCodeRegion.teleTargetMethods();
+    }
+
+    public int loadedCompilationCount() {
+        return teleCodeRegion.methodLoadedCount();
     }
 }

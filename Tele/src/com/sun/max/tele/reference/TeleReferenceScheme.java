@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.sun.max.tele.reference;
 import java.lang.ref.*;
 import java.util.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -47,11 +48,13 @@ import com.sun.max.vm.reference.Reference;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public abstract class TeleReferenceScheme extends AbstractVMScheme implements ReferenceScheme {
+public abstract class TeleReferenceScheme extends AbstractVMScheme implements TeleVMCache, ReferenceScheme {
 
     private static final int TRACE_VALUE = 1;
 
     private final String tracePrefix;
+
+    private long lastUpdateEpoch = -1L;
 
     private TeleVM vm;
     private TeleRoots teleRoots;
@@ -189,11 +192,16 @@ public abstract class TeleReferenceScheme extends AbstractVMScheme implements Re
     /**
      * Update Inspector state after a change to the remote contents of the Inspector root table.
      */
-    public void refresh() {
-        // Update Inspector's local cache of the remote Inspector root table.
-        teleRoots.updateCache();
-        // Rebuild the canonicalization map.
-        refreshTeleReferenceCanonicalization();
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            // Update Inspector's local cache of the remote Inspector root table.
+            teleRoots.updateCache(epoch);
+            // Rebuild the canonicalization map.
+            refreshTeleReferenceCanonicalization();
+            lastUpdateEpoch = epoch;
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
+        }
     }
 
     /**
