@@ -255,11 +255,11 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
         final NumberFormat formatter = NumberFormat.getInstance();
         printStream.print(indentation + "Compilations registered: " + formatter.format(codeRegistry.size()) + "\n");
         if (bootCodeRegion != null) {
-            printStream.print(indentation + "Compilations loaded from " + bootCodeRegion.entityName() + ": " + formatter.format(bootCodeRegion.compilationCount())
+            printStream.print(indentation + "Registered from " + bootCodeRegion.entityName() + ": " + formatter.format(bootCodeRegion.compilationCount())
                             + " (loaded: " + formatter.format(bootCodeRegion.loadedCompilationCount()) + ")\n");
         }
         if (dynamicCodeRegion != null) {
-            printStream.print(indentation + "Compilations loaded from " + dynamicCodeRegion.entityName() + ": " + formatter.format(dynamicCodeRegion.compilationCount())
+            printStream.print(indentation + "Registerd from " + dynamicCodeRegion.entityName() + ": " + formatter.format(dynamicCodeRegion.compilationCount())
                             + " (loaded: " + formatter.format(dynamicCodeRegion.loadedCompilationCount()) + ")\n");
         }
     }
