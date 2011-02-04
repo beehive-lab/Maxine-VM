@@ -45,7 +45,6 @@ public final class MaxineInspector {
     public static final String VERSION_STRING = Integer.toString(MAJOR_VERSION) + "." + Integer.toString(MINOR_VERSION);
     public static final String HOME_URL = "http://labs.oracle.com/projects/maxine/";
     private static final int TRACE_VALUE = 1;
-
     private static final String tracePrefix = "[Inspector] ";
 
     private MaxineInspector() {
@@ -64,12 +63,18 @@ public final class MaxineInspector {
             options.printHelp(System.out, 80);
             return;
         }
+
+        // These system properties only take effect when running under the Apple default L&F
+        // See: http://java.sun.com/developer/technicalArticles/JavaLP/JavaToMac/
+        System.setProperty("apple.laf.useScreenMenuBar", "true");
+        System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Maxine Inspector");
+
         try {
             final MaxVM maxVM = TeleVM.create(options);
             SwingUtilities.invokeLater(new Runnable() {
 
                 public void run() {
-                    Inspection.initializeSwing();
+                    initializeSwing();
                     final Inspection inspection = new Inspection(maxVM, options);
                     if (maxVM.inspectionMode() == MaxInspectionMode.IMAGE) {
                         // Bring up the boot image info inspector as a starting point for browsing
@@ -88,6 +93,38 @@ public final class MaxineInspector {
     public static String description() {
         return "The " + NAME + " Ver. " + VERSION_STRING + "  <" + HOME_URL + ">";
     }
+
+    /**
+     * Initializes the Java Swing UI system to a specified Look and Feel (L&F).
+     *
+     * @see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
+     */
+    private static void initializeSwing() {
+        // Default L&F
+        String lookAndFeelName = UIManager.getSystemLookAndFeelClassName();
+
+        // Some optional overrides of the platform default; uncomment the one you want to try.
+        // Note that you can also set the L&F for the invocation with a command line option.
+        // Note that you can set the platform default L&F in the Swing properties file.
+        // For details, see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
+
+//      lookAndFeelName = "javax.swing.plaf.metal.MetalLookAndFeel";
+//      lookAndFeelName = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+//      lookAndFeelName = "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
+//      lookAndFeelName = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
+
+        if (!lookAndFeelName.equals(UIManager.getSystemLookAndFeelClassName())) {
+            Trace.line(TRACE_VALUE, "[Inspection]  setting Look & Feel:  " + lookAndFeelName);
+            try {
+                UIManager.setLookAndFeel(lookAndFeelName);
+            } catch (Exception e) {
+                InspectorError.unexpected("Failed to set L&F:  " + lookAndFeelName, e);
+            }
+        }
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
+    }
+
 
 
 }
