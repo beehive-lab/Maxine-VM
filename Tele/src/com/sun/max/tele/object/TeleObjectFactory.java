@@ -409,14 +409,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         return teleObject == null ? null : teleObject.get();
     }
 
-    static class MutableLong {
-        long value;
-        @Override
-        public String toString() {
-            return String.valueOf(value);
-        }
-    }
-
     static class TimerPerType extends HashMap<Class, long[]> {
         @Override
         public long[] get(Object key) {
