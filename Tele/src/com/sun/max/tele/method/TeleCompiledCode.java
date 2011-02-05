@@ -255,9 +255,6 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         return teleTargetMethod;
     }
 
-    public byte[] getCode() {
-        return teleTargetMethod.getCode();
-    }
     /**
      * Gets the name of the source variable corresponding to a stack slot, if any.
      *
@@ -294,7 +291,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
                 return string;
             }
         };
-        disassemble(printStream, getCode(), platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+        disassemble(printStream, teleTargetMethod.getCode(), platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
 
 }
