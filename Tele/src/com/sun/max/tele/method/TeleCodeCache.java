@@ -138,7 +138,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
             lastUpdateEpoch = epoch;
             updateTracer.end(null);
         } else {
-            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch-" + epoch + ": " + this);
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch);
         }
     }
 

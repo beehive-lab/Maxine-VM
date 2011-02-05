@@ -65,7 +65,10 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
 
         @Override
         public MemoryUsage getUsage() {
-            return new MemoryUsage(-1, end().minus(teleStack.thread().registers().stackPointer()).toLong(), nBytes(), -1);
+            if (start().isZero() || nBytes() == 0L) {
+                return MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
+            }
+            return new MemoryUsage(-1L, end().minus(teleStack.thread().registers().stackPointer()).toLong(), nBytes(), -1L);
         }
 
         public MaxEntityMemoryRegion< ? extends MaxEntity> parent() {

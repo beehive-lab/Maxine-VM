@@ -497,7 +497,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
     }
 
     public void updateCache(long epoch) {
-        updateTracer.begin();
+        updateTracer.begin("epoch =" + epoch);
         assert vm().lockHeldByCurrentThread();
 
         final List<TeleNativeThread> currentThreads = new ArrayList<TeleNativeThread>(handleToThreadMap.size());
