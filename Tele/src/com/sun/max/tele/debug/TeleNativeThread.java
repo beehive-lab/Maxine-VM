@@ -138,7 +138,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
     protected TeleNativeThread(TeleProcess teleProcess, Params params) {
         super(teleProcess.vm());
-        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating id=" + params.id);
         tracer.begin();
 
         this.teleProcess = teleProcess;

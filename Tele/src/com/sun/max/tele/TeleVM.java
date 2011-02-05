@@ -792,10 +792,10 @@ public abstract class TeleVM implements MaxVM {
      */
     public final void updateVMCaches(long epoch) {
         if (!tryLock(DEFAULT_MAX_LOCK_TRIALS)) {
-            TeleError.unexpected("TeleVM unable to acquire VM lock for update");
+            TeleError.unexpected("TeleVM unable to acquire VM lock for update at epoch=" + epoch);
         }
         try {
-            updateTracer.begin();
+            updateTracer.begin("epoch=" + epoch);
             if (teleClassRegistry == null) {
                 /*
                  * Must delay creation/initialization of the {@link TeleClassRegistry} until after
@@ -822,7 +822,7 @@ public abstract class TeleVM implements MaxVM {
             teleClassRegistry.updateCache(epoch);
             heap.updateObjectCache(epoch);
             teleCodeCache.updateCache(epoch);
-            updateTracer.end(null);
+            updateTracer.end("epoch=" + epoch);
         } finally {
             unlock();
         }
@@ -1587,8 +1587,6 @@ public abstract class TeleVM implements MaxVM {
     public void advanceToJavaEntryPoint() throws IOException {
         final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
         final MachineCodeLocation entryLocation = codeManager().createMachineCodeLocation(startEntryAddress, "vm start address");
-
-
 
         try {
             runToInstruction(entryLocation, true, false);

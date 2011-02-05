@@ -219,7 +219,7 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
             lastUpdateEpoch = epoch;
             updateTracer.end(statsPrinter);
         } else {
-            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch);
         }
     }
 
