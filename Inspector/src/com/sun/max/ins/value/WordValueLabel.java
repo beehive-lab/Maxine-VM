@@ -622,7 +622,7 @@ public class WordValueLabel extends ValueLabel {
             case CALL_ENTRY_POINT_TEXT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordCallEntryPointColor());
-                setWrappedText(inspection().nameDisplay().veryShortName(compiledCode));
+                setWrappedText(htmlify(inspection().nameDisplay().veryShortName(compiledCode)));
                 setWrappedToolTipText(value.toWord().to0xHexString() +
                                 "<br>Points to entry in compilation number " + compiledCode.compilationIndex() + " for method" +
                                 "<br>" + htmlify(inspection().nameDisplay().longName(compiledCode)));
@@ -661,7 +661,7 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordCallReturnPointColor());
                 if (compiledCode != null) {
-                    setWrappedText(inspection().nameDisplay().veryShortName(compiledCode, value.toWord().asAddress()));
+                    setWrappedText(htmlify(inspection().nameDisplay().veryShortName(compiledCode, value.toWord().asAddress())));
                     final long position = value().asWord().asAddress().minus(compiledCode.getCodeStart()).toLong();
                     setWrappedToolTipText(value.toWord().to0xHexString() +
                                     "<br>Points into compilation number " + compiledCode.compilationIndex() + " for method" +

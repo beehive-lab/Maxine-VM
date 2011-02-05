@@ -256,7 +256,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 setToolTipPrefix("call return in frame " + modelIndex + " points at:<br>");
                 setForeground(style().wordCallReturnPointColor());
             }
-            setText(Integer.toString(modelIndex) + ":  " + methodName);
+            setWrappedText(Integer.toString(modelIndex) + ":  " + htmlify(methodName));
             setWrappedToolTipText(toolTip);
             setFont(style().defaultFont());
             setBackground(isSelected ? stackFrameList.getSelectionBackground() : stackFrameList.getBackground());
