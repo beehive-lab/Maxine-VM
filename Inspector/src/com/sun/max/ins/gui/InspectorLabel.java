@@ -338,6 +338,9 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * Sets the label's text to the specified string, but starting
      * with an {@code <html>} tag, and wrapped
      * by an optional prefix and an optional suffix.
+     * Note that any text appearing in this context should be
+     * filtered by {@link #htmlify(String)} so that angle bracket
+     * characters will be rendered correctly.
      *
      * @param text the text to be wrapped and set as the label's text.
      * @see #setTextPrefix(String)
