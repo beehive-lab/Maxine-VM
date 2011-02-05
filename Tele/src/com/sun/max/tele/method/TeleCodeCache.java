@@ -259,7 +259,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
                             + " (loaded: " + formatter.format(bootCodeRegion.loadedCompilationCount()) + ")\n");
         }
         if (dynamicCodeRegion != null) {
-            printStream.print(indentation + "Registerd from " + dynamicCodeRegion.entityName() + ": " + formatter.format(dynamicCodeRegion.compilationCount())
+            printStream.print(indentation + "Registered from " + dynamicCodeRegion.entityName() + ": " + formatter.format(dynamicCodeRegion.compilationCount())
                             + " (loaded: " + formatter.format(dynamicCodeRegion.loadedCompilationCount()) + ")\n");
         }
     }
