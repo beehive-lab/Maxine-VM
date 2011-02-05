@@ -56,7 +56,7 @@ public abstract class TeleDelegatedMemoryRegion extends TeleMemoryRegion {
     }
 
     @Override
-    public MemoryUsage getUsage() {
+    public final MemoryUsage getUsage() {
         return teleRuntimeMemoryRegion.getUsage();
     }
 

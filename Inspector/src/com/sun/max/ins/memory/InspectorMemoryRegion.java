@@ -99,7 +99,7 @@ public class InspectorMemoryRegion implements MaxMemoryRegion {
         return Util.equal(this, otherMemoryRegion);
     }
 
-    public MemoryUsage getUsage() {
+    public final MemoryUsage getUsage() {
         if (memoryUsage == null) {
             // Lazy initialization to avoid object creation circularities
             // The default usage is 100%, i.e. the region is completely used.
