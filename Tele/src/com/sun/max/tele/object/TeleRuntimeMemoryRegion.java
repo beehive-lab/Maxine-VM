@@ -43,7 +43,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     private Address regionStart = Address.zero();
     private long nBytes = 0L;
     private String regionName = null;
-    private MemoryUsage memoryUsage = null;
+    private MemoryUsage memoryUsage = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
 
     private final Object localStatsPrinter = new Object() {
 
@@ -92,7 +92,9 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
             }
             this.regionStart = newRegionStart;
             this.regionName = newRegionName;
-            this.memoryUsage = new MemoryUsage(-1, nBytes, nBytes, -1);
+            if (nBytes != memoryUsage.getUsed()) {
+                this.memoryUsage =  MaxMemoryRegion.Util.defaultUsage(nBytes);
+            }
         } catch (DataIOError dataIOError) {
             TeleWarning.message("TeleRuntimeMemoryRegion dataIOError:", dataIOError);
             dataIOError.printStackTrace();

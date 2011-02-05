@@ -78,7 +78,7 @@ public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
     @Override
     public MemoryUsage getUsage() {
         long nBytesUsed = vm().platform().nBytesInWord() * wordsUsed;
-        return new MemoryUsage(-1, nBytesUsed, getRegionNBytes(), -1);
+        return new MemoryUsage(-1L, nBytesUsed, getRegionNBytes(), -1L);
     }
 
 }

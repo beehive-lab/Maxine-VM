@@ -41,7 +41,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
      */
     private Address mark = Address.zero();
 
-    private MemoryUsage memoryUsage = null;
+    private MemoryUsage memoryUsage = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
 
     public TeleLinearAllocationMemoryRegion(TeleVM teleVM, Reference linearAllocationMemoryRegionReference) {
         super(teleVM, linearAllocationMemoryRegionReference);
@@ -67,13 +67,13 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
     }
 
     @Override
-    public MemoryUsage getUsage() {
-        if (memoryUsage == null) {
+    public final MemoryUsage getUsage() {
+        if (memoryUsage == MaxMemoryRegion.Util.NULL_MEMORY_USAGE) {
             if (isAllocated() && !mark.isZero()) {
-                memoryUsage = new MemoryUsage(-1, mark.minus(getRegionStart()).toLong(), getRegionNBytes(), -1);
+                memoryUsage = new MemoryUsage(-1L, mark.minus(getRegionStart()).toLong(), getRegionNBytes(), -1L);
             }
         }
-        if (memoryUsage != null) {
+        if (memoryUsage != MaxMemoryRegion.Util.NULL_MEMORY_USAGE) {
             return memoryUsage;
         }
         return super.getUsage();
