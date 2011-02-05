@@ -274,7 +274,7 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         if (!isInitialized()) {
             Trace.line(TRACE_VALUE, tracePrefix() + "not initialized yet");
         } else if (epoch <= lastUpdateEpoch) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "redundant udpate epoch=" + epoch + ": " + this);
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant udpate epoch=" + epoch);
         } else {
             updateTracer.begin();
             // Check GC status and update references if a GC has completed since last time we checked
@@ -604,6 +604,11 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                         " (" + "total size: " + formatter.format(totalHeapSize) + " bytes\n");
         printStream.print(indentation + "Inspection references: " + formatter.format(teleObjectFactory.referenceCount()) +
                         " (" + formatter.format(teleObjectFactory.liveObjectCount()) + " live)\n");
+        if (isInGC()) {
+            printStream.print(indentation + "IN GC(#starts=" + formatter.format(gcStartedCount) + ", #complete=" + formatter.format(gcCompletedCount) + ")\n");
+        } else if (gcCompletedCount >= 0) {
+            printStream.print(indentation + "GC count: " + formatter.format(gcCompletedCount) + "\n");
+        }
     }
 
 }
