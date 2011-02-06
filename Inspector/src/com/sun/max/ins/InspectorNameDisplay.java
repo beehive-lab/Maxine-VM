@@ -34,7 +34,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
  * Standardized ways to display textual names of common entities during Inspection sessions.
@@ -290,10 +289,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final Address entry = compiledCode.getCodeStart();
         final long position = address.minus(entry).toLong();
         return position == 0 ? "" : "+" + InspectorLabel.longTo0xHex(position);
-    }
-
-    private static String name(TargetMethod targetMethod) {
-        return targetMethod == null ? "<no method actor>" : targetMethod.name();
     }
 
     /**
