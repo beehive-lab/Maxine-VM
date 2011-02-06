@@ -65,7 +65,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
             statsPrinter.addStat("unallocated");
         }
         statsPrinter.addStat(localStatsPrinter);
-        if (!isRelocatable() && isAllocated()) {
+        if (!isRelocatable() && isAllocated() && regionName != null) {
             // Optimization: if we know the region won't be moved by the VM, and
             // we already have the location information, then don't bother to refresh.
             statsPrinter.addStat("allocated, not relocatable");
