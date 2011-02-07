@@ -266,6 +266,14 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         teleObjectFactory.updateCache(epoch);
     }
 
+    /** {@inheritDoc}
+     * <br>
+     * Updating the cache of information about <strong>heap regions</strong> is delicate because the descriptions
+     * of those regions must be read, even though those descriptions are themselves heap objects.
+     * Standard inspection machinery might fail to read those objects while the heap description
+     * is in the process of being updated, so we dynamically suspend rejection of object origin
+     * addresses based on heap containment.
+     */
     public void updateCache(long epoch) {
         // Replaces local cache of information about heap regions in the VM.
         // During this update, any method calls to check heap containment are handled specially.
@@ -297,9 +305,30 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                 // GC is not in progress, and no new GCs have happened, so cached reference data is up to date
             }
 
+            // Suspend checking for heap containment of object origin addresses.
             updatingHeapMemoryRegions = true;
+
             final List<MaxHeapRegion> heapRegions = new ArrayList<MaxHeapRegion>(allHeapRegions.size());
+
+            // We already know about the boot heap
             heapRegions.add(bootHeapRegion);
+
+            // Check for the {@link ImmortalHeap} description
+            if (teleImmortalHeapRegion == null) {
+                final Reference immortalHeapReference = vm().teleFields().ImmortalHeap_immortalHeap.readReference(vm());
+                if (immortalHeapReference != null && !immortalHeapReference.isZero()) {
+                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) makeTeleObject(immortalHeapReference);
+                    if (maybeAllocatedRegion != null && maybeAllocatedRegion.isAllocated()) {
+                        teleImmortalHeapRegion = maybeAllocatedRegion;
+                        immortalHeapRegion = new TeleHeapRegion(vm(), teleImmortalHeapRegion, false);
+                    }
+                }
+            }
+            if (immortalHeapRegion != null) {
+                heapRegions.add(immortalHeapRegion);
+            }
+
+            // Check for dynamically allocated heap regions
             final Reference runtimeHeapRegionsArrayReference = vm().teleFields().InspectableHeapInfo_dynamicHeapMemoryRegions.readReference(vm());
             if (!runtimeHeapRegionsArrayReference.isZero()) {
                 final TeleArrayObject teleArrayObject = (TeleArrayObject) makeTeleObject(runtimeHeapRegionsArrayReference);
@@ -328,7 +357,9 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                     teleRuntimeMemoryRegions = Arrays.copyOf(teleRuntimeMemoryRegions, next);
                 }
             }
-            updatingHeapMemoryRegions = false;
+
+            // Check for the {@link TeleRootTableMemoryRegion} description, even though it
+            // is not properly considered a heap region.
             if (teleRootsRegion == null) {
                 final Reference teleRootsRegionReference = vm().teleFields().InspectableHeapInfo_rootTableMemoryRegion.readReference(vm());
                 if (teleRootsRegionReference != null && !teleRootsRegionReference.isZero()) {
@@ -340,19 +371,9 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
                 }
             }
 
-            if (teleImmortalHeapRegion == null) {
-                final Reference immortalHeapReference = vm().teleFields().ImmortalHeap_immortalHeap.readReference(vm());
-                if (immortalHeapReference != null && !immortalHeapReference.isZero()) {
-                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) makeTeleObject(immortalHeapReference);
-                    if (maybeAllocatedRegion != null && maybeAllocatedRegion.isAllocated()) {
-                        teleImmortalHeapRegion = maybeAllocatedRegion;
-                        immortalHeapRegion = new TeleHeapRegion(vm(), teleImmortalHeapRegion, false);
-                    }
-                }
-            }
-            if (immortalHeapRegion != null) {
-                heapRegions.add(immortalHeapRegion);
-            }
+            // Resume checking for heap containment of object origin addresses.
+            updatingHeapMemoryRegions = false;
+
             allHeapRegions = Collections.unmodifiableList(heapRegions);
             lastUpdateEpoch = epoch;
             updateTracer.end(statsPrinter);
