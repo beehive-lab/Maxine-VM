@@ -162,11 +162,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                         resumeExecution = false;
                     }
 
+                    // Clear all breakpoints before we refresh, so the breakpoints don't show up as real patches to compiled code
+                    targetBreakpointManager().setActiveAll(false);
+
                     // Read VM memory and update various bits of cached state about the VM state
                     updateVMCaches(request, epoch);
                     updateCache(request);
-
-                    targetBreakpointManager().setActiveAll(false);
 
                     int newlystarted = 0;
                     int newlydetached = 0;
