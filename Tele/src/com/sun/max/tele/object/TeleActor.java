@@ -29,7 +29,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link Actor} in the {@link TeleVM}.
+ * Canonical surrogate for an object of type {@link Actor} in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -40,7 +40,7 @@ public abstract class TeleActor extends TeleTupleObject {
     }
 
     /**
-     * @return the generic name of this {@link Actor} copied from the {@link TeleVM}.
+     * @return the generic name of this {@link Actor} copied from the VM.
      */
     public final String getName() {
         return getTeleName().utf8Constant().string;
@@ -86,7 +86,7 @@ public abstract class TeleActor extends TeleTupleObject {
 
     /**
      * @return contents of the {@link #flags} field, read from this
-     *         {@link Actor} in the {@link TeleVM}.
+     *         {@link Actor} in the VM.
      */
     public final int getFlags() {
         return vm().teleFields().Actor_flags.readInt(reference());
