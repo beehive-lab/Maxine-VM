@@ -356,7 +356,7 @@ public class WordValueLabel extends ValueLabel {
                     if (valueMode == ValueMode.REFERENCE) {
                         displayMode = DisplayMode.NULL_WORD;
                     }
-                } else if (vm().isValidReference(vm().wordToReference(newValue.toWord()))) {
+                } else if (vm().isValidOrigin(newValue.toWord().asPointer())) {
                     displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
                     final TeleReference ref = (TeleReference) vm().wordToReference(newValue.toWord());
 
