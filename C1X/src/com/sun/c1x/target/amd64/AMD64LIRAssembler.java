@@ -1807,7 +1807,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     int framePages = frameSize / target.pageSize;
                     // emit multiple stack bangs for methods with frames larger than a page
                     for (int i = 0; i <= framePages; i++) {
-                        bangStackWithOffset((i + C1XOptions.StackShadowPages) * target.pageSize);
+                        int offset = (i + C1XOptions.StackShadowPages) * target.pageSize;
+                        // Deduct 'frameSize' to handle frames larger than (C1XOptions.StackShadowPages * target.pageSize)
+                        offset = offset - frameSize;
+                        bangStackWithOffset(offset - frameSize);
                     }
                     break;
                 }
