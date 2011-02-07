@@ -311,12 +311,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     boolean isValidOrigin(Pointer origin);
 
     /**
-     * @param reference a {@link Reference} to memory in the VM.
-     * @return whether there is a heap object at that location.
-     */
-    boolean isValidReference(Reference reference);
-
-    /**
      * @param word contents of a memory word from the VM.
      * @return the word interpreted as a memory location, wrapped in a Reference.
      */

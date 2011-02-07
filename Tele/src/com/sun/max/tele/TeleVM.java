@@ -1338,20 +1338,6 @@ public abstract class TeleVM implements MaxVM {
         return staticTupleOrigin.equals(origin);
     }
 
-    public final boolean isValidReference(Reference ref) {
-//        if (isInGC()) {
-//            final TeleReference teleReference = (TeleReference) ref;
-//            if (teleReference instanceof MutableTeleReference) {
-//                // Assume invalid during GC.
-//                return false;//TODO: check for forwarding pointer
-//            }
-//        }
-        if (ref instanceof LocalTeleReference) {
-            return true;
-        }
-        return isValidOrigin(ref.toOrigin());
-    }
-
     /**
      * Checks that a {@link Reference} points to a heap object in the VM;
      * throws an unchecked exception if not.  This is a low-level method
