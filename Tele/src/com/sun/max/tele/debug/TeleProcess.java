@@ -233,7 +233,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
 
                     // CLEANUP: debugging traces...
                     if (newlystarted > 0 || newlydetached > 0) {
-                        Trace.line(TRACE_VALUE, tracePrefix() + " e(" + epoch + ") " + "Hit " +
+                        Trace.line(TRACE_VALUE, tracePrefix() + " (epoch=" + epoch + ") " + "Hit " +
                                         newlystarted + " VmThread.run() breakpoints " +
                                         newlydetached + " VmThread.detached() breakpoints " +
                                         ", resume execution = " + resumeExecution + " " +
