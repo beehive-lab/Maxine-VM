@@ -62,8 +62,8 @@ public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
     }
 
     @Override
-    protected void updateObjectCache(StatsPrinter statsPrinter) {
-        super.updateObjectCache(statsPrinter);
+    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        super.updateObjectCache(epoch, statsPrinter);
         try {
             wordsUsed = vm().teleFields().RootTableMemoryRegion_wordsUsed.readLong(getReference());
         } catch (DataIOError dataIOError) {
