@@ -216,8 +216,9 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
             RegionTable.initialize(regionInfoClass, startOfManagedSpace, numRegions);
             // Allocate the backing storage for the region lists.
-            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[numRegions]);
-            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, new int[numRegions]);
+            final int listSize = numRegions << 1; // 2 entries per regions, one for each link (prev and next).
+            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[listSize]);
+            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, new int[listSize]);
 
             FatalError.check(bootAllocator.end.roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(initialSize)), "");
 
