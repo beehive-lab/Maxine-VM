@@ -154,15 +154,17 @@ public class HeapAccount<T extends HeapAccountOwner>{
         }
         final FixedSizeRegionAllocator regionAllocator = theHeapRegionManager.regionAllocator();
         int numRegionsNeeded = numRegions;
-        do {
-            RegionRange range = regionAllocator.allocateLessOrEqual(numRegions);
+        while (numRegionsNeeded > 0) {
+            final RegionRange range = regionAllocator.allocateLessOrEqual(numRegions);
             // For now, every allocated region is always committed
             // Probably only want to do that on not already committed regions. The
             // region allocator should be able to discriminate that.
-            regionAllocator.commit(range.firstRegion(), range.numRegions());
-            recordAllocated(range.firstRegion(), range.numRegions(), recipient, prepend);
-            numRegionsNeeded -= range.numRegions();
-        } while(numRegionsNeeded == 0);
+            final int firstAllocatedRegion = range.firstRegion();
+            final int numAllocatedRegions = range.numRegions();
+            regionAllocator.commit(firstAllocatedRegion, numAllocatedRegions);
+            recordAllocated(firstAllocatedRegion, numAllocatedRegions, recipient, prepend);
+            numRegionsNeeded -= numAllocatedRegions;
+        }
         return true;
     }
 
