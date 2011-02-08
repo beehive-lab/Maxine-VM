@@ -29,6 +29,7 @@ import java.util.*;
 import com.sun.max.io.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.*;
@@ -41,10 +42,20 @@ import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for several possible kinds of compilation of a Java {@link ClassMethod} in the VM.
+ * Canonical surrogate for some flavor of {@link TargetMethod}, which is a compilation
+ * of a Java {@link ClassMethod} in the VM.
  * <br>
- * Creation of this surrogate requires knowing the location of the compilation in the VM, but nothing about
- * its contents.  Contents are loaded lazily by deep copying from the VM, and cached as a local instances of {@link TargetMethod}.
+ * When this description is first created, it examines only the location of the {@link TargetMehod} in the VM.
+ * <br>
+ * The contents of the {@link TargetMethod} in the VM are loaded, disassembled, and cached lazily.
+ * The caches are flushed whenever
+ * an update determines that the code has been changed (i.e. patched).
+ * <br>
+ * Content loading is performed by (restricted) deep copying the {@link TargetMethod}
+ * from the VM, and caching the local instance.
+ * <br>
+ * <strong>Important</strong>: this implementation assumes that compilations in the VM, once created,
+ * <strong>do not move in memory</strong>.
  *
  * @author Michael Van De Vanter
  */
@@ -118,9 +129,30 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return Collections.emptyList();
     }
 
+    private static final int TRACE_VALUE = 2;
+
     private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
 
-    private List<TargetCodeInstruction> instructions;
+    /**
+     * Cached copy of the {@link TargetMethod} from the VM, replaced whenever the code is observed to have been patched.
+     */
+    private TargetMethod targetMethodCache;
+
+    /**
+     * Process epoch at the last time the target method in the VM was observed to have changed (been patched).
+     */
+    private long targetMethodChangedEpoch = -1L;
+
+    /**
+     * Cache of the code from the last time the local copy of the target method was made,
+     * used for comparison to see if it has changed.
+     */
+    private byte[] codeCache = null;
+
+    /**
+     * Cache of the machine instructions disassembled from code the last time the code changed.
+     */
+    private List<TargetCodeInstruction> instructionCache;
 
     /**
      * @see  StopPositions
@@ -130,49 +162,90 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
     private TeleClassMethodActor teleClassMethodActor;
 
-    /**
-     * Cached copy of the {@link TargetMethod} from the VM.
-     */
-    private TargetMethod targetMethod;
-
     protected TeleTargetMethod(TeleVM vm, Reference targetMethodReference) {
         super(vm, targetMethodReference);
-        // Exception to the general policy of not performing VM i/o during object
-        // construction.  This is needed for the code registry.
-        // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
-        updateCache(vm.teleProcess().epoch());
         // Register every method compilation, so that they can be located by code address.
+        // Note that this depends on the basic location information already being read by
+        // superclass constructors.
         vm.codeCache().register(this);
     }
 
     /**
-     * @return whether a copy of the {@link TargetMethod} in the VM has been made and cached.
+     * Creates and caches a local copy of the {@link TargetMethod} in the VM.
+     */
+    private void loadMethodCache() {
+        targetMethodCache = (TargetMethod) deepCopy();
+        codeCache = targetMethodCache.code();
+        instructionCache = null;
+    }
+
+    /**
+     * Clears all cached data from the {@link TargetMethod} in the VM.
+     */
+    private void flushMethodCache() {
+        targetMethodCache = null;
+        codeCache = null;
+        instructionCache = null;
+    }
+
+    /** {@inheritDoc}
+     * <br>
+     * Compiled machine code generally doesn't change, so the code and disassembled instructions are cached, but
+     * this update check for cases where the code does change (i.e. has been patched), in which case the caches
+     * are flushed.
+     */
+    @Override
+    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        super.updateObjectCache(epoch, statsPrinter);
+        // Flush caches if the code in the VM is different than the cache (i.e. has been patched)
+        if (isLoaded()) {
+            if (vm().tryLock()) {
+                try {
+                    final Reference byteArrayReference = vm().teleFields().TargetMethod_code.readReference(reference());
+                    final TeleArrayObject teleByteArrayObject = (TeleArrayObject) heap().makeTeleObject(byteArrayReference);
+                    final byte[] newCode = (byte[]) teleByteArrayObject.shallowCopy();
+                    if (!Arrays.equals(codeCache, newCode)) {
+                        flushMethodCache();
+                        targetMethodChangedEpoch = epoch;
+                        Trace.line(1, tracePrefix() + "TargetMethod patched for " + getTeleClassMethodActor().classMethodActor().name());
+                    }
+                } catch (DataIOError dataIOError) {
+                    // If something goes wrong, delay the cache flush until next time.
+                } finally {
+                    vm().unlock();
+                }
+            }
+        }
+    }
+
+    /**
+     * @return whether a copy of the {@link TargetMethod} in the VM has been created and cached.
      */
     public final boolean isLoaded() {
-        return targetMethod != null;
+        return targetMethodCache != null;
     }
 
     /**
      * @return a lazily created local copy of the {@link TargetMethod} in the VM.
      */
     public final TargetMethod targetMethod() {
-        if (targetMethod == null) {
-            targetMethod = (TargetMethod) deepCopy();
+        if (targetMethodCache == null) {
+            loadMethodCache();
         }
-        return targetMethod;
+        return targetMethodCache;
     }
 
     /**
      * @return disassembled target code instructions
      */
     public final List<TargetCodeInstruction> getInstructions() {
-        if (instructions == null) {
+        if (instructionCache == null) {
             final byte[] code = getCode();
             if (code != null) {
-                instructions = TeleDisassembler.decode(platform(), getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
+                instructionCache = TeleDisassembler.decode(platform(), getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
             }
         }
-        return instructions;
+        return instructionCache;
     }
 
     /**
@@ -397,6 +470,10 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return vm().vmAccess().getReferenceType(getClass());
     }
 
+    /** {@inheritDoc}
+     * <br>
+     * Assume that a {@link TargetMethod} (method compilation) region does not move (see class comment).
+     */
     @Override
     public boolean isRelocatable() {
         return false;

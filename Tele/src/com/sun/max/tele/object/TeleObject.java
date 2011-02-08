@@ -188,16 +188,16 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
         // Do some specialized tracing here, since there are subclasses that we
         // want to contribute to the tracing statistics, and since we want to
         // selectively trace certain subclasses.
-        tracer().begin(getObjectUpdateTraceValue());
+        tracer().begin(getObjectUpdateTraceValue(epoch));
 
         if (epoch > lastUpdateEpoch) {
-            updateObjectCache(statsPrinter);
+            updateObjectCache(epoch, statsPrinter);
             lastUpdateEpoch = epoch;
         } else {
             statsPrinter.addStat("Redundant update skipped");
             Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + " redundant update epoch=" + epoch + ": " + this);
         }
-        tracer().end(getObjectUpdateTraceValue(), statsPrinter);
+        tracer().end(getObjectUpdateTraceValue(epoch), statsPrinter);
         /*
          * if (reference.toOrigin().equals(Pointer.zero())) { live = false; }
          */
@@ -206,12 +206,13 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     /**
      * Gets the level at which to present a trace of individual object updates, specified
      * here as the default.  Subclasses should override to lower the level for specific types,
-     * since producing traces for every object update would generate an unworkably large amount
+     * since producing traces for every object update would generate an unreasonably large amount
      * of output.
      *
+     * @param epoch the current process epoch at the time of the update
      * @return the trace level that should bye used by this object during updates
      */
-    protected int getObjectUpdateTraceValue() {
+    protected int getObjectUpdateTraceValue(long epoch) {
         return UPDATE_TRACE_VALUE;
     }
 
@@ -219,10 +220,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * Internal call to subclasses to update their state, wrapped in the {@link TeleObject} class to provide timing and
      * update statistics reporting.
      *
+     * @param epoch the process epoch at the time of this update.
      * @param statsPrinters list of objects that report statistics for updates performed on this object so far (with no
      *            newlines)
      */
-    protected void updateObjectCache(StatsPrinter statsPrinter) {
+    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
     }
 
     public final TeleObjectMemory.State getTeleObjectMemoryState() {
