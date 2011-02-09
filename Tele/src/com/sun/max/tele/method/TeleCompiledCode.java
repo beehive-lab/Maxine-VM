@@ -135,7 +135,6 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         }
     };
 
-    private InstructionMap instructionMap = null;
     private final TeleTargetMethod teleTargetMethod;
     private CodeLocation codeStartLocation = null;
     private final CompiledCodeMemoryRegion compiledCodeMemoryRegion;
@@ -153,7 +152,6 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         super(teleVM);
         this.teleTargetMethod = teleTargetMethod;
         this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(teleVM, this, teleTargetMethod, teleCodeCache, isBootCode);
-        this.instructionMap = new CompiledCodeInstructionMap(teleVM, teleTargetMethod);
     }
 
     public String entityName() {
@@ -181,8 +179,8 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         return compiledCodeMemoryRegion.contains(address);
     }
 
-    public InstructionMap instructionMap() {
-        return instructionMap;
+    public InstructionMap getInstructionMap() {
+        return teleTargetMethod.getInstructionMap();
     }
 
     public Address getCodeStart() {

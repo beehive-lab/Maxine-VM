@@ -153,7 +153,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         int[] bytecodeToTargetCodePositionMap = null;
         InstructionMap instructionMap = null;
         if (compiledCode != null) {
-            instructionMap = compiledCode.instructionMap();
+            instructionMap = compiledCode.getInstructionMap();
             bytecodeToTargetCodePositionMap = instructionMap.bytecodeToTargetCodePositionMap();
             // TODO (mlvdv) can only map bytecodes to JIT target code so far
             if (bytecodeToTargetCodePositionMap != null) {
@@ -204,7 +204,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 return address.lessThan(bytecodeInstructions.get(row + 1).targetCodeFirstAddress);
             }
             // Last bytecode instruction:  see if before the end of the target code
-            final InstructionMap instructionMap = compiledCode.instructionMap();
+            final InstructionMap instructionMap = compiledCode.getInstructionMap();
             final TargetCodeInstruction lastTargetCodeInstruction = instructionMap.instruction(instructionMap.length() - 1);
             return address.lessThan(lastTargetCodeInstruction.address.plus(lastTargetCodeInstruction.bytes.length));
         }
