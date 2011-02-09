@@ -210,10 +210,11 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
                     if (teleObject != null) {
                         liveObjectCount++;
                         Class type = teleObject.getClass();
-                        long[] time = timePerType.get(type);
+                        long[] stats = timePerType.get(type);
                         long s = System.currentTimeMillis();
                         teleObject.updateCache(epoch);
-                        time[0] += System.currentTimeMillis() - s;
+                        stats[1] += System.currentTimeMillis() - s;
+                        stats[0]++;
                     }
                 }
             }
@@ -222,9 +223,12 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
 
             // Check that we haven't stumbled into a very bad update situation with an object.
             for (Map.Entry<Class, long[]> entry : timePerType.entrySet()) {
-                long time = entry.getValue()[0];
+                long[] stats = entry.getValue();
+                long time = stats[1];
                 if (time > 100) {
-                    Trace.line(TRACE_VALUE, "Excessive refresh time for " + entry.getKey() + ": " + time + "ms");
+                    long count = stats[0];
+                    Class key = entry.getKey();
+                    Trace.line(TRACE_VALUE, tracePrefix() + "Excessive refresh time for type " + key + ": " + count + " updated, total time=" + time + "ms");
                 }
             }
         } else {
@@ -409,12 +413,20 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         return teleObject == null ? null : teleObject.get();
     }
 
+    /**
+     * Map:  Class -> counters.
+     * <br>
+     * Class-indexed statistics.
+     * 0: number of objects in class updated
+     * 1: total system time of updates for objects in class
+     *
+     */
     static class TimerPerType extends HashMap<Class, long[]> {
         @Override
         public long[] get(Object key) {
             long[] time = super.get(key);
             if (time == null) {
-                time = new long[1];
+                time = new long[2];
                 super.put((Class) key, time);
             }
             return time;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,7 +105,7 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
             for (MaxCompiledCodeRegion teleCompiledCodeRegion : inspection().vm().codeCache().compiledCodeRegions()) {
                 for (MaxCompiledCode compiledCode : teleCompiledCodeRegion.compilations()) {
                     ClassMethodActor methodActor = compiledCode.classMethodActor();
-                    String targetMethodType = Classes.getSimpleName(compiledCode.teleTargetMethod().getTeleHub().getTeleClassActor().getName());
+                    String targetMethodType = Classes.getSimpleName(compiledCode.representation().classActorForObjectType().javaClass().getSimpleName());
                     if (methodActor != null) {
                         final String textToMatch = methodActor.format("%h.%n " + targetMethodType).toLowerCase();
                         if (filterLowerCase.isEmpty() ||

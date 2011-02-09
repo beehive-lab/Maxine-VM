@@ -110,6 +110,12 @@ public class TeleFixedHeapRegion extends AbstractTeleVMHolder implements MaxHeap
         return heapRegionMemoryRegion.contains(address);
     }
 
+    public final TeleObject representation() {
+        // No distinguished object in VM runtime represents the this region; otherwise
+        // this would be a {@link TeleDelegatedMemoryRegion}
+        return null;
+    }
+
     public boolean isBootRegion() {
         return heapRegionMemoryRegion.isBootRegion();
     }

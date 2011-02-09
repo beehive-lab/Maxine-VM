@@ -28,6 +28,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -216,6 +217,11 @@ public final class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements
 
     public boolean contains(Address address) {
         return threadLocalsBlockMemoryRegion.contains(address);
+    }
+
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents this.
+        return null;
     }
 
     public TeleNativeThread thread() {

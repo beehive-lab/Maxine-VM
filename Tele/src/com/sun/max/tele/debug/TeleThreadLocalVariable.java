@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -109,6 +110,11 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
 
     public boolean contains(Address address) {
         return threadLocalVariableMemoryRegion.contains(address);
+    }
+
+    public final TeleObject representation() {
+        // No distinguished object in VM runtime represents this.
+        return null;
     }
 
     public TeleNativeThread thread() {

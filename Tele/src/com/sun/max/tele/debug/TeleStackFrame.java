@@ -31,6 +31,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleStackFrameWalker.ErrorStackFrame;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
@@ -148,6 +149,11 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             }
         }
         this.codeLocation = location;
+    }
+
+    public final TeleObject representation() {
+        // No distinguished object in VM runtime represents a stack frame.
+        return null;
     }
 
     public final TeleStack stack() {
