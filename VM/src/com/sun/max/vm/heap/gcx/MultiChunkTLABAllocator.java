@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.heap.gcx;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
@@ -64,6 +65,7 @@ public class MultiChunkTLABAllocator extends LinearSpaceAllocator {
      * @param tlabSize
      * @return
      */
+    @NO_SAFEPOINTS("non-blocking tlab allocation loop must not be subjected to safepoints")
     final Pointer allocateTLAB(Size tlabSize) {
         if (MaxineVM.isDebug()) {
             FatalError.check(tlabSize.isWordAligned(), "Size must be word aligned");
