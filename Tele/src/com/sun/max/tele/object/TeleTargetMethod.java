@@ -31,6 +31,7 @@ import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
@@ -141,7 +142,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     /**
      * Process epoch at the last time the target method in the VM was observed to have changed (been patched).
      */
-    private long targetMethodChangedEpoch = -1L;
+    private long lastCodeChangeEpoch = -1L;
 
     /**
      * Cache of the code from the last time the local copy of the target method was made,
@@ -153,6 +154,11 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * Cache of the machine instructions disassembled from code the last time the code changed.
      */
     private List<TargetCodeInstruction> instructionCache;
+
+    /**
+     * Cache of the map built around disassembled machine code instructions.
+     */
+    private InstructionMap instructionMapCache;
 
     /**
      * @see  StopPositions
@@ -177,22 +183,25 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         targetMethodCache = (TargetMethod) deepCopy();
         codeCache = targetMethodCache.code();
         instructionCache = null;
+        instructionMapCache = null;
     }
 
     /**
-     * Clears all cached data from the {@link TargetMethod} in the VM.
+     * Clears all cached data from the {@link TargetMethod} in the VM that must
+     * be recomputed if the machine code is discovered to have changed.
      */
     private void flushMethodCache() {
         targetMethodCache = null;
         codeCache = null;
         instructionCache = null;
+        instructionMapCache = null;
     }
 
     /** {@inheritDoc}
      * <br>
      * Compiled machine code generally doesn't change, so the code and disassembled instructions are cached, but
-     * this update check for cases where the code does change (i.e. has been patched), in which case the caches
-     * are flushed.
+     * this update checks for cases where the code does change (i.e. has been patched), in which case the caches
+     * are flushed and the epoch of the change recorded.
      */
     @Override
     protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
@@ -206,7 +215,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                     final byte[] newCode = (byte[]) teleByteArrayObject.shallowCopy();
                     if (!Arrays.equals(codeCache, newCode)) {
                         flushMethodCache();
-                        targetMethodChangedEpoch = epoch;
+                        lastCodeChangeEpoch = epoch;
                         Trace.line(1, tracePrefix() + "TargetMethod patched for " + getTeleClassMethodActor().classMethodActor().name());
                     }
                 } catch (DataIOError dataIOError) {
@@ -246,6 +255,13 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             }
         }
         return instructionCache;
+    }
+
+    public final InstructionMap getInstructionMap() {
+        if (instructionMapCache == null) {
+            instructionMapCache = new CompiledCodeInstructionMap(vm(), this);
+        }
+        return instructionMapCache;
     }
 
     /**
@@ -317,6 +333,13 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             }
         }
         return stopPositions;
+    }
+
+    /**
+     * @return the process epoch at the last time when the code was observed to have changed.
+     */
+    public final long lastCodeChangeEpoch() {
+        return lastCodeChangeEpoch;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,6 @@ import com.sun.max.vm.classfile.constant.*;
 public abstract class TargetCodeViewer extends CodeViewer {
 
     private final MaxMachineCode machineCode;
-    private final InstructionMap instructionMap;
     private TeleConstantPool teleConstantPool;
     private ConstantPool localConstantPool;
     private final String[] rowToTagText;
@@ -52,7 +51,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
     protected TargetCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
         super(inspection, parent);
         this.machineCode = machineCode;
-        this.instructionMap = machineCode.instructionMap();
+        final InstructionMap instructionMap = machineCode.getInstructionMap();
         final int targetInstructionCount = instructionMap.length();
         this.rowToTagText = new String[targetInstructionCount];
         rowToStackFrame = new MaxStackFrame[targetInstructionCount];
@@ -95,10 +94,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
         return "Target Code";
     }
 
-    protected InstructionMap instructionMap() {
-        return instructionMap;
-    }
-
     /**
      * Rebuilds the cache of stack information if needed, based on the thread that is the current focus.
      * <br>
@@ -130,6 +125,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
                                     targetCodeRegion.overlaps(machineCode.memoryRegion()) :
                                         targetCodeRegion.contains(frameCodeLocation.address());
                 if (isFrameForThisCode) {
+                    final InstructionMap instructionMap = machineCode.getInstructionMap();
                     for (int row = 0; row < instructionMap.length(); row++) {
                         if (instructionMap.instruction(row).address.equals(frameCodeLocation.address())) {
                             rowToStackFrame[row] = frame;
@@ -204,7 +200,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * Does the instruction address have a target code breakpoint set in the VM.
      */
     protected MaxBreakpoint getTargetBreakpointAtRow(int row) {
-        return vm().breakpointManager().findBreakpoint(instructionMap.instructionLocation(row));
+        return vm().breakpointManager().findBreakpoint(machineCode.getInstructionMap().instructionLocation(row));
     }
 
     protected final String rowToTagText(int row) {

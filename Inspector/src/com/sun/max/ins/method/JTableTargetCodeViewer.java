@@ -223,6 +223,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         repaint();
     }
 
+    private InstructionMap instructionMap() {
+        return machineCode().getInstructionMap();
+    }
+
     /**
      * A table specialized for displaying a block of disassembled target code, one instruction per line.
      */
@@ -347,7 +351,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public int getRowCount() {
-            return machineCode.instructionMap().length();
+            return machineCode.getInstructionMap().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -406,11 +410,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public TargetCodeInstruction rowToInstruction(int row) {
-            return machineCode.instructionMap().instruction(row);
+            return machineCode.getInstructionMap().instruction(row);
         }
 
         public MaxCodeLocation rowToLocation(int row) {
-            return machineCode.instructionMap().instructionLocation(row);
+            return machineCode.getInstructionMap().instructionLocation(row);
         }
 
         /**
@@ -418,7 +422,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          * @return the row in this block of code containing an instruction starting at the address, -1 if none.
          */
         public int findRow(Address address) {
-            final InstructionMap instructionMap = machineCode.instructionMap();
+            final InstructionMap instructionMap = machineCode.getInstructionMap();
             for (int row = 0; row < instructionMap.length(); row++) {
                 final TargetCodeInstruction targetCodeInstruction = instructionMap.instruction(row);
                 if (targetCodeInstruction.address.equals(address)) {
@@ -790,25 +794,28 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     renderer = literalRenderer.render(inspection, text, literalAddress);
                     renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
                     inspectorLabels[row] = renderer;
-                } else if (instructionMap().calleeConstantPoolIndex(row) >= 0 && targetCodeInstruction.mnemonic.contains("call")) {
-                    final PoolConstantLabel poolConstantLabel =
-                        PoolConstantLabel.make(inspection, instructionMap().calleeConstantPoolIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
-                    poolConstantLabel.setToolTipPrefix(text);
-                    poolConstantLabel.redisplay();
-                    renderer = poolConstantLabel;
-                    renderer.setForeground(cellForegroundColor(row, column));
                 } else {
-                    if (instructionMap().isNativeCall(row)) {
-                        renderer = new TextLabel(inspection, "<native function>");
-                        renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
-                        renderer.setWrappedToolTipText("<br>operands = " + text);
+                    InstructionMap instructionMap = instructionMap();
+                    if (instructionMap.calleeConstantPoolIndex(row) >= 0 && targetCodeInstruction.mnemonic.contains("call")) {
+                        final PoolConstantLabel poolConstantLabel =
+                            PoolConstantLabel.make(inspection, instructionMap.calleeConstantPoolIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
+                        poolConstantLabel.setToolTipPrefix(text);
+                        poolConstantLabel.redisplay();
+                        renderer = poolConstantLabel;
                         renderer.setForeground(cellForegroundColor(row, column));
                     } else {
-                        renderer = targetCodeLabel;
-                        renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
-                        renderer.setText(text);
-                        renderer.setWrappedToolTipText("<br>operands = " + text);
-                        renderer.setForeground(cellForegroundColor(row, column));
+                        if (instructionMap.isNativeCall(row)) {
+                            renderer = new TextLabel(inspection, "<native function>");
+                            renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
+                            renderer.setWrappedToolTipText("<br>operands = " + text);
+                            renderer.setForeground(cellForegroundColor(row, column));
+                        } else {
+                            renderer = targetCodeLabel;
+                            renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
+                            renderer.setText(text);
+                            renderer.setWrappedToolTipText("<br>operands = " + text);
+                            renderer.setForeground(cellForegroundColor(row, column));
+                        }
                     }
                 }
 
