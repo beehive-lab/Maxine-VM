@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,7 +145,7 @@ public class JavaMethodInspector extends MethodInspector {
             final InspectorAction copyAction = actions().copyCompiledCodeToClipboard(compiledCode, null);
             copyAction.setEnabled(true);
             editMenu.add(copyAction);
-            objectMenu.add(actions().inspectObject(compiledCode.teleTargetMethod(), "Compiled method: " + compiledCode.classActorForObjectType().simpleName()));
+            objectMenu.add(actions().inspectObject(compiledCode.representation(), "Compiled method: " + compiledCode.classActorForObjectType().simpleName()));
         }
 
         if (teleClassMethodActor != null) {
