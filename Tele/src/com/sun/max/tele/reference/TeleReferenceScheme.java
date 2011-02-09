@@ -38,7 +38,7 @@ import com.sun.max.vm.reference.Reference;
  * A  <strong>raw reference</strong> is an {@link Address} in VM memory where the object is currently
  * located.  However, the location may be subject to change by GC, so the raw reference may change over time.
  * <br>
- * Each reference is represented as a unique index into a root table, a mirror of such a table, in the VM.  The
+ * Each ordinary reference is represented as a unique index into a root table, a mirror of such a table, in the VM.  The
  * table holds the current raw reference (address), and it is updated by the GC at the end of each collection.
  * <br>
  * References are intended to be canonical, i.e. refer to only one object.  However, in the course of inspection
@@ -205,36 +205,69 @@ public abstract class TeleReferenceScheme extends AbstractVMScheme implements Te
     }
 
     /**
-     * Returns a canonicalized tele reference associated with the given raw reference in the tele VM.
+     * Returns some kind of reference associated with the given raw reference in the tele VM, depending
+     * on what is known about the address.
+     * <ol>
+     * <li>If a canonical reference pointing at that location already exists, then returns it.</li>
+     * <li>If the address is the valid origin of an object in a <strong>non-collected</strong> heap region, for
+     * example the boot heap or an immortal heap, then return a new reference that is canonical,
+     * but which is not tracked for possible GC relocation.</li>
+     * <li>If the address is the valid origin of a live object in a dynamic heap region, then return
+     * a new reference that is canonical and which is tracked for possible GC relocation.</li>
+     * <li>If the address is the valid origin of an object in a dynamic heap region, but the object
+     * is known <strong>not</strong> to be live, then return an unsafe, temporary reference that
+     * wraps the address.</li>
+     * <li>If the address does not point an an object origin,  then return an unsafe, temporary reference that
+     * wraps the address.</li>
+     * </ol>
+     *
+     * @param address a memory location in VM memory
+     * @return a special kind of {@link Reference} implementation that encapsulates a remote
+     * location in VM memory, allowing the reuse of much VM code that deals with references.
      */
-    public synchronized TeleReference makeTeleReference(Address rawReference) {
-        if (rawReference.isZero()) {
+    public synchronized TeleReference makeTeleReference(Address address) {
+        if (address.isZero()) {
             return TeleReference.ZERO;
         }
-        final WeakReference<RemoteTeleReference> r = rawReferenceToRemoteTeleReference.get(rawReference.toLong());
-        RemoteTeleReference remoteTeleReference;
-        if (r != null) {
-            remoteTeleReference = r.get();
+        final WeakReference<RemoteTeleReference> existingCanonicalTeleReference = rawReferenceToRemoteTeleReference.get(address.toLong());
+        if (existingCanonicalTeleReference != null) {
+            final RemoteTeleReference remoteTeleReference = existingCanonicalTeleReference.get();
             if (remoteTeleReference != null) {
+                // Found an existing canonical reference that points here; return it.
                 return remoteTeleReference;
             }
         }
-        remoteTeleReference = createTemporaryRemoteTeleReference(rawReference);
-        if (vm.isValidOrigin(remoteTeleReference.toOrigin())) {
-            if (vm().heap().containsInDynamicHeap(remoteTeleReference.toOrigin()) && TeleVM.targetLocation().kind != TeleVM.TargetLocation.Kind.FILE) {
-                if (vm().heap().isInLiveMemory(remoteTeleReference.toOrigin())) {
-                    final int index = teleRoots.register(rawReference);
-                    remoteTeleReference = new MutableTeleReference(this, index);
-                } else {
-                    return remoteTeleReference;
-                }
-            } else {
-                remoteTeleReference = new CanonicalConstantTeleReference(this, rawReference);
-            }
-            rawReferenceToRemoteTeleReference.put(rawReference.toLong(), new WeakReference<RemoteTeleReference>(remoteTeleReference));
+        if (!vm.isValidOrigin(address.asPointer())) {
+            // Doesn't point at an object; create what amounts to a wrapped
+            // address that is unsafe with respect to GC.
+            return createTemporaryRemoteTeleReference(address);
         }
+        if (!vm().heap().containsInDynamicHeap(address) || TeleVM.targetLocation().kind == TeleVM.TargetLocation.Kind.FILE) {
+            // Points to an object that's not collectible; create a canonical reference but don't
+            // register it as a tracked root.
+            final CanonicalConstantTeleReference nonCollectableTeleReference = new CanonicalConstantTeleReference(this, address);
+            makeCanonical(nonCollectableTeleReference);
+            return nonCollectableTeleReference;
+        }
+        if (!vm().heap().isInLiveMemory(address)) {
+            // Points to an object that is in a collectible heap, but
+            // which is known not to be live; create what amounts to a wrapped
+            // address that is unsafe with respect to GC.
+            return createTemporaryRemoteTeleReference(address);
+        }
+        // The common case:  points to a live object in a collectible heap;
+        // return a new canonical reference that is traced for possible GC relocation.
+        final int index = teleRoots.register(address);
+        final MutableTeleReference liveCollectibleTeleReference = new MutableTeleReference(this, index);
+        makeCanonical(liveCollectibleTeleReference);
+        return liveCollectibleTeleReference;
+    }
 
-        return remoteTeleReference;
+    /**
+     * @param remoteTeleReference
+     */
+    private void makeCanonical(RemoteTeleReference remoteTeleReference) {
+        rawReferenceToRemoteTeleReference.put(remoteTeleReference.raw().toLong(), new WeakReference<RemoteTeleReference>(remoteTeleReference));
     }
 
     synchronized Address getRawReference(MutableTeleReference mutableTeleReference) {
