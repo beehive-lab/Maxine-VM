@@ -115,10 +115,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
-        } else if (phase == MaxineVM.Phase.STARTING) {
-            // the following triggers allocation, dynamic linking and compilation.
-            // Must be done once the VM is pretty much functional.
-            theHeapRegionManager().verifyAfterInitialization();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (Heap.traceGCTime()) {
                 collect.reportTotalGCTimes();
@@ -205,6 +201,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
+            theHeapRegionManager().verifyAfterInitialization();
         } finally {
             disableCustomAllocation();
         }

@@ -81,7 +81,8 @@ public final class HeapRegionConstants {
     }
 
     static void validate() {
-        FatalError.check((regionSizeInBytes == (1 << log2RegionSizeInBytes)) && ((regionSizeInBytes % Platform.getPageSize()) == 0),
-            "Region size must be a power of 2 and an integral number of platform pages");
+        FatalError.check((regionSizeInBytes == (1 << log2RegionSizeInBytes)) &&
+                        ((regionSizeInBytes % Platform.platform().pageSize) == 0),
+                        "Region size must be a power of 2 and an integral number of platform pages");
     }
 }
