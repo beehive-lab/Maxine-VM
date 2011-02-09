@@ -1937,7 +1937,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 for (int index = getMenuComponentCount(); index < compilations.size(); index++) {
                     final MaxCompiledCode compiledCode = compilations.get(index);
                     final String name = inspection().nameDisplay().shortName(compiledCode);
-                    add(actions().inspectObject(compiledCode.teleTargetMethod(), name.toString()));
+                    add(actions().inspectObject(compiledCode.representation(), name.toString()));
                 }
             }
         }
