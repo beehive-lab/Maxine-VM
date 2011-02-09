@@ -22,27 +22,18 @@
  */
 package com.sun.max.tele.method;
 
-import static com.sun.max.asm.dis.Disassembler.*;
-import static com.sun.max.platform.Platform.*;
-
 import java.io.*;
 import java.util.*;
 
-import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.io.*;
-import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.memory.*;
-import com.sun.max.tele.method.CodeLocation.*;
+import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.bytecode.BytecodeLocation;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -135,7 +126,6 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         }
     };
 
-    private InstructionMap instructionMap = null;
     private final TeleTargetMethod teleTargetMethod;
     private CodeLocation codeStartLocation = null;
     private final CompiledCodeMemoryRegion compiledCodeMemoryRegion;
@@ -153,7 +143,6 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         super(teleVM);
         this.teleTargetMethod = teleTargetMethod;
         this.compiledCodeMemoryRegion = new CompiledCodeMemoryRegion(teleVM, this, teleTargetMethod, teleCodeCache, isBootCode);
-        this.instructionMap = new CompiledCodeInstructionMap(teleVM, teleTargetMethod);
     }
 
     public String entityName() {
@@ -181,8 +170,12 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         return compiledCodeMemoryRegion.contains(address);
     }
 
-    public InstructionMap instructionMap() {
-        return instructionMap;
+    public TeleObject representation() {
+        return teleTargetMethod;
+    }
+
+    public InstructionMap getInstructionMap() {
+        return teleTargetMethod.getInstructionMap();
     }
 
     public Address getCodeStart() {
@@ -210,9 +203,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     }
 
     public int compilationIndex() {
-        // Lazily computed to avoid circularity during construction.
-        final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
-        return teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(teleTargetMethod);
+        return teleTargetMethod.compilationIndex();
     }
 
     public TeleClassMethodActor getTeleClassMethodActor() {
@@ -266,32 +257,35 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
     }
 
     public void writeSummary(PrintStream printStream) {
-        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(printStream));
-        writer.println("code for: " + classMethodActor().format("%H.%n(%p)"));
-        writer.println("compilation: " + compilationIndex());
-        teleTargetMethod.disassemble(writer);
-        writer.flush();
-        final Platform platform = platform();
-        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod().encodedInlineDataDescriptors());
-        final Address startAddress = getCodeStart();
-        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
-            @Override
-            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
-                final String string = super.disassembledObjectString(disassembler, disassembledObject);
-                if (string.startsWith("call ")) {
-                    final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
-                    if (bytecodeLocation != null) {
-                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
-                        if (methodRef != null) {
-                            final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
-                            return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
-                        }
-                    }
-                }
-                return string;
-            }
-        };
-        disassemble(printStream, teleTargetMethod.getCode(), platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+        teleTargetMethod.writeSummary(printStream);
+
+//        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(printStream));
+//        writer.println("code for: " + classMethodActor().format("%H.%n(%p)"));
+//        writer.println("compilation: " + compilationIndex());
+//        teleTargetMethod.disassemble(writer);
+//        writer.flush();
+//        final Platform platform = platform();
+//        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod().encodedInlineDataDescriptors());
+//        final Address startAddress = getCodeStart();
+//        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+//            @Override
+//            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+//                final String string = super.disassembledObjectString(disassembler, disassembledObject);
+//                if (string.startsWith("call ")) {
+//                    final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
+//                    if (bytecodeLocation != null) {
+//                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+//                        if (methodRef != null) {
+//                            final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
+//                            return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+//                        }
+//                    }
+//                }
+//                return string;
+//            }
+//        };
+//        disassemble(printStream, teleTargetMethod.getCode(), platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+//    }
     }
 
 }

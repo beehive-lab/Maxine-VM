@@ -241,6 +241,11 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
         return false;
     }
 
+    public TeleObject representation() {
+        // No single distinguished object in VM runtime represents the class registry; there's one per classloader.
+        return null;
+    }
+
     public Set<TypeDescriptor> typeDescriptors() {
         return Collections.unmodifiableSet(typeDescriptorToClassActorReference.keySet());
     }

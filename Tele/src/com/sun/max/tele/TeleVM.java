@@ -849,6 +849,11 @@ public abstract class TeleVM implements MaxVM {
         return findMemoryRegion(address) != null;
     }
 
+    public final TeleObject representation() {
+        // No distinguished object in VM runtime represents the VM.
+        return null;
+    }
+
     public final String getVersion() {
         return MaxineVM.VERSION_STRING;
     }

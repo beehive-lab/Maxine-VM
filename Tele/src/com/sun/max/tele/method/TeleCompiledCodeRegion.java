@@ -127,6 +127,10 @@ public final class TeleCompiledCodeRegion extends AbstractTeleVMHolder implement
         return compiledCodeRegionMemoryRegion.contains(address);
     }
 
+    public TeleObject representation() {
+        return teleCodeRegion;
+    }
+
     public boolean isBootRegion() {
         return compiledCodeRegionMemoryRegion.isBootRegion();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -80,5 +81,12 @@ public interface MaxEntity<Entity_Type extends MaxEntity> {
      * the specified VM memory location.
      */
     boolean contains(Address address);
+
+    /**
+     * Gets the object, if any, that the VM uses to represent this entity; null if none.
+     *
+     * @return surrogate for the VM object that represents this entity
+     */
+    TeleObject representation();
 
 }

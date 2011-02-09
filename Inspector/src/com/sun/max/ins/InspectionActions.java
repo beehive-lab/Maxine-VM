@@ -1937,7 +1937,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 for (int index = getMenuComponentCount(); index < compilations.size(); index++) {
                     final MaxCompiledCode compiledCode = compilations.get(index);
                     final String name = inspection().nameDisplay().shortName(compiledCode);
-                    add(actions().inspectObject(compiledCode.teleTargetMethod(), name.toString()));
+                    add(actions().inspectObject(compiledCode.representation(), name.toString()));
                 }
             }
         }
@@ -2968,17 +2968,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeLabelBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set breakpoint at every machine code label";
-        private final InstructionMap instructionMap;
+        final MaxCompiledCode compiledCode;
 
         SetMachineCodeLabelBreakpointsAction(MaxCompiledCode compiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.instructionMap = compiledCode.instructionMap();
-            setEnabled(inspection().hasProcess() && instructionMap.labelIndexes().size() > 0);
+            this.compiledCode = compiledCode;
+            setEnabled(inspection().hasProcess() && compiledCode.getInstructionMap().labelIndexes().size() > 0);
         }
 
         @Override
         protected void procedure() {
             try {
+                final InstructionMap instructionMap = compiledCode.getInstructionMap();
                 for (int index : instructionMap.labelIndexes()) {
                     vm().breakpointManager().makeBreakpoint(instructionMap.instructionLocation(index));
                 }
@@ -3001,17 +3002,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveMachineCodeLabelBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove breakpoint at every machine code label";
-        private final InstructionMap instructionMap;
+        private final MaxCompiledCode compiledCode;
 
         RemoveMachineCodeLabelBreakpointsAction(MaxCompiledCode compiledCode, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.instructionMap = compiledCode.instructionMap();
-            setEnabled(inspection().hasProcess() && instructionMap.labelIndexes().size() > 0);
+            this.compiledCode = compiledCode;
+            setEnabled(inspection().hasProcess() && compiledCode.getInstructionMap().labelIndexes().size() > 0);
         }
 
         @Override
         protected void procedure() {
             try {
+                final InstructionMap instructionMap = compiledCode.getInstructionMap();
                 for (int index : instructionMap.labelIndexes()) {
                     final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(instructionMap.instructionLocation(index));
                     if (breakpoint != null) {
@@ -4281,7 +4283,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
                 final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(maxCodeLocation.address());
                 if (compiledCode != null) {
-                    final InstructionMap instructionMap = compiledCode.instructionMap();
+                    final InstructionMap instructionMap = compiledCode.getInstructionMap();
                     final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());
                     for (int index = instructionIndex + 1; index < instructionMap.length(); index++) {
                         if (instructionMap.isCall(index)) {
@@ -4333,7 +4335,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (maxCodeLocation != null && maxCodeLocation.hasAddress()) {
                 final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(maxCodeLocation.address());
                 if (compiledCode != null) {
-                    final InstructionMap instructionMap = compiledCode.instructionMap();
+                    final InstructionMap instructionMap = compiledCode.getInstructionMap();
                     final int instructionIndex = instructionMap.findInstructionIndex(maxCodeLocation.address());
                     for (int index = instructionIndex + 1; index < instructionMap.length(); index++) {
                         if (instructionMap.isCall(index)) {
@@ -4586,7 +4588,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 if (instructionAddress != null && !instructionAddress.isZero()) {
                     final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
                     if (compiledCode != null) {
-                        final InstructionMap instructionMap = compiledCode.instructionMap();
+                        final InstructionMap instructionMap = compiledCode.getInstructionMap();
                         final int instructionIndex = instructionMap.findInstructionIndex(instructionAddress);
                         targetJavaFrameDescriptor = instructionMap.targetFrameDescriptor(instructionIndex);
                         if (targetJavaFrameDescriptor == null) {

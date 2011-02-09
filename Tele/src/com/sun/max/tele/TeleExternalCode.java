@@ -30,6 +30,7 @@ import java.util.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
@@ -39,7 +40,11 @@ import com.sun.max.vm.cps.target.*;
 /**
  * Holds information about a block of code in
  * the process of the VM, about which little is known
- * other than the memory location and possibly an assigned name.
+ * other than the memory location and possibly a name
+ * assigned during a session.
+ * <br>
+ * No attempt is made to check for changes to the code during
+ * a session, unlike VM target methods.
  *
  * @author Michael Van De Vanter
  */
@@ -242,6 +247,8 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
     /**
      * Creates a representation of a block of native code about which little is known.
+     * <br>
+     * No subsequent checks are made to determine whether the code gets modified.
      *
      * @param teleVM
      * @param start starting location of code in memory
@@ -296,7 +303,12 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         return externalCodeMemoryRegion.contains(address);
     }
 
-    public InstructionMap instructionMap() {
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents unknown native code.
+        return null;
+    }
+
+    public InstructionMap getInstructionMap() {
         return instructionMap;
     }
 

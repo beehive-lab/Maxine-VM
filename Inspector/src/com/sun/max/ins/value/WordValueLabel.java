@@ -1007,7 +1007,7 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_ENTRY_POINT_TEXT:
                 case CALL_RETURN_POINT_TEXT: {
                     if (compiledCode != null) {
-                        transferable = new InspectorTransferable.TeleObjectTransferable(inspection(), compiledCode.teleTargetMethod());
+                        transferable = new InspectorTransferable.TeleObjectTransferable(inspection(), compiledCode.representation());
                     } else {
                         transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
                     }
