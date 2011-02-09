@@ -179,6 +179,10 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         return compiledCodeMemoryRegion.contains(address);
     }
 
+    public TeleObject representation() {
+        return teleTargetMethod;
+    }
+
     public InstructionMap getInstructionMap() {
         return teleTargetMethod.getInstructionMap();
     }

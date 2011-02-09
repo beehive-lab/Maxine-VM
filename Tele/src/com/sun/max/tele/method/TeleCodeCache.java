@@ -161,6 +161,10 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
         return findCompiledCodeRegion(address) != null;
     }
 
+    public TeleObject representation() {
+        return teleCodeManager;
+    }
+
     public TeleCompiledCodeRegion bootCodeRegion() {
         return bootCodeRegion;
     }

@@ -191,7 +191,10 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
     public boolean contains(Address address) {
         return teleStack.contains(address) || (threadLocalsBlock != null && threadLocalsBlock.contains(address));
+    }
 
+    public final TeleObject representation() {
+        return teleVmThread();
     }
 
     public final int id() {

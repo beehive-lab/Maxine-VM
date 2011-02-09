@@ -126,6 +126,11 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             return false;
         }
 
+        public TeleObject representation() {
+            // No distinguished object in VM runtime represents this.
+            return null;
+        }
+
         public MaxStack stack() {
             return stack;
         }
