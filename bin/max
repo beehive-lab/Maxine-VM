@@ -1443,7 +1443,7 @@ view_help="browse the boot image under the Inspector
     Use \"max view -help\" to see what the Inspector options are."
 
 function run_view() {
-    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B0.jar com.sun.max.ins.MaxineInspector -trace=1 -vmdir=$MAXVM_DIR -mode=image $@
+    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=1 -vmdir=$MAXVM_DIR -mode=image $@
 }
 
 #=======================================
