@@ -402,6 +402,11 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         return findHeapRegion(address) != null;
     }
 
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents the heap.
+        return null;
+    }
+
     /**
      * @return description of the special heap region in the {@link BootImage} of the VM.
      */

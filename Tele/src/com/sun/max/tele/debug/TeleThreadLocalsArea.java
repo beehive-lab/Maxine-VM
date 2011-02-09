@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -180,6 +181,11 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
 
     public boolean contains(Address address) {
         return tlaMemoryRegion.contains(address);
+    }
+
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents this.
+        return null;
     }
 
     public Safepoint.State safepointState() {

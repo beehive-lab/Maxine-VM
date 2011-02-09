@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.sun.max.tele.debug;
 
 import com.sun.cri.ci.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 
@@ -68,6 +69,11 @@ public final class TeleRegister implements MaxRegister {
 
     public boolean contains(Address address) {
         return false;
+    }
+
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents a register.
+        return null;
     }
 
     public String name() {

@@ -32,6 +32,7 @@ import java.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
@@ -155,6 +156,10 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         return stackMemoryRegion.contains(address);
     }
 
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents the stack.
+        return null;
+    }
     public MaxThread thread() {
         return teleNativeThread;
     }

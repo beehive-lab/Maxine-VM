@@ -30,6 +30,7 @@ import java.util.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
@@ -300,6 +301,11 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
     public boolean contains(Address address) {
         return externalCodeMemoryRegion.contains(address);
+    }
+
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents unknown native code.
+        return null;
     }
 
     public InstructionMap getInstructionMap() {
