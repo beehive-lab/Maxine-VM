@@ -51,11 +51,12 @@ public abstract class TeleMemberActor extends TeleActor {
      */
     private TeleDescriptor descriptor;
 
-    public final TeleDescriptor getTeleDescriptor() {
+    protected final TeleDescriptor getTeleDescriptor() {
         if (descriptor == null) {
             Reference reference = vm().teleFields().MemberActor_descriptor.readReference(reference());
             descriptor = (TeleDescriptor) heap().makeTeleObject(reference);
         }
         return descriptor;
     }
+
 }

@@ -47,4 +47,8 @@ public class TeleInterfaceActor extends TeleClassActor implements InterfaceProvi
         return "InterfaceActor";
     }
 
+    public void setValue(ObjectProvider object, VMValue value) {
+        assert false : "Not implemented.";
+    }
+
 }

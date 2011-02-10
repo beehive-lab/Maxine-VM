@@ -23,12 +23,11 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.jdwp.vm.proxy.VMValue.*;
+import com.sun.max.jdwp.vm.proxy.VMValue.Type;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -39,29 +38,36 @@ import com.sun.max.vm.type.*;
  */
 public final class TeleFieldActor extends TeleMemberActor implements FieldProvider {
 
-    /**
-     * @return local {@link FieldActor} corresponding the the target VM's {@link FieldActor} for this field.
-     */
-    public FieldActor fieldActor() {
-        return (FieldActor) actor();
-    }
-
-    @Override
-    protected Actor initActor() {
-        // Cannot use member index as it may be different in local ClassActor
-        Utf8Constant name = getTeleName().utf8Constant();
-        TypeDescriptor type = (TypeDescriptor) getTeleDescriptor().descriptor();
-        return getTeleHolder().classActor().findLocalFieldActor(name, type);
-    }
+    private FieldActor fieldActor;
 
     // Keep construction minimal for both performance and synchronization.
     protected TeleFieldActor(TeleVM teleVM, Reference fieldActorReference) {
         super(teleVM, fieldActorReference);
     }
 
+    /**
+     * @return local {@link FieldActor} corresponding the the target VM's {@link FieldActor} for this field.
+     */
+    public FieldActor fieldActor() {
+        if (fieldActor == null && actorName() != null) {
+            TypeDescriptor type = (TypeDescriptor) getTeleDescriptor().descriptor();
+            fieldActor = getTeleHolder().classActor().findLocalFieldActor(actorName(), type);
+        }
+        return fieldActor;
+    }
+
+    @Override
+    public Actor actor() {
+        return fieldActor();
+    }
+
     @Override
     public String maxineRole() {
         return "FieldActor";
+    }
+
+    public String getName() {
+        return actorName().string;
     }
 
     public VMValue getStaticValue() {
@@ -99,4 +105,5 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
     public String getGenericSignature() {
         return fieldActor().genericSignatureString();
     }
+
 }

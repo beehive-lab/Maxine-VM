@@ -94,7 +94,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         return teleTargetMethodHistory;
     }
 
-    public void refreshView() {
+    public final void refreshView() {
         initialize();
         readTeleMethodState();
     }
@@ -237,5 +237,10 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
         return result;
     }
+
+    public final String getName() {
+        return actorName().string;
+    }
+
 
 }
