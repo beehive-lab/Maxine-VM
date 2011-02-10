@@ -59,4 +59,9 @@ public final class TeleInterfaceMethodActor extends TeleMethodActor {
     public TargetMethodAccess[] getTargetMethods() {
         return new TargetMethodAccess[0];
     }
+
+    public String getName() {
+        return actorName().string;
+    }
+
 }

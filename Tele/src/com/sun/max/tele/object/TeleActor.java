@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.vm.actor.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -35,53 +36,13 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleActor extends TeleTupleObject {
 
-    protected TeleActor(TeleVM vm, Reference actorReference) {
-        super(vm, actorReference);
-    }
-
-    /**
-     * @return the generic name of this {@link Actor} copied from the VM.
-     */
-    public final String getName() {
-        return getTeleName().utf8Constant().string;
-    }
-
     /**
      * Field is final once non-null so cache it.
      */
-    private TeleUtf8Constant name;
+    private Utf8Constant actorName;
 
-    public final TeleUtf8Constant getTeleName() {
-        if (name == null) {
-            Reference utf8ConstantReference = vm().teleFields().Actor_name.readReference(reference());
-            name = (TeleUtf8Constant) heap().makeTeleObject(utf8ConstantReference);
-        }
-        return name;
-    }
-
-    /**
-     * Local copy of the actor.
-     */
-    private Actor actor;
-
-    /**
-     * Subclasses override this method to create the local actor of the relevant type.
-     */
-    protected abstract Actor initActor();
-
-    /**
-     * Gets the local {@link Actor} instance corresponding to this tele actor.
-     */
-    public final Actor actor() {
-        if (actor == null) {
-            actor = initActor();
-        }
-        return actor;
-    }
-
-    @Override
-    protected final Object createDeepCopy(DeepCopier context) {
-        return actor();
+    protected TeleActor(TeleVM vm, Reference actorReference) {
+        super(vm, actorReference);
     }
 
     /**
@@ -233,5 +194,33 @@ public abstract class TeleActor extends TeleTupleObject {
             flags[nextFlagIndex++] = "NEVER_INLINE";
         }
         return Arrays.copyOf(flags, nextFlagIndex);
+    }
+
+    /**
+     * Gets the local {@link Actor} instance corresponding to this tele actor.
+     */
+    protected abstract Actor actor();
+
+    /**
+     * @return the generic name of this {@link Actor}
+     */
+    protected final Utf8Constant actorName() {
+        if (actorName == null) {
+            // Have to read the name using low level operations, because the name needed
+            // to create the local instance of the Actor.
+            Reference utf8ConstantReference = vm().teleFields().Actor_name.readReference(reference());
+            TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) heap().makeTeleObject(utf8ConstantReference);
+            actorName = teleUtf8Constant.utf8Constant();
+        }
+        return actorName;
+    }
+
+    /** {@inheritDoc}
+     * <br>
+     * For the purposes of inspection, use a locally loaded copy of each actor.
+     */
+    @Override
+    protected final Object createDeepCopy(DeepCopier context) {
+        return actor();
     }
 }
