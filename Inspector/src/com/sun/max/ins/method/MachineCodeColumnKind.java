@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,12 @@ package com.sun.max.ins.method;
 import com.sun.max.ins.debug.*;
 
 /**
- * Defines the columns supported by the target code inspector; the view includes one of each
+ * Defines the columns supported by the machine code inspector; the view includes one of each
  * kind.  The visibility of them, however, may be changed by the user.
  *
  * @author Michael Van De Vanter
  */
-public enum TargetCodeColumnKind implements ColumnKind {
+public enum MachineCodeColumnKind implements ColumnKind {
 
     TAG("Tag", "Tags:  IP, stack return, breakpoints", true, 20) {
         @Override
@@ -39,8 +39,8 @@ public enum TargetCodeColumnKind implements ColumnKind {
         }
     },
     NUMBER("No.", "Index of instruction in the method", false, 15),
-    ADDRESS("Addr.", "Memory address of target instruction start", false, -1),
-    POSITION("Pos.", "Position in bytes of target instruction start", true, 20),
+    ADDRESS("Addr.", "Memory address of machine instruction start", false, -1),
+    POSITION("Pos.", "Position in bytes of machine instruction start", true, 20),
     LABEL("Label", "Labels synthesized during disassembly", true, -1),
     INSTRUCTION("Instr.", "Instruction mnemonic", true, -1),
     OPERANDS("Operands", "Instruction operands", true, -1),
@@ -52,7 +52,7 @@ public enum TargetCodeColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private TargetCodeColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    private MachineCodeColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

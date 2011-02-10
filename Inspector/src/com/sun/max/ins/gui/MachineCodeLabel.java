@@ -25,11 +25,11 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 
 /**
- * A bold label for displaying target code from the VM.
+ * A bold label for displaying machine code from the VM.
  *
  * @author Michael Van De Vanter
  */
-public class TargetCodeLabel extends InspectorLabel {
+public class MachineCodeLabel extends InspectorLabel {
 
     /**
      * Creates an opaque textual label suitable for a program element name, to
@@ -37,7 +37,7 @@ public class TargetCodeLabel extends InspectorLabel {
      * @param inspection
      * @param text
      */
-    public TargetCodeLabel(Inspection inspection, String text) {
+    public MachineCodeLabel(Inspection inspection, String text) {
         super(inspection, text);
         setOpaque(true);
         redisplay();

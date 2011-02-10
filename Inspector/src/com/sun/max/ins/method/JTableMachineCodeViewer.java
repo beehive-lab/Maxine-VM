@@ -50,7 +50,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table-based viewer for an (immutable) section of {@link TargetCode} in the VM.
+ * A table-based viewer for an (immutable) section of {@link MaxMachineCode} in the VM.
  * Supports visual effects for execution state, and permits user selection
  * of instructions for various purposes (e.g. set breakpoint).
  *
@@ -58,41 +58,41 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public class JTableTargetCodeViewer extends TargetCodeViewer {
+public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     private static final int TRACE_VALUE = 2;
 
     private final MaxPlatform.ISA isa;
     private final Inspection inspection;
-    private final TargetCodeTable table;
-    private final TargetCodeTableModel tableModel;
-    private final TargetCodeViewPreferences instanceViewPreferences;
+    private final MachineCodeTable table;
+    private final MachineCodeTableModel tableModel;
+    private final MachineCodeViewPreferences instanceViewPreferences;
     private final TableColumn[] columns;
     private final OperandsRenderer operandsRenderer;
     private final SourceLineRenderer sourceLineRenderer;
     private final Color defaultBackgroundColor;
     private final Color stopBackgroundColor;
 
-    public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
+    public JTableMachineCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
         super(inspection, parent, machineCode);
         this.inspection = inspection;
         //inspection.vm().bootImage().header.
         this.isa = inspection.vm().platform().getISA();
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
-        this.tableModel = new TargetCodeTableModel(inspection, machineCode);
-        this.columns = new TableColumn[TargetCodeColumnKind.values().length];
-        instanceViewPreferences = new TargetCodeViewPreferences(TargetCodeViewPreferences.globalPreferences(inspection())) {
+        this.tableModel = new MachineCodeTableModel(inspection, machineCode);
+        this.columns = new TableColumn[MachineCodeColumnKind.values().length];
+        instanceViewPreferences = new MachineCodeViewPreferences(MachineCodeViewPreferences.globalPreferences(inspection())) {
             @Override
-            public void setIsVisible(TargetCodeColumnKind columnKind, boolean visible) {
+            public void setIsVisible(MachineCodeColumnKind columnKind, boolean visible) {
                 super.setIsVisible(columnKind, visible);
                 table.getInspectorTableColumnModel().setColumnVisible(columnKind.ordinal(), visible);
                 JTableColumnResizer.adjustColumnPreferredWidths(table);
                 refresh(true);
             }
         };
-        final TargetCodeTableColumnModel tableColumnModel = new TargetCodeTableColumnModel(instanceViewPreferences);
-        this.table = new TargetCodeTable(inspection, tableModel, tableColumnModel);
+        final MachineCodeTableColumnModel tableColumnModel = new MachineCodeTableColumnModel(instanceViewPreferences);
+        this.table = new MachineCodeTable(inspection, tableModel, tableColumnModel);
         defaultBackgroundColor = this.table.getBackground();
         stopBackgroundColor = style().darken2(defaultBackgroundColor);
         createView();
@@ -103,7 +103,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         super.createView();
 
         // Set up toolbar
-        JButton button = new InspectorButton(inspection, actions().toggleTargetCodeBreakpoint());
+        JButton button = new InspectorButton(inspection, actions().toggleMachineCodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugToggleBreakpointbuttonIcon());
@@ -147,7 +147,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         toolBar().add(Box.createHorizontalGlue());
 
-        toolBar().add(new JLabel("Target Code"));
+        toolBar().add(new JLabel("Machine Code"));
 
         toolBar().add(Box.createHorizontalGlue());
 
@@ -157,11 +157,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         final JButton viewOptionsButton = new InspectorButton(inspection(), new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
-                final TargetCodeViewPreferences globalPreferences = TargetCodeViewPreferences.globalPreferences(inspection());
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<TargetCodeColumnKind>(inspection(), "TargetCode View Options", instanceViewPreferences, globalPreferences);
+                final MachineCodeViewPreferences globalPreferences = MachineCodeViewPreferences.globalPreferences(inspection());
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MachineCodeColumnKind>(inspection(), "Machine Code View Options", instanceViewPreferences, globalPreferences);
             }
         });
-        viewOptionsButton.setToolTipText("Target code view options");
+        viewOptionsButton.setToolTipText("Machine code view options");
         viewOptionsButton.setText(null);
         viewOptionsButton.setIcon(style().generalPreferencesIcon());
         toolBar().add(viewOptionsButton);
@@ -228,13 +228,13 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     /**
-     * A table specialized for displaying a block of disassembled target code, one instruction per line.
+     * A table specialized for displaying a block of disassembled machine code, one instruction per line.
      */
-    private final class TargetCodeTable extends InspectorTable {
+    private final class MachineCodeTable extends InspectorTable {
 
         // TODO (mlvdv) Extract the table class
 
-        TargetCodeTable(Inspection inspection, TargetCodeTableModel tableModel, TargetCodeTableColumnModel tableColumnModel) {
+        MachineCodeTable(Inspection inspection, MachineCodeTableModel tableModel, MachineCodeTableColumnModel tableColumnModel) {
             super(inspection, tableModel, tableColumnModel);
             setFillsViewportHeight(true);
             setShowHorizontalLines(style().codeTableShowHorizontalLines());
@@ -251,7 +251,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             if (mouseEvent.getClickCount() > 1) {
                 // Depends on the first click selecting the row, and that changing the current
                 // code location focus to the location under the mouse event.7
-                actions().toggleTargetCodeBreakpoint().perform();
+                actions().toggleMachineCodeBreakpoint().perform();
             }
         }
 
@@ -259,13 +259,13 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
             if (col == ObjectColumnKind.TAG.ordinal()) {
                 final InspectorPopupMenu menu = new InspectorPopupMenu();
-                final TargetCodeTableModel targetCodeTableModel = (TargetCodeTableModel) getModel();
-                final MaxCodeLocation codeLocation = targetCodeTableModel.rowToLocation(row);
+                final MachineCodeTableModel machineCodeTableModel = (MachineCodeTableModel) getModel();
+                final MaxCodeLocation codeLocation = machineCodeTableModel.rowToLocation(row);
                 menu.add(actions().debugRunToInstructionWithBreakpoints(codeLocation, "Run to this instruction"));
                 menu.add(actions().debugRunToInstruction(codeLocation, "Run to this instruction (ignoring breakpoints)"));
-                menu.add(actions().toggleTargetCodeBreakpoint(codeLocation, "Toggle breakpoint (double-click)"));
-                menu.add(actions().setTargetCodeBreakpoint(codeLocation, "Set breakpoint"));
-                menu.add(actions().removeTargetCodeBreakpoint(codeLocation, "Unset breakpoint"));
+                menu.add(actions().toggleMachineCodeBreakpoint(codeLocation, "Toggle breakpoint (double-click)"));
+                menu.add(actions().setMachineCodeBreakpoint(codeLocation, "Set breakpoint"));
+                menu.add(actions().removeMachineCodeBreakpoint(codeLocation, "Unset breakpoint"));
                 return menu;
             }
             return null;
@@ -278,9 +278,9 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             super.valueChanged(e);
             if (!e.getValueIsAdjusting()) {
                 final int selectedRow = getSelectedRow();
-                final TargetCodeTableModel targetCodeTableModel = (TargetCodeTableModel) getModel();
-                if (selectedRow >= 0 && selectedRow < targetCodeTableModel.getRowCount()) {
-                    focus().setCodeLocation(targetCodeTableModel.rowToLocation(selectedRow));
+                final MachineCodeTableModel machineCodeTableModel = (MachineCodeTableModel) getModel();
+                if (selectedRow >= 0 && selectedRow < machineCodeTableModel.getRowCount()) {
+                    focus().setCodeLocation(machineCodeTableModel.rowToLocation(selectedRow));
                 }
             }
         }
@@ -293,10 +293,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public boolean updateCodeFocus(MaxCodeLocation codeLocation) {
             final int oldSelectedRow = getSelectedRow();
             if (codeLocation != null && codeLocation.hasAddress()) {
-                final Address targetCodeInstructionAddress = focus().codeLocation().address();
-                if (machineCode().contains(targetCodeInstructionAddress)) {
-                    final TargetCodeTableModel model = (TargetCodeTableModel) getModel();
-                    final int row = model.findRow(targetCodeInstructionAddress);
+                final Address machineCodeInstructionAddress = focus().codeLocation().address();
+                if (machineCode().contains(machineCodeInstructionAddress)) {
+                    final MachineCodeTableModel model = (MachineCodeTableModel) getModel();
+                    final int row = model.findRow(machineCodeInstructionAddress);
                     if (row >= 0) {
                         if (row != oldSelectedRow) {
                             updateSelection(row);
@@ -316,38 +316,38 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private final class TargetCodeTableColumnModel extends InspectorTableColumnModel<TargetCodeColumnKind> {
+    private final class MachineCodeTableColumnModel extends InspectorTableColumnModel<MachineCodeColumnKind> {
 
-        private TargetCodeTableColumnModel(TargetCodeViewPreferences viewPreferences) {
-            super(TargetCodeColumnKind.values().length, viewPreferences);
+        private MachineCodeTableColumnModel(MachineCodeViewPreferences viewPreferences) {
+            super(MachineCodeColumnKind.values().length, viewPreferences);
             final Address startAddress = tableModel.rowToInstruction(0).address;
-            addColumn(TargetCodeColumnKind.TAG, new TagRenderer(inspection), null);
-            addColumn(TargetCodeColumnKind.NUMBER, new NumberRenderer(), null);
-            addColumn(TargetCodeColumnKind.ADDRESS, new AddressRenderer(startAddress), null);
-            addColumn(TargetCodeColumnKind.POSITION, new PositionRenderer(startAddress), null);
-            addColumn(TargetCodeColumnKind.LABEL, new LabelRenderer(startAddress), null);
-            addColumn(TargetCodeColumnKind.INSTRUCTION, new InstructionRenderer(inspection), null);
-            addColumn(TargetCodeColumnKind.OPERANDS, operandsRenderer, null);
-            addColumn(TargetCodeColumnKind.SOURCE_LINE, sourceLineRenderer, null);
-            addColumn(TargetCodeColumnKind.BYTES, new BytesRenderer(inspection), null);
+            addColumn(MachineCodeColumnKind.TAG, new TagRenderer(inspection), null);
+            addColumn(MachineCodeColumnKind.NUMBER, new NumberRenderer(), null);
+            addColumn(MachineCodeColumnKind.ADDRESS, new AddressRenderer(startAddress), null);
+            addColumn(MachineCodeColumnKind.POSITION, new PositionRenderer(startAddress), null);
+            addColumn(MachineCodeColumnKind.LABEL, new LabelRenderer(startAddress), null);
+            addColumn(MachineCodeColumnKind.INSTRUCTION, new InstructionRenderer(inspection), null);
+            addColumn(MachineCodeColumnKind.OPERANDS, operandsRenderer, null);
+            addColumn(MachineCodeColumnKind.SOURCE_LINE, sourceLineRenderer, null);
+            addColumn(MachineCodeColumnKind.BYTES, new BytesRenderer(inspection), null);
         }
     }
 
     /**
      * Data model representing a block of disassembled code, one row per instruction.
      */
-    private final class TargetCodeTableModel extends InspectorTableModel {
+    private final class MachineCodeTableModel extends InspectorTableModel {
 
         final MaxMachineCode machineCode;
 
-        public TargetCodeTableModel(Inspection inspection, MaxMachineCode machineCode) {
+        public MachineCodeTableModel(Inspection inspection, MaxMachineCode machineCode) {
             super(inspection);
             assert machineCode != null;
             this.machineCode = machineCode;
         }
 
         public int getColumnCount() {
-            return TargetCodeColumnKind.values().length;
+            return MachineCodeColumnKind.values().length;
         }
 
         public int getRowCount() {
@@ -355,27 +355,27 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public Object getValueAt(int row, int col) {
-            final TargetCodeInstruction targetCodeInstruction = rowToInstruction(row);
-            switch (TargetCodeColumnKind.values()[col]) {
+            final TargetCodeInstruction machineCodeInstruction = rowToInstruction(row);
+            switch (MachineCodeColumnKind.values()[col]) {
                 case TAG:
                     return null;
                 case NUMBER:
                     return row;
                 case ADDRESS:
-                    return targetCodeInstruction.address;
+                    return machineCodeInstruction.address;
                 case POSITION:
-                    return targetCodeInstruction.position;
+                    return machineCodeInstruction.position;
                 case LABEL:
-                    final String label = targetCodeInstruction.label;
+                    final String label = machineCodeInstruction.label;
                     return label != null ? label + ":" : "";
                 case INSTRUCTION:
-                    return targetCodeInstruction.mnemonic;
+                    return machineCodeInstruction.mnemonic;
                 case OPERANDS:
-                    return targetCodeInstruction.operands;
+                    return machineCodeInstruction.operands;
                 case SOURCE_LINE:
                     return "";
                 case BYTES:
-                    return targetCodeInstruction.bytes;
+                    return machineCodeInstruction.bytes;
                 default:
                     throw new RuntimeException("Column out of range: " + col);
             }
@@ -383,7 +383,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         @Override
         public Class< ? > getColumnClass(int col) {
-            switch (TargetCodeColumnKind.values()[col]) {
+            switch (MachineCodeColumnKind.values()[col]) {
                 case TAG:
                     return Object.class;
                 case NUMBER:
@@ -424,8 +424,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public int findRow(Address address) {
             final InstructionMap instructionMap = machineCode.getInstructionMap();
             for (int row = 0; row < instructionMap.length(); row++) {
-                final TargetCodeInstruction targetCodeInstruction = instructionMap.instruction(row);
-                if (targetCodeInstruction.address.equals(address)) {
+                final TargetCodeInstruction machineCodeInstruction = instructionMap.instruction(row);
+                if (machineCodeInstruction.address.equals(address)) {
                     return row;
                 }
             }
@@ -504,15 +504,15 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 setForeground(null);
             }
             setText(rowToTagText(row));
-            final MaxBreakpoint targetBreakpoint = getTargetBreakpointAtRow(row);
-            if (targetBreakpoint != null) {
+            final MaxBreakpoint machineCodeBreakpoint = getMachineCodeBreakpointAtRow(row);
+            if (machineCodeBreakpoint != null) {
                 toolTipSB.append("<br>breakpoint set @ ");
-                toolTipSB.append(targetBreakpoint.codeLocation().address().to0xHexString());
-                toolTipSB.append(targetBreakpoint.isEnabled() ? ", enabled" : ", disabled");
-                if (targetBreakpoint.isEnabled()) {
-                    setBorder(style().debugEnabledTargetBreakpointTagBorder());
+                toolTipSB.append(machineCodeBreakpoint.codeLocation().address().to0xHexString());
+                toolTipSB.append(machineCodeBreakpoint.isEnabled() ? ", enabled" : ", disabled");
+                if (machineCodeBreakpoint.isEnabled()) {
+                    setBorder(style().debugEnabledMachineCodeBreakpointTagBorder());
                 } else {
-                    setBorder(style().debugDisabledTargetBreakpointTagBorder());
+                    setBorder(style().debugDisabledMachineCodeBreakpointTagBorder());
                 }
             } else if (instructionMap().isBytecodeBoundary(row)) {
                 setBorder(style().defaultPaneTopBorder());
@@ -602,7 +602,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final Integer position = (Integer) tableModel.getValueAt(row, TargetCodeColumnKind.POSITION.ordinal());
+            final Integer position = (Integer) tableModel.getValueAt(row, MachineCodeColumnKind.POSITION.ordinal());
             setLocation(value.toString(), position);
             setWrappedToolTipText(tableModel.getRowDescription(row));
             setFont(style().defaultFont());
@@ -621,7 +621,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private final class InstructionRenderer extends TargetCodeLabel implements TableCellRenderer {
+    private final class InstructionRenderer extends MachineCodeLabel implements TableCellRenderer {
         InstructionRenderer(Inspection inspection) {
             super(inspection, "");
             setOpaque(true);
@@ -693,7 +693,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         private BytecodeLocation lastBytecodeLocation;
 
         SourceLineRenderer() {
-            super(JTableTargetCodeViewer.this.inspection(), null);
+            super(JTableMachineCodeViewer.this.inspection(), null);
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
@@ -760,7 +760,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private final class OperandsRenderer implements TableCellRenderer, Prober {
         private InspectorLabel[] inspectorLabels = new InspectorLabel[instructionMap().length()];
-        private TargetCodeLabel targetCodeLabel = new TargetCodeLabel(inspection, "");
+        private MachineCodeLabel machineCodeLabel = new MachineCodeLabel(inspection, "");
         private LiteralRenderer literalRenderer = getLiteralRenderer(inspection);
 
         public void refresh(boolean force) {
@@ -777,26 +777,26 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     wordValueLabel.redisplay();
                 }
             }
-            targetCodeLabel.redisplay();
+            machineCodeLabel.redisplay();
         }
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int column) {
             InspectorLabel renderer = inspectorLabels[row];
             if (renderer == null) {
-                final TargetCodeInstruction targetCodeInstruction = tableModel.rowToInstruction(row);
-                final String text = targetCodeInstruction.operands;
-                if (targetCodeInstruction.targetAddress != null && !machineCode().contains(targetCodeInstruction.targetAddress)) {
-                    renderer = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction.targetAddress, table);
+                final TargetCodeInstruction machineCodeInstruction = tableModel.rowToInstruction(row);
+                final String text = machineCodeInstruction.operands;
+                if (machineCodeInstruction.targetAddress != null && !machineCode().contains(machineCodeInstruction.targetAddress)) {
+                    renderer = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, machineCodeInstruction.targetAddress, table);
                     renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
                     inspectorLabels[row] = renderer;
-                } else if (targetCodeInstruction.literalSourceAddress != null) {
-                    final Address literalAddress = targetCodeInstruction.literalSourceAddress.asAddress();
+                } else if (machineCodeInstruction.literalSourceAddress != null) {
+                    final Address literalAddress = machineCodeInstruction.literalSourceAddress.asAddress();
                     renderer = literalRenderer.render(inspection, text, literalAddress);
                     renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ": operand = ");
                     inspectorLabels[row] = renderer;
                 } else {
                     InstructionMap instructionMap = instructionMap();
-                    if (instructionMap.calleeConstantPoolIndex(row) >= 0 && targetCodeInstruction.mnemonic.contains("call")) {
+                    if (instructionMap.calleeConstantPoolIndex(row) >= 0 && machineCodeInstruction.mnemonic.contains("call")) {
                         final PoolConstantLabel poolConstantLabel =
                             PoolConstantLabel.make(inspection, instructionMap.calleeConstantPoolIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
                         poolConstantLabel.setToolTipPrefix(text);
@@ -810,7 +810,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                             renderer.setWrappedToolTipText("<br>operands = " + text);
                             renderer.setForeground(cellForegroundColor(row, column));
                         } else {
-                            renderer = targetCodeLabel;
+                            renderer = machineCodeLabel;
                             renderer.setToolTipPrefix(tableModel.getRowDescription(row) + ":");
                             renderer.setText(text);
                             renderer.setWrappedToolTipText("<br>operands = " + text);

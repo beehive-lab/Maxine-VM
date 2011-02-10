@@ -197,7 +197,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private CompiledStackFramePanel selectedFramePanel;
 
-    private final class StackFrameListCellRenderer extends TargetCodeLabel implements ListCellRenderer {
+    private final class StackFrameListCellRenderer extends MachineCodeLabel implements ListCellRenderer {
 
         StackFrameListCellRenderer(Inspection inspection) {
             super(inspection, "");

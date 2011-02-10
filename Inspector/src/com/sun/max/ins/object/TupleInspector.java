@@ -54,12 +54,12 @@ public class TupleInspector extends ObjectInspector {
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
             objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-            objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor, "Method compilations"));
+            objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor, "Method compilations"));
 
             final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
             codeMenu.add(actions().viewJavaSource(teleClassMethodActor));
             codeMenu.add(actions().viewMethodBytecode(teleClassMethodActor));
-            codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor));
+            codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
             codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
 
             final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
