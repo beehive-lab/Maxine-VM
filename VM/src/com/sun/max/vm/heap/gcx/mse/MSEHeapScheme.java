@@ -201,10 +201,10 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
-            theHeapRegionManager().verifyAfterInitialization();
         } finally {
             disableCustomAllocation();
         }
+        theHeapRegionManager().verifyAfterInitialization();
     }
 
     @Override

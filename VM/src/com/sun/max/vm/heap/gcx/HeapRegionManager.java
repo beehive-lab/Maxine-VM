@@ -281,6 +281,19 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
     public void verifyAfterInitialization() {
         HeapRegionConstants.validate();
+        final OutgoingReferenceChecker checker = new OutgoingReferenceChecker(bootHeapAccount);
+        if (MaxineVM.isDebug()) {
+            bootAllocator.unsafeMakeParsable();
+            bootHeapAccount.visitObjects(checker);
+            if (checker.outgoingReferenceCount() != 0L) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Boot heap account has ");
+                Log.print(checker.outgoingReferenceCount());
+                Log.println(" outgoing references.");
+                Log.unlock(lockDisabledSafepoints);
+                FatalError.crash("Must not happen");
+            }
+        }
     }
 }
 
