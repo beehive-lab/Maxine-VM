@@ -49,7 +49,7 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
     }
 
     @Override
-    public int[] getBytecodeToTargetCodePositionMap() {
+    public int[] getBytecodeToMachineCodePositionMap() {
         JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod();
         return jitTargetMethod.bytecodeToTargetCodePositionMap();
     }
@@ -67,7 +67,7 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
     @Override
     public BytecodeLocation[] getPositionToBytecodeLocationMap() {
         BytecodeLocation[] bytecodeLocations = new BytecodeLocation[getCodeLength()];
-        final int[] bytecodeToTargetCodePositionMap = getBytecodeToTargetCodePositionMap();
+        final int[] bytecodeToTargetCodePositionMap = getBytecodeToMachineCodePositionMap();
         if (bytecodeToTargetCodePositionMap == null) {
             return super.getPositionToBytecodeLocationMap();
         }

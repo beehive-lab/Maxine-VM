@@ -207,7 +207,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             return labelIndexes;
         }
 
-        public int[] bytecodeToTargetCodePositionMap() {
+        public int[] bytecodeToMachineCodePositionMap() {
             return null;
         }
     }
@@ -328,7 +328,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         return null;
     }
 
-    public String targetLocationToString(TargetLocation targetLocation) {
+    public String machineCodeLocationToString(TargetLocation targetLocation) {
         return null;
     }
 

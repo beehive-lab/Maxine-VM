@@ -199,7 +199,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                         final BytecodeLocation[] positionToBytecodeLocationMap = getPositionToBytecodeLocationMap();
 
                         // Non-null if we have a precise map between bytecode and machine code instructions
-                        final int[] bytecodeToTargetCodePositionMap = getBytecodeToTargetCodePositionMap();
+                        final int[] bytecodeToMachineCodePositionMap = getBytecodeToMachineCodePositionMap();
 
                         // Fill in maps indexed by instruction count
                         instructionLocations = new MachineCodeLocation[instructionCount];
@@ -248,13 +248,13 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                                     }
                                 }
                             }
-                            if (bytecodeToTargetCodePositionMap != null) {
+                            if (bytecodeToMachineCodePositionMap != null) {
                                 // Add more information if we have a precise map from bytecode to machine code instructions
                                 final int bytecodePosition = bytecodeIndex;
                                 // To check if we're crossing a bytecode boundary in the JITed code, compare the offset of the instruction at the current row with the offset recorded by the JIT
                                 // for the start of bytecode template.
-                                if (bytecodePosition < bytecodeToTargetCodePositionMap.length &&
-                                                position == bytecodeToTargetCodePositionMap[bytecodePosition]) {
+                                if (bytecodePosition < bytecodeToMachineCodePositionMap.length &&
+                                                position == bytecodeToMachineCodePositionMap[bytecodePosition]) {
                                     // This is the start of the machine code block implementing the next bytecode
                                     int opcode = Bytes.beU1(bytecodes, bytecodeIndex);
                                     if (opcode == Bytecodes.WIDE) {
@@ -264,8 +264,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                                     // Move bytecode position cursor to start of next instruction
                                     do {
                                         ++bytecodeIndex;
-                                    } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length &&
-                                                    bytecodeToTargetCodePositionMap[bytecodeIndex] == 0);
+                                    } while (bytecodeIndex < bytecodeToMachineCodePositionMap.length &&
+                                                    bytecodeToMachineCodePositionMap[bytecodeIndex] == 0);
                                 }
                             }
                         }
@@ -399,8 +399,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
             return labelIndexes;
         }
 
-        public int[] bytecodeToTargetCodePositionMap() {
-            return getBytecodeToTargetCodePositionMap();
+        public int[] bytecodeToMachineCodePositionMap() {
+            return getBytecodeToMachineCodePositionMap();
         }
 
     }
@@ -746,7 +746,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return bytecodeLocations;
     }
 
-    protected int[] getBytecodeToTargetCodePositionMap() {
+    protected int[] getBytecodeToMachineCodePositionMap() {
         return null;
     }
 
