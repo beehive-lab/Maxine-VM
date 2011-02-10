@@ -218,7 +218,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     }
 
     public List<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor) {
-        final List<MaxCompiledCode> compilations = new ArrayList<MaxCompiledCode>(teleClassMethodActor.numberOfCompilations());
+        final List<MaxCompiledCode> compilations = new ArrayList<MaxCompiledCode>(teleClassMethodActor.compilationCount());
         for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
             compilations.add(findCompiledCode(teleTargetMethod.getRegionStart()));
         }

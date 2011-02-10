@@ -102,7 +102,7 @@ public class JavaMethodInspector extends MethodInspector {
         this.requestedCodeKind = requestedCodeKind;
 
         // enable choice if machine code is present, even though this Inspector is not bound to a compilation
-        codeKindEnabled.put(MethodCodeKind.MACHINE_CODE, compiledCode != null || teleClassMethodActor.hasTargetMethod());
+        codeKindEnabled.put(MethodCodeKind.MACHINE_CODE, compiledCode != null || teleClassMethodActor.compilationCount() > 0);
         // enable if bytecodes present
         codeKindEnabled.put(MethodCodeKind.BYTECODES, (teleClassMethodActor == null) ? false : teleClassMethodActor.hasCodeAttribute());
         // not implemented yet
@@ -361,9 +361,6 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     protected void refreshView(boolean force) {
         if (getJComponent().isShowing() || force) {
-            if (teleClassMethodActor != null) {
-                teleClassMethodActor.refreshView();
-            }
             for (CodeViewer codeViewer : codeViewers.values()) {
                 codeViewer.refresh(force);
             }
