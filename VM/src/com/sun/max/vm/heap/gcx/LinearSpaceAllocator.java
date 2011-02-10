@@ -287,4 +287,15 @@ public class LinearSpaceAllocator {
             HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
         }
     }
+
+    /**
+     * Temporary hack to support HeapRegionManager.verifyAfterInitialization.
+     */
+    void unsafeMakeParsable() {
+        Pointer cell = top.asPointer();
+        Pointer hardLimit = hardLimit().asPointer();
+        if (cell.lessThan(hardLimit)) {
+            HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
+        }
+    }
 }
