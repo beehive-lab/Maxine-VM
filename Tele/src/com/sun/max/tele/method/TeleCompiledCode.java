@@ -222,7 +222,7 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         return teleTargetMethod.classActorForObjectType();
     }
 
-    public String targetLocationToString(TargetLocation targetLocation) {
+    public String machineCodeLocationToString(TargetLocation targetLocation) {
         switch (targetLocation.tag()) {
             case INTEGER_REGISTER: {
                 final TargetLocation.IntegerRegister integerRegister = (TargetLocation.IntegerRegister) targetLocation;

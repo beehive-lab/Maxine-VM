@@ -72,10 +72,10 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
      * Gets the human-readable name of a data location that can be addressed by machine
      * code instructions in this method.
      *
-     * @param targetLocation
+     * @param machineCodetLocation
      * @return the name of the data location
      */
-    String targetLocationToString(TargetLocation targetLocation);
+    String machineCodeLocationToString(TargetLocation machineCodetLocation);
 
     /**
      * Writes a textual disassembly of the machine code instructions.
@@ -169,7 +169,7 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
         List<Integer> labelIndexes();
 
         // TODO (mlvdv) should abstract this interface further so this doesn't need to be exposed.
-        int[] bytecodeToTargetCodePositionMap();
+        int[] bytecodeToMachineCodePositionMap();
 
     }
 
