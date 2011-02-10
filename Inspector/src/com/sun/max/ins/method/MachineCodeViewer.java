@@ -46,11 +46,18 @@ public abstract class MachineCodeViewer extends CodeViewer {
     private final MaxMachineCode machineCode;
     private TeleConstantPool teleConstantPool;
     private ConstantPool localConstantPool;
-    private final String[] rowToTagText;
+    private String[] rowToTagText;
 
     protected MachineCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
         super(inspection, parent);
         this.machineCode = machineCode;
+        updateMachineCodeInfo();
+    }
+
+    /**
+     * Updates all information derived from the machine code.
+     */
+    private void updateMachineCodeInfo() {
         final InstructionMap instructionMap = this.machineCode.getInstructionMap();
         final int machineInstructionCount = instructionMap.length();
         this.rowToTagText = new String[machineInstructionCount];
@@ -59,8 +66,8 @@ public abstract class MachineCodeViewer extends CodeViewer {
         teleConstantPool = null;
         localConstantPool = null;
         Arrays.fill(rowToTagText, "");
-        if (machineCode instanceof MaxCompiledCode) {
-            final MaxCompiledCode compiledCode = (MaxCompiledCode) machineCode;
+        if (this.machineCode instanceof MaxCompiledCode) {
+            final MaxCompiledCode compiledCode = (MaxCompiledCode) this.machineCode;
             final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
