@@ -90,7 +90,7 @@ public class JavaMethodInspector extends MethodInspector {
      */
     public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
         this(inspection, parent, null, teleClassMethodActor, codeKind);
-        assert codeKind != MethodCodeKind.TARGET_CODE;
+        assert codeKind != MethodCodeKind.MACHINE_CODE;
     }
 
     private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledCode compiledCode, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
@@ -101,8 +101,8 @@ public class JavaMethodInspector extends MethodInspector {
         this.compiledCode = compiledCode;
         this.requestedCodeKind = requestedCodeKind;
 
-        // enable choice if target code is present, even though this Inspector is not bound to a TargetMethod
-        codeKindEnabled.put(MethodCodeKind.TARGET_CODE, compiledCode != null || teleClassMethodActor.hasTargetMethod());
+        // enable choice if machine code is present, even though this Inspector is not bound to a compilation
+        codeKindEnabled.put(MethodCodeKind.MACHINE_CODE, compiledCode != null || teleClassMethodActor.hasTargetMethod());
         // enable if bytecodes present
         codeKindEnabled.put(MethodCodeKind.BYTECODES, (teleClassMethodActor == null) ? false : teleClassMethodActor.hasCodeAttribute());
         // not implemented yet
@@ -153,27 +153,27 @@ public class JavaMethodInspector extends MethodInspector {
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
             objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-            objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor, "Method compilations:"));
+            objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor, "Method compilations:"));
             objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
         }
         for (final MethodCodeKind codeKind : MethodCodeKind.values()) {
             codeMenu.add(codeViewCheckBoxes[codeKind.ordinal()]);
         }
         if (teleClassMethodActor != null) {
-            codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor, "View method's compilations"));
+            codeMenu.add(actions().viewMethodCompilationsMenu(teleClassMethodActor, "View method's compilations"));
         }
         codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
 
         if (compiledCode != null) {
-            breakOnEntryMenu.add(actions().setMachineCodeBreakpointAtEntry(compiledCode, "Target code"));
+            breakOnEntryMenu.add(actions().setMachineCodeBreakpointAtEntry(compiledCode, "Machine code"));
         }
         if (teleClassMethodActor != null) {
             breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecodes"));
         }
         debugMenu.add(breakOnEntryMenu);
         if (compiledCode != null) {
-            breakAtLabelsMenu.add(actions().setMachineCodeLabelBreakpoints(compiledCode, "Add target code breakpoints"));
-            breakAtLabelsMenu.add(actions().removeMachineCodeLabelBreakpoints(compiledCode, "Remove target code breakpoints"));
+            breakAtLabelsMenu.add(actions().setMachineCodeLabelBreakpoints(compiledCode, "Add machine code breakpoints"));
+            breakAtLabelsMenu.add(actions().removeMachineCodeLabelBreakpoints(compiledCode, "Remove machine code breakpoints"));
         }
         debugMenu.add(breakAtLabelsMenu);
         if (teleClassMethodActor != null) {
@@ -280,14 +280,14 @@ public class JavaMethodInspector extends MethodInspector {
             }
         }
         if (codeViewerCount() == 0) {
-            addCodeViewer(MethodCodeKind.TARGET_CODE);
+            addCodeViewer(MethodCodeKind.MACHINE_CODE);
         }
     }
 
     private CodeViewer codeViewerFactory(MethodCodeKind codeKind) {
         switch (codeKind) {
-            case TARGET_CODE:
-                return new JTableTargetCodeViewer(inspection(), this, compiledCode);
+            case MACHINE_CODE:
+                return new JTableMachineCodeViewer(inspection(), this, compiledCode);
             case BYTECODES:
                 return new JTableBytecodeViewer(inspection(), this, teleClassMethodActor, compiledCode);
             case JAVA_SOURCE:

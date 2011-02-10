@@ -81,10 +81,10 @@ public final class HubInspector extends ObjectInspector {
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
             objectMenu.add(actions().inspectObject(teleClassActor, teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-            objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor));
+            objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor));
 
             final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
-            codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor));
+            codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
             codeMenu.addSeparator();
             codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
         }

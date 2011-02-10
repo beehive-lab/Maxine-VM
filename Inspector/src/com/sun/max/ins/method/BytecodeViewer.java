@@ -111,17 +111,17 @@ public abstract class BytecodeViewer extends CodeViewer {
     }
 
     /**
-     * Disassembled target code instructions from the associated compilation of the method, null if none associated.
+     * Disassembled machine code instructions from the associated compilation of the method, null if none associated.
      */
-    private List<TargetCodeInstruction> targetCodeInstructions = null;
+    private List<TargetCodeInstruction> machineCodeInstructions = null;
 
-    private boolean haveTargetCodeAddresses = false;
+    private boolean haveMachineCodeAddresses = false;
 
     /**
-     * True if a compiled version of the method is available and if we have a map between bytecode and target locations.
+     * True if a compiled version of the method is available and if we have a map between bytecode and machine code locations.
      */
-    protected boolean haveTargetCodeAddresses() {
-        return haveTargetCodeAddresses;
+    protected boolean haveMachineCodeAddresses() {
+        return haveMachineCodeAddresses;
     }
 
     private List<BytecodeInstruction> bytecodeInstructions = null;
@@ -131,7 +131,7 @@ public abstract class BytecodeViewer extends CodeViewer {
     }
 
     /**
-     * Base class for bytecode viewers. TargetCode is optional, since a method may not yet be compiled, but may appear
+     * Base class for bytecode viewers. Machine code is optional, since a method may not yet be compiled, but may appear
      * and change as method is compiled and recompiled.
      */
     protected BytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, MaxCompiledCode compiledCode) {
@@ -150,21 +150,21 @@ public abstract class BytecodeViewer extends CodeViewer {
     }
 
     private void buildView() {
-        int[] bytecodeToTargetCodePositionMap = null;
+        int[] bytecodeToMachineCodePositionMap = null;
         InstructionMap instructionMap = null;
         if (compiledCode != null) {
             instructionMap = compiledCode.getInstructionMap();
-            bytecodeToTargetCodePositionMap = instructionMap.bytecodeToTargetCodePositionMap();
-            // TODO (mlvdv) can only map bytecodes to JIT target code so far
-            if (bytecodeToTargetCodePositionMap != null) {
-                haveTargetCodeAddresses = true;
+            bytecodeToMachineCodePositionMap = instructionMap.bytecodeToMachineCodePositionMap();
+            // TODO (mlvdv) can only map bytecodes to JIT machine code so far
+            if (bytecodeToMachineCodePositionMap != null) {
+                haveMachineCodeAddresses = true;
             }
         }
         bytecodeInstructions = new ArrayList<BytecodeInstruction>(10);
         int currentBytecodeOffset = 0;
         int bytecodeRow = 0;
-        int targetCodeRow = 0;
-        Address targetCodeFirstAddress = Address.zero();
+        int machineCodeRow = 0;
+        Address machineCodeFirstAddress = Address.zero();
         while (currentBytecodeOffset < methodBytes.length) {
             final OutputStream stream = new NullOutputStream();
             try {
@@ -172,14 +172,14 @@ public abstract class BytecodeViewer extends CodeViewer {
                 final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
                 final int nextBytecodeOffset = bytecodeScanner.scanInstruction(methodBytes, currentBytecodeOffset);
                 final byte[] instructionBytes = Bytes.getSection(methodBytes, currentBytecodeOffset, nextBytecodeOffset);
-                if (haveTargetCodeAddresses) {
-                    while (instructionMap.instruction(targetCodeRow).position < bytecodeToTargetCodePositionMap[currentBytecodeOffset]) {
-                        targetCodeRow++;
+                if (haveMachineCodeAddresses) {
+                    while (instructionMap.instruction(machineCodeRow).position < bytecodeToMachineCodePositionMap[currentBytecodeOffset]) {
+                        machineCodeRow++;
                     }
-                    targetCodeFirstAddress = instructionMap.instruction(targetCodeRow).address;
+                    machineCodeFirstAddress = instructionMap.instruction(machineCodeRow).address;
                 }
                 final BytecodeInstruction instruction = new BytecodeInstruction(bytecodeRow, currentBytecodeOffset, instructionBytes, bytecodePrinter.opcode(), bytecodePrinter.operand1(),
-                                bytecodePrinter.operand2(), targetCodeRow, targetCodeFirstAddress);
+                                bytecodePrinter.operand2(), machineCodeRow, machineCodeFirstAddress);
                 bytecodeInstructions.add(instruction);
                 bytecodeRow++;
                 currentBytecodeOffset = nextBytecodeOffset;
@@ -193,20 +193,20 @@ public abstract class BytecodeViewer extends CodeViewer {
      * @return Whether the compiled code in the VM for the bytecode at specified row contains the specified address.
      */
     protected boolean rowContainsAddress(int row, Address address) {
-        if (haveTargetCodeAddresses) {
+        if (haveMachineCodeAddresses) {
             final BytecodeInstruction bytecodeInstruction = bytecodeInstructions.get(row);
-            if (address.lessThan(bytecodeInstruction.targetCodeFirstAddress)) {
-                // before the first byte location of the first target instruction for this bytecode
+            if (address.lessThan(bytecodeInstruction.machineCodeFirstAddress)) {
+                // before the first byte location of the first machine instruction for this bytecode
                 return false;
             }
             if (row < (bytecodeInstructions.size() - 1)) {
-                // All but last bytecode instruction: see if before the first byte location of the first target instruction for the next bytecode
-                return address.lessThan(bytecodeInstructions.get(row + 1).targetCodeFirstAddress);
+                // All but last bytecode instruction: see if before the first byte location of the first machine code instruction for the next bytecode
+                return address.lessThan(bytecodeInstructions.get(row + 1).machineCodeFirstAddress);
             }
-            // Last bytecode instruction:  see if before the end of the target code
+            // Last bytecode instruction:  see if before the end of the machine code
             final InstructionMap instructionMap = compiledCode.getInstructionMap();
-            final TargetCodeInstruction lastTargetCodeInstruction = instructionMap.instruction(instructionMap.length() - 1);
-            return address.lessThan(lastTargetCodeInstruction.address.plus(lastTargetCodeInstruction.bytes.length));
+            final TargetCodeInstruction lastMachineCodeInstruction = instructionMap.instruction(instructionMap.length() - 1);
+            return address.lessThan(lastMachineCodeInstruction.address.plus(lastMachineCodeInstruction.bytes.length));
         }
         return false;
     }
@@ -217,7 +217,7 @@ public abstract class BytecodeViewer extends CodeViewer {
      */
     @Override
     protected void updateStackCache() {
-        if (haveTargetCodeAddresses()) {
+        if (haveMachineCodeAddresses()) {
             Arrays.fill(rowToStackFrame, null);
             for (int row = 0; row < bytecodeInstructions.size(); row++) {
                 for (MaxStackFrame frame : focus().thread().stack().frames()) {
@@ -231,12 +231,13 @@ public abstract class BytecodeViewer extends CodeViewer {
     }
 
     /**
-     * Determines if the compiled code for the bytecode has a target breakpoint set at this location in the VM, in
+     * Determines if the compiled code for the bytecode has a machine code breakpoint
+     * set at this location in the VM, in
      * situations where we can map between locations.
      */
-    protected List<MaxBreakpoint> getTargetBreakpointsAtRow(int row) {
+    protected List<MaxBreakpoint> getMachineCodeBreakpointsAtRow(int row) {
         final List<MaxBreakpoint> breakpoints = new LinkedList<MaxBreakpoint>();
-        if (haveTargetCodeAddresses) {
+        if (haveMachineCodeAddresses) {
             for (MaxBreakpoint breakpoint : vm().breakpointManager().breakpoints()) {
                 if (!breakpoint.isBytecodeBreakpoint() && rowContainsAddress(row, breakpoint.codeLocation().address())) {
                     breakpoints.add(breakpoint);
@@ -292,14 +293,14 @@ public abstract class BytecodeViewer extends CodeViewer {
         public final int row;
 
         /**
-         * index of the first target code instruction implementing this bytecode (Jit only for now).
+         * index of the first machine code instruction implementing this bytecode (Jit only for now).
          */
-        public final int targetCodeRow;
+        public final int machineCodeRow;
 
         /**
-         * address of the first byte in the target code instructions implementing this bytecode (Jit only for now).
+         * address of the first byte in the machine code instructions implementing this bytecode (Jit only for now).
          */
-        public final Address targetCodeFirstAddress;
+        public final Address machineCodeFirstAddress;
 
         /**
          * the code of the operation for this instruction.
@@ -325,15 +326,15 @@ public abstract class BytecodeViewer extends CodeViewer {
          */
         public final Object operand2;
 
-        BytecodeInstruction(int bytecodeRow, int position, byte[] bytes, int opcode, Object operand1, Object operand2, int targetCodeRow, Address targetCodeFirstAddress) {
+        BytecodeInstruction(int bytecodeRow, int position, byte[] bytes, int opcode, Object operand1, Object operand2, int machineCodeRow, Address machineCodeFirstAddress) {
             this.row = bytecodeRow;
             this.position = position;
             this.instructionBytes = bytes;
             this.opcode = opcode;
             this.operand1 = operand1;
             this.operand2 = operand2;
-            this.targetCodeRow = targetCodeRow;
-            this.targetCodeFirstAddress = targetCodeFirstAddress;
+            this.machineCodeRow = machineCodeRow;
+            this.machineCodeFirstAddress = machineCodeFirstAddress;
         }
     }
 

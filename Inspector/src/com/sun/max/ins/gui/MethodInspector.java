@@ -102,7 +102,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         final MaxCompiledCode compiledCode = inspection.vm().codeCache().findCompiledCode(address);
         if (compiledCode != null) {
             // Java method
-            methodInspector = make(inspection, compiledCode, MethodCodeKind.TARGET_CODE);
+            methodInspector = make(inspection, compiledCode, MethodCodeKind.MACHINE_CODE);
         } else {
             final MaxExternalCode externalCode = inspection.vm().codeCache().findExternalCode(address);
             if (externalCode != null) {
@@ -166,7 +166,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
             // TODO (mlvdv)  Select the specified bytecode position
             return make(inspection, codeLocation.teleClassMethodActor(), MethodCodeKind.BYTECODES);
         }
-        // Has neither target nor bytecode location specified.
+        // Has neither machine nor bytecode location specified.
         return null;
     }
 
@@ -286,7 +286,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         frame.makeMenu(MenuKind.EDIT_MENU);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectTargetRegionMemoryWords(machineCode()));
+        memoryMenu.add(actions().inspectMachineCodeRegionMemoryWords(machineCode()));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");

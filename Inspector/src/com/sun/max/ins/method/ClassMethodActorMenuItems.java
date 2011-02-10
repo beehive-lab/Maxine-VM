@@ -50,13 +50,13 @@ public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems 
         final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
         objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
         objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-        objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor));
+        objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor));
         menu.add(objectMenu);
 
         final InspectorMenu codeMenu = new InspectorMenu("Code");
         codeMenu.add(actions().viewJavaSource(teleClassMethodActor));
         codeMenu.add(actions().viewMethodBytecode(teleClassMethodActor));
-        codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor));
+        codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
         menu.add(codeMenu);
 
         final InspectorMenu debugMenu = new InspectorMenu("Debug");
@@ -71,13 +71,13 @@ public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems 
         final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
         objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
         objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-        objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor));
+        objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor));
         menu.add(objectMenu);
 
         final InspectorMenu codeMenu = new InspectorMenu("Code");
         codeMenu.add(actions().viewJavaSource(teleClassMethodActor));
         codeMenu.add(actions().viewMethodBytecode(teleClassMethodActor));
-        codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor));
+        codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
         menu.add(codeMenu);
 
         final InspectorMenu debugMenu = new InspectorMenu("Debug");

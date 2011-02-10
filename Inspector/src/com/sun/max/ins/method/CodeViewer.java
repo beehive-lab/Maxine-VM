@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -322,7 +322,7 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     /**
-     * Is the target code address at the row an instruction pointer
+     * Is the machine code address at the row an instruction pointer
      * for a non-top frame of the stack of the thread that is the current focus?
      */
     protected boolean isCallReturn(int row) {
@@ -331,7 +331,7 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     /**
-     * Is the target code address at the row an instruction pointer
+     * Is the machine code address at the row an instruction pointer
      * for the top frame of the stack of the thread that is the current focus?
      */
     protected boolean isInstructionPointer(int row) {

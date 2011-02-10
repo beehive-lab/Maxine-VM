@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -132,7 +132,7 @@ public interface InspectorStyle {
     // Default display of any kind of code
     Icon codeViewCloseIcon();
 
-    // Display of target code
+    // Display of machine code
 
     // Display of bytecodes
     Font bytecodeMnemonicFont();
@@ -147,8 +147,8 @@ public interface InspectorStyle {
     Color vmRunningBackgroundColor();
     Color vmTerminatedBackgroundColor();
 
-    Border debugEnabledTargetBreakpointTagBorder();
-    Border debugDisabledTargetBreakpointTagBorder();
+    Border debugEnabledMachineCodeBreakpointTagBorder();
+    Border debugDisabledMachineCodeBreakpointTagBorder();
     Border debugEnabledBytecodeBreakpointTagBorder();
     Border debugDisabledBytecodeBreakpointTagBorder();
 

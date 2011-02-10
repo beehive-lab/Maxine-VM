@@ -25,24 +25,23 @@ package com.sun.max.ins.method;
 import java.util.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectorNameDisplay.*;
+import com.sun.max.ins.InspectorNameDisplay.ReturnTypeSpecification;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
- * A dialog to let the user select a compiled method. The dialog has two flavors; one that shows all the
- * target methods currently in the VM and one that shows all the target methods pertaining to the
+ * A dialog to let the user select a method compilation. The dialog has two flavors; one that shows all the
+ * method compilations currently in the VM and one that shows all the method compilations pertaining to the
  * declared methods of a specified class actor.
  *
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompiledCode> {
+public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxCompiledCode> {
 
     /**
      * A tuple (method compilation name, method compilation).
@@ -84,7 +83,7 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
     @Override
     protected void rebuildList(String filterText) {
         final String filterLowerCase = filterText.toLowerCase();
-        final List<NamedMethodCompilation> namedTeleTargetMethods = new ArrayList<NamedMethodCompilation>();
+        final List<NamedMethodCompilation> namedMethodCompilations = new ArrayList<NamedMethodCompilation>();
 
         if (teleClassActor != null) {
             for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
@@ -96,7 +95,7 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
                                     methodNameLowerCase.contains(filterLowerCase)) {
                         for (MaxCompiledCode compiledCode : vm().codeCache().compilations(teleClassMethodActor)) {
                             final String name = inspection().nameDisplay().shortName(compiledCode, ReturnTypeSpecification.AS_SUFFIX);
-                            namedTeleTargetMethods.add(new NamedMethodCompilation(name, compiledCode));
+                            namedMethodCompilations.add(new NamedMethodCompilation(name, compiledCode));
                         }
                     }
                 }
@@ -105,27 +104,27 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
             for (MaxCompiledCodeRegion teleCompiledCodeRegion : inspection().vm().codeCache().compiledCodeRegions()) {
                 for (MaxCompiledCode compiledCode : teleCompiledCodeRegion.compilations()) {
                     ClassMethodActor methodActor = compiledCode.classMethodActor();
-                    String targetMethodType = Classes.getSimpleName(compiledCode.representation().classActorForObjectType().javaClass().getSimpleName());
+                    String methodCompilationType = Classes.getSimpleName(compiledCode.representation().classActorForObjectType().javaClass().getSimpleName());
                     if (methodActor != null) {
-                        final String textToMatch = methodActor.format("%h.%n " + targetMethodType).toLowerCase();
+                        final String textToMatch = methodActor.format("%h.%n " + methodCompilationType).toLowerCase();
                         if (filterLowerCase.isEmpty() ||
                             (filterLowerCase.endsWith(" ") && textToMatch.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
                              textToMatch.contains(filterLowerCase)) {
-                            final String name = methodActor.format("%h.%n(%p) [" + targetMethodType + "]");
-                            namedTeleTargetMethods.add(new NamedMethodCompilation(name, compiledCode));
+                            final String name = methodActor.format("%h.%n(%p) [" + methodCompilationType + "]");
+                            namedMethodCompilations.add(new NamedMethodCompilation(name, compiledCode));
                         }
                     } else {
                         String regionName = compiledCode.entityName();
-                        if (filterLowerCase.isEmpty() || (regionName + " " + targetMethodType).toLowerCase().contains(filterLowerCase)) {
-                            namedTeleTargetMethods.add(new NamedMethodCompilation(regionName + " [" + targetMethodType + "]", compiledCode));
+                        if (filterLowerCase.isEmpty() || (regionName + " " + methodCompilationType).toLowerCase().contains(filterLowerCase)) {
+                            namedMethodCompilations.add(new NamedMethodCompilation(regionName + " [" + methodCompilationType + "]", compiledCode));
                         }
                     }
                 }
             }
         }
 
-        Collections.sort(namedTeleTargetMethods);
-        for (NamedMethodCompilation namedMethodCompilation : namedTeleTargetMethods) {
+        Collections.sort(namedMethodCompilations);
+        for (NamedMethodCompilation namedMethodCompilation : namedMethodCompilations) {
             listModel.addElement(namedMethodCompilation);
         }
     }
@@ -134,11 +133,11 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
 
     @Override
     protected String filterFieldLabelTooltip() {
-        return "Enter target method name substring which can include a class name prefix. To filter only by method name, prefix filter text with '.'";
+        return "Enter method name substring which can include a class name prefix. To filter only by method name, prefix filter text with '.'";
     }
 
-    private TargetMethodSearchDialog(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multiSelection) {
-        super(inspection, title == null ? "Select Target Method" : title, "Filter text", actionName, multiSelection);
+    private MethodCompilationSearchDialog(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multiSelection) {
+        super(inspection, title == null ? "Select Method Compilation" : title, "Filter text", actionName, multiSelection);
         this.teleClassActor = teleClassActor;
         rebuildList();
     }
@@ -146,14 +145,14 @@ public final class TargetMethodSearchDialog extends FilteredListDialog<MaxCompil
     /**
      * Displays a dialog to let the use select one or more compiled methods in the tele VM.
      *
-     * @param teleClassActor a {@link ClassActor} in the tele VM. If null, then all target methods in the VM are presented for selection.
+     * @param teleClassActor a {@link ClassActor} in the tele VM. If null, then all method compilations in the VM are presented for selection.
      * @param title for dialog window
      * @param actionName name to appear on button
      * @param multi allow multiple selections if true
-     * @return references to the selected {@link TargetMethod}s in the tele VM, null if user canceled.
+     * @return references to the selected instances of {@link MaxCompiledCode} in the tele VM, null if user canceled.
      */
     public static List<MaxCompiledCode> show(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multi) {
-        final TargetMethodSearchDialog dialog = new TargetMethodSearchDialog(inspection, teleClassActor, title, actionName, multi);
+        final MethodCompilationSearchDialog dialog = new MethodCompilationSearchDialog(inspection, teleClassActor, title, actionName, multi);
         dialog.setVisible(true);
         return dialog.selectedObjects();
 //        final Sequence<MaxMachineCode> teleObjects = dialog.selectedObjects();

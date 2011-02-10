@@ -397,7 +397,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final StringBuilder name = new StringBuilder();
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
-            name.append("Target{").append(address.to0xHexString());
+            name.append("MachineCode{").append(address.to0xHexString());
             if (vm().codeCache().findExternalCode(address) != null) {
                 // a native routine that's already been registered.
                 name.append("}");
