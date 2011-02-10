@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems 
     public ClassMethodActorMenuItems(Inspection inspection, TeleClassMethodActor teleClassMethodActor) {
         super(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
-        refresh(true);
     }
 
     public void addTo(InspectorMenu menu) {
@@ -86,14 +85,6 @@ public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems 
         debugMenu.add(breakOnEntryMenu);
         debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
         menu.add(debugMenu);
-    }
-
-    @Override
-    public void refresh(boolean force) {
-        if (teleClassMethodActor != null) {
-            teleClassMethodActor.refreshView();
-        }
-        super.refresh(force);
     }
 
 }

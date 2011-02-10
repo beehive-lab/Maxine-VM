@@ -443,10 +443,10 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         if (teleClassActor != null) {
             final List<TeleTargetMethod> result = new LinkedList<TeleTargetMethod>();
             for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
-                if (teleClassMethodActor.hasTargetMethod()) {
+                if (teleClassMethodActor.compilationCount() > 0) {
                     ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
                     if (classMethodActor.name.equals(methodKey.name()) && classMethodActor.descriptor.equals(methodKey.signature())) {
-                        for (int i = 0; i < teleClassMethodActor.numberOfCompilations(); ++i) {
+                        for (int i = 0; i < teleClassMethodActor.compilationCount(); ++i) {
                             TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCompilation(i);
                             if (teleTargetMethod != null) {
                                 result.add(teleTargetMethod);
