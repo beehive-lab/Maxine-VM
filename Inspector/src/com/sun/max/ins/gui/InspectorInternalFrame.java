@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,11 @@ import com.sun.max.ins.util.*;
 
 /**
  * A internal frame controlled by an {@linkplain Inspector inspector}.
+ * This is the simple form of such a frame, designed to be used inside
+ * a Swing {@link JDesktopPane}.  It has the usual frame decorations,
+ * including a title along with affordances for resizing, minimizing,
+ * and closing (which is interpreted as a request to remove or "dispose")
+ * of an individual Inspector.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -63,6 +68,8 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
         setIconifiable(true);
         setVisible(false);
 
+        // Catch user focus events, where a window either becomes or ceases to
+        // be the currently "selected" window in the window system.
         addInternalFrameListener(new InternalFrameAdapter() {
 
             @Override
@@ -81,12 +88,24 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
         return this;
     }
 
+    /** {@inheritDoc}
+     * <p>
+     * The frame itself has no display state that would be sensitive to VM
+     * state, but there may be menu items that might, for example to
+     * enable/disable certain commands.
+     */
     public void refresh(boolean force) {
         if (menuBar != null) {
             menuBar.refresh(force);
         }
     }
 
+    /** {@inheritDoc}
+     * <p>
+     * The window system does not need to be explicitly redisplayed when some
+     * display preference is changed; that is handled by the window system
+     * itself once we've set it.
+     */
     public void redisplay() {
     }
 

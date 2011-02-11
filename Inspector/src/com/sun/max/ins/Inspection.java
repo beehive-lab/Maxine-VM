@@ -511,6 +511,7 @@ public final class Inspection implements InspectionHolder {
     }
 
     /**
+     * This is the main update loop for all inspection state after a period of VM execution.
      * Determines what happened in VM execution that just concluded. Then updates all view state as needed.
      */
     public void updateAfterVMStopped() {
@@ -526,6 +527,8 @@ public final class Inspection implements InspectionHolder {
             focus().setThread(vm().state().threads().get(0));
         }
         try {
+            // Notify all listeners (Inspectors, menu items, etc.() that
+            // there has been a signifiant VM state change.
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint
             // or the memory location that triggered a watchpoint

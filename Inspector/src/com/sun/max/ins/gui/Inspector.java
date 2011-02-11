@@ -39,8 +39,12 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
- * An {@link Inspector} combines an aggregation of {@link Prober}s in a displayed frame.
- * <br>
+ * A manager for the interactive visual presentation of some aspect of VM state.
+ * <p>
+ * The manager creates some kind of view (the visual representation of some piece
+ * of VM state)k and puts it into a {@link InspectorFrame} for realization in the
+ * window system.
+ * <p>
  * <b>Event Notification</b>:
  * This abstract class ensures that every Inspector listens for {@linkplain InspectionListener Inspection Events}
  * as well as {@linkplain ViewFocusListener Focus Events}.  Any Inspector implementation
@@ -50,7 +54,6 @@ import com.sun.max.unsafe.*;
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
- *
  */
 public abstract class Inspector<Inspector_Type extends Inspector> extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
 
@@ -240,22 +243,22 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
-     * Sets the display frame title for this inspector.
-     *
-     * @param title a string to display.  If null, uses the string provided by
-     * the abstract method {@link #getTextForTitle()}.
+     * Creates the view that will be inserted into the Inspector's frame.
      */
     protected abstract void createView();
 
     /**
-     * Creates a frame for the inspector
-     * calls {@link createView()} to populate it; adds the inspector to the update
-     * listeners; makes it all visible.
+     * Creates a simple frame for the inspector and:
+     * <ul>
+     * <li>calls {@link createView()} to populate it;</li>
+     * <li>adds this inspector to the collection of update listeners; and</li>
+     * <li>makes it all visible in the window system.</li>
+     * </ul>
      *
      * If this inspector has a {@linkplain #saveSettingsListener()}, then its size and location
      * is adjusted according to the {@linkplain Inspection#settings() inspection's settings}.
-     * @param addMenuBar TODO
      *
+     * @param addMenuBar should a menu bar be added to the frame.
      */
     protected InspectorFrame createFrame(boolean addMenuBar) {
         frame = new InspectorInternalFrame(this, addMenuBar);
@@ -272,6 +275,19 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         return frame;
     }
 
+    /**
+     * Creates a tabbed frame for the inspector and:
+     * <ul>
+     * <li>calls {@link createView()} to populate it;</li>
+     * <li>adds this inspector to the collection of update listeners; and</li>
+     * <li>makes it all visible in the window system.</li>
+     * </ul>
+     *
+     * If this inspector has a {@linkplain #saveSettingsListener()}, then its size and location
+     * is adjusted according to the {@linkplain Inspection#settings() inspection's settings}.
+     *
+     * @param addMenuBar should a menu bar be added to the frame.
+     */
     protected InspectorFrame createTabFrame(TabbedInspector<Inspector_Type> parent) {
         final Class<Inspector_Type> type = null;
         final Inspector_Type thisInspector = Utils.cast(type, this);
