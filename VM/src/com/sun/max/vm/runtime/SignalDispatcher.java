@@ -151,14 +151,20 @@ public final class SignalDispatcher extends Thread {
         return PendingSignals.compareAndSet(signal, n, n + 1);
     }
 
-    private static volatile boolean started;
+    /**
+     * Dispatcher thread state: 0 = not started, 1 = started, 2 = terminated.
+     */
+    private static volatile int state;
 
     /**
      * Terminates the signal dispatcher thread.
      */
     public static void terminate() {
         PendingSignals.incrementAndGet(ExitSignal);
-        nativeSignalNotify();
+        if (state == 1) {
+            nativeSignalNotify();
+        }
+        state = 2;
     }
 
     /**
@@ -182,8 +188,13 @@ public final class SignalDispatcher extends Thread {
 
     @Override
     public void run() {
+        if (state == 2) {
+            // already terminated
+            return;
+        }
+
         nativeSignalInit(tryPostSignal.address());
-        started = true;
+        state = 1;
 
         while (true) {
             int signal = waitForSignal();
