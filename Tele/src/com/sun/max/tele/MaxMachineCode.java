@@ -68,6 +68,14 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
      */
     InstructionMap getInstructionMap();
 
+    // TODO (mlvdv) This should be reported in terms of VM states, not process epoch.
+    /**
+     * Gets the most recent process epoch at which the contents of the machine code was observed to have changed.
+     *
+     * @return last epoch of most recent code change
+     */
+    long lastChangedEpoch();
+
     /**
      * Gets the human-readable name of a data location that can be addressed by machine
      * code instructions in this method.
