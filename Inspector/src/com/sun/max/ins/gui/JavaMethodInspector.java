@@ -155,7 +155,7 @@ public class JavaMethodInspector extends MethodInspector {
         if (compiledCode != null || teleClassMethodActor.compilationCount() > 0) {
             enabledCodeKinds.add(MethodCodeKind.MACHINE_CODE);
         }
-        if (teleClassMethodActor != null & teleClassMethodActor.hasCodeAttribute()) {
+        if (teleClassMethodActor != null && teleClassMethodActor.hasCodeAttribute()) {
             enabledCodeKinds.add(MethodCodeKind.BYTECODES);
         }
         if (false) {
