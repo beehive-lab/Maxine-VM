@@ -312,6 +312,14 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         return instructionMap;
     }
 
+    /** {@inheritDoc}
+     * <p>
+     * We don't bother to check if native code has changed once we have read and disassembled it.
+     */
+    public long lastChangedEpoch() {
+        return 0L;
+    }
+
     public Address getCodeStart() {
         return externalCodeMemoryRegion.start();
     }

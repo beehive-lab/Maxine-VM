@@ -34,6 +34,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectorNameDisplay.ReturnTypeSpecification;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.util.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
@@ -45,6 +46,8 @@ import com.sun.max.vm.actor.member.*;
  * @author Michael Van De Vanter
  */
 public class JavaMethodInspector extends MethodInspector {
+
+    private final int TRACE_VALUE = 1;
 
     private final MethodInspectorPreferences methodInspectorPreferences;
 
@@ -62,6 +65,11 @@ public class JavaMethodInspector extends MethodInspector {
      * inspector for the method.
      */
     private final MaxCompiledCode compiledCode;
+
+    /**
+     * The last process epoch at which the code was observed to have changed and the views reconstructed.
+     */
+    private long lastCodeChangedEpoch = -1L;
 
     /**
      * The kinds of code views it is possible to create for this method.
@@ -140,6 +148,7 @@ public class JavaMethodInspector extends MethodInspector {
         this.methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
         this.compiledCode = compiledCode;
+        this.lastCodeChangedEpoch = compiledCode.lastChangedEpoch();
 
         // Determine which code viewers it is possible to present for this method.
         // This doesn't change.
@@ -277,7 +286,12 @@ public class JavaMethodInspector extends MethodInspector {
 
     @Override
     protected void refreshView(boolean force) {
-        if (getJComponent().isShowing() || force) {
+        if (compiledCode.lastChangedEpoch() > lastCodeChangedEpoch) {
+            reconstructView();
+            lastCodeChangedEpoch = compiledCode.lastChangedEpoch();
+            Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + teleClassMethodActor.getName());
+
+        } else if (getJComponent().isShowing() || force) {
             for (CodeViewer codeViewer : codeViewers.values()) {
                 codeViewer.refresh(force);
             }
