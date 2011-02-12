@@ -91,7 +91,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
         Watchpoints.buildThreadLocalWatchpointMenu(inspection, editMenu);
 
-        refreshView(true);
+        forceRefresh();
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -184,8 +184,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    protected void refreshView(boolean force) {
-
+    protected void refreshState(boolean force) {
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
             final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);
@@ -211,7 +210,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         if (tlaPanel != null) {
             tlaPanel.refresh(force);
         }
-        super.refreshView(force);
         // The title displays thread state, so must be updated.
         setTitle();
     }
@@ -227,7 +225,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     public void addressFocusChanged(Address oldAddress, Address newAddress) {
-        refreshView(true);
+        forceRefresh();
     }
 
     public void tableColumnViewPreferencesChanged() {
@@ -237,7 +235,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     public void watchpointSetChanged() {
         if (vm().state().processState() != TERMINATED) {
-            refreshView(true);
+            forceRefresh();
         }
     }
 

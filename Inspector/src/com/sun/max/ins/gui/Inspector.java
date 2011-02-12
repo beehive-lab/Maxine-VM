@@ -306,14 +306,32 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
-     * Reads, re-reads, and updates any state caches if needed from the VM.
+     * Each inspector optionally re-reads, and updates any state caches if needed
+     * from the VM.  The expectation is that some Inspectors may cache and
+     * update selectively, but the argument can override this.
      *
      * @param force suspend caching behavior; read state unconditionally.
      */
-    protected void refreshView(boolean force) {
+    protected abstract void refreshState(boolean force);
+
+    /**
+     * Refreshes any state needed from the VM and then ensures that the visual
+     * display is completely updated.
+     *
+     * @param force  force suspend caching behavior; read state unconditionally.
+     */
+    private void refresh(boolean force) {
+        refreshState(force);
         frame.refresh(force);
         frame.invalidate();
         frame.repaint();
+    }
+
+    /**
+     * Unconditionally forces a full refresh of this Inspector.
+     */
+    protected final void forceRefresh() {
+        refresh(true);
     }
 
     /**
@@ -445,7 +463,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void vmStateChanged(boolean force) {
         final String title = getTitle();
         updateTracer.begin(title);
-        refreshView(force);
+        refresh(force);
         updateTracer.end(title);
     }
 
@@ -507,7 +525,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             @Override
             protected void procedure() {
                 Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
-                refreshView(true);
+                forceRefresh();
             }
         };
     }

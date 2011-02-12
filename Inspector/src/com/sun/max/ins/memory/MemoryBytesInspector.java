@@ -167,7 +167,7 @@ public final class MemoryBytesInspector extends Inspector {
     private TextLabel[] charLabels;
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         final byte[] bytes = new byte[numberOfBytesPerGroup];
         for (int i = 0; i < numberOfGroups; i++) {
             final Address address = this.address.plus(i * numberOfBytesPerGroup);
@@ -190,7 +190,6 @@ public final class MemoryBytesInspector extends Inspector {
                 }
             }
         }
-        super.refreshView(force);
     }
 
     private JPanel contentPane;
@@ -243,7 +242,7 @@ public final class MemoryBytesInspector extends Inspector {
             }
         }
 
-        refreshView(true);
+        forceRefresh();
         SpringUtilities.makeCompactGrid(view, numberOfLines * 2, 1 + numberOfGroupsPerLine, 0, 0, 5, 5);
     }
 

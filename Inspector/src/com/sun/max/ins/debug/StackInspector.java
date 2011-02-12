@@ -302,7 +302,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 } else if (stackFrame instanceof TruncatedStackFrame) {
                     maxFramesDisplay *= 2;
                     lastChangedState = vm().state();
-                    refreshView(true);
+                    forceRefresh();
                 } else {
                     newRightComponent = nativeFrame;
                 }
@@ -341,7 +341,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
-        refreshView(true);
+        forceRefresh();
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -436,7 +436,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             contentPane.add(splitPane, BorderLayout.CENTER);
         }
         setContentPane(contentPane);
-        refreshView(true);
+        forceRefresh();
         // TODO (mlvdv) try to set frame selection to match global focus; doesn't work.
         updateFocusSelection(inspection().focus().stackFrame());
 
@@ -526,7 +526,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         InspectorError.check(stack != null);
         if (stack.thread() != null && stack.thread().isLive()) {
             if (force || stack.lastUpdated() == null || vm().state().newerThan(lastUpdatedState)) {
@@ -557,7 +557,6 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 panel.refresh(true);
             }
         }
-        super.refreshView(force);
         // The title displays thread state, so must be updated.
         setTitle();
     }
@@ -605,7 +604,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     @Override
     public void watchpointSetChanged() {
         if (vm().state().processState() == STOPPED) {
-            refreshView(true);
+            forceRefresh();
         }
     }
 

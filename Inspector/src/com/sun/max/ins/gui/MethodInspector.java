@@ -313,7 +313,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     public void breakpointStateChanged() {
         // TODO (mlvdv)  Data reading PATCH, there should be a more systematic way of handling this.
         if (vm().state().processState() != TERMINATED) {
-            refreshView(true);
+            forceRefresh();
         }
     }
 

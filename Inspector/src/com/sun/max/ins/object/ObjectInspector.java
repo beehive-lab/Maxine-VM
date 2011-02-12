@@ -190,12 +190,12 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         // Object inspector displays are sensitive to the current thread selection.
-        refreshView(true);
+        forceRefresh();
     }
 
     @Override
     public void addressFocusChanged(Address oldAddress, Address newAddress) {
-        refreshView(true);
+        forceRefresh();
     }
 
     @Override
@@ -229,7 +229,7 @@ public abstract class ObjectInspector extends Inspector {
     public void watchpointSetChanged() {
         // TODO (mlvdv)  patch for concurrency issue; not completely safe
         if (vm().state().processState() == STOPPED) {
-            refreshView(true);
+            forceRefresh();
         }
     }
 
@@ -239,7 +239,7 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         if (teleObject.isObsolete() && followingTeleObject) {
             Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
@@ -276,7 +276,6 @@ public abstract class ObjectInspector extends Inspector {
         } else {
             setStateColor(null);
         }
-        super.refreshView(force);
     }
 
     public void viewConfigurationChanged() {

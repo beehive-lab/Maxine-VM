@@ -81,10 +81,10 @@ public class TupleInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         if (getJComponent().isShowing() || force) {
             fieldsPane.refresh(force);
-            super.refreshView(force);
+            super.refreshState(force);
         }
     }
 

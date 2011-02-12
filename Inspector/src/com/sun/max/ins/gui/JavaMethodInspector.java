@@ -285,7 +285,7 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         if (compiledCode.lastChangedEpoch() > lastCodeChangedEpoch) {
             reconstructView();
             lastCodeChangedEpoch = compiledCode.lastChangedEpoch();
@@ -295,7 +295,6 @@ public class JavaMethodInspector extends MethodInspector {
             for (CodeViewer codeViewer : codeViewers.values()) {
                 codeViewer.refresh(force);
             }
-            super.refreshView(force);
         }
     }
 

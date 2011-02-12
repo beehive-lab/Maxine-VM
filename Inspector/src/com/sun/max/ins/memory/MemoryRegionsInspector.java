@@ -183,12 +183,11 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         table.refresh(force);
         if (filterToolBar != null) {
             filterToolBar.refresh(force);
         }
-        super.refreshView(force);
     }
 
     @Override
@@ -205,7 +204,7 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
     @Override
     public void watchpointSetChanged() {
         if (vm().state().processState() != TERMINATED) {
-            refreshView(true);
+            forceRefresh();
         }
     }
 

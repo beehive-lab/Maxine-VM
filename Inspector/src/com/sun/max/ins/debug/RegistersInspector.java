@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,7 +75,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         memoryMenu.add(viewMemoryRegionsMenuItem);
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-        refreshView(true);
+        forceRefresh();
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -132,9 +132,8 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         table.refresh(force);
-        super.refreshView(force);
         // The title displays thread state, so must be updated.
         setTitle();
     }

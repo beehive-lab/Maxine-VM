@@ -245,9 +245,8 @@ public final class NotepadInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         save();
-        super.refreshView(force);
     }
 
     @Override
