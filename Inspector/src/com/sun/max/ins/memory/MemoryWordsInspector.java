@@ -563,9 +563,8 @@ public final class MemoryWordsInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         table.refresh(force);
-        super.refreshView(force);
     }
 
     /**
@@ -768,12 +767,12 @@ public final class MemoryWordsInspector extends Inspector {
     @Override
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         // Memory inspector displays are sensitive to the current thread selection (for register values)
-        refreshView(true);
+        forceRefresh();
     }
 
     @Override
     public void addressFocusChanged(Address oldAddress, Address newAddress) {
-        refreshView(true);
+        forceRefresh();
     }
 
     @Override
@@ -787,7 +786,7 @@ public final class MemoryWordsInspector extends Inspector {
     @Override
     public void watchpointSetChanged() {
         if (vm().state().processState() != TERMINATED) {
-            refreshView(true);
+            forceRefresh();
         }
     }
 
@@ -819,7 +818,7 @@ public final class MemoryWordsInspector extends Inspector {
         @Override
         protected void procedure() {
             setOrigin(focus().address());
-            MemoryWordsInspector.this.refreshView(true);
+            MemoryWordsInspector.this.forceRefresh();
         }
 
         @Override
@@ -832,7 +831,7 @@ public final class MemoryWordsInspector extends Inspector {
         @Override
         protected void procedure() {
             table.scrollToAddress(focus().address());
-            MemoryWordsInspector.this.refreshView(true);
+            MemoryWordsInspector.this.forceRefresh();
         }
 
         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -134,9 +134,8 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         table.refresh(force);
-        super.refreshView(force);
     }
 
     public void viewConfigurationChanged() {
@@ -145,7 +144,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
 
     @Override
     public void watchpointSetChanged() {
-        refreshView(true);
+        forceRefresh();
     }
 
     @Override

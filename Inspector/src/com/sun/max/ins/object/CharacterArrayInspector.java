@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,11 +87,11 @@ public final class CharacterArrayInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         // Only refresh the visible pane.
         final Prober prober = (Prober) tabbedPane.getSelectedComponent();
         prober.refresh(force);
-        super.refreshView(force);
+        super.refreshState(force);
     }
 
 }

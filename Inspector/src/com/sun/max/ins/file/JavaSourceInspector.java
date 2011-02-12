@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,7 +80,6 @@ public final class JavaSourceInspector extends FileInspector {
         scrollPane.setPreferredSize(inspection().geometry().javaSourceFramePrefSize());
         //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
         setContentPane(scrollPane);
-        refreshView(true);
         gui().moveToMiddle(this);
     }
 
@@ -102,6 +101,10 @@ public final class JavaSourceInspector extends FileInspector {
         Trace.line(1, tracePrefix() + " closing for " + getTitle());
         inspectors.remove(file());
         super.inspectorClosing();
+    }
+
+    @Override
+    protected void refreshState(boolean force) {
     }
 
 }

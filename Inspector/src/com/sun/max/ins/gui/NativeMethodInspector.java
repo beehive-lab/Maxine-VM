@@ -78,7 +78,7 @@ public final class NativeMethodInspector extends MethodInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         if (getJComponent().isShowing() || force) {
             machineCodeViewer.refresh(force);
         }
