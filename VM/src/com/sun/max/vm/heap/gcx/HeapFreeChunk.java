@@ -153,11 +153,11 @@ public class HeapFreeChunk {
      * @param size size of the left chunk.
      * @return
      */
-    static Pointer splitRight(Pointer chunk, Size leftChunkSize, Address rightNextFreeChunk) {
-        HeapFreeChunk leftChunk = toHeapFreeChunk(chunk);
-        Size rightSize = leftChunk.size.minus(leftChunkSize);
+    static Pointer splitRight(Address chunk, Size leftChunkSize, Address rightNextFreeChunk) {
+        HeapFreeChunk originalChunk = toHeapFreeChunk(chunk);
+        Size rightSize = originalChunk.size.minus(leftChunkSize);
         HeapFreeChunk rightChunk = format(chunk.plus(leftChunkSize), rightSize, rightNextFreeChunk);
-        leftChunk.size = rightSize;
+        originalChunk.size = leftChunkSize;
         return fromHeapFreeChunk(rightChunk).asPointer();
     }
 

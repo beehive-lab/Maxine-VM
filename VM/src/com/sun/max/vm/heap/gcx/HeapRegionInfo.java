@@ -117,6 +117,9 @@ public class HeapRegionInfo {
         return IS_ITERABLE.isSet(flags);
     }
 
+    public boolean hasFreeChunks() {
+        return HAS_FREE_CHUNK.isSet(flags);
+    }
 
     HeapRegionInfo() {
         // Not a class one can allocate. Allocation is the responsibility of the region table.
