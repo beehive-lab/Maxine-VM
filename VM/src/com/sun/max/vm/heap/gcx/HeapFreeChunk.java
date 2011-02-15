@@ -117,7 +117,7 @@ public class HeapFreeChunk {
         return false;
     }
 
-    static HeapFreeChunk format(DynamicHub hub, Address deadSpace, Size numBytes, Address nextChunk) {
+    static HeapFreeChunk format(Address deadSpace, Size numBytes, Address nextChunk, DynamicHub hub) {
         final Pointer cell = deadSpace.asPointer();
         if (MaxineVM.isDebug()) {
             FatalError.check(hub.isSubClassHub(HEAP_FREE_CHUNK_HUB.classActor),
@@ -138,7 +138,7 @@ public class HeapFreeChunk {
      * @return a reference to HeapFreeChunk object just planted at the beginning of the free chunk.
      */
     static HeapFreeChunk format(Address deadSpace, Size numBytes, Address nextChunk) {
-        return format(HEAP_FREE_CHUNK_HUB, deadSpace, numBytes, nextChunk);
+        return format(deadSpace, numBytes, nextChunk, HEAP_FREE_CHUNK_HUB);
     }
 
     @INLINE

@@ -81,9 +81,10 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
     }
 
     /**
-     * Simple allocator used to handle request to mid-size objects that are larger than the refill threshold of the tlab allocator.
-     * Calls to the allocator are always made under protection of the main allocator refill lock.
-     * So we don't bother with any clever non-blocking synchronization mechanism here.
+     * Simple allocator used to handle request to mid-size objects that are larger than the
+     * refill threshold of the tlab allocator.
+     * Calls to the allocator are always made under protection of the main allocator's refill lock.
+     * So we don't bother with any clever non-blocking synchronization mechanisms here.
      */
     class OverflowAllocator {
         private Address top;
@@ -137,7 +138,11 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
      * Refill Manager for the small object space.
      */
     class RefillManager extends MultiChunkTLABAllocator.RefillManager {
+        /**
+         * Threshold below which the allocator should be refilled.
+         */
         private Size refillThreshold;
+
         private Address nextFreeChunkInRegion;
         private OverflowAllocator overflowAllocator;
 
@@ -164,10 +169,21 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
             return overflowAllocator.allocateCleared(size);
         }
 
+        /**
+         *
+         */
         @Override
-        Address allocateTLAB(Size size, Pointer leftover, Size leftoverSize) {
-            // TODO Auto-generated method stub
-            return Address.zero();
+        Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
+            Address firstChunk = tlabChunkOrZero(leftover, leftoverSize);
+            if (!firstChunk.isZero()) {
+                tlabSize = tlabSize.minus(leftoverSize);
+                if (tlabSize.lessThan(tlabMinChunkSize)) {
+                    // don't bother with it. Just return.
+                    return firstChunk;
+                }
+            }
+
+            return firstChunk;
         }
 
 
@@ -189,19 +205,33 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
             // First, make the space left parsable, then change of allocating regions.
             if (spaceLeft.greaterThan(0)) {
                 wastedSpace = wastedSpace.plus(spaceLeft);
-                HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, startOfSpaceLeft.plus(spaceLeft));
+                final Pointer endOfSpaceLeft = startOfSpaceLeft.plus(spaceLeft);
+                if (MaxineVM.isDebug()) {
+                    FatalError.check(regionStart(endOfSpaceLeft).lessEqual(startOfSpaceLeft),
+                                    "space left must be in the same regions");
+                }
+                HeapSchemeAdaptor.fillWithDeadObject(startOfSpaceLeft, endOfSpaceLeft);
             }
             Address result = nextFreeChunkInRegion;
             if (result.isZero()) {
-                // The space we ask for a possible GC to free up if running out of space.
-                // This is arbitrary !!!! We should really pass to this refill the size that caused the refill to make sure the refill will satisfy it.
-                Size minSpace = spaceLeft.times(2);
-                result = changeAllocatingRegion(minSpace);
-                FatalError.check(!result.isZero(), "must never return 0");
+                HeapRegionInfo regionInfo = changeAllocatingRegion();
+                FatalError.check(regionInfo != null, "must never be null");
+                result = regionInfo.firstFreeBytes();
             }
             nextFreeChunkInRegion = HeapFreeChunk.getFreeChunkNext(result);
-            FatalError.check(HeapFreeChunk.getFreechunkSize(result).greaterThan(spaceLeft), "Should not refill with chunk no larger than wastage");
+            FatalError.check(HeapFreeChunk.getFreechunkSize(result).greaterThan(spaceLeft),
+                            "Should not refill with chunk no larger than wastage");
             return result;
+        }
+
+
+        @Override
+        void makeParsable(Pointer start, Pointer end) {
+            if (MaxineVM.isDebug()) {
+                FatalError.check(regionStart(end).lessEqual(start), "space left must be in the same regions");
+            }
+            HeapSchemeAdaptor.fillWithDeadObject(start, end);
+            theRegionTable().regionInfo(start).setIterable();
         }
     }
 
@@ -210,7 +240,7 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
      */
     private int currentAllocatingRegion;
 
-    Address changeAllocatingRegion(Size minSpace) {
+    HeapRegionInfo changeAllocatingRegion() {
         synchronized (heapLock()) {
             int gcCount = 0;
             // No more free chunk in this region.
@@ -219,9 +249,8 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
                 currentAllocatingRegion = allocatingRegions.next(currentAllocatingRegion);
                 if (currentAllocatingRegion != INVALID_REGION_ID) {
                     final HeapRegionInfo regionInfo = theRegionTable().regionInfo(currentAllocatingRegion);
-                    final Address result = regionInfo.firstFreeBytes();
                     regionInfo.setAllocating();
-                    return result;
+                    return regionInfo;
                 }
 
                 if (MaxineVM.isDebug() && Heap.traceGC()) {
@@ -232,7 +261,7 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
                         FatalError.unexpected("Suspiscious repeating GC calls detected");
                     }
                 }
-            } while(Heap.collectGarbage(minSpace));
+            } while(Heap.collectGarbage(Size.fromInt(regionSizeInBytes))); // Always collect for at least one region.
             // Not enough freed memory.
             throw outOfMemoryError;
         }
@@ -312,11 +341,13 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
 
         // Initialize the tlab allocator with the first contiguous range.
         regionsRangeIterable.reset();
-        RegionRange firstContiguousChunk = regionsRangeIterable.next();
-        Address start = HeapRegionInfo.fromRegionID(firstContiguousChunk.firstRegion()).regionStart();
-        Size size = Size.fromInt(firstContiguousChunk.numRegions()).shiftedLeft(HeapRegionConstants.log2RegionSizeInBytes);
-        Size minLargeObjectSize = Size.fromInt(HeapRegionConstants.regionSizeInBytes);
-        tlabAllocator.initialize(start, size, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE, minReclaimableSpace);
+        Size regionSize = Size.fromInt(regionSizeInBytes);
+        ((MultiChunkTLABAllocator.RefillManager) tlabAllocator.refillManager).setMinTLABChunkSize(minReclaimableSpace);
+
+        // Initialize TLAB allocator with first region.
+        final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(allocatingRegions.head());
+        regionInfo.setAllocating();
+        tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
     }
 
     /**

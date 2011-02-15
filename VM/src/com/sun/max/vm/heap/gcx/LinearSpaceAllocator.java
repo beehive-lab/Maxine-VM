@@ -34,8 +34,8 @@ import com.sun.max.vm.type.*;
 /**
  * An allocator that allocates space linearly by atomically increasing a pointer to a contiguous chunks of memory.
  * The allocator is associated with a refill manager that takes care of refilling the allocator when this one
- * runs out of space, and servicing requires for objects larger than what the allocator can handle.
- *
+ * runs out of space. The refill manager also takes care of requests for objects larger than what the allocator
+ * can handle.
  *
  * @author Laurent Daynes
  */
@@ -76,6 +76,14 @@ public class LinearSpaceAllocator {
          * @return
          */
         abstract Address refill(Pointer startOfSpaceLeft, Size spaceLeft);
+
+        /**
+         * Make the portion of the allocator indicated by the start and end pointers linearly walkable
+         * by an object iterator.
+         * @param start
+         * @param end
+         */
+        abstract void makeParsable(Pointer start, Pointer end);
     }
 
     /**
@@ -216,14 +224,19 @@ public class LinearSpaceAllocator {
             Pointer cell = top.asPointer();
 
             if (cell.plus(size).greaterThan(end)) {
+                // end isn't the hard limit of the space.
+                // Check if allocation request can fit up to the limit.
                 Address hardLimit = hardLimit();
                 if (cell.plus(size).equals(hardLimit)) {
-                    // We need to atomically change top
+                    // We need to atomically change top as we may be racing with
+                    // concurrent allocator for the left over. The refillLock above
+                    // only protect against concurrent refiller.
                     Pointer start = setTopToLimit();
                     if (cell.equals(start)) {
                         return cell;
                     }
-                    // Lost the race
+                    // Lost the race. Now we definitively have no space left.
+                    // Fall off to refill or allocate.
                     cell = start;
                 }
                 if (!refillManager.shouldRefill(size, hardLimit.minus(cell).asSize())) {
@@ -284,7 +297,7 @@ public class LinearSpaceAllocator {
         Pointer cell = setTopToLimit();
         Pointer hardLimit = hardLimit().asPointer();
         if (cell.lessThan(hardLimit)) {
-            HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), hardLimit);
+            refillManager.makeParsable(cell.asPointer(), hardLimit);
         }
     }
 
