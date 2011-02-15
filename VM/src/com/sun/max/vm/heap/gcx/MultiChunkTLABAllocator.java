@@ -108,11 +108,12 @@ public class MultiChunkTLABAllocator extends LinearSpaceAllocator {
                 synchronized (refillLock()) {
                     cell = top.asPointer();
                     if (cell.plus(tlabSize).greaterThan(end)) {
+                        final RefillManager rm = (RefillManager) refillManager;
                         // Bring allocation hand to the limit of the chunk of memory backing the allocator.
                         // We hold the refill lock so we're guaranteed that the chunk will not be replaced while we're doing this.
                         Pointer startOfLeftover = setTopToLimit();
                         Size sizeOfLeftover = hardLimit().minus(startOfLeftover).asSize();
-                        cell = ((RefillManager) refillManager).allocateTLAB(tlabSize, startOfLeftover, sizeOfLeftover).asPointer();
+                        cell = rm.allocateTLAB(tlabSize, startOfLeftover, sizeOfLeftover).asPointer();
                         FatalError.check(!cell.isZero(), "Refill manager must not return a null TLAB");
                         return cell;
                     }

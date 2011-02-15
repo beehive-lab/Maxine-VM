@@ -25,6 +25,7 @@ package com.sun.max.vm.heap.gcx;
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -173,7 +174,10 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
          *
          */
         @Override
+        @NO_SAFEPOINTS("tlab allocation loop must not be subjected to safepoints")
         Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
+            // FIXME:
+            // This doesn't refill the TLAB allocator. It just allocate a new one.
             Address firstChunk = tlabChunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);
@@ -182,8 +186,45 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
                     return firstChunk;
                 }
             }
+            if (nextFreeChunkInRegion.isZero()) {
+                if (!firstChunk.isZero()) {
+                    // Return what we have for now as changeAllocatingRegion can cause a GC.
+                    return firstChunk;
+                }
+                HeapRegionInfo regionInfo = changeAllocatingRegion();
+                FatalError.check(regionInfo != null, "must never be null");
+                nextFreeChunkInRegion = regionInfo.firstFreeBytes();
+                if (!regionInfo.hasFreeChunks()) {
+                    HeapFreeChunk.format(nextFreeChunkInRegion, Size.fromInt(regionSizeInBytes));
+                }
+            }
+            // Grab enough chunks to satisfy TLAB refill
+            Address lastChunk = Address.zero();
+            Address chunk = nextFreeChunkInRegion.asPointer();
+            do {
+                Size chunkSize = HeapFreeChunk.getFreechunkSize(chunk);
+                if (chunkSize.greaterThan(tlabSize)) {
+                    Address next = HeapFreeChunk.getFreeChunkNext(chunk);
+                    // Split if leftover larger that min tlab size.
+                    if (chunkSize.minus(tlabSize).greaterEqual(tlabMinChunkSize)) {
+                        lastChunk = HeapFreeChunk.splitRight(chunk, tlabSize, next);
+                    } else {
+                        lastChunk = next;
+                    }
+                    HeapFreeChunk.setFreeChunkNext(chunk, Address.zero());
+                    break;
+                }
+                tlabSize = tlabSize.minus(chunkSize);
+                chunk = HeapFreeChunk.getFreeChunkNext(chunk);
+            } while(!chunk.isZero());
 
-            return firstChunk;
+            Address result = nextFreeChunkInRegion;
+            nextFreeChunkInRegion = lastChunk;
+            if (!firstChunk.isZero()) {
+                HeapFreeChunk.setFreeChunkNext(firstChunk, chunk);
+                result = firstChunk;
+            }
+            return result;
         }
 
 
@@ -345,7 +386,8 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         ((MultiChunkTLABAllocator.RefillManager) tlabAllocator.refillManager).setMinTLABChunkSize(minReclaimableSpace);
 
         // Initialize TLAB allocator with first region.
-        final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(allocatingRegions.head());
+        currentAllocatingRegion = allocatingRegions.head();
+        final HeapRegionInfo regionInfo = HeapRegionInfo.fromRegionID(currentAllocatingRegion);
         regionInfo.setAllocating();
         tlabAllocator.initialize(regionInfo.firstFreeBytes(), regionSize, regionSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
     }
