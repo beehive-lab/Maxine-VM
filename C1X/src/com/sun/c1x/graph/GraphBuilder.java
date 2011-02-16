@@ -1629,6 +1629,7 @@ public final class GraphBuilder {
                     return false;
                 }
             case java_lang_Object$getClass:
+                canTrap = true;
                 break;
             case java_lang_Thread$currentThread:
                 break;
