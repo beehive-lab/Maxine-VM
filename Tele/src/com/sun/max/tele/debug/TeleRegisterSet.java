@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,9 @@ package com.sun.max.tele.debug;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
@@ -39,9 +41,11 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
 
     private static final int TRACE_VALUE = 2;
 
+    private static final List<MaxRegister> EMPTY_REGISTER_LIST = Collections.emptyList();
+
     private final TimedTrace updateTracer;
 
-    private static final List<MaxRegister> EMPTY_REGISTER_LIST = Collections.emptyList();
+    private long lastUpdateEpoch = -1L;
 
     private final String entityName;
     private final String entityDescription;
@@ -103,20 +107,23 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
     }
 
     @Override
-    public void updateCache() {
-        updateTracer.begin();
-
-        if (!teleNativeThread.readRegisters(
-                        teleIntegerRegisters.registerData(),
-                        teleFloatingPointRegisters.registerData(),
-                        teleStateRegisters.registerData())) {
-            TeleError.unexpected("Error while updating registers for thread: " + this);
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            updateTracer.begin();
+            if (!teleNativeThread.readRegisters(
+                            teleIntegerRegisters.registerData(),
+                            teleFloatingPointRegisters.registerData(),
+                            teleStateRegisters.registerData())) {
+                TeleError.unexpected("Error while updating registers for thread: " + this);
+            }
+            teleIntegerRegisters.updateCache(epoch);
+            teleFloatingPointRegisters.updateCache(epoch);
+            teleStateRegisters.updateCache(epoch);
+            lastUpdateEpoch = epoch;
+            updateTracer.end(null);
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
         }
-        teleIntegerRegisters.updateCache();
-        teleFloatingPointRegisters.updateCache();
-        teleStateRegisters.updateCache();
-
-        updateTracer.end(null);
     }
 
     public String entityName() {
@@ -134,6 +141,11 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
 
     public boolean contains(Address address) {
         return false;
+    }
+
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents a register set.
+        return null;
     }
 
     public MaxThread thread() {
@@ -225,12 +237,11 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
 
     private void lazyUpdate() {
         live = teleNativeThread.isLive();
-        final long processEpoch = vm().teleProcess().epoch();
-        if (live && lastRefreshedEpoch < processEpoch) {
+        final long epoch = vm().teleProcess().epoch();
+        if (live && epoch > lastUpdateEpoch) {
             if (vm().tryLock()) {
                 try {
-                    updateCache();
-                    lastRefreshedEpoch = processEpoch;
+                    updateCache(epoch);
                 } finally {
                     vm().unlock();
                 }

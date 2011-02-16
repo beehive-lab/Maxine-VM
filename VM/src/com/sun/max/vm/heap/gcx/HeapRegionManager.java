@@ -183,6 +183,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         final Address endOfManagedSpace = startOfManagedSpace.plus(reservedSpaceSize).roundedDownBy(regionSizeInBytes);
         final Size managedSpaceSize = endOfManagedSpace.minus(startOfManagedSpace).asSize();
         final int numRegions = managedSpaceSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
+        final int regionListSize = numRegions << 1; // 2 entries per regions, one for each link (prev and next).
 
         // FIXME: have we committed the space that is going to be used by the boot allocator ?
 
@@ -194,7 +195,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
         // 1. The region info table:
         Size initialSize = tupleSize(regionInfoClass).plus(tupleSize(RegionTable.class));
         // 2. The backing storage for the heap region lists
-        initialSize = initialSize.plus(Layout.getArraySize(Kind.INT, numRegions * 2)).times(2);
+        initialSize = initialSize.plus(Layout.getArraySize(Kind.INT, regionListSize)).times(2);
 
         // Round this to an integral number of regions.
         initialSize = initialSize.roundedUpBy(regionSizeInBytes);
@@ -216,8 +217,8 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
             RegionTable.initialize(regionInfoClass, startOfManagedSpace, numRegions);
             // Allocate the backing storage for the region lists.
-            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[numRegions]);
-            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, new int[numRegions]);
+            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.ACCOUNTING, new int[regionListSize]);
+            HeapRegionList.initializeListStorage(HeapRegionList.RegionListUse.OWNERSHIP, new int[regionListSize]);
 
             FatalError.check(bootAllocator.end.roundedUpBy(regionSizeInBytes).lessEqual(startOfManagedSpace.plus(initialSize)), "");
 
@@ -254,7 +255,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
      * @return the number of regions allocated
      */
     int allocate(HeapRegionList list, int numRegions, boolean append, boolean exact) {
-
+        FatalError.unimplemented();
         return 0;
     }
 
@@ -280,6 +281,19 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
     public void verifyAfterInitialization() {
         HeapRegionConstants.validate();
+        final OutgoingReferenceChecker checker = new OutgoingReferenceChecker(bootHeapAccount);
+        if (MaxineVM.isDebug()) {
+            bootAllocator.unsafeMakeParsable();
+            bootHeapAccount.visitObjects(checker);
+            if (checker.outgoingReferenceCount() != 0L) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Boot heap account has ");
+                Log.print(checker.outgoingReferenceCount());
+                Log.println(" outgoing references.");
+                Log.unlock(lockDisabledSafepoints);
+                FatalError.crash("Must not happen");
+            }
+        }
     }
 }
 

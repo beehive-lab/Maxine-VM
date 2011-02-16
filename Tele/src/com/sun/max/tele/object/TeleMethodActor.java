@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,28 +42,34 @@ import com.sun.max.vm.type.*;
  */
 public abstract class TeleMethodActor extends TeleMemberActor implements MethodProvider {
 
-    /**
-     * @return local {@link MethodActor} corresponding the the VM's {@link MethodActor} for this method.
-     */
-    @Override
-    protected Actor initActor() {
-        // Cannot use member index as it may be different in local ClassActor
-        Utf8Constant name = getTeleName().utf8Constant();
-        SignatureDescriptor signature = (SignatureDescriptor) getTeleDescriptor().descriptor();
-        ClassActor classActor = getTeleHolder().classActor();
-        MethodActor methodActor = classActor.findLocalMethodActor(name, signature);
-        assert methodActor != null : "Could not find " + name + signature + " in " + classActor;
-        assert getName().equals(methodActor.name.string);
-        return methodActor;
-    }
-
-    public MethodActor methodActor() {
-        return (MethodActor) actor();
-    }
+    private MethodActor methodActor;
 
     // Keep construction minimal for both performance and synchronization.
     protected TeleMethodActor(TeleVM vm, Reference methodActorReference) {
         super(vm, methodActorReference);
+    }
+
+    /**
+     * @return local {@link MethodActor} corresponding the the VM's {@link MethodActor} for this method.
+     */
+    public MethodActor methodActor() {
+        if (methodActor == null) {
+            Utf8Constant actorName = actorName();
+            if (actorName != null) {
+                // Cannot use member index as it may be different in local ClassActor
+                SignatureDescriptor signature = (SignatureDescriptor) getTeleDescriptor().descriptor();
+                ClassActor classActor = getTeleHolder().classActor();
+                methodActor = classActor.findLocalMethodActor(actorName, signature);
+                assert methodActor != null : "Could not find " + actorName.string + signature + " in " + classActor;
+                assert actorName.string.equals(methodActor.name.string);
+            }
+        }
+        return methodActor;
+    }
+
+    @Override
+    public Actor actor() {
+        return methodActor();
     }
 
     /**

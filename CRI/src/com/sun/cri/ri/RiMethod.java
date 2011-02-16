@@ -118,7 +118,6 @@ public interface RiMethod {
      */
     boolean isLeafMethod();
     
-
     /**
      * Gets the unique concrete method that is presumably called.
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
@@ -148,6 +147,13 @@ public interface RiMethod {
      */
     boolean isOverridden();
 
+    /**
+     * Checks whether the compiler can insert safepoints in this method.
+     * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method cannot have safepoints inserted
+     */
+    boolean noSafepoints();
+    
     /**
      * Gets a map from bytecode indexes to bit maps denoting the live locals at that position.
      * If a non-null array is return, its length is guaranteed to be equal to {@code code().length}. 

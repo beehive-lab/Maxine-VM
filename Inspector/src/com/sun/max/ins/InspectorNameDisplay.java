@@ -22,8 +22,6 @@
  */
 package com.sun.max.ins;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -36,7 +34,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
  * Standardized ways to display textual names of common entities during Inspection sessions.
@@ -46,13 +43,8 @@ import com.sun.max.vm.compiler.target.*;
  */
 public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
-    private final String heapSchemeSuffix;
-
     public InspectorNameDisplay(Inspection inspection) {
         super(inspection);
-
-        heapSchemeSuffix = "{" + vmConfig().heapScheme().getClass().getSimpleName() + "}";
-
         referenceRenderers.put(TeleArrayObject.class, new ArrayReferenceRenderer());
         referenceRenderers.put(TeleHub.class, new HubReferenceRenderer());
         referenceRenderers.put(TeleTupleObject.class, new TupleObjectReferenceRenderer());
@@ -299,10 +291,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         return position == 0 ? "" : "+" + InspectorLabel.longTo0xHex(position);
     }
 
-    private static String name(TargetMethod targetMethod) {
-        return targetMethod == null ? "<no method actor>" : targetMethod.name();
-    }
-
     /**
      * E.g. "int foo(Pointer, Word, int[])[0] in com.sun.max.ins.Bar"
      */
@@ -409,7 +397,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final StringBuilder name = new StringBuilder();
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
-            name.append("Target{").append(address.to0xHexString());
+            name.append("MachineCode{").append(address.to0xHexString());
             if (vm().codeCache().findExternalCode(address) != null) {
                 // a native routine that's already been registered.
                 name.append("}");
@@ -444,7 +432,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
         for (MaxHeapRegion heapRegion : vm().heap().heapRegions()) {
             if (memoryRegion.sameAs(heapRegion.memoryRegion())) {
-                return "dynamic heap region \"" + regionName + heapSchemeSuffix + "\"";
+                return "dynamic heap region \"" + regionName + "\"";
             }
         }
         final MaxHeapRegion immortalHeapRegion = vm().heap().immortalHeapRegion();

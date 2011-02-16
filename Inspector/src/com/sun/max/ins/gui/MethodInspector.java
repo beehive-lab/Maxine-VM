@@ -102,7 +102,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         final MaxCompiledCode compiledCode = inspection.vm().codeCache().findCompiledCode(address);
         if (compiledCode != null) {
             // Java method
-            methodInspector = make(inspection, compiledCode, MethodCodeKind.TARGET_CODE);
+            methodInspector = make(inspection, compiledCode, MethodCodeKind.MACHINE_CODE);
         } else {
             final MaxExternalCode externalCode = inspection.vm().codeCache().findExternalCode(address);
             if (externalCode != null) {
@@ -115,13 +115,13 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                 final String defaultDescription = "Native code @0x" + address.toHexString();
                 new NativeLocationInputDialog(inspection, "Name unknown native code", address, MaxExternalCode.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
                     @Override
-                    public void entered(Address nativeAddress, Size codeSize, String enteredName) {
+                    public void entered(Address nativeAddress, long nBytes, String enteredName) {
                         try {
                             String name = enteredName;
                             if (name == null || name.equals("")) {
                                 name = defaultDescription;
                             }
-                            final MaxExternalCode externalCode = vm().codeCache().createExternalCode(nativeAddress, codeSize, name);
+                            final MaxExternalCode externalCode = vm().codeCache().createExternalCode(nativeAddress, nBytes, name);
                             result.setValue(MethodInspector.make(inspection, externalCode));
                             // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                         } catch (IllegalArgumentException illegalArgumentException) {
@@ -134,8 +134,8 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                         }
                     }
                     @Override
-                    public boolean isValidSize(Size size) {
-                        return size.greaterThan(0);
+                    public boolean isValidSize(long nBytes) {
+                        return nBytes > 0;
                     }
                 };
                 methodInspector = result.value();
@@ -166,7 +166,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
             // TODO (mlvdv)  Select the specified bytecode position
             return make(inspection, codeLocation.teleClassMethodActor(), MethodCodeKind.BYTECODES);
         }
-        // Has neither target nor bytecode location specified.
+        // Has neither machine nor bytecode location specified.
         return null;
     }
 
@@ -286,7 +286,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         frame.makeMenu(MenuKind.EDIT_MENU);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectTargetRegionMemoryWords(machineCode()));
+        memoryMenu.add(actions().inspectMachineCodeRegionMemoryWords(machineCode()));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");

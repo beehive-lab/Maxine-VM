@@ -707,15 +707,16 @@ public final class GraphBuilder {
     }
 
     void genGoto(int fromBCI, int toBCI) {
-        append(new Goto(blockAt(toBCI), null, toBCI <= fromBCI)); // backwards branch => safepoint
+        boolean isSafepoint = !scopeData.noSafepoints() && toBCI <= fromBCI;
+        append(new Goto(blockAt(toBCI), null, isSafepoint));
     }
 
     void ifNode(Value x, Condition cond, Value y, FrameState stateBefore) {
         BlockBegin tsucc = blockAt(stream().readBranchDest());
         BlockBegin fsucc = blockAt(stream().nextBCI());
         int bci = stream().currentBCI();
-        boolean isBackwards = tsucc.bci() <= bci || fsucc.bci() <= bci;
-        append(new If(x, cond, false, y, tsucc, fsucc, isBackwards ? stateBefore : null, isBackwards));
+        boolean isSafepoint = !scopeData.noSafepoints() && tsucc.bci() <= bci || fsucc.bci() <= bci;
+        append(new If(x, cond, false, y, tsucc, fsucc, isSafepoint ? stateBefore : null, isSafepoint));
     }
 
     void genIfZero(Condition cond) {
@@ -741,7 +742,7 @@ public final class GraphBuilder {
 
     void genThrow(int bci) {
         FrameState stateBefore = curState.immutableCopy(bci());
-        Throw t = new Throw(apop(), stateBefore);
+        Throw t = new Throw(apop(), stateBefore, !scopeData.noSafepoints());
         appendWithoutOptimization(t, bci);
     }
 
@@ -1273,7 +1274,7 @@ public final class GraphBuilder {
             append(new MonitorExit(rootMethodSynchronizedObject, lockAddress, lockNumber, stateBefore));
             curState.unlock();
         }
-        append(new Return(x));
+        append(new Return(x, !scopeData.noSafepoints()));
     }
 
     /**
@@ -1350,8 +1351,9 @@ public final class GraphBuilder {
         int offset = ts.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        FrameState stateBefore = isBackwards ? curState.immutableCopy(bci()) : null;
-        append(new TableSwitch(ipop(), list, ts.lowKey(), stateBefore, isBackwards));
+        boolean isSafepoint = isBackwards && !scopeData.noSafepoints();
+        FrameState stateBefore = isSafepoint ? curState.immutableCopy(bci()) : null;
+        append(new TableSwitch(ipop(), list, ts.lowKey(), stateBefore, isSafepoint));
     }
 
     void genLookupswitch() {
@@ -1371,8 +1373,9 @@ public final class GraphBuilder {
         int offset = ls.defaultOffset();
         isBackwards |= offset < 0; // if the default successor is backwards
         list.add(blockAt(bci + offset));
-        FrameState stateBefore = isBackwards ? curState.immutableCopy(bci()) : null;
-        append(new LookupSwitch(ipop(), list, keys, stateBefore, isBackwards));
+        boolean isSafepoint = isBackwards && !scopeData.noSafepoints();
+        FrameState stateBefore = isSafepoint ? curState.immutableCopy(bci()) : null;
+        append(new LookupSwitch(ipop(), list, keys, stateBefore, isSafepoint));
     }
 
     /**
@@ -2635,6 +2638,7 @@ public final class GraphBuilder {
     private void genInfopoint(int opcode, boolean inclFrame) {
         // TODO: create slimmer frame state if inclFrame is false
         FrameState state = curState.immutableCopy(bci());
+        assert opcode != SAFEPOINT || !scopeData.noSafepoints() : "cannot place explicit safepoint in uninterruptible code scope";
         Value result = append(new Infopoint(opcode, state));
         if (!result.kind.isVoid()) {
             push(result.kind, result);
@@ -2647,7 +2651,8 @@ public final class GraphBuilder {
             throw new CiBailout("Unsupported READREG operand " + registerId);
         }
         LoadRegister load = new LoadRegister(CiKind.Word, register);
-        if (compilation.registerConfig.getAttributesMap()[register.number].isNonZero) {
+        RiRegisterAttributes regAttr = compilation.registerConfig.getAttributesMap()[register.number];
+        if (regAttr.isNonZero) {
             load.setFlag(Flag.NonNull);
         }
         wpush(append(load));

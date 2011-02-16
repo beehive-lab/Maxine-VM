@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,8 @@ import com.sun.max.vm.value.*;
   */
 public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
+    private static final HashSet<FieldActor> EMPTY_FIELD_ACTOR_SET = new HashSet<FieldActor>();
+
     private static final Logger LOGGER = Logger.getLogger(TeleArrayObject.class.getName());
 
     private int length = -1;
@@ -84,14 +86,18 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
         return componentKind;
     }
 
+    public int arrayOffsetFromOrigin() {
+        return componentKind().arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0).toInt();
+    }
+
     @Override
-    public Size objectSize() {
-        return Layout.getArraySize(componentKind(), length);
+    public int objectSize() {
+        return Layout.getArraySize(componentKind(), length).toInt();
     }
 
     @Override
     public Set<FieldActor> getFieldActors() {
-        return new HashSet<FieldActor>();
+        return EMPTY_FIELD_ACTOR_SET;
     }
 
     /**
@@ -112,7 +118,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    public Size fieldSize(FieldActor fieldActor) {
+    public int fieldSize(FieldActor fieldActor) {
         throw TeleError.unexpected("Maxine Array objects don't contain fields");
     }
 

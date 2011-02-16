@@ -120,7 +120,7 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      * @return location of the memory for this row, specified in a byte offset from an origin in VM memory
      * @see InspectorMemoryTableModel#getOrigin()
      */
-    public abstract Offset getOffset(int row);
+    public abstract int getOffset(int row);
 
     /**
      * Locates the row, if any, that represent a range of memory that includes a specific location in VM memory.
@@ -141,9 +141,11 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      * Returns the contents of the memory region as bytes, null if unable to read.
      */
     public byte[] getRowBytes(int row) {
-        final byte[] bytes = new byte[getMemoryRegion(row).size().toInt()];
+        long nBytes = getMemoryRegion(row).nBytes();
+        assert nBytes < Integer.MAX_VALUE;
+        final byte[] bytes = new byte[(int) nBytes];
         try {
-            vm().readFully(getMemoryRegion(row).start(), bytes);
+            vm().readBytes(getMemoryRegion(row).start(), bytes);
         } catch (DataIOError dataIOError) {
             return null;
         }

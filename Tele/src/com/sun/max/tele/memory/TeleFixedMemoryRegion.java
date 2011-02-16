@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,31 +34,25 @@ public class TeleFixedMemoryRegion extends TeleMemoryRegion {
 
     private final String regionName;
     private final Address start;
-    private final Size size;
+    private final long nBytes;
 
-    public TeleFixedMemoryRegion(TeleVM teleVM, String regionName, Address start, Size size) {
+    public TeleFixedMemoryRegion(TeleVM teleVM, String regionName, Address start, long nBytes) {
         super(teleVM);
         this.start = start;
-        this.size = size;
+        this.nBytes = nBytes;
         this.regionName = regionName;
-    }
-
-    public TeleFixedMemoryRegion(TeleVM teleVM, String regionName, TeleMemoryRegion memoryRegion) {
-        this(teleVM, regionName, memoryRegion.start(), memoryRegion.size());
     }
 
     public final String regionName() {
         return regionName;
     }
 
-    // TODO (mlvdv)  make final when all sorted out concerning code regions
-    public Address start() {
+    public final Address start() {
         return start;
     }
 
-    // TODO (mlvdv) make final when all sorted out
-    public Size size() {
-        return size;
+    public final long nBytes() {
+        return nBytes;
     }
 
 }

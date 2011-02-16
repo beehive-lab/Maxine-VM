@@ -665,6 +665,22 @@ function run_copycheck() {
 
 
 #=======================================
+# 'copycheck' command
+#=======================================
+
+copycheck_usage="[options]"
+copycheck_help="run copyright check on the Maxine sources (defined as being under hg control)"
+ 
+function run_copycheck() {
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tools.CheckCopyright $@
+    result=$?
+    if [ $result -ne 0 ]; then
+        exit $result
+    fi
+ }
+
+
+#=======================================
 # 'check' command
 #=======================================
 
@@ -1372,9 +1388,9 @@ function run_inspect() {
         run sudo -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+        ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
     else
-        run ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+        run ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
     fi
 }
 
@@ -1427,7 +1443,7 @@ view_help="browse the boot image under the Inspector
     Use \"max view -help\" to see what the Inspector options are."
 
 function run_view() {
-    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 -vmdir=$MAXVM_DIR -mode=image $@
+    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=1 -vmdir=$MAXVM_DIR -mode=image $@
 }
 
 #=======================================

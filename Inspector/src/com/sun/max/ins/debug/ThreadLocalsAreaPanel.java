@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,7 +100,7 @@ public final class ThreadLocalsAreaPanel extends InspectorPanel {
             addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, memoryRegion.end(), this));
             add(Box.createHorizontalGlue());
             addInspectorLabel(new TextLabel(inspection, "size: "));
-            addInspectorLabel(new DataLabel.IntAsDecimal(inspection, memoryRegion.size().toInt()));
+            addInspectorLabel(new DataLabel.LongAsDecimal(inspection, memoryRegion.nBytes()));
         }
 
         private void addInspectorLabel(InspectorLabel label) {

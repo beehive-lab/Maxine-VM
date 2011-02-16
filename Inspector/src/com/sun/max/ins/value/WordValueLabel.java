@@ -356,7 +356,7 @@ public class WordValueLabel extends ValueLabel {
                     if (valueMode == ValueMode.REFERENCE) {
                         displayMode = DisplayMode.NULL_WORD;
                     }
-                } else if (vm().isValidReference(vm().wordToReference(newValue.toWord()))) {
+                } else if (vm().isValidOrigin(newValue.toWord().asPointer())) {
                     displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
                     final TeleReference ref = (TeleReference) vm().wordToReference(newValue.toWord());
 
@@ -622,7 +622,7 @@ public class WordValueLabel extends ValueLabel {
             case CALL_ENTRY_POINT_TEXT: {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordCallEntryPointColor());
-                setWrappedText(inspection().nameDisplay().veryShortName(compiledCode));
+                setWrappedText(htmlify(inspection().nameDisplay().veryShortName(compiledCode)));
                 setWrappedToolTipText(value.toWord().to0xHexString() +
                                 "<br>Points to entry in compilation number " + compiledCode.compilationIndex() + " for method" +
                                 "<br>" + htmlify(inspection().nameDisplay().longName(compiledCode)));
@@ -661,7 +661,7 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordCallReturnPointColor());
                 if (compiledCode != null) {
-                    setWrappedText(inspection().nameDisplay().veryShortName(compiledCode, value.toWord().asAddress()));
+                    setWrappedText(htmlify(inspection().nameDisplay().veryShortName(compiledCode, value.toWord().asAddress())));
                     final long position = value().asWord().asAddress().minus(compiledCode.getCodeStart()).toLong();
                     setWrappedToolTipText(value.toWord().to0xHexString() +
                                     "<br>Points into compilation number " + compiledCode.compilationIndex() + " for method" +
@@ -1007,7 +1007,7 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_ENTRY_POINT_TEXT:
                 case CALL_RETURN_POINT_TEXT: {
                     if (compiledCode != null) {
-                        transferable = new InspectorTransferable.TeleObjectTransferable(inspection(), compiledCode.teleTargetMethod());
+                        transferable = new InspectorTransferable.TeleObjectTransferable(inspection(), compiledCode.representation());
                     } else {
                         transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
                     }

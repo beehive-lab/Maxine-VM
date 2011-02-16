@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,8 @@ package com.sun.max.vm.cps.cir.snippet;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.LinkNativeMethod;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.optimize.*;
 import com.sun.max.vm.value.*;
@@ -49,7 +48,7 @@ public final class CirLinkNativeMethod extends CirSnippet {
 
     @Override
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        return !MaxineVM.isHosted();
+        return false; //!MaxineVM.isHosted();
     }
 
     @Override

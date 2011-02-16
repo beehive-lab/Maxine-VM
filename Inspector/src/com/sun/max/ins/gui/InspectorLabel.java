@@ -31,7 +31,6 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -211,16 +210,6 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     }
 
     /**
-     * Translates a {@link Size} into decimal text, followed by prefixed hex equivalent, e.g. "22(0x16)"
-     *
-     * @return string describing the size in both decimal and hex, with no "+" prefix.
-     */
-    public static final String sizeToDecimalAndHex(Size size) {
-        final long longValue = size.toLong();
-        return Long.toString(longValue) + "(" + longTo0xHex(longValue) + ")";
-    }
-
-    /**
      * Translates a VM {@code Value} into decimal text, followed by prefixed
      * hex equivalent, e.g. "+22(0x16)"
      *
@@ -249,7 +238,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * @return a text string with all occurrences of '<' and '>' by HTML special character codes.
      */
     public static final String htmlify(String text) {
-        return text.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+        return text == null ? null : text.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
     }
 
     /**
@@ -349,6 +338,9 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
      * Sets the label's text to the specified string, but starting
      * with an {@code <html>} tag, and wrapped
      * by an optional prefix and an optional suffix.
+     * Note that any text appearing in this context should be
+     * filtered by {@link #htmlify(String)} so that angle bracket
+     * characters will be rendered correctly.
      *
      * @param text the text to be wrapped and set as the label's text.
      * @see #setTextPrefix(String)

@@ -28,12 +28,14 @@ public final class HeapRegionRangeIterable extends HeapRegionListIterable {
 
     public RegionRange next() {
         final int firstRegion = cursor;
-
-        while (regionList.next(cursor) == cursor + 1) {
-            cursor++;
+        int endRange = cursor + 1;
+        int next = regionList.next(cursor);
+        while (next == endRange) {
+            endRange++;
+            next = regionList.next(next);
         }
-        final int numRegions = cursor - firstRegion + 1;
+        final int numRegions = endRange - firstRegion;
+        cursor = next;
         return RegionRange.from(firstRegion, numRegions);
     }
 }
-

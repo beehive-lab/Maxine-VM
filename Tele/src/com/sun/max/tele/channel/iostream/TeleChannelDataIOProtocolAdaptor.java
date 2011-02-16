@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,8 +75,8 @@ public abstract class TeleChannelDataIOProtocolAdaptor extends TeleChannelDataIO
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean gatherThreads(Object teleDomainObject, Object threadSequence, long tlaList, long primordialETLA) {
-        final int dataSize = gatherThreads(tlaList, primordialETLA);
+    public boolean gatherThreads(Object teleDomainObject, Object threadList, long tlaList) {
+        final int dataSize = gatherThreads(tlaList);
         final byte[] data = new byte[dataSize];
         readThreads(dataSize, data);
         // deserialize the thread data
@@ -91,7 +91,7 @@ public abstract class TeleChannelDataIOProtocolAdaptor extends TeleChannelDataIO
                 Trace.line(1, "calling jniGatherThread id=" + t.id + ", lh=" + t.localHandle + ", h=" + Long.toHexString(t.handle) + ", st=" + t.state +
                         ", ip=" + Long.toHexString(t.instructionPointer) + ", sb=" + Long.toHexString(t.stackBase) + ", ss=" + Long.toHexString(t.stackSize) +
                         ", tlb=" + Long.toHexString(t.tlb) + ", tlbs=" + t.tlbSize + ", tlas=" + t.tlaSize);
-                teleProcess.jniGatherThread((List<TeleNativeThread>) threadSequence, t.id, t.localHandle, t.handle, t.state, t.instructionPointer, t.stackBase, t.stackSize, t.tlb, t.tlbSize, t.tlaSize);
+                teleProcess.jniGatherThread((List<TeleNativeThread>) threadList, t.id, t.localHandle, t.handle, t.state, t.instructionPointer, t.stackBase, t.stackSize, t.tlb, t.tlbSize, t.tlaSize);
             }
         } catch (Exception ex) {
             ex.printStackTrace();

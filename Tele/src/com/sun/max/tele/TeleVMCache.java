@@ -34,9 +34,14 @@ public interface TeleVMCache {
     /**
      * Causes this object to refresh any state that is read and cached from the VM, must
      * be called in a thread holding the VM lock.
+     * <br>
+     * Caches can be tagged with the process epoch, the number of times the process has run,
+     * on the assumption that the contents of VM memory will not change without
+     * an increment of the epoch counter.
      *
+     * @param epoch the number of times the VM process has run so far.
      * @see TeleVM#lock()
      */
-    void updateCache();
+    void updateCache(long epoch);
 
 }

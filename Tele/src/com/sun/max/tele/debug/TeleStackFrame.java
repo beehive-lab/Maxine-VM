@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleStackFrameWalker.ErrorStackFrame;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
@@ -61,8 +62,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         private static final List<MaxEntityMemoryRegion< ? extends MaxEntity>> EMPTY = Collections.emptyList();
         private final TeleStackFrame teleStackFrame;
 
-        private StackFrameMemoryRegion(TeleVM teleVM, TeleStackFrame teleStackFrame, String regionName, Address start, Size size) {
-            super(teleVM, regionName, start, size);
+        private StackFrameMemoryRegion(TeleVM teleVM, TeleStackFrame teleStackFrame, String regionName, Address start, long nBytes) {
+            super(teleVM, regionName, start, nBytes);
             this.teleStackFrame = teleStackFrame;
         }
 
@@ -150,6 +151,11 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         this.codeLocation = location;
     }
 
+    public final TeleObject representation() {
+        // No distinguished object in VM runtime represents a stack frame.
+        return null;
+    }
+
     public final TeleStack stack() {
         return teleStack;
     }
@@ -204,7 +210,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         protected CompiledFrame(TeleVM teleVM, TeleStack teleStack, int position, CompiledStackFrame compiledStackFrame) {
             super(teleVM, teleStack, position, compiledStackFrame);
             final String description = teleStack.thread().entityName() + " frame(" + position() + ")";
-            this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), Size.fromInt(layout().frameSize()));
+            this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), layout().frameSize());
             this.entityDescription = "Stack frame " + position() + " in the " + vm().entityName() + " for " + teleStack.thread().entityName();
         }
 
@@ -232,8 +238,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return stackFrame.slotBase();
         }
 
-        public Offset biasedFPOffset(Offset offset) {
-            return stackFrame.biasedFPOffset(offset);
+        public int biasedFPOffset(int offset) {
+            return stackFrame.biasedFPOffset(Offset.fromInt(offset)).toInt();
         }
 
         public StackBias bias() {

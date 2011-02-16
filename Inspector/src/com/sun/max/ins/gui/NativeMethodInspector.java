@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.sun.max.tele.object.*;
 public final class NativeMethodInspector extends MethodInspector {
 
     private final MaxExternalCode externalCode;
-    private TargetCodeViewer targetCodeViewer = null;
+    private MachineCodeViewer machineCodeViewer = null;
     private final String shortName;
     private final String longName;
 
@@ -72,25 +72,25 @@ public final class NativeMethodInspector extends MethodInspector {
 
     @Override
     public void createView() {
-        targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, externalCode);
-        getContentPane().add(targetCodeViewer);
+        machineCodeViewer =  new JTableMachineCodeViewer(inspection(), this, externalCode);
+        getContentPane().add(machineCodeViewer);
         pack();
     }
 
     @Override
     protected void refreshView(boolean force) {
         if (getJComponent().isShowing() || force) {
-            targetCodeViewer.refresh(force);
+            machineCodeViewer.refresh(force);
         }
     }
 
     public void viewConfigurationChanged() {
-        targetCodeViewer.redisplay();
+        machineCodeViewer.redisplay();
     }
 
     @Override
     public void print() {
-        targetCodeViewer.print(getTextForTitle());
+        machineCodeViewer.print(getTextForTitle());
     }
 
     /**
@@ -98,7 +98,7 @@ public final class NativeMethodInspector extends MethodInspector {
      */
     @Override
     public void closeCodeViewer(CodeViewer codeViewer) {
-        assert codeViewer == targetCodeViewer;
+        assert codeViewer == machineCodeViewer;
         close();
     }
 
@@ -107,7 +107,7 @@ public final class NativeMethodInspector extends MethodInspector {
      */
     @Override
     public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
-        if (targetCodeViewer.updateCodeFocus(codeLocation) && !isSelected()) {
+        if (machineCodeViewer.updateCodeFocus(codeLocation) && !isSelected()) {
             highlight();
         }
     }

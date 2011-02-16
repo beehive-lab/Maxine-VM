@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,9 +120,8 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
 
     @Override
     protected void gatherThreads(List<TeleNativeThread> threads) {
-        final Word primordialETLA = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.primordialETLAOffset));
         final Word tlaList = dataAccess().readWord(vm().bootImageStart().plus(vm().bootImage().header.tlaListHeadOffset));
-        protocol.gatherThreads(this, threads, tlaList.asAddress().toLong(), primordialETLA.asAddress().toLong());
+        protocol.gatherThreads(this, threads, tlaList.asAddress().toLong());
     }
 
     @Override
@@ -143,12 +142,12 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
     @Override
     protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
         final WatchpointSettings settings = teleWatchpoint.getSettings();
-        return protocol.activateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
+        return protocol.activateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().nBytes(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
     }
 
     @Override
     protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        return protocol.deactivateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong());
+        return protocol.deactivateWatchpoint(teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().nBytes());
     }
 
     /**

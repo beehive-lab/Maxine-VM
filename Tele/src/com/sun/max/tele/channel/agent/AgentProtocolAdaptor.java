@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -170,9 +170,9 @@ public abstract class AgentProtocolAdaptor extends RemoteInvocationProtocolAdapt
     private int numThreads;
 
     @Override
-    public int gatherThreads(long tlaList, long primordialETLA) {
+    public int gatherThreads(long tlaList) {
         List<TeleNativeThread> threads = new ArrayList<TeleNativeThread>();
-        impl.gatherThreads(teleProcess, threads, tlaList, primordialETLA);
+        impl.gatherThreads(teleProcess, threads, tlaList);
         numThreads = threads.size();
         TeleChannelDataIOProtocol.GatherThreadData[] data = new TeleChannelDataIOProtocol.GatherThreadData[numThreads];
         int index = 0;

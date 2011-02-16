@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,14 +26,18 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Canonical surrogate for a region of memory in the VM used to allocate compiled code.
+ * Canonical surrogate for a {@link CodeRegion} object in the VM, which describes a VM memory region
+ * that is used to allocate compiled code.
+ * <br>
+ * This implementation eagerly caches descriptions of every {@TargetMethod} object allocated
+ * in the region.
  *
  * @author Michael Van De Vanter
+ * @see CodeRegion
  */
 public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
 
@@ -64,7 +68,8 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     /**
-     * @return whether this region is the code region contained in the boot image of the VM.
+     * @return whether the {@link CodeRegion} object describes the "boot code" region,
+     * which is contained in the boot image of the VM.
      */
     private boolean isBootCodeRegion() {
         initialize();
@@ -79,8 +84,8 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     @Override
-    protected void updateObjectCache(StatsPrinter statsPrinter) {
-        super.updateObjectCache(statsPrinter);
+    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        super.updateObjectCache(epoch, statsPrinter);
         // Register any new compiled methods that have appeared since the previous refresh
         // Don't try this until the code cache is ready, which it isn't early in the startup sequence.
         // Also make sure that the region has actually been allocated before trying.
@@ -110,14 +115,14 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
     }
 
     @Override
-    public Size getRegionSize() {
+    public long getRegionNBytes() {
         if (isBootCodeRegion()) {
             // The explicit representation of the boot {@link CodeRegion} gets "trimmed" by setting its size
             // to the amount allocated within the region.  Other regions don't have this happen.
-            // Return the size allocated for the whole region, as recorded in the boot image.
-            return Size.fromInt(vm().bootImage().header.codeSize);
+            // We lie about this and return the size allocated for the whole region, as recorded in the boot image.
+            return vm().bootImage().header.codeSize;
         }
-        return super.getRegionSize();
+        return super.getRegionNBytes();
     }
 
     /**
@@ -127,5 +132,19 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
      */
     public List<TeleTargetMethod> teleTargetMethods() {
         return teleTargetMethods;
+    }
+
+    /**
+     * @return the number of method compilations that have been copied from
+     * the VM and cached locally.
+     */
+    public int methodLoadedCount() {
+        int count = 0;
+        for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
+            if (teleTargetMethod.isLoaded()) {
+                count++;
+            }
+        }
+        return count;
     }
 }

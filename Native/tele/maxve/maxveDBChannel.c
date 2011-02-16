@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -158,7 +158,7 @@ static ThreadState_t toThreadState(int state) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jlong tlaList, jlong primordialETLA) {
+Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadList, jlong tlaList) {
     struct db_thread *threads;
     int num_threads;
 
@@ -169,8 +169,8 @@ Java_com_sun_max_tele_debug_maxve_MaxVEDBNativeTeleChannelProtocol_nativeGatherT
         TLA threadLocals = (TLA) alloca(tlaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         struct db_regs *db_regs = checked_get_regs("nativeGatherThreads", threads[i].id);
-        threadLocals = teleProcess_findTLA(&db_memory_handler, tlaList, primordialETLA, db_regs->rsp, threadLocals, &nativeThreadLocalsStruct);
-        teleProcess_jniGatherThread(env, teleDomain, threadSeq, (jlong) threads[i].id, toThreadState(threads[i].flags), db_regs->rip, threadLocals);
+        threadLocals = teleProcess_findTLA(&db_memory_handler, tlaList, db_regs->rsp, threadLocals, &nativeThreadLocalsStruct);
+        teleProcess_jniGatherThread(env, teleDomain, threadList, (jlong) threads[i].id, toThreadState(threads[i].flags), db_regs->rip, threadLocals);
     }
     free(threads);
 

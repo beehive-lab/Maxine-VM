@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,9 +53,9 @@ public interface MaxMemoryRegion {
     Address start();
 
     /**
-     * @return size of the region.
+     * @return number of bytes in the region.
      */
-    Size size();
+    long nBytes();
 
     /**
      * @return address just past the last location in the region.
@@ -63,7 +63,7 @@ public interface MaxMemoryRegion {
     Address end();
 
     /**
-     * @return a description of the memory usage for this region, null if not available.
+     * @return a description of the memory usage for this region, NULL_USAGE if not allocated or no information available.
      */
     MemoryUsage getUsage();
 
@@ -96,6 +96,8 @@ public interface MaxMemoryRegion {
     boolean sameAs(MaxMemoryRegion memoryRegion);
 
     public static final class Util {
+
+        public static MemoryUsage  NULL_MEMORY_USAGE = new MemoryUsage(-1L, 0L, 0L, -1L);
 
         private static final Comparator<MaxMemoryRegion> START_COMPARATOR = new Comparator<MaxMemoryRegion>() {
 
@@ -149,17 +151,32 @@ public interface MaxMemoryRegion {
             if (right == null) {
                 return false;
             }
-            return left.start().equals(right.start()) && left.size().equals(right.size());
+            return left.start().equals(right.start()) && left.nBytes() == right.nBytes();
 
+        }
+
+        /**
+         * Gets a default description of usage information for a fixed size region,
+         * is presumed to be fully utilized, and for which {@link MemoryUsage#getInit()} and
+         * {@link MemoryUsage#getMax()} are "undefined".
+         *
+         * @param nBytes the number of bytes in the region
+         * @return a default usage descriptor of a fully utilized region of the specified size.
+         */
+        public static MemoryUsage defaultUsage(long nBytes) {
+            return nBytes == 0L ? NULL_MEMORY_USAGE :  new MemoryUsage(-1L, nBytes, nBytes, -1L);
         }
 
         /**
          * Gets a default description of usage information for the region, in which the region
          * is presumed to be fully utilized, and for which {@link MemoryUsage#getInit()} and
          * {@link MemoryUsage#getMax()} are "undefined".
+         *
+         * @param memoryRegion a region of VM memory
+         * @return a default usage descriptor indicating full utilization fo the region
          */
         public static MemoryUsage defaultUsage(MaxMemoryRegion memoryRegion) {
-            return new MemoryUsage(-1, memoryRegion.size().toLong(), memoryRegion.size().toLong(), -1);
+            return defaultUsage(memoryRegion.nBytes());
         }
 
         /**

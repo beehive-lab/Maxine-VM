@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ package com.sun.max.ins.gui;
  * @author Michael Van De Vanter
  */
 public enum MethodCodeKind {
-    TARGET_CODE("Target Code", true),
+    MACHINE_CODE("Machine Code", true),
     BYTECODES("Bytecodes", false),
     JAVA_SOURCE("Java Source", false);
 

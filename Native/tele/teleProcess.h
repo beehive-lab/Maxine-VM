@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,14 +90,13 @@ typedef struct maxve_memory_handler *ProcessHandle;
  *
  * @param ph a platform specific process handle
  * @param tlaList the head of the thread locals list in the VM's address space
- * @param primordialETLA the primordial TLA in the VM's address space
  * @param stackPointer the stack pointer to search with
  * @param tlaCopy pointer to a TLA which the found entry (if any) will be copied from the VM's address space
  * @param ntlCopy pointer to storage for a NativeThreadLocalsStruct into which the native thread locals of the found entry
  *        (if any) will be copied from the VM's address space
  * @return the entry that was found, NULL otherwise
  */
-extern TLA teleProcess_findTLA(ProcessHandle ph, Address tlaList, Address primordialETLA, Address stackPointer, TLA tlaCopy, NativeThreadLocals ntlCopy);
+extern TLA teleProcess_findTLA(ProcessHandle ph, Address tlaList, Address stackPointer, TLA tlaCopy, NativeThreadLocals ntlCopy);
 
 /**
  * Makes the upcall to TeleProcess.jniGatherThread

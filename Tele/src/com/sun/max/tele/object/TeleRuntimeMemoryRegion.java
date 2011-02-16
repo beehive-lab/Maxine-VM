@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for objects in the VM that represent a region of memory.
+ * Canonical surrogate for a {@link MemoryRegion} object in the VM, which represents a region of VM memory.
+ * <br>
+ * Usage defaults to 100%.
  *
  * @author Michael Van De Vanter
  */
@@ -39,62 +41,74 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
 
     private static final int TRACE_VALUE = 2;
 
-
-    private Address regionStart = Address.zero();
-    private Size regionSize = Size.zero();
-    private String regionName = null;
-    private MemoryUsage memoryUsage = null;
+    private Address regionStartCache = Address.zero();
+    private long nBytesCache = 0L;
+    private String regionNameCache = null;
+    private MemoryUsage memoryUsageCache = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
 
     private final Object localStatsPrinter = new Object() {
 
         @Override
         public String toString() {
-            return "name=" + (regionName == null ? "<unassigned>" : regionName);
+            return "region name=" + (regionNameCache == null ? "<unassigned>" : regionNameCache);
         }
     };
 
     TeleRuntimeMemoryRegion(TeleVM vm, Reference runtimeMemoryRegionReference) {
         super(vm, runtimeMemoryRegionReference);
-        updateCache();
+        TimedTrace timedTrace = new TimedTrace(TRACE_VALUE, tracePrefix() + "Initializing");
+        timedTrace.begin();
+        // Exception to general policy of not doing too much in constructors; some subclasses
+        // need to have the basic location information available at construction time.
+        updateRegionInfoCache();
+        timedTrace.end(localStatsPrinter);
     }
 
+    /** {@inheritDoc}
+     * <br>
+     * Optimized for certain kinds of regions that describe non-relocatable memory
+     * allocations in the VM; in those cases, once location and name information
+     * are read, then further cache updates are skipped.
+     */
     @Override
-    protected void updateObjectCache(StatsPrinter statsPrinter) {
-        super.updateObjectCache(statsPrinter);
-        if (!isAllocated()) {
-            statsPrinter.addStat("unallocated");
-        }
+    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        super.updateObjectCache(epoch, statsPrinter);
         statsPrinter.addStat(localStatsPrinter);
-        if (!isRelocatable() && isAllocated()) {
-            // Optimization: if we know the region won't be moved by the VM, and
-            // we already have the location information, then don't bother to refresh.
-            statsPrinter.addStat("allocated, not relocatable");
-            return;
+        if (!isRelocatable() && isAllocated() && regionNameCache != null) {
+            statsPrinter.addStat("allocated & not relocatable, no location refresh");
+        } else {
+            updateRegionInfoCache();
         }
+    }
+
+    /**
+     * Attempts to read information about the region from the {@link MemoryRegion} object in VM memory.
+     */
+    private void updateRegionInfoCache() {
         try {
-            final Size newRegionSize = vm().teleFields().MemoryRegion_size.readWord(reference()).asSize();
+            final long nBytes = vm().teleFields().MemoryRegion_size.readWord(reference()).asSize().toLong();
 
             final Reference regionNameStringReference = vm().teleFields().MemoryRegion_regionName.readReference(reference());
             final TeleString teleString = (TeleString) heap().makeTeleObject(regionNameStringReference);
-            final String newRegionName = teleString == null ? "<null>" : teleString.getString();
+            final String regionName = teleString == null ? "<null>" : teleString.getString();
 
-            Address newRegionStart = vm().teleFields().MemoryRegion_start.readWord(reference()).asAddress();
-            if (newRegionStart.isZero() && newRegionName != null) {
-                if (newRegionName.equals(heap().bootHeapRegionName())) {
-                    // Ugly special case:  the regionStart field of the static that defines the boot heap region
-                    // is set at zero in the boot image, only set to the real value when the VM starts running.
-                    // Lie about it.
-                    newRegionStart = vm().bootImageStart();
-                }
+            Address regionStart = vm().teleFields().MemoryRegion_start.readWord(reference()).asAddress();
+            if (regionStart.isZero() && regionName != null && regionName.equals(heap().bootHeapRegionName())) {
+                // Ugly special case: the regionStart field of the static that defines the boot heap region
+                // is set at zero in the boot image and only gets set to the real value when the VM starts running.
+                // We lie in this situation.
+                regionStart = vm().bootImageStart();
             }
-            if (newRegionStart.isZero()) {
+            if (regionStart.isZero()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "zero start address read from VM for region " + this);
             }
-            this.regionStart = newRegionStart;
-            this.regionSize = newRegionSize;
-            this.regionName = newRegionName;
-            final long sizeAsLong = this.regionSize.toLong();
-            this.memoryUsage = new MemoryUsage(-1, sizeAsLong, sizeAsLong, -1);
+            // Wait until everything read before updating (crude atomicity).
+            this.regionStartCache = regionStart;
+            this.nBytesCache = nBytes;
+            this.regionNameCache = regionName;
+            if (nBytesCache != memoryUsageCache.getUsed()) {
+                this.memoryUsageCache =  MaxMemoryRegion.Util.defaultUsage(nBytesCache);
+            }
         } catch (DataIOError dataIOError) {
             TeleWarning.message("TeleRuntimeMemoryRegion dataIOError:", dataIOError);
             dataIOError.printStackTrace();
@@ -103,58 +117,69 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
         }
     }
 
-
     /**
-     * @return the descriptive name assigned to the memory region object in the VM.
+     * @return the descriptive name assigned to the region described by a {@link MemoryRegion} object in the VM;
      */
     public final String getRegionName() {
-        return regionName;
+        return regionNameCache;
     }
 
     /**
-     * @return starting location in VM memory of the region; zero if not yet allocated.
+     * @return starting location of the region described by a {@link MemoryRegion}  object in the VM;
+     * zero if not yet allocated.
      */
     public final Address getRegionStart() {
-        return regionStart;
+        return regionStartCache;
     }
 
     /**
-     * @return the size of the VM memory, as described by the memory region object in the VM.
+     * @return the size of the VM memory in bytes described by a {@link MemoryRegion} object in the VM.
      */
-    public Size getRegionSize() {
-        return regionSize;
+    public long getRegionNBytes() {
+        return nBytesCache;
     }
 
     /**
-     * Computes the usage of the memory region, if available; default is to assume 100% utilized,
+     * @return the end location of the VM memory region described by a {@link MemoryRegion} object in the VM.
+     */
+    public final Address getRegionEnd() {
+        return getRegionStart().plus(getRegionNBytes());
+    }
+
+    /**
+     * Computes the usage of the the memory region described by a {@link MemoryRegion} object in the VM.
+     * <br>
+     * The default is to assume 100% utilized,
      * but specific subclasses may have more refined information available.
+     * <br>
+     * Returns {@link MaxMemoryRegion.Util.NULL_MEMORY_USAGE} if no information available.
      */
     public MemoryUsage getUsage() {
-        return memoryUsage;
+        return memoryUsageCache;
     }
 
     /**
-     * Determines whether an address is in the allocated portion of the memory region.
+     * Determines whether an address is in the allocated portion of the {@link MemoryRegion}
+     * described by a memory region object in the VM.
+     * <br>
      * The default is to assume that all of the region is allocated, but
      * specific subclasses may have more refined information available.
      */
     public boolean containsInAllocated(Address address) {
-        if (!isAllocated()) {
-            return false;
-        }
-        // Default:  is the address anywhere in the region
-        return address.greaterEqual(getRegionStart()) && address.lessThan(getRegionStart().plus(getRegionSize()));
+        return isAllocated() ? address.greaterEqual(getRegionStart()) && address.lessThan(getRegionEnd()) : false;
     }
 
     /**
-     * @return whether memory has been allocated yet in the VM for this region.
+     * @return whether memory has been allocated yet for the {@link MemoryRegion}
+     * described by a memory region object in the VM.
      */
     public final boolean isAllocated() {
-        return !getRegionStart().isZero() && !getRegionSize().isZero();
+        return !getRegionStart().isZero() && getRegionNBytes() > 0;
     }
 
     /**
-     * @return whether this region of VM memory might be relocated, once allocated.
+     * @return whether the memory region described by a {@link MemoryRegion} object in the VM
+     * can be relocated once allocated.
      */
     public boolean isRelocatable() {
         return true;

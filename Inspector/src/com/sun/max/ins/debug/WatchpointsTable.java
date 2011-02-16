@@ -404,7 +404,7 @@ public final class WatchpointsTable extends InspectorTable {
         }
     }
 
-    private final class SizeCellRenderer extends DataLabel.IntAsDecimal implements TableCellRenderer {
+    private final class SizeCellRenderer extends DataLabel.LongAsDecimal implements TableCellRenderer {
 
         public SizeCellRenderer(Inspection inspection) {
             super(inspection, 0);
@@ -413,7 +413,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            setValue(watchpoint.memoryRegion().size().toInt());
+            setValue(watchpoint.memoryRegion().nBytes());
             setForeground(cellForegroundColor(row, column));
             setBackground(cellBackgroundColor(isSelected));
             return this;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,10 +41,9 @@ import com.sun.max.tele.util.*;
  *
  * For this to work, the {@link ArrayMode} of a parameter must be registered with {@link RemoteInvocationProtocolAdaptor} by the target end of the communication..
  *
-* @author Mick Jordan
+ * @author Mick Jordan
  *
  */
-
 public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol {
     public enum ArrayMode {
         IN,
@@ -356,11 +355,10 @@ public class TeleChannelDataIOProtocolImpl implements TeleChannelDataIOProtocol 
     }
 
     @Override
-    public int gatherThreads(long tlaList, long primordialETLA) {
+    public int gatherThreads(long tlaList) {
         try {
             out.writeUTF("gatherThreads");
             out.writeLong(tlaList);
-            out.writeLong(primordialETLA);
             out.flush();
             return in.readInt();
         } catch (IOException ex) {

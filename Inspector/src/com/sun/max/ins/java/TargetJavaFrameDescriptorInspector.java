@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,12 +120,12 @@ public final class TargetJavaFrameDescriptorInspector extends Inspector {
             if (entry != null) {
                 local += ": " + entry.name(codeAttribute.constantPool);
             }
-            local += " = " + compiledCode.targetLocationToString(descriptor.locals[i]);
+            local += " = " + compiledCode.machineCodeLocationToString(descriptor.locals[i]);
             panel.add(new TextLabel(inspection(), local));
         }
         for (int i = 0; i < descriptor.stackSlots.length; i++) {
             String stackSlot = "stack #" + i;
-            stackSlot += " = " + compiledCode.targetLocationToString(descriptor.stackSlots[i]);
+            stackSlot += " = " + compiledCode.machineCodeLocationToString(descriptor.stackSlots[i]);
             panel.add(new TextLabel(inspection(), stackSlot));
         }
         panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor()));

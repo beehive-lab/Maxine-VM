@@ -23,6 +23,7 @@
 package com.sun.cri.ri;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.cri.ci.*;
 
@@ -219,5 +220,8 @@ public interface RiRuntime {
      */
     int getCustomStackAreaSize();
     
+    /**
+     * Determines if this runtime wants {@link System#arraycopy} and {@link Arrays#copyOf} intrinsified.
+     */
     boolean supportsArrayIntrinsics();
 }

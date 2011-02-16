@@ -116,14 +116,14 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOutButtonIcon());
-        button.setEnabled(haveTargetCodeAddresses());
+        button.setEnabled(haveMachineCodeAddresses());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugRunToSelectedInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
-        button.setEnabled(haveTargetCodeAddresses());
+        button.setEnabled(haveMachineCodeAddresses());
         toolBar().add(button);
 
         button = new InspectorButton(inspection, actions().debugResume());
@@ -240,12 +240,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 final BytecodeTableModel bytecodeTableModel = (BytecodeTableModel) getModel();
                 if (selectedRow >= 0 && selectedRow < bytecodeTableModel.getRowCount()) {
                     final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.rowToInstruction(selectedRow);
-                    final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress;
+                    final Address machineCodeFirstAddress = bytecodeInstruction.machineCodeFirstAddress;
                     final int position = bytecodeInstruction.position;
-                    if (targetCodeFirstAddress.isZero()) {
+                    if (machineCodeFirstAddress.isZero()) {
                         focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view"));
                     } else {
-                        focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position, "bytecode view"), true);
+                        focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(machineCodeFirstAddress, teleClassMethodActor(), position, "bytecode view"), true);
                     }
                 }
             }
@@ -263,7 +263,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         /**
          * @param col TODO
-         * @return Color to be used for the background of all row labels; may have special overrides in future, as for Target Code
+         * @return Color to be used for the background of all row labels; may have special overrides in future, as for compiled code
          */
         public Color cellBackgroundColor(int row, int col) {
             final int[] searchMatchingRows = getSearchMatchingRows();
@@ -417,7 +417,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
          *  instruction whose associated compiled code starts at the address, -1 if none.
          */
         public int findRow(Address address) {
-            if (haveTargetCodeAddresses()) {
+            if (haveMachineCodeAddresses()) {
                 for (BytecodeInstruction instruction : bytecodeInstructions) {
                     int row = instruction.row;
                     if (rowContainsAddress(row, address)) {
@@ -477,7 +477,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             }
             setText(rowToTagText(row));
             final MaxBreakpoint bytecodeBreakpoint = getBytecodeBreakpointAtRow(row);
-            final List<MaxBreakpoint> targetBreakpoints = getTargetBreakpointsAtRow(row);
+            final List<MaxBreakpoint> machineCodeBreakpoints = getMachineCodeBreakpointsAtRow(row);
             if (bytecodeBreakpoint != null) {
                 toolTipSB.append("<br>breakpont set @");
                 toolTipSB.append(bytecodeBreakpoint);
@@ -488,17 +488,17 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 } else {
                     setBorder(style().debugDisabledBytecodeBreakpointTagBorder());
                 }
-            } else if (targetBreakpoints.size() > 0) {
+            } else if (machineCodeBreakpoints.size() > 0) {
                 boolean enabled = false;
-                for (MaxBreakpoint targetBreakpoint : targetBreakpoints) {
-                    toolTipSB.append(targetBreakpoint);
+                for (MaxBreakpoint machineCodeBreakpoint : machineCodeBreakpoints) {
+                    toolTipSB.append(machineCodeBreakpoint);
                     toolTipSB.append("; ");
-                    enabled = enabled || targetBreakpoint.isEnabled();
+                    enabled = enabled || machineCodeBreakpoint.isEnabled();
                 }
                 if (enabled) {
-                    setBorder(style().debugEnabledTargetBreakpointTagBorder());
+                    setBorder(style().debugEnabledMachineCodeBreakpointTagBorder());
                 } else {
-                    setBorder(style().debugDisabledTargetBreakpointTagBorder());
+                    setBorder(style().debugDisabledMachineCodeBreakpointTagBorder());
                 }
             } else {
                 setBorder(null);

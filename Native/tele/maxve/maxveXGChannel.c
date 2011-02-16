@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -214,15 +214,15 @@ static struct tele_xg_thread *get_thread(int id) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_maxve_MaxVEXGNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jlong tlaList, jlong primordialETLA) {
+Java_com_sun_max_tele_debug_guestvm_GuestVMXGNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadList, jlong tlaList) {
     tele_xg_gather_threads();
     struct tele_xg_thread *tcb = tele_xg_thread_list;
     while (tcb != NULL) {
             debug_println("nativeGatherThreads processing thread %d,", tcb->id);
             TLA threadLocals = (TLA) alloca(tlaSize());
             NativeThreadLocalsStruct nativeThreadLocalsStruct;
-            threadLocals = teleProcess_findTLA(&xg_memory_handler, tlaList, primordialETLA, tcb->regs.u.xregs_64.rsp, threadLocals, &nativeThreadLocalsStruct);
-            teleProcess_jniGatherThread(env, teleDomain, threadSeq, (jlong) tcb->id, toThreadState(tcb->flags), tcb->regs.u.xregs_64.rip, threadLocals);
+            threadLocals = teleProcess_findTLA(&xg_memory_handler, tlaList, tcb->regs.u.xregs_64.rsp, threadLocals, &nativeThreadLocalsStruct);
+            teleProcess_jniGatherThread(env, teleDomain, threadList, (jlong) tcb->id, toThreadState(tcb->flags), tcb->regs.u.xregs_64.rip, threadLocals);
             tcb = tcb->next;
     }
     return 0;

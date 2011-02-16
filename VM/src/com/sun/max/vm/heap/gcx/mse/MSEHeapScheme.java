@@ -112,7 +112,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             // VM-generation time initialization.
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
             LinearSpaceAllocator.hostInitialize();
-        } else  if (phase == MaxineVM.Phase.PRISTINE) {
+        } else if (phase == MaxineVM.Phase.PRISTINE) {
             doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
@@ -201,10 +201,10 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             if (VirtualMemory.deallocate(unusedReservedSpaceStart, leftoverSize, VirtualMemory.Type.DATA).isZero()) {
                 MaxineVM.reportPristineMemoryFailure("reserved space leftover", "deallocate", leftoverSize);
             }
-            theHeapRegionManager().verifyAfterInitialization();
         } finally {
             disableCustomAllocation();
         }
+        theHeapRegionManager().verifyAfterInitialization();
     }
 
     @Override

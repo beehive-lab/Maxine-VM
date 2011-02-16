@@ -101,8 +101,8 @@ public abstract class LocationLabel extends InspectorLabel {
         updateText();
     }
 
-    public final void setValue(Offset value, Address origin) {
-        this.value = value.toInt();
+    public void setValue(int value, Address origin) {
+        this.value = value;
         this.origin = origin;
         updateText();
     }
@@ -218,12 +218,6 @@ public abstract class LocationLabel extends InspectorLabel {
             redisplay();
         }
 
-        public void setValue(int offset, Address origin) {
-            this.value = offset;
-            this.origin = origin;
-            updateText();
-        }
-
         public void redisplay() {
             setFont(style().decimalDataFont());
             updateText();
@@ -277,7 +271,7 @@ public abstract class LocationLabel extends InspectorLabel {
 
         @Override
         protected void updateText() {
-            final int wordOffset = value / vm().platform().wordSize().toInt();
+            final int wordOffset = value / vm().platform().nBytesInWord();
             setWrappedToolTipText(origin.plus(value).to0xHexString() + "<br>offset= " + intToPlusMinusDecimalAndHex(wordOffset) + " words from origin)");
             setText(intToPlusMinusDecimal(wordOffset));
         }
@@ -296,9 +290,14 @@ public abstract class LocationLabel extends InspectorLabel {
         /**
          * A label that displays a memory location <origin> + <offset> as "<prefix>[<index>]",
          * with a ToolTip giving more detail.
+         *
+         * @param prefix optional textual prefix to the value display
+         * @param index the logical index of the value being displayed
+         * @param offset the offset in bytes from origin of the value being displayed
+         * @param origin the base location in VM memory from which the location of the value is computed
          */
-        public AsIndex(Inspection inspection, String prefix, int index, Offset value, Address origin) {
-            super(inspection, value.toInt(), origin);
+        public AsIndex(Inspection inspection, String prefix, int index, int offset, Address origin) {
+            super(inspection, offset, origin);
             this.prefix = prefix;
             this.index = index;
             redisplay();
@@ -309,9 +308,16 @@ public abstract class LocationLabel extends InspectorLabel {
             updateText();
         }
 
-        public void setValue(int index, Offset value, Address origin) {
+        /**
+         * Sets the value of the label to a new location in VM memory.
+         *
+         * @param index the logical index of the value being displayed
+         * @param offset the offset in bytes from origin of the value being displayed
+         * @param origin the base location in VM memory from which the location of the value is computed
+         */
+        public void setValue(int index, int offset, Address origin) {
             this.index = index;
-            this.value = value.toInt();
+            this.value = offset;
             this.origin = origin;
             updateText();
         }

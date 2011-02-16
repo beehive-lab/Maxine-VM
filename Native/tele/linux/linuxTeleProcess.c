@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ ThreadState_t toThreadState(char taskState, pid_t tid) {
     return threadState;
 }
 
-static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong tlaList, long primordialETLA) {
+static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadList, jlong tlaList) {
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
@@ -99,13 +99,13 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
         TLA threadLocals = (TLA) alloca(tlaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         ProcessHandleStruct ph = {tgid, tid};
-        tla = teleProcess_findTLA(&ph, tlaList, primordialETLA, stackPointer, threadLocals, &nativeThreadLocalsStruct);
+        tla = teleProcess_findTLA(&ph, tlaList, stackPointer, threadLocals, &nativeThreadLocalsStruct);
     }
     teleProcess_jniGatherThread(env, linuxTeleProcess, threadList, tid, toThreadState(taskState, tid), (jlong) canonicalStateRegisters.rip, tla);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jlong pid, jobject linuxTeleProcess, jobject threads, long tlaList, long primordialETLA) {
+Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThreads(JNIEnv *env, jclass c, jlong pid, jobject linuxTeleProcess, jobject threads, long tlaList) {
 
     pid_t *tasks;
     const int nTasks = scan_process_tasks(pid, &tasks);
@@ -117,7 +117,7 @@ Java_com_sun_max_tele_debug_linux_LinuxNativeTeleChannelProtocol_nativeGatherThr
     int n = 0;
     while (n < nTasks) {
         pid_t tid = tasks[n];
-        gatherThread(env, pid, tid, linuxTeleProcess, threads, tlaList, primordialETLA);
+        gatherThread(env, pid, tid, linuxTeleProcess, threads, tlaList);
         n++;
     }
     free(tasks);

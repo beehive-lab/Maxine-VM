@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,6 +67,7 @@ static Address allocateThreadLocalBlock(size_t tlBlockSize) {
 #if os_MAXVE
 	return (Address) maxve_virtualMemory_allocate(tlBlockSize, DATA_VM);
 #else
+	c_ASSERT(tlBlockSize < 100000000);
 	return (Address) valloc(tlBlockSize);
 #endif
 }
@@ -80,48 +81,68 @@ static void deallocateThreadLocalBlock(Address tlBlock, Size tlBlockSize) {
 }
 
 /**
+ * Commits the memory reserved for the stack of the initial thread.
+ * This is necessary to place the guard pages via mprotect on OSes that
+ * lazily commit memory reserved for the initial thread's stack.
+ */
+static void commitStackMemoryForInitialThread(Address base, int pageSize) {
+#if os_LINUX
+    /* Writing to the bottom page of the reserved stack (appears) not to be
+     * sufficient on Linux. Using alloca() to allocate a chunk approximately
+     * the size of the remaining stack seems to fix it. */
+    size_t s = (size_t) &base - (size_t) base;
+    alloca(s);
+    volatile char *p = (volatile char *) base;
+    p[0] = p[0];
+#elif os_SOLARIS
+    /* Writing to the bottom page of the reserved stack (appears) to be sufficient on Solaris. */
+    volatile char *p = (volatile char *) base;
+    p[0] = p[0];
+#elif os_DARWIN
+    /* Mac OS X appears to commit the whole stack. */
+#endif
+}
+
+/**
  * Allocates and/or initializes a thread locals block.
  *
  * @param id  > 0: the identifier reserved in the thread map for the thread being started
- *           == 0: the primordial thread
  *            < 0: temporary identifier (derived from the native thread handle) of a thread
  *                 that is being attached to the VM
- * @param init true iff initializing a previously created thread locals block
- * @param stackSize only set if id > 0 && init == false;
+ * @param tlBlock a previously allocated thread locals block or 0 if this call should allocate it
+ * @param stackSize ignored if tlBlock != 0
  */
-Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
-    Address tlBlock;
+Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
+    c_ASSERT(id != 0);
     const int s = tlaSize();
     const int tlaSize = s;
     const int pageSize = virtualMemory_getPageSize();
-    const jboolean attaching = id < 0;
-    const jboolean primordial = id == 0;
-    const jboolean threadIsCreated = init || attaching || primordial;
+    const jboolean attaching = id < 0 || id == PRIMORDIAL_THREAD_ID;
+    jboolean haveRedZone = false;
+#if os_MAXVE
+    haveRedZone = true;
+#endif
 
-    Address stackBase;
-    if (threadIsCreated) {
+
+    Address stackBase = 0;
+    if (stackSize == 0) {
         thread_getStackInfo(&stackBase, &stackSize);
-    }
-
-    if (init) {
-        tlBlock = threadLocalsBlock_current();
-        c_ASSERT(tlBlock != 0);
     }
 
     /* See diagram at top of threadLocals.h */
     const int triggerPageSize = pageSize;
-    int stackWords = stackSize / sizeof(Address);
-    Size refMapSize = primordial ? 0 : wordAlign(1 + (stackWords / 8));
+    Size stackWords = stackSize / sizeof(Address);
+    Size refMapSize = wordAlign(1 + (stackWords / 8));
     const int tlBlockSize = triggerPageSize +
                             (3 * tlaSize) +
                             sizeof(NativeThreadLocalsStruct) +
-                            (primordial ? 0 : refMapSize);
+                            refMapSize;
 
     c_ASSERT(wordAlign(tlBlockSize) == (Address) tlBlockSize);
-    if (!init) {
-        tlBlock= allocateThreadLocalBlock(tlBlockSize);
-        // if we are creating a VM thread, initialization is deferred.
-        if (!(attaching || primordial)) {
+    if (tlBlock == 0) {
+        tlBlock = allocateThreadLocalBlock(tlBlockSize);
+        // if we are creating a VM thread, initialization is deferred until the thread is running
+        if (!attaching) {
             return tlBlock;
         }
     }
@@ -134,9 +155,7 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
     NativeThreadLocals ntl = (NativeThreadLocals) current;
     current += sizeof(NativeThreadLocalsStruct);
     Address refMap = current;
-    if (!primordial) {
-        current = current + refMapSize;
-    }
+    current = current + refMapSize;
 
     /* Clear each of the thread local spaces: */
     memset((void *) ttla, 0, tlaSize);
@@ -154,12 +173,7 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
 
     Address startGuardZone;
     int guardZonePages;
-    if (primordial) {
-        ntl->stackRedZone = 0;
-        ntl->stackYellowZone = 0;
-        startGuardZone = 0;
-        guardZonePages = 0;
-    } else if (!attaching) {
+    if (!attaching || haveRedZone) {
         /* Thread library creates a red-zone guard page just below the stack */
         ntl->stackRedZone = ntl->stackBase - (STACK_RED_ZONE_PAGES * pageSize);
         ntl->stackRedZoneIsProtectedByVM = false;
@@ -179,6 +193,10 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
 
         startGuardZone = ntl->stackRedZone;
         guardZonePages = STACK_YELLOW_ZONE_PAGES + STACK_RED_ZONE_PAGES;
+
+        if (id == PRIMORDIAL_THREAD_ID) {
+            commitStackMemoryForInitialThread(ntl->stackBase, pageSize);
+        }
     }
 
     tla_store(etla, ETLA, etla);
@@ -210,16 +228,6 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
 
     ntl->stackBlueZone = ntl->stackYellowZone;  // default is no blue zone
 
-    // no protection for the primordial thread
-    if (guardZonePages != 0) {
-#if os_MAXVE
-        // custom stack initialization
-        maxve_initStack(ntl);
-#else
-        virtualMemory_protectPages(startGuardZone, guardZonePages);
-#endif
-    }
-
 #if log_THREADS
     log_println("thread %3d: stackEnd     = %p", id, ntl->stackBase + ntl->stackSize);
     log_println("thread %3d: sp           ~ %p", id, &id);
@@ -237,17 +245,20 @@ Address threadLocalsBlock_create(jint id, jboolean init, Size stackSize) {
     log_println("thread %3d: refMapSize   = %d (%p)", id, refMapSize, refMapSize);
 #endif
 
+    if (guardZonePages != 0) {
+#if os_MAXVE
+        // custom stack initialization
+        maxve_initStack(ntl);
+#else
+        virtualMemory_protectPages(startGuardZone, guardZonePages);
+#endif
+    }
     /* Protect the first page of the TL block (which contains the first word of the triggered thread locals) */
     virtualMemory_protectPages(tlBlock, 1);
 
-    if (!init) {
-        threadLocalsBlock_setCurrent(tlBlock);
-    }
-    return tlBlock;
-}
+    threadLocalsBlock_setCurrent(tlBlock);
 
-Address threadLocalsBlock_createForExistingThread(jint id) {
-    return threadLocalsBlock_create(id, JNI_FALSE, 0);
+    return tlBlock;
 }
 
 /**

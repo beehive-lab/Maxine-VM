@@ -138,6 +138,8 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
 
     private TimedTrace updateTracer = null;
 
+    private long lastUpdateEpoch = -1L;
+
     private TeleReference reference;
     private final LayoutScheme layoutScheme;
     private final SpecificLayout specificLayout;
@@ -175,7 +177,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
         return updateTracer;
     }
 
-    public final void updateCache() {
+    public final void updateCache(long epoch) {
         // Note that this method gets called automatically as part of instance creation
         // in {@link TeleObjectFactory#make(Reference)}
 
@@ -186,10 +188,16 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
         // Do some specialized tracing here, since there are subclasses that we
         // want to contribute to the tracing statistics, and since we want to
         // selectively trace certain subclasses.
-        tracer().begin(getObjectUpdateTraceValue());
-        updateObjectCache(statsPrinter);
-        tracer().end(getObjectUpdateTraceValue(), statsPrinter);
+        tracer().begin(getObjectUpdateTraceValue(epoch));
 
+        if (epoch > lastUpdateEpoch) {
+            updateObjectCache(epoch, statsPrinter);
+            lastUpdateEpoch = epoch;
+        } else {
+            statsPrinter.addStat("Redundant update skipped");
+            Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + " redundant update epoch=" + epoch + ": " + this);
+        }
+        tracer().end(getObjectUpdateTraceValue(epoch), statsPrinter);
         /*
          * if (reference.toOrigin().equals(Pointer.zero())) { live = false; }
          */
@@ -198,12 +206,13 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     /**
      * Gets the level at which to present a trace of individual object updates, specified
      * here as the default.  Subclasses should override to lower the level for specific types,
-     * since producing traces for every object update would generate an unworkably large amound
+     * since producing traces for every object update would generate an unreasonably large amount
      * of output.
      *
+     * @param epoch the current process epoch at the time of the update
      * @return the trace level that should bye used by this object during updates
      */
-    protected int getObjectUpdateTraceValue() {
+    protected int getObjectUpdateTraceValue(long epoch) {
         return UPDATE_TRACE_VALUE;
     }
 
@@ -211,10 +220,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * Internal call to subclasses to update their state, wrapped in the {@link TeleObject} class to provide timing and
      * update statistics reporting.
      *
+     * @param epoch the process epoch at the time of this update.
      * @param statsPrinters list of objects that report statistics for updates performed on this object so far (with no
      *            newlines)
      */
-    protected void updateObjectCache(StatsPrinter statsPrinter) {
+    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
     }
 
     public final TeleObjectMemory.State getTeleObjectMemoryState() {
@@ -335,7 +345,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     /**
      * @return the size of the memory occupied by this object in the VM, including header.
      */
-    protected abstract Size objectSize();
+    protected abstract int objectSize();
 
     /**
      * Gets the current area of memory in which the object is stored.
@@ -381,13 +391,13 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     }
 
     /**
-     * The size of a field in the object's header.
+     * The size in bytes of a field in the object's header.
      *
      * @param headerField identifies a header field in the object layout
      * @return the size of the header field
      */
-    public final Size headerSize(HeaderField headerField) {
-        return Size.fromInt(headerType(headerField).toKind().width.numberOfBytes);
+    public final int headerSize(HeaderField headerField) {
+        return headerType(headerField).toKind().width.numberOfBytes;
     }
 
     /**
@@ -396,12 +406,22 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * @param headerField identifies a header field in the object layout
      * @return the location of the header field relative to object origin
      */
-    public final Offset headerOffset(HeaderField headerField) {
-        if (headerField != HeaderField.LENGTH) {
-            return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
+    public final int headerOffset(HeaderField headerField) {
+        if (headerField == HeaderField.LENGTH) {
+            return layoutScheme.arrayLayout.getOffsetFromOrigin(headerField).toInt();
         } else {
-            return layoutScheme.arrayLayout.getOffsetFromOrigin(headerField);
+            return layoutScheme.generalLayout.getOffsetFromOrigin(headerField).toInt();
         }
+    }
+
+    /**
+     * Address of a field in the object's header.
+     *
+     * @param headerField identifies a header field in the object layout
+     * @return the location of the header in VM memory
+     */
+    public Address headerAddress(HeaderField headerField) {
+        return origin().plus(headerOffset(headerField));
     }
 
     /**
@@ -411,9 +431,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      * @return current memory region occupied by a header field in this object in the VM
      */
     public final TeleFixedMemoryRegion headerMemoryRegion(HeaderField headerField) {
-        final Pointer start = origin().plus(headerOffset(headerField));
-        final Size size = headerSize(headerField);
-        return new TeleFixedMemoryRegion(vm(), "Current memory for header field " + headerField.name, start, size);
+        final Address address = headerAddress(headerField);
+        final int nBytes = headerSize(headerField);
+        return new TeleFixedMemoryRegion(vm(), "Current memory for header field " + headerField.name, address, nBytes);
     }
 
     /**
@@ -472,12 +492,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
     public abstract Address fieldAddress(FieldActor fieldActor);
 
     /**
-     * The size of a field in the object.
+     * The size in bytes of a field in the object.
      *
      * @param fieldActor descriptor for a field in this class
      * @return the memory size of the field
      */
-    public abstract Size fieldSize(FieldActor fieldActor);
+    public abstract int fieldSize(FieldActor fieldActor);
 
     /**
      * The memory region in which field in the object is stored, subject to change by GC relocation.
@@ -487,8 +507,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
      */
     public final TeleFixedMemoryRegion fieldMemoryRegion(FieldActor fieldActor) {
         final Pointer start = origin().plus(fieldActor.offset());
-        final Size size = fieldSize(fieldActor);
-        return new TeleFixedMemoryRegion(vm(), "", start, size);
+        return new TeleFixedMemoryRegion(vm(), "", start, fieldSize(fieldActor));
     }
 
     /**

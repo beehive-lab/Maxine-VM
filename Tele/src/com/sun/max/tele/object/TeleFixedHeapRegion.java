@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,8 +47,8 @@ public class TeleFixedHeapRegion extends AbstractTeleVMHolder implements MaxHeap
         private final TeleFixedHeapRegion owner;
         private final boolean isBootRegion;
 
-        protected FixedHeapRegionMemoryRegion(TeleVM teleVM, TeleFixedHeapRegion owner, String regionName, Address start, Size size, boolean isBootRegion) {
-            super(teleVM, regionName, start, size);
+        protected FixedHeapRegionMemoryRegion(TeleVM teleVM, TeleFixedHeapRegion owner, String regionName, Address start, long nBytes, boolean isBootRegion) {
+            super(teleVM, regionName, start, nBytes);
             this.owner = owner;
             this.isBootRegion = isBootRegion;
         }
@@ -85,13 +85,13 @@ public class TeleFixedHeapRegion extends AbstractTeleVMHolder implements MaxHeap
      * @param teleVM the VM
      * @param name a short description of the region
      * @param start starting location of the region in the VM
-     * @param size size of the region in the VM
+     * @param long size of the region in the VM
      * @param isBootRegion whether this region is in the boot image.
      */
-    public TeleFixedHeapRegion(TeleVM teleVM, String name, Address start, Size size, boolean isBootRegion) {
+    public TeleFixedHeapRegion(TeleVM teleVM, String name, Address start, long nBytes, boolean isBootRegion) {
         super(teleVM);
         this.entityDescription = "A unit of allocation area for a heap in the " + vm().entityName();
-        this.heapRegionMemoryRegion = new FixedHeapRegionMemoryRegion(teleVM, this, name, start, size, isBootRegion);
+        this.heapRegionMemoryRegion = new FixedHeapRegionMemoryRegion(teleVM, this, name, start, nBytes, isBootRegion);
     }
 
     public String entityName() {
@@ -108,6 +108,12 @@ public class TeleFixedHeapRegion extends AbstractTeleVMHolder implements MaxHeap
 
     public boolean contains(Address address) {
         return heapRegionMemoryRegion.contains(address);
+    }
+
+    public final TeleObject representation() {
+        // No distinguished object in VM runtime represents the this region; otherwise
+        // this would be a {@link TeleDelegatedMemoryRegion}
+        return null;
     }
 
     public boolean isBootRegion() {

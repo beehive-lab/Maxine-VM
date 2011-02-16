@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,9 +49,9 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
         return Collections.emptyList();
     }
 
-    public Offset gcForwardingPointerOffset() {
+    public int gcForwardingPointerOffset() {
         // Don't know anything about how this GC works.
-        return null;
+        return -1;
     }
 
     public boolean isInLiveMemory(Address address) {

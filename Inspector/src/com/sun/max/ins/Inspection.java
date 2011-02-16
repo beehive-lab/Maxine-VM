@@ -59,40 +59,6 @@ public final class Inspection implements InspectionHolder {
     private static final int TRACE_VALUE = 1;
 
     /**
-     * Initializes the UI system to a specified L&F.
-     */
-    public static void initializeSwing() {
-        // Default L&F
-        String lookAndFeelName = UIManager.getSystemLookAndFeelClassName();
-
-        // Some optional overrides of the platform default
-        lookAndFeelName = "javax.swing.plaf.metal.MetalLookAndFeel";
-//      lookAndFeelName = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
-//      lookAndFeelName = "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
-//      lookAndFeelName = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
-
-
-        if (lookAndFeelName.equals("com.apple.laf.AquaLookAndFeel")) {
-            // Here are some experimental attributes to set for OS X
-            // System.setProperty("apple.laf.useScreenMenuBar", "true   ");
-        }
-
-        if (lookAndFeelName.equals(UIManager.getSystemLookAndFeelClassName())) {
-            Trace.line(TRACE_VALUE, "[Inspection]  using platform Look & Feel:  " + lookAndFeelName);
-        } else {
-            Trace.line(TRACE_VALUE, "[Inspection]  setting Look & Feel:  " + lookAndFeelName);
-            try {
-                UIManager.setLookAndFeel(lookAndFeelName);
-            } catch (Exception e) {
-                InspectorError.unexpected("Failed to set L&F:  " + lookAndFeelName, e);
-            }
-        }
-
-        JFrame.setDefaultLookAndFeelDecorated(true);
-        JDialog.setDefaultLookAndFeelDecorated(true);
-    }
-
-    /**
      * @return a string suitable for tagging all trace lines; mention the thread if it isn't the AWT event handler.
      */
     private String tracePrefix() {

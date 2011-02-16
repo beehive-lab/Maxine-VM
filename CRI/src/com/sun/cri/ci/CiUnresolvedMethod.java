@@ -86,7 +86,6 @@ public class CiUnresolvedMethod implements RiMethod {
         throw unresolved("maxStackSize()");
     }
     
-    @Override
     public RiMethod uniqueConcreteMethod() {
         throw unresolved("uniqueConcreteMethod()");
     }
@@ -103,6 +102,10 @@ public class CiUnresolvedMethod implements RiMethod {
         throw unresolved("maxStackSize()");
     }
 
+    public boolean noSafepoints() {
+        throw unresolved("isUninterruptible()");
+    }
+    
     public RiMethodProfile methodData() {
         throw unresolved("maxStackSize()");
     }

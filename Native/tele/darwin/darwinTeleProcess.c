@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -232,9 +232,8 @@ typedef struct {
     JNIEnv *env;
     jobject process;
     jlong task;
-    jobject result;
+    jobject threadList;
     jlong tlaList;
-    jlong primordialETLA;
 } GatherThreadArgs;
 
 static boolean gatherThread(thread_t thread, void* args) {
@@ -249,14 +248,14 @@ static boolean gatherThread(thread_t thread, void* args) {
 
     TLA threadLocals = (TLA) alloca(tlaSize());
     NativeThreadLocalsStruct nativeThreadLocalsStruct;
-    TLA tla = teleProcess_findTLA(a->task, a->tlaList, a->primordialETLA, threadState.__rsp, threadLocals, &nativeThreadLocalsStruct);
-    teleProcess_jniGatherThread(a->env, a->process, a->result, thread, state, threadState.__rip, tla);
+    TLA tla = teleProcess_findTLA(a->task, a->tlaList, threadState.__rsp, threadLocals, &nativeThreadLocalsStruct);
+    teleProcess_jniGatherThread(a->env, a->process, a->threadList, thread, state, threadState.__rip, tla);
     return true;
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject this, jlong task, jobject teleProcess, jobject result, jlong tlaList, jlong primordialETLA) {
-    GatherThreadArgs args = {env, teleProcess, task, result, tlaList, primordialETLA};
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject this, jlong task, jobject teleProcess, jobject threadList, jlong tlaList) {
+    GatherThreadArgs args = {env, teleProcess, task, threadList, tlaList};
     forall_threads(task, gatherThread, (void *) &args);
 }
 

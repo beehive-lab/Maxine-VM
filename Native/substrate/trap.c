@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -342,7 +342,6 @@ static void logTrap(int signal, Address ip, Address fault, TLA dtla) {
  * The handler for signals dealt with by Stubs.trapStub.
  */
 static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
-    int primordial = 0;
     int trapNumber = getTrapNumber(signal);
     Address ip = getInstructionPointer(ucontext);
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
@@ -377,20 +376,11 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
         trapLogged = true;
     }
 
-    if (tla_load(int, tla, ID) == 0) {
-        log_println("Trap taken on primordial thread (this is usually bad)!");
-        if (!trapLogged) {
-	        logTrap(signal, ip, faultAddress, dtla);
-	        trapLogged = true;
-	    }
-        primordial = 1;
-    }
-
     if (dtla == 0) {
         log_exit(-21, "could not find DTLA in trap handler");
     }
 
-    if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize && !primordial) {
+    if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize) {
         if (faultAddress < ntl->stackYellowZone) {
             /* The faultAddress is in the red zone; we shouldn't be alive */
             if (ntl->stackRedZoneIsProtectedByVM) {
@@ -459,7 +449,7 @@ SignalHandlerFunction userSignalHandler = (SignalHandlerFunction) userSignalHand
  */
 void nativeTrapInitialize(Address javaTrapStub) {
     /* This function must be called on the primordial thread. */
-    c_ASSERT(tla_load(int, tla_current(), ID) == 0);
+    c_ASSERT(tla_load(int, tla_current(), ID) == PRIMORDIAL_THREAD_ID);
 
     theJavaTrapStub = javaTrapStub;
     setSignalHandler(SIGSEGV, (SignalHandlerFunction) vmSignalHandler);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
     private final TimedTrace updateTracer;
 
+    private long lastUpdateEpoch = -1L;
+
     private static final Logger LOGGER = Logger.getLogger(TeleNativeThread.class.getName());
 
     private final TeleProcess teleProcess;
@@ -136,7 +138,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
     protected TeleNativeThread(TeleProcess teleProcess, Params params) {
         super(teleProcess.vm());
-        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
+        final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating id=" + params.id);
         tracer.begin();
 
         this.teleProcess = teleProcess;
@@ -151,21 +153,26 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name);
         } else {
             final String name = this.entityName + " Locals";
-            this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name, params.threadLocalsRegion.start(), params.threadLocalsRegion.size());
+            this.threadLocalsBlock = new TeleThreadLocalsBlock(this, name, params.threadLocalsRegion.start(), params.threadLocalsRegion.nBytes());
         }
         this.breakpointIsAtInstructionPointer = platform().isa == ISA.SPARC;
         final String stackName = this.entityName + " Stack";
-        this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.size());
+        this.teleStack = new TeleStack(teleProcess.vm(), this, stackName, params.stackRegion.start(), params.stackRegion.nBytes());
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " updating");
 
         tracer.end(null);
     }
 
-    public void updateCache() {
-        Trace.line(TRACE_VALUE + 1, tracePrefix() + "refresh thread=" + this);
-        if (state.allowsDataAccess()) {
-            refreshBreakpoint();
-            threadLocalsBlock.updateCache();
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refresh thread=" + this);
+            if (state.allowsDataAccess()) {
+                refreshBreakpoint();
+                threadLocalsBlock.updateCache(epoch);
+            }
+            lastUpdateEpoch = epoch;
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
         }
     }
 
@@ -184,7 +191,10 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
 
     public boolean contains(Address address) {
         return teleStack.contains(address) || (threadLocalsBlock != null && threadLocalsBlock.contains(address));
+    }
 
+    public final TeleObject representation() {
+        return teleVmThread();
     }
 
     public final int id() {
@@ -296,17 +306,17 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
      * @return the most currently refreshed frames on the thread's stack, never null.
      */
     final List<StackFrame> frames() {
-        final long currentProcessEpoch = teleProcess().epoch();
-        if (framesRefreshedEpoch < currentProcessEpoch) {
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + currentProcessEpoch + ") for " + this);
-            threadLocalsBlock.updateCache();
+        final long epoch = teleProcess().epoch();
+        if (framesRefreshedEpoch < epoch) {
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + epoch + ") for " + this);
+            threadLocalsBlock.updateCache(epoch);
             final List<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.vm(), this).frames();
             assert !newFrames.isEmpty();
             // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
             // frame may have changed.
             if (newFrames.size() != this.frames.size()) {
                 // Clear structural change; lengths are different
-                framesLastChangedEpoch = currentProcessEpoch;
+                framesLastChangedEpoch = epoch;
             } else {
                 // Lengths are the same; see if any frames differ.
                 final Iterator<StackFrame> oldFramesIterator = this.frames.iterator();
@@ -315,13 +325,13 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                     final StackFrame oldFrame = oldFramesIterator.next();
                     final StackFrame newFrame = newFramesIterator.next();
                     if (!oldFrame.isSameFrame(newFrame)) {
-                        framesLastChangedEpoch = currentProcessEpoch;
+                        framesLastChangedEpoch = epoch;
                         break;
                     }
                 }
             }
             this.frames = newFrames;
-            framesRefreshedEpoch = currentProcessEpoch;
+            framesRefreshedEpoch = epoch;
         }
         return frames;
     }
@@ -424,10 +434,10 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
      * Update the current list of frames, and notice if the structure of the stack has changed.
      */
     private synchronized void refreshFrames() {
-        final long processEpoch = teleProcess().epoch();
-        if (framesRefreshedEpoch < processEpoch) {
-            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
-            threadLocalsBlock.updateCache();
+        final long epoch = teleProcess().epoch();
+        if (epoch > framesRefreshedEpoch) {
+            Trace.line(TRACE_VALUE + 1, tracePrefix() + "refreshFrames (epoch=" + epoch + ") for " + this);
+            threadLocalsBlock.updateCache(epoch);
             final TeleVM teleVM = teleProcess.vm();
             final List<StackFrame> newFrames = new TeleStackFrameWalker(teleVM, this).frames();
             assert !newFrames.isEmpty();
@@ -435,7 +445,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             // frame may have changed.
             if (newFrames.size() != this.frames.size()) {
                 // Clear structural change; lengths are different
-                framesLastChangedEpoch = processEpoch;
+                framesLastChangedEpoch = epoch;
             } else {
                 final Iterator<StackFrame> oldFramesIterator = this.frames.iterator();
                 final Iterator<StackFrame> newFramesIterator = newFrames.iterator();
@@ -443,13 +453,13 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                     final StackFrame oldFrame = oldFramesIterator.next();
                     final StackFrame newFrame = newFramesIterator.next();
                     if (!oldFrame.isSameFrame(newFrame)) {
-                        framesLastChangedEpoch = processEpoch;
+                        framesLastChangedEpoch = epoch;
                         break;
                     }
                 }
             }
             this.frames = newFrames;
-            framesRefreshedEpoch = processEpoch;
+            framesRefreshedEpoch = epoch;
         }
     }
 
@@ -526,7 +536,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
             sb.append(",ip=0x").append(teleRegisterSet.instructionPointer().toHexString());
             if (isJava()) {
                 sb.append(",stack_start=0x").append(stack().memoryRegion().start().toHexString());
-                sb.append(",stack_size=").append(stack().memoryRegion().size().toLong());
+                sb.append(",stack_size=").append(stack().memoryRegion().nBytes());
             }
         }
         sb.append("]");

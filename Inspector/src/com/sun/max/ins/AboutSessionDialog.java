@@ -55,7 +55,7 @@ public final class AboutSessionDialog extends InspectorDialog {
         super(inspection, MaxineInspector.NAME + " session information", true);
 
 
-        this.textArea = new JTextArea(17, 50);
+        this.textArea = new JTextArea(20, 50);
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
 
@@ -127,12 +127,17 @@ public final class AboutSessionDialog extends InspectorDialog {
         stream.println();
         final MaxHeap heap = vm().heap();
         stream.print(heap.entityName().toString().toUpperCase() + ":\n");
-        heap.printStats(stream, indent, verbose);
+        heap.printSessionStats(stream, indent, verbose);
 
         stream.println();
         final MaxClassRegistry classRegistry = vm().classRegistry();
         stream.print(classRegistry.entityName().toString().toUpperCase() + ":\n");
         classRegistry.printSessionStats(stream, indent, verbose);
+
+        stream.println();
+        final MaxCodeCache codeCache = vm().codeCache();
+        stream.print(codeCache.entityName().toString().toUpperCase() + ":\n");
+        codeCache.printSessionStats(stream, indent, verbose);
 
         stream.println();
         stream.print("SESSION OPTIONS: \n");
