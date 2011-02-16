@@ -1857,11 +1857,14 @@ public final class GraphBuilder {
         if (!target.hasBalancedMonitors()) {
             return cannotInline(target, "has unbalanced monitors");
         }
-        if (target.isConstructor() && target.holder().isSubtypeOf(compilation.throwableType())) {
-            // don't inline constructors of throwable classes unless the inlining tree is
-            // rooted in a throwable class
-            if (!rootScope().method.holder().isSubtypeOf(compilation.throwableType())) {
-                return cannotInline(target, "don't inline Throwable constructors");
+        if (target.isConstructor()) {
+            RiType throwableType = compilation.runtime.getRiType(Throwable.class);
+            if (target.holder().isSubtypeOf(throwableType)) {
+                // don't inline constructors of throwable classes unless the inlining tree is
+                // rooted in a throwable class
+                if (!rootScope().method.holder().isSubtypeOf(throwableType)) {
+                    return cannotInline(target, "don't inline Throwable constructors");
+                }
             }
         }
         return true;
