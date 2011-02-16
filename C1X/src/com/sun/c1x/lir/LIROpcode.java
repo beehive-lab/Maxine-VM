@@ -33,7 +33,6 @@ public enum LIROpcode {
     // @formatter:off
     BeginOp0,
         Label,
-        StdEntry,
         OsrEntry,
         Here,
         Info,

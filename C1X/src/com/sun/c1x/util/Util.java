@@ -338,6 +338,10 @@ public class Util {
         return -0x8000 <= x && x < 0x8000;
     }
 
+    public static boolean is32bit(long x) {
+        return -0x80000000L <= x && x < 0x80000000L;
+    }
+
     public static short safeToShort(int v) {
         assert is16bit(v);
         return (short) v;

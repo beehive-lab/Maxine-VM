@@ -226,8 +226,4 @@ public abstract class AbstractAssembler {
     public void blockComment(String st) {
         Util.nonFatalUnimplemented();
     }
-
-    public void verifiedEntry() {
-        Util.nonFatalUnimplemented();
-    }
 }
