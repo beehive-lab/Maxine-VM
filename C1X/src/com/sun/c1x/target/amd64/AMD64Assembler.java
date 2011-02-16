@@ -782,7 +782,7 @@ public class AMD64Assembler extends AbstractAssembler {
     public final void jcc(ConditionFlag cc, Label l) {
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
-            int dst = target(l);
+            int dst = l.position();
 
             int shortSize = 2;
             int longSize = 6;
@@ -814,7 +814,7 @@ public class AMD64Assembler extends AbstractAssembler {
     public final void jccb(ConditionFlag cc, Label l) {
         if (l.isBound()) {
             int shortSize = 2;
-            int entry = target(l);
+            int entry = l.position();
             assert Util.is8bit(entry - (codeBuffer.position() + shortSize)) : "Dispacement too large for a short jmp";
             long offs = entry - codeBuffer.position();
             // 0111 tttn #8-bit disp
@@ -836,7 +836,7 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public final void jmp(Label l) {
         if (l.isBound()) {
-            int entry = target(l);
+            int entry = l.position();
 
             int shortSize = 2;
             int longSize = 5;
@@ -869,7 +869,7 @@ public class AMD64Assembler extends AbstractAssembler {
     public final void jmpb(Label l) {
         if (l.isBound()) {
             int shortSize = 2;
-            int entry = target(l);
+            int entry = l.position();
             assert Util.is8bit((entry - codeBuffer.position()) + shortSize) : "Dispacement too large for a short jmp";
             long offs = entry - codeBuffer.position();
             emitByte(0xEB);
