@@ -296,6 +296,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (!callee.isVmEntryPoint()) {
             asm.stackOverflowCheck();
         }
+
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -47,6 +48,9 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
     private static final int TRACE_VALUE = 2;
 
     private final TimedTrace updateTracer;
+
+    private long lastUpdateEpoch = -1L;
+
     public final CiRegister[] registers;
 
     private final TeleRegisterSet teleRegisterSet;
@@ -73,19 +77,23 @@ abstract class TeleRegisters extends AbstractTeleVMHolder implements TeleVMCache
         tracer.end(null);
     }
 
-    public final void updateCache() {
-        updateTracer.begin();
-        // Refreshes the register values from the {@linkplain #registerData() raw buffer} holding the registers' values.
-        // This method should be called whenever the raw buffer is updated.
-        registerDataInputStream.reset();
-        for (int i = 0; i != registerValues.length; i++) {
-            try {
-                registerValues[i] = Word.read(registerDataInputStream, endianness).asAddress();
-            } catch (IOException ioException) {
-                TeleError.unexpected(ioException);
+    public final void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            updateTracer.begin();
+            // Refreshes the register values from the {@linkplain #registerData() raw buffer} holding the registers' values.
+            // This method should be called whenever the raw buffer is updated.
+            registerDataInputStream.reset();
+            for (int i = 0; i != registerValues.length; i++) {
+                try {
+                    registerValues[i] = Word.read(registerDataInputStream, endianness).asAddress();
+                } catch (IOException ioException) {
+                    TeleError.unexpected(ioException);
+                }
             }
+            updateTracer.end(null);
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch + ": " + this);
         }
-        updateTracer.end(null);
     }
 
     /**

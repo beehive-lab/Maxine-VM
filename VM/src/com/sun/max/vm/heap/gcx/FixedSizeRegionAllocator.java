@@ -282,6 +282,7 @@ public class FixedSizeRegionAllocator {
             highestAllocated = residentRegions - 1;
             committed.set(0, residentRegions);
             committedSize = residentRegions;
+            numFreeRegions -= residentRegions;
         }
     }
 

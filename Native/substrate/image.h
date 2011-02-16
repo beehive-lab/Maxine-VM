@@ -57,7 +57,7 @@
     f(reservedVirtualSpaceFieldOffset) /* offset where to store the address of the reserved contiguous virtual space, if any*/ \
     f(bootRegionMappingConstraint) \
     f(tlaListHeadOffset) /* See the comment for the 'tlaListHead' field in the VmThreadMap class.  */ \
-    f(primordialETLAOffset) \
+    f(exitCodeOffset) \
     f(tlaSize) /* The size of a TLA.  */ \
     f(SAFEPOINT_LATCH) \
     f(ETLA) \

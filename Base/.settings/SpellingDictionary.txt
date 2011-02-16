@@ -54,6 +54,7 @@ affordances
 allocatable
 appendable
 arg
+atomicity
 bailed
 bailout
 beltway

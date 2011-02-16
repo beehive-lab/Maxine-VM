@@ -196,21 +196,21 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
 
     private static final Border debugEnabledBreakpointTagBorder = BorderFactory.createLineBorder(Color.black, 2);
-    public Border debugEnabledTargetBreakpointTagBorder() {
+    public Border debugEnabledMachineCodeBreakpointTagBorder() {
         return debugEnabledBreakpointTagBorder;
     }
 
     private static final Border debugDisabledBreakpointTagBorder = BorderFactory.createLineBorder(Color.black, 1);
-    public Border debugDisabledTargetBreakpointTagBorder() {
+    public Border debugDisabledMachineCodeBreakpointTagBorder() {
         return debugDisabledBreakpointTagBorder;
     }
 
     public Border debugEnabledBytecodeBreakpointTagBorder() {
-        return debugEnabledTargetBreakpointTagBorder();
+        return debugEnabledMachineCodeBreakpointTagBorder();
     }
 
     public Border debugDisabledBytecodeBreakpointTagBorder() {
-        return debugDisabledTargetBreakpointTagBorder();
+        return debugDisabledMachineCodeBreakpointTagBorder();
     }
 
     public Border watchpointTagBorder() {
@@ -381,10 +381,10 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return wordSelectedColor();
     }
     public Border memoryEnabledWatchpointTagBorder() {
-        return debugEnabledTargetBreakpointTagBorder();
+        return debugEnabledMachineCodeBreakpointTagBorder();
     }
     public Border memoryDisabledWatchpointTagBorder() {
-        return debugDisabledTargetBreakpointTagBorder();
+        return debugDisabledMachineCodeBreakpointTagBorder();
     }
 
     public Color memoryWatchpointTextColor() {

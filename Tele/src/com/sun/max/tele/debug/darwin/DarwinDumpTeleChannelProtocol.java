@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -170,12 +170,12 @@ public class DarwinDumpTeleChannelProtocol extends TeleChannelDataIOProtocolAdap
     }
 
     @Override
-    public boolean gatherThreads(Object teleProcessObject, Object threadSequence, long tlaList, long primordialETLA) {
-        return darwinDumpThreadAccess.gatherThreads(teleProcessObject, threadSequence, tlaList, primordialETLA);
+    public boolean gatherThreads(Object teleProcessObject, Object threadList, long tlaList) {
+        return darwinDumpThreadAccess.gatherThreads(teleProcessObject, threadList, tlaList);
     }
 
     @Override
-    public int gatherThreads(long tlaList, long primordialETLA) {
+    public int gatherThreads(long tlaList) {
         inappropriate("gatherThreads");
         return 0;
     }

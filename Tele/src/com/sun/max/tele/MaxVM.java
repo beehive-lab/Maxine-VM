@@ -27,7 +27,6 @@ import java.util.*;
 
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.interpreter.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
@@ -242,11 +241,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     Pointer bootImageStart();
 
     /**
-     * @return access to specific methods in the VM
-     */
-    TeleMethods teleMethods();
-
-    /**
      * @return how much reliance is placed on the {@link TeleInterpreter} when
      * communicating with the VM (0=none, 1=some, etc)
      */
@@ -289,19 +283,14 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     void setVMTraceThreshold(long newThreshold);
 
     /**
-     * Low-level read of a word from memory of the VM.
+     * Low-level read of a word as a generic boxed value from memory of the VM.
      */
-    Word readWord(Address address);
-
-    /**
-     * Low-level read of a word from memory of the VM.
-     */
-    Word readWord(Address address, int offset);
+    Value readWordValue(Address address);
 
     /**
      * Low-level read of bytes from memory of the VM.
      */
-    void readFully(Address address, byte[] bytes);
+    void readBytes(Address address, byte[] bytes);
 
     /**
      * @param origin current absolute location of the beginning of a heap object's memory in the VM,
@@ -320,12 +309,6 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return whether there is a heap object with that origin.
      */
     boolean isValidOrigin(Pointer origin);
-
-    /**
-     * @param reference a {@link Reference} to memory in the VM.
-     * @return whether there is a heap object at that location.
-     */
-    boolean isValidReference(Reference reference);
 
     /**
      * @param word contents of a memory word from the VM.

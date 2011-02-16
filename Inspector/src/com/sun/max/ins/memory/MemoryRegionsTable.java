@@ -22,8 +22,6 @@
  */
 package com.sun.max.ins.memory;
 
-import static com.sun.max.vm.VMConfiguration.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -49,14 +47,11 @@ import com.sun.max.vm.value.*;
  */
 public final class MemoryRegionsTable extends InspectorTable {
 
-    private final String heapSchemeName;
-
     private final MemoryRegionsTableModel tableModel;
     private final MemoryRegionsColumnModel columnModel;
 
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
-        this.heapSchemeName = vmConfig().heapScheme().getClass().getSimpleName();
         this.tableModel = new MemoryRegionsTableModel(inspection);
         this.columnModel = new MemoryRegionsColumnModel(this, this.tableModel, viewPreferences);
         configureDefaultTable(tableModel, columnModel);
@@ -187,8 +182,8 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         @Override
-        public Offset getOffset(int row) {
-            return Offset.fromLong(getAddress(row).toLong());
+        public int getOffset(int row) {
+            return getAddress(row).toInt();
         }
 
         /**

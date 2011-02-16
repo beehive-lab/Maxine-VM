@@ -196,7 +196,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             slotDescriptions = new String[slots.size()];
             int index = 0;
             for (Slot slot : slots) {
-                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().platform().wordSize());
+                regions[index] = new InspectorMemoryRegion(inspection.vm(), "", getOrigin().plus(slot.offset), vm().platform().nBytesInWord());
                 slotDescriptions[index] = "Stack frame slot \"" + slot.name + "\"";
                 index++;
             }
@@ -221,7 +221,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         @Override
         public int findRow(Address address) {
-            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().platform().wordSize()).toInt();
+            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().platform().nBytesInWord()).toInt();
             return (wordOffset >= 0 && wordOffset < slots.size()) ? wordOffset : -1;
         }
 
@@ -231,9 +231,9 @@ public class CompiledStackFrameTable extends InspectorTable {
         }
 
         @Override
-        public Offset getOffset(int row) {
+        public int getOffset(int row) {
             // Slot offsets are relative to Stack Pointer
-            return Offset.fromInt(slots.slot(row).offset);
+            return slots.slot(row).offset;
         }
 
         @Override
@@ -248,9 +248,9 @@ public class CompiledStackFrameTable extends InspectorTable {
          * @param biasOffset whether offsets should be biased
          * @return the slot offset relative to the SP
          */
-        public Offset getSPOffset(int row, boolean biasOffset) {
+        public int getSPOffset(int row, boolean biasOffset) {
             if (biasOffset) {
-                return javaStackFrame.biasedFPOffset(getOffset(row)).plus(frameSize);
+                return javaStackFrame.biasedFPOffset(getOffset(row)) + frameSize;
             }
             return getOffset(row);
         }
@@ -262,11 +262,11 @@ public class CompiledStackFrameTable extends InspectorTable {
          * @param biasOffset whether offsets should be biased
          * @return the slot offset relative to the FP
          */
-        public Offset getFPOffset(int row, boolean biasOffset) {
+        public int getFPOffset(int row, boolean biasOffset) {
             if (biasOffset) {
                 return javaStackFrame.biasedFPOffset(getOffset(row));
             }
-            return getOffset(row).minus(frameSize);
+            return getOffset(row) - frameSize;
         }
 
         public String getSlotName(int row) {
@@ -297,11 +297,11 @@ public class CompiledStackFrameTable extends InspectorTable {
 
             String otherInfo = "";
             if (viewPreferences.biasSlotOffsets()) {
-                final Offset biasedOffset = tableModel.getFPOffset(row, viewPreferences.biasSlotOffsets());
-                otherInfo = String.format("(%%fp %+d)", biasedOffset.toInt());
+                final int biasedOffset = tableModel.getFPOffset(row, viewPreferences.biasSlotOffsets());
+                otherInfo = String.format("(%%fp %+d)", biasedOffset);
             }
             final String sourceVariableName = tableModel.getSourceVariableName(row);
-            final int offset = tableModel.getSPOffset(row, false).toInt();
+            final int offset = tableModel.getSPOffset(row, false);
             final String toolTipText = String.format("SP %+d%s%s", offset, otherInfo, sourceVariableName == null ? "" : " [" + sourceVariableName + "]");
             setWrappedToolTipText(tableModel.getRowDescription(row) + "<br>" + toolTipText);
             setForeground(cellForegroundColor(row, col));
@@ -364,7 +364,7 @@ public class CompiledStackFrameTable extends InspectorTable {
                 label = new WordValueLabel(inspection, ValueMode.INTEGER_REGISTER, CompiledStackFrameTable.this) {
                     @Override
                     public Value fetchValue() {
-                        return new WordValue(vm().readWord(address));
+                        return vm().readWordValue(address);
                     }
                 };
                 label.setOpaque(true);

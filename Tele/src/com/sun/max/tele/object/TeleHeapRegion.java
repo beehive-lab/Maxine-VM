@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,6 +77,7 @@ public class TeleHeapRegion extends AbstractTeleVMHolder implements MaxHeapRegio
     }
 
     private final String entityDescription = "An allocation area for a Maxine VM heap";
+    private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
     private final DelegatedHeapRegionMemoryRegion heapRegionMemoryRegion;
 
     /**
@@ -89,6 +90,7 @@ public class TeleHeapRegion extends AbstractTeleVMHolder implements MaxHeapRegio
      */
     public TeleHeapRegion(TeleVM teleVM, TeleRuntimeMemoryRegion teleRuntimeMemoryRegion, boolean isBootRegion) {
         super(teleVM);
+        this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
         this.heapRegionMemoryRegion = new DelegatedHeapRegionMemoryRegion(teleVM, this, teleRuntimeMemoryRegion, isBootRegion);
     }
 
@@ -106,6 +108,10 @@ public class TeleHeapRegion extends AbstractTeleVMHolder implements MaxHeapRegio
 
     public boolean contains(Address address) {
         return heapRegionMemoryRegion.contains(address);
+    }
+
+    public TeleObject representation() {
+        return teleRuntimeMemoryRegion;
     }
 
     public boolean isBootRegion() {

@@ -30,9 +30,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -47,10 +44,9 @@ public final class ObjectScrollPane extends InspectorScrollPane {
      */
     public static ObjectScrollPane createArrayElementsPane(Inspection inspection, TeleArrayObject teleArrayObject, ObjectViewPreferences instanceViewPreferences) {
         final int length = teleArrayObject.getLength();
-        final ArrayClassActor arrayClassActor = (ArrayClassActor) teleArrayObject.classActorForObjectType();
-        final Kind kind = arrayClassActor.componentClassActor().kind;
+        final Kind kind = teleArrayObject.componentKind();
         final WordValueLabel.ValueMode valueMode = kind.isReference ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
-        final Offset arrayOffsetFromOrigin = arrayClassActor.kind.arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0);
+        final int arrayOffsetFromOrigin = teleArrayObject.arrayOffsetFromOrigin();
         final ArrayElementsTable arrayElementsTable = new ArrayElementsTable(inspection, teleArrayObject, kind, teleArrayObject.componentType(), arrayOffsetFromOrigin, 0, length, "", valueMode, instanceViewPreferences);
         return new ObjectScrollPane(inspection, arrayElementsTable);
     }

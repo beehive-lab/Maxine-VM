@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -175,9 +175,7 @@ ifeq ($(OS),darwin)
     endif
     C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     LINK_MAIN = $(CC) -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -framework CoreFoundation -o $(MAIN)
-    # The version linker flag below ensure are required by the modified version of
-    # libjava.jnilib that is put into the $(PROJECT)/generated/$(OS) directory
-    # by running $(PROJECT)/../bin/mod-macosx-javalib.sh. This library expects the jvm shared
+    # The version linker flags below are required by libjava.jnilib which expects the jvm shared
     # library to have a certain version number.
     LINK_LIB = $(CC) -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
         -Xlinker -compatibility_version -Xlinker 1.0.0 \

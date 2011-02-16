@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.sun.max.tele.reference;
 
 import java.util.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -53,6 +54,8 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
 
     private final TimedTrace updateTracer;
 
+    private long lastUpdateEpoch = -1L;
+
     private final TeleReferenceScheme teleReferenceScheme;
 
     private final Address[] cachedRoots = new Address[InspectableHeapInfo.MAX_NUMBER_OF_ROOTS];
@@ -78,16 +81,36 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
         tracer.end(null);
     }
 
-    public void updateCache() {
-        updateTracer.begin();
-        // Flush local cache; copy remote contents of Inspectors' root table into Inspector's local cache.
-        final int numberOfIndices = usedIndices.length();
-        for (int i = 0; i < numberOfIndices; i++) {
-            WordArray.set(cachedRoots, i, teleRootsReference().getWord(0, i).asAddress());
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            updateTracer.begin();
+            // Flush local cache; copy remote contents of Inspectors' root table into Inspector's local cache.
+            final int numberOfIndices = usedIndices.length();
+            for (int i = 0; i < numberOfIndices; i++) {
+                WordArray.set(cachedRoots, i, teleRootsReference().getWord(0, i).asAddress());
+            }
+            lastUpdateEpoch = epoch;
+            updateTracer.end(null);
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + " redundant udpate epoch=" + epoch + ": " + this);
         }
-        updateTracer.end(null);
     }
 
+
+    /**
+     * Clears the entries in the VM's Tele root table that were submitted by {@link #unregister(int)}.
+     */
+    public void flushUnregisteredRoots() {
+        synchronized (unregistrationQueue) {
+            for (int index = unregistrationQueue.nextSetBit(0); index >= 0; index = unregistrationQueue.nextSetBit(index + 1)) {
+                WordArray.set(cachedRoots, index, Address.zero());
+                usedIndices.clear(index);
+                teleRootsReference().setWord(0, index, Word.zero());
+            }
+            usedIndices.andNot(unregistrationQueue);
+            unregistrationQueue.clear();
+        }
+    }
 
     private RemoteTeleReference teleRootsReference() {
         return teleReferenceScheme.createTemporaryRemoteTeleReference(vm().dataAccess().readWord(heap().teleRootsPointer()).asAddress());
@@ -104,21 +127,6 @@ public final class TeleRoots extends AbstractTeleVMHolder implements TeleVMCache
         // Remote root table
         teleRootsReference().setWord(0, index, rawReference);
         return index;
-    }
-
-    /**
-     * Clears the entries in the VM's Tele root table that were submitted by {@link #unregister(int)}.
-     */
-    public void flushUnregisteredRoots() {
-        synchronized (unregistrationQueue) {
-            for (int index = unregistrationQueue.nextSetBit(0); index >= 0; index = unregistrationQueue.nextSetBit(index + 1)) {
-                WordArray.set(cachedRoots, index, Address.zero());
-                usedIndices.clear(index);
-                teleRootsReference().setWord(0, index, Word.zero());
-            }
-            usedIndices.andNot(unregistrationQueue);
-            unregistrationQueue.clear();
-        }
     }
 
     /**

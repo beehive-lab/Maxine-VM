@@ -249,8 +249,8 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         @Override
-        public Offset getOffset(int row) {
-            return Offset.fromInt(fieldActors[row].offset());
+        public int getOffset(int row) {
+            return fieldActors[row].offset();
         }
 
         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,14 +65,14 @@ public class PreferenceDialog extends SimpleDialog {
         methodInspectorPanel.setBorder(border);
         prefPanel.add(methodInspectorPanel);
 
-        final JPanel targetCodeLabelPanel = new InspectorPanel(inspection, new BorderLayout());
-        targetCodeLabelPanel.setBorder(border);
-        targetCodeLabelPanel.add(new TextLabel(inspection, "Target Code"), BorderLayout.WEST);
-        prefPanel.add(targetCodeLabelPanel);
+        final JPanel machineCodeLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        machineCodeLabelPanel.setBorder(border);
+        machineCodeLabelPanel.add(new TextLabel(inspection, "Machine Code"), BorderLayout.WEST);
+        prefPanel.add(machineCodeLabelPanel);
 
-        final JPanel targetCodeInspectorPanel = TargetCodeViewPreferences.globalPreferences(inspection).getPanel();
-        targetCodeInspectorPanel.setBorder(border);
-        prefPanel.add(targetCodeInspectorPanel);
+        final JPanel machineCodeInspectorPanel = MachineCodeViewPreferences.globalPreferences(inspection).getPanel();
+        machineCodeInspectorPanel.setBorder(border);
+        prefPanel.add(machineCodeInspectorPanel);
 
         final JPanel bytecodeLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         bytecodeLabelPanel.setBorder(border);

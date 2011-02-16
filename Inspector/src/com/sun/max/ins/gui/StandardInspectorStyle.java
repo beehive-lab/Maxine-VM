@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -281,18 +281,18 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return debugSelectionBorderColor;
     }
 
-    private static final Border debugEnabledTargetBreakpointTagBorder =
+    private static final Border debugEnabledMachineCodeBreakpointTagBorder =
         BorderFactory.createLineBorder(debugBreakpointBorderColor, 3);
     @Override
-    public Border debugEnabledTargetBreakpointTagBorder() {
-        return debugEnabledTargetBreakpointTagBorder;
+    public Border debugEnabledMachineCodeBreakpointTagBorder() {
+        return debugEnabledMachineCodeBreakpointTagBorder;
     }
 
-    private static final Border debugDisabledTargetBreakpointTagBorder =
+    private static final Border debugDisabledMachineCodeBreakpointTagBorder =
         BorderFactory.createMatteBorder(3, 3, 3, 3, IconFactory.createPixelatedIcon(debugBreakpointBorderColor));
     @Override
-    public Border debugDisabledTargetBreakpointTagBorder() {
-        return debugDisabledTargetBreakpointTagBorder;
+    public Border debugDisabledMachineCodeBreakpointTagBorder() {
+        return debugDisabledMachineCodeBreakpointTagBorder;
     }
 
     private static final Border debugEnabledBytecodeBreakpointTagBorder =

@@ -30,6 +30,7 @@ import java.util.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
@@ -39,7 +40,11 @@ import com.sun.max.vm.cps.target.*;
 /**
  * Holds information about a block of code in
  * the process of the VM, about which little is known
- * other than the memory location and possibly an assigned name.
+ * other than the memory location and possibly a name
+ * assigned during a session.
+ * <br>
+ * No attempt is made to check for changes to the code during
+ * a session, unlike VM target methods.
  *
  * @author Michael Van De Vanter
  */
@@ -60,8 +65,8 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
         private MaxExternalCode owner;
 
-        private ExternalCodeMemoryRegion(TeleVM vm, MaxExternalCode owner, String name, Address start, Size size) {
-            super(vm, name, start, size);
+        private ExternalCodeMemoryRegion(TeleVM vm, MaxExternalCode owner, String name, Address start, long nBytes) {
+            super(vm, name, start, nBytes);
             this.owner = owner;
         }
 
@@ -202,7 +207,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             return labelIndexes;
         }
 
-        public int[] bytecodeToTargetCodePositionMap() {
+        public int[] bytecodeToMachineCodePositionMap() {
             return null;
         }
     }
@@ -212,18 +217,20 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      * <br>
      * Must be called in thread with the VM lock held.
      *
+     * @param codeStart starting memory location of the code in VM memory
+     * @param nBytes size of the region in bytes
      * @param name a name for the region
-     * @return a newly created surrogate for a block of native code discovered in the VM
+     *  @return a newly created surrogate for a block of native code discovered in the VM
      * about which little more is known than its location.  The location must not overlap any code
      * region already known.
      * @throws MaxInvalidAddressException if memory cannot be read
      */
-    public static TeleExternalCode create(TeleVM teleVM, Address codeStart, Size codeSize, String name) throws MaxInvalidAddressException {
+    public static TeleExternalCode create(TeleVM teleVM, Address codeStart, long nBytes, String name) throws MaxInvalidAddressException {
         assert teleVM.lockHeldByCurrentThread();
         TeleExternalCode teleExternalCode = null;
         try {
-            // Fail if the region specified by 'address' and 'size' overlaps an existing native entry
-            teleExternalCode = new TeleExternalCode(teleVM, codeStart, codeSize, name);
+            // Fail if the region specified by 'address' and 'nBytes' overlaps an existing native entry
+            teleExternalCode = new TeleExternalCode(teleVM, codeStart, nBytes, name);
         } catch (IllegalArgumentException illegalArgumentException) {
             TeleError.unexpected("External native code region is overlapping an existing code region");
         }
@@ -240,17 +247,19 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
 
     /**
      * Creates a representation of a block of native code about which little is known.
+     * <br>
+     * No subsequent checks are made to determine whether the code gets modified.
      *
      * @param teleVM
      * @param start starting location of code in memory
-     * @param size length of code in memory
+     * @param nBytes length in bytes of code in memory
      * @param name the name to assign to the block of code in the registry
      * @throws IllegalArgumentException if the range overlaps one already in the registry
      * @throws MaxInvalidAddressException if unable to read memory.
      */
-    private TeleExternalCode(TeleVM teleVM, Address start, Size size, String name) throws MaxInvalidAddressException {
+    private TeleExternalCode(TeleVM teleVM, Address start, long nBytes, String name) throws MaxInvalidAddressException {
         super(teleVM);
-        this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(teleVM, this, name, start, size);
+        this.externalCodeMemoryRegion = new ExternalCodeMemoryRegion(teleVM, this, name, start, nBytes);
 
         try {
             this.instructionMap = new ExternalCodeInstructionMap();
@@ -265,7 +274,9 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         if (instructions == null && vm().tryLock()) {
             byte[] code = null;
             try {
-                code = vm().dataAccess().readFully(getCodeStart(), externalCodeMemoryRegion.size().toInt());
+                final long nBytes = externalCodeMemoryRegion.nBytes();
+                assert nBytes < Integer.MAX_VALUE;
+                code = vm().dataAccess().readFully(getCodeStart(), (int) nBytes);
             } finally {
                 vm().unlock();
             }
@@ -292,8 +303,21 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         return externalCodeMemoryRegion.contains(address);
     }
 
-    public InstructionMap instructionMap() {
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents unknown native code.
+        return null;
+    }
+
+    public InstructionMap getInstructionMap() {
         return instructionMap;
+    }
+
+    /** {@inheritDoc}
+     * <p>
+     * We don't bother to check if native code has changed once we have read and disassembled it.
+     */
+    public long lastChangedEpoch() {
+        return 0L;
     }
 
     public Address getCodeStart() {
@@ -312,7 +336,7 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
         return null;
     }
 
-    public String targetLocationToString(TargetLocation targetLocation) {
+    public String machineCodeLocationToString(TargetLocation targetLocation) {
         return null;
     }
 

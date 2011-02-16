@@ -27,7 +27,6 @@ import java.util.*;
 
 import com.sun.max.tele.MaxWatchpoint.WatchpointSettings;
 import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.type.*;
@@ -144,7 +143,7 @@ public interface MaxWatchpointManager {
      * @throws MaxWatchpointManager.MaxDuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
      * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
      */
-    MaxWatchpoint createArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+    MaxWatchpoint createArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, WatchpointSettings settings)
         throws MaxWatchpointManager.MaxTooManyWatchpointsException, MaxWatchpointManager.MaxDuplicateWatchpointException, MaxVMBusyException;
 
     /**

@@ -165,7 +165,7 @@ public final class RegistersTable extends InspectorTable {
         }
     }
 
-    private final class NameCellRenderer extends TargetCodeLabel implements TableCellRenderer {
+    private final class NameCellRenderer extends MachineCodeLabel implements TableCellRenderer {
 
         NameCellRenderer(Inspection inspection) {
             super(inspection, null);

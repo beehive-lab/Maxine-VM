@@ -34,6 +34,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
+import com.sun.max.ins.memory.MemoryTagTableCellRenderer;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
@@ -59,7 +60,7 @@ public final class ArrayElementsTable extends InspectorTable {
     private final TeleObject teleObject;
     private final Kind elementKind;
     private final TypeDescriptor elementTypeDescriptor;
-    private final Offset startOffset;
+    private final int startOffset;
     private final int startIndex;
     private final int arrayLength;
     private final String indexPrefix;
@@ -87,7 +88,7 @@ public final class ArrayElementsTable extends InspectorTable {
      */
     ArrayElementsTable(Inspection inspection,
         TeleObject teleObject, final Kind elementKind, final TypeDescriptor elementTypeDescriptor,
-        final Offset startOffset, int startIndex, int length, final String indexPrefix,
+        final int startOffset, int startIndex, int length, final String indexPrefix,
         WordValueLabel.ValueMode wordValueMode, ObjectViewPreferences instanceViewPreferences) {
         super(inspection);
         this.teleObject = teleObject;
@@ -213,7 +214,7 @@ public final class ArrayElementsTable extends InspectorTable {
      */
     private final class ArrayElementsTableModel extends InspectorMemoryTableModel {
 
-        private final int elementSize;
+        private final int nBytesInElement;
 
         /** Maps display rows to element rows (indexes) in the table. */
         private int[] rowToElementIndex;
@@ -221,7 +222,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public ArrayElementsTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
-            this.elementSize = elementKind.width.numberOfBytes;
+            this.nBytesInElement = elementKind.width.numberOfBytes;
 
             // Initialize map so that all elements will display
             this.rowToElementIndex = new int[arrayLength];
@@ -255,12 +256,12 @@ public final class ArrayElementsTable extends InspectorTable {
 
         @Override
         public MaxMemoryRegion getMemoryRegion(int row) {
-            return new InspectorMemoryRegion(vm(), "", getAddress(row), Size.fromInt(elementSize));
+            return new InspectorMemoryRegion(vm(), "", getAddress(row), nBytesInElement);
         }
 
         @Override
-        public Offset getOffset(int row) {
-            return startOffset.plus(rowToElementIndex[row] * elementSize);
+        public int getOffset(int row) {
+            return startOffset + (rowToElementIndex[row] * nBytesInElement);
         }
 
         /**
@@ -272,8 +273,8 @@ public final class ArrayElementsTable extends InspectorTable {
         public int findRow(Address address) {
             if (!address.isZero()) {
                 final int offset = address.minus(getOrigin()).minus(startOffset).toInt();
-                if (offset >= 0 && offset < arrayLength * elementSize) {
-                    final int elementRow = offset / elementSize;
+                if (offset >= 0 && offset < arrayLength * nBytesInElement) {
+                    final int elementRow = offset / nBytesInElement;
                     for (int row = 0; row < visibleElementCount; row++) {
                         if (rowToElementIndex[row] == elementRow) {
                             return elementRow;
@@ -328,7 +329,7 @@ public final class ArrayElementsTable extends InspectorTable {
     private final class NameRenderer extends LocationLabel.AsIndex implements TableCellRenderer {
 
         public NameRenderer(Inspection inspection) {
-            super(inspection, indexPrefix, 0, Offset.zero(), Address.zero());
+            super(inspection, indexPrefix, 0, 0, Address.zero());
             setOpaque(true);
         }
 
@@ -409,7 +410,6 @@ public final class ArrayElementsTable extends InspectorTable {
                 }
                 labels[elementIndex].setToolTipPrefix(tableModel.getRowDescription(row) + "<br>value = ");
                 labels[elementIndex].setOpaque(true);
-
             }
             labels[elementIndex].setBackground(cellBackgroundColor(isSelected));
             return labels[elementIndex];

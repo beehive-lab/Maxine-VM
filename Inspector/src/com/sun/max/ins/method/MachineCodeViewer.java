@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,33 +35,39 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
- * Base class for views of disassembled target code for a single method in the VM.
+ * Base class for views of disassembled machine code for a single method in the VM.
  *
  * @author Mick Jordan
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TargetCodeViewer extends CodeViewer {
+public abstract class MachineCodeViewer extends CodeViewer {
 
     private final MaxMachineCode machineCode;
-    private final InstructionMap instructionMap;
     private TeleConstantPool teleConstantPool;
     private ConstantPool localConstantPool;
-    private final String[] rowToTagText;
+    private String[] rowToTagText;
 
-    protected TargetCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
+    protected MachineCodeViewer(Inspection inspection, MethodInspector parent, MaxMachineCode machineCode) {
         super(inspection, parent);
         this.machineCode = machineCode;
-        this.instructionMap = machineCode.instructionMap();
-        final int targetInstructionCount = instructionMap.length();
-        this.rowToTagText = new String[targetInstructionCount];
-        rowToStackFrame = new MaxStackFrame[targetInstructionCount];
+        updateMachineCodeInfo();
+    }
+
+    /**
+     * Updates all information derived from the machine code.
+     */
+    private void updateMachineCodeInfo() {
+        final InstructionMap instructionMap = this.machineCode.getInstructionMap();
+        final int machineInstructionCount = instructionMap.length();
+        this.rowToTagText = new String[machineInstructionCount];
+        rowToStackFrame = new MaxStackFrame[machineInstructionCount];
 
         teleConstantPool = null;
         localConstantPool = null;
         Arrays.fill(rowToTagText, "");
-        if (machineCode instanceof MaxCompiledCode) {
-            final MaxCompiledCode compiledCode = (MaxCompiledCode) machineCode;
+        if (this.machineCode instanceof MaxCompiledCode) {
+            final MaxCompiledCode compiledCode = (MaxCompiledCode) this.machineCode;
             final TeleClassMethodActor teleClassMethodActor = compiledCode.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
                 final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
@@ -87,16 +93,12 @@ public abstract class TargetCodeViewer extends CodeViewer {
 
     @Override
     public  MethodCodeKind codeKind() {
-        return MethodCodeKind.TARGET_CODE;
+        return MethodCodeKind.MACHINE_CODE;
     }
 
     @Override
     public String codeViewerKindName() {
-        return "Target Code";
-    }
-
-    protected InstructionMap instructionMap() {
-        return instructionMap;
+        return "Machine Code";
     }
 
     /**
@@ -119,17 +121,18 @@ public abstract class TargetCodeViewer extends CodeViewer {
 
         // For very deep stacks (e.g. when debugging a metacircular related infinite recursion issue),
         // it's faster to loop over the frames and then only loop over the instructions for each
-        // frame related to the target code represented by this viewer.
-        final MaxMemoryRegion targetCodeRegion = machineCode().memoryRegion();
+        // frame related to the machine code represented by this viewer.
+        final MaxMemoryRegion machineCodeRegion = machineCode().memoryRegion();
         for (MaxStackFrame frame : frames) {
             final MaxCodeLocation frameCodeLocation = frame.codeLocation();
             final MaxMachineCode machineCode = frame.compiledCode();
             if (frameCodeLocation != null && machineCode != null) {
                 final boolean isFrameForThisCode =
                     frame instanceof MaxStackFrame.Compiled ?
-                                    targetCodeRegion.overlaps(machineCode.memoryRegion()) :
-                                        targetCodeRegion.contains(frameCodeLocation.address());
+                                    machineCodeRegion.overlaps(machineCode.memoryRegion()) :
+                                        machineCodeRegion.contains(frameCodeLocation.address());
                 if (isFrameForThisCode) {
+                    final InstructionMap instructionMap = machineCode.getInstructionMap();
                     for (int row = 0; row < instructionMap.length(); row++) {
                         if (instructionMap.instruction(row).address.equals(frameCodeLocation.address())) {
                             rowToStackFrame[row] = frame;
@@ -142,7 +145,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
     }
 
     /**
-     * @return surrogate for the {@link TargetRoutine} in the VM for the method being viewed.
+     * @return surrogate for the machine in the VM for the method being viewed.
      */
     protected MaxMachineCode machineCode() {
         return machineCode;
@@ -201,10 +204,10 @@ public abstract class TargetCodeViewer extends CodeViewer {
     private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
 
     /**
-     * Does the instruction address have a target code breakpoint set in the VM.
+     * Does the instruction address have a machine code breakpoint set in the VM.
      */
-    protected MaxBreakpoint getTargetBreakpointAtRow(int row) {
-        return vm().breakpointManager().findBreakpoint(instructionMap.instructionLocation(row));
+    protected MaxBreakpoint getMachineCodeBreakpointAtRow(int row) {
+        return vm().breakpointManager().findBreakpoint(machineCode.getInstructionMap().instructionLocation(row));
     }
 
     protected final String rowToTagText(int row) {

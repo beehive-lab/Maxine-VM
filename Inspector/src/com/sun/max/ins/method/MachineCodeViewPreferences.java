@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,36 +26,36 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 
 /**
- * Persistent preferences for viewing disassembled target code in the VM.
+ * Persistent preferences for viewing disassembled machine code in the VM.
  *
  * @author Michael Van De Vanter
   */
-public class TargetCodeViewPreferences extends TableColumnVisibilityPreferences<TargetCodeColumnKind> {
+public class MachineCodeViewPreferences extends TableColumnVisibilityPreferences<MachineCodeColumnKind> {
 
-    private static TargetCodeViewPreferences globalPreferences;
+    private static MachineCodeViewPreferences globalPreferences;
 
-    public static TargetCodeViewPreferences globalPreferences(Inspection inspection) {
+    public static MachineCodeViewPreferences globalPreferences(Inspection inspection) {
         if (globalPreferences == null) {
-            globalPreferences = new TargetCodeViewPreferences(inspection);
+            globalPreferences = new MachineCodeViewPreferences(inspection);
         }
         return globalPreferences;
     }
 
     // Prefix for all persistent column preferences in view
-    private static final String TARGET_CODE_COLUMN_PREFERENCE = "targetCodeViewColumn";
+    private static final String MACHINE_CODE_COLUMN_PREFERENCE = "machineCodeViewColumn";
 
     /**
      * Creates the global, persistent set of preferences.
      */
-    private TargetCodeViewPreferences(Inspection inspection) {
-        super(inspection, TARGET_CODE_COLUMN_PREFERENCE, TargetCodeColumnKind.values());
+    private MachineCodeViewPreferences(Inspection inspection) {
+        super(inspection, MACHINE_CODE_COLUMN_PREFERENCE, MachineCodeColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional saving needed here.
     }
 
     /**
      * Creates a non-persistent set of preferences by cloning another set of preferences (i.e. the globally persistent set).
      */
-    public TargetCodeViewPreferences(TableColumnVisibilityPreferences<TargetCodeColumnKind> otherPreferences) {
+    public MachineCodeViewPreferences(TableColumnVisibilityPreferences<MachineCodeColumnKind> otherPreferences) {
         super(otherPreferences);
     }
 }

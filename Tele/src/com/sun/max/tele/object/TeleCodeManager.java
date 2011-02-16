@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,8 +71,8 @@ public final class TeleCodeManager extends TeleTupleObject {
             final Reference runtimeCodeRegionReference = vm().teleFields().CodeManager_runtimeCodeRegion.readReference(vm());
             teleRuntimeCodeRegion = (TeleCodeRegion) heap().makeTeleObject(runtimeCodeRegionReference);
 
-            teleBootCodeRegion.updateCache();
-            teleRuntimeCodeRegion.updateCache();
+            teleBootCodeRegion.updateCache(vm().teleProcess().epoch());
+            teleRuntimeCodeRegion.updateCache(vm().teleProcess().epoch());
 
             Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
         }

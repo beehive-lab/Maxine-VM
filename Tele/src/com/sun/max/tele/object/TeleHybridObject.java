@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,10 +59,10 @@ public abstract class TeleHybridObject extends TeleObject {
     }
 
     @Override
-    public Size objectSize() {
+    public int objectSize() {
         // A hybrid object is sized as if it were all one big array, even though the memory will
         // be used differently in different parts.
-        return Layout.hybridLayout().getArraySize(readArrayLength());
+        return Layout.hybridLayout().getArraySize(readArrayLength()).toInt();
     }
 
     @Override
@@ -76,8 +76,8 @@ public abstract class TeleHybridObject extends TeleObject {
     }
 
     @Override
-    public Size fieldSize(FieldActor fieldActor) {
-        return Size.fromInt(fieldActor.kind.width.numberOfBytes);
+    public int fieldSize(FieldActor fieldActor) {
+        return fieldActor.kind.width.numberOfBytes;
     }
 
     @Override

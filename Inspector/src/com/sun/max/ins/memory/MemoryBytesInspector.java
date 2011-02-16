@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,9 @@ public final class MemoryBytesInspector extends Inspector {
      */
     public static MemoryBytesInspector create(Inspection inspection, TeleObject teleObject) {
         final MaxMemoryRegion region = teleObject.objectMemoryRegion();
-        return create(inspection, region.start(), region.size().toInt(), 1, 16);
+        final long nBytes = region.nBytes();
+        assert nBytes < Integer.MAX_VALUE;
+        return create(inspection, region.start(), (int) nBytes, 1, 16);
     }
 
     private MemoryBytesInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
@@ -169,7 +171,7 @@ public final class MemoryBytesInspector extends Inspector {
         final byte[] bytes = new byte[numberOfBytesPerGroup];
         for (int i = 0; i < numberOfGroups; i++) {
             final Address address = this.address.plus(i * numberOfBytesPerGroup);
-            vm().readFully(address, bytes);
+            vm().readBytes(address, bytes);
             memoryLabels[i].setText(byteGroupToString(bytes));
             memoryLabels[i].setToolTipText(address.toHexString());
             switch (numberOfBytesPerGroup) {

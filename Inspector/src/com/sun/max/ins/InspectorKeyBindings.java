@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,8 +49,8 @@ public class InspectorKeyBindings {
         InspectClassActorByNameAction.class,
         InspectMethodActorByNameAction.class,
         ViewMethodBytecodeByNameAction.class,
-        ViewMethodTargetCodeAction.class,
-        ViewMethodTargetCodeByNameAction.class,
+        ViewMethodMachineCodeAction.class,
+        ViewMethodCompilationByNameAction.class,
         DebugSingleStepAction.class,
         DebugRunToInstructionAction.class,
         DebugRunToInstructionWithBreakpointsAction.class,
@@ -62,7 +62,7 @@ public class InspectorKeyBindings {
         DebugStepOverWithBreakpointsAction.class,
         DebugResumeAction.class,
         DebugPauseAction.class,
-        ToggleTargetCodeBreakpointAction.class,
+        ToggleMachineCodeBreakpointAction.class,
         SetMachineCodeLabelBreakpointsAction.class,
         RemoveMachineCodeLabelBreakpointsAction.class,
         SetBytecodeBreakpointAtMethodEntryByNameAction.class,
@@ -146,8 +146,8 @@ public class InspectorKeyBindings {
         add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(InspectMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodBytecodeByNameAction.class, 'J', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(ViewMethodTargetCodeAction.class, 'D', CTRL_DOWN_MASK).
-        add(ViewMethodTargetCodeByNameAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ViewMethodMachineCodeAction.class, 'D', CTRL_DOWN_MASK).
+        add(ViewMethodCompilationByNameAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugSingleStepAction.class, VK_F7).
         add(DebugStepOverWithBreakpointsAction.class, VK_F8).
         add(DebugStepOverAction.class, VK_F8, CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
@@ -155,7 +155,7 @@ public class InspectorKeyBindings {
         add(DebugReturnFromFrameAction.class, VK_F7, CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugResumeAction.class, VK_F5).
         add(DebugPauseAction.class, 'P', CTRL_DOWN_MASK).
-        add(ToggleTargetCodeBreakpointAction.class, VK_F8, CTRL_DOWN_MASK).
+        add(ToggleMachineCodeBreakpointAction.class, VK_F8, CTRL_DOWN_MASK).
         add(SetMachineCodeBreakpointAtEntriesByNameAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetBytecodeBreakpointAtMethodEntryByNameAction.class, 'S', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetMachineCodeBreakpointAtObjectInitializerAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
@@ -173,8 +173,8 @@ public class InspectorKeyBindings {
         add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(InspectMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodBytecodeByNameAction.class, 'J', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(ViewMethodTargetCodeAction.class, 'D', CTRL_DOWN_MASK).
-        add(ViewMethodTargetCodeByNameAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ViewMethodMachineCodeAction.class, 'D', CTRL_DOWN_MASK).
+        add(ViewMethodCompilationByNameAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugSingleStepAction.class, VK_F5).
         add(DebugStepOverWithBreakpointsAction.class, VK_F6).
         add(DebugStepOverAction.class, VK_F6, CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
@@ -182,7 +182,7 @@ public class InspectorKeyBindings {
         add(DebugReturnFromFrameAction.class, VK_F7, CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugResumeAction.class, VK_F8).
         add(DebugPauseAction.class, 'P', CTRL_DOWN_MASK).
-        add(ToggleTargetCodeBreakpointAction.class, 'B', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ToggleMachineCodeBreakpointAction.class, 'B', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetMachineCodeBreakpointAtEntriesByNameAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetBytecodeBreakpointAtMethodEntryByNameAction.class, 'S', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetMachineCodeBreakpointAtObjectInitializerAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).

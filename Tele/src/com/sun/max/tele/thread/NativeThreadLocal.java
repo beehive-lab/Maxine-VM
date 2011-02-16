@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,9 +38,11 @@ public enum NativeThreadLocal {
     TLBLOCKSIZE(32),
     STACK_YELLOW_ZONE(40),
     STACK_RED_ZONE(48),
-    STACK_BLUE_ZONE(56),
-    OSDATA(64);
+    STACK_RED_ZONE_VMPROTECTED(56),
+    STACK_BLUE_ZONE(64),
+    OSDATA(72);
 
+    public static final int SIZE = 80;
     public int offset;
 
     NativeThreadLocal(int offset) {

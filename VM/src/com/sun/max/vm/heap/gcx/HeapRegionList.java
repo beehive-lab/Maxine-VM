@@ -213,6 +213,7 @@ public final class HeapRegionList {
             // Insert at head
             setPrev(head, elem);
             init(elem, head, nullElement);
+            head = elem;
             size++;
         }
     }

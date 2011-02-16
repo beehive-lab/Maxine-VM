@@ -224,7 +224,7 @@ public final class TeleVMState implements MaxVMState {
         while (state != null) {
             final StringBuilder sb = new StringBuilder(100);
             sb.append(Long.toString(state.serialID())).append(":  ");
-            sb.append("proc=(").append(state.processState().label()).append(", ").append(Long.toString(state.epoch())).append(") ");
+            sb.append("proc=(").append(state.processState().label()).append(", epoch=").append(Long.toString(state.epoch())).append(") ");
             sb.append("gc=").append(state.isInGC()).append(" ");
             printStream.println(sb.toString());
             if (state.singleStepThread() != null) {

@@ -23,8 +23,11 @@
 package com.sun.max.tele.method;
 
 import java.io.*;
+import java.text.*;
 import java.util.*;
 
+import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
@@ -51,6 +54,8 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     private static final int TRACE_VALUE = 1;
 
     private final TimedTrace updateTracer;
+
+    private long lastUpdateEpoch = -1L;
 
     private final String entityName = "Code Cache";
     private final String entityDescription;
@@ -106,7 +111,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
      * Completes the initialization of this object:  identifies the VM's code regions, and preloads
      * the cache of information about method compilations in the boot code region.
      */
-    public void initialize() {
+    public void initialize(long epoch) {
         assert vm().lockHeldByCurrentThread();
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " initializing");
         tracer.begin();
@@ -119,17 +124,22 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
         regions.add(bootCodeRegion);
         regions.add(dynamicCodeRegion);
         compiledCodeRegions = Collections.unmodifiableList(regions);
-
+        lastUpdateEpoch = epoch;
         tracer.end(null);
     }
 
-    public void updateCache() {
-        updateTracer.begin();
-        assert vm().lockHeldByCurrentThread();
-        codeRegistry.updateCache();
-        bootCodeRegion.updateCache();
-        dynamicCodeRegion.updateCache();
-        updateTracer.end(null);
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            updateTracer.begin();
+            assert vm().lockHeldByCurrentThread();
+            codeRegistry.updateCache(epoch);
+            bootCodeRegion.updateCache(epoch);
+            dynamicCodeRegion.updateCache(epoch);
+            lastUpdateEpoch = epoch;
+            updateTracer.end(null);
+        } else {
+            Trace.line(TRACE_VALUE, tracePrefix() + "redundant update epoch=" + epoch);
+        }
     }
 
     public String entityName() {
@@ -149,6 +159,10 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
 
     public boolean contains(Address address) {
         return findCompiledCodeRegion(address) != null;
+    }
+
+    public TeleObject representation() {
+        return teleCodeManager;
     }
 
     public TeleCompiledCodeRegion bootCodeRegion() {
@@ -204,7 +218,7 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     }
 
     public List<MaxCompiledCode> compilations(TeleClassMethodActor teleClassMethodActor) {
-        final List<MaxCompiledCode> compilations = new ArrayList<MaxCompiledCode>(teleClassMethodActor.numberOfCompilations());
+        final List<MaxCompiledCode> compilations = new ArrayList<MaxCompiledCode>(teleClassMethodActor.compilationCount());
         for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.compilations()) {
             compilations.add(findCompiledCode(teleTargetMethod.getRegionStart()));
         }
@@ -228,15 +242,29 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
     }
 
     // TODO (mlvdv) fix
-    public TeleExternalCode createExternalCode(Address codeStart, Size codeSize, String name) throws MaxVMBusyException, MaxInvalidAddressException {
+    public TeleExternalCode createExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException {
         if (!vm().tryLock()) {
             throw new MaxVMBusyException();
         }
         try {
-            TeleExternalCode create = TeleExternalCode.create(vm(), codeStart, codeSize, name);
+            TeleExternalCode create = TeleExternalCode.create(vm(), codeStart, nBytes, name);
             return create;
         } finally {
             vm().unlock();
+        }
+    }
+
+    public void printSessionStats(PrintStream printStream, int indent, boolean verbose) {
+        final String indentation = Strings.times(' ', indent);
+        final NumberFormat formatter = NumberFormat.getInstance();
+        printStream.print(indentation + "Compilations registered: " + formatter.format(codeRegistry.size()) + "\n");
+        if (bootCodeRegion != null) {
+            printStream.print(indentation + "Registered from " + bootCodeRegion.entityName() + ": " + formatter.format(bootCodeRegion.compilationCount())
+                            + " (code loaded: " + formatter.format(bootCodeRegion.loadedCompilationCount()) + ")\n");
+        }
+        if (dynamicCodeRegion != null) {
+            printStream.print(indentation + "Registered from " + dynamicCodeRegion.entityName() + ": " + formatter.format(dynamicCodeRegion.compilationCount())
+                            + " (code loaded: " + formatter.format(dynamicCodeRegion.loadedCompilationCount()) + ")\n");
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,10 +145,9 @@ public interface TeleChannelDataIOProtocol {
      * A dumbed down version of {@link TeleChannelProtocol#gatherThreads} that can communicate using the
      * limitations of this interface. Operates in tandem with {@link #readThreads}.
      * @param tlaList forwarded from {@link TeleChannelProtocol#gatherThreads}
-     * @param primordialETLA forwarded from {@link TeleChannelProtocol#gatherThreads}
      * @return number of gathered threads (length of serialized array)
      */
-    int gatherThreads(long tlaList, long primordialETLA);
+    int gatherThreads(long tlaList);
 
     /**
      * Read the gathered threads data into byte array.

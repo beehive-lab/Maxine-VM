@@ -97,17 +97,26 @@ public interface MaxCodeCache extends MaxEntity<MaxCodeCache> {
      * Create a new MaxExternalCode for a block of external native code in the VM that has not yet been registered.
      *
      * @param codeStart starting address of the machine code in VM memory
-     * @param codeSize presumed size of the code
+     * @param nBytes presumed size of the code in bytes
      * @param name an optional name to be assigned to the block of code; a simple address-based name used if null.
      * @return a newly created TeleExternalCode
      * @throws MaxVMBusyException if the VM is unavailable
      * @throws MaxInvalidAddressException if he address cannot be read
      */
-    MaxExternalCode createExternalCode(Address codeStart, Size codeSize, String name) throws MaxVMBusyException, MaxInvalidAddressException;
+    MaxExternalCode createExternalCode(Address codeStart, long nBytes, String name) throws MaxVMBusyException, MaxInvalidAddressException;
 
     /**
      * Writes a textual summary describing all instances of {@link MaxMachineCode} known to the VM.
      */
     void writeSummary(PrintStream printStream);
+
+    /**
+     * Writes current statistics concerning inspection of VM's code cache.
+     *
+     * @param printStream stream to which to write
+     * @param indent number of spaces to indent each line
+     * @param verbose possibly write extended information when true
+     */
+    void printSessionStats(PrintStream printStream, int indent, boolean verbose);
 
 }

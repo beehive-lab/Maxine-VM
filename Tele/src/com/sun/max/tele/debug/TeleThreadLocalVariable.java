@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -53,8 +54,8 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
 
         private final MaxThreadLocalVariable owner;
 
-        protected ThreadLocalVariableMemoryRegion(TeleVM teleVM, MaxThreadLocalVariable owner, String regionName, Address start, Size size) {
-            super(teleVM, regionName, start, size);
+        protected ThreadLocalVariableMemoryRegion(TeleVM teleVM, MaxThreadLocalVariable owner, String regionName, Address start, int nBytes) {
+            super(teleVM, regionName, start, nBytes);
             this.owner = owner;
         }
 
@@ -84,13 +85,13 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
     private volatile Value value;
 
 
-    public TeleThreadLocalVariable(VmThreadLocal vmThreadLocal, TeleNativeThread teleNativeThread, Safepoint.State safepointState, Address start, Size size) {
+    public TeleThreadLocalVariable(VmThreadLocal vmThreadLocal, TeleNativeThread teleNativeThread, Safepoint.State safepointState, Address start, int nBytes) {
         super(teleNativeThread.vm());
         this.vmThreadLocal = vmThreadLocal;
         this.teleNativeThread = teleNativeThread;
         this.safepointState = safepointState;
         final String entityName = teleNativeThread.entityName() + " local=" + vmThreadLocal.name + " (" + safepointState + ")";
-        this.threadLocalVariableMemoryRegion = new ThreadLocalVariableMemoryRegion(teleNativeThread.vm(), this, entityName, start, size);
+        this.threadLocalVariableMemoryRegion = new ThreadLocalVariableMemoryRegion(teleNativeThread.vm(), this, entityName, start, nBytes);
         this.value = VoidValue.VOID;
         this.entityDescription = "thread-local variable:  " + vmThreadLocal.description;
     }
@@ -109,6 +110,11 @@ public class TeleThreadLocalVariable extends AbstractTeleVMHolder implements Max
 
     public boolean contains(Address address) {
         return threadLocalVariableMemoryRegion.contains(address);
+    }
+
+    public final TeleObject representation() {
+        // No distinguished object in VM runtime represents this.
+        return null;
     }
 
     public TeleNativeThread thread() {

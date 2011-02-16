@@ -42,29 +42,35 @@ import com.sun.max.vm.type.*;
  */
 public abstract class TeleClassActor extends TeleActor implements ReferenceTypeProvider {
 
-    protected TeleClassActor(TeleVM vm, Reference classActorReference) {
-        super(vm, classActorReference);
-    }
-
-    /**
-     * @return Local {@link ClassActor} corresponding the {@link ClassActor} in the VM.
-     */
-    public ClassActor classActor() {
-        return (ClassActor) actor();
-    }
-
-    @Override
-    protected Actor initActor() {
-        ClassActor classActor = vm().classRegistry().makeClassActor(reference());
-        return classActor;
-    }
+    private ClassActor classActor;
 
     private boolean initialized = false;
 
     // Fields are final; cache them.
     private TeleClassLoader teleClassLoader;
+
     private int id;
+
     private TeleTypeDescriptor teleTypeDescriptor;
+
+    protected TeleClassActor(TeleVM vm, Reference classActorReference) {
+        super(vm, classActorReference);
+    }
+
+    @Override
+    public final Actor actor() {
+        if (classActor == null) {
+            classActor = vm().classRegistry().makeClassActor(reference());
+        }
+        return classActor;
+    }
+
+    /**
+     * @return Local {@link ClassActor} corresponding the {@link ClassActor} in the VM.
+     */
+    public final ClassActor classActor() {
+        return (ClassActor) actor();
+    }
 
     private void initialize() {
         if (!initialized) {
@@ -283,6 +289,10 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         return "ClassActor";
     }
 
+    public final String getName() {
+        return actorName().string;
+    }
+
     public ClassLoaderProvider classLoader() {
         return getTeleClassLoader();
     }
@@ -331,8 +341,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         }
 
         public String getName() {
-            // TODO Auto-generated method stub
-            return name;
+            return actorName().string;
         }
 
         public String getSignature() {

@@ -438,7 +438,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 verifyObjectSpaces("after GC");
 
                 HeapScheme.Inspect.notifyGCCompleted();
-                enableImmortalMemoryAllocation();
 
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();

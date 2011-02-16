@@ -171,6 +171,11 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return isNeverInline(flags());
     }
 
+    @INLINE
+    public final boolean noSafepoints() {
+        return noSafepoints(flags());
+    }
+
     /**
      * @return whether this method was generated merely to provide an entry in a vtable slot that would otherwise be
      *         empty.

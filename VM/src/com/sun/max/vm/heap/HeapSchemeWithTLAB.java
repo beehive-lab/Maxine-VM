@@ -337,6 +337,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * @throws OutOfMemoryError if the allocation request cannot be satisfied
      */
     @INLINE
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     protected final Pointer tlabAllocate(Size size) {
         if (MaxineVM.isDebug() && !size.isWordAligned()) {
             FatalError.unexpected("size is not word aligned in heap allocation request");
@@ -389,7 +390,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
-
         trackCreation(cell, dynamicHub, true);
 
         return Cell.plantArray(cell, size, dynamicHub, length);
@@ -398,7 +398,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @INLINE
     @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public final Object createTuple(Hub hub) {
-        final Pointer cell = tlabAllocate(hub.tupleSize);
+        Pointer cell = tlabAllocate(hub.tupleSize);
 
         trackCreation(cell, hub, false);
 

@@ -221,7 +221,7 @@ public final class BreakpointsTable extends InspectorTable {
                     return true;
                 case CONDITION:
                     // TODO (mlvdv) machinery is now in place for bytecode breakpoints to be conditional; untested.
-                    return get(row) instanceof TargetBreakpointData;
+                    return get(row) instanceof MachineCodeBreakpointData;
                 default:
                     break;
             }
@@ -269,10 +269,10 @@ public final class BreakpointsTable extends InspectorTable {
                     }
                 } else {
                     // Machine code breakpoint
-                    final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.codeLocation().address());
+                    final BreakpointData breakpointData = findMachineCodeBreakpoint(breakpoint.codeLocation().address());
                     if (breakpointData == null) {
                         // new breakpoint in VM since last refresh
-                        breakpoints.add(new TargetBreakpointData(breakpoint));
+                        breakpoints.add(new MachineCodeBreakpointData(breakpoint));
                         //fireTableDataChanged();
                     } else {
                         // mark as not deleted
@@ -322,14 +322,14 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         /**
-         * Locates a target code breakpoint already known to the inspector.
+         * Locates a machine code breakpoint already known to the inspector.
          */
-        TargetBreakpointData findTargetBreakpoint(Address address) {
+        MachineCodeBreakpointData findMachineCodeBreakpoint(Address address) {
             for (BreakpointData breakpointData : breakpoints) {
-                if (breakpointData instanceof TargetBreakpointData) {
-                    final TargetBreakpointData targetBreakpointData = (TargetBreakpointData) breakpointData;
-                    if (targetBreakpointData.address().toLong() == address.toLong()) {
-                        return targetBreakpointData;
+                if (breakpointData instanceof MachineCodeBreakpointData) {
+                    final MachineCodeBreakpointData machineCodeBreakpointData = (MachineCodeBreakpointData) breakpointData;
+                    if (machineCodeBreakpointData.address().toLong() == address.toLong()) {
+                        return machineCodeBreakpointData;
                     }
                 }
             }
@@ -626,15 +626,15 @@ public final class BreakpointsTable extends InspectorTable {
         }
     }
 
-    private final class TargetBreakpointData extends BreakpointData {
+    private final class MachineCodeBreakpointData extends BreakpointData {
 
         private Address codeStart;
         private int location = 0;
         private String shortName;
         private String longName;
 
-        TargetBreakpointData(MaxBreakpoint targetBreakpoint) {
-            super(targetBreakpoint);
+        MachineCodeBreakpointData(MaxBreakpoint machineCodeBreakpoint) {
+            super(machineCodeBreakpoint);
             final Address address = codeLocation().address();
             final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
             if (compiledCode != null) {
@@ -675,7 +675,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String kindName() {
-            return "Target Code breakpoint";
+            return "Machine Code breakpoint";
         }
 
         @Override

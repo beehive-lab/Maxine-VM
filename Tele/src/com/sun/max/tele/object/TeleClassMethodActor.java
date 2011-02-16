@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,8 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.LineNumberTable.Entry;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.LineNumberTable.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 
@@ -42,11 +42,40 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleClassMethodActor extends TeleMethodActor implements MethodProvider {
 
-    private static final TeleTargetMethod[] NO_TELE_TARGET_METHODS = new TeleTargetMethod[0];
+    private static final TeleTargetMethod[] NO_TARGET_METHODS = new TeleTargetMethod[0];
+
+    /**
+     * Cached history of compilation for this method in the tele VM.
+     */
+    private TeleTargetMethod[] teleTargetMethodHistory = NO_TARGET_METHODS;
 
     // Keep construction minimal for both performance and synchronization.
     protected TeleClassMethodActor(TeleVM vm, Reference classMethodActorReference) {
         super(vm, classMethodActorReference);
+    }
+
+    /** {@inheritDoc}
+     * <br>
+     * The compilation history associated with a {@link ClassMethodActor} in the VM
+     * is assumed to grow monotonically, as recompilations
+     * take place in the VM, and that the old compilations still persist.
+     */
+    @Override
+    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        super.updateObjectCache(epoch, statsPrinter);
+        if (vm().tryLock()) {
+            try {
+                final Reference targetStateReference = vm().teleFields().ClassMethodActor_targetState.readReference(reference());
+                if (!targetStateReference.isZero()) {
+                    // the method has been compiled; check the type to determine the number of times
+                    translateTargetState(heap().makeTeleObject(targetStateReference));
+                }
+            } catch (DataIOError dataIOError) {
+                // If something goes wrong, delay the cache flush until next time.
+            } finally {
+                vm().unlock();
+            }
+        }
     }
 
    /**
@@ -78,38 +107,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         return null;
     }
 
-    /**
-     * Cached history of compilation for this method in the tele VM.  Null means not initialized yet.
-     */
-    private TeleTargetMethod[] teleTargetMethodHistory = null;
-
-    private void initialize() {
-        if (teleTargetMethodHistory == null) {
-            teleTargetMethodHistory = NO_TELE_TARGET_METHODS;
-            readTeleMethodState();
-        }
-    }
-
     public TargetMethodAccess[] getTargetMethods() {
         return teleTargetMethodHistory;
-    }
-
-    public void refreshView() {
-        initialize();
-        readTeleMethodState();
-    }
-
-    /**
-     * Refreshes cache of information about the compilation state of this method in the VM.
-     */
-    private void readTeleMethodState() {
-        final Reference targetStateReference = vm().teleFields().ClassMethodActor_targetState.readReference(reference());
-        if (!targetStateReference.isZero()) {
-            // the method has been compiled; check the type to determine the number of times
-            translateTargetState(heap().makeTeleObject(targetStateReference));
-        } else {
-            teleTargetMethodHistory = NO_TELE_TARGET_METHODS;
-        }
     }
 
     private void translateTargetState(TeleObject targetState) {
@@ -135,7 +134,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
                 translateTargetState(heap().makeTeleObject(previousTargetStateReference));
             }  else {
                 // this is the first compilation, no previous state
-                teleTargetMethodHistory = NO_TELE_TARGET_METHODS;
+                teleTargetMethodHistory = NO_TARGET_METHODS;
             }
         }
     }
@@ -143,32 +142,23 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     /**
      * @return the number of times this method has been compiled
      */
-    public final int numberOfCompilations() {
-        initialize();
+    public final int compilationCount() {
         return teleTargetMethodHistory.length;
-    }
-    /**
-     * @return whether there is any compiled target code for this method.
-     */
-    public boolean hasTargetMethod() {
-        return numberOfCompilations() > 0;
     }
 
     /**
      * @return all compilations of the method, in order, oldest first.
      */
     public Iterable<TeleTargetMethod> compilations() {
-        if (hasTargetMethod()) {
-            return Arrays.asList(teleTargetMethodHistory);
-        }
-        return Arrays.asList(NO_TELE_TARGET_METHODS);
+        return Arrays.asList(teleTargetMethodHistory);
     }
 
    /**
-     * @return  surrogate for the most recent compilation of this method in the VM.
+     * @return  surrogate for the most recent compilation of this method in the VM,
+     * null if no compilations.
      */
     public TeleTargetMethod getCurrentCompilation() {
-        if (hasTargetMethod()) {
+        if (compilationCount() > 0) {
             return teleTargetMethodHistory[teleTargetMethodHistory.length - 1];
         }
         return null;
@@ -178,7 +168,6 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      * @return the specified compilation of the method in the VM, first compilation at index=0; null if no such compilation.
      */
     public TeleTargetMethod getCompilation(int index) {
-        initialize();
         if (0 <= index && index < teleTargetMethodHistory.length) {
             return teleTargetMethodHistory[index];
         }
@@ -190,7 +179,6 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      * @return the position of the specified compilation in the VM in the compilation history of this method, -1 if not present
      */
     public int compilationIndexOf(TeleTargetMethod teleTargetMethod) {
-        initialize();
         for (int i = 0; i <= teleTargetMethodHistory.length - 1; i++) {
             if (teleTargetMethodHistory[i] == teleTargetMethod) {
                 return i;
@@ -237,5 +225,10 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
         return result;
     }
+
+    public final String getName() {
+        return actorName().string;
+    }
+
 
 }

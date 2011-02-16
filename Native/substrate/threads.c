@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -129,9 +129,6 @@ void thread_getStackInfo(Address *stackBase, Size* stackSize) {
 
 }
 
-/* Forward declaration. */
-void *thread_run(void *arg);
-
 /**
  * OS-specific thread creation.
  *
@@ -163,12 +160,13 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 
     // Allocate the threadLocals block and the struct for passing this to the created thread.
     // We do this to ensure that all memory allocation problems are addressed here before the thread runs.
-    Address tlBlock = threadLocalsBlock_create(id, JNI_FALSE, stackSize);
+    Address tlBlock = threadLocalsBlock_create(id, 0, stackSize);
     if (tlBlock == 0) {
         return (Thread) 0;
     }
 
-    tla_store(tlBlock, ID, id);
+    TLA etla = ETLA_FROM_TLBLOCK(tlBlock);
+    tla_store(etla, ID, id);
 
 #if os_MAXVE
     thread = maxve_create_thread(
@@ -244,7 +242,8 @@ static int thread_join(Thread thread) {
 void *thread_run(void *arg) {
 
     Address tlBlock = (Address) arg;
-    jint id = tla_load(jint, tlBlock, ID);
+    TLA etla = ETLA_FROM_TLBLOCK(tlBlock);
+    jint id = tla_load(jint, etla, ID);
     Address nativeThread = (Address) thread_current();
 
 #if log_THREADS
@@ -252,9 +251,10 @@ void *thread_run(void *arg) {
 #endif
 
     threadLocalsBlock_setCurrent(tlBlock);
-    // initialize the threadLocalsBlock
-    threadLocalsBlock_create(id, JNI_TRUE, 0);
-    TLA etla = ETLA_FROM_TLBLOCK(tlBlock);
+    // initialize the thread locals block
+    if (id != PRIMORDIAL_THREAD_ID) {
+        threadLocalsBlock_create(id, tlBlock, 0);
+    }
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
     /* Grab the global thread lock so that:
@@ -341,7 +341,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
     jint handle = (jint) nativeThread;
     jint id = handle < 0 ? handle : -handle;
 
-    Address tlBlock = threadLocalsBlock_createForExistingThread(id);
+    Address tlBlock = threadLocalsBlock_create(id, 0, 0);
     if (tlBlock == 0) {
         return JNI_ENOMEM;
     }
@@ -543,7 +543,7 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
     if (value == -1) {
         int error = errno;
         if (error != EINTR && error != 0) {
-            log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec);
+            /* log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec); */
         }
     }
     return value;

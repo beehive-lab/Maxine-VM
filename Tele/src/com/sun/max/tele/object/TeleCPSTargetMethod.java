@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,13 +65,6 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
         return javaFrameDescriptors;
     }
 
-    /**
-     * Gets the Java frame descriptor corresponding to a given stop index.
-     *
-     * @param stopIndex a stop index
-     * @return the Java frame descriptor corresponding to {@code stopIndex} or null if there is no Java frame descriptor
-     *         for {@code stopIndex}
-     */
     @Override
     public BytecodeLocation getBytecodeLocation(int stopIndex) {
         final List<TargetJavaFrameDescriptor> javaFrameDescriptors = getJavaFrameDescriptors();

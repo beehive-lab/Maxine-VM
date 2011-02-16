@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,10 @@ package com.sun.max.tele.debug;
 
 import java.util.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.memory.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -66,8 +68,8 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
 
         private final TeleThreadLocalsArea teleThreadLocalsArea;
 
-        private ThreadLocalsAreaMemoryRegion(TeleVM teleVM, TeleThreadLocalsArea owner, String regionName, Address start, Size size) {
-            super(teleVM, regionName, start, size);
+        private ThreadLocalsAreaMemoryRegion(TeleVM teleVM, TeleThreadLocalsArea owner, String regionName, Address start, int nBytes) {
+            super(teleVM, regionName, start, nBytes);
             this.teleThreadLocalsArea = owner;
         }
 
@@ -94,6 +96,8 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         }
     }
 
+    private long lastUpdateEpoch = -1L;
+
     private final String entityDescription;
     private final ThreadLocalsAreaMemoryRegion tlaMemoryRegion;
     private final TeleNativeThread teleNativeThread;
@@ -118,10 +122,10 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         this.safepointState = safepointState;
         final String entityName = teleNativeThread.entityName() + " locals(" + safepointState + ")";
         this.tlaMemoryRegion =
-            new ThreadLocalsAreaMemoryRegion(teleVM, this, entityName, start.asAddress(), VmThreadLocal.tlaSize());
+            new ThreadLocalsAreaMemoryRegion(teleVM, this, entityName, start.asAddress(), VmThreadLocal.tlaSize().toInt());
         this.threadLocalAreaVariableCount = VmThreadLocal.values().size();
         this.threadLocalVariables = new TeleThreadLocalVariable[threadLocalAreaVariableCount];
-        final Size wordSize = teleNativeThread.vm().wordSize();
+        final int wordSize = teleNativeThread.vm().platform().nBytesInWord();
         for (VmThreadLocal vmThreadLocal : VmThreadLocal.values()) {
             final TeleThreadLocalVariable teleThreadLocalVariable =
                 new TeleThreadLocalVariable(vmThreadLocal, teleNativeThread, safepointState, start.plus(vmThreadLocal.offset), wordSize);
@@ -131,26 +135,31 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         this.entityDescription = "The set of local variables for thread " + teleNativeThread.entityName() + " when in state " + safepointState + " in the " + teleVM.entityName();
     }
 
-    public void updateCache() {
-        int offset = 0;
-        final DataAccess dataAccess = vm().teleProcess().dataAccess();
-        for (VmThreadLocal vmThreadLocalVariable : VmThreadLocal.values()) {
-            final int index = vmThreadLocalVariable.index;
-            if (offset == 0 && safepointState == State.TRIGGERED) {
-                threadLocalVariables[index].setValue(VoidValue.VOID);
-            } else {
-                try {
-                    final Word word = dataAccess.readWord(memoryRegion().start(), offset);
-                    threadLocalVariables[index].setValue(new WordValue(word));
-                } catch (DataIOError dataIOError) {
-                    final String msg =
-                        "Could not read value of " + vmThreadLocalVariable + " from safepoints-" +
-                        safepointState.name().toLowerCase() + " VM thread locals: ";
-                    TeleWarning.message(msg, dataIOError);
+    public void updateCache(long epoch) {
+        if (epoch > lastUpdateEpoch) {
+            int offset = 0;
+            final DataAccess dataAccess = vm().teleProcess().dataAccess();
+            for (VmThreadLocal vmThreadLocalVariable : VmThreadLocal.values()) {
+                final int index = vmThreadLocalVariable.index;
+                if (offset == 0 && safepointState == State.TRIGGERED) {
                     threadLocalVariables[index].setValue(VoidValue.VOID);
+                } else {
+                    try {
+                        final Word word = dataAccess.readWord(memoryRegion().start(), offset);
+                        threadLocalVariables[index].setValue(new WordValue(word));
+                    } catch (DataIOError dataIOError) {
+                        final String msg =
+                            "Could not read value of " + vmThreadLocalVariable + " from safepoints-" +
+                            safepointState.name().toLowerCase() + " VM thread locals: ";
+                        TeleWarning.message(msg, dataIOError);
+                        threadLocalVariables[index].setValue(VoidValue.VOID);
+                    }
                 }
+                offset += Word.size();
             }
-            offset += Word.size();
+            lastUpdateEpoch = epoch;
+        } else {
+            Trace.line(TRACE_LEVEL, tracePrefix() + "redundant refresh epoch=" + epoch + ": " + this);
         }
     }
 
@@ -174,6 +183,11 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
         return tlaMemoryRegion.contains(address);
     }
 
+    public TeleObject representation() {
+        // No distinguished object in VM runtime represents this.
+        return null;
+    }
+
     public Safepoint.State safepointState() {
         return safepointState;
     }
@@ -190,7 +204,7 @@ public final class TeleThreadLocalsArea extends AbstractTeleVMHolder implements 
     public TeleThreadLocalVariable findThreadLocalVariable(Address address) {
         if (!address.isZero()) {
             if (memoryRegion().contains(address)) {
-                final int index = address.minus(memoryRegion().start()).dividedBy(vm().wordSize()).toInt();
+                final int index = address.minus(memoryRegion().start()).dividedBy(vm().platform().nBytesInWord()).toInt();
                 return threadLocalVariables[index];
             }
         }

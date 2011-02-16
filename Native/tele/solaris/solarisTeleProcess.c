@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -207,7 +207,6 @@ typedef struct GatherThreadArgument {
     jobject teleProcess;
     jobject threadList;
     Address tlaList;
-    Address primordialETLA;
 } *GatherThreadArgument;
 
 static int gatherThread(void *data, const lwpstatus_t *ls) {
@@ -220,14 +219,14 @@ static int gatherThread(void *data, const lwpstatus_t *ls) {
     NativeThreadLocalsStruct nativeThreadLocalsStruct;
     Address stackPointer = ls->pr_reg[R_SP];
     Address instructionPointer = ls->pr_reg[R_PC];
-    TLA tla = teleProcess_findTLA(a->ph, a->tlaList, a->primordialETLA, stackPointer, threadLocals, &nativeThreadLocalsStruct);
+    TLA tla = teleProcess_findTLA(a->ph, a->tlaList, stackPointer, threadLocals, &nativeThreadLocalsStruct);
     teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadList, lwpId, threadState, instructionPointer, tla);
 
     return 0;
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject  this, jlong processHandle, jobject teleProcess, jobject threadList, long tlaList, long primordialETLA) {
+Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *env, jobject  this, jlong processHandle, jobject teleProcess, jobject threadList, long tlaList) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
     struct GatherThreadArgument a;
@@ -236,7 +235,6 @@ Java_com_sun_max_tele_channel_natives_TeleChannelNatives_gatherThreads(JNIEnv *e
     a.teleProcess = teleProcess;
     a.threadList = threadList;
     a.tlaList = tlaList;
-    a.primordialETLA = primordialETLA;
 
     int error = Plwp_iter(ph, gatherThread, &a);
     if (error != 0) {

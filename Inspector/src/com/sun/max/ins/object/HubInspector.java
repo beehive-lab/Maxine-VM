@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,10 +81,10 @@ public final class HubInspector extends ObjectInspector {
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
             objectMenu.add(actions().inspectObject(teleClassActor, teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-            objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor));
+            objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor));
 
             final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
-            codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor));
+            codeMenu.add(actions().viewMethodCompilationsCodeMenu(teleClassMethodActor));
             codeMenu.addSeparator();
             codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
         }

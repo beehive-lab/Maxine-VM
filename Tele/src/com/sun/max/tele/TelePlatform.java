@@ -25,8 +25,6 @@ package com.sun.max.tele;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.sun.max.unsafe.*;
-
 
 /*
  * An abstraction of the underlying platform on which a VM is running.
@@ -59,12 +57,12 @@ public final class TelePlatform implements MaxPlatform {
         os = OS.fromName(maxinePlatform.os.name());
     }
 
-    public Size wordSize() {
-        return Size.fromInt(maxinePlatform.wordWidth().numberOfBytes);
+    public int nBytesInWord() {
+        return maxinePlatform.wordWidth().numberOfBytes;
     }
 
-    public Size pageSize() {
-        return Size.fromInt(platform().pageSize);
+    public int nBytesInPage() {
+        return platform().pageSize;
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,9 +36,11 @@ import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
 import com.sun.max.vm.stack.*;
 
 /**
- * Canonical surrogate for a Jit compilation of a Java {@link ClassMethod} in the VM.
+ * Canonical surrogate for a {@link JitTargetMethod} object in the VM, which holds a
+ * Jit compilation of a Java {@link ClassMethod} in the VM.
  *
  * @author Michael Van De Vanter
+ * @see JitTargetMethod
  */
 public class TeleJitTargetMethod extends TeleCPSTargetMethod {
 
@@ -47,7 +49,7 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
     }
 
     @Override
-    public int[] getBytecodeToTargetCodePositionMap() {
+    public int[] getBytecodeToMachineCodePositionMap() {
         JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod();
         return jitTargetMethod.bytecodeToTargetCodePositionMap();
     }
@@ -57,10 +59,15 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
         return new ReducedDeepCopier().omit(vm().teleFields().JitTargetMethod_referenceMapEditor.fieldActor());
     }
 
+    /** {@inheritDoc}
+     * <br>
+     * This kind of Jit compilation permits precise mapping between bytecode and machine
+     * code locations.
+     */
     @Override
     public BytecodeLocation[] getPositionToBytecodeLocationMap() {
         BytecodeLocation[] bytecodeLocations = new BytecodeLocation[getCodeLength()];
-        final int[] bytecodeToTargetCodePositionMap = getBytecodeToTargetCodePositionMap();
+        final int[] bytecodeToTargetCodePositionMap = getBytecodeToMachineCodePositionMap();
         if (bytecodeToTargetCodePositionMap == null) {
             return super.getPositionToBytecodeLocationMap();
         }
@@ -87,12 +94,6 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
         return bytecodeLocations;
     }
 
-    /**
-     * Gets the name of the source variable corresponding to a stack slot, if any.
-     *
-     * @param slotIndex a stack slot
-     * @return the Java source name for the frame slot, null if not available.
-     */
     @Override
     public String sourceVariableName(MaxStackFrame.Compiled javaStackFrame, int slotIndex) {
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod();

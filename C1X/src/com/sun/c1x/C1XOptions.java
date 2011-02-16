@@ -28,7 +28,7 @@ import com.sun.c1x.debug.TTY.*;
  * This class encapsulates options that control the behavior of the C1X compiler.
  * The help message for each option is specified by a {@linkplain #helpMap help map}.
  *
- * (tw) WARNING: Fields of this class are treated as final by the compiler.
+ * (tw) WARNING: Fields of this class are treated as final by Graal.
  *
  * @author Ben L. Titzer
  */

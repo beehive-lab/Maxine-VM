@@ -89,15 +89,15 @@ public final class MemoryTagTableCellRenderer extends InspectorTableCellRenderer
             // Set an appropriate border showing the presence of watchpoints, with a different
             // border style, depending on whether any of them are currently enabled.
             // Assume all are disabled until discovered otherwise.
-            label.setBorder(style().debugDisabledTargetBreakpointTagBorder());
+            label.setBorder(style().debugDisabledMachineCodeBreakpointTagBorder());
             for (MaxWatchpoint watchpoint : watchpointsInRegion) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append("<br>Watchpoint set @ ").append(watchpoint.memoryRegion().start().to0xHexString());
-                sb.append(", size=").append(InspectorLabel.sizeToDecimalAndHex(watchpoint.memoryRegion().size())).append("bytes, ");
+                sb.append(", size=").append(InspectorLabel.longToDecimalAndHex(watchpoint.memoryRegion().nBytes())).append("bytes, ");
                 sb.append(watchpoint.isEnabled() ? "enabled" : "disabled");
                 toolTipText += sb.toString();
                 if (watchpoint.isEnabled()) {
-                    label.setBorder(style().debugEnabledTargetBreakpointTagBorder());
+                    label.setBorder(style().debugEnabledMachineCodeBreakpointTagBorder());
                 }
             }
         } else {

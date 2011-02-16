@@ -126,6 +126,11 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             return false;
         }
 
+        public TeleObject representation() {
+            // No distinguished object in VM runtime represents this.
+            return null;
+        }
+
         public MaxStack stack() {
             return stack;
         }
@@ -192,7 +197,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private CompiledStackFramePanel selectedFramePanel;
 
-    private final class StackFrameListCellRenderer extends TargetCodeLabel implements ListCellRenderer {
+    private final class StackFrameListCellRenderer extends MachineCodeLabel implements ListCellRenderer {
 
         StackFrameListCellRenderer(Inspection inspection) {
             super(inspection, "");
@@ -256,7 +261,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 setToolTipPrefix("call return in frame " + modelIndex + " points at:<br>");
                 setForeground(style().wordCallReturnPointColor());
             }
-            setText(Integer.toString(modelIndex) + ":  " + methodName);
+            setWrappedText(Integer.toString(modelIndex) + ":  " + htmlify(methodName));
             setWrappedToolTipText(toolTip);
             setFont(style().defaultFont());
             setBackground(isSelected ? stackFrameList.getSelectionBackground() : stackFrameList.getBackground());
@@ -375,9 +380,9 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             final TextLabel stackSizeLabel = new TextLabel(inspection(), "size: ");
             stackSizeLabel.setToolTipText("Stack size");
             header.add(stackSizeLabel);
-            final DataLabel.IntAsDecimal stackSizeValueLabel = new DataLabel.IntAsDecimal(inspection());
+            final DataLabel.LongAsDecimal stackSizeValueLabel = new DataLabel.LongAsDecimal(inspection());
             stackSizeValueLabel.setToolTipPrefix("Stack size ");
-            stackSizeValueLabel.setValue(stack.memoryRegion().size().toInt());
+            stackSizeValueLabel.setValue(stack.memoryRegion().nBytes());
             header.add(stackSizeValueLabel);
             SpringUtilities.makeCompactGrid(header, 2);
             contentPane.add(header, BorderLayout.NORTH);
@@ -495,7 +500,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             final MaxStackFrame.Compiled javaStackFrame = (MaxStackFrame.Compiled) stackFrame;
             final int frameSize = javaStackFrame.layout().frameSize();
             final Pointer stackPointer = javaStackFrame.sp();
-            final MaxMemoryRegion memoryRegion = new InspectorMemoryRegion(vm(), "", stackPointer, Size.fromInt(frameSize));
+            final MaxMemoryRegion memoryRegion = new InspectorMemoryRegion(vm(), "", stackPointer, frameSize);
             final String frameName = javaStackFrameName(javaStackFrame);
             menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
         }
@@ -506,7 +511,12 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 menu.add(new InspectorAction(inspection(), "Open external code dialog...") {
                     @Override
                     protected void procedure() {
-                        focus().setCodeLocation(stackFrame.codeLocation(), true);
+                        MaxCodeLocation codeLocation = stackFrame.codeLocation();
+                        if (codeLocation == null) {
+                            gui().errorMessage("Stack frame has no code location");
+                        } else {
+                            focus().setCodeLocation(codeLocation, true);
+                        }
                     }
                 });
             }
@@ -581,7 +591,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
-        if (selectedFramePanel != null) {
+        if (selectedFramePanel != null && codeLocation != null) {
             // TODO (mlvdv)  This call is a no-op at present.  What should happen?
             selectedFramePanel.instructionPointerFocusChanged(codeLocation.address().asPointer());
         }

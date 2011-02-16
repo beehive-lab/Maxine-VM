@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,14 +26,16 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.*;
+import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.BytecodeLocation;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 
 /**
  * Description of a single machine code routine in the VM, either compiled from a Java method or a block of external native code.
+ * <br>
+ * Note that machine code can get patched (changed) at runtime, so any caching of these results should be avoided.
  *
  * @author Michael Van De Vanter
  */
@@ -60,18 +62,28 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
     CodeLocation getCallEntryLocation();
 
     /**
-     * @return meta-information about the machine code instructions
+     * Gets a map describing various characteristics of the current machine code.
+     *
+     * @return meta-information about the current machine code instructions
      */
-    InstructionMap instructionMap();
+    InstructionMap getInstructionMap();
+
+    // TODO (mlvdv) This should be reported in terms of VM states, not process epoch.
+    /**
+     * Gets the most recent process epoch at which the contents of the machine code was observed to have changed.
+     *
+     * @return last epoch of most recent code change
+     */
+    long lastChangedEpoch();
 
     /**
      * Gets the human-readable name of a data location that can be addressed by machine
      * code instructions in this method.
      *
-     * @param targetLocation
+     * @param machineCodetLocation
      * @return the name of the data location
      */
-    String targetLocationToString(TargetLocation targetLocation);
+    String machineCodeLocationToString(TargetLocation machineCodetLocation);
 
     /**
      * Writes a textual disassembly of the machine code instructions.
@@ -165,7 +177,7 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
         List<Integer> labelIndexes();
 
         // TODO (mlvdv) should abstract this interface further so this doesn't need to be exposed.
-        int[] bytecodeToTargetCodePositionMap();
+        int[] bytecodeToMachineCodePositionMap();
 
     }
 

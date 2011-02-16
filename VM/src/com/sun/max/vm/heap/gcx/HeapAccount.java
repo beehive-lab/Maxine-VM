@@ -26,6 +26,8 @@ import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * Backing storage for a heap is managed via a heap account created on demand by the {@link HeapRegionManager}.
@@ -41,11 +43,17 @@ public class HeapAccount<T extends HeapAccountOwner>{
     /**
      * Owner of the account.
      */
-    private final T owner;
+    final T owner;
     /**
      * Guaranteed reserve of regions for this account.
      */
     private int reserve;
+
+    /**
+     * A region range iterable private to the heap account.
+     * Mostly for debugging / verification purposes.
+     */
+    private final HeapRegionRangeIterable regionsRangeIterable;
 
     /**
      * List of regions allocated to the account owner. All allocated regions are committed
@@ -55,6 +63,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
 
     public HeapAccount(T owner) {
         this.owner = owner;
+        this.regionsRangeIterable = new HeapRegionRangeIterable();
     }
 
     /**
@@ -70,6 +79,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
         if (theHeapRegionManager.reserve(numRegions)) {
             reserve = numRegions;
             allocated = HeapRegionList.RegionListUse.ACCOUNTING.createList();
+            regionsRangeIterable.initialize(allocated);
             return true;
         }
         return false;
@@ -154,15 +164,17 @@ public class HeapAccount<T extends HeapAccountOwner>{
         }
         final FixedSizeRegionAllocator regionAllocator = theHeapRegionManager.regionAllocator();
         int numRegionsNeeded = numRegions;
-        do {
-            RegionRange range = regionAllocator.allocateLessOrEqual(numRegions);
+        while (numRegionsNeeded > 0) {
+            final RegionRange range = regionAllocator.allocateLessOrEqual(numRegions);
             // For now, every allocated region is always committed
             // Probably only want to do that on not already committed regions. The
             // region allocator should be able to discriminate that.
-            regionAllocator.commit(range.firstRegion(), range.numRegions());
-            recordAllocated(range.firstRegion(), range.numRegions(), recipient, prepend);
-            numRegionsNeeded -= range.numRegions();
-        } while(numRegionsNeeded == 0);
+            final int firstAllocatedRegion = range.firstRegion();
+            final int numAllocatedRegions = range.numRegions();
+            regionAllocator.commit(firstAllocatedRegion, numAllocatedRegions);
+            recordAllocated(firstAllocatedRegion, numAllocatedRegions, recipient, prepend);
+            numRegionsNeeded -= numAllocatedRegions;
+        }
         return true;
     }
 
@@ -193,5 +205,23 @@ public class HeapAccount<T extends HeapAccountOwner>{
 
     public boolean allocateContiguous(int numRegions) {
         return allocateContiguous(numRegions, null, false);
+    }
+
+    /**
+     * Walk over the regions of the heap account an apply the closure to all objects.
+     * This assume that all the regions of the account are parsable.
+     */
+    public void visitObjects(CellVisitor visitor) {
+        final int log2RegionSizeInBytes = HeapRegionConstants.log2RegionSizeInBytes;
+        regionsRangeIterable.reset();
+        while (regionsRangeIterable.hasNext()) {
+            final RegionRange regionRange = regionsRangeIterable.next();
+            final int firstRegion = regionRange.firstRegion();
+            Pointer cell = RegionTable.theRegionTable().regionAddress(firstRegion).asPointer();
+            final Pointer endOfRange = cell.plus(regionRange.numRegions() << log2RegionSizeInBytes);
+            do {
+                cell = visitor.visitCell(cell);
+            } while(cell.lessThan(endOfRange));
+        }
     }
 }

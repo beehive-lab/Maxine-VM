@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,7 +68,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         settings.addSaveSettingsListener(this);
 
         if (!settings.bootImageChanged()) {
-            loadTargetCodeBreakpoints(settings);
+            loadMachineCodeBreakpoints(settings);
             loadBytecodeBreakpoints(settings);
         } else {
             // TODO (mlvdv) some breakpoints could be saved across image builds,
@@ -81,7 +81,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     }
 
     // Keys used for making data persistent
-    private static final String TARGET_BREAKPOINT_KEY = "targetBreakpoint";
+    private static final String MACHINE_CODE_BREAKPOINT_KEY = "machineCodeBreakpoint";
     private static final String BYTECODE_BREAKPOINT_KEY = "bytecodeBreakpoint";
     private static final String ADDRESS_KEY = "address";
     private static final String CONDITION_KEY = "condition";
@@ -99,24 +99,24 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     }
 
     public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-        final List<MaxBreakpoint> targetBreakpoints = new LinkedList<MaxBreakpoint>();
+        final List<MaxBreakpoint> machineCodeBreakpoints = new LinkedList<MaxBreakpoint>();
         final List<MaxBreakpoint> bytecodeBreakpoints = new LinkedList<MaxBreakpoint>();
         for (MaxBreakpoint breakpoint : inspection.vm().breakpointManager().breakpoints()) {
             if (breakpoint.isBytecodeBreakpoint()) {
                 bytecodeBreakpoints.add(breakpoint);
             } else {
-                targetBreakpoints.add(breakpoint);
+                machineCodeBreakpoints.add(breakpoint);
             }
         }
-        saveTargetCodeBreakpoints(saveSettingsEvent, targetBreakpoints);
+        saveMachineCodeBreakpoints(saveSettingsEvent, machineCodeBreakpoints);
         saveBytecodeBreakpoints(saveSettingsEvent, bytecodeBreakpoints);
     }
 
-    private void saveTargetCodeBreakpoints(SaveSettingsEvent saveSettingsEvent, List<MaxBreakpoint> targetBreakpoints) {
-        saveSettingsEvent.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, targetBreakpoints.size());
+    private void saveMachineCodeBreakpoints(SaveSettingsEvent saveSettingsEvent, List<MaxBreakpoint> machineCodeBreakpoints) {
+        saveSettingsEvent.save(MACHINE_CODE_BREAKPOINT_KEY + "." + COUNT_KEY, machineCodeBreakpoints.size());
         int index = 0;
-        for (MaxBreakpoint breakpoint : targetBreakpoints) {
-            final String prefix = TARGET_BREAKPOINT_KEY + index++;
+        for (MaxBreakpoint breakpoint : machineCodeBreakpoints) {
+            final String prefix = MACHINE_CODE_BREAKPOINT_KEY + index++;
             final Address bootImageOffset = breakpoint.codeLocation().address().minus(inspection.vm().bootImageStart());
             saveSettingsEvent.save(prefix + "." + ADDRESS_KEY, bootImageOffset.toLong());
             saveSettingsEvent.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
@@ -129,10 +129,10 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         }
     }
 
-    private void loadTargetCodeBreakpoints(final InspectionSettings settings) {
-        final int numberOfBreakpoints = settings.get(this, TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, OptionTypes.INT_TYPE, 0);
+    private void loadMachineCodeBreakpoints(final InspectionSettings settings) {
+        final int numberOfBreakpoints = settings.get(this, MACHINE_CODE_BREAKPOINT_KEY + "." + COUNT_KEY, OptionTypes.INT_TYPE, 0);
         for (int i = 0; i < numberOfBreakpoints; i++) {
-            final String prefix = TARGET_BREAKPOINT_KEY + i;
+            final String prefix = MACHINE_CODE_BREAKPOINT_KEY + i;
             final Address bootImageOffset = Address.fromLong(settings.get(this, prefix + "." + ADDRESS_KEY, OptionTypes.LONG_TYPE, null));
             final Address address = inspection.vm().bootImageStart().plus(bootImageOffset);
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, null);
@@ -150,7 +150,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 } catch (BreakpointCondition.ExpressionException expressionException) {
                     inspection.gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
                 } catch (MaxVMBusyException maxVMBusyException) {
-                    InspectorWarning.message("Unable to recreate target breakpoint from saved settings at: " + address, maxVMBusyException);
+                    InspectorWarning.message("Unable to recreate machine code breakpoint from saved settings at: " + address, maxVMBusyException);
                 }
             } else {
                 InspectorWarning.message("dropped former breakpoint in runtime-generated code at address: " + address);

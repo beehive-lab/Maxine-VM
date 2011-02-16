@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -305,7 +305,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      * expensive than {@link refreshView()}, but necessary when the parameters or
      * configuration of the view changes enough to require creating a new one.
      */
-    protected void reconstructView() {
+    protected final void reconstructView() {
         final Dimension size = frame.getSize();
         createView();
         frame.setPreferredSize(size);

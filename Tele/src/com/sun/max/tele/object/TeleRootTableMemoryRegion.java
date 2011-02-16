@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,8 +62,8 @@ public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
     }
 
     @Override
-    protected void updateObjectCache(StatsPrinter statsPrinter) {
-        super.updateObjectCache(statsPrinter);
+    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        super.updateObjectCache(epoch, statsPrinter);
         try {
             wordsUsed = vm().teleFields().RootTableMemoryRegion_wordsUsed.readLong(getReference());
         } catch (DataIOError dataIOError) {
@@ -77,7 +77,8 @@ public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
 
     @Override
     public MemoryUsage getUsage() {
-        return new MemoryUsage(-1, vm().wordSize().toLong() * wordsUsed, getRegionSize().toLong(), -1);
+        long nBytesUsed = vm().platform().nBytesInWord() * wordsUsed;
+        return new MemoryUsage(-1L, nBytesUsed, getRegionNBytes(), -1L);
     }
 
 }

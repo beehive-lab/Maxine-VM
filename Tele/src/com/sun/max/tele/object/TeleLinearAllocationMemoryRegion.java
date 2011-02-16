@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,33 +31,68 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
-
+/**
+ * Canonical surrogate for a {@link LinearAllocationMemoryRegion} object in the VM,
+ * which represents a region of memory
+ * that is allocated linearly from the beginning, and which holds an
+ * <i>allocation mark</i> that represents the limit of the current allocation.
+ * <br>
+ * Usage defaults to 100% if nothing can be determined about the allocation mark.
+ *
+ * @author Michael Van De Vanter
+ */
 public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
 
     /**
-     * Cached mark field from the object in the VM.
+     * Cached contents of the mark field from the {@link LinearAllocationMemoryRegion} object in the VM.
      */
-    private Address mark = Address.zero();
+    private Address markCache;
 
-    private MemoryUsage memoryUsage = null;
+    private MemoryUsage usageCache = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
+
+    private final Object localStatsPrinter = new Object() {
+
+        @Override
+        public String toString() {
+            return "mark=" + markCache.to0xHexString();
+        }
+    };
 
     public TeleLinearAllocationMemoryRegion(TeleVM teleVM, Reference linearAllocationMemoryRegionReference) {
         super(teleVM, linearAllocationMemoryRegionReference);
+        // Initialize mark to region end: default 100% utilization
+        markCache = super.getRegionEnd();
+        updateMarkCache();
+    }
+
+    /** {@inheritDoc}
+     * <br>
+     * Preempt upward the priority for tracing on {@link LinearAllocationMemoryRegion} objects,
+     * since they usually represent very significant regions.
+     */
+    @Override
+    protected int getObjectUpdateTraceValue(long epoch) {
+        return TRACE_VALUE;
     }
 
     @Override
-    protected int getObjectUpdateTraceValue() {
-        return 1;
+    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        super.updateObjectCache(epoch, statsPrinter);
+        statsPrinter.addStat(localStatsPrinter);
+        updateMarkCache();
     }
 
-    @Override
-    protected void updateObjectCache(StatsPrinter statsPrinter) {
-        super.updateObjectCache(statsPrinter);
+    /**
+     * Attempts to read information about the {@link LinearAllocationMemoryRegion}
+     * region's mark from the object in VM memory.
+     */
+    private void updateMarkCache() {
         try {
             final Reference markReference = vm().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
-            mark = markReference.readWord(AtomicWord.valueOffset()).asPointer();
+            markCache = markReference.readWord(AtomicWord.valueOffset()).asPointer();
+            usageCache = MaxMemoryRegion.Util.NULL_MEMORY_USAGE;
         } catch (DataIOError dataIOError) {
             // No update; data read failed for some reason other than VM availability
             TeleWarning.message("TeleLinearAllocationMemoryRegion: ", dataIOError);
@@ -66,32 +101,37 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
         }
     }
 
+    /** {@inheritDoc}
+     * <br>
+     * This override reports "used memory" to be between region start and the allocation mark.
+     */
     @Override
-    public MemoryUsage getUsage() {
-        if (memoryUsage == null) {
-            if (isAllocated() && !mark.isZero()) {
-                memoryUsage = new MemoryUsage(-1, mark.minus(getRegionStart()).toLong(), getRegionSize().toLong(), -1);
+    public final MemoryUsage getUsage() {
+        if (isAllocated()) {
+            long used = markCache.minus(getRegionStart()).toLong();
+            long committed = getRegionNBytes();
+            if (used != usageCache.getUsed() || committed != usageCache.getCommitted()) {
+                usageCache = new MemoryUsage(-1L, used, committed, -1L);
             }
         }
-        if (memoryUsage != null) {
-            return memoryUsage;
-        }
-        return super.getUsage();
+        return usageCache;
     }
 
+    /** {@inheritDoc}
+     * <br>
+     * In a {@link LinearAllocationMemoryRegion}, the allocated region is assumed to be between
+     * the region's start and its "mark" location.
+     */
     @Override
     public boolean containsInAllocated(Address address) {
-        if (isAllocated()) {
-            return address.greaterEqual(getRegionStart()) && address.lessThan(mark);
-        }
-        return super.containsInAllocated(address);
+        return isAllocated() ? address.greaterEqual(getRegionStart()) && address.lessThan(markCache) : false;
     }
 
     /**
-     * Reads from the VM the mark field of the {@link LinearAllocationMemoryRegion}.
+     * Gets most recently read value from the mark field of the {@link LinearAllocationMemoryRegion} in the VM.
      */
     public Address mark() {
-        return mark;
+        return markCache;
     }
 
 }
