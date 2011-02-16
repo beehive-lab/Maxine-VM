@@ -192,6 +192,7 @@ public class LinearSpaceAllocator {
      * @return
      */
     @INLINE
+    @NO_SAFEPOINTS("filling linear space allocator must not be subjected to safepoints")
     final Pointer setTopToLimit() {
         Pointer thisAddress = Reference.fromJava(this).toOrigin();
         Address cell;
