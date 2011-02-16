@@ -36,8 +36,8 @@ import com.sun.cri.ri.*;
  */
 public abstract class AccessField extends StateSplit {
 
-    Value object;
-    final RiField field;
+    private Value object;
+    protected final RiField field;
 
     /**
      * Constructs a new access field object.

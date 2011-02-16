@@ -216,16 +216,6 @@ public class LIRItem {
         }
     }
 
-    public int asInt() {
-        assert instruction instanceof Constant : "must be a constant";
-        return instruction.asConstant().asInt();
-    }
-
-    public long asLong() {
-        assert instruction instanceof Constant : "must be a constant";
-        return instruction.asConstant().asLong();
-    }
-
     @Override
     public String toString() {
         return result().toString();

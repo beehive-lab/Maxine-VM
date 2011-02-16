@@ -35,7 +35,7 @@ import com.sun.cri.ci.*;
  */
 public final class UnsignedCompareOp extends Op2 {
 
-    FrameState stateBefore;
+    private FrameState stateBefore;
 
     /**
      * One of the constants defined in {@link UnsignedComparisons} denoting the type of this comparison.

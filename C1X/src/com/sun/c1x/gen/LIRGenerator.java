@@ -196,8 +196,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected final IR ir;
     protected final XirSupport xirSupport;
     protected final RiXirGenerator xir;
-    protected final boolean is32;
-    protected final boolean is64;
     protected final boolean isTwoOperand;
 
     private BlockBegin currentBlock;
@@ -218,8 +216,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         this.ir = compilation.hir();
         this.xir = compilation.compiler.xir;
         this.xirSupport = new XirSupport();
-        this.is32 = compilation.target.arch.is32bit();
-        this.is64 = compilation.target.arch.is64bit();
         this.isTwoOperand = compilation.target.arch.twoOperandMode();
         this.vma = new VolatileMemoryAccess();
 
@@ -291,10 +287,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitBase(Base x) {
-        // Emit moves from physical registers / stack slots to variables
-
-        // increment invocation counters if needed
-
         // emit phi-instruction move after safepoint since this simplifies
         // describing the state at the safepoint.
         moveToPhi(x.stateAfter());
@@ -1367,29 +1359,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         return result;
     }
 
-    protected void profileBranch(If ifInstr, Condition cond) {
-        if (false) {
-            // generate counting of taken / not taken
-            RiMethodProfile md = null;
-            int bci = 0;
-            if (md != null) {
-                int takenCountOffset = md.branchTakenCountOffset(bci);
-                int notTakenCountOffset = md.branchNotTakenCountOffset(bci);
-                CiValue mdReg = newVariable(CiKind.Object);
-                lir.move(md.encoding(), mdReg);
-                CiValue dataOffsetReg = newVariable(CiKind.Int);
-                lir.cmove(cond, CiConstant.forInt(takenCountOffset), CiConstant.forInt(notTakenCountOffset), dataOffsetReg);
-                CiValue dataReg = newVariable(CiKind.Int);
-                CiAddress dataAddr = new CiAddress(CiKind.Int, mdReg, dataOffsetReg);
-                lir.move(dataAddr, dataReg);
-                CiValue fakeIncrValue = new CiAddress(CiKind.Int, dataReg, 1);
-                // Use leal instead of add to avoid destroying condition codes on x86
-                lir.lea(fakeIncrValue, dataReg);
-                lir.move(dataReg, dataAddr);
-            }
-        }
-    }
-
     /**
      * Allocates a variable operand to hold the result of a given instruction.
      * This can only be performed once for any given instruction.
@@ -1982,10 +1951,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         return returnRegister.asValue(kind);
     }
 
-    public Value currentInstruction() {
-        return currentInstruction;
-    }
-
     protected XirSupport site(Value x) {
         return xirSupport.site(x);
     }
@@ -2137,5 +2102,4 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.cmp(typeEqualityCheck.condition.negate(), leftValue, rightValue);
         emitGuard(typeEqualityCheck);
     }
-
 }

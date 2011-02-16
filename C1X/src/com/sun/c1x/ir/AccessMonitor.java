@@ -35,7 +35,7 @@ public abstract class AccessMonitor extends StateSplit {
     /**
      * The object locked or unlocked by this instruction.
      */
-    Value object;
+    private Value object;
 
     /**
      * The address of the on-stack lock object or {@code null} if the runtime does not place locks on the stack.

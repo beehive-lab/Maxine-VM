@@ -32,7 +32,7 @@ import com.sun.cri.ci.*;
  */
 public abstract class AccessArray extends StateSplit {
 
-    Value array;
+    protected Value array;
 
     /**
      * Creates a new AccessArray instruction.

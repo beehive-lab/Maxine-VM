@@ -63,8 +63,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     public AMD64LIRGenerator(C1XCompilation compilation) {
         super(compilation);
-        assert is32 || is64 : "unknown word size: " + compilation.target.wordSize;
-        assert is32 != is64 : "can't be both 32 and 64 bit";
     }
 
     @Override
@@ -300,7 +298,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 boolean useConstant = false;
                 boolean useTmp = false;
                 if (rightArg.result().isConstant()) {
-                    int iconst = rightArg.asInt();
+                    int iconst = rightArg.instruction.asConstant().asInt();
                     if (iconst > 0) {
                         if (CiUtil.isPowerOf2(iconst)) {
                             useConstant = true;
@@ -654,7 +652,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             xin.setDestroysRegister();
         }
         xin.loadItem();
-        if (kind.isLong() && yin.result().isConstant() && yin.asLong() == 0 && (cond == Condition.EQ || cond == Condition.NE)) {
+        if (kind.isLong() && yin.result().isConstant() && yin.instruction.asConstant().asLong() == 0 && (cond == Condition.EQ || cond == Condition.NE)) {
             // dont load item
         } else if (kind.isLong() || kind.isFloat() || kind.isDouble()) {
             // longs cannot handle constants at right side
@@ -670,7 +668,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         CiValue left = xin.result();
         CiValue right = yin.result();
         lir.cmp(cond, left, right);
-        profileBranch(x, cond);
         moveToPhi(x.stateAfter());
         if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
             lir.branch(cond, right.kind, x.trueSuccessor(), x.unorderedSuccessor());
