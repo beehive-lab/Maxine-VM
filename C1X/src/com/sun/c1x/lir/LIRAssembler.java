@@ -309,9 +309,6 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case Label:
                 throw Util.shouldNotReachHere();
-            case StdEntry:
-                asm.verifiedEntry();
-                break;
             case OsrEntry:
                 emitOsrEntry();
                 break;
