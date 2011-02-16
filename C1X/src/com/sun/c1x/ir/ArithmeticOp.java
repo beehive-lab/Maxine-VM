@@ -34,7 +34,7 @@ import com.sun.cri.ci.*;
  */
 public final class ArithmeticOp extends Op2 {
 
-    FrameState stateBefore;
+    private FrameState stateBefore;
 
     /**
      * Creates a new arithmetic operation.

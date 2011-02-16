@@ -62,18 +62,15 @@ public final class Label {
      */
     public void bind(int pos) {
         this.position = pos;
+        assert isBound();
     }
 
     public boolean isBound() {
         return position >= 0;
     }
 
-    public boolean isUnbound() {
-        return position == -1 && patchPositions.size() > 0;
-    }
-
     public void addPatchAt(int branchLocation) {
-        assert position == -1 : "Label is unbound";
+        assert isBound() : "Label is unbound";
         patchPositions.add(branchLocation);
     }
 

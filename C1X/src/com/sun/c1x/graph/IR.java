@@ -199,21 +199,21 @@ public class IR {
         printToTTY(phase);
     }
 
-    void printToTTY(String phase) {
+    private void printToTTY(String phase) {
         if (C1XOptions.PrintHIR && !TTY.isSuppressed()) {
             TTY.println(phase);
             print(false);
         }
     }
 
-    void printToCFGFile(String phase) {
+    private void printToCFGFile(String phase) {
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
         if (cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
         }
     }
 
-    void verify(String phase) {
+    private void verify(String phase) {
         if (C1XOptions.IRChecking) {
             try {
                 new IRChecker(this, phase).check();

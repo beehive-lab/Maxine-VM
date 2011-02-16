@@ -35,9 +35,9 @@ import com.sun.cri.ci.*;
  */
 public abstract class AccessIndexed extends AccessArray {
 
-    Value index;
-    Value length;
-    final CiKind elementType;
+    private Value index;
+    private Value length;
+    private final CiKind elementType;
 
     /**
      * Create an new AccessIndexed instruction.
