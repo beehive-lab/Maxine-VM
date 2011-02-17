@@ -4590,9 +4590,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     if (compiledCode != null) {
                         final InstructionMap instructionMap = compiledCode.getInstructionMap();
                         final int instructionIndex = instructionMap.findInstructionIndex(instructionAddress);
-                        targetJavaFrameDescriptor = instructionMap.targetFrameDescriptor(instructionIndex);
-                        if (targetJavaFrameDescriptor == null) {
-                            return false;
+                        if (instructionIndex >= 0) {
+                            targetJavaFrameDescriptor = instructionMap.targetFrameDescriptor(instructionIndex);
+                            if (targetJavaFrameDescriptor == null) {
+                                return false;
+                            }
                         }
                         return true;
                     }
