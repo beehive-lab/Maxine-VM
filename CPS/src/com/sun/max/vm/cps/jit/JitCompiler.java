@@ -42,12 +42,15 @@ public abstract class JitCompiler implements RuntimeCompiler {
     @HOSTED_ONLY
     private boolean isInitialized;
 
+    private boolean createdCPSCompiler;
+
     @HOSTED_ONLY
     protected JitCompiler() {
         CPSCompiler compiler = CPSCompiler.Static.compiler();
         if (compiler == null) {
             if (platform().isa == ISA.AMD64) {
                 compiler = new AMD64CPSCompiler();
+                createdCPSCompiler = true;
             } else {
                 throw FatalError.unimplemented();
             }
@@ -57,6 +60,10 @@ public abstract class JitCompiler implements RuntimeCompiler {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        if (createdCPSCompiler) {
+            CPSCompiler.Static.compiler().initialize(phase);
+        }
+
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.COMPILING) {
             init();
         }
