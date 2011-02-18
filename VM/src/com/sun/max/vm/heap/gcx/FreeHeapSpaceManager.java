@@ -115,7 +115,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
         @Override
         void makeParsable(Pointer start, Pointer end) {
-
+            HeapSchemeAdaptor.fillWithDeadObject(start, end);
         }
     }
 
