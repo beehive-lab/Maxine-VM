@@ -250,7 +250,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
             if (mouseEvent.getClickCount() > 1) {
                 // Depends on the first click selecting the row, and that changing the current
-                // code location focus to the location under the mouse event.7
+                // code location focus to the location under the mouse event.
                 actions().toggleMachineCodeBreakpoint().perform();
             }
         }
