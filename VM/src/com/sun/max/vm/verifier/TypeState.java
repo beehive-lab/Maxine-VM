@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -348,21 +348,41 @@ public class TypeState extends Frame {
             return VerificationType.NO_TYPES;
         }
         int stackMapTypesLength = 0;
+        boolean safeToCopy = true;
         for (int i = 0; i != length; ++i) {
-            if (types[i].classfileTag() != -1) {
+            VerificationType type = types[i];
+            if (type.classfileTag() == -1) {
+                assert type.isSecondWordType();
+                assert i > 0;
+                VerificationType prev = types[i - 1];
+                if (!prev.isCategory2()) {
+                    // A 'left-over' second-word type
+                    ++stackMapTypesLength;
+                    safeToCopy = false;
+                }
+            } else {
                 ++stackMapTypesLength;
             }
         }
 
-        if (stackMapTypesLength == length) {
+        if (stackMapTypesLength == length && safeToCopy) {
             // No category 2 types
             return Arrays.copyOf(types, stackMapTypesLength);
         }
         final VerificationType[] stackMapTypes = new VerificationType[stackMapTypesLength];
         stackMapTypesLength = 0;
         for (int i = 0; i != length; ++i) {
-            if (types[i].classfileTag() != -1) {
-                stackMapTypes[stackMapTypesLength++] = types[i];
+            VerificationType type = types[i];
+            if (type.classfileTag() == -1) {
+                assert type.isSecondWordType();
+                assert i > 0;
+                VerificationType prev = types[i - 1];
+                if (!prev.isCategory2()) {
+                    stackMapTypes[stackMapTypesLength++] = VerificationType.TOP;
+                }
+            } else {
+                assert !type.isSecondWordType();
+                stackMapTypes[stackMapTypesLength++] = type;
             }
         }
         return stackMapTypes;
