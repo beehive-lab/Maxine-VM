@@ -23,6 +23,7 @@
 package com.sun.max.vm.heap.gcx;
 
 import static com.sun.max.vm.heap.gcx.HeapRegionConstants.*;
+import static com.sun.max.vm.heap.gcx.RegionTable.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -148,6 +149,18 @@ public final class HeapRegionManager implements HeapAccountOwner {
             Address allocate(Size size) {
                 FatalError.unimplemented();
                 return Address.zero();
+            }
+
+            @Override
+            void makeParsable(Pointer start, Pointer end) {
+                // Boot linear allocator should not span multiple regions.
+                RegionTable rt = theRegionTable();
+                if (MaxineVM.isDebug()) {
+                    final Pointer regionEnd = rt.regionInfo(start).regionStart().asPointer().plus(regionSizeInBytes);
+                    FatalError.check(regionEnd.lessThan(end), "must be at region boundary");
+                }
+                HeapSchemeAdaptor.fillWithDeadObject(start, end);
+                rt.regionInfo(start).setIterable();
             }
         });
     }
