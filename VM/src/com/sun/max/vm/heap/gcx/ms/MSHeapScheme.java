@@ -553,6 +553,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
                 // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
                 return objectSpace.allocate(size);
             }
+            // Leave as is. Parsability of the TLAB will be taken care by what follows.
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
         allocateAndRefillTLAB(etla, nextTLABSize);

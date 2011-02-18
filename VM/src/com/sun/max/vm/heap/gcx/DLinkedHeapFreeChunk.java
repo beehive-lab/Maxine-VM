@@ -86,7 +86,7 @@ public class DLinkedHeapFreeChunk extends HeapFreeChunk {
             FatalError.check(hub.isSubClassHub(HEAP_FREE_CHUNK_HUB.classActor),
                             "Should format with a sub-class of HeapFreeChunk");
         }
-        HeapFreeChunk.format(hub, deadSpace, numBytes, nextChunk);
+        HeapFreeChunk.format(deadSpace, numBytes, nextChunk, hub);
         setFreeChunkPrev(deadSpace, prevChunk);
         return to(deadSpace);
     }
