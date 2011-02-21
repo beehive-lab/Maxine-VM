@@ -46,6 +46,7 @@ public class ClassDirectory {
         classActor.prependToSiblingList();
         // TODO track interface implementors as well for future additional dependency types (...._concrete_subtypes_2 and ...._concrete_methods_2)?
         flushDependentsOn(classActor);
+        UniqueConcreteSubtypeTable.recordClassActor(classActor);
     }
 
     public static boolean recordLeafMethodAssumption(RiMethod method) {
