@@ -29,7 +29,7 @@ import com.sun.max.vm.heap.*;
 /**
  * @author Bernd Mathiske
  */
-public class StaticHub extends Hub {
+public final class StaticHub extends Hub {
 
     StaticHub(Size tupleSize, ClassActor classActor, TupleReferenceMap referenceMap, int vTableLength) {
         super(tupleSize, classActor, referenceMap, vTableLength);

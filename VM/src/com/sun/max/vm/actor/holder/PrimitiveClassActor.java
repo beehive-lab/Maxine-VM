@@ -36,6 +36,11 @@ import com.sun.max.vm.type.*;
  */
 public final class PrimitiveClassActor extends ClassActor {
 
+    @Override
+    public void recordUniqueConcreteSubtype() {
+        UniqueConcreteSubtypeTable.recordClassActor(this);
+    }
+
     @HOSTED_ONLY
     public PrimitiveClassActor(Kind kind) {
         super(kind,
@@ -57,6 +62,7 @@ public final class PrimitiveClassActor extends ClassActor {
               NO_INNER_CLASSES,
               NO_OUTER_CLASS,
               NO_ENCLOSING_METHOD_INFO);
+        recordUniqueConcreteSubtype();
     }
 
     public TupleClassActor toWrapperClassActor() {
