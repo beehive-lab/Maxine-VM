@@ -16,7 +16,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.vm.hosted.BootImageGenerator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -build=DEBUG -run=java -heap=gcx.ms"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -build=DEBUG -run=java -heap=gcx.ms -opt=c1x -jit=c1x --C1X:OptLevel=1"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="VM"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1G -Xmx2G"/>
 </launchConfiguration>

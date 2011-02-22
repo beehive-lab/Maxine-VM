@@ -1637,9 +1637,12 @@ public abstract class ClassActor extends Actor implements RiType {
         }
     }
 
+    public abstract void recordUniqueConcreteSubtype();
+
     @Override
     public RiType uniqueConcreteSubtype() {
-        // (tw) TODO: Return the unique concrete subtype if one exists.
+        // Default is to return null. See sub-classes of ClassActor for specific details.
+        // This method is meaningful only for non-array types.
         return null;
     }
 }

@@ -31,6 +31,7 @@ import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
@@ -204,6 +205,7 @@ public final class BootImageGenerator {
             if (statsOption.getValue()) {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
+            UniqueConcreteSubtypeTable.dump();
             writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
             writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));
             if (treeOption.getValue()) {

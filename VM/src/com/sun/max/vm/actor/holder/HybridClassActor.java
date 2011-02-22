@@ -78,6 +78,11 @@ public class HybridClassActor extends ReferenceClassActor {
     }
 
     @Override
+    public void recordUniqueConcreteSubtype() {
+        UniqueConcreteSubtypeTable.recordClassActor(this);
+    }
+
+    @Override
     protected Size layoutFields(SpecificLayout specificLayout) {
         final HybridLayout hybridLayout = (HybridLayout) specificLayout;
         return hybridLayout.layoutFields(superClassActor, localInstanceFieldActors());
