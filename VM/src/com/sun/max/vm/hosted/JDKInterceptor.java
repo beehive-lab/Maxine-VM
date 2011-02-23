@@ -176,6 +176,32 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("mapOffset", JDK.java_util_concurrent_ConcurrentSkipListSet, "m"),
         JDK.java_util_concurrent_CopyOnWriteArrayList,
             new FieldOffsetRecomputation("lockOffset", JDK.java_util_concurrent_CopyOnWriteArrayList, "lock"),
+        JDK.java_nio_DirectByteBuffer,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectByteBuffer, byte[].class),
+        JDK.java_nio_DirectCharBufferS,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectCharBufferS, char[].class),
+        JDK.java_nio_DirectCharBufferU,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectCharBufferU, char[].class),
+        JDK.java_nio_DirectDoubleBufferS,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectDoubleBufferS, double[].class),
+        JDK.java_nio_DirectDoubleBufferU,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectDoubleBufferU, double[].class),
+        JDK.java_nio_DirectFloatBufferS,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectFloatBufferS, float[].class),
+        JDK.java_nio_DirectFloatBufferU,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectFloatBufferU, float[].class),
+        JDK.java_nio_DirectIntBufferS,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectIntBufferS, int[].class),
+        JDK.java_nio_DirectIntBufferU,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectIntBufferU, int[].class),
+        JDK.java_nio_DirectLongBufferS,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectLongBufferS, long[].class),
+        JDK.java_nio_DirectLongBufferU,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectLongBufferU, long[].class),
+        JDK.java_nio_DirectShortBufferS,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectShortBufferS, short[].class),
+        JDK.java_nio_DirectShortBufferU,
+            new ArrayBaseOffsetRecomputation("arrayBaseOffset", JDK.java_nio_DirectShortBufferU, short[].class),
         JDK.java_util_concurrent_atomic_AtomicBoolean,
             new FieldOffsetRecomputation("valueOffset", JDK.java_util_concurrent_atomic_AtomicBoolean, "value"),
         JDK.java_util_concurrent_atomic_AtomicInteger,
@@ -488,7 +514,7 @@ public final class JDKInterceptor {
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
             ArrayLayout arrayLayout = (ArrayLayout) ClassActor.fromJava(arrayClass).dynamicHub().specificLayout;
-            return IntValue.from(arrayLayout.getElementOffsetFromOrigin(0).toInt());
+            return fieldActor.kind.convert(IntValue.from(arrayLayout.getElementOffsetFromOrigin(0).toInt()));
         }
     }
 

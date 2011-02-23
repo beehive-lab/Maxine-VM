@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,50 +71,43 @@ public final class Mangle {
 
     /**
      * Mangles a Java method to a unique C function name in compliance with the JNI specification for resolving native
-     * method names. The method signature is not included.
-     *
-     * @param holder
-     *                the class declaring the method
-     * @param method
-     *                the Java method name
-     * @return the mangled C function name for {@code method}
-     */
-    public static String mangleMethod(Class holder, String methodName) {
-        return mangleMethod(JavaTypeDescriptor.forJavaClass(holder), methodName, null);
-    }
-
-    /**
-     * Mangles a Java method to a unique C function name in compliance with the JNI specification for resolving native
      * method names.
      *
-     * @param method
-     *                a Java method
-     * @param withSignature
-     *                if true, the method's signature is included in the mangled name
+     * @param method a Java method
+     * @param withSignature if true, the method's signature is included in the mangled name
      * @return the mangled C function name for {@code method}
      */
     public static String mangleMethod(Method method, boolean withSignature) {
-        return mangleMethod(JavaTypeDescriptor.forJavaClass(method.getDeclaringClass()), method.getName(), withSignature ? SignatureDescriptor.fromJava(method) : null);
+        return mangleMethod(JavaTypeDescriptor.forJavaClass(method.getDeclaringClass()), method.getName(), withSignature ? SignatureDescriptor.fromJava(method) : null, false);
     }
 
     /**
-     * Mangles a Java method to a unique C function name in compliance with the JNI specification for resolving native
-     * method names.
-     *
-     * @param declaringClass
-     *                a fully qualified class descriptor
-     * @param name
-     *                a Java method name (not checked here for validity)
-     * @param signature
-     *                if non-null, a method signature to include in the mangled name
-     * @return the mangled C function name for the method described by {@code declaringClass}, {@code name} and
-     *         {@code signature}
+     * The delimiter in the string returned by {@link #mangleMethod(TypeDescriptor, String, SignatureDescriptor, boolean)} separating
+     * the short mangled form from the suffix to be added to obtain the long mangled form.
      */
-    public static String mangleMethod(TypeDescriptor declaringClass, String name, SignatureDescriptor signature) {
+    public static final char LONG_NAME_DELIMITER = ' ';
+
+    /**
+     * Mangles a Java method to the symbol(s) to be used when binding it to a native function.
+     * If {@code signature} is {@code null}, then a non-qualified symbol is returned.
+     * Otherwise, a qualified symbol is returned. A qualified symbol has its non-qualified
+     * prefix separated from its qualifying suffix by {@link #LONG_NAME_DELIMITER} if
+     * {@code splitSuffix} is {@code true}.
+     *
+     * @param declaringClass a fully qualified class descriptor
+     * @param name a Java method name (not checked here for validity)
+     * @param signature if non-null, a method signature to include in the mangled name
+     * @param splitSuffix determines if {@link #LONG_NAME_DELIMITER} should be used as described above
+     * @return the symbol for the C function as described above
+     */
+    public static String mangleMethod(TypeDescriptor declaringClass, String name, SignatureDescriptor signature, boolean splitSuffix) {
         final StringBuilder result = new StringBuilder(100);
         final String declaringClassName = declaringClass.toJavaString();
         result.append("Java_").append(mangle(declaringClassName)).append('_').append(mangle(name));
         if (signature != null) {
+            if (splitSuffix) {
+                result.append(LONG_NAME_DELIMITER);
+            }
             result.append("__");
             final String sig = signature.toString();
             final String parametersSignature = sig.substring(1, sig.lastIndexOf(')')).replace('/', '.').replace('$', '.');
@@ -180,20 +173,22 @@ public final class Mangle {
     /**
      * Demangles a name that was mangled in an manner equivalent to {@link #mangleMethod(Method, boolean) mangle}.
      *
-     * @param mangled
-     *                a mangled C function name
+     * @param mangled a mangled C function name
      * @return an object containing the demangled components of a Java method from which {@code mangled} may have been
      *         produced
-     * @throws IllegalArgumentException
-     *                 if {@code mangled} is not a valid mangled method name
+     * @throws IllegalArgumentException if {@code mangled} is not a valid mangled method name
      */
     public static DemangledMethod demangleMethod(String mangled) throws IllegalArgumentException {
         if (!mangled.startsWith("Java_")) {
             throw new IllegalArgumentException("JNI mangled name must start with \"Java_\"");
         }
-        final String s = mangled.substring("Java_".length());
+        String s = mangled.substring("Java_".length());
         final String qualifiedName;
         final String parametersSignature;
+        final int delim = s.indexOf(LONG_NAME_DELIMITER);
+        if (delim != -1) {
+            s = s.substring(0, delim) + s.substring(delim + 1);
+        }
         final Matcher matcher = SIGNATURE_SEPARATOR.matcher(s);
         if (matcher.matches()) {
             qualifiedName = demangle(matcher.group(1));
@@ -311,7 +306,7 @@ public final class Mangle {
         }
 
         public String mangle() {
-            return Mangle.mangleMethod(declaringClass, name, createDummySignature(parametersSignature));
+            return Mangle.mangleMethod(declaringClass, name, createDummySignature(parametersSignature), false);
         }
     }
 }
