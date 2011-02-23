@@ -40,6 +40,9 @@ import com.sun.max.vm.runtime.*;
  * @author Laurent Daynes.
  */
 public final class UniqueConcreteSubtypeTable {
+
+    private static final boolean enableDumpOption = false;
+
     static class VariableLengthArray<E> {
         /*
          * Simple first implementation. Backing Storage for the array is made of a
@@ -126,6 +129,9 @@ public final class UniqueConcreteSubtypeTable {
      * Dump the table in the log.
      */
     public static void dump() {
+        if (!enableDumpOption) {
+            return;
+        }
         synchronized (table) {
             int classId = 0;
             int totalClasses = 0;

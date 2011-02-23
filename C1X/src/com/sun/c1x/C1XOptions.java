@@ -87,7 +87,7 @@ public final class C1XOptions {
     public static boolean TraceLIRVisit                      = ____;
     public static boolean TraceAssembler                     = ____;
     public static int     TraceBytecodeParserLevel           = 0;
-    public static boolean PrintAssumptions                   = true;
+    public static boolean PrintAssumptions                   = ____;
     public static boolean PrintInlinedIntrinsics             = ____;
 
     // IR checking
