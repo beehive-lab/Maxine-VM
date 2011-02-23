@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -216,15 +216,17 @@ public final class CString {
      *
      * @param string the String to write to the buffer
      * @param start the index of the character in {@code string} from which to start copying
+     * @param length the number of characters in {@code string} to copy
      * @param buffer a pointer to the beginning of the buffer
      * @param bufferSize the size of the buffer
-     * @return the number of characters from {@code string} written to the buffer
+     * @return the number of characters written to the buffer including the terminating zero
      */
-    public static int writePartialUtf8(final String string, final int start, final Pointer buffer, final int bufferSize) {
+    public static int writePartialUtf8(final String string, final int start, int length, final Pointer buffer, final int bufferSize) {
         int position = 0;
         final int endPosition = bufferSize - 1;
         int i = start;
-        while (i < string.length()) {
+        int end = i + length;
+        while (i < end) {
             final char ch = string.charAt(i);
             if ((ch >= 0x0001) && (ch <= 0x007F)) {
                 if (position >= endPosition) {
@@ -247,8 +249,8 @@ public final class CString {
             }
             i++;
         }
-        buffer.writeByte(position, (byte) 0);
-        return i;
+        buffer.writeByte(position++, (byte) 0);
+        return position;
     }
 
     public static byte[] toByteArray(Pointer start, int length) {
