@@ -33,6 +33,10 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  */
 public final class InterfaceActor extends ClassActor {
+    @Override
+    public void recordUniqueConcreteSubtype() {
+        UniqueConcreteSubtypeTable.recordClassActor(this);
+    }
 
     public boolean isAnnotation() {
         return (flags() & ACC_ANNOTATION) != 0;
