@@ -1645,4 +1645,23 @@ public abstract class ClassActor extends Actor implements RiType {
         // This method is meaningful only for non-array types.
         return null;
     }
+
+    /**
+     * Gets the unique concrete incarnation of the specified method that can be called on instances
+     * of sub-types of this class actor, or null if such method doesn't exist.
+     * @param method a method of the class actor
+     * @return the unique concrete incarnation of the method, or null.
+     */
+    public RiMethod uniqueConcreteMethod(RiMethod method) {
+        // Default is to return null. See sub-classes of ClassActor for specific details.
+        assert isSubtypeOf(method.holder());
+        ClassActor uct = UniqueConcreteSubtypeTable.getUniqueConcreteSubtype(this);
+        if (uct != null) {
+            // This is the only concrete sub-type for the current context. The concrete method
+            // is whatever concrete method is used by this concrete type.
+            return uct.resolveMethodImpl(method);
+        }
+        return null;
+    }
+
 }
