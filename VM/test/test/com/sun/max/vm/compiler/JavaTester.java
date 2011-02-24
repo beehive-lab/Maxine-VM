@@ -108,7 +108,6 @@ public final class JavaTester {
         executors.registerClass("cir", "test.com.sun.max.vm.cps.CIRTestExecutor");
         executors.registerClass("dir", "test.com.sun.max.vm.cps.DIRTestExecutor");
         executors.registerClass("eir", "test.com.sun.max.vm.cps.EIRTestExecutor");
-        executors.registerClass("hir", "test.com.sun.max.vm.compiler.c1x.HIRTestExecutor");
 
         // run each executor.
         for (String alias : EXECS.getValue()) {

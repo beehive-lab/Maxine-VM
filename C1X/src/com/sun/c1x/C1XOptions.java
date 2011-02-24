@@ -91,7 +91,6 @@ public final class C1XOptions {
     public static boolean PrintInlinedIntrinsics             = ____;
 
     // IR checking
-    public static boolean IRChecking                         = ____;
     public static boolean InterpretInvokedMethods            = ____;
     public static boolean PrintStateInInterpreter            = ____;
 

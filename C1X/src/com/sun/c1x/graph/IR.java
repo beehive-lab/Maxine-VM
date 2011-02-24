@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.debug.IRChecker.IRCheckException;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.value.*;
@@ -194,7 +193,6 @@ public class IR {
      * @param phase the name of the phase for printing
      */
     public void verifyAndPrint(String phase) {
-        verify(phase);
         printToCFGFile(phase);
         printToTTY(phase);
     }
@@ -210,19 +208,6 @@ public class IR {
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
         if (cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
-        }
-    }
-
-    private void verify(String phase) {
-        if (C1XOptions.IRChecking) {
-            try {
-                new IRChecker(this, phase).check();
-            } catch (IRCheckException e) {
-                // Print the CFG (to TTY and CFG file) so that the error message context makes sense
-                print(false);
-                printToCFGFile(phase);
-                throw e;
-            }
         }
     }
 
