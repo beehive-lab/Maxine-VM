@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 
@@ -51,19 +52,11 @@ public final class NegateOp extends Instruction {
         return x;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each value
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         x = closure.apply(x);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitNegateOp(this);
@@ -81,5 +74,10 @@ public final class NegateOp extends Instruction {
             return x == o.x;
         }
         return false;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("- ").print(x());
     }
 }

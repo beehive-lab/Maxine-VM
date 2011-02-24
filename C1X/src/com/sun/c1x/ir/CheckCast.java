@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
@@ -64,10 +65,6 @@ public final class CheckCast extends TypeCheck {
         return targetClass.isResolved() ? targetClass.exactType() : null;
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitCheckCast(this);
@@ -87,4 +84,13 @@ public final class CheckCast extends TypeCheck {
         return false;
     }
 
+    @Override
+    public void print(LogStream out) {
+        out.print("checkcast(").
+        print(object()).
+        print(",").
+        print(targetClassInstruction()).
+        print(") ").
+        print(CiUtil.toJavaName(targetClass()));
+    }
 }

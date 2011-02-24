@@ -22,6 +22,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
+
 /**
  * The {@code UnsafePrefetchWrite} instruction represents a prefetch write.
  *
@@ -38,12 +40,13 @@ public final class UnsafePrefetchWrite extends UnsafePrefetch {
         super(object, offset);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitUnsafePrefetchWrite(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("UnsafePrefetchWrite.(").print(object()).print(", ").print(offset()).print(')');
     }
 }

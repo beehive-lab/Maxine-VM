@@ -221,7 +221,7 @@ public class CFGPrinter {
                 while (i < stackSize) {
                     Value value = state.stackAt(i);
                     out.disableIndentation();
-                    out.print(InstructionPrinter.stateString(i, value, block));
+                    out.print(block.stateString(i, value));
                     printOperand(value);
                     out.println();
                     out.enableIndentation();
@@ -242,7 +242,7 @@ public class CFGPrinter {
                 for (int i = 0; i < state.locksSize(); ++i) {
                     Value value = state.lockAt(i);
                     out.disableIndentation();
-                    out.print(InstructionPrinter.stateString(i, value, block));
+                    out.print(block.stateString(i, value));
                     printOperand(value);
                     out.println();
                     out.enableIndentation();
@@ -258,7 +258,7 @@ public class CFGPrinter {
                 Value value = state.localAt(i);
                 if (value != null) {
                     out.disableIndentation();
-                    out.print(InstructionPrinter.stateString(i, value, block));
+                    out.print(block.stateString(i, value));
                     printOperand(value);
                     out.println();
                     out.enableIndentation();
@@ -565,7 +565,7 @@ public class CFGPrinter {
         }
 
         out.print("instruction ");
-        new InstructionPrinter(out, true, target).printInstruction(i);
+        i.print(out);
         out.print(COLUMN_END).print(' ').println(COLUMN_END);
     }
 

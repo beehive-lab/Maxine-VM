@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -39,12 +40,13 @@ public final class BreakpointTrap extends Instruction {
         setFlag(Flag.LiveSideEffect);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitBreakpointTrap(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("breakpoint_trap");
     }
 }

@@ -1958,7 +1958,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void maybePrintCurrentInstruction() {
         if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
             lastInstructionPrinted = currentInstruction;
-            InstructionPrinter ip = new InstructionPrinter(TTY.out(), true, compilation.target);
+            InstructionPrinter ip = new InstructionPrinter(TTY.out());
             ip.printInstructionListing(currentInstruction);
         }
     }

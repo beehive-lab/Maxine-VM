@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -54,22 +55,20 @@ public final class UnsafePutObject extends UnsafeObjectOp {
         return value;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         value = closure.apply(value);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitUnsafePutObject(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("UnsafePutObject.(").print(object()).print(", ").print(offset() +
+        ", value ").print(value()).print(')');
     }
 }

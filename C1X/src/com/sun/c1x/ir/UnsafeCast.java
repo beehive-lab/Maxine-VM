@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -91,10 +93,6 @@ public final class UnsafeCast extends Instruction {
         return declaredType().exactType();
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitUnsafeCast(this);
@@ -107,5 +105,13 @@ public final class UnsafeCast extends Instruction {
     @Override
     public void inputValuesDo(ValueClosure closure) {
         value = closure.apply(value);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("unsafe_cast(").
+        print(value).
+        print(") ").
+        print(CiUtil.toJavaName(toType));
     }
 }

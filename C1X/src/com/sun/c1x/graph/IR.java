@@ -183,7 +183,7 @@ public class IR {
     private void print(boolean cfgOnly) {
         if (!TTY.isSuppressed()) {
             TTY.println("IR for " + compilation.method);
-            final InstructionPrinter ip = new InstructionPrinter(TTY.out(), true, compilation.target);
+            final InstructionPrinter ip = new InstructionPrinter(TTY.out());
             final BlockPrinter bp = new BlockPrinter(this, ip, cfgOnly, false);
             startBlock.iteratePreOrder(bp);
         }

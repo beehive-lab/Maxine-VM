@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -71,6 +73,11 @@ public final class ResolveClass extends StateSplit {
     @Override
     public String toString() {
         return super.toString() + "(type: " + type + ", portion: " + portion + ")";
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("resolve[").print(CiUtil.toJavaName(type)).print("-" + portion + "]");
     }
 
 }

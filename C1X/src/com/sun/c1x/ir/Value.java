@@ -25,6 +25,7 @@ package com.sun.c1x.ir;
 import static com.sun.c1x.ir.Value.Flag.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.opt.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -385,6 +386,8 @@ public abstract class Value {
      * @param v the visitor to accept
      */
     public abstract void accept(ValueVisitor v);
+
+    public abstract void print(LogStream out);
 
     /**
      * This method returns a unique identification number for this value. The number returned is unique

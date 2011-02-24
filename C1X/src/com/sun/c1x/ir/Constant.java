@@ -24,6 +24,7 @@ package com.sun.c1x.ir;
 
 import static com.sun.c1x.C1XCompilation.*;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -47,10 +48,6 @@ public final class Constant extends Instruction {
         initFlag(Value.Flag.NonNull, value.isNonNull());
     }
 
-    /**
-     * Implements half of the visitor pattern for this instruction.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitConstant(this);
@@ -161,5 +158,29 @@ public final class Constant extends Instruction {
     @Override
     public RiType exactType() {
         return declaredType();
+    }
+
+    @Override
+    public void print(LogStream out) {
+        if (value == CiConstant.NULL_OBJECT) {
+            out.print("null");
+        } else if (value.kind.isPrimitive()) {
+            out.print(asConstant().valueString());
+        } else if (value.kind.isObject()) {
+            Object object = asConstant().asObject();
+            if (object == null) {
+                out.print("null");
+            } else if (object instanceof String) {
+                out.print('"').print(object.toString()).print('"');
+            } else {
+                out.print("<object: ").print(value.kind.format(object)).print('>');
+            }
+        } else if (value.kind.isWord()) {
+            out.print("0x").print(Long.toHexString(value.asLong()));
+        } else if (value.kind.isJsr()) {
+            out.print("bci:").print(asConstant().valueString());
+        } else {
+            out.print("???");
+        }
     }
 }

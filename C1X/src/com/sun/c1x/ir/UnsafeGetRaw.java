@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -66,12 +67,17 @@ public final class UnsafeGetRaw extends UnsafeRawOp {
         return mayBeUnaligned;
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitUnsafeGetRaw(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("UnsafeGetRaw.(base ").print(base());
+        if (hasIndex()) {
+            out.print(", index ").print(index()).print(", log2_scale ").print(log2Scale());
+        }
+        out.print(')');
     }
 }

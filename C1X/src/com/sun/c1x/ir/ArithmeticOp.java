@@ -23,6 +23,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -96,10 +97,6 @@ public final class ArithmeticOp extends Op2 {
         return stateBefore != null;
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitArithmeticOp(this);
@@ -115,5 +112,14 @@ public final class ArithmeticOp extends Op2 {
 
     public void eliminateZeroCheck() {
         clearRuntimeCheck(Flag.NoZeroCheck);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(x()).
+             print(' ').
+             print(Bytecodes.operator(opcode)).
+             print(' ').
+             print(y());
     }
 }

@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -55,10 +57,6 @@ public final class NewObjectArray extends NewArray {
         return elementClass;
     }
 
-    /**
-     * Gets the exact type of this instruction.
-     * @return the exact type of this instruction
-     */
     @Override
     public RiType exactType() {
         return elementClass.arrayOf();
@@ -69,12 +67,13 @@ public final class NewObjectArray extends NewArray {
         return exactType();
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitNewObjectArray(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("new object array [").print(length()).print("] ").print(CiUtil.toJavaName(elementClass()));
     }
 }

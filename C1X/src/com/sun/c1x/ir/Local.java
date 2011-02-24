@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -71,12 +72,13 @@ public final class Local extends Value {
         return declaredType;
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to dispatch to
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitLocal(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("local[index ").print(javaIndex()).print(']');
     }
 }

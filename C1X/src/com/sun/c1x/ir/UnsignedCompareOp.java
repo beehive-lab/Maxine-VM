@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytecodes.*;
@@ -66,12 +67,17 @@ public final class UnsignedCompareOp extends Op2 {
         return stateBefore;
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitUnsignedCompareOp(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(x()).
+        print(' ').
+        print(Bytecodes.operator(opcode)).
+        print(' ').
+        print(y());
     }
 }
