@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -47,5 +48,10 @@ public final class MonitorAddress extends Instruction {
 
     public int monitor() {
         return monitor;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("monitor_address (").print(monitor()).print(")");
     }
 }

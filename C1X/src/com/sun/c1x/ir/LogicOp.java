@@ -22,6 +22,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -45,12 +47,13 @@ public final class LogicOp extends Op2 {
         super(kind, opcode, x, s);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitLogicOp(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(x()).print(' ').print(Bytecodes.operator(opcode)).print(' ').print(y());
     }
 }

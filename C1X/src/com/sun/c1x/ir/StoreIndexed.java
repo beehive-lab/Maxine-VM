@@ -24,6 +24,7 @@ package com.sun.c1x.ir;
 
 import static com.sun.c1x.ir.Value.Flag.*;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
@@ -94,22 +95,19 @@ public final class StoreIndexed extends AccessIndexed {
         return super.canTrap() || needsStoreCheck();
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each instruction
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         value = closure.apply(value);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitStoreIndexed(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(array()).print('[').print(index()).print("] := ").print(value()).print(" (").print(kind.typeChar).print(')');
     }
 }

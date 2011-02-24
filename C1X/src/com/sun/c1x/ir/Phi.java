@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
@@ -132,10 +133,6 @@ public final class Phi extends Value {
         }
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to dispatch to
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitPhi(this);
@@ -147,5 +144,10 @@ public final class Phi extends Value {
     public void makeDead() {
         setFlag(Flag.PhiCannotSimplify);
         setFlag(Flag.PhiDead);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("phi function");
     }
 }

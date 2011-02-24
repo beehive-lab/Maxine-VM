@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
@@ -46,19 +47,11 @@ public final class AllocateStackVariable extends Instruction {
         this.value = value;
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitLoadStackAddress(this);
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each instruction
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         value = closure.apply(value);
@@ -69,5 +62,10 @@ public final class AllocateStackVariable extends Instruction {
      */
     public Value value() {
         return value;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("&(").print(value).print(")");
     }
 }

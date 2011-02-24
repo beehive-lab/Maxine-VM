@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -71,5 +72,10 @@ public final class LoadIndexed extends AccessIndexed {
     @Override
     public void accept(ValueVisitor v) {
         v.visitLoadIndexed(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(array()).print('[').print(index()).print("] (").print(kind.typeChar).print(')');
     }
 }

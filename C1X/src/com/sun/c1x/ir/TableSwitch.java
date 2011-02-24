@@ -22,8 +22,11 @@
  */
 package com.sun.c1x.ir;
 
+import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
+
 import java.util.*;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -64,12 +67,24 @@ public final class TableSwitch extends Switch {
         return lowKey + numberOfCases();
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitTableSwitch(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("tableswitch ");
+        if (isSafepoint()) {
+            out.print("(safepoint) ");
+        }
+        out.println(value());
+        int l = numberOfCases();
+        for (int i = 0; i < l; i++) {
+            INSTRUCTION.advance(out);
+            out.printf("case %5d: B%d%n", lowKey() + i, successors().get(i).blockID);
+        }
+        INSTRUCTION.advance(out);
+        out.print("default   : B").print(defaultSuccessor().blockID);
     }
 }

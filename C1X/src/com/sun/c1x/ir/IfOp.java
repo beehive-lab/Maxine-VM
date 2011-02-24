@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 
@@ -86,10 +87,6 @@ public final class IfOp extends Op2 {
         return cond == Condition.EQ || cond == Condition.NE;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each instruction
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
@@ -97,10 +94,6 @@ public final class IfOp extends Op2 {
         falseVal = closure.apply(falseVal);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitIfOp(this);
@@ -118,5 +111,18 @@ public final class IfOp extends Op2 {
             return opcode == o.opcode && x == o.x && y == o.y && trueVal == o.trueVal && falseVal == o.falseVal;
         }
         return false;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(x()).
+        print(' ').
+        print(condition().operator).
+        print(' ').
+        print(y()).
+        print(" ? ").
+        print(trueValue()).
+        print(" : ").
+        print(falseValue());
     }
 }

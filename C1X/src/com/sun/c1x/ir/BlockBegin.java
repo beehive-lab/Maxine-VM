@@ -26,7 +26,9 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
@@ -722,5 +724,199 @@ public final class BlockBegin extends Instruction {
         for (FrameState state : exceptHandlerStates) {
             addExceptionState(state);
         }
+    }
+
+    public void printWithoutPhis(LogStream out) {
+        // print block id
+        BlockEnd end = end();
+        out.print("B").print(blockID).print(" ");
+
+        // print flags
+        StringBuilder sb = new StringBuilder(8);
+        if (isStandardEntry()) {
+            sb.append('S');
+        }
+        if (isOsrEntry()) {
+            sb.append('O');
+        }
+        if (isExceptionEntry()) {
+            sb.append('E');
+        }
+        if (isSubroutineEntry()) {
+            sb.append('s');
+        }
+        if (isParserLoopHeader()) {
+            sb.append("LH");
+        }
+        if (isBackwardBranchTarget()) {
+            sb.append('b');
+        }
+        if (wasVisited()) {
+            sb.append('V');
+        }
+        if (sb.length() != 0) {
+            out.print('(').print(sb.toString()).print(')');
+        }
+
+        // print block bci range
+        out.print('[').print(bci()).print(", ").print(end == null ? -1 : end.bci()).print(']');
+
+        // print block successors
+        if (end != null && end.successors().size() > 0) {
+            out.print(" .");
+            for (BlockBegin successor : end.successors()) {
+                out.print(" B").print(successor.blockID);
+            }
+        }
+        // print exception handlers
+        if (!exceptionHandlers().isEmpty()) {
+            out.print(" (xhandlers");
+            for (BlockBegin handler : exceptionHandlerBlocks()) {
+                out.print(" B").print(handler.blockID);
+            }
+            out.print(')');
+        }
+
+        // print dominator block
+        if (dominator() != null) {
+            out.print(" dom B").print(dominator().blockID);
+        }
+
+        // print predecessors
+        if (!predecessors().isEmpty()) {
+            out.print(" pred:");
+            for (BlockBegin pred : predecessors()) {
+                out.print(" B").print(pred.blockID);
+            }
+        }
+    }
+
+    @Override
+    public void print(LogStream out) {
+
+        printWithoutPhis(out);
+
+        // print phi functions
+        boolean hasPhisInLocals = false;
+        boolean hasPhisOnStack = false;
+
+        if (end != null && end.stateAfter() != null) {
+            FrameState state = stateBefore();
+
+            int i = 0;
+            while (!hasPhisOnStack && i < state.stackSize()) {
+                Value value = state.stackAt(i);
+                hasPhisOnStack = isPhiAtBlock(value);
+                if (value != null && !value.isIllegal()) {
+                    i += value.kind.sizeInSlots();
+                } else {
+                    i++;
+                }
+            }
+
+            do {
+                for (i = 0; !hasPhisInLocals && i < state.localsSize();) {
+                    Value value = state.localAt(i);
+                    hasPhisInLocals = isPhiAtBlock(value);
+                    // also ignore illegal HiWords
+                    if (value != null && !value.isIllegal()) {
+                        i += value.kind.sizeInSlots();
+                    } else {
+                        i++;
+                    }
+                }
+                state = state.callerState();
+            } while (state != null);
+        }
+
+        // print values in locals
+        if (hasPhisInLocals) {
+            out.println();
+            out.println("Locals:");
+
+            FrameState state = stateBefore();
+            do {
+                int i = 0;
+                while (i < state.localsSize()) {
+                    Value value = state.localAt(i);
+                    if (value != null) {
+                        out.println(stateString(i, value));
+                        // also ignore illegal HiWords
+                        i += value.isIllegal() ? 1 : value.kind.sizeInSlots();
+                    } else {
+                        i++;
+                    }
+                }
+                out.println();
+                state = state.callerState();
+            } while (state != null);
+        }
+
+        // print values on stack
+        if (hasPhisOnStack) {
+            out.println();
+            out.println("Stack:");
+            int i = 0;
+            while (i < stateBefore().stackSize()) {
+                Value value = stateBefore().stackAt(i);
+                if (value != null) {
+                    out.println(stateString(i, value));
+                    i += value.kind.sizeInSlots();
+                } else {
+                    i++;
+                }
+            }
+        }
+
+    }
+
+
+
+    /**
+     * Determines if a given instruction is a phi whose {@linkplain Phi#block() join block} is a given block.
+     *
+     * @param value the instruction to test
+     * @param block the block that may be the join block of {@code value} if {@code value} is a phi
+     * @return {@code true} if {@code value} is a phi and its join block is {@code block}
+     */
+    private boolean isPhiAtBlock(Value value) {
+        return value instanceof Phi && ((Phi) value).block() == this;
+    }
+
+
+    /**
+     * Formats a given instruction as a value in a {@linkplain FrameState frame state}. If the instruction is a phi defined at a given
+     * block, its {@linkplain Phi#inputCount() inputs} are appended to the returned string.
+     *
+     * @param index the index of the value in the frame state
+     * @param value the frame state value
+     * @param block if {@code value} is a phi, then its inputs are formatted if {@code block} is its
+     *            {@linkplain Phi#block() join point}
+     * @return the instruction representation as a string
+     */
+    public String stateString(int index, Value value) {
+        StringBuilder sb = new StringBuilder(30);
+        sb.append(String.format("%2d  %s", index, Util.valueString(value)));
+        if (value instanceof Phi) {
+            Phi phi = (Phi) value;
+            // print phi operands
+            if (phi.block() == this) {
+                sb.append(" [");
+                for (int j = 0; j < phi.inputCount(); j++) {
+                    sb.append(' ');
+                    Value operand = phi.inputAt(j);
+                    if (operand != null) {
+                        sb.append(Util.valueString(operand));
+                    } else {
+                        sb.append("NULL");
+                    }
+                }
+                sb.append("] ");
+            }
+        }
+        if (value != null && value.hasSubst()) {
+            sb.append("alias ").append(Util.valueString(value.subst()));
+        }
+        return sb.toString();
     }
 }

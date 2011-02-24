@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -53,12 +54,13 @@ public final class MonitorExit extends AccessMonitor {
         return needsNullCheck();
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitMonitorExit(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("exit monitor[").print(lockNumber).print("](").print(object()).print(')');
     }
 }

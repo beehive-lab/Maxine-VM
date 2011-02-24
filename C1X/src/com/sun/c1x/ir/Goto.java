@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 
@@ -43,12 +44,16 @@ public final class Goto extends BlockEnd {
         successors.add(succ);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitGoto(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("goto B").print(defaultSuccessor().blockID);
+        if (isSafepoint()) {
+            out.print(" (safepoint)");
+        }
     }
 }

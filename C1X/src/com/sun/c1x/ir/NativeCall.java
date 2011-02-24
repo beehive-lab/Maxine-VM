@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ri.*;
 
@@ -87,10 +88,6 @@ public final class NativeCall extends StateSplit {
         return address;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each instruction
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         for (int i = 0; i < arguments.length; i++) {
@@ -103,13 +100,20 @@ public final class NativeCall extends StateSplit {
         address = closure.apply(address);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     *
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitNativeCall(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(nativeMethod.jniSymbol()).print('(');
+        for (int i = 0; i < arguments.length; i++) {
+            if (i > 0) {
+                out.print(", ");
+            }
+            out.print(arguments[i]);
+        }
+        out.print(')');
     }
 }

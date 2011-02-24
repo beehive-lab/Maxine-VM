@@ -22,6 +22,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
+
 /**
  * The {@code UnsafePrefetchRead} instruction represents a prefetch operation on an object field.
  *
@@ -38,12 +40,13 @@ public final class UnsafePrefetchRead extends UnsafePrefetch {
         super(object, offset);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitUnsafePrefetchRead(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("UnsafePrefetchRead.(").print(object()).print(", ").print(offset()).print(')');
     }
 }

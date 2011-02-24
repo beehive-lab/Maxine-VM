@@ -22,6 +22,9 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
+import com.sun.cri.bytecode.*;
+
 /**
  * The {@code ShiftOp} class represents shift operations.
  *
@@ -39,12 +42,13 @@ public final class ShiftOp extends Op2 {
         super(x.kind, opcode, x, y);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitShiftOp(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(x()).print(' ').print(Bytecodes.operator(opcode)).print(' ').print(y());
     }
 }

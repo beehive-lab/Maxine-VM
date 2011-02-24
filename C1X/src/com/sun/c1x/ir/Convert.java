@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -59,19 +61,11 @@ public final class Convert extends Instruction {
         return value;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each input value
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         value = closure.apply(value);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitConvert(this);
@@ -89,5 +83,10 @@ public final class Convert extends Instruction {
             return opcode == o.opcode && value == o.value;
         }
         return false;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(Bytecodes.nameOf(opcode)).print('(').print(value()).print(')');
     }
 }
