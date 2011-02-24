@@ -70,7 +70,7 @@ public final class Label {
     }
 
     public void addPatchAt(int branchLocation) {
-        assert isBound() : "Label is unbound";
+        assert !isBound() : "Label is already bound";
         patchPositions.add(branchLocation);
     }
 
