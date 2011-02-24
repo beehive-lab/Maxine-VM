@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,9 @@ package test.com.sun.max.vm.jni;
 import java.io.*;
 import java.lang.reflect.*;
 
+import junit.framework.*;
+import test.com.sun.max.vm.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
@@ -47,9 +50,13 @@ public class MangleTest extends MaxTestCase {
         junit.textui.TestRunner.run(MangleTest.class);
     }
 
+    public static Test suite() {
+        return new VmTestSetup(new TestCaseClassSet(AutoTest.class).toTestSuite());
+    }
+
     private boolean mangleAndDemangle(String className, String name, String signature) {
         try {
-            final String mangled = Mangle.mangleMethod(JavaTypeDescriptor.parseTypeDescriptor(className), name, signature == null ? null : SignatureDescriptor.create(signature));
+            final String mangled = Mangle.mangleMethod(JavaTypeDescriptor.parseTypeDescriptor(className), name, signature == null ? null : SignatureDescriptor.create(signature), false);
             final Mangle.DemangledMethod demangled = Mangle.demangleMethod(mangled);
             return demangled.mangle().equals(mangled);
         } catch (IllegalArgumentException e) {
@@ -75,7 +82,7 @@ public class MangleTest extends MaxTestCase {
         assert Modifier.isNative(method.getModifiers());
         final String mangled = Mangle.mangleMethod(method, isOverloaded(method));
         final Mangle.DemangledMethod demangled = Mangle.demangleMethod(mangled);
-        assertTrue(demangled.mangle().equals(mangled));
+        assertEquals(demangled.mangle(), mangled);
         if (containedByTopLevelClass(method)) {
             final Method demangledMethod = demangled.toJava(method.getDeclaringClass().getClassLoader());
             if (demangledMethod == null) {

@@ -248,6 +248,10 @@ public final class Heap {
         return (TraceGC || TraceRootScanning) && TraceGCSuppressionCount <= 0;
     }
 
+    public static void setTraceRootScanning(boolean flag) {
+        TraceRootScanning = flag;
+    }
+
     /**
      * Determines if garbage collection timings should be collected and printed.
      */

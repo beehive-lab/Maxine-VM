@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,10 +58,23 @@ public class JDK {
     public static final ClassRef java_lang_ref_Reference$ReferenceHandler  = new ClassRef(java.lang.ref.Reference.class, "ReferenceHandler");
     public static final ClassRef java_lang_ref_ReferenceQueue              = new ClassRef(java.lang.ref.ReferenceQueue.class);
 
-    public static final ClassRef java_io_BufferedInputStream         = new ClassRef(java.io.BufferedInputStream.class);
     public static final ClassRef java_io_Serializable                = new ClassRef(java.io.Serializable.class);
     public static final ClassRef java_io_UnixFileSystem              = new ClassRef("java.io.UnixFileSystem");
     public static final ClassRef java_io_ExpiringCache               = new ClassRef("java.io.ExpiringCache");
+
+    public static final ClassRef java_nio_DirectByteBuffer           = new ClassRef("java.nio.DirectByteBuffer");
+    public static final ClassRef java_nio_DirectCharBufferS          = new ClassRef("java.nio.DirectCharBufferS");
+    public static final ClassRef java_nio_DirectCharBufferU          = new ClassRef("java.nio.DirectCharBufferU");
+    public static final ClassRef java_nio_DirectDoubleBufferS        = new ClassRef("java.nio.DirectDoubleBufferS");
+    public static final ClassRef java_nio_DirectDoubleBufferU        = new ClassRef("java.nio.DirectDoubleBufferU");
+    public static final ClassRef java_nio_DirectFloatBufferS         = new ClassRef("java.nio.DirectFloatBufferS");
+    public static final ClassRef java_nio_DirectFloatBufferU         = new ClassRef("java.nio.DirectFloatBufferU");
+    public static final ClassRef java_nio_DirectIntBufferS           = new ClassRef("java.nio.DirectIntBufferS");
+    public static final ClassRef java_nio_DirectIntBufferU           = new ClassRef("java.nio.DirectIntBufferU");
+    public static final ClassRef java_nio_DirectLongBufferS          = new ClassRef("java.nio.DirectLongBufferS");
+    public static final ClassRef java_nio_DirectLongBufferU          = new ClassRef("java.nio.DirectLongBufferU");
+    public static final ClassRef java_nio_DirectShortBufferS         = new ClassRef("java.nio.DirectShortBufferS");
+    public static final ClassRef java_nio_DirectShortBufferU         = new ClassRef("java.nio.DirectShortBufferU");
 
     public static final ClassRef java_lang_reflect_Constructor       = new ClassRef(java.lang.reflect.Constructor.class);
     public static final ClassRef java_lang_reflect_Field             = new ClassRef(java.lang.reflect.Field.class);

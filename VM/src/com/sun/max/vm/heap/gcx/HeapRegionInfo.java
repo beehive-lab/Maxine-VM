@@ -42,25 +42,22 @@ import com.sun.max.vm.reference.*;
  */
 public class HeapRegionInfo {
 
-    // revisit this. What we need is bitfield, e.g.,
-    // bits 0 to 3 holds enumerated values EMPTY, FULL, HAS_FREE_CHUNK, ALLOCATING.
-    // bits 4 to 5 ... etc.
-    // The following isn't expressive enough.
     static enum Flag {
         /**
-         * Flags indicating that the region has no space left for allocation.
-         * Note that it doesn't mean that it is 100% occupied.
+         * Indicates that the region can be iterated over.
+         * GCs and other operations walking over the heap must never come
+         * across a non-iterable region. Empty and allocating region may not be iterable.
          */
-        FULL,
+        IS_ITERABLE,
+        /**
+         * Indicates that the region is used by an allocator. An allocation region may not be iterable.
+         */
+        IS_ALLOCATING,
         /**
          * Region has a list of {@link HeapFreeChunk} tracking space available for allocation within the region.
          * The head of the list is located at the {@link HeapRegionInfo#firstFreeChunkIndex} word in the region.
          */
-        HAS_FREE_CHUNK,
-        /**
-         * Region is being used by an allocator. It's free chunks information cannot be trusted.
-         */
-        ALLOCATING;
+        HAS_FREE_CHUNK;
 
         private final int mask = 1 << ordinal();
 
@@ -79,20 +76,26 @@ public class HeapRegionInfo {
         public final int xor(int flags) {
             return flags ^ mask;
         }
-
         public int clear(int flags) {
             return flags & ~mask;
         }
+        public final int or(Flag flag) {
+            return flag.mask | mask;
+        }
 
-        /**
-         * Check that the flag set is a legal combination.
-         * @param flags the flags to be checked.
-         * @return true if the flag set defines a legal combination, false otherwise
-         */
-        public static boolean isValidFlagSet(int flags) {
-            return !(FULL.isSet(flags) && HAS_FREE_CHUNK.isSet(flags));
+        public final int and(Flag flag) {
+            return flag.mask & mask;
+        }
+
+        public static int allFlagsMaks() {
+            return IS_ITERABLE.or(IS_ALLOCATING.or(HAS_FREE_CHUNK));
         }
     }
+
+    static final int EMPTY_REGION = 0;
+    static final int ALLOCATING_REGION = IS_ALLOCATING.or(0);
+    static final int FULL_REGION = IS_ITERABLE.or(0);
+    static final int FREE_CHUNKS_REGION = IS_ITERABLE.or(HAS_FREE_CHUNK.or(0));
 
     /**
      * A 32-bit vector compounding several flags information. See {@link Flag} for usage of each of the bits.
@@ -100,13 +103,23 @@ public class HeapRegionInfo {
     int flags; // NOTE: don't want to use an EnumSet here. Don't want a long for storing flags; and want the flags embedded in the heap region info.
 
     public boolean isEmpty() {
-        return (flags & (FULL.mask | HAS_FREE_CHUNK.mask)) == 0;
+        return flags == EMPTY_REGION;
     }
-
     public boolean isFull() {
-        return Flag.FULL.isClear(flags);
+        return flags == FULL_REGION;
     }
 
+    public boolean isAllocating() {
+        return IS_ALLOCATING.isSet(ALLOCATING_REGION);
+    }
+
+    public boolean isIterable() {
+        return IS_ITERABLE.isSet(flags);
+    }
+
+    public boolean hasFreeChunks() {
+        return HAS_FREE_CHUNK.isSet(flags);
+    }
 
     HeapRegionInfo() {
         // Not a class one can allocate. Allocation is the responsibility of the region table.
@@ -186,14 +199,23 @@ public class HeapRegionInfo {
     }
 
     void setFull() {
-        flags = FULL.mask;
+        flags = FULL_REGION;
     }
+
     void setAllocating() {
-        flags = ALLOCATING.mask;
+        flags = IS_ALLOCATING.or(IS_ITERABLE.clear(flags));
+    }
+
+    void setIterable() {
+        flags = IS_ITERABLE.and(IS_ALLOCATING.clear(flags));
+    }
+
+    void setEmpty() {
+        flags = EMPTY_REGION;
     }
 
     void setFirstFreeChunks(Address firstChunkAddress) {
-        flags = HAS_FREE_CHUNK.mask;
+        flags = FREE_CHUNKS_REGION;
         firstFreeChunkIndex = (short) firstChunkAddress.minus(regionStart()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
     }
 

@@ -56,7 +56,7 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
 
     class LinearSpaceRefillManager extends MultiChunkTLABAllocator.RefillManager {
         /**
-         * Size linear space allocated managed by this refill manager are refilled with.
+         * Size linear space allocator managed by this refill manager are refilled with.
          */
         Size refillSize;
         /**
@@ -65,12 +65,14 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
          */
         Size refillThreshold;
 
-        LinearSpaceRefillManager() {
-        }
 
-        void setRefillPolicy(Size refillSize, Size refillThreshold) {
+        void setPolicy(Size refillSize, Size refillThreshold, Size tlabMinChunkSize) {
             this.refillSize = refillSize;
             this.refillThreshold =  refillThreshold;
+            this.tlabMinChunkSize = tlabMinChunkSize;
+        }
+
+        LinearSpaceRefillManager() {
         }
 
         @Override
@@ -99,21 +101,21 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
          */
         @Override
         Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
-            Address firstChunk = Address.zero();
-            if (leftoverSize.greaterThan(0)) {
-                if (leftoverSize.lessThan(refillThreshold)) {
-                    // Don't bother with the left over in the allocator.
-                    HeapSchemeAdaptor.fillWithDeadObject(leftover, leftover.plus(leftoverSize));
-                } else {
-                    HeapFreeChunk.format(leftover, leftoverSize);
-                    tlabSize = tlabSize.minus(leftoverSize);
-                    if (tlabSize.lessThan(refillThreshold)) {
-                        return leftover;
-                    }
-                    firstChunk = leftover;
+            // FIXME: this never refill the allocator!
+            Address firstChunk = tlabChunkOrZero(leftover, leftoverSize);
+            if (!firstChunk.isZero()) {
+                tlabSize = tlabSize.minus(leftoverSize);
+                if (tlabSize.lessThan(tlabMinChunkSize)) {
+                    // Don't bother adding a new chunk.
+                    return firstChunk;
                 }
             }
             return binAllocateTLAB(tlabSize, firstChunk);
+        }
+
+        @Override
+        void makeParsable(Pointer start, Pointer end) {
+            HeapSchemeAdaptor.fillWithDeadObject(start, end);
         }
     }
 
@@ -674,12 +676,13 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         TraceSweep = MaxineVM.isDebug() ? traceSweepingOption.getValue() : false;
         TraceTLAB = heapScheme instanceof HeapSchemeWithTLAB && HeapSchemeWithTLAB.traceTLAB();
 
-        // Refill TLAB on TLAB overflow if less than this:
-        Size tlabRefillThreshold = Size.fromInt(Word.widthValue().numberOfBytes * 64);
+        // Refill allocator if space left below this:
+        Size allocatorRefillThreshold = Size.fromInt(Word.widthValue().numberOfBytes * 64);
 
-        // Dumb refill policy. Doesn't matter in the long term as we'll switch to a first fit linear allocator with overflow allocator on the side.
+        // Dumb refill policy. Doesn't matter in the long term as we'll switch to a first fit linear allocator
+        // with overflow allocator on the side.
         LinearSpaceRefillManager refillManager = (LinearSpaceRefillManager) smallObjectAllocator.refillManager();
-        refillManager.setRefillPolicy(minLargeObjectSize, tlabRefillThreshold);
+        refillManager.setPolicy(minLargeObjectSize, allocatorRefillThreshold, minReclaimableSpace);
         smallObjectAllocator.initialize(start, initSize, minLargeObjectSize, HeapSchemeAdaptor.MIN_OBJECT_SIZE);
         useTLABBin = false;
     }

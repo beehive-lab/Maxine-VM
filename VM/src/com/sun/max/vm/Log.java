@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -464,7 +464,7 @@ public final class Log {
             final String s = string == null ? "null" : string;
             int i = 0;
             while (i < s.length()) {
-                i = CString.writePartialUtf8(s, i, buffer.address(), buffer.size());
+                i = CString.writePartialUtf8(s, i, s.length(), buffer.address(), buffer.size()) - 1;
                 log_print_buffer(buffer.address());
             }
         }
