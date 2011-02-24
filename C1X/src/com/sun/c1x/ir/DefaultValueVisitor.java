@@ -56,7 +56,6 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitExceptionObject(ExceptionObject i) { visit(i); }
     @Override public void visitGoto(Goto i) { visit(i); }
     @Override public void visitIf(If i) { visit(i); }
-    @Override public void visitIfInstanceOf(IfInstanceOf i) { visit(i); }
     @Override public void visitIfOp(IfOp i) { visit(i); }
     @Override public void visitInfopoint(Infopoint i) { visit(i); }
     @Override public void visitInstanceOf(InstanceOf i) { visit(i); }

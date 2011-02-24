@@ -460,12 +460,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitIfInstanceOf(IfInstanceOf i) {
-        // This is unimplemented in C1
-        Util.shouldNotReachHere();
-    }
-
-    @Override
     public void visitIfOp(IfOp i) {
         Value x = i.x();
         Value y = i.y();

@@ -46,7 +46,6 @@ public abstract class ValueVisitor {
     public abstract void visitExceptionObject(ExceptionObject i);
     public abstract void visitGoto(Goto i);
     public abstract void visitIf(If i);
-    public abstract void visitIfInstanceOf(IfInstanceOf i);
     public abstract void visitIfOp(IfOp i);
     public abstract void visitInstanceOf(InstanceOf i);
     public abstract void visitIntrinsic(Intrinsic i);
