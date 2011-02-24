@@ -77,10 +77,6 @@ public abstract class AccessMonitor extends StateSplit {
         return lockAddress;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);

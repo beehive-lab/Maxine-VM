@@ -131,11 +131,6 @@ public abstract class AccessField extends StateSplit {
         return needsPatching() || needsNullCheck();
     }
 
-    /**
-     * Iterates over the input values to this instruction. In this case,
-     * it is only the receiver object of the field access.
-     * @param closure the closure to apply to each value
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);

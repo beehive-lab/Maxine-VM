@@ -100,10 +100,6 @@ public abstract class AccessIndexed extends AccessArray {
         return needsNullCheck() || needsBoundsCheck();
     }
 
-    /**
-     * Iterates over the input values of this instruction.
-     * @param closure the closure to apply to each of the input values
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
