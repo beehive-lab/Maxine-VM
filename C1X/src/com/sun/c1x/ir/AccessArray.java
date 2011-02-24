@@ -66,10 +66,6 @@ public abstract class AccessArray extends StateSplit {
         }
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each of the input values.
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         array = closure.apply(array);

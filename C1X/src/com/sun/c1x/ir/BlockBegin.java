@@ -390,10 +390,6 @@ public final class BlockBegin extends Instruction {
         }
     }
 
-    /**
-     * Implements half of the visitor pattern for this instruction.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitBlockBegin(this);
