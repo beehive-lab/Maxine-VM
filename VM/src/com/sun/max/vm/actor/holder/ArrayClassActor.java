@@ -55,11 +55,6 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
         return interfaceActors;
     }
 
-    @Override
-    public void recordUniqueConcreteSubtype() {
-        UniqueConcreteSubtypeTable.recordClassActor(this);
-    }
-
     public ArrayClassActor(ClassActor componentClassActor) {
         super(Kind.REFERENCE,
               componentClassActor.kind.arrayLayout(Layout.layoutScheme()),

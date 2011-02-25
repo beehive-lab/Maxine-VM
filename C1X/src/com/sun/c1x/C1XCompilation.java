@@ -178,26 +178,6 @@ public final class C1XCompilation {
     }
 
     /**
-     * Records an assumption made by this compilation that the specified type is a leaf class.
-     *
-     * @param type the type that is assumed to be a leaf class
-     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
-     */
-    public boolean recordLeafTypeAssumption(RiType type) {
-        return false;
-    }
-
-    /**
-     * Records an assumption made by this compilation that the specified method is a leaf method.
-     *
-     * @param method the method that is assumed to be a leaf method
-     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
-     */
-    public boolean recordLeafMethodAssumption(RiMethod method) {
-        return runtime.recordLeafMethodAssumption(method);
-    }
-
-    /**
      * Records an assumption that the specified type has no finalizable subclasses.
      *
      * @param receiverType the type that is assumed to have no finalizable subclasses

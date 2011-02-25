@@ -24,6 +24,7 @@ package com.sun.max.vm.actor.holder;
 
 import java.util.*;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 
@@ -39,10 +40,79 @@ import com.sun.max.vm.*;
  */
 public final class ClassID {
 
+    /**
+     * Value to be used as invalid class id.
+     */
+    public static int NULL_CLASS_ID = -1;
+
     private ClassID() {
     }
 
-    // TODO: Should be a weak reference list to allow class unloading
+    static class VariableLengthArray<E> {
+        /*
+         * Simple first implementation. Backing Storage for the array is made of a
+         * fixed size initial prefix and a variable tail that is resized automatically
+         * when trying to add an out of bound element.
+         */
+
+        private final E[] prefix;
+        private E[] variable;
+
+        public VariableLengthArray(int initialCapacity) {
+            final Class<E []> type = null;
+            prefix =  Utils.newArray(type, initialCapacity);
+            variable = Utils.newArray(type, 0);
+        }
+
+        private void ensureCapacity(int minOverflowCapacity) {
+            // FIXME: need to make sure that capacity doesn't go beyond max int.
+            int newCapacity = (variable.length * 3) / 2 + 1;
+            if (newCapacity < minOverflowCapacity) {
+                newCapacity = minOverflowCapacity;
+            }
+            E [] newOverflow = Arrays.copyOf(variable, newCapacity);
+            variable = newOverflow;
+        }
+
+        public E set(int index, E element) {
+            final int pl = prefix.length;
+            if (index < pl) {
+                E oldValue = prefix[index];
+                prefix[index] = element;
+                return oldValue;
+            }
+            final int oindex = index - pl;
+
+            if (oindex >= variable.length) {
+                ensureCapacity(oindex + 1);
+            }
+            E oldValue = variable[oindex];
+            variable[oindex] = element;
+            return oldValue;
+        }
+
+        public E get(int index) {
+            final int pl = prefix.length;
+            if (index < pl) {
+                return prefix[index];
+            }
+            final int oindex = index - pl;
+            if (oindex < variable.length) {
+                return variable[oindex];
+            }
+            return null;
+        }
+
+        public int length() {
+            return prefix.length + variable.length;
+        }
+        // TODO:
+        // Add trimming method
+    }
+
+    public static final int MINIMAL_CLASSES_POPULATIONS = 5000;
+
+    // TODO: replace with the array above and make this field known to GC for class unloading support.
     private static List<ClassActor> idToClassActor = new ArrayList<ClassActor>();
 
     private static BitSet usedIDs = new BitSet();
@@ -93,5 +163,9 @@ public final class ClassID {
     static synchronized void clear(int id) {
         idToClassActor.set(id, null);
         usedIDs.clear(id);
+    }
+
+    public static synchronized int largetClassId() {
+        return idToClassActor.size();
     }
 }
