@@ -1440,7 +1440,7 @@ public final class ClassfileReader {
         final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
 
-        ClassDirectory.addToHierarchy(classActor);
+        ClassDependencyManager.addToHierarchy(classActor);
 
         return classActor;
     }
@@ -1536,7 +1536,7 @@ public final class ClassfileReader {
                         Class<?> javaClass = Class.forName(name);
                         if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
                             // Don't emit messages for host only classes as these class files are only generated
-                            // as an unavoidable side effect of bytecode intrinisification (see Intrinsics)
+                            // as an unavoidable side effect of bytecode intrinsification (see Intrinsics)
                         } else {
                             ProgramWarning.message("class with same name generated twice: " + name);
                         }

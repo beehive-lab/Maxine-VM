@@ -205,7 +205,7 @@ public final class BootImageGenerator {
             if (statsOption.getValue()) {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
-            UniqueConcreteSubtypeTable.dump();
+            ClassDependencyManager.dump();
             writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
             writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));
             if (treeOption.getValue()) {

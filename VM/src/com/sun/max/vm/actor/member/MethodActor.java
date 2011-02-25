@@ -537,6 +537,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     public final boolean isOverridden() {
         // TODO: do more sophisticated leaf method check than just if class has subclass
+        // Currently unused, so doesn't matter.
         return !canBeStaticallyBound() && holder().hasSubclass(); // TODO what about interfaces?
     }
 

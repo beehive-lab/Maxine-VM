@@ -26,6 +26,7 @@ import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
+import static com.sun.max.vm.actor.holder.ClassID.NULL_CLASS_ID;
 
 import java.io.*;
 import java.lang.annotation.*;
@@ -85,14 +86,6 @@ public abstract class ClassActor extends Actor implements RiType {
     public static final InterfaceMethodActor[] NO_INTERFACE_METHODS = new InterfaceMethodActor[0];
     public static final TypeDescriptor[] NO_TYPE_DESCRIPTORS = new TypeDescriptor[0];
 
-    /**
-     * Unique class actor identifier. Simplifies the implementation of type checking, interface dispatch, etc.
-     *
-     * @see ClassID
-     */
-    @INSPECTED
-    public final int id;
-
     @INSPECTED
     public final ClassLoader classLoader;
 
@@ -105,9 +98,39 @@ public abstract class ClassActor extends Actor implements RiType {
 
     public final ClassActor superClassActor;
 
-    public ClassActor firstSubclassActor;
+    /**
+     * Unique class actor identifier (i.e., class id). Simplifies the implementation of type checking, interface dispatch, etc.
+     *
+     * @see ClassID
+     */
+    @INSPECTED
+    public final int id;
 
-    public ClassActor nextSibling;
+    /**
+     * Class id of the head of the list of sub-classes of this actor.
+     * Links are updated only by the {@link ClassDependencyManager}.
+     * Relevant only for tuple and hybrid class actors. All other class actors are direct sub-classes
+     * of the Object class.
+     *
+     * See {@link ClassID}
+     */
+    int firstSubclassActorId;
+
+    /**
+     * Class id of the next sibling of this actor in this actor's superclass list of sub-classes.
+     * Links are updated only by the {@link ClassDependencyManager}.
+     * Relevant only for tuple and hybrid class actors.
+     * See {@link ClassID}
+     */
+    int nextSiblingId;
+
+    /**
+     * Holds the class id of the unique concrete sub-type of
+     * this class actor, {@link ClassID#NULL_CLASS_ID} if the class has
+     * no concrete sub-type, or the class id of the java.lang.Object class
+     * if there is multiple concrete sub-types.
+     */
+    int uniqueConcreteType;
 
     public final char majorVersion;
 
@@ -193,6 +216,10 @@ public abstract class ClassActor extends Actor implements RiType {
         this.classLoader = classLoader;
 
         FatalError.check(classLoader != null, "Class loader cannot be null for class actor " + name);
+        // Initialize all three to the null class id. These will be set up by the ClassHierarchyManager.
+        this.firstSubclassActorId = NULL_CLASS_ID;
+        this.nextSiblingId = NULL_CLASS_ID;
+        this.uniqueConcreteType = NULL_CLASS_ID;
 
         final ClassRegistry classRegistry = classRegistry();
         classRegistry.set(ENCLOSING_METHOD_INFO, this, enclosingMethodInfo);
@@ -777,6 +804,12 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     public final VirtualMethodActor getVirtualMethodActorByVTableIndex(int vTableIndex) {
+        if (MaxineVM.isDebug()) {
+            final int index = vTableIndex - DynamicHub.vTableStartIndex();
+            if (index < 0 || index >= allVirtualMethodActors.length) {
+                FatalError.unexpected("must not happen");
+            }
+        }
         return allVirtualMethodActors[vTableIndex - DynamicHub.vTableStartIndex()];
     }
 
@@ -1576,24 +1609,7 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     public final boolean hasSubclass() {
-        return firstSubclassActor != null;
-    }
-
-    /**
-     * Adds this {@linkplain ClassActor} to the beginning of the list of subclasses of its superclass.
-     */
-    public final void prependToSiblingList() {
-        if (superClassActor == null) {
-            // special case: class "Object"
-            return;
-        }
-        assert !superClassActor.isInterface() : "Superclass cannot be interface.";
-        nextSibling = superClassActor.firstSubclassActor;
-        superClassActor.firstSubclassActor = this;
-    }
-
-    public final void removeFromSiblingList() {
-        // TODO implement and call when unloading classes
+        return firstSubclassActorId != NULL_CLASS_ID;
     }
 
     public final boolean isInstanceClass() {
@@ -1637,13 +1653,9 @@ public abstract class ClassActor extends Actor implements RiType {
         }
     }
 
-    public abstract void recordUniqueConcreteSubtype();
-
     @Override
-    public RiType uniqueConcreteSubtype() {
-        // Default is to return null. See sub-classes of ClassActor for specific details.
-        // This method is meaningful only for non-array types.
-        return null;
+    public final RiType uniqueConcreteSubtype() {
+        return ClassDependencyManager.getUniqueConcreteSubtype(this);
     }
 
     /**
@@ -1653,15 +1665,7 @@ public abstract class ClassActor extends Actor implements RiType {
      * @return the unique concrete incarnation of the method, or null.
      */
     public RiMethod uniqueConcreteMethod(RiMethod method) {
-        // Default is to return null. See sub-classes of ClassActor for specific details.
-        assert isSubtypeOf(method.holder());
-        ClassActor uct = UniqueConcreteSubtypeTable.getUniqueConcreteSubtype(this);
-        if (uct != null) {
-            // This is the only concrete sub-type for the current context. The concrete method
-            // is whatever concrete method is used by this concrete type.
-            return uct.resolveMethodImpl(method);
-        }
-        return null;
+        return ClassDependencyManager.getUniqueConcreteMethod(this, method);
     }
 
 }

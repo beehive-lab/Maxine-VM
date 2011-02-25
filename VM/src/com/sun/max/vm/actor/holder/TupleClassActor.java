@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.actor.holder;
 
-import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -42,6 +41,7 @@ public class TupleClassActor extends ReferenceClassActor {
 
     @INSPECTED
     private final ConstantPool constantPool;
+
 
     protected TupleClassActor(Kind kind,
                               ConstantPool constantPool,
@@ -85,16 +85,6 @@ public class TupleClassActor extends ReferenceClassActor {
     @Override
     public final ConstantPool constantPool() {
         return constantPool;
-    }
-
-    @Override
-    public void recordUniqueConcreteSubtype() {
-        UniqueConcreteSubtypeTable.recordClassActor(this);
-    }
-
-    @Override
-    public RiType uniqueConcreteSubtype() {
-        return UniqueConcreteSubtypeTable.getUniqueConcreteSubtype(this);
     }
 
     /**

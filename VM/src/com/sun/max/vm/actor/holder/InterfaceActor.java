@@ -31,12 +31,9 @@ import com.sun.max.vm.type.*;
  * Internal representations of Java interfaces.
  *
  * @author Bernd Mathiske
+ * @author Laurent Daynes
  */
 public final class InterfaceActor extends ClassActor {
-    @Override
-    public void recordUniqueConcreteSubtype() {
-        UniqueConcreteSubtypeTable.recordClassActor(this);
-    }
 
     public boolean isAnnotation() {
         return (flags() & ACC_ANNOTATION) != 0;
