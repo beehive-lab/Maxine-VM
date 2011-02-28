@@ -110,11 +110,15 @@ public final class ClassID {
         // Add trimming method
     }
 
-    public static final int MINIMAL_CLASSES_POPULATIONS = 5000;
+    public static final int MINIMAL_CLASSES_POPULATIONS = 4000;
 
-    // TODO: replace with the array above and make this field known to GC for class unloading support.
-    private static List<ClassActor> idToClassActor = new ArrayList<ClassActor>();
+    private static VariableLengthArray<ClassActor> idToClassActor = new VariableLengthArray<ClassActor>(MINIMAL_CLASSES_POPULATIONS);
 
+    /**
+     * BitSet keeping track of the assigned class identifiers. A bit set to 1 doesn't necessarily means a non-null entry in {@link ClassID#idToClassActor}
+     * because class identifiers are created eagerly for array classes, whereas array class actors are created lazily.
+     * Thus it is possible to encounter a null entry for a used class identifiers.
+     */
     private static BitSet usedIDs = new BitSet();
 
     /**
@@ -149,9 +153,7 @@ public final class ClassID {
 
     static synchronized int create() {
         final int id = usedIDs.nextClearBit(0);
-        if (id == idToClassActor.size()) {
-            idToClassActor.add(null);
-        }
+        idToClassActor.set(id, null);
         usedIDs.set(id);
         return id;
     }
@@ -165,7 +167,49 @@ public final class ClassID {
         usedIDs.clear(id);
     }
 
-    public static synchronized int largetClassId() {
-        return idToClassActor.size();
+    public static synchronized int largestClassId() {
+        return idToClassActor.length();
+    }
+
+
+    @HOSTED_ONLY
+    private static final BitSet createdArrayClassIDs = new BitSet();
+
+    @HOSTED_ONLY
+    public static void recordArrayClassID(int id) {
+        createdArrayClassIDs.set(id);
+    }
+
+    @HOSTED_ONLY
+    public static void validateUsedClassIds() {
+        int totalUsedNotCreated = 0;
+        int id = 0;
+        id = createdArrayClassIDs.nextSetBit(0);
+        while (id >= 0) {
+            ClassActor classActor = idToClassActor.get(id);
+            if (classActor == null) {
+                System.out.print("Class ID " + id + " created for array isn't assigned");
+                if (usedIDs.get(id)) {
+                    System.out.print(" but recorded used");
+                    totalUsedNotCreated++;
+                }
+                System.out.println();
+            } else if (!(classActor instanceof ArrayClassActor)) {
+                System.out.println("Class ID " + id + " created for array isn't assigned to class array but to " + classActor.name());
+            }
+            id = createdArrayClassIDs.nextSetBit(id + 1);
+        }
+
+        id = 0;
+        while (id >= 0) {
+            ClassActor classActor = idToClassActor.get(id);
+            if (classActor != null && classActor.arrayClassIDs != null) {
+                final int [] arrayClassIDs = classActor.arrayClassIDs;
+                for (int i = 0; i < arrayClassIDs.length; i++) {
+
+                }
+            }
+            id = usedIDs.nextSetBit(id);
+        }
     }
 }

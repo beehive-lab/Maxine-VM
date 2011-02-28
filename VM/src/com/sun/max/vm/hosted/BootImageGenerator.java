@@ -206,6 +206,9 @@ public final class BootImageGenerator {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
             ClassDependencyManager.dump();
+            // ClassID debugging
+            // ClassID.validateUsedClassIds();
+
             writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
             writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));
             if (treeOption.getValue()) {
