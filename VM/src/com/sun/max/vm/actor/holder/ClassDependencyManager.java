@@ -347,7 +347,7 @@ public final class ClassDependencyManager {
             if (printDetails) {
                 Log.println("class id, class name, concrete subtype, concrete subtype class id");
             }
-            final int length = ClassID.largetClassId();
+            final int length = ClassID.largestClassId();
             while (classId < length) {
                 ClassActor classActor;
                 // Skip unused ids
