@@ -38,6 +38,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
 import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.XirConstant;
 import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
 import com.sun.cri.xir.CiXirAssembler.XirParameter;
@@ -72,7 +73,7 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * This class implements the VM interface for generating XIR snippets that express
+ * This class is the Maxine's implementation of VM interface for generating XIR snippets that express
  * the low-level implementation of each bytecode for C1X compilation.
  *
  * @author Ben L. Titzer
@@ -144,6 +145,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate monitorExitTemplate;
     private XirTemplate[] resolveClassTemplates;
     private NewInstanceTemplates newInstanceTemplate;
+    private NewInstanceTemplates tlabNewInstanceTemplate;  // version of templates using TLAB
     private XirPair checkcastForLeafTemplate;
     private XirPair checkcastForClassTemplate;
     private XirPair checkcastForInterfaceTemplate;
@@ -260,6 +262,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         monitorExitTemplate = buildMonitorExit();
 
         newInstanceTemplate = buildNewInstance();
+        tlabNewInstanceTemplate = buildTLABNewInstance();
 
         checkcastForLeafTemplate = buildCheckcastForLeaf(false);
         checkcastForClassTemplate = buildCheckcastForInterface(false); // XXX: more efficient template for class checks
@@ -430,12 +433,18 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirSnippet(pair.unresolved, staticTuple, value, guard);
     }
 
+    // TODO: remove... This is just for testing for now.
+    private static final boolean FastAllocate = true;
     @Override
     public XirSnippet genNewInstance(XirSite site, RiType type) {
         if (type.isResolved() && type.isInitialized()) {
             DynamicHub hub = hubFor(type);
             if (hub.classActor.isHybridClass()) {
                 return new XirSnippet(newInstanceTemplate.resolvedHybrid, XirArgument.forObject(hub));
+            }
+            if (FastAllocate) {
+                return new XirSnippet(tlabNewInstanceTemplate.resolved, XirArgument.forObject(hub),
+                                XirArgument.forInt(hub.tupleSize.toInt()));
             }
             return new XirSnippet(newInstanceTemplate.resolved, XirArgument.forObject(hub));
         }
@@ -953,6 +962,60 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirPair(resolved == null ? unresolved : resolved, unresolved);
     }
 
+    private NewInstanceTemplates buildTLABNewInstance() {
+        XirTemplate resolved;
+        XirTemplate resolvedHybrid;
+        XirTemplate unresolved;
+        {
+            // resolved new instance
+            XirOperand result = asm.restart(CiKind.Object);
+            XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
+            XirParameter hub = asm.createInputParameter("hub", CiKind.Object);
+            XirParameter tupleSize = asm.createConstantInputParameter("tupleSize", CiKind.Int);
+            XirOperand vmThreadLocal = asm.createRegisterTemp("vmThreadLocal", CiKind.Word, AMD64.r14);
+            XirOperand tlabMark = asm.createTemp("tlabMark", CiKind.Word);
+            XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
+            XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
+            XirOperand exchanged = asm.createTemp("exchanged", CiKind.Boolean);
+
+            XirConstant offsetToTLABMark = asm.i(VmThreadLocal.ETLA.offset + HeapSchemeWithTLAB.TLAB_MARK.offset);
+            XirConstant offsetToTLABEnd = asm.i(VmThreadLocal.ETLA.offset + HeapSchemeWithTLAB.TLAB_TOP.offset);
+
+            // Load mark in result register.
+            asm.pload(CiKind.Word, result, vmThreadLocal, offsetToTLABMark, false);
+            asm.pload(CiKind.Word, tlabEnd, vmThreadLocal, offsetToTLABEnd, false);
+            asm.add(newMark, result, tupleSize);
+            asm.jgt(slowPath, newMark, tlabEnd);
+            asm.pcas(CiKind.Word, exchanged, tlabMark, newMark, result);
+            asm.jneq(slowPath, exchanged, result);
+            // Now, plant the hub to properly format the allocated cell as an object.
+            asm.pstore(CiKind.Object, result, asm.i(hubOffset()), hub, false);
+
+            asm.bindOutOfLine(slowPath);
+            callRuntimeThroughStub(asm, "allocateSlowPath", vmThreadLocal, tupleSize);
+            // Now, plant the hub to finalize the allocated object.
+            asm.pstore(CiKind.Object, result, asm.i(hubOffset()), hub, false);
+            resolved = finishTemplate(asm, "new");
+        }
+        {
+            // resolved new hybrid
+            XirOperand result = asm.restart(CiKind.Object);
+            XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
+            callRuntimeThroughStub(asm, "allocateHybrid", result, hub);
+            resolvedHybrid = finishTemplate(asm, "newHybrid");
+        }
+        {
+            // unresolved new instance
+            XirOperand result = asm.restart(CiKind.Object);
+            XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
+            callRuntimeThroughStub(asm, "resolveNew", hub, guard);
+            callRuntimeThroughStub(asm, "allocateObject", result, hub);
+            unresolved = finishTemplate(asm, "new-unresolved");
+        }
+        return new NewInstanceTemplates(resolved, resolvedHybrid, unresolved);
+    }
+
     private NewInstanceTemplates buildNewInstance() {
         XirTemplate resolved;
         XirTemplate resolvedHybrid;
@@ -961,6 +1024,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             // resolved new instance
             XirOperand result = asm.restart(CiKind.Object);
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
+            //XirParameter tupleSize = asm.createConstantInputParameter("tupleSize", CiKind.Int);
+
             callRuntimeThroughStub(asm, "allocateObject", result, hub);
             resolved = finishTemplate(asm, "new");
         }
@@ -968,6 +1033,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             // resolved new hybrid
             XirOperand result = asm.restart(CiKind.Object);
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
+            //XirParameter tupleSize = asm.createConstantInputParameter("tupleSize", CiKind.Int);
             callRuntimeThroughStub(asm, "allocateHybrid", result, hub);
             resolvedHybrid = finishTemplate(asm, "newHybrid");
         }
@@ -1450,6 +1516,19 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         public static Object allocateHybrid(DynamicHub hub) {
             return Heap.createHybrid(hub);
+        }
+
+        private static final HeapSchemeWithTLAB heapScheme =
+            VMConfiguration.vmConfig().heapScheme().usesTLAB() ? (HeapSchemeWithTLAB) VMConfiguration.vmConfig().heapScheme() : null;
+
+        /**
+         * Runtime entry point for failed tlab allocation.
+         * @param etla
+         * @param tupleSize
+         * @return
+         */
+        public static Pointer slowPathAllocateObject(Pointer etla, int tupleSize) {
+            return heapScheme.slowPathAllocate(Size.fromInt(tupleSize), etla);
         }
 
         public static int[] allocateIntArray(int length) {

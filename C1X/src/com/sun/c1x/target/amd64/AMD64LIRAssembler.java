@@ -1676,6 +1676,18 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     break;
 
                 case PointerCAS:
+
+                    if ((Boolean) inst.extra && info != null) {
+                        asm.recordImplicitException(codePos(), info);
+                    }
+                    assert operands[inst.x().index].asRegister().equals(AMD64.rax) : "wrong input x: " + operands[inst.x().index];
+
+                    CiValue exchangedVal = operands[inst.y().index];
+                    CiValue exchangedAddress = operands[inst.x().index];
+                    CiRegisterValue pointerRegister = assureInRegister(exchangedAddress);
+                    CiAddress addr = new CiAddress(CiKind.Word, pointerRegister);
+                    masm.cmpxchgq(exchangedVal.asRegister(), addr);
+
                     break;
 
                 case CallStub: {
