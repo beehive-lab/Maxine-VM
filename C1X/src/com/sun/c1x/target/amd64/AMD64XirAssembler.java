@@ -140,7 +140,17 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case PointerStore:
                 case PointerLoadDisp:
                 case PointerStoreDisp:
+                    break;
                 case PointerCAS:
+                    if (fixedRAX == null) {
+                        fixedRAX = createRegisterTemp("fixedRAX", CiKind.Word, AMD64.rax);
+                    }
+                    // x = source of cmpxch
+                    // y = new value
+                    // z = old value (i.e., the one compared to). Must be in RAX (and so must the result).
+                    currentList.add(new XirInstruction(CiKind.Word, XirOp.Mov, fixedRAX, i.z()));
+                    currentList.add(new XirInstruction(i.kind, i.op, i.result, i.x(), i.y(), fixedRAX));
+                    appended = true;
                     break;
                 case CallStub:
                     flags |= HAS_STUB_CALL.mask;

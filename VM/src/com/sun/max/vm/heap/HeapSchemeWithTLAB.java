@@ -88,14 +88,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
      * {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_TOP
+    public static final VmThreadLocal TLAB_TOP
         = new VmThreadLocal(TLAB_TOP_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: top of current TLAB, zero if not used", Nature.Single);
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_MARK
+    public static final VmThreadLocal TLAB_MARK
         = new VmThreadLocal(TLAB_MARK_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used", Nature.Single);
 
     /**
@@ -352,6 +352,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         }
         TLAB_MARK.store(etla, end);
         return cell;
+    }
+
+    public final Pointer slowPathAllocate(Size size, Pointer etla) {
+        return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
     }
 
     protected abstract Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag);

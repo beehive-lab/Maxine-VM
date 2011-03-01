@@ -199,7 +199,7 @@ public final class C1XOptions {
         OptInlineExcept                 = lll;
         OptInlineSynchronized           = lll;
         UseStackMapTableLiveness        = lll;
-        UseAssumptions                  = l;    // FOR TESTING
+        UseAssumptions                  = lll;
         OptIterativeNCE                 = lll;
         OptFlowSensitiveNCE             = lll;
         OptDeadCodeElimination1         = lll;
