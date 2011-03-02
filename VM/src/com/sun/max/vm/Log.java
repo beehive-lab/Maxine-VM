@@ -464,7 +464,7 @@ public final class Log {
             final String s = string == null ? "null" : string;
             int i = 0;
             while (i < s.length()) {
-                i = CString.writePartialUtf8(s, i, s.length(), buffer.address(), buffer.size()) - 1;
+                i += CString.writePartialUtf8(s, i, s.length() - i, buffer.address(), buffer.size()) - 1;
                 log_print_buffer(buffer.address());
             }
         }
