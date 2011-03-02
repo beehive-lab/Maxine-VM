@@ -344,7 +344,7 @@ public class CheckCopyright {
         String fileName = info.fileName;
         File file = new File(fileName);
         if (!file.exists()) {
-            System.err.println("WARNING: file " + file + " doesn't exist");
+            System.err.println("COPYRIGHT CHECK WARNING: file " + file + " doesn't exist");
             return;
         }
         int fileLength = (int) file.length();
