@@ -893,7 +893,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         setNoResult(x);
     }
 
-    private XirArgument toXirArgument(CiValue v) {
+    protected XirArgument toXirArgument(CiValue v) {
         if (v == null) {
             return null;
         }
