@@ -41,7 +41,7 @@ import com.sun.cri.ci.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public final class AMD64LIRGenerator extends LIRGenerator {
+public class AMD64LIRGenerator extends LIRGenerator {
 
     private static final CiRegisterValue RAX_I = AMD64.rax.asValue(CiKind.Int);
     private static final CiRegisterValue RAX_L = AMD64.rax.asValue(CiKind.Long);

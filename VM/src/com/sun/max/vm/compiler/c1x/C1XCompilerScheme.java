@@ -60,7 +60,7 @@ public class C1XCompilerScheme implements RuntimeCompiler {
     /**
      * The {@linkplain CiTarget target} environment derived from a Maxine {@linkplain Platform platform} description.
      */
-    public final CiTarget target = platform().target;
+    public final CiTarget target;
 
     /**
      * The Maxine specific implementation of the {@linkplain RiXirGenerator interface} used by C1X
@@ -91,11 +91,6 @@ public class C1XCompilerScheme implements RuntimeCompiler {
                 return false;
             }
         }, MaxineVM.Phase.STARTING);
-
-    @HOSTED_ONLY
-    public C1XCompilerScheme() {
-        this(new MaxXirGenerator());
-    }
 
     /**
      * A map from option field names to some text describing the meaning and
@@ -140,12 +135,18 @@ public class C1XCompilerScheme implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
-    protected C1XCompilerScheme(MaxXirGenerator xirGenerator) {
+    public C1XCompilerScheme() {
+        this(new MaxXirGenerator(), platform().target);
+    }
+
+    @HOSTED_ONLY
+    protected C1XCompilerScheme(MaxXirGenerator xirGenerator, CiTarget target) {
         if (!optionsRegistered) {
             VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
             optionsRegistered = true;
         }
         this.xirGenerator = xirGenerator;
+        this.target = target;
     }
 
     @Override
