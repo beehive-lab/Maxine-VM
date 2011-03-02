@@ -528,12 +528,16 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     @Override
     public RiMethod uniqueConcreteMethod() {
-        // (tw) TODO: Return unique concrete method.
-        return null;
+        // FIXME: this method will disappear shortly. Instead, C1X will call
+        // directly RiType.uniqueConcreteMethod(RiMethod method).
+        // In the meantime, we conservatively used the holder of the specified method as the
+        // declaring context to find the unique concrete method.
+        return holder().uniqueConcreteMethod(this);
     }
 
     public final boolean isOverridden() {
         // TODO: do more sophisticated leaf method check than just if class has subclass
+        // Currently unused, so doesn't matter.
         return !canBeStaticallyBound() && holder().hasSubclass(); // TODO what about interfaces?
     }
 

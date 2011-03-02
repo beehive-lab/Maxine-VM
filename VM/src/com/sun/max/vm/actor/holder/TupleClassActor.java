@@ -42,6 +42,7 @@ public class TupleClassActor extends ReferenceClassActor {
     @INSPECTED
     private final ConstantPool constantPool;
 
+
     protected TupleClassActor(Kind kind,
                               ConstantPool constantPool,
                               ClassLoader classLoader,

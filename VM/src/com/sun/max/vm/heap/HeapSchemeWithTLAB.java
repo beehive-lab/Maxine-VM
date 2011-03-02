@@ -54,6 +54,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public static final String TLAB_MARK_THREAD_LOCAL_NAME = "TLAB_MARK";
     public static final String TLAB_DISABLED_THREAD_LOCAL_NAME = "TLAB_DISABLED";
 
+
+    // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
+    public static boolean GenInlinedTLABAlloc;
+
     private static boolean TraceTLAB;
 
     /**
@@ -70,6 +74,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (MaxineVM.isDebug()) {
             VMOptions.addFieldOption("-XX:", "TraceTLAB", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "TraceTLAB"), "Trace TLAB.", MaxineVM.Phase.PRISTINE);
         }
+        // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
+        VMOptions.addFieldOption("-XX:", "InlineTLAB", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "GenInlinedTLABAlloc"),
+                        "XIR generate inlined TLAB allocations.", MaxineVM.Phase.PRISTINE);
     }
 
     /**
@@ -77,6 +84,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     protected static final VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB",
         "Use thread-local object allocation."), MaxineVM.Phase.PRISTINE);
+
 
     /**
      * A VM option for specifying the size of a TLAB. Default is 64 K.
@@ -88,14 +96,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
      * {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_TOP
+    public static final VmThreadLocal TLAB_TOP
         = new VmThreadLocal(TLAB_TOP_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: top of current TLAB, zero if not used", Nature.Single);
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_MARK
+    public static final VmThreadLocal TLAB_MARK
         = new VmThreadLocal(TLAB_MARK_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used", Nature.Single);
 
     /**
@@ -254,7 +262,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @INLINE(override = true)
     @Override
-    public boolean usesTLAB() {
+    public final boolean usesTLAB() {
         return useTLAB;
     }
 
@@ -352,6 +360,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         }
         TLAB_MARK.store(etla, end);
         return cell;
+    }
+
+    public final Pointer slowPathAllocate(Size size, Pointer etla) {
+        return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
     }
 
     protected abstract Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag);

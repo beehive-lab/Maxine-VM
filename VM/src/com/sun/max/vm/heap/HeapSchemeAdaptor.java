@@ -210,6 +210,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     @INLINE(override = true)
+    public int objectAlignment() {
+        return Word.size();
+    }
+
+    @INLINE(override = true)
     public boolean supportsTagging() {
         return true;
     }

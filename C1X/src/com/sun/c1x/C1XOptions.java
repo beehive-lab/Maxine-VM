@@ -124,7 +124,7 @@ public final class C1XOptions {
     public static boolean OptMoveElimination;
 
     // optimistic optimization settings
-    public static boolean UseAssumptions                = ____;
+    public static boolean UseAssumptions                = true;
 
     // state merging settings
     public static boolean AssumeVerifiedBytecode        = ____;

@@ -35,7 +35,13 @@ public final class CiAssumptions {
     }
     
     public final static class ConcreteSubtype extends Assumption {
+        /**
+         * Type the assumption is made about.
+         */
         public final RiType context;
+        /**
+         * Assumed unique concrete sub-type of the context type.
+         */
         public final RiType subtype;
         
         private ConcreteSubtype(RiType context, RiType subtype) {
@@ -107,4 +113,6 @@ public final class CiAssumptions {
         list[count] = assumption;
         count++;
     }
+ 
+    
 }
