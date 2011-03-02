@@ -215,10 +215,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     @INLINE(override = true)
-    public void trackCreation(Pointer cell, Hub hub, boolean isArray) {
-    }
-
-    @INLINE(override = true)
     public void trackLifetime(Pointer cell) {
     }
 
