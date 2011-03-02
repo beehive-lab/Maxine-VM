@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
@@ -44,19 +45,11 @@ public final class StackAllocate extends Instruction {
         eliminateNullCheck();
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitStackAllocate(this);
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each instruction
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         size = closure.apply(size);
@@ -67,5 +60,10 @@ public final class StackAllocate extends Instruction {
      */
     public Value size() {
         return size;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("alloca(").print(size).print(")");
     }
 }

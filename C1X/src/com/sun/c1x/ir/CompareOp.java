@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -41,12 +43,17 @@ public final class CompareOp extends Op2 {
         super(CiKind.Int, opcode, x, y);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitCompareOp(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(x()).
+            print(' ').
+            print(Bytecodes.operator(opcode)).
+            print(' ').
+            print(y());
     }
 }

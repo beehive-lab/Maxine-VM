@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,11 @@
  */
 package com.sun.c1x.ir;
 
+import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
+
 import java.util.*;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -62,12 +65,24 @@ public final class LookupSwitch extends Switch {
         return keys.length;
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitLookupSwitch(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("lookupswitch ");
+        if (isSafepoint()) {
+            out.print("(safepoint) ");
+        }
+        out.println(value());
+        int l = numberOfCases();
+        for (int i = 0; i < l; i++) {
+            INSTRUCTION.advance(out);
+            out.printf("case %5d: B%d%n", keyAt(i), successors().get(i).blockID);
+        }
+        INSTRUCTION.advance(out);
+        out.print("default   : B").print(defaultSuccessor().blockID);
     }
 }

@@ -56,7 +56,7 @@ import com.sun.cri.ci.*;
  */
 public class NullCheckEliminator extends DefaultValueVisitor {
 
-    static class IfEdge {
+    private static class IfEdge {
         final BlockBegin ifBlock;
         final BlockBegin succ;
         final Value checked;
@@ -68,7 +68,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         }
     }
 
-    static class BlockInfo {
+    private static class BlockInfo {
         // used in first pass
         final BlockBegin block;
         boolean marked;
@@ -84,7 +84,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         }
     }
 
-    static class ValueInfo {
+    private static class ValueInfo {
         final Value value;
         final int globalIndex;
 

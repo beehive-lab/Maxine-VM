@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -72,23 +73,25 @@ public final class StoreField extends AccessField {
         return !checkFlag(Flag.NoWriteBarrier);
     }
 
-    /**
-     * Iterates over the input values to this instruction. This implementation applies the closure
-     * to the object receiver value and the written value.
-     * @param closure the closure to apply to each value
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         value = closure.apply(value);
     }
 
-    /**
-     * Implements this instruction's half of the visitor interface.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitStoreField(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(object()).
+        print(".").
+        print(field().name()).
+        print(" := ").
+        print(value()).
+        print(" [type: ").print(CiUtil.format("%h.%n:%t", field(), false)).
+        print(']');
     }
 }

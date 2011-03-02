@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ri.*;
 
@@ -47,10 +48,6 @@ public final class NewObjectArrayClone extends NewArray {
         this.referenceArray = referenceArray;
     }
 
-    /**
-     * Gets the exact type of this instruction.
-     * @return the exact type of this instruction
-     */
     @Override
     public RiType exactType() {
         return referenceArray.exactType();
@@ -65,12 +62,13 @@ public final class NewObjectArrayClone extends NewArray {
         return referenceArray;
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitNewObjectArrayClone(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("new object array [").print(length()).print("] ").print(referenceArray());
     }
 }

@@ -101,10 +101,6 @@ public final class LIRList {
         append(new LIRMemoryBarrier(barriers));
     }
 
-    public void stdEntry(CiValue receiver) {
-        append(new LIROp0(LIROpcode.StdEntry, receiver));
-    }
-
     public void osrEntry(CiValue osrPointer) {
         append(new LIROp0(LIROpcode.OsrEntry, osrPointer));
     }

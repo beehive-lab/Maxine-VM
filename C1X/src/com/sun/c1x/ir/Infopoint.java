@@ -24,6 +24,7 @@ package com.sun.c1x.ir;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -57,10 +58,6 @@ public final class Infopoint extends Instruction {
         }
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitInfopoint(this);
@@ -69,5 +66,10 @@ public final class Infopoint extends Instruction {
     @Override
     public FrameState stateBefore() {
         return state;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(Bytecodes.nameOf(opcode));
     }
 }

@@ -153,9 +153,7 @@ public abstract class LIRAssembler {
         }
 
         if (C1XOptions.PrintLIRWithAssembly) {
-            // don't print Phi's
-            InstructionPrinter ip = new InstructionPrinter(TTY.out(), false, compilation.target);
-            ip.printBlock(block);
+            block.printWithoutPhis(TTY.out());
         }
 
         assert block.lir() != null : "must have LIR";
@@ -309,9 +307,6 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case Label:
                 throw Util.shouldNotReachHere();
-            case StdEntry:
-                asm.verifiedEntry();
-                break;
             case OsrEntry:
                 emitOsrEntry();
                 break;

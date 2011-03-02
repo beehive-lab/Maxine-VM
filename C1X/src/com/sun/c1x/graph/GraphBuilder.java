@@ -282,69 +282,69 @@ public final class GraphBuilder {
         return scopeData.stream.nextBCI();
     }
 
-    void ipush(Value x) {
+    private void ipush(Value x) {
         curState.ipush(x);
     }
 
-    void lpush(Value x) {
+    private void lpush(Value x) {
         curState.lpush(x);
     }
 
-    void fpush(Value x) {
+    private void fpush(Value x) {
         curState.fpush(x);
     }
 
-    void dpush(Value x) {
+    private void dpush(Value x) {
         curState.dpush(x);
     }
 
-    void apush(Value x) {
+    private void apush(Value x) {
         curState.apush(x);
     }
 
-    void wpush(Value x) {
+    private void wpush(Value x) {
         curState.wpush(x);
     }
 
-    void push(CiKind kind, Value x) {
+    private void push(CiKind kind, Value x) {
         curState.push(kind, x);
     }
 
-    void pushReturn(CiKind kind, Value x) {
+    private void pushReturn(CiKind kind, Value x) {
         if (kind != CiKind.Void) {
             curState.push(kind.stackKind(), x);
         }
     }
 
-    Value ipop() {
+    private Value ipop() {
         return curState.ipop();
     }
 
-    Value lpop() {
+    private Value lpop() {
         return curState.lpop();
     }
 
-    Value fpop() {
+    private Value fpop() {
         return curState.fpop();
     }
 
-    Value dpop() {
+    private Value dpop() {
         return curState.dpop();
     }
 
-    Value apop() {
+    private Value apop() {
         return curState.apop();
     }
 
-    Value wpop() {
+    private Value wpop() {
         return curState.wpop();
     }
 
-    Value pop(CiKind kind) {
+    private Value pop(CiKind kind) {
         return curState.pop(kind);
     }
 
-    CiKind peekKind() {
+    private CiKind peekKind() {
         Value top = curState.stackAt(curState.stackSize() - 1);
         if (top == null) {
             top = curState.stackAt(curState.stackSize() - 2);
@@ -354,11 +354,11 @@ public final class GraphBuilder {
         return top.kind;
     }
 
-    void loadLocal(int index, CiKind kind) {
+    private void loadLocal(int index, CiKind kind) {
         push(kind, curState.loadLocal(index));
     }
 
-    void storeLocal(CiKind kind, int index) {
+    private void storeLocal(CiKind kind, int index) {
         if (scopeData.parsingJsr()) {
             // We need to do additional tracking of the location of the return
             // address for jsrs since we don't handle arbitrary jsr/ret
@@ -383,7 +383,7 @@ public final class GraphBuilder {
             }
         }
 
-        curState.storeLocal(index, roundFp(pop(kind)));
+        curState.storeLocal(index, pop(kind));
     }
 
     private void overwriteJsrReturnAddressLocal(int index) {
@@ -403,14 +403,6 @@ public final class GraphBuilder {
                 throw new CiBailout("subroutine overwrites return address from previous subroutine");
             }
         }
-    }
-
-    /**
-     * Adds extra node to round a floating point value if necessary to comply with the requirements of the {@code strictfp} keyword.
-     */
-    Value roundFp(Value x) {
-        // C1X assumes that all X86 backends support SSE2
-        return x;
     }
 
     List<ExceptionHandler> handleException(Instruction x, int bci) {
@@ -1629,6 +1621,7 @@ public final class GraphBuilder {
                     return false;
                 }
             case java_lang_Object$getClass:
+                canTrap = true;
                 break;
             case java_lang_Thread$currentThread:
                 break;
@@ -1777,7 +1770,7 @@ public final class GraphBuilder {
         return false;
     }
 
-    boolean tryInline(RiMethod target, Value[] args) {
+    private boolean tryInline(RiMethod target, Value[] args) {
         boolean forcedInline = compilation.runtime.mustInline(target);
         if (forcedInline) {
             for (IRScope scope = scope().caller; scope != null; scope = scope.caller) {
@@ -1815,7 +1808,7 @@ public final class GraphBuilder {
         return false;
     }
 
-    boolean checkInliningConditions(RiMethod target) {
+    private boolean checkInliningConditions(RiMethod target) {
         if (!C1XOptions.OptInline) {
             return false; // all inlining is turned off
         }
@@ -1856,24 +1849,27 @@ public final class GraphBuilder {
         if (!target.hasBalancedMonitors()) {
             return cannotInline(target, "has unbalanced monitors");
         }
-        if (target.isConstructor() && target.holder().isSubtypeOf(compilation.throwableType())) {
-            // don't inline constructors of throwable classes unless the inlining tree is
-            // rooted in a throwable class
-            if (!rootScope().method.holder().isSubtypeOf(compilation.throwableType())) {
-                return cannotInline(target, "don't inline Throwable constructors");
+        if (target.isConstructor()) {
+            RiType throwableType = compilation.runtime.getRiType(Throwable.class);
+            if (target.holder().isSubtypeOf(throwableType)) {
+                // don't inline constructors of throwable classes unless the inlining tree is
+                // rooted in a throwable class
+                if (!rootScope().method.holder().isSubtypeOf(throwableType)) {
+                    return cannotInline(target, "don't inline Throwable constructors");
+                }
             }
         }
         return true;
     }
 
-    boolean cannotInline(RiMethod target, String reason) {
+    private boolean cannotInline(RiMethod target, String reason) {
         if (C1XOptions.PrintInliningFailures) {
             TTY.println("Cannot inline " + target.toString() + " into " + compilation.method.toString() + " because of " + reason);
         }
         return false;
     }
 
-    void inline(RiMethod target, Value[] args, boolean forcedInline) {
+    private void inline(RiMethod target, Value[] args, boolean forcedInline) {
         BlockBegin orig = curBlock;
         if (!forcedInline && !isStatic(target.accessFlags())) {
             // the receiver object must be null-checked for instance methods
@@ -1906,7 +1902,7 @@ public final class GraphBuilder {
         for (int i = 0; i < args.length; i++) {
             Value arg = args[i];
             if (arg != null) {
-                calleeState.storeLocal(i, roundFp(arg));
+                calleeState.storeLocal(i, arg);
             }
         }
 
@@ -2002,7 +1998,7 @@ public final class GraphBuilder {
         }
     }
 
-    void inlineSyncEntry(Value lock, BlockBegin syncHandler) {
+    private void inlineSyncEntry(Value lock, BlockBegin syncHandler) {
         genMonitorEnter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
@@ -2011,7 +2007,7 @@ public final class GraphBuilder {
         scopeData.addExceptionHandler(handler);
     }
 
-    void fillSyncHandler(Value lock, BlockBegin syncHandler, boolean inlinedMethod) {
+    private void fillSyncHandler(Value lock, BlockBegin syncHandler, boolean inlinedMethod) {
         BlockBegin origBlock = curBlock;
         MutableFrameState origState = curState;
         Instruction origLast = lastInstr;
@@ -2055,7 +2051,7 @@ public final class GraphBuilder {
         lastInstr = origLast;
     }
 
-    void iterateAllBlocks() {
+    private void iterateAllBlocks() {
         BlockBegin b;
         while ((b = scopeData.removeFromWorkList()) != null) {
             if (!b.wasVisited()) {
@@ -2078,17 +2074,17 @@ public final class GraphBuilder {
         }
     }
 
-    void popScope() {
+    private void popScope() {
         int maxLocks = scope().maxLocks();
         scopeData = scopeData.parent;
         scope().updateMaxLocks(maxLocks);
     }
 
-    void popScopeForJsr() {
+    private void popScopeForJsr() {
         scopeData = scopeData.parent;
     }
 
-    void setupOsrEntryBlock() {
+    private void setupOsrEntryBlock() {
         assert compilation.isOsrCompilation();
 
         int osrBCI = compilation.osrBCI;
@@ -2146,7 +2142,7 @@ public final class GraphBuilder {
         target.mergeOrClone(ir.osrEntryBlock.end().stateAfter());
     }
 
-    BlockEnd iterateBytecodesForBlock(int bci, boolean inliningIntoCurrentBlock) {
+    private BlockEnd iterateBytecodesForBlock(int bci, boolean inliningIntoCurrentBlock) {
         skipBlock = false;
         assert curState != null;
         BytecodeStream s = scopeData.stream;
@@ -2580,7 +2576,7 @@ public final class GraphBuilder {
         }
     }
 
-    void genJniOp(int operand) {
+    private void genJniOp(int operand) {
         RiSnippets snippets = compilation.runtime.getSnippets();
         switch (operand) {
             case JniOp.LINK: {
@@ -2604,9 +2600,9 @@ public final class GraphBuilder {
                 break;
             }
         }
-     }
+    }
 
-    void genNativeCall(int cpi) {
+    private void genNativeCall(int cpi) {
         Value nativeFunctionAddress = wpop();
         RiSignature sig = constantPool().lookupSignature(cpi);
         Value[] args = curState.popArguments(sig.argumentSlots(false));

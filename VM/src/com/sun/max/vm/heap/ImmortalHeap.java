@@ -57,14 +57,29 @@ public final class ImmortalHeap {
             "Trace allocation from the immortal heap.", MaxineVM.Phase.PRISTINE);
     }
 
+    // FIXME: immortal heap is initialized at PRIMORDIAL time, so the value specified on the command line will always be ignored!
+    // Beside, PermSize shouldn't really be used as it clash with what it really means in the HotSpot VM
+
+    /**
+     * Partial fix - allow permsize to be specified at image build time via a property.
+     */
+    private static final String PERMSIZE_PROPERTY = "max.permsize";
+
+    static {
+        final String permSizeProp = System.getProperty(PERMSIZE_PROPERTY);
+        int sizeInMB = 1;
+        if (permSizeProp != null) {
+            sizeInMB = Integer.parseInt(permSizeProp);
+        }
+        PermSize = Size.M.times(sizeInMB);
+    }
+
     /**
      * VM option to set the size of the immortal heap. Maxine currently only supports a non-growable
      * immortal heap and so the greater of this option and the {@link #MaxPermSize} option is allocated.
      */
-    private static Size PermSize = Size.M.times(1);
+    private static Size PermSize;
     static {
-        // FIXME: immortal heap is initialized at PRIMORDIAL time, so the value specified on the command line will always be ignored!
-        // Beside, PermSize shouldn't really be used as it clash with what it really means in the HotSpot VM
         VMOptions.addFieldOption("-XX:", "PermSize", ImmortalHeap.class, "Size of immortal heap.", MaxineVM.Phase.PRISTINE);
     }
 

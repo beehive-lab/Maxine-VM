@@ -402,7 +402,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
-        trackCreation(cell, dynamicHub, true);
 
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -412,8 +411,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createTuple(Hub hub) {
         Pointer cell = tlabAllocate(hub.tupleSize);
 
-        trackCreation(cell, hub, false);
-
         return Cell.plantTuple(cell, hub);
     }
 
@@ -421,8 +418,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
-
-        trackCreation(cell, hub, false);
 
         return Cell.plantHybrid(cell, size, hub);
     }

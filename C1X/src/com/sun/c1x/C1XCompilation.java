@@ -57,7 +57,6 @@ public final class C1XCompilation {
     public final CiAssumptions assumptions = new CiAssumptions();
 
     private boolean hasExceptionHandlers;
-
     private final C1XCompilation parent;
 
     /**
@@ -188,15 +187,6 @@ public final class C1XCompilation {
     }
 
     /**
-     * Gets the {@code RiType} corresponding to {@code java.lang.Throwable}.
-     *
-     * @return the compiler interface type for {@link Throwable}
-     */
-    public RiType throwableType() {
-        return runtime.getRiType(Throwable.class);
-    }
-
-    /**
      * Converts this compilation to a string.
      *
      * @return a string representation of this compilation
@@ -304,7 +294,6 @@ public final class C1XCompilation {
     }
 
     public IR emitHIR() {
-
         hir = new IR(this);
         hir.build();
         return hir;
@@ -389,10 +378,4 @@ public final class C1XCompilation {
         assert compilation != null;
         return compilation;
     }
-
-//    public static C1XCompilation setCurrent(C1XCompilation compilation) {
-//        assert compilation == null || currentCompilation.get() == null : "cannot have more than one current compilation per thread";
-//        currentCompilation.set(compilation);
-//        return compilation;
-//    }
 }

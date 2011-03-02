@@ -22,8 +22,6 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.cri.ci.CiKind.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.globalstub.*;
@@ -100,7 +98,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         return pos;
     }
 
-    void loadResult(CiRegister r, int offset, CiKind kind) {
+    private void loadResult(CiRegister r, int offset, CiKind kind) {
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
             movl(r, new CiAddress(CiKind.Int, AMD64.RSP, offset));
         } else if (kind == CiKind.Float) {
@@ -112,7 +110,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    void storeParameter(CiValue registerOrConstant, int offset) {
+    private void storeParameter(CiValue registerOrConstant, int offset) {
         CiKind k = registerOrConstant.kind;
         if (registerOrConstant.isConstant()) {
             CiConstant c = (CiConstant) registerOrConstant;
@@ -153,8 +151,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         movq(dst, rscratch1);
     }
 
-    // src should NEVER be a real pointer. Use AddressLiteral for true pointers
-    void movptr(CiAddress dst, long src) {
+    void mov64(CiAddress dst, long src) {
         mov64(rscratch1, src);
         movq(dst, rscratch1);
     }
@@ -264,19 +261,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
             directCall(CiRuntimeCall.Debug, null);
             hlt();
         }
-    }
-
-    void andptr(CiRegister dst, int imm32) {
-        andq(dst, imm32);
-    }
-
-    void c2bool(CiRegister x) {
-        // implements x == 0 ? 0 : 1
-        // note: must only look at least-significant byte of x
-        // since C-style booleans are stored in one byte
-        // only! (was bug)
-        andl(x, 0xFF);
-        setb(AMD64Assembler.ConditionFlag.notZero, x);
     }
 
     public final void cmp32(CiRegister src1, int imm) {
@@ -426,53 +410,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         }
     }
 
-    int loadSignedByte(CiRegister dst, CiAddress src) {
-        int off = codeBuffer.position();
-        movsxb(dst, src); // movsxb
-        return off;
-    }
-
-    // Note: loadSignedShort used to be called loadSignedWord.
-    // Although the 'w' in x86 opcodes refers to the term "word" in the assembler
-    // manual : which means 16 bits : that usage is found nowhere in HotSpot code.
-    // The term "word" in HotSpot means a 32- or 64-bit machine word.
-    int loadSignedShort(CiRegister dst, CiAddress src) {
-        // This is dubious to me since it seems safe to do a signed 16 => 64 bit
-        // version but this is what 64bit has always done. This seems to imply
-        // that users are only using 32bits worth.
-        int off = codeBuffer.position();
-        movswl(dst, src); // movsxw
-        return off;
-    }
-
-    int loadUnsignedByte(CiRegister dst, CiAddress src) {
-        // According to Intel Doc. AP-526 : "Zero-Extension of Short" : p.16 :
-        // and "3.9 Partial Register Penalties" : p. 22.
-        int off = codeBuffer.position();
-        movzxb(dst, src); // movzxb
-        return off;
-    }
-
-    // Note: loadUnsignedShort used to be called loadUnsignedWord.
-    int loadUnsignedShort(CiRegister dst, CiAddress src) {
-        // According to Intel Doc. AP-526, "Zero-Extension of Short", p.16,
-        // and "3.9 Partial Register Penalties", p. 22).
-        int off = codeBuffer.position();
-        movzxl(dst, src); // movzxw
-        return off;
-    }
-
-    @Override
-    public void nullCheck(CiRegister reg) {
-        // provoke OS null exception if reg = null by
-        // accessing M[reg] w/o changing any (non-CC) registers
-        // NOTE: cmpl is plenty here to provoke a segv
-        testl(AMD64.rax, new CiAddress(CiKind.Word, reg.asValue(Word), 0));
-        // Note: should probably use testl(X86Register.rax, new Address(reg, 0));
-        // may be shorter code (however, this version of
-        // testl needs to be implemented first)
-    }
-
     void signExtendByte(CiRegister reg) {
         if (reg.isByte()) {
             movsxb(reg, reg); // movsxb
@@ -484,10 +421,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     void signExtendShort(CiRegister reg) {
         movsxw(reg, reg); // movsxw
-    }
-
-    void subptr(CiRegister dst, int imm32) {
-        subq(dst, imm32);
     }
 
     // Support optimal SSE move instructions.

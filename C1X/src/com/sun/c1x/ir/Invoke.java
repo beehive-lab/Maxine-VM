@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
@@ -128,10 +129,6 @@ public final class Invoke extends StateSplit {
         return !isStatic();
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each instruction
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         for (int i = 0; i < arguments.length; i++) {
@@ -143,11 +140,6 @@ public final class Invoke extends StateSplit {
         }
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     *
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitInvoke(this);
@@ -156,5 +148,25 @@ public final class Invoke extends StateSplit {
     public CiKind[] signature() {
         CiKind receiver = isStatic() ? null : target.holder().kind();
         return Util.signatureToKinds(target.signature(), receiver);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        int argStart = 0;
+        if (hasReceiver()) {
+            out.print(receiver()).print('.');
+            argStart = 1;
+        }
+
+        RiMethod target = target();
+        out.print(target.name()).print('(');
+        Value[] arguments = arguments();
+        for (int i = argStart; i < arguments.length; i++) {
+            if (i > argStart) {
+                out.print(", ");
+            }
+            out.print(arguments[i]);
+        }
+        out.print(CiUtil.format(") [method: %H.%n(%p):%r]", target, false));
     }
 }
