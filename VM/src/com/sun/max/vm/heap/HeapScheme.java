@@ -255,6 +255,13 @@ public interface HeapScheme extends VMScheme {
     boolean usesTLAB();
 
     /**
+     * Object alignment required by the heap manager (in number of bytes).
+     * @return number of bytes.
+     */
+    @INLINE
+    int objectAlignment();
+
+    /**
      * Turns custom memory allocation on for the current thread. All memory allocations performed by the current thread
      * happen in the allocator identified by the customAllocator value.
      *

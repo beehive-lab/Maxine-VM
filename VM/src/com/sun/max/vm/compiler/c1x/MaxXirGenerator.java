@@ -189,6 +189,11 @@ public class MaxXirGenerator implements RiXirGenerator {
         return FieldActor.findInstance(Hub.class, "tupleSize").offset();
     }
 
+    @FOLD
+    int minObjectAlignmentMask() {
+        return vmConfig().heapScheme().objectAlignment() - 1;
+    }
+
     public MaxXirGenerator() {
     }
 
@@ -449,11 +454,12 @@ public class MaxXirGenerator implements RiXirGenerator {
 
 
     private boolean useTLABs() {
-        // TODO: second term of the conditions below should disappear. This is just to evaluate the impact on performance.
+        // TODO: second clause in each of the two conditions below should disappear. This is just to evaluate the impact of
+        // inlined tlab allocation on performance.
         if (MaxineVM.isHosted()) {
             return vmConfig().heapScheme()instanceof HeapSchemeWithTLAB && Heap.genInlinedTLAB;
         }
-        return vmConfig().heapScheme().usesTLAB() && HeapSchemeWithTLAB.inlineTLABOptions.getValue();
+        return vmConfig().heapScheme().usesTLAB() && HeapSchemeWithTLAB.GenInlinedTLABAlloc;
     }
 
     @Override
@@ -480,9 +486,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genNewArray(XirSite site, XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType) {
-        // FIXME: template for inlined tlab alloc doesn't align sizes for now... So only used for array of element type of word size.
-        XirPair [] templates = (useTLABs() && target().sizeInBytes(elementKind) == target().wordSize) ?
-                        tlabNewArrayTemplates : newArrayTemplates;
+        XirPair [] templates = useTLABs() ? tlabNewArrayTemplates : newArrayTemplates;
         XirPair pair = templates[elementKind.ordinal()];
         Object hub = arrayHubs[elementKind.ordinal()];
         if (elementKind == CiKind.Object && arrayType.isResolved()) {
@@ -935,14 +939,25 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         asm.jlt(reportNegativeIndexError, length, asm.i(0));
         asm.pload(CiKind.Word, etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
-        Scale scale = Scale.fromInt(target().sizeInBytes(kind));
-        // FIXME: NEED to align size to allocation boundary of the heap scheme.
-        if (scale.equals(Scale.Times1)) {
-            asm.add(arraySize, length, asm.i(arrayLayout().headerSize()));
+
+        int elemSize = target().sizeInBytes(kind);
+        Scale scale = Scale.fromInt(elemSize);
+
+        if (elemSize == vmConfig().heapScheme().objectAlignment()) {
+            // Assumed here that header size is already aligned.
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+
+//            asm.shl(arraySize, length, asm.i(scale.log2));
+//            asm.add(arraySize, arraySize, asm.i(arrayLayout().headerSize()));
         } else {
-            asm.shl(arraySize, length, asm.i(scale.log2));
-            asm.add(arraySize, arraySize, asm.i(arrayLayout().headerSize()));
+            // Very x86 / x64 way of doing alignment.
+            //asm.add(arraySize, length, asm.i(arrayLayout().headerSize()));
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+            asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
         }
+
         asm.pload(CiKind.Word, cell, etla, offsetToTLABMark, false);
         asm.pload(CiKind.Word, tlabEnd, etla, offsetToTLABEnd, false);
         asm.add(newMark, cell, arraySize);
