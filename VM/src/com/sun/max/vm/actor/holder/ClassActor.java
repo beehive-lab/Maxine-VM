@@ -487,22 +487,6 @@ public abstract class ClassActor extends Actor implements RiType {
         return componentClassActor().numberOfDimensions() + 1;
     }
 
-
-    @HOSTED_ONLY
-    private void traceArrayIDs(int first, int last) {
-        Log.println("Make Array ID:");
-        for (int i = first; i <= last; i++) {
-            ClassID.recordArrayClassID(arrayClassIDs[i]);
-            Log.print(" ");
-            for (int d = 0; d <= i; d++) {
-                Log.print('[');
-            }
-            Log.print(name());
-            Log.print(" => ");
-            Log.println(arrayClassIDs[i]);
-        }
-    }
-
     protected final synchronized int makeID(int numberOfDimensions) {
         if (numberOfDimensions <= 0) {
             return ClassID.create();
@@ -512,22 +496,20 @@ public abstract class ClassActor extends Actor implements RiType {
             arrayClassIDs = new int[numberOfDimensions];
             for (int i = 0; i < numberOfDimensions; i++) {
                 arrayClassIDs[i] = ClassID.create();
-            }
-            if (MaxineVM.isHosted()) {
-                traceArrayIDs(0, numberOfDimensions - 1);
+                if (MaxineVM.isHosted()) {
+                    ClassID.recordArrayClassID(this, i, arrayClassIDs[i]);
+                }
             }
         } else if (arrayClassIDs.length < numberOfDimensions) {
             final int[] a = new int[numberOfDimensions];
             Ints.copyAll(arrayClassIDs, a);
-            final int first = arrayClassIDs.length;
             for (int i = arrayClassIDs.length; i < a.length; i++) {
                 a[i] = ClassID.create();
+                if (MaxineVM.isHosted()) {
+                    ClassID.recordArrayClassID(this, i, a[i]);
+                }
             }
             arrayClassIDs = a;
-
-            if (MaxineVM.isHosted()) {
-                traceArrayIDs(first, numberOfDimensions - 1);
-            }
         }
         return arrayClassIDs[numberOfDimensions - 1];
     }

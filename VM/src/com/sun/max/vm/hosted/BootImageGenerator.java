@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -84,6 +85,13 @@ public final class BootImageGenerator {
 
     private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
+
+    private final Option<Boolean> debugClassIDOption = options.newBooleanOption("debug-classid", false,
+            "Trace array class id creation and prints reserved class id without array class actors.");
+
+    // TODO: clean this up. Just for getting perf numbers.
+    private final Option<Boolean> inlinedTLABOption = options.newBooleanOption("inline-tlabs", true,
+            "Generate inline TLAB allocation code in boot image.");
 
     /**
      * Used in the Java tester to indicate whether to compile the testing harness itself with the baseline compiler.
@@ -177,6 +185,7 @@ public final class BootImageGenerator {
                 options.printHelp(System.out, 80);
                 return;
             }
+            ClassID.traceArrayClassIDs = debugClassIDOption.getValue();
 
             String[] extraClassesAndPackages = options.getArguments();
             if (extraClassesAndPackages.length != 0) {
@@ -192,8 +201,11 @@ public final class BootImageGenerator {
 
             // Create and installs the VM
             configurator.create(true);
+
             // Initialize the Java prototype
             JavaPrototype.initialize(true);
+
+            Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
 
@@ -205,9 +217,10 @@ public final class BootImageGenerator {
             if (statsOption.getValue()) {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
+
             ClassDependencyManager.dump();
             // ClassID debugging
-            // ClassID.validateUsedClassIds();
+            ClassID.validateUsedClassIds();
 
             writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
             writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));

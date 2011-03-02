@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 
 /**
@@ -37,6 +38,7 @@ import com.sun.max.vm.*;
  * class in JNI code.
  *
  * @author Bernd Mathiske
+ * @author Laurent Daynes
  */
 public final class ClassID {
 
@@ -107,10 +109,10 @@ public final class ClassID {
             return prefix.length + variable.length;
         }
         // TODO:
-        // Add trimming method
+        // When class unloading is supported, add trimming methods and support sparse array.
     }
 
-    public static final int MINIMAL_CLASSES_POPULATIONS = 4000;
+    static final int MINIMAL_CLASSES_POPULATIONS = 4000;
 
     private static VariableLengthArray<ClassActor> idToClassActor = new VariableLengthArray<ClassActor>(MINIMAL_CLASSES_POPULATIONS);
 
@@ -176,12 +178,28 @@ public final class ClassID {
     private static final BitSet createdArrayClassIDs = new BitSet();
 
     @HOSTED_ONLY
-    public static void recordArrayClassID(int id) {
-        createdArrayClassIDs.set(id);
+    public static boolean traceArrayClassIDs = false;
+
+    @HOSTED_ONLY
+    public static void recordArrayClassID(ClassActor elementClass, int dimension, int id) {
+        if (traceArrayClassIDs) {
+            createdArrayClassIDs.set(id);
+            StringBuffer sb = new StringBuffer(" ");
+            for (int d = 0; d <= dimension; d++) {
+                sb.append('[');
+            }
+            sb.append(elementClass.name());
+            sb.append(" => ");
+            sb.append(id);
+            Trace.line(1, sb);
+        }
     }
 
     @HOSTED_ONLY
     public static void validateUsedClassIds() {
+        if (!traceArrayClassIDs) {
+            return;
+        }
         int totalUsedNotCreated = 0;
         int id = 0;
         id = createdArrayClassIDs.nextSetBit(0);

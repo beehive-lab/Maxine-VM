@@ -78,6 +78,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     protected static final VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB",
         "Use thread-local object allocation."), MaxineVM.Phase.PRISTINE);
 
+    // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
+    public static final VMBooleanXXOption inlineTLABOptions = register(new VMBooleanXXOption("-XX:+InlineTLAB",
+        "XIR snippets generate inlined TLAB allocation."), MaxineVM.Phase.PRISTINE);
+
     /**
      * A VM option for specifying the size of a TLAB. Default is 64 K.
      */
