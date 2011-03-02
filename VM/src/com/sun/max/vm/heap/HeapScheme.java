@@ -304,16 +304,6 @@ public interface HeapScheme extends VMScheme {
     boolean supportsTagging();
 
     /**
-     * Experimental support for the analysis of object creation.
-     *
-     * @param cell allocated cell
-     * @param hub object hub
-     * @param isArray true iff object is an array
-     */
-    @INLINE
-    void trackCreation(Pointer cell, Hub hub, boolean isArray);
-
-    /**
      * Experimental support for the analysis of object lifetimes.
      * This is called each time an object survives a GC.
      *
