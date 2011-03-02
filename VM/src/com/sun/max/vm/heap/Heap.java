@@ -107,6 +107,10 @@ public final class Heap {
         heapSizeInfo = theHeapSizeInfo;
     }
 
+    // TODO: clean up. Just for indicating that boot image should be generated with inline TLAB allocation if heap scheme supports TLAB.
+    @HOSTED_ONLY
+    public static boolean genInlinedTLAB;
+
     /**
      * Lock for synchronizing access to the heap.
      */
