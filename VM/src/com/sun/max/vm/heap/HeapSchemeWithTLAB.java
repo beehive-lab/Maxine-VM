@@ -207,7 +207,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     /*
      * TLAB statistics. For now, something simple shared by all threads without synchronization.
-     * Will need to get per-thread and more elaborated.
+     * Will need to get per-thread, with statistics gathered globally at safepoint,
+     * and with more elaborated statistics (especially wrt to TLAB refills).
      */
     class TLABStats {
         /**
@@ -230,14 +231,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         private volatile long leftover = 0L;
 
         private void printTLABStats() {
-            Log.println("\n\n **** TLAB stats");
-            Log.print("inlined allocation slow-path count: ");
+            Log.println("\n\n Summary TLAB stats");
+            Log.print("   inlined allocation slow-path count: ");
             Log.println(inlinedSlowPathAllocateCount);
-            Log.print("runtime allocation slow-path count: ");
+            Log.print("   runtime allocation slow-path count: ");
             Log.println(runtimeSlowPathAllocateCount);
-            Log.print("tlab overflow count               :");
+            Log.print("   tlab overflow count               :");
             Log.println(tlabOverflowCount);
-            Log.print("leftover at TLAB refill           :");
+            Log.print("   leftover at TLAB refill           :");
             if (leftover > Size.K.toLong()) {
                 Log.print(Size.K.plus(leftover).unsignedShiftedRight(10).toLong());
                 Log.println(" K");
