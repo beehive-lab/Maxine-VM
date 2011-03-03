@@ -562,4 +562,16 @@ public final class MaxineVM {
         Log.println(memoryAreaName);
         MaxineVM.native_exit(1);
     }
+
+    /**
+     * Application-requested exit.
+     * @param exitCode code to exit the VM process with.
+     * @param halt  true if this is a halt, not an exit.
+     */
+    public static void exit(int exitCode, boolean halt) {
+        // TODO: need to revisit this. Likely, we would want to bring all
+        // threads to a safepoint before running the terminating phase.
+        vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
+        native_exit(exitCode);
+    }
 }
