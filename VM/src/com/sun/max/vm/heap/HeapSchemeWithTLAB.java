@@ -70,10 +70,15 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return MaxineVM.isDebug() && TraceTLAB;
     }
 
+    private static boolean PrintTLABStats;
+
     static {
         if (MaxineVM.isDebug()) {
             VMOptions.addFieldOption("-XX:", "TraceTLAB", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "TraceTLAB"), "Trace TLAB.", MaxineVM.Phase.PRISTINE);
         }
+        VMOptions.addFieldOption("-XX:", "PrintTLABStats", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "PrintTLABStats"),
+                        "Print TLAB statistics at end of program.", MaxineVM.Phase.PRISTINE);
+
         // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
         VMOptions.addFieldOption("-XX:", "InlineTLAB", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "GenInlinedTLABAlloc"),
                         "XIR generate inlined TLAB allocations.", MaxineVM.Phase.PRISTINE);
@@ -200,6 +205,51 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     private Size initialTlabSize;
 
+    /*
+     * TLAB statistics. For now, something simple shared by all threads without synchronization.
+     * Will need to get per-thread and more elaborated.
+     */
+    class TLABStats {
+        /**
+         * Count of calls to slow path from inlined tlab allocation request.
+         */
+        private volatile long inlinedSlowPathAllocateCount = 0L;
+        /**
+         * Count of all calls to slow path (inlined and runtime).
+         */
+        private volatile long runtimeSlowPathAllocateCount = 0L;
+
+        /**
+         * Count TLAB overflows.
+         */
+        private volatile long tlabOverflowCount = 0L;
+
+        /**
+         * Leftover after refill.
+         */
+        private volatile long leftover = 0L;
+
+        private void printTLABStats() {
+            Log.println("\n\n **** TLAB stats");
+            Log.print("inlined allocation slow-path count: ");
+            Log.println(inlinedSlowPathAllocateCount);
+            Log.print("runtime allocation slow-path count: ");
+            Log.println(runtimeSlowPathAllocateCount);
+            Log.print("tlab overflow count               :");
+            Log.println(tlabOverflowCount);
+            Log.print("leftover at TLAB refill           :");
+            if (leftover > Size.K.toLong()) {
+                Log.print(Size.K.plus(leftover).unsignedShiftedRight(10).toLong());
+                Log.println(" K");
+            } else {
+                Log.print(leftover);
+                Log.println(" bytes");
+            }
+        }
+    }
+
+    final TLABStats globalTlabStats = new TLABStats();
+
     @HOSTED_ONLY
     public HeapSchemeWithTLAB() {
     }
@@ -212,6 +262,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             initialTlabSize = tlabSizeOption.getValue();
             if (initialTlabSize.lessThan(0)) {
                 FatalError.unexpected("Specified TLAB size is too small");
+            }
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            if (PrintTLABStats) {
+                globalTlabStats.printTLABStats();
             }
         }
     }
@@ -285,8 +339,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer tlabTop = tlab.plus(size); // top of the new TLAB
         final Pointer allocationMark = TLAB_MARK.load(etla);
         if (!allocationMark.isZero()) {
+            final Pointer oldTop = TLAB_TOP.load(etla);
+            globalTlabStats.leftover += oldTop.minus(allocationMark).toLong();
             // It is a refill, not an initial fill. So invoke handler.
-            doBeforeTLABRefill(allocationMark, TLAB_TOP.load(etla));
+            doBeforeTLABRefill(allocationMark, oldTop);
         } else {
             ProgramError.check(CUSTOM_ALLOCATION_ENABLED.load(etla).isZero(),
                 "Must not refill TLAB when in custom allocator is set");
@@ -363,6 +419,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     public final Pointer slowPathAllocate(Size size, Pointer etla) {
+        globalTlabStats.inlinedSlowPathAllocateCount++;
         return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
     }
 
@@ -371,6 +428,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     @NEVER_INLINE
     private Pointer slowPathAllocate(Size size, final Pointer etla, final Pointer oldAllocationMark, final Pointer tlabEnd) {
+        globalTlabStats.runtimeSlowPathAllocateCount++;
         // Slow path may be taken because of a genuine refill request, because allocation was disabled,
         // or because allocation in immortal heap was requested.
         // Check for the second here.
@@ -381,6 +439,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (!customAllocator.isZero()) {
             return customAllocate(customAllocator, size, true);
         }
+        globalTlabStats.tlabOverflowCount++;
         // This path will always be taken if TLAB allocation is not enabled.
         return handleTLABOverflow(size, etla, oldAllocationMark, tlabEnd);
     }
@@ -470,6 +529,5 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public void notifyCurrentThreadDetach() {
         tlabReset(currentTLA());
     }
-
 }
 

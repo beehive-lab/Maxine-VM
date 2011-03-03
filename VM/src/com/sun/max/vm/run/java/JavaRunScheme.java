@@ -158,6 +158,12 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         switch (phase) {
+            case BOOTSTRAPPING: {
+                // Make sure MaxineVM.exit is available when running the JavaRunScheme.
+                new CriticalMethod(MaxineVM.class, "exit",
+                                SignatureDescriptor.create(void.class, int.class, boolean.class));
+                break;
+            }
             case STARTING: {
 
                 // This hack enables (platform-dependent) tracing before the eventual System properties are set:
