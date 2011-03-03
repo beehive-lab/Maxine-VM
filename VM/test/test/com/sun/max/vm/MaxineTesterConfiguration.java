@@ -106,6 +106,7 @@ public class MaxineTesterConfiguration {
         output(test.output.JavacTest.class,                RAND_LINUX);
         output(test.output.GCTest7.class,                  RAND_ALL);
         output(test.output.GCTest8.class,                  RAND_ALL);
+        output(test.output.GCThroughput.class,          RAND_ALL);
         output(test.output.MegaThreads.class,              RAND_ALL);
         output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
 
