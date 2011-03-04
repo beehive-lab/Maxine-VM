@@ -46,6 +46,13 @@ import com.sun.max.vm.thread.*;
  */
 public final class Heap {
 
+    @HOSTED_ONLY
+    public static boolean usedOutOfLineStubs;
+
+    // TODO: clean up. Just for indicating that boot image should be generated with inline TLAB allocation if heap scheme supports TLAB.
+    @HOSTED_ONLY
+    public static boolean genInlinedTLAB;
+
     private Heap() {
     }
 
@@ -106,10 +113,6 @@ public final class Heap {
     public static void registerHeapSizeInfo(HeapSizeInfo theHeapSizeInfo) {
         heapSizeInfo = theHeapSizeInfo;
     }
-
-    // TODO: clean up. Just for indicating that boot image should be generated with inline TLAB allocation if heap scheme supports TLAB.
-    @HOSTED_ONLY
-    public static boolean genInlinedTLAB;
 
     /**
      * Lock for synchronizing access to the heap.

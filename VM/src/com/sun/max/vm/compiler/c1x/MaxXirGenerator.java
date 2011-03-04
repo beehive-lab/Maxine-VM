@@ -919,15 +919,14 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    private XirTemplate buildTLABAllocateArray(CiKind kind, XirOperand result, XirOperand hub) {
+    private XirTemplate buildTLABAllocateArrayIn(CiKind kind, XirOperand result, XirOperand hub) {
         XirParameter length = asm.createInputParameter("length", CiKind.Int);
         XirOperand arraySize = asm.createTemp("arraySize", CiKind.Int);
         XirOperand cell = asm.createTemp("cell",  CiKind.Word);
 
         XirLabel done = asm.createInlineLabel("done");
-        XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
-        XirLabel reportNegativeIndexError = asm.createOutOfLineLabel("slowPath");
-
+        XirLabel ok = asm.createInlineLabel("ok");
+        XirLabel reportNegativeIndexError = asm.createOutOfLineLabel("indexError");
 
         XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, AMD64.r14);
         XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
@@ -947,12 +946,66 @@ public class MaxXirGenerator implements RiXirGenerator {
             // Assumed here that header size is already aligned.
             asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
             asm.lea(arraySize, arraySize, length, 0, scale);
-
-//            asm.shl(arraySize, length, asm.i(scale.log2));
-//            asm.add(arraySize, arraySize, asm.i(arrayLayout().headerSize()));
         } else {
             // Very x86 / x64 way of doing alignment.
-            //asm.add(arraySize, length, asm.i(arrayLayout().headerSize()));
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+            asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+        }
+
+        asm.pload(CiKind.Word, cell, etla, offsetToTLABMark, false);
+        asm.pload(CiKind.Word, tlabEnd, etla, offsetToTLABEnd, false);
+        asm.add(newMark, cell, arraySize);
+        asm.jlteq(ok, newMark, tlabEnd);
+
+        callRuntimeThroughStub(asm, "slowPathAllocate", cell, arraySize, etla);
+        asm.jmp(done);
+
+        asm.bindInline(ok);
+        asm.pstore(CiKind.Word, etla, offsetToTLABMark, newMark, false);
+
+        asm.bindInline(done);
+        // Now, plant the hub to properly format the allocated cell as an object.
+        asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
+        asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
+        asm.mov(result, cell);
+
+        asm.bindOutOfLine(reportNegativeIndexError);
+        callRuntimeThroughStub(asm, "throwNegativeArraySizeException", null, length);
+
+        return finishTemplate(asm, (kind.isObject() ? "a" : "") + "newarray<" + kind + ">");
+    }
+
+    @HOSTED_ONLY
+    private XirTemplate buildTLABAllocateArray(CiKind kind, XirOperand result, XirOperand hub) {
+        XirParameter length = asm.createInputParameter("length", CiKind.Int);
+        XirOperand arraySize = asm.createTemp("arraySize", CiKind.Int);
+        XirOperand cell = asm.createTemp("cell",  CiKind.Word);
+
+        XirLabel done = asm.createInlineLabel("done");
+        XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
+        XirLabel reportNegativeIndexError = asm.createOutOfLineLabel("indexError");
+
+        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, AMD64.r14);
+        XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
+        XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
+        XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
+
+        XirConstant offsetToTLABMark = asm.i(HeapSchemeWithTLAB.TLAB_MARK.offset);
+        XirConstant offsetToTLABEnd = asm.i(HeapSchemeWithTLAB.TLAB_TOP.offset);
+
+        asm.jlt(reportNegativeIndexError, length, asm.i(0));
+        asm.pload(CiKind.Word, etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
+
+        int elemSize = target().sizeInBytes(kind);
+        Scale scale = Scale.fromInt(elemSize);
+
+        if (elemSize == vmConfig().heapScheme().objectAlignment()) {
+            // Assumed here that header size is already aligned.
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+        } else {
+            // Very x86 / x64 way of doing alignment.
             asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
             asm.lea(arraySize, arraySize, length, 0, scale);
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
@@ -982,7 +1035,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildTLABAllocateArray(CiKind kind) {
         XirOperand result = asm.restart(CiKind.Object);
         XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
-        return buildTLABAllocateArray(kind, result, hub);
+        return Heap.usedOutOfLineStubs ?
+                        buildTLABAllocateArray(kind, result, hub) :
+                            buildTLABAllocateArrayIn(kind, result, hub);
     }
 
     @HOSTED_ONLY
@@ -1074,11 +1129,41 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirPair(resolved == null ? unresolved : resolved, unresolved);
     }
 
+    // Version that doesn't use out-of-line stub.
     @HOSTED_ONLY
-    private XirTemplate buildTLABAllocate(boolean isHybrid) {
-        XirOperand result = asm.restart(CiKind.Object);
-        XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
-        XirParameter tupleSize = asm.createConstantInputParameter("tupleSize", CiKind.Int);
+    private void buildTLABAllocateIn(boolean isHybrid, XirOperand result, XirOperand hub, XirOperand tupleSize) {
+        XirOperand cell = asm.createTemp("cell",  CiKind.Word);
+        XirLabel done = asm.createInlineLabel("done");
+        XirLabel ok = asm.createInlineLabel("slowPath");
+        XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, AMD64.r14);
+        XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
+        XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
+        XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
+
+        XirConstant offsetToTLABMark = asm.i(HeapSchemeWithTLAB.TLAB_MARK.offset);
+        XirConstant offsetToTLABEnd = asm.i(HeapSchemeWithTLAB.TLAB_TOP.offset);
+        asm.pload(CiKind.Word, etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
+        asm.pload(CiKind.Word, cell, etla, offsetToTLABMark, false);
+        asm.pload(CiKind.Word, tlabEnd, etla, offsetToTLABEnd, false);
+        asm.add(newMark, cell, tupleSize);
+        asm.jlteq(ok, newMark, tlabEnd);
+        // Slow path.
+        callRuntimeThroughStub(asm, "slowPathAllocate", cell, tupleSize, etla);
+        // Jump over update of TLAB mark and go directly to code formatting the allocated cell.
+        asm.jmp(done);
+        asm.bindInline(ok);
+        asm.pstore(CiKind.Word, etla, offsetToTLABMark, newMark, false);
+        asm.bindInline(done);
+        // Now, plant the hub to properly format the allocated cell as an object.
+        asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
+        if (isHybrid) {
+            asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), asm.i(hubFirstWordIndex()), false);
+        }
+        asm.mov(result, cell);
+    }
+
+    @HOSTED_ONLY
+    private void buildTLABAllocate(boolean isHybrid, XirOperand result, XirOperand hub, XirOperand tupleSize) {
         XirOperand cell = asm.createTemp("cell",  CiKind.Word);
         XirLabel done = asm.createInlineLabel("done");
         XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
@@ -1105,13 +1190,25 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.bindOutOfLine(slowPath);
         callRuntimeThroughStub(asm, "slowPathAllocate", cell, tupleSize, etla);
         asm.jmp(done);
-        return finishTemplate(asm, "new" + (isHybrid ? "Hybrid" : ""));
+    }
+
+    @HOSTED_ONLY
+    private XirTemplate buildTLABAllocate(String templateName, boolean isHybrid) {
+        XirOperand result = asm.restart(CiKind.Object);
+        XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
+        XirParameter tupleSize = asm.createConstantInputParameter("tupleSize", CiKind.Int);
+        if (Heap.usedOutOfLineStubs) {
+            buildTLABAllocate(isHybrid, result, hub, tupleSize);
+        } else {
+            buildTLABAllocateIn(isHybrid, result, hub, tupleSize);
+        }
+        return finishTemplate(asm, templateName);
     }
 
     @HOSTED_ONLY
     private NewInstanceTemplates buildTLABNewInstance() {
-        XirTemplate resolved = buildTLABAllocate(false);
-        XirTemplate resolvedHybrid = buildTLABAllocate(true);
+        XirTemplate resolved = buildTLABAllocate("new", false);
+        XirTemplate resolvedHybrid = buildTLABAllocate("newHybrid", true);
         XirTemplate unresolved;
         {
             // unresolved new instance
@@ -1121,30 +1218,12 @@ public class MaxXirGenerator implements RiXirGenerator {
             callRuntimeThroughStub(asm, "resolveNew", hub, guard);
 
             XirOperand tupleSize = asm.createTemp("tupleSize", CiKind.Int);
-            XirOperand cell = asm.createTemp("cell",  CiKind.Word);
-            XirLabel done = asm.createInlineLabel("done");
-            XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
-            XirOperand tla = asm.createRegisterTemp("TLA", CiKind.Word, AMD64.r14);
-            XirOperand etla = asm.createTemp("ETLA", CiKind.Word);
-            XirOperand tlabEnd = asm.createTemp("tlabEnd", CiKind.Word);
-            XirOperand newMark = asm.createTemp("newMark", CiKind.Word);
-
-            XirConstant offsetToTLABMark = asm.i(HeapSchemeWithTLAB.TLAB_MARK.offset);
-            XirConstant offsetToTLABEnd = asm.i(HeapSchemeWithTLAB.TLAB_TOP.offset);
-            asm.pload(CiKind.Word, etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
             asm.pload(CiKind.Int, tupleSize, hub, asm.i(offsetOfTupleSize()), false);
-            asm.pload(CiKind.Word, cell, etla, offsetToTLABMark, false);
-            asm.pload(CiKind.Word, tlabEnd, etla, offsetToTLABEnd, false);
-            asm.add(newMark, cell, tupleSize);
-            asm.jgt(slowPath, newMark, tlabEnd);
-            asm.pstore(CiKind.Word, etla, offsetToTLABMark, newMark, false);
-            asm.bindInline(done);
-            // Now, plant the hub to properly format the allocated cell as an object.
-            asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
-            asm.mov(result, cell);
-            asm.bindOutOfLine(slowPath);
-            callRuntimeThroughStub(asm, "slowPathAllocate", cell, tupleSize, etla);
-            asm.jmp(done);
+            if (Heap.usedOutOfLineStubs) {
+                buildTLABAllocate(false, result, hub, tupleSize);
+            } else {
+                buildTLABAllocateIn(false, result, hub, tupleSize);
+            }
             unresolved = finishTemplate(asm, "new-unresolved");
         }
         return new NewInstanceTemplates(resolved, resolvedHybrid, unresolved);
