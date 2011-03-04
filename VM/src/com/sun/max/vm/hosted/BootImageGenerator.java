@@ -92,6 +92,9 @@ public final class BootImageGenerator {
     // TODO: clean this up. Just for getting perf numbers.
     private final Option<Boolean> inlinedTLABOption = options.newBooleanOption("inline-tlabs", true,
             "Generate inline TLAB allocation code in boot image.");
+    // TODO: clean this up. Just for getting perf numbers.
+    private final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
+                    "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
     /**
      * Used in the Java tester to indicate whether to compile the testing harness itself with the baseline compiler.
@@ -206,6 +209,7 @@ public final class BootImageGenerator {
             JavaPrototype.initialize(true);
 
             Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
+            Heap.usedOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
 
