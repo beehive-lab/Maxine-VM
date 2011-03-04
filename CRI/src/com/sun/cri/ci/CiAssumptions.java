@@ -26,14 +26,35 @@ import com.sun.cri.ri.*;
 
 /**
  * Class for recording optimistic assumptions made during compilation.
+ * Recorded assumption can be visited for subsequent processing using 
+ * an implementation of the {@link AssumptionProcessor} interface.
+ * 
  * @author Thomas Wuerthinger
+ * @author Laurent Daynes
  *
  */
 public final class CiAssumptions {
 
-    public abstract static class Assumption {
+    public static interface AssumptionProcessor {
+        /**
+         * Process a unique concrete subtype assumptions
+         * @param context
+         * @param subtype
+         * @return true if the processor should proceed to next assumptions, false if it should stop.
+         */
+        boolean processUniqueConcreteSubtype(RiType context, RiType subtype);
+        boolean processUniqueConcreteMethod(RiMethod context, RiMethod method);
     }
-    
+
+    public abstract static class Assumption {
+        /**
+         * Apply an assumption processor to the assumption.
+         * @param processor
+         * @return true if a next assumption in a list should be fed to the processor.
+         */
+        abstract boolean visit(AssumptionProcessor processor);
+    }
+
     public final static class ConcreteSubtype extends Assumption {
         /**
          * Type the assumption is made about.
@@ -57,6 +78,11 @@ public final class CiAssumptions {
             }
             return false;
         }
+
+        @Override
+        public boolean visit(AssumptionProcessor processor) {
+            return processor.processUniqueConcreteSubtype(context, subtype);
+        }
     }
     
     public final static class ConcreteMethod extends Assumption {
@@ -75,6 +101,11 @@ public final class CiAssumptions {
                 return other.context == context && other.method == method;
             }
             return false;
+        }
+        
+        @Override
+        public boolean visit(AssumptionProcessor processor) {
+            return processor.processUniqueConcreteMethod(context, method);
         }
     }
     
@@ -113,6 +144,13 @@ public final class CiAssumptions {
         list[count] = assumption;
         count++;
     }
- 
+
+    public void visit(AssumptionProcessor processor) {
+        for (int i = 0; i < count; i++) {
+            if (!list[i].visit(processor)) {
+                return;
+            }
+        }
+    }
     
 }

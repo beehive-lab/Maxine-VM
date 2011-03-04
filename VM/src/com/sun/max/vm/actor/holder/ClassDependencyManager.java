@@ -24,8 +24,13 @@ package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.actor.holder.ClassID.*;
 
+import java.io.*;
+import java.util.*;
+
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.profile.*;
+import com.sun.max.profile.ValueMetrics.IntegerDistribution;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -317,13 +322,84 @@ public final class ClassDependencyManager {
         }
     }
 
+
+    static class AssumptionValidator implements CiAssumptions.AssumptionProcessor {
+        int numDep = 0;
+        int numUCT = 0;
+        int numUCM = 0;
+        int selfUCT = 0;
+        int selfUCM = 0;
+        HashSet<RiType> contexts = new HashSet<RiType>(10);
+
+        IntegerDistribution numContextPerMethods = ValueMetrics.newIntegerDistribution("numContextPerMethods", 0, 10);
+        IntegerDistribution numUCTPerMethods = ValueMetrics.newIntegerDistribution("numUCTPerMethods", 0, 10);
+        IntegerDistribution numUCMPerMethods = ValueMetrics.newIntegerDistribution("numUCMPerMethods", 0, 30);
+        IntegerDistribution numDepPerMethods = ValueMetrics.newIntegerDistribution("numDepPerMethods", 0, 40);
+
+        long numTargetMethods                 = 0;
+        long numTargetMethodWithAssumptions  = 0;
+
+        void summarize() {
+            numTargetMethods++;
+            if (numDep > 0) {
+                numTargetMethodWithAssumptions++;
+                numDepPerMethods.record(numDep);
+                numContextPerMethods.record(contexts.size());
+                numUCTPerMethods.record(numUCT);
+                numUCMPerMethods.record(numUCM);
+                contexts.clear();
+                numUCT = 0;
+                numUCM = 0;
+                numDep = 0;
+            }
+        }
+
+        @Override
+        public boolean processUniqueConcreteSubtype(RiType context, RiType subtype) {
+            if (context.equals(subtype)) {
+                selfUCT++;
+            }
+            numDep++;
+            numUCT++;
+            contexts.add(context);
+            return true;
+        }
+
+        @Override
+        public boolean processUniqueConcreteMethod(RiMethod context, RiMethod method) {
+            numDep++;
+            numUCM++;
+            contexts.add(context.holder());
+            return true;
+        }
+
+        public void report() {
+            PrintStream out = System.out;
+            out.println("CiAssumptions statistics");
+            out.println("#target methods               " + numTargetMethods);
+            out.println("#target methods w/ assumptions" + numTargetMethodWithAssumptions);
+            numDepPerMethods.report("# deps / methods", out);
+            numContextPerMethods.report("# contexts / methods", out);
+            numUCTPerMethods.report("# uct deps / methods", out);
+            numUCMPerMethods.report("# ucm deps / methods", out);
+        }
+    }
+
+    private static AssumptionValidator assumptionValidator = new AssumptionValidator();
+
     /**
-     * Validate a set of assumptions made by a dynamic compiler.
+     * Validate a set of assumptions made by a dynamic compiler for a compiled method.
      *
      * @param ciAssumptions
-     * @return
+     * @return true if assumptions made are valid.
      */
     public static boolean validateAssumptions(CiAssumptions ciAssumptions) {
+        if (ciAssumptions != null) {
+            synchronized (classHierarchyLock) {
+                ciAssumptions.visit(assumptionValidator);
+                assumptionValidator.summarize();
+            }
+        }
         return true;
     }
 
@@ -331,6 +407,8 @@ public final class ClassDependencyManager {
      * Dump the table in the log.
      */
     public static void dump() {
+        assumptionValidator.report();
+
         if (!enableDumpOption) {
             return;
         }

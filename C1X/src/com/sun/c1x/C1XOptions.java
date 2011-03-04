@@ -198,7 +198,7 @@ public final class C1XOptions {
         OptInlineExcept                 = lll;
         OptInlineSynchronized           = lll;
         UseStackMapTableLiveness        = lll;
-        UseAssumptions                  = lll;
+        UseAssumptions                  = l; // FIXME. Just for testing for now
         OptIterativeNCE                 = lll;
         OptFlowSensitiveNCE             = lll;
         OptDeadCodeElimination1         = lll;

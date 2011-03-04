@@ -111,6 +111,10 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+
+        // TODO: for now, just to gather statistics on assumptions
+        ClassDependencyManager.validateAssumptions(ciTargetMethod.assumptions());
+
         init(ciTargetMethod);
 
         if (PrintTargetMethods != null) {
