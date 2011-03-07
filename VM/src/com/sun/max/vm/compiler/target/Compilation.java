@@ -201,6 +201,9 @@ public class Compilation implements Future<TargetMethod> {
             if (targetMethod == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }
+
+            Inspect.notifyCompilationComplete(targetMethod);
+
             if (startCompile != 0) {
                 compilationTime += System.currentTimeMillis() - startCompile;
             }
