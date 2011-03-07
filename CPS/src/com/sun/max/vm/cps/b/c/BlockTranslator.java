@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ final class BlockTranslator {
             }
             bytecodeScanner.scan(blockState.birBlock().bytecodeBlock());
         } catch (Throwable e) {
-            String dis = "\n\n" + BytecodePrinter.toString(translation.classMethodActor().codeAttribute().constantPool, blockState.birBlock().bytecodeBlock());
+            String dis = "\n\n" + BytecodePrinter.toString(translation.classMethodActor().codeAttribute().cp, blockState.birBlock().bytecodeBlock());
             throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(translation.classMethodActor()) + dis).initCause(e);
         }
         visitor.terminateBlock();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ public final class CodeAttributePrinter {
     public static void print(Writer writer, CodeAttribute codeAttribute) {
         final PrintWriter printWriter = (writer instanceof PrintWriter) ? (PrintWriter) writer : new PrintWriter(writer);
         printWriter.println("Stack=" + (int) codeAttribute.maxStack + ", Locals=" + (int) codeAttribute.maxLocals);
-        final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, codeAttribute.constantPool);
+        final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, codeAttribute.cp);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
         try {
             bytecodeScanner.scan(new BytecodeBlock(codeAttribute.code()));
@@ -112,12 +112,12 @@ public final class CodeAttributePrinter {
                     catchType = "*any*";
                 } else {
                     try {
-                        catchType = codeAttribute.constantPool.classAt(catchTypeIndex).typeDescriptor().toJavaString();
+                        catchType = codeAttribute.cp.classAt(catchTypeIndex).typeDescriptor().toJavaString();
                     } catch (ClassFormatError classFormatError) {
                         catchType = "*ERROR[cpi=" + catchTypeIndex + "]*";
                     }
                 }
-                printWriter.println(String.format("  %-6d%-4d%-8d%s", entry.startPosition(), entry.endPosition(), entry.handlerPosition(), catchType));
+                printWriter.println(String.format("  %-6d%-4d%-8d%s", entry.startBCI(), entry.endBCI(), entry.handlerBCI(), catchType));
             }
         }
         printWriter.flush();
@@ -134,13 +134,13 @@ public final class CodeAttributePrinter {
     public static void printStackMapTable(CodeAttribute codeAttribute, final PrintWriter printWriter) {
         final StackMapTable stackMapTable = codeAttribute.stackMapTable();
         if (stackMapTable != null) {
-            final Verifier verifier = new Verifier(codeAttribute.constantPool);
+            final Verifier verifier = new Verifier(codeAttribute.cp);
             final StackMapFrame[] frames = stackMapTable.getFrames(verifier);
             printWriter.println("StackMapTable: number of entries = " + frames.length);
             int previousFrameOffset = -1;
             for (int i = 0; i != frames.length; ++i) {
                 final StackMapFrame stackMapFrame = frames[i];
-                final int offset = stackMapFrame.getPosition(previousFrameOffset);
+                final int offset = stackMapFrame.getBCI(previousFrameOffset);
                 printWriter.println(Strings.indent(offset + ": " + stackMapFrame.toString(), "  "));
                 previousFrameOffset = offset;
             }
@@ -161,7 +161,7 @@ public final class CodeAttributePrinter {
         if (!lineNumberTable.isEmpty()) {
             printWriter.println("LineNumberTable:");
             for (LineNumberTable.Entry entry : lineNumberTable.entries()) {
-                printWriter.println("  line " + entry.lineNumber() + ": " + entry.position());
+                printWriter.println("  line " + entry.lineNumber() + ": " + entry.bci());
             }
         }
         printWriter.flush();
@@ -180,13 +180,13 @@ public final class CodeAttributePrinter {
         if (!localVariableTable.isEmpty()) {
             printWriter.println("LocalVariableTable:");
             printWriter.println("  Start Length Slot Name               Descriptor            Generic-signature");
-            final ConstantPool cp = codeAttribute.constantPool;
+            final ConstantPool cp = codeAttribute.cp;
             for (LocalVariableTable.Entry entry : localVariableTable.entries()) {
                 final int signatureIndex = entry.signatureIndex();
                 final String name = utf8At(cp, entry.nameIndex());
                 final String descriptor = utf8At(cp, entry.descriptorIndex());
                 final String genericSignature = signatureIndex == 0 ? "" : utf8At(cp, signatureIndex);
-                printWriter.println(String.format("  %-6d%-7d%-5d%-19s%-22s%s", entry.startPosition(), entry.length(), entry.slot(), name, descriptor, genericSignature));
+                printWriter.println(String.format("  %-6d%-7d%-5d%-19s%-22s%s", entry.startBCI(), entry.length(), entry.slot(), name, descriptor, genericSignature));
             }
         }
         printWriter.flush();

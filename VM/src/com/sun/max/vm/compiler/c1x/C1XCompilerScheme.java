@@ -135,6 +135,9 @@ public class C1XCompilerScheme implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
+    public static C1XCompilerScheme instance;
+
+    @HOSTED_ONLY
     public C1XCompilerScheme() {
         this(new MaxXirGenerator(), platform().target);
     }
@@ -147,6 +150,9 @@ public class C1XCompilerScheme implements RuntimeCompiler {
         }
         this.xirGenerator = xirGenerator;
         this.target = target;
+        if (instance == null) {
+            instance = this;
+        }
     }
 
     @Override
@@ -157,14 +163,13 @@ public class C1XCompilerScheme implements RuntimeCompiler {
 
     @Override
     public void initialize(Phase phase) {
-        if (isHosted() && phase == Phase.BOOTSTRAPPING) {
+        if (isHosted() && phase == Phase.COMPILING) {
             C1XOptions.UseConstDirectCall = true; // Default
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.globalStub);
             // search for the runtime call and register critical methods
             for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
                 int flags = m.getModifiers();
                 if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
-                    // Log.out.println("Registered critical method: " + m.getName() + " / " + SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()).toString());
                     new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
                 }
             }
@@ -181,7 +186,7 @@ public class C1XCompilerScheme implements RuntimeCompiler {
 
     public C1XCompiler compiler() {
         if (isHosted() && compiler == null) {
-            initialize(Phase.BOOTSTRAPPING);
+            initialize(Phase.COMPILING);
         }
         return compiler;
     }
@@ -199,5 +204,10 @@ public class C1XCompilerScheme implements RuntimeCompiler {
     @Override
     public CallEntryPoint calleeEntryPoint() {
         return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
     }
 }

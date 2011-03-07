@@ -106,6 +106,13 @@ public class RegisterConfigs {
     }
 
     @HOSTED_ONLY
+    private static void setNonZero(RiRegisterAttributes[] attrMap, CiRegister... regs) {
+        for (CiRegister reg : regs) {
+            attrMap[reg.number].isNonZero = true;
+        }
+    }
+
+    @HOSTED_ONLY
     public static RegisterConfigs create() {
         if (platform().isa == ISA.AMD64) {
             OS os = platform().os;
@@ -150,8 +157,7 @@ public class RegisterConfigs {
                                 allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
 
-                RiRegisterAttributes latchAttr = standard.getAttributesMap()[r14.number];
-                latchAttr.isNonZero = true;
+                setNonZero(standard.getAttributesMap(), r14, rsp);
 
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, rbx, rbp, r12, r13, r14, r15));
                 CiRegisterConfig globalStub = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8, allRegisters));
@@ -175,6 +181,7 @@ public class RegisterConfigs {
                                 EMPTY,               // no callee save
                                 allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
+                setNonZero(template.getAttributesMap(), r14, rsp, rbp);
 
                 return new RegisterConfigs(standard, n2j, trampoline, template, globalStub, trapStub);
             }

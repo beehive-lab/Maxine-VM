@@ -93,8 +93,12 @@ public final class LIRList {
         append(new LIRCall(LIROpcode.IndirectCall, method, result, arguments, info, marks, false, pointerSlots));
     }
 
-    public void callNative(CiValue address, String symbol, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks, List<CiValue> pointerSlots) {
+    public void callNative(String symbol, CiValue result, List<CiValue> arguments, LIRDebugInfo info, Map<XirMark, Mark> marks) {
         append(new LIRCall(LIROpcode.NativeCall, symbol, result, arguments, info, marks, false, null));
+    }
+
+    public void templateCall(CiValue result, List<CiValue> arguments) {
+        append(new LIRCall(LIROpcode.TemplateCall, null, result, arguments, null, null, false, null));
     }
 
     public void membar(int barriers) {
@@ -249,8 +253,8 @@ public final class LIRList {
         append(new LIROp2(LIROpcode.Add, left, right, res));
     }
 
-    public void sub(CiValue left, CiValue right, CiValue res, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Sub, left, right, res, info));
+    public void sub(CiValue left, CiValue right, CiValue res) {
+        append(new LIROp2(LIROpcode.Sub, left, right, res));
     }
 
     public void mul(CiValue left, CiValue right, CiValue res) {
@@ -285,6 +289,10 @@ public final class LIRList {
     public void branch(Condition cond, CiKind kind, BlockBegin block, BlockBegin unordered) {
         assert kind == CiKind.Float || kind == CiKind.Double : "fp comparisons only";
         append(new LIRBranch(cond, kind, block, unordered));
+    }
+
+    public void tableswitch(CiValue index, int lowKey, BlockBegin defaultTargets, BlockBegin[] targets) {
+        append(new LIRTableSwitch(index, lowKey, defaultTargets, targets));
     }
 
     public void shiftLeft(CiValue value, int count, CiValue dst) {

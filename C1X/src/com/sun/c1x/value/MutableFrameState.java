@@ -67,6 +67,7 @@ public final class MutableFrameState extends FrameState {
     public void replaceStack(FrameState with) {
         System.arraycopy(with.values, with.maxLocals, values, maxLocals, with.stackIndex);
         stackIndex = with.stackIndex;
+        assert stackIndex >= 0;
     }
 
     /**
@@ -101,6 +102,7 @@ public final class MutableFrameState extends FrameState {
      */
     public void truncateStack(int size) {
         stackIndex = size;
+        assert stackIndex >= 0;
     }
 
     /**
@@ -318,6 +320,7 @@ public final class MutableFrameState extends FrameState {
             r[i] = values[y++];
         }
         stackIndex = base;
+        assert stackIndex >= 0;
         return r;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -498,7 +498,7 @@ public final class X86InstructionDecoder {
     }
 
     private static void patchDisp32(byte[] code, int pos, int offset) {
-        assert pos + 4 < code.length;
+        assert pos + 4 <= code.length;
 
         assert code[pos] == 0;
         assert code[pos + 1] == 0;

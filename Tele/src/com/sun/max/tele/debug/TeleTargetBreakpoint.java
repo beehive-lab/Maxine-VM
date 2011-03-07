@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,14 +30,11 @@ import java.util.concurrent.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
-import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Target code breakpoints.
@@ -499,23 +496,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             } finally {
                 vm().unlock();
             }
-        }
-
-        private byte[] recoverOriginalCodeForBreakpoint(Address instructionPointer) {
-            Value result = null;
-            try {
-                result = vm().teleMethods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
-            } catch (MaxVMBusyException maxVMBusyException) {
-            } catch (TeleInterpreterException e) {
-                throw TeleError.unexpected(e);
-            }
-            if (result != null) {
-                final Reference reference = result.asReference();
-                if (!reference.isZero()) {
-                    return (byte[]) reference.toJava();
-                }
-            }
-            return null;
         }
 
         /**

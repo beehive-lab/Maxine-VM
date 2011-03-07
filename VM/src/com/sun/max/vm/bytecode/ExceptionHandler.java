@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
- * A node in a linked list of objects describing the exception handlers active for a given bytecode position.
+ * A node in a linked list of objects describing the exception handlers active for a given BCI.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -37,19 +37,19 @@ public final class ExceptionHandler {
 
     private final ExceptionHandler next;
     private final int catchTypeIndex;
-    private final int position;
+    private final int bci;
 
     /**
      * Creates an object representing an exception handler.
      *
-     * @param next one or more other exception handlers that cover the same bytecode position as this handler
+     * @param next one or more other exception handlers that cover the same BCI as this handler
      * @param catchTypeIndex the constant pool index of the {@link ClassConstant} representing the type of exceptions
      *            caught by this handler
-     * @param position the bytecode position denoting the start of this exception handler
+     * @param bci the BCI denoting the start of this exception handler
      */
-    private ExceptionHandler(ExceptionHandler next, int catchTypeIndex, int position) {
+    private ExceptionHandler(ExceptionHandler next, int catchTypeIndex, int bci) {
         this.catchTypeIndex = catchTypeIndex;
-        this.position = position;
+        this.bci = bci;
 
         ExceptionHandler n = next;
         while (n != null && n.catchTypeIndex == catchTypeIndex) {
@@ -71,15 +71,15 @@ public final class ExceptionHandler {
     }
 
     /**
-     * Gets the bytecode position denoting the start of this exception handler.
+     * Gets the BCI denoting the start of this exception handler.
      */
-    public int position() {
-        return position;
+    public int bci() {
+        return bci;
     }
 
     @Override
     public int hashCode() {
-        final int n = position ^ catchTypeIndex;
+        final int n = bci ^ catchTypeIndex;
         if (next == null) {
             return n;
         }
@@ -92,7 +92,7 @@ public final class ExceptionHandler {
             return false;
         }
         final ExceptionHandler handler = (ExceptionHandler) other;
-        if (catchTypeIndex != handler.catchTypeIndex || position != handler.position) {
+        if (catchTypeIndex != handler.catchTypeIndex || bci != handler.bci) {
             return false;
         }
         if (next == null) {
@@ -102,12 +102,12 @@ public final class ExceptionHandler {
     }
 
     /**
-     * Creates a mapping from each bytecode position within the range covered by at least one exception handler to the
-     * list of exception handlers that cover the position. Note that the returned mapping includes non-null entries for
-     * all positions covered by at least one exception handler, including positions that may be in the middle of an
+     * Creates a mapping from each BCI within the range covered by at least one exception handler to the
+     * list of exception handlers that cover the BCI. Note that the returned mapping includes non-null entries for
+     * all BCIs covered by at least one exception handler, including BCIs that may be in the middle of an
      * instruction.
      *
-     * @return an array mapping each byte code position to an exception handler list (or null)
+     * @return an array mapping each BCI to an exception handler list (or null)
      */
     public static ExceptionHandler[] createHandlerMap(int codeLength, ExceptionHandlerEntry[] exceptionHandlerEntries) {
         final ExceptionHandler[] handlerMap = new ExceptionHandler[codeLength];
@@ -115,14 +115,14 @@ public final class ExceptionHandler {
         for (int i = exceptionHandlerEntries.length - 1; i >= 0; i--) {
             ExceptionHandlerEntry info = exceptionHandlerEntries[i];
             final int catchTypeIndex = info.catchTypeIndex();
-            for (int position = info.startPosition(); position < info.endPosition(); position++) {
-                final ExceptionHandler candidate = new ExceptionHandler(handlerMap[position], catchTypeIndex, info.handlerPosition());
+            for (int bci = info.startBCI(); bci < info.endBCI(); bci++) {
+                final ExceptionHandler candidate = new ExceptionHandler(handlerMap[bci], catchTypeIndex, info.handlerBCI());
                 ExceptionHandler handler = handlers.get(candidate);
                 if (handler == null) {
                     handlers.put(candidate, candidate);
                     handler = candidate;
                 }
-                handlerMap[position] = handler;
+                handlerMap[bci] = handler;
             }
         }
         return handlerMap;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,7 +103,10 @@ public class LIRCall extends LIRInstruction {
     }
 
     public CiValue targetAddress() {
-        return operand(targetAddressIndex);
+        if (targetAddressIndex >= 0) {
+            return operand(targetAddressIndex);
+        }
+        return null;
     }
 
     @Override
@@ -116,8 +119,10 @@ public class LIRCall extends LIRInstruction {
         if (code == LIROpcode.RuntimeCall) {
             buf.append(target);
         } else if (code != LIROpcode.DirectCall && code != LIROpcode.ConstDirectCall) {
-            targetAddress = operandFmt.format(targetAddress());
-            buf.append(targetAddress);
+            if (targetAddressIndex >= 0) {
+                targetAddress = operandFmt.format(targetAddress());
+                buf.append(targetAddress);
+            }
         }
         buf.append('(');
         boolean first = true;

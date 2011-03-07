@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -310,7 +310,7 @@ public class X86CodeGen extends CodeGen {
                 Label endLabel = new Label();
                 CiRegister rscratch1 = compilation.registerConfig.getScratchRegister();
                 asm.cvttss2siq(dst, src);
-                asm.mov64(rscratch1, Long.MIN_VALUE);
+                asm.movq(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
                 asm.jcc(AMD64Assembler.ConditionFlag.notEqual, endLabel);
 // TODO                asm.callGlobalStub(GlobalStub.f2i, dst, src);
@@ -333,7 +333,7 @@ public class X86CodeGen extends CodeGen {
                 Label endLabel = new Label();
                 CiRegister rscratch1 = compilation.registerConfig.getScratchRegister();
                 asm.cvttsd2siq(dst, src);
-                asm.mov64(rscratch1, Long.MIN_VALUE);
+                asm.movq(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
                 asm.jcc(AMD64Assembler.ConditionFlag.notEqual, endLabel);
 // TODO                asm.callGlobalStub(GlobalStub.d2i, dst, src);
@@ -626,7 +626,7 @@ public class X86CodeGen extends CodeGen {
         if (val == 0) {
             asm.xorq(dst, dst);
         } else {
-            asm.mov64(dst, val);
+            asm.movq(dst, val);
         }
         return location(dst);
     }

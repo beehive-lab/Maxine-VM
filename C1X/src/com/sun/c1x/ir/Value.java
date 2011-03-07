@@ -172,7 +172,7 @@ public abstract class Value {
                 C1XMetrics.BoundsChecksElminations++;
             } else if (flag == NoStoreCheck) {
                 C1XMetrics.StoreCheckEliminations++;
-            } else {
+            } else if (flag != NoZeroCheck) {
                 throw new InternalError("Unknown runtime check: " + flag);
             }
         }

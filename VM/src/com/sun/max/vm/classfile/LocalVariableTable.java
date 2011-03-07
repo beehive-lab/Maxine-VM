@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public final class LocalVariableTable {
      */
     public static final class Entry {
 
-        private final char startPosition;
+        private final char startBCI;
         private final char length;
         private final char slot;
         private final char nameIndex;
@@ -52,7 +52,7 @@ public final class LocalVariableTable {
         private char signatureIndex;
 
         public Entry(ClassfileStream classfileStream, boolean forLocalVariableTypeTables) {
-            startPosition = (char) classfileStream.readUnsigned2();
+            startBCI = (char) classfileStream.readUnsigned2();
             length = (char) classfileStream.readUnsigned2();
             nameIndex = (char) classfileStream.readUnsigned2();
             if (forLocalVariableTypeTables) {
@@ -64,8 +64,8 @@ public final class LocalVariableTable {
             slot = (char) classfileStream.readUnsigned2();
         }
 
-        public Entry(char startPosition, char length, char slot, char nameIndex, char descriptorIndex, char signatureIndex) {
-            this.startPosition = startPosition;
+        public Entry(char startBCI, char length, char slot, char nameIndex, char descriptorIndex, char signatureIndex) {
+            this.startBCI = startBCI;
             this.length = length;
             this.slot = slot;
             this.nameIndex = nameIndex;
@@ -73,8 +73,8 @@ public final class LocalVariableTable {
             this.signatureIndex = signatureIndex;
         }
 
-        public int startPosition() {
-            return startPosition;
+        public int startBCI() {
+            return startBCI;
         }
 
         public int length() {
@@ -117,7 +117,7 @@ public final class LocalVariableTable {
         public boolean equals(Object object) {
             if (object instanceof Entry) {
                 final Entry otherEntry = (Entry) object;
-                return otherEntry.startPosition == startPosition &&
+                return otherEntry.startBCI == startBCI &&
                        otherEntry.length == length &&
                        otherEntry.slot == slot;
             }
@@ -126,15 +126,15 @@ public final class LocalVariableTable {
 
         @Override
         public int hashCode() {
-            return startPosition + (length * 37) + (slot * 37);
+            return startBCI + (length * 37) + (slot * 37);
         }
 
         public void verify(ConstantPool constantPool, int codeLength, int maxLocals, boolean forLVTT) {
             name(constantPool);
-            if (startPosition >= codeLength) {
-                throw classFormatError("Invalid start_pc (" + startPosition + ") in LocalVariableTable");
+            if (startBCI >= codeLength) {
+                throw classFormatError("Invalid start_pc (" + startBCI + ") in LocalVariableTable");
             }
-            final int endPC = startPosition + length;
+            final int endPC = startBCI + length;
             if (endPC > codeLength) {
                 throw classFormatError("Invalid length (" + length + ") in LocalVariableTable");
             }
@@ -149,7 +149,7 @@ public final class LocalVariableTable {
 
         @Override
         public String toString() {
-            return (int) slot + "@" + (int) startPosition + "+" + (int) length + "{name=" + (int) nameIndex + ",descriptor=" + (int) descriptorIndex + ",signature=" + (int) signatureIndex + "}";
+            return (int) slot + "@" + (int) startBCI + "+" + (int) length + "{name=" + (int) nameIndex + ",descriptor=" + (int) descriptorIndex + ",signature=" + (int) signatureIndex + "}";
         }
     }
 
@@ -163,7 +163,7 @@ public final class LocalVariableTable {
      * encoded_entries {
      *     u2 number_of_entries_with_a_signature;
      *     {
-     *         u2 start_position;
+     *         u2 start_bci;
      *         u2 length;
      *         u2 slot;
      *         u2 name_index;
@@ -175,7 +175,7 @@ public final class LocalVariableTable {
      */
     private final char[] encodedEntries;
 
-    private static final int ENCODED_START_POSITION = 0;
+    private static final int ENCODED_START_BCI = 0;
     private static final int ENCODED_LENGTH = 1;
     private static final int ENCODED_SLOT = 2;
     private static final int ENCODED_NAME_INDEX = 3;
@@ -191,7 +191,7 @@ public final class LocalVariableTable {
         encodedEntries = new char[(entries.size() * 6) + 1];
         int i = 1;
         for (Entry entry : entries) {
-            encodedEntries[i + ENCODED_START_POSITION] = entry.startPosition;
+            encodedEntries[i + ENCODED_START_BCI] = entry.startBCI;
             encodedEntries[i + ENCODED_LENGTH] = entry.length;
             encodedEntries[i + ENCODED_SLOT] = entry.slot;
             encodedEntries[i + ENCODED_NAME_INDEX] = entry.nameIndex;
@@ -204,20 +204,20 @@ public final class LocalVariableTable {
         }
     }
 
-    public LocalVariableTable relocate(OpcodePositionRelocator relocator) {
+    public LocalVariableTable relocate(OpcodeBCIRelocator relocator) {
         if (encodedEntries.length == 1) {
             return this;
         }
         final char[] relocEncodedEntries = new char[this.encodedEntries.length];
         relocEncodedEntries[0] = relocEncodedEntries[0];
         for (int i = 1; i != relocEncodedEntries.length; i += 6) {
-            final char startPosition = relocEncodedEntries[i + ENCODED_START_POSITION];
+            final char startBCI = relocEncodedEntries[i + ENCODED_START_BCI];
             final char length = relocEncodedEntries[i + ENCODED_LENGTH];
-            final char relocatedEndPosition = (char) relocator.relocate(startPosition + length);
+            final char relocatedEndBCI = (char) relocator.relocate(startBCI + length);
             // Special case for start address 0: only parameters can be defined at 0
-            final char relocatedStartPosition = startPosition == 0 ? 0 : (char) relocator.relocate(startPosition);
-            final char relocatedLength = (char) (relocatedEndPosition - relocatedStartPosition);
-            relocEncodedEntries[i + ENCODED_START_POSITION] = relocatedStartPosition;
+            final char relocatedStartBCI = startBCI == 0 ? 0 : (char) relocator.relocate(startBCI);
+            final char relocatedLength = (char) (relocatedEndBCI - relocatedStartBCI);
+            relocEncodedEntries[i + ENCODED_START_BCI] = relocatedStartBCI;
             relocEncodedEntries[i + ENCODED_LENGTH] = relocatedLength;
             relocEncodedEntries[i + ENCODED_SLOT] = relocEncodedEntries[i + ENCODED_SLOT];
             relocEncodedEntries[i + ENCODED_NAME_INDEX] = relocEncodedEntries[i + ENCODED_NAME_INDEX];
@@ -244,28 +244,28 @@ public final class LocalVariableTable {
     }
 
     /**
-     * Gets an object describing a local variable that is live at a given bytecode position.
+     * Gets an object describing a local variable that is live at a given BCI.
      *
      * @param index
      *                the index of the variable in the local variables array
-     * @param bytecodePosition
-     *                a bytecode position for which the details of the variable are being requested
-     * @return a {@link Entry} object describing the requested variable. If the given local variable index and bytecode
-     *         position do not denote a live local variable, then null is returned.
+     * @param bci
+     *                a BCI for which the details of the variable are being requested
+     * @return a {@link Entry} object describing the requested variable. If the given local variable index and BCI
+     *         do not denote a live local variable, then null is returned.
      */
-    public Entry findLocalVariable(int index, int bytecodePosition) {
+    public Entry findLocalVariable(int index, int bci) {
         if (encodedEntries.length != 1) {
             for (int i = 1; i != encodedEntries.length; i += 6) {
                 final char thisSlot = encodedEntries[i + ENCODED_SLOT];
                 if (thisSlot == index) {
-                    final char thisStartPosition = encodedEntries[i + ENCODED_START_POSITION];
+                    final char thisStartBCI = encodedEntries[i + ENCODED_START_BCI];
                     final char thisLength = encodedEntries[i + ENCODED_LENGTH];
-                    final char thisEndPosition = (char) (thisStartPosition + thisLength);
-                    if (bytecodePosition >= thisStartPosition && bytecodePosition <= thisEndPosition) {
+                    final char thisEndBCI = (char) (thisStartBCI + thisLength);
+                    if (bci >= thisStartBCI && bci <= thisEndBCI) {
                         final char thisNameIndex = encodedEntries[i + ENCODED_NAME_INDEX];
                         final char thisDescriptorIndex = encodedEntries[i + ENCODED_DESCRIPTOR_INDEX];
                         final char thisSignatureIndex = encodedEntries[i + ENCODED_SIGNATURE_INDEX];
-                        return new Entry(thisStartPosition, thisLength, thisSlot, thisNameIndex, thisDescriptorIndex, thisSignatureIndex);
+                        return new Entry(thisStartBCI, thisLength, thisSlot, thisNameIndex, thisDescriptorIndex, thisSignatureIndex);
                     }
                 }
             }
@@ -276,13 +276,13 @@ public final class LocalVariableTable {
     public Entry[] entries() {
         final Entry[] entries = new Entry[numberOfEntries()];
         for (int i = 1; i != encodedEntries.length; i += 6) {
-            final char startPosition = encodedEntries[i + ENCODED_START_POSITION];
+            final char startBCI = encodedEntries[i + ENCODED_START_BCI];
             final char slot = encodedEntries[i + ENCODED_SLOT];
             final char length = encodedEntries[i + ENCODED_LENGTH];
             final char nameIndex = encodedEntries[i + ENCODED_NAME_INDEX];
             final char descriptorIndex = encodedEntries[i + ENCODED_DESCRIPTOR_INDEX];
             final char signatureIndex = encodedEntries[i + ENCODED_SIGNATURE_INDEX];
-            entries[i / 6] = new Entry(startPosition, length, slot, nameIndex, descriptorIndex, signatureIndex);
+            entries[i / 6] = new Entry(startBCI, length, slot, nameIndex, descriptorIndex, signatureIndex);
         }
         return entries;
     }
@@ -319,7 +319,7 @@ public final class LocalVariableTable {
         final int numberOfEntries = numberOfEntries();
         stream.writeShort(numberOfEntries);
         for (int i = 1; i != encodedEntries.length; i += 6) {
-            stream.writeShort(encodedEntries[i + ENCODED_START_POSITION]);
+            stream.writeShort(encodedEntries[i + ENCODED_START_BCI]);
             stream.writeShort(encodedEntries[i + ENCODED_LENGTH]);
             stream.writeShort(encodedEntries[i + ENCODED_NAME_INDEX]);
             stream.writeShort(encodedEntries[i + ENCODED_DESCRIPTOR_INDEX]);
@@ -341,7 +341,7 @@ public final class LocalVariableTable {
         for (int i = 1; i != encodedEntries.length; i += 6) {
             final int signatureIndex = encodedEntries[i + ENCODED_SIGNATURE_INDEX];
             if (signatureIndex != 0) {
-                stream.writeShort(encodedEntries[i + ENCODED_START_POSITION]);
+                stream.writeShort(encodedEntries[i + ENCODED_START_BCI]);
                 stream.writeShort(encodedEntries[i + ENCODED_LENGTH]);
                 stream.writeShort(encodedEntries[i + ENCODED_NAME_INDEX]);
                 stream.writeShort(signatureIndex);

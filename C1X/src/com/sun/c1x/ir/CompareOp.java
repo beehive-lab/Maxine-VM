@@ -36,11 +36,16 @@ public final class CompareOp extends Op2 {
     /**
      * Creates a new compare operation.
      * @param opcode the bytecode opcode
+     * @param kind the result kind
      * @param x the first input
      * @param y the second input
      */
-    public CompareOp(int opcode, Value x, Value y) {
-        super(CiKind.Int, opcode, x, y);
+    public CompareOp(int opcode, CiKind kind, Value x, Value y) {
+        super(kind, opcode, x, y);
+        if (kind.isVoid()) {
+            // A compare that does not produce a value exists soley for it's side effect (i.e. setting condition codes)
+            setFlag(Flag.LiveSideEffect);
+        }
     }
 
     @Override

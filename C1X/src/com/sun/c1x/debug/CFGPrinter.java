@@ -35,7 +35,6 @@ import com.sun.c1x.lir.LIRInstruction.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
 
@@ -393,8 +392,8 @@ public class CFGPrinter {
         do {
             buf.append(CiUtil.toLocation(codePos.method, codePos.bci));
             buf.append('\n');
-            if (codePos instanceof Frame) {
-                Frame frame = (Frame) codePos;
+            if (codePos instanceof CiFrame) {
+                CiFrame frame = (CiFrame) codePos;
                 if (frame.numStack > 0) {
                     int i = 0;
                     buf.append("stack: ");
@@ -496,7 +495,7 @@ public class CFGPrinter {
                     op += "|" + operand.kind.typeChar;
                 }
                 if (asStateOrHIROperandResult) {
-                    op = " \"" + op + "\" ";
+                    op = " \"" + op.replace('"', '\'') + "\" ";
                 }
                 return op;
             }
@@ -657,9 +656,14 @@ public class CFGPrinter {
         out.println();
     }
 
-    public void printMachineCode(String code) {
+    public void printMachineCode(String code, String label) {
         if (code.length() == 0) {
             return;
+        }
+        if (label != null) {
+            begin("cfg");
+            out.print("name \"").print(label).println('"');
+            end("cfg");
         }
         begin("nmethod");
         out.print(code);

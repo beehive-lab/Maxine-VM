@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ public class IRScope {
     public final IRScope caller;
     public final RiMethod method;
     public final int level;
-    CiCodePos callerCodeSite;
+    CiCodePos callerCodePos;
 
     /**
      * The frame state at the call site of this scope's caller or {@code null}
@@ -117,14 +117,14 @@ public class IRScope {
         }
     }
 
-    public CiCodePos callerCodeSite() {
-        if (caller != null && callerCodeSite == null) {
-            callerCodeSite = caller.toCodeSite(callerBCI());
+    public CiCodePos callerCodePos() {
+        if (caller != null && callerCodePos == null) {
+            callerCodePos = caller.toCodePos(callerBCI());
         }
-        return callerCodeSite;
+        return callerCodePos;
     }
 
-    public CiCodePos toCodeSite(int bci) {
-        return new CiCodePos(callerCodeSite(), method, bci);
+    public CiCodePos toCodePos(int bci) {
+        return new CiCodePos(callerCodePos(), method, bci);
     }
 }

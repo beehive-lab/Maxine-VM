@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,7 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
                 BYTECODE_TEMPLATE bct = method.getAnnotation(BYTECODE_TEMPLATE.class);
                 if (bct != null) {
                     BytecodeTemplate bt = bct.value();
-                    templates.put(bt, generateBytecodeTemplate(method));
+                    templates.put(bt, generateBytecodeTemplate(ClassMethodActor.fromJava(method)));
                 }
             }
         }
@@ -93,12 +93,6 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
             maxTemplateFrameSize = targetMethod.frameSize();
         }
         return targetMethod;
-    }
-
-    private TargetMethod generateBytecodeTemplate(Method bytecodeSourceTemplate) {
-        final ClassMethodActor classMethodActor = ClassMethodActor.fromJava(bytecodeSourceTemplate);
-        final TargetMethod template = generateBytecodeTemplate(classMethodActor);
-        return template;
     }
 
 }

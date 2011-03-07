@@ -22,6 +22,8 @@
  */
 package com.sun.c1x.opt;
 
+import static com.sun.c1x.ir.Value.Flag.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
@@ -38,8 +40,8 @@ public final class LivenessMarker {
 
     final IR ir;
 
-    final InstructionMarker deoptMarker = new InstructionMarker(Value.Flag.LiveDeopt);
-    final InstructionMarker valueMarker = new InstructionMarker(Value.Flag.LiveValue);
+    final InstructionMarker deoptMarker = new InstructionMarker(LiveDeopt);
+    final InstructionMarker valueMarker = new InstructionMarker(LiveValue);
 
     int count;
 
@@ -168,16 +170,19 @@ public final class LivenessMarker {
             // stateBefore != null implies that this instruction may have side effects
             stateBefore.valuesDo(deoptMarker);
             i.inputValuesDo(valueMarker);
-            setFlag(i, Value.Flag.LiveSideEffect);
-        } else if (i.checkFlag(Value.Flag.LiveStore)) {
+            setFlag(i, LiveSideEffect);
+        } else if (i.checkFlag(LiveStore)) {
             // instruction is a store that cannot be eliminated
             i.inputValuesDo(valueMarker);
-            setFlag(i, Value.Flag.LiveSideEffect);
+            setFlag(i, LiveSideEffect);
+        } else if (i.checkFlag(LiveSideEffect)) {
+            // instruction has a side effect
+            i.inputValuesDo(valueMarker);
         }
         if (i instanceof BlockEnd) {
             // input values to block ends are control dependencies
             i.inputValuesDo(valueMarker);
-            setFlag(i, Value.Flag.LiveControl);
+            setFlag(i, LiveControl);
         }
         FrameState stateAfter = i.stateAfter();
         if (stateAfter != null) {

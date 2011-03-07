@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -299,7 +299,7 @@ public abstract class BytecodeAssembler {
     void setCurrentAddress(int address) {
         assert address <= highestAddress;
         currentAddress = address;
-        setWritePosition(address - startAddress);
+        setWriteBCI(address - startAddress);
     }
 
     public int currentAddress() {
@@ -313,11 +313,11 @@ public abstract class BytecodeAssembler {
     protected abstract void writeByte(byte b);
 
     /**
-     * Sets the position at which the next byte will be {@link #writeByte(byte) written}. This is
-     * used when {@link #fixup() fixing} up forward branches and {@code position} will never
+     * Sets the bci at which the next byte will be {@link #writeByte(byte) written}. This is
+     * used when {@link #fixup() fixing} up forward branches and {@code bci} will never
      * be greater than {@link #numberOfEmittedBytes()}.
      */
-    protected abstract void setWritePosition(int position);
+    protected abstract void setWriteBCI(int bci);
 
     public final void emitByte(int b) {
         writeByte((byte) (b & 0xff));

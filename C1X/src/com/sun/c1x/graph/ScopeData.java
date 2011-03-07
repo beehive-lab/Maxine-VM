@@ -53,7 +53,7 @@ public class ScopeData {
         HasHandler,
 
         /**
-         * Code in scope is cannot contain safepoints.
+         * Code in scope cannot contain safepoints.
          * This attribute is inherited by nested scopes.
          */
         NoSafepoints;
@@ -195,12 +195,8 @@ public class ScopeData {
         if (maxInlineSize < C1XOptions.MaximumTrivialSize) {
             maxInlineSize = C1XOptions.MaximumTrivialSize;
         }
-        if (parent.hasHandler()) {
-            flags |= HasHandler.mask;
-        }
-        if (parent.noSafepoints()) {
-            flags |= NoSafepoints.mask;
-        }
+        flags = parent.flags;
+
         // duplicate the parent scope's exception handlers, if any
         List<ExceptionHandler> handlers = parent.exceptionHandlers();
         if (handlers != null && handlers.size() > 0) {

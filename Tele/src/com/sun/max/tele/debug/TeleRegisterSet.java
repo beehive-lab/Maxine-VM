@@ -242,6 +242,8 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
             if (vm().tryLock()) {
                 try {
                     updateCache(epoch);
+                } catch (DataIOError e) {
+                    e.printStackTrace();
                 } finally {
                     vm().unlock();
                 }

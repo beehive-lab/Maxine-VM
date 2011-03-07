@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +27,10 @@ import static com.sun.max.platform.Platform.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -40,11 +38,12 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
+import com.sun.max.vm.stack.VMFrameLayout.Slots;
 
 /**
  * Target method that saves for each catch block the ranges in the code that can
@@ -58,25 +57,21 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     /**
      * @see #catchRangePositions()
      */
-    @INSPECTED
     private int[] catchRangePositions;
 
     /**
      * @see #catchBlockPositions()
      */
-    @INSPECTED
     private int[] catchBlockPositions;
 
     /**
      * @see #compressedJavaFrameDescriptors()
      */
-    @INSPECTED
     protected byte[] compressedJavaFrameDescriptors;
 
     /**
      * If non-null, this array encodes a serialized array of {@link InlineDataDescriptor} objects.
      */
-    @INSPECTED
     protected byte[] encodedInlineDataDescriptors;
 
     /**
@@ -84,7 +79,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      */
     protected byte[] referenceMaps;
 
-    @INSPECTED
     protected int frameReferenceMapSize;
 
     public CPSTargetMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
@@ -230,7 +224,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     /**
      * Overwrite this method if the instruction pointer for a throw must be adjusted when it
-     * is in a frame that has made a call (i.e. not hte top frame).
+     * is in a frame that has made a call (i.e. not the top frame).
      * @return the value that should be added to the instruction pointer
      */
     public int callerInstructionPointerAdjustment() {
@@ -346,14 +340,14 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
      * @return an object that represents the layout of this stack frame
      */
-    public abstract CompiledStackFrameLayout stackFrameLayout();
+    public abstract VMFrameLayout stackFrameLayout();
 
     public String referenceMapsToString() {
         if (numberOfStopPositions() == 0) {
             return "";
         }
         final StringBuilder buf = new StringBuilder();
-        final CompiledStackFrameLayout layout = stackFrameLayout();
+        final VMFrameLayout layout = stackFrameLayout();
         final Slots slots = layout.slots();
         int safepointIndex = 0;
         final int firstSafepointStopIndex = numberOfDirectCalls() + numberOfIndirectCalls();
@@ -393,15 +387,9 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return buf.toString();
     }
 
-    /**
-     * Gets the {@linkplain InlineDataDescriptor inline data descriptors} associated with this target method's code
-     * encoded as a byte array in the format described {@linkplain InlineDataDescriptor here}.
-     *
-     * @return null if there are no inline data descriptors associated with this target method's code
-     */
     @Override
-    public byte[] encodedInlineDataDescriptors() {
-        return encodedInlineDataDescriptors;
+    public InlineDataDecoder inlineDataDecoder() {
+        return InlineDataDecoder.createFrom(encodedInlineDataDescriptors);
     }
 
     /**
@@ -460,16 +448,8 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     }
 
     @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
-        if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
-            ip = ip.minus(1);
-        }
-        return getJavaFrameDescriptorFor(ip);
-    }
-
-    @Override
-    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
-        return TargetJavaFrameDescriptor.get(this, stopIndex);
+    public CiFrame getBytecodeFrames(int stopIndex) {
+        return TargetJavaFrameDescriptor.get(this, stopIndex).toFrame(null);
     }
 
     /**
@@ -480,33 +460,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     }
 
     @Override
-    public CiDebugInfo getDebugInfo(Pointer instructionPointer, boolean implicitExceptionPoint) {
-        if (implicitExceptionPoint) {
-            // CPS target methods don't have Java frame descriptors at implicit throw points.
-            return null;
+    public CiCodePos getCodePos(Pointer ip, boolean ipIsReturnAddress) {
+        if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
+            ip = ip.minus(1);
         }
-        if (Platform.platform().isa.offsetToReturnPC == 0) {
-            instructionPointer = instructionPointer.minus(1);
-        }
-
-        if (stopPositions == null || compressedJavaFrameDescriptors == null) {
-            return null;
-        }
-        int stopIndex = findStopIndex(instructionPointer);
-        if (stopIndex < 0) {
-            return null;
-        }
-        TargetJavaFrameDescriptor jfd = TargetJavaFrameDescriptor.get(this, stopIndex);
-        Frame frame = jfd.toFrame(null);
-
-        CiBitMap regRefMap = null;
-        CiBitMap frameRefMap = new CiBitMap(referenceMaps, stopIndex * frameReferenceMapSize, frameReferenceMapSize);
-        if (stopIndex >= numberOfDirectCalls() + numberOfIndirectCalls()) {
-            int regRefMapSize = registerReferenceMapSize();
-            regRefMap = new CiBitMap(referenceMaps, frameReferenceMapsSize() + (regRefMapSize * stopIndex), regRefMapSize);
-        }
-
-        return new CiDebugInfo(frame, regRefMap, frameRefMap);
+        TargetJavaFrameDescriptor jfd = getJavaFrameDescriptorFor(ip);
+        return jfd == null ? null : jfd.toFrame(null);
     }
 
     @HOSTED_ONLY
@@ -529,8 +488,8 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
                     final InvokedMethodRecorder invokedMethodRecorder = new InvokedMethodRecorder(location.classMethodActor, directCalls, virtualCalls, interfaceCalls);
                     final BytecodeScanner bytecodeScanner = new BytecodeScanner(invokedMethodRecorder);
                     final byte[] bytecode = location.classMethodActor.codeAttribute().code();
-                    if (bytecode != null && location.bytecodePosition < bytecode.length) {
-                        bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition);
+                    if (bytecode != null && location.bci < bytecode.length) {
+                        bytecodeScanner.scanInstruction(bytecode, location.bci);
                     }
                     inlinedMethods.add(location.classMethodActor);
                     location = location.parent();

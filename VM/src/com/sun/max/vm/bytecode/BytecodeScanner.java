@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,10 +51,10 @@ public final class BytecodeScanner {
         return bytecodeBlock;
     }
 
-    private int currentBytePosition;
+    private int currentBCI;
 
-    public int currentBytePosition() {
-        return currentBytePosition;
+    public int currentBCI() {
+        return currentBCI;
     }
 
     protected boolean stopped;
@@ -84,11 +84,11 @@ public final class BytecodeScanner {
         return currentOpcode;
     }
 
-    protected int currentOpcodePosition;
+    protected int currentOpcodeBCI;
 
     @INLINE
-    public int currentOpcodePosition() {
-        return currentOpcodePosition;
+    public int currentOpcodeBCI() {
+        return currentOpcodeBCI;
     }
 
     protected boolean currentOpcodeWidened;
@@ -106,7 +106,7 @@ public final class BytecodeScanner {
      * @param classMethodActor the context of the bytecode being scanned
      */
     public String getCurrentLocationAsString(ClassMethodActor classMethodActor) {
-        final int lineNumber = classMethodActor.codeAttribute().lineNumberTable().findLineNumber(currentOpcodePosition);
+        final int lineNumber = classMethodActor.codeAttribute().lineNumberTable().findLineNumber(currentOpcodeBCI);
         final StringBuilder buf = new StringBuilder();
         if (lineNumber != -1) {
             final ClassActor holder = classMethodActor.holder();
@@ -118,11 +118,11 @@ public final class BytecodeScanner {
         } else {
             buf.append(classMethodActor.format("%H.%n(%p)"));
         }
-        return buf.append(" [bytecode index=" + currentOpcodePosition + ", opcode=" + currentOpcode + "]").toString();
+        return buf.append(" [bytecode index=" + currentOpcodeBCI + ", opcode=" + currentOpcode + "]").toString();
     }
 
     public byte readByte() {
-        return bytecodeBlock.code()[currentBytePosition++];
+        return bytecodeBlock.code()[currentBCI++];
     }
 
     public int readUnsigned1() {
@@ -162,9 +162,9 @@ public final class BytecodeScanner {
     }
 
     private void alignAddress() {
-        final int remainder = currentBytePosition % 4;
+        final int remainder = currentBCI % 4;
         if (remainder != 0) {
-            currentBytePosition += 4 - remainder;
+            currentBCI += 4 - remainder;
         }
     }
 
@@ -228,12 +228,12 @@ public final class BytecodeScanner {
                     int length = Bytecodes.lengthOf(opcode);
                     assert length != 0;
                     boolean parsedAllBytes = bytecodeVisitor.extension(opcode, true);
-                    int endPos = currentOpcodePosition + length - 1;
+                    int endPos = currentOpcodeBCI + length - 1;
                     if (parsedAllBytes) {
-                        assert currentBytePosition == endPos;
+                        assert currentBCI == endPos;
                     } else {
-                        assert currentBytePosition <= endPos;
-                        currentBytePosition = endPos;
+                        assert currentBCI <= endPos;
+                        currentBCI = endPos;
                     }
                 } else {
                     bytecodeVisitor.unknown(opcode);
@@ -974,11 +974,11 @@ public final class BytecodeScanner {
                     throw verifyError("Low must be less than or equal to high in TABLESWITCH");
                 }
                 final int numberOfCases = highMatch - lowMatch + 1;
-                final int start = currentBytePosition;
+                final int start = currentBCI;
                 bytecodeVisitor.tableswitch(defaultOffset, lowMatch, highMatch, numberOfCases);
-                final int caseBytesRead = currentBytePosition - start;
+                final int caseBytesRead = currentBCI - start;
                 if ((caseBytesRead % 4) != 0 || (caseBytesRead >> 2) != numberOfCases) {
-                    ProgramError.unexpected("Bytecodes visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodePosition);
+                    ProgramError.unexpected("Bytecodes visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodeBCI);
                 }
                 break;
             }
@@ -989,11 +989,11 @@ public final class BytecodeScanner {
                 if (numberOfCases < 0) {
                     throw verifyError("Number of keys in LOOKUPSWITCH less than 0");
                 }
-                final int start = currentBytePosition;
+                final int start = currentBCI;
                 bytecodeVisitor.lookupswitch(defaultOffset, numberOfCases);
-                final int caseBytesRead = currentBytePosition - start;
+                final int caseBytesRead = currentBCI - start;
                 if ((caseBytesRead % 8) != 0 || (caseBytesRead >> 3) != numberOfCases) {
-                    ProgramError.unexpected("Bytecodes visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodePosition);
+                    ProgramError.unexpected("Bytecodes visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodeBCI);
                 }
                 break;
             }
@@ -1153,12 +1153,12 @@ public final class BytecodeScanner {
                     int length = Bytecodes.lengthOf(opcode);
                     assert length != 0;
                     boolean parsedAllBytes = bytecodeVisitor.extension(opcode, false);
-                    int endPos = currentOpcodePosition + length;
+                    int endPos = currentOpcodeBCI + length;
                     if (parsedAllBytes) {
-                        assert currentBytePosition == endPos;
+                        assert currentBCI == endPos;
                     } else {
-                        assert currentBytePosition <= endPos;
-                        currentBytePosition = endPos;
+                        assert currentBCI <= endPos;
+                        currentBCI = endPos;
                     }
                 } else {
                     bytecodeVisitor.unknown(opcode);
@@ -1172,12 +1172,12 @@ public final class BytecodeScanner {
     public int scanInstruction(BytecodeBlock block) {
         this.bytecodeBlock = block;
         try {
-            currentBytePosition = block.start;
-            currentOpcodePosition = currentBytePosition;
+            currentBCI = block.start;
+            currentOpcodeBCI = currentBCI;
             scanInstruction();
-            return currentBytePosition;
+            return currentBCI;
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            if (currentBytePosition > block.end) {
+            if (currentBCI > block.end) {
                 throw verifyError("Ran off end of code");
             }
             throw arrayIndexOutOfBoundsException;
@@ -1191,15 +1191,15 @@ public final class BytecodeScanner {
     public void scan(BytecodeBlock block) {
         this.bytecodeBlock = block;
         try {
-            currentBytePosition = block.start;
-            currentOpcodePosition = currentBytePosition;
+            currentBCI = block.start;
+            currentOpcodeBCI = currentBCI;
             bytecodeVisitor.prologue();
-            while (!stopped && currentBytePosition <= block.end) {
-                currentOpcodePosition = currentBytePosition;
+            while (!stopped && currentBCI <= block.end) {
+                currentOpcodeBCI = currentBCI;
                 scanInstruction();
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            if (currentBytePosition > block.end) {
+            if (currentBCI > block.end) {
                 throw verifyError("Ran off end of code");
             }
             throw arrayIndexOutOfBoundsException;
@@ -1211,7 +1211,7 @@ public final class BytecodeScanner {
     }
 
     public void skipBytes(int numBytes) {
-        currentBytePosition += numBytes;
+        currentBCI += numBytes;
     }
 
 }

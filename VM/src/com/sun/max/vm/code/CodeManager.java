@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ public abstract class CodeManager {
             Heap.disableAllocationForCurrentThread();
             currentCodeRegion = runtimeCodeRegion;
         } else {
-            currentCodeRegion = Code.bootCodeRegion;
+            currentCodeRegion = Code.bootCodeRegion();
         }
 
         Object allocationTraceDescription = Code.traceAllocation.getValue() ? (targetMethod.classMethodActor() == null ? targetMethod.regionName() : targetMethod.classMethodActor()) : null;
@@ -207,8 +207,8 @@ public abstract class CodeManager {
      *         the code pointer lies outside of all code regions
      */
     CodeRegion codePointerToCodeRegion(Address codePointer) {
-        if (Code.bootCodeRegion.contains(codePointer)) {
-            return Code.bootCodeRegion;
+        if (Code.bootCodeRegion().contains(codePointer)) {
+            return Code.bootCodeRegion();
         }
         if (runtimeCodeRegion.contains(codePointer)) {
             return runtimeCodeRegion;
@@ -240,7 +240,7 @@ public abstract class CodeManager {
      */
     void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
         if (includeBootCode) {
-            CodeRegion codeRegion = Code.bootCodeRegion;
+            CodeRegion codeRegion = Code.bootCodeRegion();
             Pointer firstCell = codeRegion.start().asPointer();
             Pointer cell = firstCell;
             while (cell.lessThan(codeRegion.getAllocationMark())) {

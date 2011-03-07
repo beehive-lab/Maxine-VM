@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,7 @@ public class BytecodeTransformer extends BytecodeAdapter {
         return assembler;
     }
 
-    public final OpcodePositionRelocator transform(BytecodeBlock bytecodeBlock) {
+    public final OpcodeBCIRelocator transform(BytecodeBlock bytecodeBlock) {
         final int originalCodeLength = bytecodeBlock.code().length;
         opcodeRelocationMap = new int[originalCodeLength];
         relocatableTargets = new Label[originalCodeLength];
@@ -75,7 +75,7 @@ public class BytecodeTransformer extends BytecodeAdapter {
         this.opcodeRelocationMap = null;
         relocatableTargets = null;
 
-        final OpcodePositionRelocator opcodeAddressRelocator = new OpcodePositionRelocator() {
+        final OpcodeBCIRelocator opcodeAddressRelocator = new OpcodeBCIRelocator() {
             public int relocate(int address) throws IllegalArgumentException {
                 final int relocatedAddress;
                 if (address == originalCodeLength) {
@@ -121,19 +121,19 @@ public class BytecodeTransformer extends BytecodeAdapter {
     protected final void instructionDecoded() {
         if (!ignoreCurrentInstruction) {
             final byte[] bytes = code();
-            for (int address = currentOpcodePosition(); address != currentBytePosition(); ++address) {
+            for (int address = currentOpcodeBCI(); address != currentBCI(); ++address) {
                 assembler.appendByte(bytes[address]);
             }
         } else {
             ignoreCurrentInstruction = false;
         }
 
-        opcodeRelocationMap[currentOpcodePosition()] = currentToAddress;
+        opcodeRelocationMap[currentOpcodeBCI()] = currentToAddress;
         currentToAddress = assembler.currentAddress();
     }
 
     private Label relocatableTarget(int offset) {
-        final int target = currentOpcodePosition() + offset;
+        final int target = currentOpcodeBCI() + offset;
         if (relocatableTargets[target] == null) {
             relocatableTargets[target] = assembler.newLabel();
         }
@@ -141,7 +141,7 @@ public class BytecodeTransformer extends BytecodeAdapter {
     }
 
     private void branch(int offset) {
-        final int target = currentOpcodePosition() + offset;
+        final int target = currentOpcodeBCI() + offset;
         if (offset < 0) {
             final int relocatedTarget = opcodeRelocationMap[target];
             assembler.branch(currentOpcode(), relocatedTarget);

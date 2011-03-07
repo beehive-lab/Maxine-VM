@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ public class FixedAddressCodeManager extends CodeManager {
      */
     @Override
     void initialize() {
-        final Address address = Code.bootCodeRegion.end().roundedUpBy(Platform.platform().pageSize);
+        final Address address = Code.bootCodeRegion().end().roundedUpBy(Platform.platform().pageSize);
         final Size size = runtimeCodeRegionSize.getValue();
         if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
             ProgramError.unexpected("could not allocate runtime code region");

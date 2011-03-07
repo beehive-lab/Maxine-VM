@@ -716,12 +716,6 @@ public final class BlockBegin extends Instruction {
         return this.predecessors.contains(block);
     }
 
-    public void addExceptionStates(List<FrameState> exceptHandlerStates) {
-        for (FrameState state : exceptHandlerStates) {
-            addExceptionState(state);
-        }
-    }
-
     public void printWithoutPhis(LogStream out) {
         // print block id
         BlockEnd end = end();

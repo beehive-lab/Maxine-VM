@@ -325,10 +325,6 @@ public final class MaxineVM {
         boolean result = false; // default assumption
         final String pkgName = getPackageName(javaClass);
 
-        if (pkgName.startsWith("test")) {
-            System.console();
-        }
-
         // Direct part of definition
 
         if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {

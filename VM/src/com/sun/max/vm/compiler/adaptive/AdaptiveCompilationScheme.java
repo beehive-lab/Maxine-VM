@@ -205,7 +205,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return the target method that results from compiling the specified method
      */
     public TargetMethod synchronousCompile(ClassMethodActor classMethodActor) {
-        boolean retrying = false;
+        RuntimeCompiler retryCompiler = null;
         while (true) {
             Compilation compilation;
             boolean doCompile = true;
@@ -214,16 +214,21 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 Object targetState = classMethodActor.targetState;
                 if (targetState == null) {
                     // this is the first compilation.
-                    RuntimeCompiler compiler = !retrying ? selectCompiler(classMethodActor, true) : optimizingCompiler;
+                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, true) : retryCompiler;
                     compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
                 } else if (targetState instanceof Compilation) {
-                    // the method is currently being compiled, just wait for the result
                     compilation = (Compilation) targetState;
-                    doCompile = false;
+                    if (retryCompiler != null) {
+                        assert compilation.compilingThread == Thread.currentThread();
+                        compilation.compiler = retryCompiler;
+                    } else {
+                        // the method is currently being compiled, just wait for the result
+                        doCompile = false;
+                    }
                 } else {
                     // this method has already been compiled once
-                    RuntimeCompiler compiler = !retrying ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0) : optimizingCompiler;
+                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0) : retryCompiler;
                     TargetMethod targetMethod = classMethodActor.currentTargetMethod();
                     if (targetMethod != null && compiler.compiledType() == targetMethod.getClass()) {
                         return targetMethod;
@@ -243,12 +248,16 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
                 Log.println(errorMessage);
                 t.printStackTrace(Log.out);
-                if (compilation.compiler != optimizingCompiler && FailOverCompilation) {
-                    Log.println("Retrying with " + optimizingCompiler + "...");
-                    retrying = true;
-                } else {
-                    throw (InternalError) new InternalError(errorMessage).initCause(t);
+                if (!FailOverCompilation || retryCompiler != null || (optimizingCompiler == baselineCompiler)) {
+                    // This is the final failure: no other compilers available or failover is disabled
+                    throw FatalError.unexpected(errorMessage + " (final attempt)", t);
                 }
+                if (compilation.compiler == optimizingCompiler) {
+                    retryCompiler = baselineCompiler;
+                } else {
+                    retryCompiler = optimizingCompiler;
+                }
+                Log.println("Retrying with " + retryCompiler + "...");
             }
         }
     }

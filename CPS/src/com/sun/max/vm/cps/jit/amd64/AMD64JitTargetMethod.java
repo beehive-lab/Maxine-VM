@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,12 +72,11 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         return -1;
     }
 
-    @Override
-    public int bytecodePositionForCallSite(Pointer returnInstructionPointer) {
+    public int bciForCallSite(Pointer returnInstructionPointer) {
         // The instruction pointer is now just beyond the call machine instruction.
         // In case the call happens to be the last machine instruction for the invoke bytecode we are interested in, we subtract one byte.
         // Thus we always look up what bytecode we were in during the call.
-        return bytecodePositionFor(returnInstructionPointer.minus(1));
+        return bciFor(returnInstructionPointer.minus(1));
     }
 
     @Override
@@ -292,7 +291,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             FramePointerState framePointerState = computeFramePointerState(current, stackFrameWalker, lastPrologueInstruction);
             localVariablesBase = framePointerState.localVariablesBase(current);
         }
-        StackFrame stackFrame = new AMD64JitStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), current.sp(), localVariablesBase, localVariablesBase);
+        StackFrame stackFrame = new AMD64JVMSFrame(stackFrameWalker.calleeStackFrame(), stackFrameLayout(), current.targetMethod(), current.ip(), current.sp(), localVariablesBase, localVariablesBase);
         return visitor.visitFrame(stackFrame);
     }
 
@@ -324,7 +323,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         Pointer callerIP = stackFrameWalker.readWord(returnRIP, 0).asPointer();
         Pointer callerSP = returnRIP.plus(Word.size()); // Skip the rip
 
-        int stackAmountInBytes = classMethodActor.numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE;
+        int stackAmountInBytes = classMethodActor.numberOfParameterSlots() * JVMSFrameLayout.JVMS_SLOT_SIZE;
         if (stackAmountInBytes != 0) {
             callerSP = callerSP.plus(stackAmountInBytes);
         }
@@ -350,15 +349,15 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         // prepare the reference map for the parameters passed by the current (caller) frame.
         // the call was unresolved and hit a trampoline, so compute the refmap from the signature of
         // the called method by looking at the bytecode of the caller method
-        final int bytecodePosition = bytecodePositionForCallSite(caller.ip());
+        final int bytecodePosition = bciForCallSite(caller.ip());
         final CodeAttribute codeAttribute = classMethodActor().codeAttribute();
-        final ConstantPool constantPool = codeAttribute.constantPool;
+        final ConstantPool constantPool = codeAttribute.cp;
         final byte[] code = codeAttribute.code();
         final MethodRefConstant methodConstant = constantPool.methodAt(getInvokeConstantPoolIndexOperand(code, bytecodePosition));
         final boolean isInvokestatic = (code[bytecodePosition] & 0xFF) == Bytecodes.INVOKESTATIC;
         final SignatureDescriptor signature = methodConstant.signature(constantPool);
 
-        int slotSize = JitStackFrameLayout.JIT_SLOT_SIZE;
+        int slotSize = JVMSFrameLayout.JVMS_SLOT_SIZE;
         final int numberOfSlots = signature.computeNumberOfSlots() + (isInvokestatic ? 0 : 1);
 
         if (numberOfSlots != 0) {

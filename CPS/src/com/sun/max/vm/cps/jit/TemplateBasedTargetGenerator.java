@@ -88,6 +88,8 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         // emit instrumentation for the method entry
         codeGenerator.emitEntrypointInstrumentation();
 
+        codeGenerator.emitMethodTrace();
+
         // Translate bytecode into native code
         codeGenerator.generate();
 

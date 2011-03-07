@@ -153,6 +153,13 @@ public interface RiMethod {
      * @return {@code true} if the method cannot have safepoints inserted
      */
     boolean noSafepoints();
+
+    /**
+     * Determines if only minimal debug info is to be generated for a
+     * compilation of this method. The minimal debug info is exactly the
+     * reference maps. 
+     */
+    boolean minimalDebugInfo();
     
     /**
      * Gets a map from bytecode indexes to bit maps denoting the live locals at that position.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,7 +89,7 @@ public class BytecodeStopsIteratorTest extends MaxTestCase {
 
     private void assertSame(BytecodeStopsIterator bsi, Entry[] entries) {
         int i = 0;
-        for (int bcp = bsi.bytecodePosition(); bcp != -1; bcp = bsi.next()) {
+        for (int bcp = bsi.bci(); bcp != -1; bcp = bsi.next()) {
             final Entry entry = entries[i++];
             assertEquals(bcp, entry.bcp);
             int j = 0;
