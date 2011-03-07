@@ -280,7 +280,7 @@ projects=( \
     MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \
-    CPSTele:src                   \
+    TeleCPS:test                  \
     JDWP:src                      \
     TeleJDWP:src                  \
     Inspector:src,test            \

@@ -25,13 +25,15 @@ package com.sun.max.vm.t1x;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import static com.sun.max.vm.t1x.T1XCompilation.*;
-import static com.sun.max.vm.t1x.T1XTargetMethod.FramePointerStateAMD64.*;
 
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
+import com.sun.max.annotate.PLATFORM;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.FOLD;
+import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.atomic.*;
 import com.sun.max.io.*;
 import com.sun.max.memory.*;
@@ -225,7 +227,7 @@ public final class T1XTargetMethod extends TargetMethod {
         return comp.handlers;
     }
 
-    private int sizeOfNonParameterLocals() {
+    int sizeOfNonParameterLocals() {
         return JVMSFrameLayout.JVMS_SLOT_SIZE * frame.numberOfNonParameterSlots();
     }
 
@@ -663,15 +665,15 @@ public final class T1XTargetMethod extends TargetMethod {
         Pointer ip = current.ip();
         byte byteAtIP = stackFrameWalker.readByte(ip, 0);
         if (ip.lessThan(lastPrologueInstr) || byteAtIP == ENTER || byteAtIP == RET || byteAtIP == RET2) {
-            return CALLER_FRAME_IN_RBP;
+            return FramePointerStateAMD64.CALLER_FRAME_IN_RBP;
         }
         if (ip.equals(lastPrologueInstr) || byteAtIP == LEAVE) {
-            return CALLER_FRAME_AT_RBP;
+            return FramePointerStateAMD64.CALLER_FRAME_AT_RBP;
         }
         if (byteAtIP == POP_RBP) {
-            return RETURNING_FROM_RUNTIME;
+            return FramePointerStateAMD64.RETURNING_FROM_RUNTIME;
         }
-        return IN_RBP;
+        return FramePointerStateAMD64.IN_RBP;
     }
 
     @Override
@@ -688,7 +690,7 @@ public final class T1XTargetMethod extends TargetMethod {
                 } else {
                     startOfPrologue = codeStart;
                 }
-                Pointer lastPrologueInstruction = startOfPrologue.plus(OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
+                Pointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateAMD64.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
                 FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
                 localVariablesBase = framePointerState.localVariablesBase(current);
             }
@@ -697,123 +699,6 @@ public final class T1XTargetMethod extends TargetMethod {
         } else {
             throw unimplISA();
         }
-    }
-
-    /**
-     * Various execution states in a T1X method that can only be observed in
-     * the context of the Inspector.
-     *
-     * @author Laurent Daynes
-     */
-    @PLATFORM(cpu = "amd64")
-    @HOSTED_ONLY
-    enum FramePointerStateAMD64 {
-        /**
-         * RBP holds the frame pointer of the current method activation. caller's RIP is at [RBP + FrameSize], caller's
-         * frame pointer is at [RBP + FrameSize -1]
-         */
-        IN_RBP {
-
-            @Override
-            Pointer localVariablesBase(Cursor current) {
-                return current.fp();
-            }
-
-            @Override
-            Pointer returnIP(Cursor current) {
-                T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
-                int dispToRip = targetMethod.frameSize() - targetMethod.sizeOfNonParameterLocals();
-                return current.fp().plus(dispToRip);
-            }
-
-            @Override
-            Pointer callerFP(Cursor current) {
-                return current.stackFrameWalker().readWord(returnIP(current), -Word.size()).asPointer();
-            }
-        },
-
-        /**
-         * RBP holds the frame pointer of the caller, caller's RIP is at [RSP] This state occurs when entering the
-         * method or exiting it.
-         */
-        CALLER_FRAME_IN_RBP {
-
-            @Override
-            Pointer localVariablesBase(Cursor current) {
-                int offsetToSaveArea = current.targetMethod().frameSize();
-                return current.sp().minus(offsetToSaveArea);
-            }
-
-            @Override
-            Pointer returnIP(Cursor current) {
-                return current.sp();
-            }
-
-            @Override
-            Pointer callerFP(Cursor current) {
-                return current.fp();
-            }
-        },
-
-        /**
-         * RBP points at the bottom of the "saving area". Caller's frame pointer is at [RBP], caller's RIP is at [RBP +
-         * WordSize].
-         */
-        CALLER_FRAME_AT_RBP {
-
-            @Override
-            Pointer localVariablesBase(Cursor current) {
-                T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
-                int dispToFrameStart = targetMethod.frameSize() - (targetMethod.sizeOfNonParameterLocals() + Word.size());
-                return current.fp().minus(dispToFrameStart);
-            }
-
-            @Override
-            Pointer returnIP(Cursor current) {
-                return current.fp().plus(Word.size());
-            }
-
-            @Override
-            Pointer callerFP(Cursor current) {
-                return current.stackFrameWalker().readWord(current.fp(), 0).asPointer();
-            }
-        },
-
-        /**
-         * Returning from a runtime call (or actually in a runtime call). RBP may have been clobbered by the runtime.
-         * The frame pointer for the current activation record is 'RSP + stack slot size'.
-         */
-        RETURNING_FROM_RUNTIME {
-
-            @Override
-            Pointer localVariablesBase(Cursor current) {
-                return current.stackFrameWalker().readWord(current.sp(), 0).asPointer();
-            }
-
-            @Override
-            Pointer returnIP(Cursor current) {
-                T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
-                int dispToRip = targetMethod.frameSize() - targetMethod.sizeOfNonParameterLocals();
-                return localVariablesBase(current).plus(dispToRip);
-            }
-
-            @Override
-            Pointer callerFP(Cursor current) {
-                return current.stackFrameWalker().readWord(returnIP(current), -Word.size()).asPointer();
-            }
-        };
-
-        abstract Pointer localVariablesBase(Cursor current);
-
-        abstract Pointer returnIP(Cursor current);
-
-        abstract Pointer callerFP(Cursor current);
-
-        /**
-         * Offset to the last instruction of the prologue from the JIT entry point. The prologue comprises two instructions,
-         * the first one of which is enter (fixed size, 4 bytes long).
-         */
-        public static final int OFFSET_TO_LAST_PROLOGUE_INSTRUCTION = 4;
     }
 
     @Override
@@ -836,7 +721,7 @@ public final class T1XTargetMethod extends TargetMethod {
                     startOfPrologue = codeStart;
                 }
 
-                Pointer lastPrologueInstruction = startOfPrologue.plus(OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
+                Pointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateAMD64.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
                 FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
                 returnRIP = framePointerState.returnIP(current);
                 callerFP = framePointerState.callerFP(current);
@@ -855,4 +740,121 @@ public final class T1XTargetMethod extends TargetMethod {
             unimplISA();
         }
     }
+}
+
+/**
+ * Various execution states in a T1X method that can only be observed in
+ * the context of the Inspector.
+ *
+ * @author Laurent Daynes
+ */
+@HOSTED_ONLY
+@PLATFORM(cpu = "amd64")
+enum FramePointerStateAMD64 {
+    /**
+     * RBP holds the frame pointer of the current method activation. caller's RIP is at [RBP + FrameSize], caller's
+     * frame pointer is at [RBP + FrameSize -1]
+     */
+    IN_RBP {
+
+        @Override
+        Pointer localVariablesBase(Cursor current) {
+            return current.fp();
+        }
+
+        @Override
+        Pointer returnIP(Cursor current) {
+            T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
+            int dispToRip = targetMethod.frameSize() - targetMethod.sizeOfNonParameterLocals();
+            return current.fp().plus(dispToRip);
+        }
+
+        @Override
+        Pointer callerFP(Cursor current) {
+            return current.stackFrameWalker().readWord(returnIP(current), -Word.size()).asPointer();
+        }
+    },
+
+    /**
+     * RBP holds the frame pointer of the caller, caller's RIP is at [RSP] This state occurs when entering the
+     * method or exiting it.
+     */
+    CALLER_FRAME_IN_RBP {
+
+        @Override
+        Pointer localVariablesBase(Cursor current) {
+            int offsetToSaveArea = current.targetMethod().frameSize();
+            return current.sp().minus(offsetToSaveArea);
+        }
+
+        @Override
+        Pointer returnIP(Cursor current) {
+            return current.sp();
+        }
+
+        @Override
+        Pointer callerFP(Cursor current) {
+            return current.fp();
+        }
+    },
+
+    /**
+     * RBP points at the bottom of the "saving area". Caller's frame pointer is at [RBP], caller's RIP is at [RBP +
+     * WordSize].
+     */
+    CALLER_FRAME_AT_RBP {
+
+        @Override
+        Pointer localVariablesBase(Cursor current) {
+            T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
+            int dispToFrameStart = targetMethod.frameSize() - (targetMethod.sizeOfNonParameterLocals() + Word.size());
+            return current.fp().minus(dispToFrameStart);
+        }
+
+        @Override
+        Pointer returnIP(Cursor current) {
+            return current.fp().plus(Word.size());
+        }
+
+        @Override
+        Pointer callerFP(Cursor current) {
+            return current.stackFrameWalker().readWord(current.fp(), 0).asPointer();
+        }
+    },
+
+    /**
+     * Returning from a runtime call (or actually in a runtime call). RBP may have been clobbered by the runtime.
+     * The frame pointer for the current activation record is 'RSP + stack slot size'.
+     */
+    RETURNING_FROM_RUNTIME {
+
+        @Override
+        Pointer localVariablesBase(Cursor current) {
+            return current.stackFrameWalker().readWord(current.sp(), 0).asPointer();
+        }
+
+        @Override
+        Pointer returnIP(Cursor current) {
+            T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
+            int dispToRip = targetMethod.frameSize() - targetMethod.sizeOfNonParameterLocals();
+            return localVariablesBase(current).plus(dispToRip);
+        }
+
+        @Override
+        Pointer callerFP(Cursor current) {
+            return current.stackFrameWalker().readWord(returnIP(current), -Word.size()).asPointer();
+        }
+    };
+
+    abstract Pointer localVariablesBase(Cursor current);
+
+    abstract Pointer returnIP(Cursor current);
+
+    abstract Pointer callerFP(Cursor current);
+
+    /**
+     * Offset to the last instruction of the prologue from the JIT entry point. The prologue comprises two instructions,
+     * the first one of which is enter (fixed size, 4 bytes long).
+     */
+    public static final int OFFSET_TO_LAST_PROLOGUE_INSTRUCTION = 4;
 }
