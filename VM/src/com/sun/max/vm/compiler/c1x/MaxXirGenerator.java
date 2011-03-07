@@ -302,6 +302,10 @@ public class MaxXirGenerator implements RiXirGenerator {
         assert method.isResolved() : "Cannot generate prologue for unresolved method: " + method;
         ClassMethodActor callee = (ClassMethodActor) method;
 
+        if (callee.isTemplate()) {
+            return null;
+        }
+
         // Cannot share 'asm' across concurrent compilations.
         CiXirAssembler asm = this.asm.copy();
         asm.restart(CiKind.Void);
@@ -332,6 +336,10 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genEpilogue(XirSite site, RiMethod method) {
+        ClassMethodActor callee = (ClassMethodActor) method;
+        if (callee.isTemplate()) {
+            return null;
+        }
         return new XirSnippet(epilogueTemplate);
     }
 

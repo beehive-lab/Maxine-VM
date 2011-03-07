@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,7 +114,7 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
         final byte[] originalCode = codeAttribute.code();
         final byte[] code = Arrays.copyOf(originalCode, originalCode.length + codeStream.size());
         codeStream.copyTo(0, code, originalCode.length, codeStream.size());
-        result = new CodeAttribute(codeAttribute.constantPool,
+        result = new CodeAttribute(codeAttribute.cp,
                                     code,
                                     (char) maxStack(),
                                     (char) maxLocals(),
@@ -125,8 +125,8 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
     }
 
     @Override
-    protected void setWritePosition(int position) {
-        codeStream.seek(position);
+    protected void setWriteBCI(int bci) {
+        codeStream.seek(bci);
     }
 
     @Override
@@ -176,7 +176,7 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
                 while (endAddress < dispatcherMap.length && dispatcherMap[endAddress] == dispatcher) {
                     ++endAddress;
                 }
-                final ExceptionHandlerEntry dispatcherInfo = new ExceptionHandlerEntry(startAddress, endAddress, dispatcher.position(), 0);
+                final ExceptionHandlerEntry dispatcherInfo = new ExceptionHandlerEntry(startAddress, endAddress, dispatcher.bci(), 0);
                 table.add(dispatcherInfo);
                 i = endAddress;
             } else {

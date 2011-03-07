@@ -24,6 +24,7 @@ package com.sun.max.vm.hosted;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
+import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
@@ -79,12 +80,13 @@ public final class PrototypeGenerator {
             }
         } while (currentNumberOfClasses() != numberOfClassActors);
 
+        compiledPrototype.checkRequiredImageMethods();
         compiledPrototype.compileFoldableMethods();
         compiledPrototype.link();
 
         graphPrototype = new GraphPrototype(compiledPrototype, tree);
 
-        Code.bootCodeRegion.trim();
+        Code.bootCodeRegion().trim();
         return graphPrototype;
     }
 
@@ -96,6 +98,11 @@ public final class PrototypeGenerator {
      * @return a completed data prototype
      */
     DataPrototype createDataPrototype(boolean tree) {
+        if (tree && threadsOption.getValue() != 1) {
+            ProgramWarning.message("Overriding value of -" + threadsOption + " with 1 since -tree option is enabled");
+            threadsOption.setValue(1);
+        }
+
         final GraphPrototype graphPrototype = createGraphPrototype(tree);
         final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null, threadsOption.getValue());
         return dataPrototype;

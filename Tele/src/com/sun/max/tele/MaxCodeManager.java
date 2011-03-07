@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ public interface MaxCodeManager {
      * is bytecode instruction 0, the method entry. When requested, attempts will be made to locate the surrogate
      * for the {@link ClassMethodActor} in the VM that identifies the method, once the class has been loaded.
      * <br>
-     * Important: this location will always have {@link #bytecodePosition()} = -1, which in any machine code
+     * Important: this location will always have {@link #bci()} = -1, which in any machine code
      * compilation is understood to mean the beginning of the method prologue, which comes before the machine
      * code deriving from bytecode instruction 0;
      * <br>

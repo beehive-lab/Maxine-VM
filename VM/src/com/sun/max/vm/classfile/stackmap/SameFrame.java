@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,9 +45,9 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public class SameFrame extends StackMapFrame {
 
-    public SameFrame(int positionDelta) {
-        super(positionDelta);
-        assert positionDelta >= 0 && positionDelta < SAME_FRAME_BOUND;
+    public SameFrame(int bciDelta) {
+        super(bciDelta);
+        assert bciDelta >= 0 && bciDelta < SAME_FRAME_BOUND;
     }
 
     public SameFrame(int frameType, ClassfileStream classfileStream) {
@@ -66,12 +66,12 @@ public class SameFrame extends StackMapFrame {
 
     @Override
     public int frameType() {
-        return positionDelta();
+        return bciDelta();
     }
 
     @Override
     public String toString() {
         return "frame_type = " + frameType() + " /* same_frame */\n" +
-               "  offset_delta = " + positionDelta() + " /* implicit */";
+               "  offset_delta = " + bciDelta() + " /* implicit */";
     }
 }

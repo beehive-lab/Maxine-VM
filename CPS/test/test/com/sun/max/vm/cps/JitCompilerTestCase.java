@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,7 +154,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
 
             // Now re-scan and print the code stream in bytecode blocks:
             final CodeAttribute codeAttribute = targetMethod.classMethodActor().codeAttribute();
-            final ConstantPool constantPool = codeAttribute.constantPool;
+            final ConstantPool constantPool = codeAttribute.cp;
             for (CodeTranslation codeTranslation : codeTranslations) {
                 final BytecodeBlock bytecodeBlock = codeTranslation.toBytecodeBlock(codeAttribute.code());
 
@@ -189,7 +189,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
     public static List<CodeTranslation> codeTranslations(JitTargetMethod jitTargetMethod) {
         final List<CodeTranslation> translations = new ArrayList<CodeTranslation>();
         int startBytecodePosition = 0;
-        int[] positionMap = jitTargetMethod.bytecodeToTargetCodePositionMap();
+        int[] positionMap = jitTargetMethod.bciToPosMap();
         int startTargetCodePosition = positionMap[0];
         assert startTargetCodePosition != 0;
         translations.add(new CodeTranslation(0, 0, 0, startTargetCodePosition));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.dir.transform.*;
@@ -216,7 +216,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
             final DirValue[] locals = useMany(state.getLocalSlots());
             final DirValue[] stack = useMany(state.getStackSlots());
             final BytecodeLocation location = state.last().location();
-            frameDescriptor = new DirJavaFrameDescriptor(null, location.classMethodActor, location.bytecodePosition, locals, stack);
+            frameDescriptor = new DirJavaFrameDescriptor(null, location.classMethodActor, location.bci, locals, stack);
         } else {
             frameDescriptor = null;
         }

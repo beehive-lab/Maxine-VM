@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -563,9 +563,9 @@ public abstract class StackFrameWalker {
     private Pointer getNativeFunctionCallInstructionPointerInNativeStub(Pointer ip, boolean fatalIfNotFound) {
         final TargetMethod nativeStubTargetMethod = targetMethodFor(ip);
         if (nativeStubTargetMethod != null) {
-            final int targetCodePosition = nativeStubTargetMethod.targetCodePositionFor(ip);
-            final int nativeFunctionCallPosition = nativeStubTargetMethod.findNextCall(targetCodePosition, true);
-            final Pointer nativeFunctionCall = nativeFunctionCallPosition < 0 ? Pointer.zero() : nativeStubTargetMethod.codeStart().plus(nativeFunctionCallPosition);
+            final int pos = nativeStubTargetMethod.posFor(ip);
+            final int nativeFunctionCallPos = nativeStubTargetMethod.findNextCall(pos, true);
+            final Pointer nativeFunctionCall = nativeFunctionCallPos < 0 ? Pointer.zero() : nativeStubTargetMethod.codeStart().plus(nativeFunctionCallPos);
             if (!nativeFunctionCall.isZero()) {
                 // The returned instruction pointer must be one past the actual address of the
                 // native function call. This makes it match the pattern expected by the
@@ -577,7 +577,7 @@ public abstract class StackFrameWalker {
                     Log.print(" [");
                     Log.print(nativeStubTargetMethod.codeStart());
                     Log.print("+");
-                    Log.print(nativeFunctionCallPosition + 1);
+                    Log.print(nativeFunctionCallPos + 1);
                     Log.println(']');
                 }
                 return nativeFunctionCall;

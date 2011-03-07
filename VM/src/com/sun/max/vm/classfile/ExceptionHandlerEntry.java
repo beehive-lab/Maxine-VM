@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,24 +37,24 @@ public final class ExceptionHandlerEntry {
 
     public static final ExceptionHandlerEntry[] NONE = {};
 
-    private final int startPosition;
+    private final int startBCI;
 
-    private final int endPosition;
+    private final int endBCI;
 
-    private final int handlerPosition;
+    private final int handlerBCI;
 
     private final int catchTypeIndex;
 
-    public int startPosition() {
-        return startPosition;
+    public int startBCI() {
+        return startBCI;
     }
 
-    public int endPosition() {
-        return endPosition;
+    public int endBCI() {
+        return endBCI;
     }
 
-    public int handlerPosition() {
-        return handlerPosition;
+    public int handlerBCI() {
+        return handlerBCI;
     }
 
     public int catchTypeIndex() {
@@ -62,30 +62,30 @@ public final class ExceptionHandlerEntry {
     }
 
     public ExceptionHandlerEntry(int startAddress, int endAddress, int handlerAddress, int catchTypeIndex) {
-        this.startPosition = startAddress;
-        this.endPosition = endAddress;
-        this.handlerPosition = handlerAddress;
+        this.startBCI = startAddress;
+        this.endBCI = endAddress;
+        this.handlerBCI = handlerAddress;
         this.catchTypeIndex = catchTypeIndex;
     }
 
-    public ExceptionHandlerEntry changeEndPosition(int address) {
-        return new ExceptionHandlerEntry(startPosition, address, handlerPosition, catchTypeIndex);
+    public ExceptionHandlerEntry changeEndBCI(int address) {
+        return new ExceptionHandlerEntry(startBCI, address, handlerBCI, catchTypeIndex);
     }
 
     /**
-     * Determines if a given offset is within the range {@code [startProgramCounter() .. endProgramCounter())}.
+     * Determines if a given BCI is within the range {@code [startProgramCounter() .. endProgramCounter())}.
      */
-    public boolean rangeIncludes(int offset) {
-        return startPosition <= offset && offset < endPosition;
+    public boolean rangeIncludes(int bci) {
+        return startBCI <= bci && bci < endBCI;
     }
 
-    public ExceptionHandlerEntry relocate(OpcodePositionRelocator relocator) {
-        return new ExceptionHandlerEntry(relocator.relocate(startPosition), relocator.relocate(endPosition), relocator.relocate(handlerPosition), catchTypeIndex);
+    public ExceptionHandlerEntry relocate(OpcodeBCIRelocator relocator) {
+        return new ExceptionHandlerEntry(relocator.relocate(startBCI), relocator.relocate(endBCI), relocator.relocate(handlerBCI), catchTypeIndex);
     }
 
     @Override
     public String toString() {
-        return "[" + startPosition + " .. " + endPosition + ") -> " + handlerPosition + " {type=" + catchTypeIndex + "}";
+        return "[" + startBCI + " .. " + endBCI + ") -> " + handlerBCI + " {type=" + catchTypeIndex + "}";
     }
 
     /**
@@ -101,12 +101,12 @@ public final class ExceptionHandlerEntry {
                         continue outerLoop;
                     }
                     final boolean disjoint;
-                    if (otherEntry.startPosition() == entry.startPosition()) {
+                    if (otherEntry.startBCI() == entry.startBCI()) {
                         disjoint = false;
-                    } else if (otherEntry.startPosition() > entry.startPosition()) {
-                        disjoint = otherEntry.startPosition() >= entry.endPosition();
+                    } else if (otherEntry.startBCI() > entry.startBCI()) {
+                        disjoint = otherEntry.startBCI() >= entry.endBCI();
                     } else {
-                        disjoint = otherEntry.endPosition() <= entry.startPosition();
+                        disjoint = otherEntry.endBCI() <= entry.startBCI();
                     }
                     if (!disjoint) {
                         ProgramError.unexpected("two exception handlers overlap: " + otherEntry + " and " + entry);
@@ -123,7 +123,7 @@ public final class ExceptionHandlerEntry {
         dataOutputStream.writeShort(length);
         boolean byteEncoding = true;
         for (ExceptionHandlerEntry entry : entries) {
-            if (!(entry.startPosition <= 0xff && entry.endPosition <= 0xff && entry.handlerPosition <= 0xff && entry.catchTypeIndex <= 0xff)) {
+            if (!(entry.startBCI <= 0xff && entry.endBCI <= 0xff && entry.handlerBCI <= 0xff && entry.catchTypeIndex <= 0xff)) {
                 byteEncoding = false;
                 break;
             }
@@ -131,16 +131,16 @@ public final class ExceptionHandlerEntry {
         dataOutputStream.writeBoolean(byteEncoding);
         if (byteEncoding) {
             for (ExceptionHandlerEntry entry : entries) {
-                dataOutputStream.writeByte(entry.startPosition);
-                dataOutputStream.writeByte(entry.endPosition);
-                dataOutputStream.writeByte(entry.handlerPosition);
+                dataOutputStream.writeByte(entry.startBCI);
+                dataOutputStream.writeByte(entry.endBCI);
+                dataOutputStream.writeByte(entry.handlerBCI);
                 dataOutputStream.writeByte(entry.catchTypeIndex);
             }
         } else {
             for (ExceptionHandlerEntry entry : entries) {
-                dataOutputStream.writeShort(entry.startPosition);
-                dataOutputStream.writeShort(entry.endPosition);
-                dataOutputStream.writeShort(entry.handlerPosition);
+                dataOutputStream.writeShort(entry.startBCI);
+                dataOutputStream.writeShort(entry.endBCI);
+                dataOutputStream.writeShort(entry.handlerBCI);
                 dataOutputStream.writeShort(entry.catchTypeIndex);
             }
         }
@@ -176,7 +176,7 @@ public final class ExceptionHandlerEntry {
     /**
      * Decodes the exception handler table as an array of triplets (start bci, end bci, handler bci).
      */
-    public static int[] decodeHandlerPositions(DataInputStream dataInputStream) throws IOException {
+    public static int[] decodeHandlerBCIs(DataInputStream dataInputStream) throws IOException {
         final int length = dataInputStream.readUnsignedShort();
         assert length != 0;
         final int[] entries = new int[length * 3];

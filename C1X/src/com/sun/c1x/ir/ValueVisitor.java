@@ -52,6 +52,7 @@ public abstract class ValueVisitor {
     public abstract void visitInvoke(Invoke i);
     public abstract void visitLoadField(LoadField i);
     public abstract void visitLoadIndexed(LoadIndexed i);
+    public abstract void visitIncrementRegister(IncrementRegister i);
     public abstract void visitInfopoint(Infopoint i);
     public abstract void visitLoadPointer(LoadPointer i);
     public abstract void visitLoadStackAddress(AllocateStackVariable i);
@@ -84,6 +85,7 @@ public abstract class ValueVisitor {
     public abstract void visitStorePointer(StorePointer i);
     public abstract void visitStoreRegister(StoreRegister i);
     public abstract void visitTableSwitch(TableSwitch i);
+    public abstract void visitTemplateCall(TemplateCall templateCall);
     public abstract void visitThrow(Throw i);
     public abstract void visitTypeEqualityCheck(TypeEqualityCheck typeEqualityCheck);
     public abstract void visitUnsafeCast(UnsafeCast i);

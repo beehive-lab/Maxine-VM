@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,9 @@ package com.sun.max.vm.stack;
 
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reflection.*;
@@ -71,20 +71,21 @@ public class SourceFrameVisitor extends RawStackFrameVisitor {
         }
 
         long frameId = current.sp.toLong() << 16;
-        BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(current.ip(), current.ipIsReturnAddress);
         boolean trapped = callee.targetMethod != null && callee.targetMethod.is(TrapStub);
-        if (bytecodeLocation == null) {
+        CiCodePos codePos = targetMethod.getCodePos(current.ip, current.ipIsReturnAddress);
+
+        if (codePos == null) {
             return visitSourceFrame(targetMethod.classMethodActor, -1, trapped, frameId);
         }
-        return visitSourceFrames(bytecodeLocation, trapped, frameId);
+        return visitSourceFrames(codePos, trapped, frameId);
     }
 
-    private boolean visitSourceFrames(BytecodeLocation bytecodeLocation, boolean trapped, long frameId) {
-        if (!visitSourceFrame(bytecodeLocation.classMethodActor, bytecodeLocation.bytecodePosition, trapped, frameId)) {
+    private boolean visitSourceFrames(CiCodePos codePos, boolean trapped, long frameId) {
+        if (!visitSourceFrame((ClassMethodActor) codePos.method, codePos.bci, trapped, frameId)) {
             return false;
         }
-        if (bytecodeLocation.parent() != null) {
-            return visitSourceFrames(bytecodeLocation.parent(), false, ++frameId);
+        if (codePos.caller != null) {
+            return visitSourceFrames(codePos.caller, false, ++frameId);
         }
         return true;
     }

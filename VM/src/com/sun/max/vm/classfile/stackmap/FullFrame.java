@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,8 +68,8 @@ public class FullFrame extends StackMapFrame {
     private final VerificationType[] locals;
     private final VerificationType[] stack;
 
-    public FullFrame(int positionDelta, VerificationType[] locals, VerificationType[] stack) {
-        super(positionDelta);
+    public FullFrame(int bciDelta, VerificationType[] locals, VerificationType[] stack) {
+        super(bciDelta);
         this.locals = locals;
         this.stack = stack;
     }
@@ -96,7 +96,7 @@ public class FullFrame extends StackMapFrame {
     @Override
     public void write(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
         stream.writeByte(frameType());
-        stream.writeShort(positionDelta());
+        stream.writeShort(bciDelta());
         stream.writeShort(locals.length);
         for (int i = 0; i < locals.length; i++) {
             locals[i].write(stream, constantPoolEditor);
@@ -115,7 +115,7 @@ public class FullFrame extends StackMapFrame {
     @Override
     public String toString() {
         return "frame_type = " + frameType() + " /* full_frame */\n" +
-               "  offset_delta = " + positionDelta() + "\n" +
+               "  offset_delta = " + bciDelta() + "\n" +
                "  number_of_locals = " + locals.length + "\n" +
                "  locals = [ " + Utils.toString(locals, ", ") + " ]\n" +
                "  number_of_stack_items = " + stack.length + "\n" +

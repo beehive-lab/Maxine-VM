@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1287,17 +1287,17 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitAdjustJitStack(AdjustJitStack builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 1;
-        final EirValue registerPointerValue = methodTranslation().integerRegisterRoleValue(VMRegister.Role.ABI_STACK_POINTER);
-        final EirValue delta = dirToEirValue(dirArguments[0]);
+    public void visitIncrementIntegerRegister(IncrementIntegerRegister builtin, DirValue dirResult, DirValue[] dirArguments) {
+        assert dirArguments.length == 2;
+        final VMRegister.Role registerRole = (VMRegister.Role) dirArguments[0].value().asObject();
+        final EirValue registerPointerValue = methodTranslation().integerRegisterRoleValue(registerRole);
+        final EirValue delta = dirToEirValue(dirArguments[1]);
         if (delta.isConstant()) {
             final EirConstant constant = (EirConstant) delta;
             int addend = constant.value().asInt();
             if (addend == 0) {
                 return;
             }
-            addend <<= 3; // times word size (8)
             if (addend < 0) {
                 addInstruction(new AMD64EirInstruction.SUB_I64(eirBlock(), registerPointerValue, methodTranslation().createEirConstant(IntValue.from(-addend))));
             } else {
@@ -1305,7 +1305,6 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
             }
             return;
         }
-        addInstruction(new AMD64EirInstruction.SAL_I64(eirBlock(), delta, methodTranslation().createEirConstant(IntValue.from(3)))); // times word size (8)
         addInstruction(new AMD64EirInstruction.ADD_I64(eirBlock(), registerPointerValue, delta));
     }
 

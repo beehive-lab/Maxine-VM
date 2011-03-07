@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -135,7 +135,7 @@ public class TirPrintSink extends TirBufferedSink {
             final ClassMethodActor classMethodActor = tree.classMethodActor();
             final LocalVariableTable localVariableTable = classMethodActor.codeAttribute().localVariableTable();
             final Entry entry = localVariableTable.findLocalVariable(instruction.slot(), tree.anchor().position());
-            final String variableName = entry == null ? "?" : entry.name(classMethodActor.codeAttribute().constantPool).toString();
+            final String variableName = entry == null ? "?" : entry.name(classMethodActor.codeAttribute().cp).toString();
             return Color.color(NameMap.LOCAL_COLOR, "(" + variableName + ")");
         }
 

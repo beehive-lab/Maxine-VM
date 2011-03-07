@@ -61,13 +61,14 @@ public interface CompilationScheme extends VMScheme {
      * The option whose value (if non-null) specifies the class name of the optimizing compiler to use.
      */
     @HOSTED_ONLY
-    Option<String> optimizingCompilerOption = compilers.newStringOption("opt", C1XCompilerScheme.class.getName(), "Specifies the optimizing compiler class.");
+    Option<String> optimizingCompilerOption = compilers.newStringOption("opt", C1XCompilerScheme.class.getName(), "Specifies the class name of the optimizing compiler.");
 
     /**
      * The option whose value (if non-null) specifies the class name of the baseline compiler to use.
      */
     @HOSTED_ONLY
     Option<String> baselineCompilerOption = compilers.newStringOption("baseline", "com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler", "Specifies the baseline compiler class.");
+//    Option<String> baselineCompilerOption = compilers.newStringOption("baseline", "com.sun.max.vm.t1x.T1XCompiler", "Specifies the class name of the baseline compiler.");
 
     /**
      * This method makes a target method for the specified method actor. If the method is already compiled, it will

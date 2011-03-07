@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,8 +41,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.cps.ir.*;
-import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -55,7 +53,7 @@ import com.sun.max.vm.value.*;
  * @author Athul Acharya
  * @author Doug Simon
  */
-public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
+public final class TeleInterpreter {
 
     private final TeleVM teleVM;
 
@@ -65,11 +63,6 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
 
     public TeleInterpreter(TeleVM teleVM) {
         this.teleVM = teleVM;
-    }
-
-    @Override
-    public Value execute(IrMethod method, Value... arguments) throws InvocationTargetException {
-        return run(method.classMethodActor(), arguments);
     }
 
     /**
@@ -196,7 +189,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
         }
     }
 
-    private Value run(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
+    public Value run(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
 
         machine = new Machine(teleVM);
         machine.pushFrame(classMethodActor);

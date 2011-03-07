@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,8 +58,8 @@ public abstract class ControlFlowAdapter extends BytecodeAdapter {
      * @param offset the offset of the taken branch
      */
     private void fork(int offset) {
-        fallThrough(currentBytePosition());
-        jump(currentOpcodePosition() + offset);
+        fallThrough(currentBCI());
+        jump(currentOpcodeBCI() + offset);
     }
 
     @Override
@@ -134,7 +134,7 @@ public abstract class ControlFlowAdapter extends BytecodeAdapter {
 
     @Override
     protected void goto_(int offset) {
-        jump(currentOpcodePosition() + offset);
+        jump(currentOpcodeBCI() + offset);
     }
 
     @Override
@@ -144,20 +144,20 @@ public abstract class ControlFlowAdapter extends BytecodeAdapter {
 
     @Override
     protected void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
-        jump(currentOpcodePosition() + defaultOffset);
+        jump(currentOpcodeBCI() + defaultOffset);
         for (int i = 0; i < numberOfCases; i++) {
             final BytecodeScanner scanner = bytecodeScanner();
-            jump(currentOpcodePosition() + scanner.readSwitchOffset());
+            jump(currentOpcodeBCI() + scanner.readSwitchOffset());
         }
     }
 
     @Override
     protected void lookupswitch(int defaultOffset, int numberOfCases) {
-        jump(currentOpcodePosition() + defaultOffset);
+        jump(currentOpcodeBCI() + defaultOffset);
         for (int i = 0; i < numberOfCases; i++) {
             final BytecodeScanner scanner = bytecodeScanner();
             scanner.readSwitchCase(); // ignore case value
-            jump(currentOpcodePosition() + scanner.readSwitchOffset());
+            jump(currentOpcodeBCI() + scanner.readSwitchOffset());
         }
     }
 

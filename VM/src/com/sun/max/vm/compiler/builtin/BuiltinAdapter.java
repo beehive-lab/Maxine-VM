@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -153,7 +153,7 @@ import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWord;
 import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWordAtIntOffset;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AboveEqual;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AboveThan;
-import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AdjustJitStack;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.IncrementIntegerRegister;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BarMemory;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BelowEqual;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BelowThan;
@@ -743,7 +743,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    public void visitAdjustJitStack(AdjustJitStack builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitIncrementIntegerRegister(IncrementIntegerRegister builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 

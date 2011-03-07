@@ -42,7 +42,7 @@ import com.sun.max.vm.thread.*;
  *
  * @author Ben L. Titzer
  */
-public class Compilation implements Future<TargetMethod> {
+public class Compilation /*implements Future<TargetMethod>*/ {
 
     /**
      * Used to detect re-entrant compilation which indicates the boot image closure was not incomplete.
@@ -73,7 +73,7 @@ public class Compilation implements Future<TargetMethod> {
     private static long compilationTime;
 
     public final CompilationScheme compilationScheme;
-    public final RuntimeCompiler compiler;
+    public RuntimeCompiler compiler;
     public final ClassMethodActor classMethodActor;
     public final Compilation parent;
     @INSPECTED
@@ -99,8 +99,8 @@ public class Compilation implements Future<TargetMethod> {
         this.compilingThread = compilingThread;
 
         for (Compilation scope = parent; scope != null; scope = scope.parent) {
-            if (scope.classMethodActor.equals(classMethodActor)) {
-                FatalError.unexpected("Recursive compilation of " + classMethodActor);
+            if (scope.classMethodActor.equals(classMethodActor) && scope.compiler == compiler) {
+                FatalError.unexpected("Recursive compilation of " + classMethodActor + " by " + compiler);
             }
         }
         COMPILATION.set(this);

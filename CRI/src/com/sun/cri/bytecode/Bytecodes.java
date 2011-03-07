@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -284,7 +284,20 @@ public class Bytecodes {
      */
     public static final int JNIOP                = 204;
     
-    public static final int CALL                 = 205;
+    /**
+     * Template call.
+     * 
+     * <pre>
+     * Format: { u1 opcode;  // CALL
+     *           u2 sig;     // Constant pool index of a CONSTANT_Utf8_info representing the signature of the call.
+     *                          The parameters part of the signature must be "()", "(word)" or "(word, object)".
+     *         }
+     *
+     * Operand Stack:
+     *     ..., [arg1, [arg2 ... ]] => [return value, ]...,
+     * </pre>
+     */
+    public static final int TEMPLATE_CALL        = 205;
 
     public static final int WLOAD                = 206;
     public static final int WLOAD_0              = 207;
@@ -402,6 +415,8 @@ public class Bytecodes {
      */
     public static final int WRITEREG             = 235;
 
+    public static final int INCREG               = 236;
+    
     /**
      * Unsafe cast of top value on stack.
      *
@@ -415,9 +430,9 @@ public class Bytecodes {
      *     ..., value => ..., value
      * </pre>
      */
-    public static final int UNSAFE_CAST          = 236;
+    public static final int UNSAFE_CAST          = 237;
 
-    public static final int WRETURN              = 237;
+    public static final int WRETURN              = 238;
     
     /**
      * Record debug info at the current code location.
@@ -433,7 +448,7 @@ public class Bytecodes {
      * @see #HERE
      * @see #INFO
      */
-    public static final int INFOPOINT        = 238;
+    public static final int INFOPOINT        = 239;
 
     /**
      * Record debug info at the current code location
@@ -506,7 +521,7 @@ public class Bytecodes {
      * The value on the top of the stack is the size in bytes to allocate.
      * The result is the address of the allocated block. <b>N.B.</b> The contents of the block are uninitialized.
      */
-    public static final int ALLOCA               = 239;
+    public static final int ALLOCA               = 240;
 
     /**
      * Inserts a memory barrier.
@@ -522,7 +537,7 @@ public class Bytecodes {
      * 
      * @see MemoryBarriers
      */
-    public static final int MEMBAR               = 240;
+    public static final int MEMBAR               = 241;
     
     /**
      * Allocates and initializes a slot on the native stack frame.
@@ -546,12 +561,12 @@ public class Bytecodes {
      *     ..., value => ..., address
      * </pre>
      */
-    public static final int ALLOCSTKVAR          = 241;
+    public static final int ALLOCSTKVAR          = 242;
     
-    public static final int PAUSE                = 242;
-    public static final int BREAKPOINT_TRAP      = 243;
-    public static final int ADD_SP               = 244;
-    public static final int FLUSHW               = 245;
+    public static final int PAUSE                = 243;
+    public static final int BREAKPOINT_TRAP      = 244;
+    public static final int ADD_SP               = 245;
+    public static final int FLUSHW               = 246;
     
     /**
      * Produces the index of the least significant bit within {@code value} or {@code -1} if {@code value == 0}.
@@ -565,7 +580,7 @@ public class Bytecodes {
      *     ..., value => ..., index
      * </pre>
      */
-    public static final int LSB                  = 246;
+    public static final int LSB                  = 247;
     
     /**
      * Produces the index of the most significant bit within {@code value} or {@code -1} if {@code value == 0}.
@@ -579,7 +594,7 @@ public class Bytecodes {
      *     ..., value => ..., index
      * </pre>
      */
-    public static final int MSB                  = 247;
+    public static final int MSB                  = 248;
 
     // End extended bytecodes
 
@@ -785,6 +800,36 @@ public class Bytecodes {
      *
      * The documentation for each constant is taken from Doug Lea's
      * <a href="http://gee.cs.oswego.edu/dl/jmm/cookbook.html">The JSR-133 Cookbook for Compiler Writers</a>.
+     * <p>
+     * The {@code JMM_*} constants capture the memory barriers necessary to implement the Java Memory Model
+     * with respect to volatile field accesses. Their values are explained by this
+     * comment from templateTable_i486.cpp in the HotSpot source code:
+     * <pre>
+     * Volatile variables demand their effects be made known to all CPU's in
+     * order.  Store buffers on most chips allow reads & writes to reorder; the
+     * JMM's ReadAfterWrite.java test fails in -Xint mode without some kind of
+     * memory barrier (i.e., it's not sufficient that the interpreter does not
+     * reorder volatile references, the hardware also must not reorder them).
+     *
+     * According to the new Java Memory Model (JMM):
+     * (1) All volatiles are serialized wrt to each other.
+     * ALSO reads & writes act as acquire & release, so:
+     * (2) A read cannot let unrelated NON-volatile memory refs that happen after
+     * the read float up to before the read.  It's OK for non-volatile memory refs
+     * that happen before the volatile read to float down below it.
+     * (3) Similarly, a volatile write cannot let unrelated NON-volatile memory refs
+     * that happen BEFORE the write float down to after the write.  It's OK for
+     * non-volatile memory refs that happen after the volatile write to float up
+     * before it.
+     *
+     * We only put in barriers around volatile refs (they are expensive), not
+     * _between_ memory refs (which would require us to track the flavor of the
+     * previous memory refs).  Requirements (2) and (3) require some barriers
+     * before volatile stores and after volatile loads.  These nearly cover
+     * requirement (1) but miss the volatile-store-volatile-load case.  This final
+     * case is placed after volatile-stores although it could just as well go
+     * before volatile-loads.
+     * </pre>
      */
     public static class MemoryBarriers {
 
@@ -870,6 +915,12 @@ public class Bytecodes {
          */
         @INTRINSIC(MEMBAR | ((LOAD_STORE | STORE_STORE) << 8))
         public static native void memopStore();
+        
+        
+        public static final int JMM_PRE_VOLATILE_WRITE = LOAD_STORE | STORE_STORE;
+        public static final int JMM_POST_VOLATILE_WRITE = STORE_LOAD | STORE_STORE;
+        public static final int JMM_PRE_VOLATILE_READ = 0;
+        public static final int JMM_POST_VOLATILE_READ = LOAD_LOAD | LOAD_STORE;
     }
 
     public static final int ILLEGAL = 255;
@@ -1222,9 +1273,10 @@ public class Bytecodes {
         def(UWCMP               , "uwcmp"           , "bii"  , EXTENSION);
         def(JNICALL             , "jnicall"         , "bii"  , EXTENSION | TRAP);
         def(JNIOP               , "jniop"           , "bii"  , EXTENSION);
-        def(CALL                , "call"            , "bii"  , EXTENSION | TRAP);
+        def(TEMPLATE_CALL       , "template_call"   , "bii"  , EXTENSION | TRAP);
         def(READREG             , "readreg"         , "bii"  , EXTENSION);
         def(WRITEREG            , "writereg"        , "bii"  , EXTENSION);
+        def(INCREG              , "increg"          , "bii"  , EXTENSION);
         def(UNSAFE_CAST         , "unsafe_cast"     , "bii"  , EXTENSION);
         def(WRETURN             , "wreturn"         , "b"    , EXTENSION | TRAP | STOP);
         def(ALLOCA              , "alloca"          , "bii"  , EXTENSION);

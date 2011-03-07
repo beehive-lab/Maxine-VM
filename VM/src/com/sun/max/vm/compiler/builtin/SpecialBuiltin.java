@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,23 +95,23 @@ public abstract class SpecialBuiltin extends Builtin {
      * Adjusts the value register used as the JIT's stack pointer. The value of the register
      * adjusted by adding {@code numberOrWords * Word.size()} to its current value.
      *
-     * @param numberOfWords the signed adjustment amount specified in words
+     * @param delta the signed increment amount specified
      */
-    @BUILTIN(AdjustJitStack.class)
-    public static native void adjustJitStack(int numberOfWords);
+    @BUILTIN(IncrementIntegerRegister.class)
+    public static native void incrementIntegerRegister(VMRegister.Role r, int delta);
 
     /**
-     * @see SpecialBuiltin#adjustJitStack(int)
+     * @see SpecialBuiltin#incrementIntegerRegister(int)
      */
-    public static class AdjustJitStack extends SpecialBuiltin {
+    public static class IncrementIntegerRegister extends SpecialBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 1;
-            visitor.visitAdjustJitStack(this, result, arguments);
+            assert arguments.length == 2;
+            visitor.visitIncrementIntegerRegister(this, result, arguments);
         }
 
-        public static final AdjustJitStack BUILTIN = new AdjustJitStack();
+        public static final IncrementIntegerRegister BUILTIN = new IncrementIntegerRegister();
     }
 
     /**
@@ -194,63 +194,63 @@ public abstract class SpecialBuiltin extends Builtin {
     // return type, so we don't need to have one SpecialBuiltin class per returnType.
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native void call();
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native float callFloat();
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native long callLong();
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native double callDouble();
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native Word callWord();
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native void call(Word address);
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native float callFloat(Word address);
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native long callLong(Word address);
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native double callDouble(Word address);
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native Word callWord(Word address);
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native void call(Word address, Object receiver);
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native float callFloat(Word address, Object receiver);
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native long callLong(Word address, Object receiver);
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native double callDouble(Word address, Object receiver);
 
     @BUILTIN(Call.class)
-    @INTRINSIC(CALL)
+    @INTRINSIC(TEMPLATE_CALL)
     public static native Word callWord(Word address, Object receiver);
 
     public static class Call extends SpecialBuiltin {

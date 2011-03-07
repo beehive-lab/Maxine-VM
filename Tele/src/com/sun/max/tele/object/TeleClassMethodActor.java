@@ -194,7 +194,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         final Entry[] entries = classMethodActor.codeAttribute().lineNumberTable().entries();
         final LineTableEntry[] result = new LineTableEntry[entries.length];
         for (int i = 0; i < result.length; i++) {
-            result[i] = new LineTableEntry(entries[i].position(), entries[i].lineNumber());
+            result[i] = new LineTableEntry(entries[i].bci(), entries[i].lineNumber());
         }
         return result;
     }
@@ -211,15 +211,15 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
             String signature = null;
             if (entries[i].signatureIndex() == 0) {
-                signature = entries[i].descriptor(classMethodActor.codeAttribute().constantPool).toString();
+                signature = entries[i].descriptor(classMethodActor.codeAttribute().cp).toString();
             } else {
-                signature = entries[i].signature(classMethodActor.codeAttribute().constantPool).toString();
+                signature = entries[i].signature(classMethodActor.codeAttribute().cp).toString();
             }
 
             // TODO: Check if generic signature can be retrieved!
             final String genericSignature = signature;
 
-            result[i] = new VariableTableEntry(entries[i].startPosition(), entries[i].length(), entries[i].name(classMethodActor.codeAttribute().constantPool).string, entries[i].slot(),
+            result[i] = new VariableTableEntry(entries[i].startBCI(), entries[i].length(), entries[i].name(classMethodActor.codeAttribute().cp).string, entries[i].slot(),
                             signature, genericSignature);
         }
 

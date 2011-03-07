@@ -128,7 +128,7 @@ public interface MaxStackFrame extends MaxEntity<MaxStackFrame> {
      */
     public static interface Compiled extends MaxStackFrame {
 
-        CompiledStackFrameLayout layout();
+        VMFrameLayout layout();
 
         /**
          * Gets the base address of all stack slots. This provides a convenience for stack frame visitors that need to see all stack slot as

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,8 +31,8 @@ import java.util.*;
  * <p>
  * To implement this construct, the Java compiler uses the exception handling facilities, together with two special
  * instructions, <tt>jsr</tt> (jump to subroutine) and <tt>ret</tt> (return from subroutine). The cleanup code is
- * compiled as a subroutine. When it is called, the top object on the stack will be the return position; this return
- * position is saved in a register. At the end of the cleanup code, it performs a <tt>ret</tt> to return to whatever
+ * compiled as a subroutine. When it is called, the top object on the stack will be the return BCI; this return
+ * BCI is saved in a register. At the end of the cleanup code, it performs a <tt>ret</tt> to return to whatever
  * code called the cleanup.
  * <p>
  *
@@ -104,17 +104,17 @@ import java.util.*;
 public class Subroutine extends Category1Type {
 
     /**
-     * The position at which the subroutine was entered (i.e. the target of one or more JSR instructions).
+     * The BCI at which the subroutine was entered (i.e. the target of one or more JSR instructions).
      */
-    public final int entryPosition;
+    public final int entryBCI;
 
     /**
-     * The positions of the successors of all the JSR instructions that enter this subroutine.
+     * The BCIs of the successors of all the JSR instructions that enter this subroutine.
      */
     private int[] retTargets = {};
 
     /**
-     * The positions of the RET instructions that effect a return from this subroutine.
+     * The BCIs of the RET instructions that effect a return from this subroutine.
      */
     private int[] retInstructions = {};
 
@@ -123,23 +123,23 @@ public class Subroutine extends Category1Type {
      */
     private final boolean[] accessedVariableMask;
 
-    public Subroutine(int entryPosition, int maxLocals) {
-        assert SUBROUTINE == null || entryPosition != -1;
-        this.entryPosition = entryPosition;
+    public Subroutine(int entryBCI, int maxLocals) {
+        assert SUBROUTINE == null || entryBCI != -1;
+        this.entryBCI = entryBCI;
         this.accessedVariableMask = new boolean[maxLocals];
     }
 
     /**
-     * Gets the positions of the successors of all the JSR instructions that enter this subroutine.
+     * Gets the BCIs of the successors of all the JSR instructions that enter this subroutine.
      *
-     * @return the bytecode positions to which this subroutine returns
+     * @return the BCIs to which this subroutine returns
      */
     public int[] retTargets() {
         return retTargets;
     }
 
     /**
-     * Gets the positions of the RET instructions that effect a return from this subroutine.
+     * Gets the BCIs of the RET instructions that effect a return from this subroutine.
      */
     public int[] retInstructions() {
         return retInstructions;
@@ -162,7 +162,7 @@ public class Subroutine extends Category1Type {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("subroutine{entry = ").
-            append(entryPosition).
+            append(entryBCI).
             append(", ret instructions = " + Arrays.toString(retInstructions)).
             append(", ret targets = " + Arrays.toString(retTargets)).
             append(", accessed variables = [");
@@ -177,17 +177,17 @@ public class Subroutine extends Category1Type {
     }
 
     /**
-     * Adds a bytecode position to which this subroutine returns.
+     * Adds a BCI to which this subroutine returns.
      */
-    public void addRetTarget(int position) {
-        assert !containsRetTarget(position);
+    public void addRetTarget(int bci) {
+        assert !containsRetTarget(bci);
         retTargets = Arrays.copyOf(retTargets, retTargets.length + 1);
-        retTargets[retTargets.length - 1] = position;
+        retTargets[retTargets.length - 1] = bci;
     }
 
-    public boolean containsRetTarget(int position) {
+    public boolean containsRetTarget(int bci) {
         for (int retTarget : retTargets) {
-            if (retTarget == position) {
+            if (retTarget == bci) {
                 return true;
             }
         }
@@ -195,18 +195,18 @@ public class Subroutine extends Category1Type {
     }
 
     /**
-     * Adds a bytecode position of a RET instruction that effects a return from this subroutine.
+     * Adds a BCI of a RET instruction that effects a return from this subroutine.
      */
-    public void addRetInstruction(int position) {
-        if (!containsRetInstruction(position)) {
+    public void addRetInstruction(int bci) {
+        if (!containsRetInstruction(bci)) {
             retInstructions = Arrays.copyOf(retInstructions, retInstructions.length + 1);
-            retInstructions[retInstructions.length - 1] = position;
+            retInstructions[retInstructions.length - 1] = bci;
         }
     }
 
-    public boolean containsRetInstruction(int position) {
+    public boolean containsRetInstruction(int bci) {
         for (int retInstruction : retInstructions) {
-            if (retInstruction == position) {
+            if (retInstruction == bci) {
                 return true;
             }
         }

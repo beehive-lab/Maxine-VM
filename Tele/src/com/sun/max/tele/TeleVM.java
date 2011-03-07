@@ -1399,6 +1399,9 @@ public abstract class TeleVM implements MaxVM {
     public final String getString(Reference stringReference)  throws InvalidReferenceException {
         checkReference(stringReference);
         final Reference charArrayReference = teleFields().String_value.readReference(stringReference);
+        if (charArrayReference.isZero()) {
+            return null;
+        }
         checkReference(charArrayReference);
         int offset = teleFields().String_offset.readInt(stringReference);
         final int count = teleFields().String_count.readInt(stringReference);
@@ -1600,7 +1603,7 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    public final Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
+    public final Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws InvocationTargetException {
         return TeleInterpreter.execute(this, classMethodActor, arguments);
     }
 

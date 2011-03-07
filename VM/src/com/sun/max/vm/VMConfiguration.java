@@ -158,8 +158,6 @@ public final class VMConfiguration {
      * It is analogous to comparing the scheme package but allows an assignability check
      * within {@link BootImagePackage#isPartOfMaxineVM(VMConfiguration) before
      * the schemes are instantiated.
-     * N.B. It is possible that that there are multiple implementations of a given
-     * scheme class in the configuration.
      * @param <S>
      * @param schemeClass the scheme class being searched for
      * @param schemeSubClass the scheme class being checked

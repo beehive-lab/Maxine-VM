@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,8 +48,8 @@ public class ChopFrame extends StackMapFrame {
 
     private final int chop;
 
-    public ChopFrame(int positionDelta, int chop) {
-        super(positionDelta);
+    public ChopFrame(int bciDelta, int chop) {
+        super(bciDelta);
         assert chop >= 1 && chop <= 3;
         this.chop = chop;
     }
@@ -67,7 +67,7 @@ public class ChopFrame extends StackMapFrame {
     @Override
     public void write(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
         stream.writeByte(frameType());
-        stream.writeShort(positionDelta());
+        stream.writeShort(bciDelta());
     }
 
     @Override
@@ -79,6 +79,6 @@ public class ChopFrame extends StackMapFrame {
     public String toString() {
         return "frame_type = " + frameType() + " /* chop_frame */\n" +
                "  chop = " + chop + " /* implicit */\n" +
-               "  offset_delta = " + positionDelta();
+               "  offset_delta = " + bciDelta();
     }
 }

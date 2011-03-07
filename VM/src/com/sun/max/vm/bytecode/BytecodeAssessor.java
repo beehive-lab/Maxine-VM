@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,7 @@ public final class BytecodeAssessor {
         if (Utils.indexOfIdentical(callers, classMethodActor) != -1) {
             return false;
         }
-        final ConstantPool constantPool = classMethodActor.codeAttribute().constantPool;
+        final ConstantPool constantPool = classMethodActor.codeAttribute().cp;
         final BytecodeScanner scanner =
             new BytecodeScanner(new BytecodeAdapter() {
                 @Override

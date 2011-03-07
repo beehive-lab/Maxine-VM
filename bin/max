@@ -275,10 +275,12 @@ projects=( \
     Base:src,test                 \
     Assembler:src,test            \
     VM:src,test                   \
+    T1X:src                       \
     CPS:src,test                  \
     MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \
+    CPSTele:src                   \
     JDWP:src                      \
     TeleJDWP:src                  \
     Inspector:src,test            \
@@ -1092,6 +1094,30 @@ c1x_help="process a list of methods with the C1X compiler
 function run_c1x() {
     c1x_cp=${maxine_cp}:`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
     run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
+}
+
+#=======================================
+# 't1x' command
+#=======================================
+
+t1x_usage="[options] patterns..."
+t1x_help="process a list of methods with the T1X compiler
+
+    See Patterns below for a description of the format expected for \"patterns...\"
+    
+    The output traced by this command is not guaranteed to be the same as the output
+    for a compilation performed at runtime. The code produced by a compiler is sensitive
+    to the compilation context such as what classes have been resolved etc.
+
+    Use \"max t1x -help\" to see what other options this command accepts.
+    
+    --- Patterns ---
+    
+    $method_finder_pattern_help"
+
+function run_t1x() {
+    c1x_cp=${maxine_cp}:`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
+    run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest -t1x $@
 }
 
 #=======================================

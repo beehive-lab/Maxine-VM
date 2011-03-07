@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,8 +31,10 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.field.TeleFields.InspectedMemberReifier;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
@@ -55,29 +57,31 @@ public class TeleMethods extends AbstractTeleVMHolder {
     // Checkstyle: stop field name check
 
     // START GENERATED CONTENT
-    public final TeleStaticMethodAccess Code_codePointerToTargetMethod = new TeleStaticMethodAccess(vm(), Code.class, "codePointerToTargetMethod", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;)Lcom/sun/max/vm/compiler/target/TargetMethod;"));
-    public final TeleStaticMethodAccess CompilationScheme$Inspect_inspectableCompilationComplete = new TeleStaticMethodAccess(vm(), CompilationScheme.Inspect.class, "inspectableCompilationComplete", SignatureDescriptor.create("(Lcom/sun/max/vm/compiler/target/TargetMethod;)V"));
-    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableDecreaseMemoryRequested = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Size;)V"));
-    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCCompleted = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCCompleted", SignatureDescriptor.create("()V"));
-    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCStarted = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCStarted", SignatureDescriptor.create("()V"));
-    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableIncreaseMemoryRequested = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableIncreaseMemoryRequested", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Size;)V"));
-    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableObjectRelocated = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableObjectRelocated", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;Lcom/sun/max/unsafe/Address;)V"));
-    public final TeleStaticMethodAccess InspectableCodeInfo_inspectableCompilationEvent = new TeleStaticMethodAccess(vm(), InspectableCodeInfo.class, "inspectableCompilationEvent", SignatureDescriptor.create("(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/max/vm/compiler/target/TargetMethod;)V"));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableDecreaseMemoryRequested = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Size;)V"));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCCompleted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCCompleted", SignatureDescriptor.create("(J)V"));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCStarted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCStarted", SignatureDescriptor.create("(J)V"));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableIncreaseMemoryRequested = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableIncreaseMemoryRequested", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Size;)V"));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableObjectRelocated = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableObjectRelocated", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;Lcom/sun/max/unsafe/Address;)V"));
-    public final TeleStaticMethodAccess TargetBreakpoint_findOriginalCode = new TeleStaticMethodAccess(vm(), TargetBreakpoint.class, "findOriginalCode", SignatureDescriptor.create("(J)[B"));
-    public final TeleStaticMethodAccess VmThread_detached = new TeleStaticMethodAccess(vm(), VmThread.class, "detached", SignatureDescriptor.create("()V"));
-    public final TeleStaticMethodAccess VmThread_run = new TeleStaticMethodAccess(vm(), VmThread.class, "run", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Pointer;Lcom/sun/max/unsafe/Pointer;Lcom/sun/max/unsafe/Pointer;)V"));
+    public final TeleStaticMethodAccess Code_codePointerToTargetMethod = new TeleStaticMethodAccess(vm(), Code.class, "codePointerToTargetMethod", SignatureDescriptor.fromJava(TargetMethod.class, Address.class));
+    public final TeleStaticMethodAccess CompilationScheme$Inspect_inspectableCompilationComplete = new TeleStaticMethodAccess(vm(), CompilationScheme.Inspect.class, "inspectableCompilationComplete", SignatureDescriptor.fromJava(void.class, TargetMethod.class));
+    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableDecreaseMemoryRequested = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
+    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCCompleted = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCCompleted", SignatureDescriptor.fromJava(void.class));
+    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCStarted = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCStarted", SignatureDescriptor.fromJava(void.class));
+    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableIncreaseMemoryRequested = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableIncreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
+    public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableObjectRelocated = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableObjectRelocated", SignatureDescriptor.fromJava(void.class, Address.class, Address.class));
+    public final TeleStaticMethodAccess InspectableCodeInfo_inspectableCompilationCompleted = new TeleStaticMethodAccess(vm(), InspectableCodeInfo.class, "inspectableCompilationCompleted", SignatureDescriptor.fromJava(void.class, String.class, String.class, String.class, TargetMethod.class));
+    public final TeleStaticMethodAccess InspectableCodeInfo_inspectableCompilationStarted = new TeleStaticMethodAccess(vm(), InspectableCodeInfo.class, "inspectableCompilationStarted", SignatureDescriptor.fromJava(void.class, String.class, String.class, String.class));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableDecreaseMemoryRequested = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCCompleted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCCompleted", SignatureDescriptor.fromJava(void.class, long.class));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCStarted = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableGCStarted", SignatureDescriptor.fromJava(void.class, long.class));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableIncreaseMemoryRequested = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableIncreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableObjectRelocated = new TeleStaticMethodAccess(vm(), InspectableHeapInfo.class, "inspectableObjectRelocated", SignatureDescriptor.fromJava(void.class, Address.class, Address.class));
+    public final TeleStaticMethodAccess TargetBreakpoint_findOriginalCode = new TeleStaticMethodAccess(vm(), TargetBreakpoint.class, "findOriginalCode", SignatureDescriptor.fromJava(byte[].class, long.class));
+    public final TeleStaticMethodAccess VmThread_detached = new TeleStaticMethodAccess(vm(), VmThread.class, "detached", SignatureDescriptor.fromJava(void.class));
+    public final TeleStaticMethodAccess VmThread_run = new TeleStaticMethodAccess(vm(), VmThread.class, "run", SignatureDescriptor.fromJava(void.class, Pointer.class, Pointer.class, Pointer.class));
     // END GENERATED CONTENT
 
     // Checkstyle: resume field name check
 
     // CAUTION:  order-dependent declarations; these must follow the auto-generated fields.
     // Note that for this to work correctly, the named methods must be compiled into the boot heap.
-    private CodeLocation compilationEvent = CodeLocation.createMachineCodeLocation(vm(), InspectableCodeInfo_inspectableCompilationEvent, "Compilation start or complete (internal)");
+    private CodeLocation compilationStarted = CodeLocation.createMachineCodeLocation(vm(), InspectableCodeInfo_inspectableCompilationStarted, "Compilation start (internal)");
+    private CodeLocation compilationCompleted = CodeLocation.createMachineCodeLocation(vm(), InspectableCodeInfo_inspectableCompilationCompleted, "Compilation complete (internal)");
     private CodeLocation gcCompleted = CodeLocation.createMachineCodeLocation(vm(), InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
     private CodeLocation gcStarted = CodeLocation.createMachineCodeLocation(vm(), InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
     private CodeLocation vmThreadRunning = CodeLocation.createMachineCodeLocation(vm(), VmThread_run, "VmThread running (internal) ");
@@ -112,10 +116,17 @@ public class TeleMethods extends AbstractTeleVMHolder {
     }
 
     /**
-     * @return a VM method for internal (non-client) use that is called when each method compilation starts or finished.
+     * @return a VM method for internal (non-client) use that is called when a method compilation starts
      */
-    public CodeLocation compilationEvent() {
-        return compilationEvent;
+    public CodeLocation compilationStarted() {
+        return compilationStarted;
+    }
+
+    /**
+     * @return a VM method for internal (non-client) use that is called when a method compilation finishes.
+     */
+    public CodeLocation compilationCompleted() {
+        return compilationCompleted;
     }
 
     /**
@@ -153,6 +164,13 @@ public class TeleMethods extends AbstractTeleVMHolder {
         updateSource(false);
     }
 
+    private static String javaName(Class c) {
+        if (c.isArray()) {
+            return javaName(c.getComponentType()) + "[]";
+        }
+        return c.getSimpleName();
+    }
+
     private static void updateSource(boolean inInspector) {
         final InspectedMemberReifier<Method> methodReifier = new InspectedMemberReifier<Method>() {
             public void reify(Method method, IndentWriter writer) {
@@ -160,11 +178,16 @@ public class TeleMethods extends AbstractTeleVMHolder {
                 final boolean isStatic = Modifier.isStatic(method.getModifiers());
                 final String holder = c.getName().substring(c.getPackage().getName().length() + 1);
                 final String name = method.getName();
-                final SignatureDescriptor signature = SignatureDescriptor.fromJava(method);
+                String sig = "SignatureDescriptor.fromJava(" + javaName(method.getReturnType()) + ".class";
+                for (Class p : method.getParameterTypes()) {
+                    sig += ", " + javaName(p) + ".class";
+                }
+                sig += ")";
+
                 final String inspectorFieldName = holder + (name.charAt(0) == '_' ? name : '_' + name);
                 final String inspectorFieldType = "Tele" + (isStatic ? "Static" : "Virtual") + "MethodAccess";
                 writer.println("public final " + inspectorFieldType + " " + inspectorFieldName + " = new " + inspectorFieldType + "(vm(), " +
-                                holder.replace('$', '.') + ".class, \"" + name + "\", SignatureDescriptor.create(\"" + signature + "\"));");
+                                holder.replace('$', '.') + ".class, \"" + name + "\", " + sig + ");");
             }
         };
         TeleFields.updateSource(TeleMethods.class, Method.class, methodReifier, inInspector);

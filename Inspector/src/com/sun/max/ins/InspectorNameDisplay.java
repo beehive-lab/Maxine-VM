@@ -25,6 +25,7 @@ package com.sun.max.ins;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
@@ -33,7 +34,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 
 /**
  * Standardized ways to display textual names of common entities during Inspection sessions.
@@ -375,9 +375,10 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. "int foo(Pointer, Word, int[]) in com.sun.max.ins.Bar"
      * E.g. "int foo(Pointer, Word, int[])+14 in com.sun.max.ins.Bar"
      */
-    public String longName(BytecodeLocation bytecodeLocation) {
-        final int position = bytecodeLocation.bytecodePosition;
-        return bytecodeLocation.classMethodActor.format("%r %n(%p)" + (position != 0 ? " +" + bytecodeLocation.bytecodePosition : "") + " in %H");
+    public String longName(CiCodePos codePos) {
+        final int position = codePos.bci;
+        ClassMethodActor classMethodActor = (ClassMethodActor) codePos.method;
+        return classMethodActor.format("%r %n(%p)" + (position != 0 ? " +" + codePos.bci : "") + " in %H");
     }
 
     /**

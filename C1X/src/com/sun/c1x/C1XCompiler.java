@@ -57,6 +57,11 @@ public class C1XCompiler extends CiCompiler {
     public final RiXirGenerator xir;
 
     /**
+     * The ordered set of compiler extensions.
+     */
+    public List<C1XCompilerExtension> extensions;
+
+    /**
      * The backend that this compiler has been configured for.
      */
     public final Backend backend;

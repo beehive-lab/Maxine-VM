@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ public abstract class BytecodeToTargetTranslator {
 
     private final TemplateTable templateTable;
 
-    protected final JitStackFrameLayout jitStackFrameLayout;
+    protected final JVMSFrameLayout jitStackFrameLayout;
 
     public final CodeBuffer codeBuffer;
 
@@ -148,7 +148,7 @@ public abstract class BytecodeToTargetTranslator {
      */
     protected final AdapterGenerator adapterGenerator;
 
-    public BytecodeToTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, JitStackFrameLayout jitStackFrameLayout, boolean trace) {
+    public BytecodeToTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, JVMSFrameLayout jitStackFrameLayout, boolean trace) {
         this.isTraceInstrumented = trace;
         this.templateTable = templateTable;
         this.codeBuffer = codeBuffer;
@@ -181,7 +181,7 @@ public abstract class BytecodeToTargetTranslator {
         if (exceptionHandlers.length != 0) {
             this.exceptionHandlers = new boolean[code.length];
             for (ExceptionHandlerEntry e : exceptionHandlers) {
-                this.exceptionHandlers[e.handlerPosition()] = true;
+                this.exceptionHandlers[e.handlerBCI()] = true;
             }
         }
 
@@ -335,7 +335,7 @@ public abstract class BytecodeToTargetTranslator {
 
     public Stops packStops() {
         int firstTemplateSlot = jitStackFrameLayout.numberOfNonParameterSlots() + jitStackFrameLayout.numberOfOperandStackSlots();
-        int firstTemplateSlotIndexInFrameReferenceMap = firstTemplateSlot * JitStackFrameLayout.STACK_SLOTS_PER_JIT_SLOT;
+        int firstTemplateSlotIndexInFrameReferenceMap = firstTemplateSlot * JVMSFrameLayout.STACK_SLOTS_PER_JVMS_SLOT;
         return stops.pack(frameReferenceMapSize(), registerReferenceMapSize(), firstTemplateSlotIndexInFrameReferenceMap);
     }
 
@@ -502,8 +502,8 @@ public abstract class BytecodeToTargetTranslator {
         // Deal with simple, single-handler, case first.
         if (exceptionHandlers.length == 1) {
             ExceptionHandlerEntry einfo = exceptionHandlers[0];
-            catchRangePositions = new int[] {bytecodeToTargetCodePosition(einfo.startPosition()), bytecodeToTargetCodePosition(einfo.endPosition())};
-            catchBlockPositions = new int[] {bytecodeToTargetCodePosition(einfo.handlerPosition()), 0};
+            catchRangePositions = new int[] {bytecodeToTargetCodePosition(einfo.startBCI()), bytecodeToTargetCodePosition(einfo.endBCI())};
+            catchBlockPositions = new int[] {bytecodeToTargetCodePosition(einfo.handlerBCI()), 0};
             return;
         }
         // Over-allocate to the maximum possible size (i.e., when no two ranges are contiguous)
@@ -511,16 +511,16 @@ public abstract class BytecodeToTargetTranslator {
         int[] catchRangePosns = new int[exceptionHandlers.length * 2 + 1];
         int[] catchBlockPosns = new int[catchRangePosns.length];
         int index = 0;
-        int nextRange = exceptionHandlers[0].startPosition();
+        int nextRange = exceptionHandlers[0].startBCI();
         for (ExceptionHandlerEntry einfo : exceptionHandlers) {
-            if (nextRange < einfo.startPosition()) {
+            if (nextRange < einfo.startBCI()) {
                 // There's a gap between the two catch ranges. Insert a range with no handler.
                 catchRangePosns[index] = bytecodeToTargetCodePosition(nextRange);
                 catchBlockPosns[index++] = 0;
             }
-            catchRangePosns[index] = bytecodeToTargetCodePosition(einfo.startPosition());
-            catchBlockPosns[index++] = bytecodeToTargetCodePosition(einfo.handlerPosition());
-            nextRange = einfo.endPosition();
+            catchRangePosns[index] = bytecodeToTargetCodePosition(einfo.startBCI());
+            catchBlockPosns[index++] = bytecodeToTargetCodePosition(einfo.handlerBCI());
+            nextRange = einfo.endBCI();
         }
         if (nextRange < classMethodActor.codeAttribute().code().length) {
             catchRangePosns[index] = bytecodeToTargetCodePosition(nextRange);
@@ -553,7 +553,7 @@ public abstract class BytecodeToTargetTranslator {
         // the second slot so that it can be loaded/stored without further adjustments
         // to the stack/base pointer offsets.
         int slotIndex = (!kind.isCategory1) ? (localIndex + 1) : localIndex;
-        int slotOffset = jitStackFrameLayout.localVariableOffset(slotIndex) + JitStackFrameLayout.offsetInStackSlot(kind);
+        int slotOffset = jitStackFrameLayout.localVariableOffset(slotIndex) + JVMSFrameLayout.offsetInStackSlot(kind);
         assignIntTemplateArgument(parameterIndex, slotOffset);
     }
 
@@ -1019,7 +1019,7 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.ALLOCA             :
                 case Bytecodes.ALLOCSTKVAR        :
                 case Bytecodes.JNICALL            :
-                case Bytecodes.CALL               :
+                case Bytecodes.TEMPLATE_CALL               :
                 case Bytecodes.ICMP               :
                 case Bytecodes.WCMP               :
                 case Bytecodes.RET                :
@@ -1085,6 +1085,19 @@ public abstract class BytecodeToTargetTranslator {
             methodProfileBuilder.addEntryCounter(MethodInstrumentation.initialEntryCount);
             final TargetMethod template = getCode(NOP$instrumented$MethodEntry);
             assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
+            emitAndRecordStops(template);
+        }
+    }
+
+    static boolean TraceMethods;
+    static {
+        VMOptions.addFieldOption("-JIT:", "TraceMethods", "Trace calls to JIT'ed methods.");
+    }
+
+    public void emitMethodTrace() {
+        if (TraceMethods) {
+            TargetMethod template = getCode(NOP$instrumented$TraceMethod);
+            assignReferenceLiteralTemplateArgument(0, classMethodActor.toString());
             emitAndRecordStops(template);
         }
     }

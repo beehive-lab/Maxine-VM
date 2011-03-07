@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -253,7 +253,7 @@ final class RegisterVerifier {
             }
 
             // invalidate all caller save registers at calls
-            if (op.hasCall()) {
+            if (op.hasCall) {
                 for (CiRegister r : allocator.compilation.registerConfig.getCallerSaveRegisters()) {
                     statePut(inputState, r.asValue(), null);
                 }

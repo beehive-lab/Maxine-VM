@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -155,7 +155,7 @@ public final class DataPrototype extends Prototype {
         Trace.begin(1, "assignCodeCells");
         Size size = Size.zero();
         int n = 0;
-        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
             final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(targetMethod);
             assignCodeCell(targetMethod.scalarLiterals(), targetMethod.start(), targetBundleLayout, ArrayField.scalarLiterals);
             assignCodeCell(targetMethod.referenceLiterals(), targetMethod.start(), targetBundleLayout, ArrayField.referenceLiterals);
@@ -163,7 +163,7 @@ public final class DataPrototype extends Prototype {
             size = size.plus(targetMethod.size());
             ++n;
         }
-        ProgramError.check(size.equals(Code.bootCodeRegion.size()));
+        ProgramError.check(size.equals(Code.bootCodeRegion().size()));
         Trace.end(1, "assignCodeCells: " + n + " target methods");
     }
 
@@ -272,7 +272,7 @@ public final class DataPrototype extends Prototype {
             if (classInfo.containsMutableReferences(object) == objectsWithMutableReferences) {
                 Address cell = objectToCell.get(object);
                 if (cell != null) {
-                    assert Code.bootCodeRegion.contains(cell);
+                    assert Code.bootCodeRegion().contains(cell);
                 } else {
                     final Size size = ObjectAccess.size(object);
                     cell = heapRegion.allocate(size, true);
@@ -900,7 +900,7 @@ public final class DataPrototype extends Prototype {
             }
         }
 
-        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
             targetMethod.setStart(targetMethod.start().plus(delta));
             targetMethod.setCodeStart(targetMethod.codeStart().plus(delta));
         }
@@ -921,7 +921,7 @@ public final class DataPrototype extends Prototype {
     private void adjustMemoryRegions() {
         Trace.begin(1, "adjustMemoryRegions");
         final LinearAllocatorHeapRegion heap = Heap.bootHeapRegion;
-        final LinearAllocatorHeapRegion code = Code.bootCodeRegion;
+        final LinearAllocatorHeapRegion code = Code.bootCodeRegion();
 
         final Address codeStart = heap.end().roundedUpBy(pageSize);
         final int delta = codeStart.minus(code.start()).toInt();
@@ -1103,7 +1103,7 @@ public final class DataPrototype extends Prototype {
 
         final int codeStartFieldOffset = getInstanceFieldOffsetInTupleCell(TargetMethod.class, codeStart, JavaTypeDescriptor.forJavaClass(Pointer.class));
 
-        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
             setRelocationFlag(objectToCell.get(targetMethod).plus(startFieldOffset));
             setRelocationFlag(objectToCell.get(targetMethod).plus(codeStartFieldOffset));
         }
@@ -1124,10 +1124,10 @@ public final class DataPrototype extends Prototype {
 
         final int startFieldOffset = getInstanceFieldOffsetInTupleCell(MemoryRegion.class, start, JavaTypeDescriptor.forJavaClass(Address.class));
         assignTargetMethodRelocationFlags(startFieldOffset);
-        setRelocationFlag(objectToCell.get(Code.bootCodeRegion).plus(startFieldOffset));
+        setRelocationFlag(objectToCell.get(Code.bootCodeRegion()).plus(startFieldOffset));
 
         setRelocationFlag(objectToCell.get(Heap.bootHeapRegion.mark).plus(AtomicWord.valueOffset()));
-        setRelocationFlag(objectToCell.get(Code.bootCodeRegion.mark).plus(AtomicWord.valueOffset()));
+        setRelocationFlag(objectToCell.get(Code.bootCodeRegion().mark).plus(AtomicWord.valueOffset()));
 
         Trace.end(1, "assignRelocationFlags");
     }
@@ -1165,14 +1165,14 @@ public final class DataPrototype extends Prototype {
         MaxineVM vm = vm();
         vm.phase = MaxineVM.Phase.PRIMORDIAL;
         heapDataWriter = new ByteArrayMemoryRegionWriter(Heap.bootHeapRegion, "heap");
-        codeDataWriter = new ByteArrayMemoryRegionWriter(Code.bootCodeRegion, "code");
+        codeDataWriter = new ByteArrayMemoryRegionWriter(Code.bootCodeRegion(), "code");
 
         int numberOfBytes = createData(heapObjects, heapDataWriter);
         final int bootHeapRegionSize = Heap.bootHeapRegion.size().toInt();
         ProgramWarning.check(numberOfBytes == bootHeapRegionSize, "numberOfBytes != bootHeapRegionSize");
 
         numberOfBytes = createData(codeObjects, codeDataWriter);
-        final int bootCodeRegionSize = Code.bootCodeRegion.size().toInt();
+        final int bootCodeRegionSize = Code.bootCodeRegion().size().toInt();
         ProgramWarning.check(numberOfBytes <= bootCodeRegionSize, "numberOfBytes > bootCodeRegionSize");
 
         // one bit per alignment unit
@@ -1184,10 +1184,10 @@ public final class DataPrototype extends Prototype {
             try {
                 final PrintStream mapPrintStream = new PrintStream(new FileOutputStream(mapFile));
                 mapPrintStream.println("start heap");
-                createData(heapObjects, new MemoryRegionMapWriter(Heap.bootHeapRegion, Code.bootCodeRegion, "heap", mapPrintStream));
+                createData(heapObjects, new MemoryRegionMapWriter(Heap.bootHeapRegion, Code.bootCodeRegion(), "heap", mapPrintStream));
                 mapPrintStream.println("end heap");
                 mapPrintStream.println("start code");
-                createData(codeObjects, new MemoryRegionMapWriter(Code.bootCodeRegion, Heap.bootHeapRegion, "code", mapPrintStream));
+                createData(codeObjects, new MemoryRegionMapWriter(Code.bootCodeRegion(), Heap.bootHeapRegion, "code", mapPrintStream));
                 mapPrintStream.println("end code");
                 mapPrintStream.close();
             } catch (IOException e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,11 +28,8 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiDebugInfo.Frame;
-import com.sun.cri.ci.CiTargetMethod.Call;
-import com.sun.cri.ci.CiTargetMethod.DataPatch;
-import com.sun.cri.ci.CiTargetMethod.Safepoint;
-import com.sun.cri.ci.CiTargetMethod.Site;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.dis.*;
 
@@ -47,6 +44,7 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
     private CiTargetMethod targetMethod;
     private final HashMap<Integer, Site> sitesMap = new HashMap<Integer, Site>();
     private Site currentSite;
+    private final HashMap<Integer, ArrayList<String>> commentsMap = new HashMap<Integer, ArrayList<String>>();
 
     private void addSites(List<? extends Site> sites) {
         for (Site site : sites) {
@@ -62,6 +60,22 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
         addSites(targetMethod.indirectCalls);
         addSites(targetMethod.safepoints);
         addSites(targetMethod.dataReferences);
+
+        List<CodeAnnotation> annotations = targetMethod.annotations();
+        if (annotations != null) {
+            for (CodeAnnotation a : annotations) {
+                if (a instanceof CodeComment) {
+                    CodeComment comment = (CodeComment) a;
+                    ArrayList<String> list = commentsMap.get(comment.position);
+                    if (list == null) {
+                        list = new ArrayList<String>();
+                        commentsMap.put(comment.position, list);
+                    }
+                    list.add(comment.comment);
+                }
+
+            }
+        }
     }
 
     private String toString(Call call) {
@@ -71,8 +85,10 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
             return "{" + call.symbol + "}";
         } else if (call.globalStubID != null) {
             return "{" + call.globalStubID + "}";
-        } else {
+        } else if (call.method != null) {
             return "{" + call.method + "}";
+        } else {
+            return "{<template_call>}";
         }
     }
     private String siteInfo(int pcOffset) {
@@ -118,7 +134,7 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
         return string;
     }
 
-    public static String tabulateValues(Frame frame) {
+    public static String tabulateValues(CiFrame frame) {
         int cols = Math.max(frame.numLocals, Math.max(frame.numStack, frame.numLocks));
         assert cols > 0;
         ArrayList<Object> cells = new ArrayList<Object>();
@@ -180,8 +196,8 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
                 CiCodePos pos = info.codePos;
                 while (pos != null) {
                     stream.println(";; at " + CiUtil.appendLocation(new StringBuilder(), pos.method, pos.bci));
-                    if (pos instanceof Frame) {
-                        Frame frame = (Frame) pos;
+                    if (pos instanceof CiFrame) {
+                        CiFrame frame = (CiFrame) pos;
                         if (frame.values != null && frame.values.length > 0) {
                             String table = tabulateValues(frame);
                             String nl = String.format("%n");
@@ -194,6 +210,12 @@ public class MaxDisassemblyPrinter extends DisassemblyPrinter {
                     }
                     pos = pos.caller;
                 }
+            }
+        }
+        ArrayList<String> comments = commentsMap.get(pc);
+        if (comments != null) {
+            for (String c : comments) {
+                stream.println(";; " + c);
             }
         }
         super.printDisassembledObject(disassembler, stream, nOffsetChars, nLabelChars, disassembledObject);

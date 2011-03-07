@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,8 @@ public final class Code {
      * The code region that contains the boot code.
      */
     @INSPECTED
-    public static final CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).wordAligned(), Size.fromInt(Integer.MAX_VALUE / 4), CODE_BOOT_NAME);
+    @CONSTANT_WHEN_NOT_ZERO
+    private static CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).wordAligned(), Size.fromInt(Integer.MAX_VALUE / 4), CODE_BOOT_NAME);
 
 
     /**
@@ -151,10 +152,19 @@ public final class Code {
         return new CodeMemoryManagerMXBean("Code");
     }
 
+    public static CodeRegion bootCodeRegion() {
+        return bootCodeRegion;
+    }
+
+    @HOSTED_ONLY
+    public static void resetBootCodeRegion() {
+        bootCodeRegion = new CodeRegion(bootCodeRegion.start(), bootCodeRegion.size(), bootCodeRegion.regionName());
+    }
+
     private static class CodeMemoryManagerMXBean extends MemoryManagerMXBeanAdaptor {
         CodeMemoryManagerMXBean(String name) {
             super(name);
-            add(new CodeMemoryPoolMXBean(bootCodeRegion, this));
+            add(new CodeMemoryPoolMXBean(bootCodeRegion(), this));
             add(new CodeMemoryPoolMXBean(codeManager.getRuntimeCodeRegion(), this));
 
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,8 +52,8 @@ import com.sun.max.vm.verifier.types.*;
 public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     /**
-     * A map from each bytecode position to the instruction at that position. A null entry
-     * means that an instruction does not start at the corresponding position.
+     * A map from each BCI to the instruction at that BCI. A null entry
+     * means that an instruction does not start at the corresponding BCI.
      */
     private final Instruction[] instructionMap;
 
@@ -68,9 +68,9 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     private final BytecodeScanner scanner;
 
     /**
-     * The set of ASTORE instructions that store the return position of a subroutine.
+     * The set of ASTORE instructions that store the return BCI of a subroutine.
      */
-    private Set<Instruction> returnPositionStores;
+    private Set<Instruction> retBCIStores;
 
     public TypeInferencingMethodVerifier(ClassVerifier classVerifier, ClassMethodActor classMethodActor, CodeAttribute codeAttribute) {
         super(classVerifier, classMethodActor, codeAttribute);
@@ -95,16 +95,16 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     }
 
     @Override
-    public int currentOpcodePosition() {
-        return scanner == null ? -1 : scanner.currentOpcodePosition();
+    public int currentOpcodeBCI() {
+        return scanner == null ? -1 : scanner.currentOpcodeBCI();
     }
 
-    public TypeState typeStateAt(int position) {
-        return typeStateMap()[position];
+    public TypeState typeStateAt(int bci) {
+        return typeStateMap()[bci];
     }
 
-    public boolean isReturnPositionStore(Instruction astore) {
-        return returnPositionStores != null && returnPositionStores.contains(astore);
+    public boolean isRetBCIStore(Instruction astore) {
+        return retBCIStores != null && retBCIStores.contains(astore);
     }
 
     public boolean hasUnvisitedCode() {
@@ -118,7 +118,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     /**
      * Derives a {@link StackMapTable} attribute from the type state inferred during verification. This method returns
-     * null if there are no bytecode positions for which an explicit frame map needs to be recorded in a StackMapTable
+     * null if there are no BCIs for which an explicit frame map needs to be recorded in a StackMapTable
      * attribute. That is, the only type state required to verify the method via
      * {@linkplain TypeCheckingMethodVerifier type checking} is the implicit entry frame that can be derived from the
      * method's signature.
@@ -131,7 +131,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         final List<StackMapFrame> stackMapFrames = new ArrayList<StackMapFrame>();
         TypeState previousTypeState = typeStateMap()[0];
         for (TypeState typeState : typeStateMap()) {
-            if (typeState != null && typeState.visited() && typeState.position() != 0) {
+            if (typeState != null && typeState.visited() && typeState.bci() != 0) {
                 final StackMapFrame stackMapFrame = typeState.asStackMapFrame(previousTypeState);
                 stackMapFrames.add(stackMapFrame);
                 previousTypeState = typeState;
@@ -164,12 +164,12 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         verifyExceptionHandlers();
 
         // Verify targets and bind them to their targeted instructions
-        for (int position = 0; position != instructionMap.length; ++position) {
-            final TypeState typeState = typeStateMap[position];
+        for (int bci = 0; bci != instructionMap.length; ++bci) {
+            final TypeState typeState = typeStateMap[bci];
             if (typeState != null) {
-                final Instruction targetedInstruction = instructionMap[position];
+                final Instruction targetedInstruction = instructionMap[bci];
                 if (targetedInstruction == null) {
-                    verifyError("Invalid branch target or exception handler entry position (" + position + ")");
+                    verifyError("Invalid branch target or exception handler entry BCI (" + bci + ")");
                 }
                 typeState.setTargetedInstruction(targetedInstruction);
             }
@@ -202,21 +202,21 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     }
 
     @Override
-    protected void verifyIsValidInstructionPosition(int position, String positionDescription) {
+    protected void verifyIsValidInstructionBCI(int bci, String bciDescription) {
         try {
-            if (instructionMap[position] != null) {
+            if (instructionMap[bci] != null) {
                 return;
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
             // fall through
         }
-        verifyError("Invalid bytecode position " + position + "(" + positionDescription + ")");
+        verifyError("Invalid BCI " + bci + "(" + bciDescription + ")");
     }
 
     @Override
     protected void verifyExceptionHandler(ExceptionHandlerEntry info) {
         super.verifyExceptionHandler(info);
-        makeTypeState(info.handlerPosition());
+        makeTypeState(info.handlerBCI());
     }
 
     /**
@@ -227,14 +227,14 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         return (TypeState) frame;
     }
 
-    TypeState makeTypeState(int position) {
+    TypeState makeTypeState(int bci) {
         try {
             final TypeState[] typeStateMap = typeStateMap();
-            TypeState typeState = typeStateMap[position];
+            TypeState typeState = typeStateMap[bci];
             if (typeState == null) {
                 typeState = new TypeState(typeState());
                 typeState.clear();
-                typeStateMap[position] = typeState;
+                typeStateMap[bci] = typeState;
             }
             return typeState;
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
@@ -248,12 +248,12 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             final Subroutine subroutine = (Subroutine) typeState().pop(SUBROUTINE);
             typeState().store(subroutine, index);
 
-            final Instruction astore = instructionMap[currentOpcodePosition()];
+            final Instruction astore = instructionMap[currentOpcodeBCI()];
             assert Bytecodes.nameOf(astore.opcode).startsWith("astore");
-            if (returnPositionStores == null) {
-                returnPositionStores = new HashSet<Instruction>();
+            if (retBCIStores == null) {
+                retBCIStores = new HashSet<Instruction>();
             }
-            returnPositionStores.add(astore);
+            retBCIStores.add(astore);
 
         } else {
             super.performStore(type, index);
@@ -262,13 +262,13 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     @Override
     protected void performJsr(int offset) {
-        final int subroutineEntryPosition = currentOpcodePosition() + offset;
-        final Subroutine subroutine = classVerifier().getSubroutine(subroutineEntryPosition, codeAttribute().maxLocals);
+        final int subroutineEntryBCI = currentOpcodeBCI() + offset;
+        final Subroutine subroutine = classVerifier().getSubroutine(subroutineEntryBCI, codeAttribute().maxLocals);
 
-        final int returnPosition = scanner.currentBytePosition();
-        final boolean firstVisit = !subroutine.containsRetTarget(returnPosition);
+        final int retBCI = scanner.currentBCI();
+        final boolean firstVisit = !subroutine.containsRetTarget(retBCI);
         if (firstVisit) {
-            subroutine.addRetTarget(returnPosition);
+            subroutine.addRetTarget(retBCI);
         }
         typeState().push(subroutine);
         typeState().pushSubroutine(subroutine);
@@ -277,13 +277,13 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         // propagating into a subroutine.
         typeState().killUninitializedObjects();
 
-        performBranch(subroutineEntryPosition);
+        performBranch(subroutineEntryBCI);
 
         if (firstVisit) {
             // Need to force a visit to the subroutine as a single object is used to represent
             // the subroutine state for all paths into the subroutine (i.e. the merge done in
             // the above call to performBranch() will not have detected a change in the type state).
-            enqueChangedTypeState(typeStateAt(subroutineEntryPosition));
+            enqueChangedTypeState(typeStateAt(subroutineEntryBCI));
 
             // For the same reason as above, we also need to force a visit to all of the RET
             // instructions currently recorded for the subroutine. That is, forcing a visit
@@ -307,18 +307,18 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         // propagating out of a subroutine.
         typeState.killUninitializedObjects();
 
-        // Record the position of this RET instruction
-        final int currentOpcodePosition = currentOpcodePosition();
-        subroutine.addRetInstruction(currentOpcodePosition);
+        // Record the BCI of this RET instruction
+        final int currentOpcodeBCI = currentOpcodeBCI();
+        subroutine.addRetInstruction(currentOpcodeBCI);
 
-        // Create the type state at this position if it does not already exist.
+        // Create the type state at this BCI if it does not already exist.
         // This is required so that the data-flow analyzer can be forced to
         // (re)consider the control flow starting at each RET instruction in
         // a subroutine whenever a JSR to the subroutine is found.
-        final Ret ret = (Ret) instructionMap[currentOpcodePosition];
-        if (typeStateMap[currentOpcodePosition] == null) {
-            typeStateMap[currentOpcodePosition] = new TypeState(typeState);
-            typeStateMap[currentOpcodePosition].setTargetedInstruction(ret);
+        final Ret ret = (Ret) instructionMap[currentOpcodeBCI];
+        if (typeStateMap[currentOpcodeBCI] == null) {
+            typeStateMap[currentOpcodeBCI] = new TypeState(typeState);
+            typeStateMap[currentOpcodeBCI].setTargetedInstruction(ret);
         }
 
         // Update the current frame based on the combination of the frame state upon entry to the subroutine
@@ -332,11 +332,11 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             jsr.verifyRet(ret);
             ret.setNumberOfFramesPopped(numberOfSubroutineFramesPopped);
 
-            final TypeState jsrTypeState = typeStateMap[jsr.position()];
+            final TypeState jsrTypeState = typeStateMap[jsr.bci()];
             assert jsrTypeState != null;
             typeState.updateLocalsNotAccessedInSubroutine(jsrTypeState, subroutine, index);
 
-            // Create the type state at the return position if it does not already exist
+            // Create the type state at the return BCI if it does not already exist
             TypeState retTypeState = typeStateMap[retTarget];
             if (retTypeState == null) {
                 retTypeState = new TypeState(jsrTypeState);
@@ -356,18 +356,18 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             @Override
             public void instructionDecoded() {
-                final int currentOpcodePosition = currentOpcodePosition();
-                if (instructionMap[currentOpcodePosition] == null) {
-                    previous = new Instruction(currentOpcode(), currentOpcodePosition, currentBytePosition(), previous);
+                final int currentOpcodeBCI = currentOpcodeBCI();
+                if (instructionMap[currentOpcodeBCI] == null) {
+                    previous = new Instruction(currentOpcode(), currentOpcodeBCI, currentBCI(), previous);
                 }
             }
 
             private TypeState makeTarget(int offset) {
-                return makeTypeState(currentOpcodePosition() + offset);
+                return makeTypeState(currentOpcodeBCI() + offset);
             }
 
             private void branch(int offset) {
-                previous = new Branch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(offset), previous);
+                previous = new Branch(currentOpcode(), currentOpcodeBCI(), currentBCI(), makeTarget(offset), previous);
             }
 
             @Override
@@ -462,7 +462,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             @Override
             protected void jsr(int offset) {
-                previous = new Jsr(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(offset), previous);
+                previous = new Jsr(currentOpcode(), currentOpcodeBCI(), currentBCI(), makeTarget(offset), previous);
 
                 // Create a target at the JSR to save the frame state before entering the subroutine. This
                 // is used to restore the frame state upon leaving the subroutine via a RET.
@@ -476,7 +476,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             @Override
             protected void ret(int index) {
-                previous = new Ret(currentOpcode(), currentOpcodePosition(), currentBytePosition(), previous);
+                previous = new Ret(currentOpcode(), currentOpcodeBCI(), currentBCI(), previous);
             }
 
             @Override
@@ -485,7 +485,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
                 for (int i = 0; i != numberOfCases; ++i) {
                     targets[i] = makeTarget(bytecodeScanner().readSwitchOffset());
                 }
-                previous = new Tableswitch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(defaultOffset), lowMatch, highMatch, targets, previous);
+                previous = new Tableswitch(currentOpcode(), currentOpcodeBCI(), currentBCI(), makeTarget(defaultOffset), lowMatch, highMatch, targets, previous);
             }
 
             @Override
@@ -496,7 +496,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
                     matches[i] = bytecodeScanner().readSwitchCase();
                     targets[i] = makeTarget(bytecodeScanner().readSwitchOffset());
                 }
-                previous = new Lookupswitch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(defaultOffset), matches, targets, previous);
+                previous = new Lookupswitch(currentOpcode(), currentOpcodeBCI(), currentBCI(), makeTarget(defaultOffset), matches, targets, previous);
             }
         }
 
@@ -515,17 +515,17 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         private Instruction next;
         private boolean visited;
 
-        public Instruction(int opcode, int position, int endPosition, Instruction previous) {
-            assert endPosition > position;
+        public Instruction(int opcode, int bci, int endBCI, Instruction previous) {
+            assert endBCI > bci;
             this.opcode = opcode;
-            this.block = new BytecodeBlock(codeAttribute().code(), position, endPosition - 1);
-            instructionMap[position] = this;
+            this.block = new BytecodeBlock(codeAttribute().code(), bci, endBCI - 1);
+            instructionMap[bci] = this;
             if (previous != null) {
                 previous.next = this;
             }
         }
 
-        public int position() {
+        public int bci() {
             return block.start;
         }
 
@@ -538,9 +538,9 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         }
 
         public Instruction previous() {
-            int position = position();
-            while (position > 0) {
-                final Instruction instruction = instructionMap[--position];
+            int bci = bci();
+            while (bci > 0) {
+                final Instruction instruction = instructionMap[--bci];
                 if (instruction != null) {
                     return instruction;
                 }
@@ -577,8 +577,8 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
          */
         final TypeState target;
 
-        public Branch(int opcode, int position, int endPosition, TypeState target, Instruction previous) {
-            super(opcode, position, endPosition, previous);
+        public Branch(int opcode, int bci, int endBCI, TypeState target, Instruction previous) {
+            super(opcode, bci, endBCI, previous);
             this.target = target;
         }
     }
@@ -588,8 +588,8 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         final TypeState defaultTarget;
         final TypeState[] caseTargets;
 
-        public Select(int opcode, int position, int endPosition, TypeState defaultTarget, TypeState[] caseTargets, Instruction previous) {
-            super(opcode, position, endPosition, previous);
+        public Select(int opcode, int bci, int endBCI, TypeState defaultTarget, TypeState[] caseTargets, Instruction previous) {
+            super(opcode, bci, endBCI, previous);
             this.defaultTarget = defaultTarget;
             this.caseTargets = caseTargets;
         }
@@ -600,8 +600,8 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         final int low;
         final int high;
 
-        public Tableswitch(int opcode, int position, int size, TypeState defaultTarget, int low, int high, TypeState[] caseTargets, Instruction previous) {
-            super(opcode, position, size, defaultTarget, caseTargets, previous);
+        public Tableswitch(int opcode, int bci, int size, TypeState defaultTarget, int low, int high, TypeState[] caseTargets, Instruction previous) {
+            super(opcode, bci, size, defaultTarget, caseTargets, previous);
             this.low = low;
             this.high = high;
         }
@@ -611,8 +611,8 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         final int[] matches;
 
-        public Lookupswitch(int opcode, int position, int size, TypeState defaultTarget, int[] matches, TypeState[] caseTargets, Instruction previous) {
-            super(opcode, position, size, defaultTarget, caseTargets, previous);
+        public Lookupswitch(int opcode, int bci, int size, TypeState defaultTarget, int[] matches, TypeState[] caseTargets, Instruction previous) {
+            super(opcode, bci, size, defaultTarget, caseTargets, previous);
             this.matches = matches;
         }
     }
@@ -621,8 +621,8 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         private Instruction ret;
 
-        public Jsr(int opcode, int position, int size, TypeState branchTarget, Instruction previous) {
-            super(opcode, position, size, branchTarget, previous);
+        public Jsr(int opcode, int bci, int size, TypeState branchTarget, Instruction previous) {
+            super(opcode, bci, size, branchTarget, previous);
         }
 
         public void verifyRet(Instruction ret) {
@@ -645,8 +645,8 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         private int numberOfFramesPopped = -1;
 
-        public Ret(int opcode, int position, int endPosition, Instruction previous) {
-            super(opcode, position, endPosition, previous);
+        public Ret(int opcode, int bci, int endBCI, Instruction previous) {
+            super(opcode, bci, endBCI, previous);
         }
 
         public int numberOfFramesPopped() {

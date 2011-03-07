@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,7 @@ public final class LivenessAdapter implements FrameModel {
                 livenessMap[0] = locals.copy();
                 int previousPos = -1;
                 for (StackMapFrame frame : stackMapTable.getFrames(null)) {
-                    int pos = frame.getPosition(previousPos);
+                    int pos = frame.getBCI(previousPos);
                     frame.applyTo(this);
                     livenessMap[pos] = locals.copy();
                     previousPos = pos;

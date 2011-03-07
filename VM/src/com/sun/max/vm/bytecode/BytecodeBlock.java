@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,18 +23,18 @@
 package com.sun.max.vm.bytecode;
 
 /**
- * Extends the notion of a {@linkplain BytecodePositionRange bytecode position range} to refer to a specific underlying
+ * Extends the notion of a {@linkplain BCIRange BCI range} to refer to a specific underlying
  * {@linkplain #code() code array}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public class BytecodeBlock extends BytecodePositionRange {
+public class BytecodeBlock extends BCIRange {
 
     private final byte[] code;
 
-    public BytecodeBlock(byte[] bytecode, int startPosition, int endPosition) {
-        super(startPosition, endPosition);
+    public BytecodeBlock(byte[] bytecode, int startBCI, int endBCI) {
+        super(startBCI, endBCI);
         code = bytecode;
         assert check();
     }
@@ -55,14 +55,14 @@ public class BytecodeBlock extends BytecodePositionRange {
     }
 
     /**
-     * Gets the code to which the range of positions in this object refer.
+     * Gets the code to which the range of BCIs in this object refer.
      */
     public byte[] code() {
         return code;
     }
 
     /**
-     * Gets the number of bytecode positions covered by this block.
+     * Gets the number of BCIs covered by this block.
      */
     public int size() {
         return end - start + 1;

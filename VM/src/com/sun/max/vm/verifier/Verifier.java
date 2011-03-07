@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -189,11 +189,11 @@ public class Verifier implements VerificationRegistry {
         return objectType;
     }
 
-    public UninitializedNewType getUninitializedNewType(int position) {
-        UninitializedNewType uninitializedNewType = uninitializedNewTypes.get(position);
+    public UninitializedNewType getUninitializedNewType(int bci) {
+        UninitializedNewType uninitializedNewType = uninitializedNewTypes.get(bci);
         if (uninitializedNewType == null) {
-            uninitializedNewType = new UninitializedNewType(position);
-            uninitializedNewTypes.put(position, uninitializedNewType);
+            uninitializedNewType = new UninitializedNewType(bci);
+            uninitializedNewTypes.put(bci, uninitializedNewType);
         }
         return uninitializedNewType;
     }
@@ -207,14 +207,14 @@ public class Verifier implements VerificationRegistry {
         return 0;
     }
 
-    public Subroutine getSubroutine(int entryPosition, int maxLocals) {
+    public Subroutine getSubroutine(int entryBCI, int maxLocals) {
         if (subroutines == null) {
             subroutines = new IntHashMap<Subroutine>();
         }
-        Subroutine subroutine = subroutines.get(entryPosition);
+        Subroutine subroutine = subroutines.get(entryBCI);
         if (subroutine == null) {
-            subroutine = new Subroutine(entryPosition, maxLocals);
-            subroutines.put(entryPosition, subroutine);
+            subroutine = new Subroutine(entryBCI, maxLocals);
+            subroutines.put(entryBCI, subroutine);
         }
         return subroutine;
     }

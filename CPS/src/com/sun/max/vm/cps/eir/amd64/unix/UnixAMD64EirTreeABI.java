@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,10 +63,10 @@ public class UnixAMD64EirTreeABI extends UnixAMD64EirJavaABI {
      */
     @Override
     public EirLocation[] getParameterLocations(ClassMethodActor classMethodActor, Purpose purpose, Kind[] kinds) {
-        final AMD64JitStackFrameLayout layout = new AMD64JitStackFrameLayout(classMethodActor, 2);
+        final AMD64JVMSFrameLayout layout = new AMD64JVMSFrameLayout(classMethodActor, 2);
         final EirLocation[] parameterLocations = new EirLocation[kinds.length];
         final int stackSlots = kinds.length - layout.numberOfLocalSlots();
-        final int offset = 0 - layout.operandStackOffset(stackSlots) - JitStackFrameLayout.JIT_SLOT_SIZE;
+        final int offset = 0 - layout.operandStackOffset(stackSlots) - JVMSFrameLayout.JVMS_SLOT_SIZE;
         for (int slotIndex = 0; slotIndex < kinds.length; slotIndex++) {
             parameterLocations[slotIndex] = new EirStackSlot(purpose, layout.localVariableOffset(slotIndex) + offset);
         }

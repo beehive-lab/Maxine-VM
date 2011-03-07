@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * Template from which (parts of) {@link JmmFunctions} is generated. The static initializer of
- * {@link JmmFunctions} includes a call to {@link #generate()} to double-check that the source
+ * {@link JmmFunctions} includes a call to {@link #compile()} to double-check that the source
  * is up-to-date with respect to any edits made to this class.
  *
  * All the methods annotated by {@link VM_ENTRY_POINT} appear in the exact same order as specified in
