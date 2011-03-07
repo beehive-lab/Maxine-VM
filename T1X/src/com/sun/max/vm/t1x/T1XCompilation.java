@@ -27,7 +27,6 @@ import static com.sun.cri.ci.CiRegister.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
-import static com.sun.max.vm.t1x.T1XCompilation.PatchInfoAMD64.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
 
 import java.util.*;
@@ -70,6 +69,7 @@ import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
+import com.sun.max.vm.t1x.T1XCompilation.PatchInfo;
 import com.sun.max.vm.t1x.T1XTemplate.StopsBuilder;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
@@ -1276,7 +1276,7 @@ if (false) ProgramWarning.message("Leave this code until it's proven that the GC
             int i = 0;
             while (i < patchInfo.size) {
                 int tag = patchInfo.at(i++);
-                if (tag == JCC) {
+                if (tag == PatchInfoAMD64.JCC) {
                     ConditionFlag cc = ConditionFlag.values[patchInfo.at(i++)];
                     int pos = patchInfo.at(i++);
                     int targetBCI = patchInfo.at(i++);
@@ -1284,14 +1284,14 @@ if (false) ProgramWarning.message("Leave this code until it's proven that the GC
                     assert target != 0;
                     buf.setPosition(pos);
                     asm.jcc(cc, target, true);
-                } else if (tag == JMP) {
+                } else if (tag == PatchInfoAMD64.JMP) {
                     int pos = patchInfo.at(i++);
                     int targetBCI = patchInfo.at(i++);
                     int target = bciToPos[targetBCI];
                     assert target != 0;
                     buf.setPosition(pos);
                     asm.jmp(target, true);
-                } else if (tag == JUMP_TABLE_ENTRY) {
+                } else if (tag == PatchInfoAMD64.JUMP_TABLE_ENTRY) {
                     int pos = patchInfo.at(i++);
                     int jumpTablePos = patchInfo.at(i++);
                     int targetBCI = patchInfo.at(i++);
@@ -1300,7 +1300,7 @@ if (false) ProgramWarning.message("Leave this code until it's proven that the GC
                     int disp = target - jumpTablePos;
                     buf.setPosition(pos);
                     buf.emitInt(disp);
-                } else if (tag == LOOKUP_TABLE_ENTRY) {
+                } else if (tag == PatchInfoAMD64.LOOKUP_TABLE_ENTRY) {
                     int pos = patchInfo.at(i++);
                     int key = patchInfo.at(i++);
                     int lookupTablePos = patchInfo.at(i++);
@@ -1791,65 +1791,65 @@ if (false) ProgramWarning.message("Leave this code until it's proven that the GC
             size = 0;
         }
     }
+}
 
-    @PLATFORM(cpu = "amd64")
-    static class PatchInfoAMD64 extends PatchInfo {
+@PLATFORM(cpu = "amd64")
+class PatchInfoAMD64 extends PatchInfo {
 
-        /**
-         * Denotes a conditonal jump patch.
-         * Encoding: {@code cc, pos, targetBCI}.
-         */
-        static final int JCC = 0;
+    /**
+     * Denotes a conditonal jump patch.
+     * Encoding: {@code cc, pos, targetBCI}.
+     */
+    static final int JCC = 0;
 
-        /**
-         * Denotes an unconditonal jump patch.
-         * Encoding: {@code pos, targetBCI}.
-         */
-        static final int JMP = 1;
+    /**
+     * Denotes an unconditonal jump patch.
+     * Encoding: {@code pos, targetBCI}.
+     */
+    static final int JMP = 1;
 
-        /**
-         * Denotes a signed int jump table entry.
-         * Encoding: {@code pos, jumpTablePos, targetBCI}.
-         */
-        static final int JUMP_TABLE_ENTRY = 2;
+    /**
+     * Denotes a signed int jump table entry.
+     * Encoding: {@code pos, jumpTablePos, targetBCI}.
+     */
+    static final int JUMP_TABLE_ENTRY = 2;
 
-        /**
-         * Denotes a signed int jump table entry.
-         * Encoding: {@code pos, key, lookupTablePos, targetBCI}.
-         */
-        static final int LOOKUP_TABLE_ENTRY = 3;
+    /**
+     * Denotes a signed int jump table entry.
+     * Encoding: {@code pos, key, lookupTablePos, targetBCI}.
+     */
+    static final int LOOKUP_TABLE_ENTRY = 3;
 
-        void addJCC(ConditionFlag cc, int pos, int targetBCI) {
-            ensureCapacity(size + 4);
-            data[size++] = JCC;
-            data[size++] = cc.ordinal();
-            data[size++] = pos;
-            data[size++] = targetBCI;
+    void addJCC(ConditionFlag cc, int pos, int targetBCI) {
+        ensureCapacity(size + 4);
+        data[size++] = JCC;
+        data[size++] = cc.ordinal();
+        data[size++] = pos;
+        data[size++] = targetBCI;
 
-        }
+    }
 
-        void addJMP(int pos, int targetBCI) {
-            ensureCapacity(size + 3);
-            data[size++] = JMP;
-            data[size++] = pos;
-            data[size++] = targetBCI;
-        }
+    void addJMP(int pos, int targetBCI) {
+        ensureCapacity(size + 3);
+        data[size++] = JMP;
+        data[size++] = pos;
+        data[size++] = targetBCI;
+    }
 
-        void addJumpTableEntry(int pos, int jumpTablePos, int targetBCI) {
-            ensureCapacity(size + 4);
-            data[size++] = JUMP_TABLE_ENTRY;
-            data[size++] = pos;
-            data[size++] = jumpTablePos;
-            data[size++] = targetBCI;
-        }
+    void addJumpTableEntry(int pos, int jumpTablePos, int targetBCI) {
+        ensureCapacity(size + 4);
+        data[size++] = JUMP_TABLE_ENTRY;
+        data[size++] = pos;
+        data[size++] = jumpTablePos;
+        data[size++] = targetBCI;
+    }
 
-        void addLookupTableEntry(int pos, int key, int lookupTablePos, int targetBCI) {
-            ensureCapacity(size + 5);
-            data[size++] = LOOKUP_TABLE_ENTRY;
-            data[size++] = pos;
-            data[size++] = key;
-            data[size++] = lookupTablePos;
-            data[size++] = targetBCI;
-        }
+    void addLookupTableEntry(int pos, int key, int lookupTablePos, int targetBCI) {
+        ensureCapacity(size + 5);
+        data[size++] = LOOKUP_TABLE_ENTRY;
+        data[size++] = pos;
+        data[size++] = key;
+        data[size++] = lookupTablePos;
+        data[size++] = targetBCI;
     }
 }
