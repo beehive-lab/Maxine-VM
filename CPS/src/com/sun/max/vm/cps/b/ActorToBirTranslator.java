@@ -55,7 +55,7 @@ public class ActorToBirTranslator extends BirGenerator {
     }
 
     @Override
-    protected void generateIrMethod(BirMethod birMethod) {
+    protected void generateIrMethod(BirMethod birMethod, boolean install) {
         translate(birMethod);
     }
 }

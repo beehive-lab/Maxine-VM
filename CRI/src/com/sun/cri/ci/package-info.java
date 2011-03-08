@@ -27,8 +27,7 @@
  * The target hardware architecture is represented by {@link com.sun.cri.ci.CiArchitecture} and the specific target machine
  * environment for a compiler instance is represented by {@link com.sun.cri.ci.CiTarget}.
  * <p>
- * A compiler instance is represented by {@link com.sun.cri.ci.CiCompiler} which can compile a single method,
- * but with possible inlining, and returns a {@link com.sun.cri.ci.CiResult}. A {@code CiResult} encapsulates
+ * A {@code CiResult} encapsulates
  * {@linkplain com.sun.cri.ci.CiStatistics compilation statistics}, possible {@linkplain com.sun.cri.ci.CiBailout error state}
  * and the {@linkplain com.sun.cri.ci.CiTargetMethod compiled code and metadata}.
  * {@link com.sun.cri.ci.CiCodePos} and {@link com.sun.cri.ci.CiDebugInfo} provide detailed information to the

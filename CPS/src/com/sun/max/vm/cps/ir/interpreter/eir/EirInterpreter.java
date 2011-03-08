@@ -492,7 +492,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
      * The method is compiled first if necessary.
      */
     protected void callCompiled(ClassMethodActor classMethodActor) {
-        final EirMethod eirMethod = eirGenerator().makeIrMethod(classMethodActor);
+        final EirMethod eirMethod = eirGenerator().makeIrMethod(classMethodActor, true);
         call(eirMethod);
     }
 
@@ -535,7 +535,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             try {
                 final Method javaMethod = JniHandle.class.getDeclaredMethod("unhand");
                 final ClassMethodActor classMethodActor = ClassMethodActor.fromJava(javaMethod);
-                jniHandleUnhand = eirGenerator().makeIrMethod(classMethodActor);
+                jniHandleUnhand = eirGenerator().makeIrMethod(classMethodActor, true);
             } catch (NoSuchMethodException e) {
                 ProgramError.unexpected("could not find 'JniHandle.get()' method used in JNI stub");
             }

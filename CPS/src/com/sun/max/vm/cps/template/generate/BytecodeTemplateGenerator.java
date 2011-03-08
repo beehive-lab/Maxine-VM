@@ -77,7 +77,7 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
         if (hasStackParameters(bytecodeSourceTemplate)) {
             ProgramError.unexpected("Template must not have *any* stack parameters: " + bytecodeSourceTemplate, null);
         }
-        final TargetMethod targetMethod = targetGenerator().compile(bytecodeSourceTemplate);
+        final TargetMethod targetMethod = targetGenerator().compile(bytecodeSourceTemplate, true, null);
         if (!(targetMethod.referenceLiterals() == null)) {
             StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + targetMethod);
             for (int i = 0; i < targetMethod.referenceLiterals().length; i++) {

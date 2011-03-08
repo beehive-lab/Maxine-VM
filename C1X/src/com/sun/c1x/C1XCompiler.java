@@ -37,7 +37,7 @@ import com.sun.cri.xir.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public class C1XCompiler extends CiCompiler {
+public class C1XCompiler {
 
     private final Map<Object, GlobalStub> stubs = new HashMap<Object, GlobalStub>();
 
@@ -78,8 +78,7 @@ public class C1XCompiler extends CiCompiler {
         init();
     }
 
-    @Override
-    public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
+    public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator, CiStatistics stats) {
         long startTime = 0;
         int index = C1XMetrics.CompiledMethods++;
         if (C1XOptions.PrintCompilation) {
@@ -89,7 +88,7 @@ public class C1XCompiler extends CiCompiler {
 
         CiResult result = null;
         TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
-        C1XCompilation compilation = new C1XCompilation(this, method, osrBCI);
+        C1XCompilation compilation = new C1XCompilation(this, method, osrBCI, stats);
         try {
             result = compilation.compile();
         } finally {

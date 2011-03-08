@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.compiler;
 
+import com.sun.cri.ci.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -46,14 +47,23 @@ public interface RuntimeCompiler {
      * Compiles a method to an internal representation.
      *
      * @param classMethodActor the method to compile
+     * @param install specifies if the method should be installed in the code cache. Only methods in a code region can
+     *            be executed. This option exists for the purpose of testing or benchmarking a compiler at runtime
+     *            without polluting the code cache.
+     * @param stats externally supplied statistics object to be used if not {@code null}
      * @return a reference to the target method created by this compiler for {@code classMethodActor}
      */
-    TargetMethod compile(ClassMethodActor classMethodActor);
+    TargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats);
+
+    /**
+     * Resets any metrics gathered by this compiler.
+     */
+    void resetMetrics();
 
     /**
      * Gets the exact subtype of {@link TargetMethod} produces by this compiler.
      *
-     * @param <Type> the exact type of the object returned by {@link #compile(ClassMethodActor)}
+     * @param <Type> the exact type of the object returned by {@link #compile(ClassMethodActor, boolean, CiStatistics)}
      */
     <Type extends TargetMethod> Class<Type> compiledType();
 

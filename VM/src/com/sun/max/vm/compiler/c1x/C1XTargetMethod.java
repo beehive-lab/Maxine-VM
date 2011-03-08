@@ -114,11 +114,11 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
-    public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
+    public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
-        init(ciTargetMethod);
+        init(ciTargetMethod, install);
 
         if (PrintTargetMethods != null) {
             if (classMethodActor.format("%H.%n").contains(PrintTargetMethods)) {
@@ -131,7 +131,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
-        init(ciTargetMethod);
+        init(ciTargetMethod, true);
 
         if (PrintTargetMethods != null) {
             if (stubName.contains(PrintTargetMethods)) {
@@ -140,14 +140,14 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
-    private void init(CiTargetMethod ciTargetMethod) {
+    private void init(CiTargetMethod ciTargetMethod, boolean install) {
 
         if (MaxineVM.isHosted()) {
             // Save the target method for later gathering of calls and duplication
             this.bootstrappingCiTargetMethod = ciTargetMethod;
         }
 
-        initCodeBuffer(ciTargetMethod);
+        initCodeBuffer(ciTargetMethod, install);
         initFrameLayout(ciTargetMethod);
         initStopPositions(ciTargetMethod);
         initExceptionTable(ciTargetMethod);
@@ -158,7 +158,11 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
             if (generator != null) {
                 adapter = generator.make(classMethodActor);
             }
-            linkDirectCalls(adapter);
+            if (install) {
+                linkDirectCalls(adapter);
+            } else {
+                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+            }
         }
     }
 
@@ -222,7 +226,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         return regRefMapSize() + frameRefMapSize();
     }
 
-    private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
+    private void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
         // Create the arrays for the scalar and the object reference literals
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         List<Object> objectReferences = new ArrayList<Object>();
@@ -232,7 +236,11 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize());
-        Code.allocate(targetBundleLayout, this);
+        if (install) {
+            Code.allocate(targetBundleLayout, this);
+        } else {
+            Code.allocateInHeap(targetBundleLayout, this);
+        }
         this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
 
         // Patch relative instructions in the code buffer

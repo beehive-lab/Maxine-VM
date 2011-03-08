@@ -52,7 +52,7 @@ public class DirTracer {
     public static DirMethod makeDirMethod(ClassMethodActor method) {
         final BcdCompiler compiler = new BcdCompiler();
         final CirToDirTranslator translator = new CirToDirTranslator(compiler);
-        return translator.makeIrMethod(method);
+        return translator.makeIrMethod(method, true);
     }
 
     /**

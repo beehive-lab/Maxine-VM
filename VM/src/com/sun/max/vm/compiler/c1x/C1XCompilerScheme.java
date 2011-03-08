@@ -191,17 +191,28 @@ public class C1XCompilerScheme implements RuntimeCompiler {
         return compiler;
     }
 
-    public final TargetMethod compile(final ClassMethodActor classMethodActor) {
+    public final TargetMethod compile(final ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
         RiMethod method = classMethodActor;
-        CiTargetMethod compiledMethod = compiler().compileMethod(method, -1, xirGenerator).targetMethod();
+        CiTargetMethod compiledMethod = compiler().compileMethod(method, -1, xirGenerator, stats).targetMethod();
         if (compiledMethod != null) {
-            C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
+            C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod, install);
             return c1xTargetMethod;
         }
         throw FatalError.unexpected("bailout"); // compilation failed
     }
 
-    @Override
+    public void resetMetrics() {
+        for (Field f : C1XMetrics.class.getFields()) {
+            if (f.getType() == int.class) {
+                try {
+                    f.set(null, 0);
+                } catch (IllegalAccessException e) {
+                    // do nothing.
+                }
+            }
+        }
+    }
+
     public CallEntryPoint calleeEntryPoint() {
         return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
     }

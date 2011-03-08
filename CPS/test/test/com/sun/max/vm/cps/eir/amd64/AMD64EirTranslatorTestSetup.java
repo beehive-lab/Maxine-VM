@@ -56,7 +56,7 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
 
     @Override
     public EirMethod translate(ClassMethodActor classMethodActor) {
-        return eirGenerator().makeIrMethod(classMethodActor);
+        return eirGenerator().makeIrMethod(classMethodActor, true);
     }
 
     @Override

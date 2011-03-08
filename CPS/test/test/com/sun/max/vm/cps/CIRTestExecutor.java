@@ -70,7 +70,7 @@ public class CIRTestExecutor implements JavaExecHarness.Executor {
             args[i] = Value.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
-        final CirMethod method = generator.makeIrMethod(classMethodActor);
+        final CirMethod method = generator.makeIrMethod(classMethodActor, true);
         final CirInterpreter interpreter = new CirInterpreter(generator);
         final Value result = interpreter.execute(method, args);
         return result.asBoxedJavaValue();

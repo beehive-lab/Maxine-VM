@@ -46,7 +46,7 @@ public class BirCompilerTestSetup extends CompilerTestSetup<BirMethod> {
 
     @Override
     public BirMethod translate(ClassMethodActor classMethodActor) {
-        return birGenerator().makeIrMethod(classMethodActor);
+        return birGenerator().makeIrMethod(classMethodActor, true);
     }
 
     @Override

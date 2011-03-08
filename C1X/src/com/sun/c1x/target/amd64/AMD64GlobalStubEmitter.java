@@ -157,7 +157,7 @@ public class AMD64GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public GlobalStub emit(XirTemplate template, RiRuntime runtime) {
-        C1XCompilation compilation = new C1XCompilation(compiler, null, -1);
+        C1XCompilation compilation = new C1XCompilation(compiler, null, -1, null);
         try {
             return emit(template, compilation);
         } finally {

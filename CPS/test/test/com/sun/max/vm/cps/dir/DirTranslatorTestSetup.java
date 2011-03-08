@@ -51,7 +51,7 @@ public class DirTranslatorTestSetup extends CompilerTestSetup<DirMethod> {
 
     @Override
     public DirMethod translate(ClassMethodActor classMethodActor) {
-        return dirGenerator().makeIrMethod(classMethodActor);
+        return dirGenerator().makeIrMethod(classMethodActor, true);
     }
 
     @Override
