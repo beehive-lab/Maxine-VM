@@ -71,12 +71,12 @@ public abstract class IrGenerator<CompilerScheme_Type extends RuntimeCompiler, I
     /**
      * Generate and install IR for the method body of the given IR method.
      */
-    protected abstract void generateIrMethod(IrMethod_Type irMethod);
+    protected abstract void generateIrMethod(IrMethod_Type irMethod, boolean install);
 
-    public final void makeIrMethod(final IrMethod_Type irMethod) {
+    public final void makeIrMethod(final IrMethod_Type irMethod, boolean install) {
         if (!irMethod.isGenerated()) {
             notifyBeforeGeneration(irMethod);
-            generateIrMethod(irMethod);
+            generateIrMethod(irMethod, install);
             notifyAfterGeneration(irMethod);
             irMethod.cleanup();
         }
@@ -183,9 +183,9 @@ public abstract class IrGenerator<CompilerScheme_Type extends RuntimeCompiler, I
      * Synchronizing {@code classMethodActor} here can cause deadlock due to the fact
      * that {@link ClassMethodActor#compilee()} is synchronized.
      */
-    public final IrMethod_Type makeIrMethod(ClassMethodActor classMethodActor) {
+    public final IrMethod_Type makeIrMethod(ClassMethodActor classMethodActor, boolean install) {
         final IrMethod_Type irMethod = createIrMethod(classMethodActor);
-        makeIrMethod(irMethod);
+        makeIrMethod(irMethod, install);
         return irMethod;
     }
 

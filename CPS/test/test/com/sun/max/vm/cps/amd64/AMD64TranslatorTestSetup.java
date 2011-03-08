@@ -53,7 +53,7 @@ public class AMD64TranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
 
     @Override
     public CPSTargetMethod translate(ClassMethodActor classMethodActor) {
-        return targetGenerator().makeIrMethod(classMethodActor);
+        return targetGenerator().makeIrMethod(classMethodActor, true);
     }
 
     @Override

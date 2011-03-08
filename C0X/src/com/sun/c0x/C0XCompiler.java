@@ -31,7 +31,7 @@ import com.sun.cri.xir.*;
  *
  * @author Ben L. Titzer
  */
-public class C0XCompiler extends CiCompiler {
+public class C0XCompiler {
 
     /**
      * The target that this compiler has been configured for.
@@ -47,7 +47,6 @@ public class C0XCompiler extends CiCompiler {
         this.target = target;
     }
 
-    @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
         C0XCompilation comp = new C0XCompilation(runtime, method, target);
         comp.compile();

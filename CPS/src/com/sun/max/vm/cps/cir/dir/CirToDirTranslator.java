@@ -42,10 +42,10 @@ public class CirToDirTranslator extends DirGenerator {
     }
 
     @Override
-    protected void generateIrMethod(DirMethod dirMethod) {
+    protected void generateIrMethod(DirMethod dirMethod, boolean install) {
         final CirGeneratorScheme cirGeneratorScheme = (CirGeneratorScheme) compilerScheme();
         final CirGenerator cirGenerator = cirGeneratorScheme.cirGenerator();
-        final CirMethod cirMethod = cirGenerator.makeIrMethod(dirMethod.classMethodActor());
+        final CirMethod cirMethod = cirGenerator.makeIrMethod(dirMethod.classMethodActor(), install);
 
         Trace.begin(3, "CIR->DIR " + cirMethod.getQualifiedName());
 

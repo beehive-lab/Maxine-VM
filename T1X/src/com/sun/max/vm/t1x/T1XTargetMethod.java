@@ -135,7 +135,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
     public final CiExceptionHandler[] handlers;
 
-    public T1XTargetMethod(T1XCompilation comp) {
+    public T1XTargetMethod(T1XCompilation comp, boolean install) {
         super(comp.method, CallEntryPoint.JIT_ENTRY_POINT);
 
         codeAttribute = comp.codeAttribute;
@@ -156,7 +156,11 @@ public final class T1XTargetMethod extends TargetMethod {
 
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.referenceLiterals.size(), comp.buf.position());
-        Code.allocate(targetBundleLayout, this);
+        if (install) {
+            Code.allocate(targetBundleLayout, this);
+        } else {
+            Code.allocateInHeap(targetBundleLayout, this);
+        }
 
         // Copy code
         comp.buf.copyInto(code, 0, code.length);
@@ -181,7 +185,11 @@ public final class T1XTargetMethod extends TargetMethod {
         }
 
         if (!MaxineVM.isHosted()) {
-            linkDirectCalls(comp.adapter);
+            if (install) {
+                linkDirectCalls(comp.adapter);
+            } else {
+                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+            }
         }
     }
 

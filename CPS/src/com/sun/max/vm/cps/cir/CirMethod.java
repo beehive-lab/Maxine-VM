@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.cps.cir;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -29,6 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.bytecode.*;
 import com.sun.max.vm.cps.cir.optimize.*;
@@ -112,7 +114,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
         if (classMethodActor.isStatic() && arguments.length == 2) {
             // no application arguments, just the 2 continuations
-            cirGenerator.makeIrMethod(this);
+            cirGenerator.makeIrMethod(this, true);
             return inline(cirOptimizer, arguments, NO_JAVA_FRAME_DESCRIPTOR);
         }
         return CirFoldable.Static.fold(this, arguments);
@@ -140,6 +142,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     private CirBytecode cirBytecode;
+    private int inlinedBytecode;
 
     /**
      * Determines if this object represents a native stub generated for a native method.
@@ -220,6 +223,8 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     protected boolean makingIr;
 
     public synchronized CirCall inline(CirOptimizer cirOptimizer, CirValue[] arguments, CirJavaFrameDescriptor javaFrameDescriptor) {
+        CPSAbstractCompiler compiler = (CPSAbstractCompiler) cirOptimizer.cirGenerator().compilerScheme();
+        CiStatistics stats = compiler.stats.get();
         if (cirBytecode == null) {
             // This usually denotes a case where the code for a snippet includes
             // a section that is only executed if MaxineVM.isHosted() is true and
@@ -229,8 +234,22 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
             ProgramError.check(!makingIr, "cannot inline " + classMethodActor() + " while making its IR");
 
             makingIr = true;
-            cirOptimizer.cirGenerator().makeIrMethod(this);
+            int mark = 0;
+            if (stats != null) {
+                assert inlinedBytecode == 0;
+                mark = stats.bytecodeCount;
+            }
+            cirOptimizer.cirGenerator().makeIrMethod(this, true);
+            if (stats != null) {
+                inlinedBytecode = (stats.bytecodeCount - mark) + classMethodActor.codeAttribute().code().length;
+                stats.bytecodeCount = mark;
+            }
         }
+
+        if (stats != null) {
+            stats.bytecodeCount += inlinedBytecode;
+        }
+
         final CirClosure closure = copyClosure();
         if (javaFrameDescriptor != null) {
             javaFrameDescriptor.pushInto(closure);

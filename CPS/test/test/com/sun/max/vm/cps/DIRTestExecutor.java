@@ -73,7 +73,7 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
             args[i] = Value.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
-        final DirMethod method = generator.makeIrMethod(classMethodActor);
+        final DirMethod method = generator.makeIrMethod(classMethodActor, true);
         final DirInterpreter interpreter = new DirInterpreter();
         final Value result = interpreter.execute(method, args);
         return result.asBoxedJavaValue();

@@ -41,9 +41,9 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
     }
 
     @Override
-    protected void generateIrMethod(EirMethod eirMethod) {
+    protected void generateIrMethod(EirMethod eirMethod, boolean install) {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) compilerScheme();
-        final DirMethod dirMethod = dirGeneratorScheme.dirGenerator().makeIrMethod(eirMethod.classMethodActor());
+        final DirMethod dirMethod = dirGeneratorScheme.dirGenerator().makeIrMethod(eirMethod.classMethodActor(), install);
 
         final DirToAMD64EirMethodTranslation translation = new DirToAMD64EirMethodTranslation(this, eirMethod, dirMethod);
         translation.translateMethod();

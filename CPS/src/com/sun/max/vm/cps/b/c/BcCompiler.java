@@ -76,7 +76,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
                 cirGenerator().notifyBeforeGeneration(cirSnippet);
                 final ClassMethodActor classMethodActor = cirSnippet.classMethodActor();
                 final CirVariableFactory cirVariableFactory = new CirVariableFactory();
-                final CirClosure cirClosure = birToCirTranslator.translateMethod(birGenerator().makeIrMethod(classMethodActor), cirSnippet, cirVariableFactory);
+                final CirClosure cirClosure = birToCirTranslator.translateMethod(birGenerator().makeIrMethod(classMethodActor, true), cirSnippet, cirVariableFactory);
                 cirSnippet.setGenerated(cirClosure);
                 cirGenerator().setCirMethod(classMethodActor, cirSnippet);
                 cirGenerator().notifyAfterGeneration(cirSnippet);

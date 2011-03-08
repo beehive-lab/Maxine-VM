@@ -406,9 +406,9 @@ public final class T1XCompilation {
     /**
      * Translates the bytecode of a given method into a {@link T1XTargetMethod}.
      */
-    public T1XTargetMethod compile(ClassMethodActor method) {
+    public T1XTargetMethod compile(ClassMethodActor method, boolean install) {
         try {
-            return compile1(method, method.originalCodeAttribute(true));
+            return compile1(method, method.originalCodeAttribute(true), install);
         } catch (UnsupportedSubroutineException e) {
             T1XMetrics.MethodsWithSubroutines++;
             if (T1XOptions.PrintJsrRetRewrites) {
@@ -417,11 +417,11 @@ public final class T1XCompilation {
             TypeInferencingVerifier verifier = new TypeInferencingVerifier(method.holder());
             CodeAttribute codeAttribute = verifier.verify(method, this.codeAttribute);
             cleanup();
-            return compile1(method, codeAttribute);
+            return compile1(method, codeAttribute, install);
         }
     }
 
-    public T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute) {
+    public T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute, boolean install) {
         startTimer(T1XTimer.PRE_COMPILE);
         try {
             initCompile(method, codeAttribute);
@@ -445,7 +445,7 @@ public final class T1XCompilation {
 
         startTimer(T1XTimer.INSTALL);
         try {
-            return new T1XTargetMethod(this);
+            return new T1XTargetMethod(this, install);
         } finally {
             stopTimer(T1XTimer.INSTALL);
         }

@@ -75,7 +75,7 @@ public class EIRTestExecutor implements JavaExecHarness.Executor {
             args[i] = Value.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
-        final EirMethod method = (EirMethod) generator.makeIrMethod(classMethodActor);
+        final EirMethod method = (EirMethod) generator.makeIrMethod(classMethodActor, true);
         final EirInterpreter interpreter = new AMD64EirInterpreter((AMD64EirGenerator) generator);
         final Value result = interpreter.execute(method, args);
         return result.asBoxedJavaValue();

@@ -57,15 +57,17 @@ public interface CompilationScheme extends VMScheme {
     @HOSTED_ONLY
     OptionSet compilers = new OptionSet();
 
+    // Available compilers
+    String CPS = "com.sun.max.vm.cps.b.c.d.e.amd64.target.AMD64CPSCompiler";
+    String JIT = "com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler";
+    String T1X = "com.sun.max.vm.t1x.T1XCompiler";
+    String C1X = C1XCompilerScheme.class.getName();
+
     /**
      * The option whose value (if non-null) specifies the class name of the optimizing compiler to use.
      */
     @HOSTED_ONLY
-    Option<String> optimizingCompilerOption = compilers.newStringOption("opt", C1XCompilerScheme.class.getName(), "Specifies the class name of the optimizing compiler.");
-
-    // Available baseline compilers
-    String JIT = "com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler";
-    String T1X = "com.sun.max.vm.t1x.T1XCompiler";
+    Option<String> optimizingCompilerOption = compilers.newStringOption("opt", C1X, "Specifies the class name of the optimizing compiler.");
 
     /**
      * The option whose value (if non-null) specifies the class name of the baseline compiler to use.

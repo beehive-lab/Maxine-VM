@@ -36,6 +36,7 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.lang.*;
@@ -77,8 +78,19 @@ public class T1XCompiler implements RuntimeCompiler {
         }
     };
 
-    @Override
-    public TargetMethod compile(ClassMethodActor method) {
+    public void resetMetrics() {
+        for (Field f : T1XMetrics.class.getFields()) {
+            if (f.getType() == int.class) {
+                try {
+                    f.set(null, 0);
+                } catch (IllegalAccessException e) {
+                    // do nothing.
+                }
+            }
+        }
+    }
+
+    public TargetMethod compile(ClassMethodActor method, boolean install, CiStatistics stats) {
         T1XCompilation c = compilation.get();
         if (c.method != null) {
             throw new InternalError("T1X is not re-entrant");
@@ -87,7 +99,7 @@ public class T1XCompiler implements RuntimeCompiler {
         long startTime = 0;
         int index = T1XMetrics.CompiledMethods++;
         if (PrintCompilation) {
-            TTY.print(String.format("C1X %4d %-70s %-45s | ", index, method.holder().name(), method.name()));
+            TTY.print(String.format("T1X %4d %-70s %-45s | ", index, method.holder().name(), method.name()));
             startTime = System.nanoTime();
         }
 
@@ -104,9 +116,12 @@ public class T1XCompiler implements RuntimeCompiler {
 
         TTY.Filter filter = PrintFilter == null ? null : new TTY.Filter(PrintFilter, method);
         try {
-            T1XTargetMethod t1xMethod = c.compile(method);
+            T1XTargetMethod t1xMethod = c.compile(method, install);
             T1XMetrics.BytecodesCompiled += t1xMethod.codeAttribute.code().length;
             T1XMetrics.CodeBytesEmitted += t1xMethod.code().length;
+            if (stats != null) {
+                stats.bytecodeCount = t1xMethod.codeAttribute.code().length;
+            }
             printMachineCodeTo(t1xMethod, cfgPrinter);
             return t1xMethod;
         } finally {
@@ -166,14 +181,14 @@ public class T1XCompiler implements RuntimeCompiler {
         }
     }
 
-    @Override
     public <T extends TargetMethod> Class<T> compiledType() {
-        throw FatalError.unimplemented();
+        Class<Class<T>> type = null;
+        return Utils.cast(type, T1XTargetMethod.class);
     }
 
     @Override
     public CallEntryPoint calleeEntryPoint() {
-        throw FatalError.unimplemented();
+        return CallEntryPoint.JIT_ENTRY_POINT;
     }
 
     @Override
@@ -210,7 +225,7 @@ public class T1XCompiler implements RuntimeCompiler {
                         FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
                         FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
 
-                        final C1XTargetMethod templateCode = (C1XTargetMethod) bootCompiler.compile(templateSource);
+                        final C1XTargetMethod templateCode = (C1XTargetMethod) bootCompiler.compile(templateSource, true, null);
                         if (!(templateCode.referenceLiterals() == null)) {
                             StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + templateCode);
                             for (int i = 0; i < templateCode.referenceLiterals().length; i++) {

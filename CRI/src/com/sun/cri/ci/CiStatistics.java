@@ -33,7 +33,7 @@ public class CiStatistics {
     /**
      * The total number of bytes of bytecode parsed during this compilation, including any inlined methods.
      */
-    public int byteCount;
+    public int bytecodeCount;
 
     /**
      * The number of internal graph nodes created during this compilation.

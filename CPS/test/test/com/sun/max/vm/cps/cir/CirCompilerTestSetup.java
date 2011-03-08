@@ -45,7 +45,7 @@ public abstract class CirCompilerTestSetup extends CompilerTestSetup<CirMethod> 
 
     @Override
     public CirMethod translate(ClassMethodActor classMethodActor) {
-        return cirGenerator().makeIrMethod(classMethodActor);
+        return cirGenerator().makeIrMethod(classMethodActor, true);
     }
 
 }
