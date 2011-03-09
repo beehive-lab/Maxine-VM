@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ public final class StackReferenceMapPreparer {
         return Heap.traceRootScanning() || (TraceSRS && TraceSRSSuppressionCount <= 0);
     }
 
-    public static boolean VerifyRefMaps = true;
+    public static boolean VerifyRefMaps;
     static {
         VMOptions.addFieldOption("-XX:", "VerifyRefMaps", StackReferenceMapPreparer.class,
             "Verify reference maps by performing a stack walk and checking plausibility of reference roots in " +
