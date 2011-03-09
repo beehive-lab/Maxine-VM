@@ -102,7 +102,7 @@ public final class StackReferenceMapPreparer {
         return Heap.traceRootScanning() || (TraceSRS && TraceSRSSuppressionCount <= 0);
     }
 
-    public static boolean VerifyRefMaps;
+    public static boolean VerifyRefMaps = true;
     static {
         VMOptions.addFieldOption("-XX:", "VerifyRefMaps", StackReferenceMapPreparer.class,
             "Verify reference maps by performing a stack walk and checking plausibility of reference roots in " +
@@ -113,7 +113,7 @@ public final class StackReferenceMapPreparer {
     private Pointer ttla;
     private Pointer referenceMap;
     private Pointer lowestStackSlot;
-    private boolean completingReferenceMap;
+    private Pointer completingReferenceMapLimit;
     private final boolean verify;
     private final boolean prepare;
     private long preparationTime;
@@ -478,13 +478,21 @@ public final class StackReferenceMapPreparer {
 
         // walk the stack and prepare references for each stack frame
         StackFrameWalker stackFrameWalker = vmThread.unwindingOrReferenceMapPreparingStackFrameWalker();
-        completingReferenceMap = true;
+        completingReferenceMapLimit = highestSlot;
         stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
-        completingReferenceMap = false;
+        completingReferenceMapLimit = Pointer.zero();
 
         traceStackRootScanEnd(lockDisabledSafepoints);
         timer.stop();
         preparationTime += timer.getLastElapsedTime();
+    }
+
+    /**
+     * Gets the lowest stack address for which a stack map has already been completed.
+     * A zero return value indicates that this preparer is not currently in a call to {@link #completeStackReferenceMap(Pointer)}.
+     */
+    public Pointer completingReferenceMapLimit() {
+        return completingReferenceMapLimit;
     }
 
     public void setReferenceMapBit(Pointer slotAddress) {

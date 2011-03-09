@@ -161,7 +161,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
             final CodeAttribute codeAttribute = t1xMethod.classMethodActor().codeAttribute();
             for (int bcp = bytecodeStopsIterator.bci(); bcp != -1; bcp = bytecodeStopsIterator.next()) {
                 for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
-                    final int offset = stopIndex * t1xMethod.frameRefMapSize;
+                    final int offset = stopIndex * t1xMethod.totalRefMapSize();
                     Log.print(bcp);
                     Log.print(":");
                     int opc = codeAttribute.code()[bcp] & 0xff;

@@ -51,6 +51,7 @@ import com.sun.max.vm.thread.*;
 public abstract class StackFrameWalker {
 
     public enum CalleeKind {
+        NONE,
         NATIVE,
         JAVA,
         TRAP_STUB,
@@ -183,6 +184,11 @@ public abstract class StackFrameWalker {
          */
         public CalleeKind calleeKind() {
             if (targetMethod == null) {
+                if (sp.isZero()) {
+                    assert callee == this;
+                    assert current.isTopFrame;
+                    return CalleeKind.NONE;
+                }
                 return CalleeKind.NATIVE;
             }
             if (targetMethod.is(TrapStub)) {
@@ -379,9 +385,14 @@ public abstract class StackFrameWalker {
             // walk the frame for reference map preparation
             StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
             if (preparer.checkIgnoreCurrentFrame()) {
-                return proceed;
+                proceed = true;
+            } else {
+                targetMethod.prepareReferenceMap(current, callee, preparer);
+                Pointer limit = preparer.completingReferenceMapLimit();
+                if (!limit.isZero() && current.sp().greaterEqual(limit)) {
+                    proceed = false;
+                }
             }
-            targetMethod.prepareReferenceMap(current, callee, preparer);
         } else if (purpose == Purpose.EXCEPTION_HANDLING) {
             // walk the frame for exception handling
             Throwable throwable = ((StackUnwindingContext) context).throwable;
@@ -396,8 +407,11 @@ public abstract class StackFrameWalker {
             proceed = visitor.visitFrame(current, callee);
         }
         // in any case, advance to the next frame
-        targetMethod.advance(current);
-        return proceed;
+        if (proceed) {
+            targetMethod.advance(current);
+            return true;
+        }
+        return false;
     }
 
     private void traceWalkPurpose(Purpose purpose) {
@@ -694,12 +708,12 @@ public abstract class StackFrameWalker {
         return !current.sp.isZero();
     }
 
-    public final Cursor advance(Word ip, Word sp, Word fp, boolean ipIsReturnAddress) {
+    public final void advance(Word ip, Word sp, Word fp, boolean ipIsReturnAddress) {
         if (!(current.targetMethod instanceof Adapter)) {
             // Adapter frames are never of interest when visiting the frame of a caller
             callee.copyFrom(current);
         }
-        return current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer(), ipIsReturnAddress);
+        current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer(), ipIsReturnAddress);
     }
 
     /**

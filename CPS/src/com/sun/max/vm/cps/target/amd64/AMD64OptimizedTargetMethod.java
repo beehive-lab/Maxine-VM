@@ -23,7 +23,9 @@
 package com.sun.max.vm.cps.target.amd64;
 
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -85,6 +87,7 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
         Pointer registerState = Pointer.zero();
         Pointer resumptionIp = current.ip();
+        CiCalleeSaveArea csa = null;
         switch (calleeKind) {
             case TRAMPOLINE:
                 // compute the register reference map from the call at this site
@@ -93,6 +96,8 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame
                 registerState = callee.sp();
+                assert callee.targetMethod().getRegisterConfig() == vm().registerConfigs.trapStub;
+                csa = callee.targetMethod().getRegisterConfig().getCalleeSaveArea();
                 int trapNum = vm().trapStateAccess.getTrapNumber(registerState);
                 Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNum);
                 if (throwableClass != null) {
@@ -105,9 +110,8 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
                     }
                 }
                 break;
+            case NONE:
             case NATIVE:
-                // no register state.
-                break;
             case JAVA:
                 // no register state.
                 break;
@@ -128,15 +132,31 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
                 FatalError.unexpected("Could not find safepoint index");
             }
 
+            // the callee contains register state from this frame;
+            // use register reference maps in this method to fill in the map for the callee
+            Pointer slotPointer = registerState;
             int registerReferenceMapSize = registerReferenceMapSize();
             int byteIndex = frameReferenceMapsSize() + (registerReferenceMapSize * safepointIndex);
-            Pointer slotPointer = registerState;
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "CPS register state");
+            // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
             for (int i = 0; i < registerReferenceMapSize; i++) {
-                preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
-                slotPointer = slotPointer.plusWords(Bytes.WIDTH);
+                int b = referenceMaps[byteIndex] & 0xff;
+                int reg = i * 8;
+                while (b != 0) {
+                    if ((b & 1) != 0) {
+                        int offset = csa.offsetOf(reg);
+                        if (traceStackRootScanning()) {
+                            Log.print("    register: ");
+                            Log.println(csa.registers[reg].name);
+                        }
+                        preparer.setReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
+                    }
+                    reg++;
+                    b = b >>> 1;
+                }
                 byteIndex++;
             }
+
         }
 
         // prepare the map for this stack frame
