@@ -31,6 +31,7 @@ import static com.sun.max.vm.stack.amd64.AMD64OptStackWalking.*;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -43,6 +44,7 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
+import com.sun.max.lang.Bytes;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -713,8 +715,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
-    private static final boolean C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES = System.getProperty("C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES") != null;
-
     /**
      * Prepares the reference map for this frame.
      * @param current the current frame
@@ -727,53 +727,49 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         Pointer registerState = Pointer.zero();
         CiCalleeSaveArea csa = null;
         switch (calleeKind) {
+            case NONE:
+                // 'current' is a C1X method trapped at a safepoint/implicit exception.
+                // The register save area in the trap stub frame will be processed
+                // when completing the stack reference map
+                assert preparer.completingReferenceMapLimit().isZero();
+                break;
+            case JAVA:
+                // Normal call - no registers need scanning
+                break;
             case TRAMPOLINE:
-                if (callee.targetMethod() instanceof C1XTargetMethod) {
-                    if (C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES) {
-                        // can simply use the register ref map at the call site
-                        RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
-                        csa = registerConfig.getCalleeSaveArea();
-                        registerState = callee.sp();
-                    } else {
-                        prepareTrampolineRefMap(current, callee, preparer);
-                    }
-                } else {
-                    // compute the register reference map from the call at this site
-                    prepareTrampolineRefMap(current, callee, preparer);
-                }
+                prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
-                // get the register state from the callee's frame
+                // The register state *is* the trap stub frame
                 registerState = callee.sp();
                 if (Trap.Number.isStackOverflow(registerState)) {
-                    // a method can never catch stack overflow for itself
+                    // a method can never catch stack overflow for itself so there
+                    // is no need to prepare the map for the registers of the trapped method
                     return;
                 }
+
+                assert callee.targetMethod().getRegisterConfig() == vm().registerConfigs.trapStub;
+                csa = callee.targetMethod().getRegisterConfig().getCalleeSaveArea();
                 break;
             case CALLEE_SAVED:
-                if (callee.targetMethod() instanceof C1XTargetMethod) {
-                    // can simply use the register ref map at the call site
-                    C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
-                    csa = c1xCallee.getRegisterConfig().getCalleeSaveArea();
-                    if (c1xCallee.is(GlobalStub)) {
-                        // The register state *is* the frame
-                        registerState = callee.sp();
-                    } else {
-                        assert c1xCallee.is(Standard);
-                        // Register state/callee save area directly is at the top of the frame.
-                        registerState = callee.sp().plus(c1xCallee.frameSize());
-                    }
-                } else {
-                    FatalError.unexpected("Only C1XTargetMethods can be callee-saved");
-                    // get the register state from the callee's frame
+                // can simply use the register ref map at the call site
+                TargetMethod calleeMethod = callee.targetMethod();
+                csa = calleeMethod.getRegisterConfig().getCalleeSaveArea();
+                if (calleeMethod.is(GlobalStub)) {
+                    // The register state *is* the frame
                     registerState = callee.sp();
+                } else {
+                    assert calleeMethod.is(Standard);
+
+                    // (dns) I want to step through this in the Inspector to ensure it's correct
+                    Bytecodes.breakpointTrap();
+
+                    // Register state/callee save area is at the top of the frame.
+                    Pointer calleeSaveAreaEnd = callee.sp().plus(calleeMethod.frameSize());
+                    registerState = calleeSaveAreaEnd.minus(csa.size);
                 }
                 break;
             case NATIVE:
-                // no register state.
-                break;
-            case JAVA:
-                // no register state.
                 break;
         }
         int stopIndex = findClosestStopIndex(current.ip());
@@ -784,6 +780,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         int frameRefMapSize = frameRefMapSize();
         if (!registerState.isZero()) {
+            assert csa != null;
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = registerState;

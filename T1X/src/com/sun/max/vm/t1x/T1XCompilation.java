@@ -43,7 +43,6 @@ import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -795,15 +794,14 @@ public final class T1XCompilation {
                 }
                 assert bciToPos[targetBCI] == 0;
             } else {
-                // Need to emit the safepoint at the source of the branch. We emit the safepoint just before the actual branch instruction:
-                // so it can benefit from the same condition testing as the branch instruction to be performed conditionally (using a conditional move), i.e., we
-                // want the safepoint to occur only if we're branching backward.
-                // Note that the safepoint takes place once the stack frame is in the same state as that of the target bytecode.
-                // The reference maps of the target should be used when at this safepoint.
+                // Ideally, we'd like to emit a safepoint at the target of a backward branch.
+                // However, that would require at least one extra pass to determine where
+                // the backward branches are. Instead, we simply emit a safepoint at the source of
+                // a backward branch. This means the cost of the safepoint is taken even if
+                // the backward branch is not taken but that cost should not be noticeable.
                 byte[] safepointCode = vm().safepoint.code;
                 buf.emitBytes(safepointCode, 0, safepointCode.length);
                 stops.addBytecodeBackwardBranch(bci, pos);
-if (false) ProgramWarning.message("Leave this code until it's proven that the GC maps for bytecode safepoints are correct!");
 
                 // Compute relative offset.
                 final int target = bciToPos[targetBCI];
