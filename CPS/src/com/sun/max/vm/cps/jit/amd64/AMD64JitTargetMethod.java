@@ -240,13 +240,13 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
                 prepareTrampolineRefMap(current, preparer);
                 break;
             case TRAP_STUB:
+                // The register state *is* the trap stub frame
+                registerState = callee.sp();
                 if (Trap.Number.isStackOverflow(registerState)) {
                     // a method can never catch stack overflow for itself so there
                     // is no need to prepare the map for the registers of the trapped method
                     return;
                 }
-                // The register state *is* the trap stub frame
-                registerState = callee.sp();
 
                 assert callee.targetMethod().getRegisterConfig() == vm().registerConfigs.trapStub;
                 csa = callee.targetMethod().getRegisterConfig().getCalleeSaveArea();
