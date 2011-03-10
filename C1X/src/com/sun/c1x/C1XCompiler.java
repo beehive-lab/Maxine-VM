@@ -39,7 +39,7 @@ import com.sun.cri.xir.*;
  */
 public class C1XCompiler {
 
-    private final Map<Object, GlobalStub> stubs = new HashMap<Object, GlobalStub>();
+    public final Map<Object, GlobalStub> stubs = new HashMap<Object, GlobalStub>();
 
     /**
      * The target that this compiler has been configured for.
