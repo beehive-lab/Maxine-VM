@@ -26,6 +26,7 @@ import java.nio.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.TargetLocation.Kind;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
@@ -143,8 +144,14 @@ public class Page {
      */
     private void refreshRead() throws DataIOError {
         if (epoch < teleIO.epoch()) {
-            DataIO.Static.readFully(teleIO, address(), buffer);
-            epoch = teleIO.epoch();
+            try {
+                DataIO.Static.readFully(teleIO, address(), buffer);
+                epoch = teleIO.epoch();
+            } catch (DataIOError e) {
+                if (!(e instanceof ConcurrentDataIOError)) {
+                    System.err.println(e);
+                }
+            }
         }
     }
 

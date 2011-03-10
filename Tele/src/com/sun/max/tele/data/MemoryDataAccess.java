@@ -20,11 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.unsafe;
+package com.sun.max.tele.data;
 
 import java.nio.*;
 
 import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
 /**

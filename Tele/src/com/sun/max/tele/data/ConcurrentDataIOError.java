@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.unsafe;
+
+package com.sun.max.tele.data;
+
+import com.sun.max.unsafe.*;
+
 
 /**
- * Thrown when an error occurs accessing memory through a {@link DataIO} or {@link DataAccess}.
+ * Thrown when an error occurs accessing VM memory at the same time as another thread
+ * in a context where only one thread can access the VM at a time. Use of ptrace(2)
+ * on Linux is one such context.
  *
- * @author Aritra Bandyopadhyay
+ * @author Doug Simon
  */
-public class DataIOError extends Error {
-    private final Address faultAddress;
+public class ConcurrentDataIOError extends DataIOError {
 
-    public DataIOError(Address address, String message) {
-        super("data access error at ^" + address.toPaddedHexString('0') + " (" + message + " )");
-        faultAddress = address;
+    public ConcurrentDataIOError(String message) {
+        super(Address.zero(), message);
     }
 
-    public DataIOError(Address address) {
-        super("data access error at ^" + address.toPaddedHexString('0'));
-        faultAddress = address;
+    public ConcurrentDataIOError() {
+        super(Address.zero());
     }
 
-    public Address getFaultAddress() {
-        return faultAddress;
-    }
 }

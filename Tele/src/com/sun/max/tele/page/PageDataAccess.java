@@ -27,9 +27,9 @@ import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.hosted.*;
 
 /**
  * @author Bernd Mathiske

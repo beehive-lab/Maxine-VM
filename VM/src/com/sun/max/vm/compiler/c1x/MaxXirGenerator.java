@@ -1629,9 +1629,6 @@ public class MaxXirGenerator implements RiXirGenerator {
                 if (C1XOptions.PrintXirTemplates) {
                     stub.print(Log.out);
                 }
-                if (method.equals("fneg")) {
-                    System.console();
-                }
                 final XirTemplate existing = runtimeCallStubs.put(method, stub);
                 assert existing == null : "stub for " + method + "redefined";
             }

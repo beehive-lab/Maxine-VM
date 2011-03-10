@@ -20,9 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.unsafe;
+package com.sun.max.tele.data;
 
 import java.nio.*;
+
+import com.sun.max.unsafe.*;
 
 /**
  * Buffered reading/writing of bytes from/to a source/destination that can be identified by an {@link Address}.

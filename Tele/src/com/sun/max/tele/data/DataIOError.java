@@ -20,27 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.page;
+package com.sun.max.tele.data;
 
-import com.sun.max.tele.data.*;
 import com.sun.max.unsafe.*;
 
 /**
- *  Buffered reading/writing of bytes from/to a source/destination that can be identified by an {@link Address},
- *  and which has a natural page size and for which generations of modification can be articulated.
+ * Thrown when an error occurs accessing memory through a {@link DataIO} or {@link DataAccess}.
  *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
+ * @author Aritra Bandyopadhyay
  */
-public interface TeleIO extends DataIO {
+public class DataIOError extends Error {
 
-    /**
-     * @return the natural page size for the I/O source/destination
-     */
-    int pageSize();
+    public final Address faultAddress;
 
-    /**
-     * @return the number of times the I/O source/destination has been modified.
-     */
-    long epoch();
+    public DataIOError(Address address, String message) {
+        super("data access error at ^" + address.toPaddedHexString('0') + " (" + message + " )");
+        faultAddress = address;
+    }
+
+    public DataIOError(Address address) {
+        super("data access error at ^" + address.toPaddedHexString('0'));
+        faultAddress = address;
+    }
 }
