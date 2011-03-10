@@ -24,7 +24,7 @@ package com.sun.max.vm.tele;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import static com.sun.max.vm.VMOptions.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * Holder for magic word that communicates whether this VM is being inspected and possibly
@@ -40,14 +40,17 @@ public final class Inspectable {
     /**
      * Option to make the VM run inspectable when VM not created by Inspector.
      */
-    public static final VMBooleanXXOption makeInspectable = register(new VMBooleanXXOption("-XX:-MakeInspectable", "Make it possible for Inspector to attach to running VM"), MaxineVM.Phase.PRISTINE);
+
+    public static boolean MakeInspectable;
+    static {
+        VMOptions.addFieldOption("-XX:", "MakeInspectable", Inspectable.class, "Make it possible for Inspector to attach to running VM", Phase.PRISTINE);
+    }
 
     /**
      * Constant denoting that the VM process is being inspected.
      */
     public static final int INSPECTED = 0x0000001;
 
-    /**
     /**
      * If a non-zero value is put here remotely, or by command line option, then the
      * additional steps to facilitate inspection should be activated.
@@ -69,7 +72,7 @@ public final class Inspectable {
             // during a build, which would then need resetting
             return false;
         }
-        if (makeInspectable.getValue()) {
+        if (MakeInspectable) {
             flags = INSPECTED;
         }
         optionChecked = true;

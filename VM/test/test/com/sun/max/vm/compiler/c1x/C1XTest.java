@@ -111,7 +111,7 @@ public class C1XTest {
 
     static {
         // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "C1X", C1XCompilerScheme.getHelpMap());
+        options.addFieldOptions(C1XOptions.class, "C1X", C1X.getHelpMap());
 
         // add all the fields from T1XOptions as options
         Class t1xOptionsClass = Classes.forName("com.sun.max.vm.t1x.T1XOptions");
@@ -252,8 +252,8 @@ public class C1XTest {
             for (MethodActor methodActor : methods) {
                 progress.begin(methodActor.toString());
                 Throwable error;
-                if (compiler instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
-                    C1XCompilerScheme c1x = (C1XCompilerScheme) compiler;
+                if (compiler instanceof C1X && !compileTargetMethod.getValue()) {
+                    C1X c1x = (C1X) compiler;
                     error = compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, methodActor, printBailoutOption.getValue(), false);
                 } else {
                     error = compile(compiler, methodActor, printBailoutOption.getValue(), false);
@@ -291,8 +291,8 @@ public class C1XTest {
         totalNs = 0;
         totalInstrs = 0;
         totalFailures = 0;
-        if (compiler instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
-            C1XCompilerScheme c1x = (C1XCompilerScheme) compiler;
+        if (compiler instanceof C1X && !compileTargetMethod.getValue()) {
+            C1X c1x = (C1X) compiler;
             for (MethodActor methodActor : methods) {
                 if (compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, methodActor, false, true) != null) {
                     totalFailures++;
@@ -318,7 +318,7 @@ public class C1XTest {
             for (int i = 0; i < max; i++) {
                 out.print(".");
                 out.flush();
-                C1XCompilerScheme c1x = (C1XCompilerScheme) compiler;
+                C1X c1x = (C1X) compiler;
                 for (MethodActor actor : methods) {
                     compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, actor, false, false);
                 }

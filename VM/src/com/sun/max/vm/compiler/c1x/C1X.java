@@ -50,7 +50,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Doug Simon
  */
-public class C1XCompilerScheme implements RuntimeCompiler {
+public class C1X implements RuntimeCompiler {
 
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
@@ -135,15 +135,15 @@ public class C1XCompilerScheme implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
-    public static C1XCompilerScheme instance;
+    public static C1X instance;
 
     @HOSTED_ONLY
-    public C1XCompilerScheme() {
+    public C1X() {
         this(new MaxXirGenerator(), platform().target);
     }
 
     @HOSTED_ONLY
-    protected C1XCompilerScheme(RiXirGenerator xirGenerator, CiTarget target) {
+    protected C1X(RiXirGenerator xirGenerator, CiTarget target) {
         if (!optionsRegistered) {
             VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
             optionsRegistered = true;

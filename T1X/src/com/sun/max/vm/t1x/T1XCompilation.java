@@ -129,7 +129,7 @@ public final class T1XCompilation {
     /**
      * The compiler context.
      */
-    final T1XCompiler compiler;
+    final T1X compiler;
 
     /**
      * Object used to aggregate all the stops for the compiled code.
@@ -248,7 +248,7 @@ public final class T1XCompilation {
     /**
      * Creates a compilation object.
      */
-    public T1XCompilation(T1XCompiler compiler) {
+    public T1XCompilation(T1X compiler) {
         this.compiler = compiler;
         AbstractAssembler asm = null;
         if (isAMD64()) {

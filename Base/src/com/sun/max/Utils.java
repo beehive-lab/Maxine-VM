@@ -87,6 +87,27 @@ public final class Utils {
     }
 
     /**
+     * Adds a set of key-value pairs to a given map.
+     *
+     * @param <K>
+     * @param <V>
+     * @param map
+     * @param keyValuePairs
+     * @return
+     */
+    public static <K, V> Map<K, V> addEntries(Map<K, V> map, Object... keyValuePairs) {
+        assert keyValuePairs.length % 2 == 0;
+        for (int i = 0; i < keyValuePairs.length; i += 2) {
+            Object key = keyValuePairs[i];
+            Object value = keyValuePairs[i + 1];
+            Class<K> keyType = null;
+            Class<V> valueType = null;
+            map.put(cast(keyType, key), cast(valueType, value));
+        }
+        return map;
+    }
+
+    /**
      * Creates an array of a generic type and {@linkplain Arrays#asList(Object...) wraps} it with
      * a fixed-size list.
      *

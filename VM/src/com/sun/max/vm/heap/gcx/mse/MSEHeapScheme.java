@@ -24,7 +24,6 @@ package com.sun.max.vm.heap.gcx.mse;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.gcx.HeapRegionManager.*;
 
 import com.sun.cri.bytecode.*;
@@ -35,6 +34,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -56,9 +56,10 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
 
-    static final VMBooleanXXOption doImpreciseSweepOption =
-        register(new VMBooleanXXOption("-XX:+", "ImpreciseSweep", "Use an imprecise sweeping phase"),
-                        MaxineVM.Phase.PRISTINE);
+    static boolean DoImpreciseSweep = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", MSEHeapScheme.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
+    }
 
    /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
@@ -90,8 +91,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
 
     private final Collect collect = new Collect();
 
-    private boolean doImpreciseSweep;
-
     final AfterMarkSweepVerifier afterGCVerifier;
 
     /**
@@ -113,7 +112,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
             LinearSpaceAllocator.hostInitialize();
         } else if (phase == MaxineVM.Phase.PRISTINE) {
-            doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (Heap.traceGCTime()) {
@@ -378,7 +376,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceRefForwarder());
             stopTimer(weakRefTimer);
             startTimer(reclaimTimer);
-            Size freeSpaceAfterGC = theHeap.sweep(heapMarker, doImpreciseSweep);
+            /*Size freeSpaceAfterGC = */theHeap.sweep(heapMarker, DoImpreciseSweep);
             stopTimer(reclaimTimer);
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();

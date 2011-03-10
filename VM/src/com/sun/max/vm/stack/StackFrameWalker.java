@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.stack;
 
-import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -61,7 +60,10 @@ public abstract class StackFrameWalker {
     /**
      * A VM option for enabling stack frame walk tracing.
      */
-    public static final VMBooleanXXOption TRACE_STACK_WALK = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
+    public static boolean TraceStackWalk;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceStackWalk", "Trace every stack walk");
+    }
 
     /**
      * The cursor class encapsulates all the state associated with a single stack frame,
@@ -415,14 +417,14 @@ public abstract class StackFrameWalker {
     }
 
     private void traceWalkPurpose(Purpose purpose) {
-        if (TRACE_STACK_WALK.getValue()) {
+        if (TraceStackWalk) {
             Log.print("StackFrameWalk: Start stack frame walk for purpose ");
             Log.println(purpose);
         }
     }
 
     private void traceCursor(Cursor cursor) {
-        if (TRACE_STACK_WALK.getValue()) {
+        if (TraceStackWalk) {
             if (cursor.targetMethod != null) {
                 Log.print("StackFrameWalk: Frame for ");
                 if (cursor.targetMethod.classMethodActor() == null) {
@@ -585,7 +587,7 @@ public abstract class StackFrameWalker {
                 // native function call. This makes it match the pattern expected by the
                 // StackReferenceMapPreparer where the instruction pointer in all but the
                 // top frame is past the address of the call.
-                if (TRACE_STACK_WALK.getValue() && purpose == Purpose.REFERENCE_MAP_PREPARING) {
+                if (TraceStackWalk && purpose == Purpose.REFERENCE_MAP_PREPARING) {
                     Log.print("IP for stack frame preparation of stub for native method ");
                     Log.print(nativeStubTargetMethod.name());
                     Log.print(" [");
@@ -678,7 +680,7 @@ public abstract class StackFrameWalker {
      * Terminates the current stack walk.
      */
     public final void reset() {
-        if (TRACE_STACK_WALK.getValue()) {
+        if (TraceStackWalk) {
             Log.print("StackFrameWalk: Finish stack frame walk for purpose ");
             Log.println(purpose);
         }
