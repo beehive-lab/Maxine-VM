@@ -25,7 +25,9 @@ package com.sun.max.vm;
 import java.util.*;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
+import com.sun.max.program.option.*;
 
 /**
  * @author Bernd Mathiske
@@ -75,6 +77,32 @@ public abstract class AbstractVMScheme {
 
     public String about() {
         return getClass().getName();
+    }
+
+    /**
+     * Gets a configuration value from either a given system property or a command line option.
+     * Each source is probed until a non-null value is obtained.
+     *
+     * @param property a system property defining the configuration value
+     * @param option an option defining the configuration value
+     * @param aliasMap if non {@code null}, then this is used to try and resolve the value as an alias
+     */
+    @HOSTED_ONLY
+    public static String configValue(String property, Option<String> option, Map<String, String> aliasMap) {
+        String value = null;
+        if (property != null) {
+            value =  System.getProperty(property);
+        }
+        if (value == null && option != null) {
+            value = option.getValue();
+        }
+        if (value == null) {
+            return value;
+        }
+        if (aliasMap != null && aliasMap.containsKey(value)) {
+            return aliasMap.get(value);
+        }
+        return value;
     }
 
     public Properties properties() {

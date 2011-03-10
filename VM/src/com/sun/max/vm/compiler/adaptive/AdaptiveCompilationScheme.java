@@ -29,7 +29,6 @@ import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -133,34 +132,19 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     private static final String BASELINE_COMPILER_PROPERTY = AdaptiveCompilationScheme.class.getSimpleName() + "." + baselineCompilerOption.getName();
 
     /**
-     * Gets a configuration property from a given system property or from an option if
-     * the system property has a {@code null} value. This method also checks against
-     * the compiler aliases.
-     *
-     * @param property a system property defining the configuration value
-     * @param option an option defining the configuration value
+     * Gets the class name of the optimizing compiler that will be configured when an instance of this scheme is instantiated.
      */
     @HOSTED_ONLY
-    public static String configValue(String property, Option<String> option) {
-        String value = System.getProperty(property);
-        if (value == null) {
-            value = option.getValue();
-        }
-        if (value == null) {
-            return value;
-        }
-        if (aliases.containsKey(value)) {
-            return aliases.get(value);
-        }
-        return value;
-    }
-
     public static String optName() {
-        return configValue(OPTIMIZING_COMPILER_PROPERTY, optimizingCompilerOption);
+        return configValue(OPTIMIZING_COMPILER_PROPERTY, optimizingCompilerOption, aliases);
     }
 
+    /**
+     * Gets the class name of the baseline compiler that will be configured when an instance of this scheme is instantiated.
+     */
+    @HOSTED_ONLY
     public static String baselineName() {
-        return configValue(BASELINE_COMPILER_PROPERTY, baselineCompilerOption);
+        return configValue(BASELINE_COMPILER_PROPERTY, baselineCompilerOption, aliases);
     }
 
     /**
