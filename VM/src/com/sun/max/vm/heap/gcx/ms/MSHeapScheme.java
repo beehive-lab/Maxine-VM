@@ -23,7 +23,6 @@
 package com.sun.max.vm.heap.gcx.ms;
 
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -32,6 +31,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -55,14 +55,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
 
-    static final VMBooleanXXOption doImpreciseSweepOption =
-        register(new VMBooleanXXOption("-XX:+", "ImpreciseSweep", "Use an imprecise sweeping phase"),
-                        MaxineVM.Phase.PRISTINE);
-
-    // In progress.
-    static final VMBooleanXXOption useLargeObjectSpaceOption =
-        register(new VMBooleanXXOption("-XX:+", "UseLOS", "Use a large object space"),
-                        MaxineVM.Phase.PRISTINE);
+    static boolean DoImpreciseSweep = true;
+    static boolean UseLOS = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", MSHeapScheme.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "UseLOS", MSHeapScheme.class, "Use a large object space", Phase.PRISTINE);
+    }
 
    /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
@@ -95,15 +93,13 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
     final FreeHeapSpaceManager objectSpace;
 
     /**
-     * Space where large object are allocated from if {@link MSHeapScheme#useLargeObjectSpaceOption} is true.
+     * Space where large object are allocated from if {@link MSHeapScheme#UseLOS} is true.
      * Implements the {@link Sweepable} interface to be notified by a sweeper of
      * free space.
      */
     final LargeObjectSpace largeObjectSpace;
 
     private final Collect collect = new Collect();
-
-    private boolean doImpreciseSweep;
 
     final AfterMarkSweepVerifier afterGCVerifier;
 
@@ -123,7 +119,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
             TLAB_HEADROOM = MIN_OBJECT_SIZE;
             LinearSpaceAllocator.hostInitialize();
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
-            doImpreciseSweep = doImpreciseSweepOption.getValue();
             allocateHeapAndGCStorage();
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (Heap.traceGCTime()) {
@@ -353,14 +348,14 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
 
         private Size reclaim() {
-            Size minReclaimableSpace = objectSpace.beginSweep(doImpreciseSweep);
+            Size minReclaimableSpace = objectSpace.beginSweep(DoImpreciseSweep);
 
             if (Heap.traceGCPhases()) {
-                Log.print(doImpreciseSweep ? "Imprecise" : "Precise");
+                Log.print(DoImpreciseSweep ? "Imprecise" : "Precise");
                 Log.println(" sweeping of the heap...");
             }
 
-            if (doImpreciseSweep) {
+            if (DoImpreciseSweep) {
                 heapMarker.impreciseSweep(objectSpace, minReclaimableSpace);
             } else {
                 heapMarker.sweep(objectSpace);

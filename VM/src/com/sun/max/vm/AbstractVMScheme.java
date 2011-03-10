@@ -71,6 +71,10 @@ public abstract class AbstractVMScheme {
         return name;
     }
 
+    public String about() {
+        return getClass().getName();
+    }
+
     @Override
     public String toString() {
         return name;

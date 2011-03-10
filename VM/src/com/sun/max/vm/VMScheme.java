@@ -36,6 +36,12 @@ public interface VMScheme {
     Class<? extends VMScheme> specification();
 
     /**
+     * Gets a very brief description of this configuration.
+     * Often, simply returning the name of the implementation class is sufficient.
+     */
+    String about();
+
+    /**
      * Performs any scheme specific actions when entering a given VM phase.
      *
      * @param phase the VM phase that has just been entered

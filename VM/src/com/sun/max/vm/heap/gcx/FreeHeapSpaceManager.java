@@ -51,7 +51,6 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         register(new VMIntOption("-XX:LargeObjectsMinSize=", Size.K.times(64).toInt(),
                         "Minimum size to be treated as a large object"), MaxineVM.Phase.PRISTINE);
 
-    private static boolean TraceSweep = false;
     private static boolean TraceTLAB = false;
 
     class LinearSpaceRefillManager extends MultiChunkTLABAllocator.RefillManager {
@@ -673,7 +672,6 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
         minLargeObjectSize = Size.fromInt(Integer.highestOneBit(largeObjectsMinSizeOption.getValue()));
         log2FirstBinSize = Integer.numberOfTrailingZeros(minLargeObjectSize.toInt());
         minReclaimableSpace = Size.fromInt(freeChunkMinSizeOption.getValue());
-        TraceSweep = MaxineVM.isDebug() ? traceSweepingOption.getValue() : false;
         TraceTLAB = heapScheme instanceof HeapSchemeWithTLAB && HeapSchemeWithTLAB.traceTLAB();
 
         // Refill allocator if space left below this:

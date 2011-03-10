@@ -26,6 +26,7 @@ import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 
 /**
  * Interface that space managers must implement to be notified of sweeping events emitted by a sweeping collector.
@@ -39,10 +40,12 @@ import com.sun.max.vm.*;
  */
 public abstract class Sweepable {
 
-    //  Debug tracing
-    static final VMBooleanXXOption traceSweepingOption =
-        register(new VMBooleanXXOption("-XX:-", "TraceSweep", "Trace heap sweep operations. Do nothing for PRODUCT images"),
-                        MaxineVM.Phase.PRISTINE);
+    static boolean TraceSweep;
+    static {
+        if (MaxineVM.isDebug()) {
+            VMOptions.addFieldOption("-XX:", "TraceSweep", Sweepable.class, "Trace heap sweep operations", Phase.PRISTINE);
+        }
+    }
 
     static final VMIntOption freeChunkMinSizeOption =
         register(new VMIntOption("-XX:FreeChunkMinSize=", 256,

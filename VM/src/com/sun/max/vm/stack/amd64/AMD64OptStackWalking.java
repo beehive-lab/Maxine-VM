@@ -126,7 +126,7 @@ public class AMD64OptStackWalking {
         Pointer fp = current.fp();
         Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), ip, throwable.getClass());
         if (!catchAddress.isZero()) {
-            if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+            if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(ip.minus(targetMethod.codeStart()).toInt());
                 Log.print(" is ");

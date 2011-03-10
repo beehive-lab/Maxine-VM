@@ -28,7 +28,6 @@ import static com.sun.max.vm.VMOptions.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -145,14 +144,31 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     @HOSTED_ONLY
     private static RuntimeCompiler instantiateCompiler(String compilerClassName) {
         try {
-            return (RuntimeCompiler) Classes.forName(compilerClassName).newInstance();
+            return (RuntimeCompiler) Class.forName(compilerClassName).newInstance();
         } catch (Exception e) {
-            throw FatalError.unexpected("Error instantiating compiler " + compilerClassName, e);
+            String alias = compilerClassName;
+            compilerClassName = CompilationScheme.compilerAliases.get(alias);
+            if (compilerClassName == null) {
+                compilerClassName = CompilationScheme.compilerAliases.get(alias.toLowerCase());
+                if (compilerClassName == null) {
+                    FatalError.unexpected("Given name does not denote a compiler alias or an existing compiler class", e);
+                }
+            }
+            try {
+                return (RuntimeCompiler) Class.forName(compilerClassName).newInstance();
+            } catch (Exception e2) {
+                throw FatalError.unexpected("Error instantiating compiler " + compilerClassName, e);
+            }
         }
     }
 
     public String description() {
         return "compilation: " + mode.name().toLowerCase();
+    }
+
+    @Override
+    public String about() {
+        return super.about() + " [opt=" + optimizingCompiler.getClass().getSimpleName() + ", baseline=" + baselineCompiler.getClass().getSimpleName() + "]";
     }
 
     /**

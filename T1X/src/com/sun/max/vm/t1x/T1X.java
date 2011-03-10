@@ -57,7 +57,7 @@ import com.sun.max.vm.verifier.*;
  *
  * @author Doug Simon
  */
-public class T1XCompiler implements RuntimeCompiler {
+public class T1X implements RuntimeCompiler {
 
     final T1XTemplate[] templates;
 
@@ -67,14 +67,14 @@ public class T1XCompiler implements RuntimeCompiler {
     int templateSlots;
 
     @HOSTED_ONLY
-    public T1XCompiler() {
+    public T1X() {
         templates = new T1XTemplate[T1XTemplateTag.values().length];
     }
 
     private final ThreadLocal<T1XCompilation> compilation = new ThreadLocal<T1XCompilation>() {
         @Override
         protected T1XCompilation initialValue() {
-            return new T1XCompilation(T1XCompiler.this);
+            return new T1XCompilation(T1X.this);
         }
     };
 
@@ -199,9 +199,9 @@ public class T1XCompiler implements RuntimeCompiler {
             long startTime = System.currentTimeMillis();
 
             // Create a C1X compiler to compile the templates
-            C1XCompilerScheme bootCompiler = C1XCompilerScheme.instance;
+            C1X bootCompiler = C1X.instance;
             if (bootCompiler == null) {
-                bootCompiler = new C1XCompilerScheme();
+                bootCompiler = new C1X();
                 bootCompiler.initialize(Phase.COMPILING);
             }
             C1XCompiler comp = bootCompiler.compiler();

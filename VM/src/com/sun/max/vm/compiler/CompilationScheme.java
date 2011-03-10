@@ -24,7 +24,10 @@ package com.sun.max.vm.compiler;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
+import java.util.*;
+
 import com.sun.c1x.*;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
@@ -60,8 +63,17 @@ public interface CompilationScheme extends VMScheme {
     // Available compilers
     String CPS = "com.sun.max.vm.cps.b.c.d.e.amd64.target.AMD64CPSCompiler";
     String JIT = "com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler";
-    String T1X = "com.sun.max.vm.t1x.T1XCompiler";
-    String C1X = C1XCompilerScheme.class.getName();
+    String T1X = "com.sun.max.vm.t1x.T1X";
+    String C1X = C1X.class.getName();
+
+    /**
+     * A map from short aliases to qualified class names for the known compilers.
+     */
+    Map<String, String> compilerAliases = Utils.addEntries(new HashMap<String, String>(),
+                    "CPS", CPS,
+                    "JIT", JIT,
+                    "T1X", T1X,
+                    "C1X", C1X);
 
     /**
      * The option whose value (if non-null) specifies the class name of the optimizing compiler to use.

@@ -252,9 +252,9 @@ public class MaxineTesterConfiguration {
         auto("test_count_bits(test.com.sun.max.vm.cps.sparc.SPARCTranslatorTest_regressions)", FAIL_ALL);
 
         String opt_cps = "-opt=com.sun.max.vm.cps.b.c.d.e.amd64.target.AMD64CPSCompiler";
-        String opt_c1x = "-opt=" + C1XCompilerScheme.class.getName();
+        String opt_c1x = "-opt=" + C1X.class.getName();
 
-        String baseline_c1x = "-baseline=" + C1XCompilerScheme.class.getName();
+        String baseline_c1x = "-baseline=" + C1X.class.getName();
         String baseline_jit = "-baseline=com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler";
 
 

@@ -632,7 +632,7 @@ public final class T1XTargetMethod extends TargetMethod {
         Address catchAddress = throwAddressToCatchAddress(current.isTopFrame(), throwAddress, throwable.getClass());
 
         if (!catchAddress.isZero()) {
-            if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+            if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(throwAddress.minus(codeStart()).toInt());
                 Log.print(" is ");
