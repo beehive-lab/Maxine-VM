@@ -27,6 +27,7 @@ import java.lang.management.*;
 import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;

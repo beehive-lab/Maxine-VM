@@ -31,9 +31,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Encapsulates the mechanism (or mechanisms) by which methods are prepared for execution.
@@ -167,56 +164,5 @@ public interface CompilationScheme extends VMScheme {
             }
         }
 
-    }
-
-    /**
-     * Collection of methods (the public ones) to be called by all implementations when
-     * specified events occur; these supports certain Inspector services.
-     *
-     * @author Michael Van De Vanter
-     */
-    public static final class Inspect {
-
-        /**
-         * Announces that a compilation is being started; must be called for
-         * certain Inspector services to work.
-         *
-         * @param method a method about to be compiled
-         */
-        public static void notifyCompilationStart(ClassMethodActor method) {
-            InspectableCodeInfo.notifyCompilationEvent(method, null);
-        }
-
-        /**
-         * Announces that a compilation has just been completed; must be called for
-         * certain Inspector services to work.
-         *
-         * @param targetMethod a compilation that was just completed.
-         */
-        public static void notifyCompilationComplete(TargetMethod targetMethod) {
-            InspectableCodeInfo.notifyCompilationEvent(targetMethod.classMethodActor, targetMethod);
-            inspectableCompilationComplete(targetMethod);
-        }
-
-        /**
-         * An empty method whose purpose is to be interrupted by the Inspector
-         * at the conclusion of a method compilation.
-         * <br>
-         * This particular method is intended for use by users of the Inspector, and
-         * is separate from a method used by the Inspector for internal use.
-         * <br>
-         * <strong>Important:</strong> The Inspector assumes that this method is loaded
-         * and compiled in the boot image and that it will never be dynamically recompiled.
-         *
-         * @param targetMethod the method compilation just created
-         */
-        @INSPECTED
-        @NEVER_INLINE
-        private static void inspectableCompilationComplete(TargetMethod targetMethod) {
-        }
-
-        // Ensure that the above method is compiled into the boot image so that it can be inspected conveniently
-        private static CriticalMethod inspectableCompilationCompleteCriticalMethod =
-            new CriticalMethod(CompilationScheme.Inspect.class, "inspectableCompilationComplete", SignatureDescriptor.create(void.class, TargetMethod.class));
     }
 }

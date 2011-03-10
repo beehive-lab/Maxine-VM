@@ -44,6 +44,7 @@ import com.sun.max.program.Classpath.Entry;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.tcp.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.BytecodeBreakpointManager;
 import com.sun.max.tele.debug.no.*;

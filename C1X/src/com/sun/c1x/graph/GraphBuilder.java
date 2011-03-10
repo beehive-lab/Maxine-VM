@@ -2230,7 +2230,7 @@ public final class GraphBuilder {
     }
 
     private void traceState() {
-        if (C1XOptions.TraceBytecodeParserLevel >= TRACELEVEL_STATE) {
+        if (C1XOptions.TraceBytecodeParserLevel >= TRACELEVEL_STATE && !TTY.isSuppressed()) {
             log.println(String.format("|   state [nr locals = %d, stack depth = %d, method = %s]", curState.localsSize(), curState.stackSize(), curState.scope().method));
             for (int i = 0; i < curState.localsSize(); ++i) {
                 Value value = curState.localAt(i);
@@ -2524,7 +2524,7 @@ public final class GraphBuilder {
     }
 
     private void traceInstruction(int bci, BytecodeStream s, int opcode, boolean blockStart) {
-        if (C1XOptions.TraceBytecodeParserLevel >= TRACELEVEL_INSTRUCTIONS) {
+        if (C1XOptions.TraceBytecodeParserLevel >= TRACELEVEL_INSTRUCTIONS && !TTY.isSuppressed()) {
             StringBuilder sb = new StringBuilder(40);
             sb.append(blockStart ? '+' : '|');
             if (bci < 10) {

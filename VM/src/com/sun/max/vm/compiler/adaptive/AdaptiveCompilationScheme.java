@@ -24,10 +24,12 @@ package com.sun.max.vm.compiler.adaptive;
 
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -127,35 +129,62 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         return baselineCompiler != optimizingCompiler;
     }
 
+    private static final String OPTIMIZING_COMPILER_PROPERTY = AdaptiveCompilationScheme.class.getSimpleName() + "." + optimizingCompilerOption.getName();
+    private static final String BASELINE_COMPILER_PROPERTY = AdaptiveCompilationScheme.class.getSimpleName() + "." + baselineCompilerOption.getName();
+
+    /**
+     * Gets a configuration property from a given system property or from an option if
+     * the system property has a {@code null} value. This method also checks against
+     * the compiler aliases.
+     *
+     * @param property a system property defining the configuration value
+     * @param option an option defining the configuration value
+     */
+    @HOSTED_ONLY
+    public static String configValue(String property, Option<String> option) {
+        String value = System.getProperty(property);
+        if (value == null) {
+            value = option.getValue();
+        }
+        if (value == null) {
+            return value;
+        }
+        if (aliases.containsKey(value)) {
+            return aliases.get(value);
+        }
+        return value;
+    }
+
+    public static String optName() {
+        return configValue(OPTIMIZING_COMPILER_PROPERTY, optimizingCompilerOption);
+    }
+
+    public static String baselineName() {
+        return configValue(BASELINE_COMPILER_PROPERTY, baselineCompilerOption);
+    }
+
     /**
      * The constructor for this class initializes a new adaptive compilation.
      */
     @HOSTED_ONLY
     public AdaptiveCompilationScheme() {
-        assert RuntimeCompiler.optimizingCompilerOption.getValue() != null;
-        optimizingCompiler = instantiateCompiler(RuntimeCompiler.optimizingCompilerOption.getValue());
-        if (!RuntimeCompiler.optimizingCompilerOption.getValue().equals(RuntimeCompiler.baselineCompilerOption.getValue()) && RuntimeCompiler.baselineCompilerOption.getValue() != null) {
-            baselineCompiler = instantiateCompiler(RuntimeCompiler.baselineCompilerOption.getValue());
+        assert optimizingCompilerOption.getValue() != null;
+        String optName = optName();
+        String baselineName = baselineName();
+        optimizingCompiler = instantiateCompiler(optName);
+        if (!optName.equals(baselineName) && baselineName != null) {
+            baselineCompiler = instantiateCompiler(baselineName);
         } else {
             baselineCompiler = optimizingCompiler;
         }
     }
 
     @HOSTED_ONLY
-    private static RuntimeCompiler instantiateCompiler(String compilerClassName) {
+    private static RuntimeCompiler instantiateCompiler(String name) {
         try {
-            return (RuntimeCompiler) Class.forName(compilerClassName).newInstance();
+            return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {
-            String alias = compilerClassName;
-            compilerClassName = RuntimeCompiler.aliases.get(alias);
-            if (compilerClassName == null) {
-                FatalError.unexpected("Given name does not denote a compiler alias or an existing compiler class", e);
-            }
-            try {
-                return (RuntimeCompiler) Class.forName(compilerClassName).newInstance();
-            } catch (Exception e2) {
-                throw FatalError.unexpected("Error instantiating compiler " + compilerClassName, e);
-            }
+            throw FatalError.unexpected("Error instantiating compiler " + name, e);
         }
     }
 
@@ -166,6 +195,14 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     @Override
     public String about() {
         return super.about() + " [opt=" + optimizingCompiler.getClass().getSimpleName() + ", baseline=" + baselineCompiler.getClass().getSimpleName() + "]";
+    }
+
+    @Override
+    public Properties properties() {
+        Properties props = new Properties();
+        props.put(OPTIMIZING_COMPILER_PROPERTY, optimizingCompiler.getClass().getName());
+        props.put(BASELINE_COMPILER_PROPERTY, baselineCompiler.getClass().getName());
+        return props;
     }
 
     /**

@@ -23,6 +23,7 @@
 package com.sun.max.tele.object;
 
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
 import java.util.*;
@@ -41,6 +42,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.method.*;
@@ -618,19 +620,21 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         final Pointer codeStart = getCodeStart();
         if (!codeStart.isZero()) {
             callEntryAddress = codeStart;
-            TeleObject teleCallEntryPoint = null;
-            if (vm().tryLock()) {
-                try {
-                    final Reference callEntryPointReference = vm().teleFields().TargetMethod_callEntryPoint.readReference(reference());
-                    teleCallEntryPoint = heap().makeTeleObject(callEntryPointReference);
-                } finally {
-                    vm().unlock();
+            if (vmConfig().needsAdapters()) {
+                TeleObject teleCallEntryPoint = null;
+                if (vm().tryLock()) {
+                    try {
+                        final Reference callEntryPointReference = vm().teleFields().TargetMethod_callEntryPoint.readReference(reference());
+                        teleCallEntryPoint = heap().makeTeleObject(callEntryPointReference);
+                    } finally {
+                        vm().unlock();
+                    }
                 }
-            }
-            if (teleCallEntryPoint != null) {
-                final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
-                if (callEntryPoint != null) {
-                    callEntryAddress = codeStart.plus(callEntryPoint.offset());
+                if (teleCallEntryPoint != null) {
+                    final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
+                    if (callEntryPoint != null) {
+                        callEntryAddress = codeStart.plus(callEntryPoint.offset());
+                    }
                 }
             }
         }

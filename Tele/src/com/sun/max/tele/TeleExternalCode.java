@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;

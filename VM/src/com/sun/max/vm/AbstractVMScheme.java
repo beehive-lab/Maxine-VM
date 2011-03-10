@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm;
 
+import java.util.*;
+
 import com.sun.max.*;
 import com.sun.max.program.*;
 
@@ -73,6 +75,10 @@ public abstract class AbstractVMScheme {
 
     public String about() {
         return getClass().getName();
+    }
+
+    public Properties properties() {
+        return null;
     }
 
     @Override
