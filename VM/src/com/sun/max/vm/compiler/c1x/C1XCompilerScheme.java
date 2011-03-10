@@ -143,7 +143,7 @@ public class C1XCompilerScheme implements RuntimeCompiler {
     }
 
     @HOSTED_ONLY
-    protected C1XCompilerScheme(MaxXirGenerator xirGenerator, CiTarget target) {
+    protected C1XCompilerScheme(RiXirGenerator xirGenerator, CiTarget target) {
         if (!optionsRegistered) {
             VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
             optionsRegistered = true;
