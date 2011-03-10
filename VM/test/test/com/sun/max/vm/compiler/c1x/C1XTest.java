@@ -189,10 +189,10 @@ public class C1XTest {
 
         boolean useBaseline = t1xOption.getValue();
         if (t1xOption.getValue()) {
-            CompilationScheme.baselineCompilerOption.setValue(Classes.forName("com.sun.max.vm.t1x.T1XCompiler").getName());
+            RuntimeCompiler.baselineCompilerOption.setValue(Classes.forName("com.sun.max.vm.t1x.T1XCompiler").getName());
             useBaseline = true;
         } else if (jitOption.getValue()) {
-            CompilationScheme.baselineCompilerOption.setValue(Classes.forName("com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler").getName());
+            RuntimeCompiler.baselineCompilerOption.setValue(Classes.forName("com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler").getName());
             useBaseline = true;
         }
 

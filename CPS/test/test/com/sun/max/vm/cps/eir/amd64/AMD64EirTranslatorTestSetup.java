@@ -67,7 +67,7 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     @Override
     protected void initializeVM() {
         Platform.set(platform().constrainedByInstructionSet(ISA.AMD64));
-        CompilationScheme.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.d.e.amd64.BcdeAMD64Compiler.class.getName());
+        RuntimeCompiler.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.d.e.amd64.BcdeAMD64Compiler.class.getName());
         VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

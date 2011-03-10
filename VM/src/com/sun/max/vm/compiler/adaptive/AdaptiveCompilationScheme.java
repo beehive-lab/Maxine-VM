@@ -132,10 +132,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     @HOSTED_ONLY
     public AdaptiveCompilationScheme() {
-        assert CompilationScheme.optimizingCompilerOption.getValue() != null;
-        optimizingCompiler = instantiateCompiler(CompilationScheme.optimizingCompilerOption.getValue());
-        if (!CompilationScheme.optimizingCompilerOption.getValue().equals(CompilationScheme.baselineCompilerOption.getValue()) && CompilationScheme.baselineCompilerOption.getValue() != null) {
-            baselineCompiler = instantiateCompiler(CompilationScheme.baselineCompilerOption.getValue());
+        assert RuntimeCompiler.optimizingCompilerOption.getValue() != null;
+        optimizingCompiler = instantiateCompiler(RuntimeCompiler.optimizingCompilerOption.getValue());
+        if (!RuntimeCompiler.optimizingCompilerOption.getValue().equals(RuntimeCompiler.baselineCompilerOption.getValue()) && RuntimeCompiler.baselineCompilerOption.getValue() != null) {
+            baselineCompiler = instantiateCompiler(RuntimeCompiler.baselineCompilerOption.getValue());
         } else {
             baselineCompiler = optimizingCompiler;
         }
@@ -147,12 +147,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             return (RuntimeCompiler) Class.forName(compilerClassName).newInstance();
         } catch (Exception e) {
             String alias = compilerClassName;
-            compilerClassName = CompilationScheme.compilerAliases.get(alias);
+            compilerClassName = RuntimeCompiler.aliases.get(alias);
             if (compilerClassName == null) {
-                compilerClassName = CompilationScheme.compilerAliases.get(alias.toLowerCase());
-                if (compilerClassName == null) {
-                    FatalError.unexpected("Given name does not denote a compiler alias or an existing compiler class", e);
-                }
+                FatalError.unexpected("Given name does not denote a compiler alias or an existing compiler class", e);
             }
             try {
                 return (RuntimeCompiler) Class.forName(compilerClassName).newInstance();
