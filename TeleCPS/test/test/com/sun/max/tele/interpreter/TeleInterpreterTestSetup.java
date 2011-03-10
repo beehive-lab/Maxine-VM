@@ -56,8 +56,8 @@ public class TeleInterpreterTestSetup extends CompilerTestSetup<ActorIrMethod> {
 
     @Override
     protected void initializeVM() {
-        CompilationScheme.optimizingCompilerOption.setValue(BCompiler.class.getName());
-        CompilationScheme.baselineCompilerOption.setValue(null);
+        RuntimeCompiler.optimizingCompilerOption.setValue(BCompiler.class.getName());
+        RuntimeCompiler.baselineCompilerOption.setValue(null);
         VMConfigurator vmConfigurator = new VMConfigurator(null);
         vmConfigurator.buildLevel.setValue(BuildLevel.DEBUG);
         vmConfigurator.referenceScheme.setValue(getPackageName(HostedReference.class));

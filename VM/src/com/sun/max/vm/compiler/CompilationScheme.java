@@ -24,16 +24,10 @@ package com.sun.max.vm.compiler;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
@@ -49,43 +43,6 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 public interface CompilationScheme extends VMScheme {
-
-    /**
-     * Temporary flag to disable alignment check when code patching. The alignment requirement
-     * is satisfied by C1X (see {@link C1XOptions#AlignCallsForPatching}) but not yet by
-     * CPS and the template JIT.
-     */
-    boolean CODE_PATCHING_ALIGMMENT_IS_GUARANTEED = System.getProperty("non-constant value to fool Eclipse") != null;
-
-    @HOSTED_ONLY
-    OptionSet compilers = new OptionSet();
-
-    // Available compilers
-    String CPS = "com.sun.max.vm.cps.b.c.d.e.amd64.target.AMD64CPSCompiler";
-    String JIT = "com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler";
-    String T1X = "com.sun.max.vm.t1x.T1X";
-    String C1X = C1X.class.getName();
-
-    /**
-     * A map from short aliases to qualified class names for the known compilers.
-     */
-    Map<String, String> compilerAliases = Utils.addEntries(new HashMap<String, String>(),
-                    "CPS", CPS,
-                    "JIT", JIT,
-                    "T1X", T1X,
-                    "C1X", C1X);
-
-    /**
-     * The option whose value (if non-null) specifies the class name of the optimizing compiler to use.
-     */
-    @HOSTED_ONLY
-    Option<String> optimizingCompilerOption = compilers.newStringOption("opt", C1X, "Specifies the class name of the optimizing compiler.");
-
-    /**
-     * The option whose value (if non-null) specifies the class name of the baseline compiler to use.
-     */
-    @HOSTED_ONLY
-    Option<String> baselineCompilerOption = compilers.newStringOption("baseline", T1X, "Specifies the baseline compiler class.");
 
     /**
      * This method makes a target method for the specified method actor. If the method is already compiled, it will

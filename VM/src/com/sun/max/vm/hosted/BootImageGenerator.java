@@ -179,7 +179,7 @@ public final class BootImageGenerator {
             PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
-            options.addOptions(CompilationScheme.compilers);
+            options.addOptions(RuntimeCompiler.compilers);
 
             programArguments = VMOption.extractVMArgs(programArguments);
             options.parseArguments(programArguments);

@@ -22,10 +22,9 @@
  */
 package com.sun.max.vm.t1x;
 
-import static com.sun.max.vm.compiler.CompilationScheme.*;
-
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * T1X compiler.
@@ -43,6 +42,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return isT1X(baselineCompilerOption.getValue()) || isT1X(optimizingCompilerOption.getValue());
+        return isT1X(RuntimeCompiler.baselineCompilerOption.getValue()) || isT1X(RuntimeCompiler.optimizingCompilerOption.getValue());
     }
 }

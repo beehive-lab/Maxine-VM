@@ -153,7 +153,7 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
 
     protected static void createVMConfiguration() {
         Platform.set(platform().constrainedByInstructionSet(ISA.SPARC));
-        CompilationScheme.optimizingCompilerOption.setValue(BcdCompiler.class.getName());
+        RuntimeCompiler.optimizingCompilerOption.setValue(BcdCompiler.class.getName());
         VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

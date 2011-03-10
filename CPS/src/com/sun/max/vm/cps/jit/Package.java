@@ -37,7 +37,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        if (CompilationScheme.baselineCompilerOption.getValue() != null && Classes.getPackageName(CompilationScheme.baselineCompilerOption.getValue()).startsWith(this.name())) {
+        if (RuntimeCompiler.baselineCompilerOption.getValue() != null && Classes.getPackageName(RuntimeCompiler.baselineCompilerOption.getValue()).startsWith(this.name())) {
             return true;
         }
         return false;
