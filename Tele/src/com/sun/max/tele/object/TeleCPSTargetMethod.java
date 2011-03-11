@@ -29,6 +29,7 @@ import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
 
@@ -46,9 +47,9 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
     private List<TargetJavaFrameDescriptor> javaFrameDescriptors = null;
 
     @Override
-    public List<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
+    public List<TargetJavaFrameDescriptor> getJavaFrameDescriptors(TargetMethod targetMethod) {
         if (javaFrameDescriptors == null) {
-            final byte[] compressedDescriptors = ((CPSTargetMethod) targetMethod()).compressedJavaFrameDescriptors();
+            final byte[] compressedDescriptors = ((CPSTargetMethod) targetMethod).compressedJavaFrameDescriptors();
             if (compressedDescriptors == null) {
                 return null;
             }
@@ -67,7 +68,7 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
 
     @Override
     public BytecodeLocation getBytecodeLocation(int stopIndex) {
-        final List<TargetJavaFrameDescriptor> javaFrameDescriptors = getJavaFrameDescriptors();
+        final List<TargetJavaFrameDescriptor> javaFrameDescriptors = javaFrameDescriptors();
         if (javaFrameDescriptors != null && stopIndex < javaFrameDescriptors.size()) {
             return javaFrameDescriptors.get(stopIndex);
         }

@@ -55,27 +55,27 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     }
 
     /** {@inheritDoc}
-     * <br>
+     * <p>
      * The compilation history associated with a {@link ClassMethodActor} in the VM
      * is assumed to grow monotonically, as recompilations
      * take place in the VM, and that the old compilations still persist.
      */
     @Override
-    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        super.updateObjectCache(epoch, statsPrinter);
-        if (vm().tryLock()) {
-            try {
-                final Reference targetStateReference = vm().teleFields().ClassMethodActor_targetState.readReference(reference());
-                if (!targetStateReference.isZero()) {
-                    // the method has been compiled; check the type to determine the number of times
-                    translateTargetState(heap().makeTeleObject(targetStateReference));
-                }
-            } catch (DataIOError dataIOError) {
-                // If something goes wrong, delay the cache flush until next time.
-            } finally {
-                vm().unlock();
-            }
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
         }
+        try {
+            final Reference targetStateReference = vm().teleFields().ClassMethodActor_targetState.readReference(reference());
+            if (!targetStateReference.isZero()) {
+                // the method has been compiled; check the type to determine the number of times
+                translateTargetState(heap().makeTeleObject(targetStateReference));
+            }
+        } catch (DataIOError dataIOError) {
+            // If something goes wrong, delay the cache update until next time.
+            return false;
+        }
+        return true;
     }
 
    /**

@@ -35,8 +35,8 @@ import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.method.*;
@@ -44,7 +44,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
@@ -130,282 +129,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     }
 
     /**
-     * Summary information about a sequence of disassembled machine code instructions
-     * that were compiled by the VM from a method, stub, adapter, or other routine.
-     * <br>
-     * Full initialization is lazy, so that it isn't done for all the methods discovered
-     * in the VM, but only those for which we want all the details about the code.
-     *
-     * @author Michael Van De Vanter
-     */
-    public class CompiledCodeInstructionMap extends AbstractTeleVMHolder implements InstructionMap {
-
-        private List<TargetCodeInstruction> instructions = EMPTY_TARGET_INSTRUCTIONS;
-        private MachineCodeLocation[] instructionLocations = EMPTY_MACHINE_CODE_LOCATIONS;
-
-        /**
-         * Map:  target code instruction index -> the kind of stop at the instruction, null if not a stop.
-         */
-        private CodeStopKind[] codeStopKinds = EMPTY_CODE_STOP_KINDS;
-
-        /**
-         * Map: target code instruction index -> bytecode that compiled into code starting at this instruction, if known; else null.
-         * The bytecode location may be in a different method that was inlined.
-         */
-        private BytecodeLocation[] bytecodeLocations = EMPTY_BYTECODE_LOCATIONS;
-
-        /**
-         * Map: target code instruction index -> the specific opcode implemented by the group of instructions starting
-         * with this one, if known; else null.
-         */
-        private int[] opcodes = EMPTY_INT_ARRAY;
-
-        /**
-         * Map: target code instruction index -> constant pool index of {@Link MethodRefConstant} if this is a call instruction; else -1.
-         */
-        private int[] callees = EMPTY_INT_ARRAY;
-
-        /**
-         * Unmodifiable list of indexes for instructions that are labeled.
-         */
-        private List<Integer> labelIndexes = EMPTY_INTEGER_LIST;
-
-        private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
-
-        public CompiledCodeInstructionMap(TeleVM teleVM) {
-            super(teleVM);
-        }
-
-        private void initialize() {
-            if (instructions.isEmpty()) {
-                if (vm().tryLock()) {
-                    try {
-                        instructions = getInstructions();
-                        final int instructionCount = instructions.size();
-
-                        byte[] bytecodes = null;
-                        final TeleClassMethodActor teleClassMethodActor = getTeleClassMethodActor();
-                        if (teleClassMethodActor != null) {
-                            final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
-                            if (teleCodeAttribute != null) {
-                                bytecodes = teleCodeAttribute.readBytecodes();
-                            }
-                        }
-
-                        // First, gather general information from target method, indexed by
-                        // bytecode positions of instructions (byte offset from code start)
-                        final int targetCodeLength = getCodeLength();
-                        final CodeStopKind[] positionToStopKindMap = getPositionToStopKindMap();
-                        final BytecodeLocation[] positionToBytecodeLocationMap = getPositionToBytecodeLocationMap();
-
-                        // Non-null if we have a precise map between bytecode and machine code instructions
-                        final int[] bytecodeToMachineCodePositionMap = getBytecodeToMachineCodePositionMap();
-
-                        // Fill in maps indexed by instruction count
-                        instructionLocations = new MachineCodeLocation[instructionCount];
-                        codeStopKinds = new CodeStopKind[instructionCount];
-                        bytecodeLocations = new BytecodeLocation[instructionCount];
-                        opcodes = new int[instructionCount];
-                        Arrays.fill(opcodes, -1);
-                        callees = new int[instructionCount];
-                        Arrays.fill(callees, -1);
-
-                        // Fill in list of labels (index of instruction)
-                        final List<Integer> labels = new ArrayList<Integer>();
-
-                        int bytecodeIndex = 0; // position cursor in the original bytecode stream, used if we have a bytecode-> machine code map
-                        for (int index = 0; index < instructionCount; index++) {
-                            final TargetCodeInstruction instruction = instructions.get(index);
-                            instructionLocations[index] = codeManager().createMachineCodeLocation(instruction.address, "native target code instruction");
-                            if (instruction.label != null) {
-                                labels.add(index);
-                            }
-
-                            // offset in bytes of this machine code instruction from beginning
-                            final int position = instruction.position;
-
-                            // Ensure that the reported instruction position is legitimate.
-                            // The disassembler sometimes seems to report wild positions
-                            // when disassembling random binary; this can happen when
-                            // viewing some unknown native code whose length we must guess.
-                            if (position < 0 || position >= targetCodeLength) {
-                                continue;
-                            }
-
-                            if (positionToBytecodeLocationMap != null) {
-                                bytecodeLocations[index] = positionToBytecodeLocationMap[position];
-                            }
-
-                            if (positionToStopKindMap != null) {
-                                final CodeStopKind codeStopKind = positionToStopKindMap[position];
-                                if (codeStopKind != null) {
-                                    // We're at a stop
-                                    codeStopKinds[index] = codeStopKind;
-                                    final BytecodeLocation bytecodeLocation = bytecodeLocations[index];
-                                    // TODO (mlvdv) only works for non-inlined calls
-                                    if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(classMethodActor()) && bytecodeLocation.bytecodePosition >= 0) {
-                                        callees[index] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
-                                    }
-                                }
-                            }
-                            if (bytecodeToMachineCodePositionMap != null) {
-                                // Add more information if we have a precise map from bytecode to machine code instructions
-                                final int bytecodePosition = bytecodeIndex;
-                                // To check if we're crossing a bytecode boundary in the JITed code, compare the offset of the instruction at the current row with the offset recorded by the JIT
-                                // for the start of bytecode template.
-                                if (bytecodePosition < bytecodeToMachineCodePositionMap.length &&
-                                                position == bytecodeToMachineCodePositionMap[bytecodePosition]) {
-                                    // This is the start of the machine code block implementing the next bytecode
-                                    int opcode = Bytes.beU1(bytecodes, bytecodeIndex);
-                                    if (opcode == Bytecodes.WIDE) {
-                                        opcode = Bytes.beU1(bytecodes, bytecodeIndex + 1);
-                                    }
-                                    opcodes[index] = opcode;
-                                    // Move bytecode position cursor to start of next instruction
-                                    do {
-                                        ++bytecodeIndex;
-                                    } while (bytecodeIndex < bytecodeToMachineCodePositionMap.length &&
-                                                    bytecodeToMachineCodePositionMap[bytecodeIndex] == 0);
-                                }
-                            }
-                        }
-                        labelIndexes = Collections.unmodifiableList(labels);
-                    } finally {
-                        vm().unlock();
-                    }
-                }
-            }
-        }
-
-        /**
-         * @param bytecodes
-         * @param bytecodePosition byte offset into bytecodes
-         * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
-         */
-        private int findCalleeIndex(byte[] bytecodes, int bytecodePosition) {
-            if (bytecodes == null || bytecodePosition >= bytecodes.length) {
-                return -1;
-            }
-            final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefIndexFinder.reset());
-            bytecodeScanner.scanInstruction(bytecodes, bytecodePosition);
-            return methodRefIndexFinder.methodRefIndex();
-        }
-
-        public int length() {
-            initialize();
-            return instructions.size();
-        }
-
-        public TargetCodeInstruction instruction(int index) throws IllegalArgumentException {
-            initialize();
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            return instructions.get(index);
-        }
-
-        public int findInstructionIndex(Address address) {
-            initialize();
-            final int length = instructions.size();
-            if (address.greaterEqual(instructions.get(0).address)) {
-                for (int index = 1; index < length; index++) {
-                    instructions.get(index);
-                    if (address.lessThan(instructions.get(index).address)) {
-                        return index - 1;
-                    }
-                }
-                final TargetCodeInstruction lastInstruction = instructions.get(instructions.size() - 1);
-                if (address.lessThan(lastInstruction.address.plus(lastInstruction.bytes.length))) {
-                    return length - 1;
-                }
-            }
-            return -1;
-        }
-        public MachineCodeLocation instructionLocation(int index) {
-            initialize();
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            return instructionLocations[index];
-        }
-
-        public boolean isStop(int index) throws IllegalArgumentException {
-            initialize();
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            return codeStopKinds[index] != null;
-        }
-
-        public boolean isCall(int index) throws IllegalArgumentException {
-            initialize();
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            final CodeStopKind stopKind = codeStopKinds[index];
-            return stopKind != null && stopKind != CodeStopKind.SAFE;
-        }
-
-        public boolean isNativeCall(int index) throws IllegalArgumentException {
-            initialize();
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            final CodeStopKind stopKind = codeStopKinds[index];
-            return stopKind == CodeStopKind.NATIVE_CALL;
-        }
-
-        public boolean isBytecodeBoundary(int index) throws IllegalArgumentException {
-            initialize();
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            return opcodes[index] >= 0;
-        }
-
-        public BytecodeLocation bytecodeLocation(int index) throws IllegalArgumentException {
-            initialize();
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            return bytecodeLocations[index];
-        }
-
-        public TargetJavaFrameDescriptor targetFrameDescriptor(int index) throws IllegalArgumentException {
-            initialize();
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            return getTargetFrameDescriptor(index);
-        }
-
-        public int opcode(int index) throws IllegalArgumentException {
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            return opcodes[index];
-        }
-
-        public int calleeConstantPoolIndex(int index) {
-            initialize();
-            if (index < 0 || index >= instructions.size()) {
-                throw new IllegalArgumentException();
-            }
-            return callees[index];
-        }
-
-        public List<Integer> labelIndexes() {
-            initialize();
-            return labelIndexes;
-        }
-
-        public int[] bytecodeToMachineCodePositionMap() {
-            return getBytecodeToMachineCodePositionMap();
-        }
-
-    }
-
-    /**
      * A copier to be used for implementing {@link TeleTargetMethod#targetMethod()}.
      */
     class ReducedDeepCopier extends DeepCopier {
@@ -425,6 +148,436 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 return super.makeDeepCopy(fieldActor, teleObject);
             }
         }
+    }
+
+
+    /**
+     * Encapsulates a copied {@link TargeMethod} along with derived information.
+     * The class is intended to be treated as immutable; a new one gets created for each
+     * successive version of the TargetMethod. That means that any method can be called
+     * without needing to obtain the VM lock.
+     * <p>
+     * Successive versions of a single {@link TargetMethod} in the VM can occur in two
+     * ways; otherwise a {@link TargetMethod} in the VM is mostly immutable.
+     * <ol>
+     * <li>The initial state of the code starting location is zero, which gets assigned finally
+     * when the code is generated and placed into the code cache.</li>
+     * <li>The compiled code can be patched, for example when a method call is resolved.</li>
+     * </ol>
+     * <p>
+     * There are three states for this cache:
+     * <ul>
+     * <li><i>Unloaded, Dirty</i>:  the initial state where {@code targetMethod = null && generation = 0}.</li>
+     * <li><i>Loaded, Current</i>: {@code targetMethod != null && generation == TeleTargetMethod.codeGeneration}.
+     * In this state, all derived information has been computed and is cached; it is available without reading
+     * from the VM.</li>
+     * <li><i>Loaded, Dirty</i>:  {@code targetMethod != null && generation < TeleTargetMethod.codeGeneration}.
+     * In this state, derived cached information is presumed to be out of date and unreliable; every attempt
+     * to use derived information should be preceded by an attempt to reload the cache and the old information
+     * provided only if the attempt fails.</li>
+     * </ul>
+     * Once a {@link TargetMethod} has been loaded, it remains in that state, alternating between current and dirty
+     * as the cached code is compared with the code in the VM during each update cycle.
+     * <p>
+     * This constructor requires access to the VM lock.
+     *
+     * @see TargetMethod
+     * @see TeleVM#tryLock()
+     *
+     * @author Michael Van De Vanter
+     */
+    private final class TargetMethodCache implements InstructionMap {
+
+        /**
+         * A copy of the {@link TargetMethod} in the VM, reflecting its state at some point during
+         * its lifetime.
+         */
+        private final TargetMethod targetMethod;
+
+        /**
+         * Counts the successive versions of this cache, with a new one presumed to be
+         * created each time the code in the VM is discovered to have changed.  Note that this might
+         * not agree with the actual number of times the code has changed, since it may have changed
+         * more than once in a single VM execution cycle.
+         */
+        private final int codeGenerationCount;
+
+        /**
+         * The size of the compilation's machine code in bytes.
+         */
+        private final int codeLength;
+
+        /**
+         * Location of the first byte of the machine code for the compilation in VM memory.
+         */
+        private final Pointer codeStart;
+
+        private final Address callEntryAddress;
+
+        /**
+         * Locations in compiled code (by byte offset from the start)
+         * of stop positions:  calls and safepoints.
+         *
+         * @return the stop positions for the compiled code.
+         * @see  StopPositions
+         */
+        private final StopPositions stopPositions;
+
+        private final List<TargetCodeInstruction> instructions;
+
+        /**
+         * The number of disassembled instructions.
+         */
+        private final int instructionCount;
+
+        private final List<TargetJavaFrameDescriptor> javaFrameDescriptors;
+
+        private final int[] bytecodeToMachineCodePositionMap;
+
+        private final MachineCodeLocation[] instructionLocations;
+
+        /**
+         * Map:  target code instruction index -> the kind of stop at the instruction, null if not a stop.
+         */
+        private final CodeStopKind[] codeStopKinds;
+
+        /**
+         * Map: target code instruction index -> bytecode that compiled into code starting at this instruction, if known; else empty.
+         * The bytecode location may be in a different method that was inlined.
+         */
+        private final BytecodeLocation[] bytecodeLocations;
+
+        /**
+         * Map: target code instruction index -> the specific opcode implemented by the group of instructions starting
+         * with this one, if known; else empty.
+         */
+        private final int[] opcodes;
+
+        /**
+         * Map: target code instruction index -> constant pool index of {@Link MethodRefConstant} if this is a call instruction; else -1.
+         */
+        private final int[] callees;
+
+        /**
+         * Unmodifiable list of indexes for instructions that are labeled.
+         */
+        private final List<Integer> labelIndexes;
+
+        private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
+
+        /**
+         * Create a cache that holds a copy of a {@link TargetMethod} at some stage in its life, along
+         * with information derived from that copy.
+         * <p>
+         * This constructor should be called with the vm lock held.
+         *
+         * @param targetMethod a local copy of the {@link TargetMethod} in the VM.
+         * @param generationCount number of this cache in the sequence of caches: 0 = no information; 1 VM's initial state.
+         * @param teleClassMethodActor access to the {@link ClassMethodActor} in the VM of which this {@link TargetMethod}
+         * is a compilation.
+         * @see TeleVM#tryLock()
+         */
+        private TargetMethodCache(TargetMethod targetMethod, int generationCount, TeleClassMethodActor teleClassMethodActor) {
+            assert (targetMethod == null && generationCount == 0) || (targetMethod != null && generationCount > 0);
+            this.targetMethod = targetMethod;
+            this.codeGenerationCount = generationCount;
+
+            if (targetMethod == null) {
+                this.codeLength = 0;
+                this.codeStart = Pointer.zero();
+                this.callEntryAddress = Address.zero();
+                this.stopPositions = null;
+                this.instructions = EMPTY_TARGET_INSTRUCTIONS;
+                this.instructionCount = 0;
+                this.javaFrameDescriptors = null;
+                this.bytecodeToMachineCodePositionMap = null;
+                this.instructionLocations = EMPTY_MACHINE_CODE_LOCATIONS;
+                this.codeStopKinds = EMPTY_CODE_STOP_KINDS;
+                this.bytecodeLocations = EMPTY_BYTECODE_LOCATIONS;
+                this.opcodes = EMPTY_INT_ARRAY;
+                this.callees = EMPTY_INT_ARRAY;
+                this.labelIndexes = EMPTY_INTEGER_LIST;
+            } else {
+                codeLength = targetMethod.codeLength();
+                codeStart = targetMethod.codeStart();
+                if (codeStart.isZero()) {
+                    callEntryAddress = Address.zero();
+                } else {
+                    callEntryAddress = codeStart.plus(targetMethod.callEntryPoint.offset());
+                }
+
+                if (targetMethod.stopPositions() != null) {
+                    stopPositions = new StopPositions(targetMethod.stopPositions());
+                } else {
+                    stopPositions = null;
+                }
+
+                this.instructions = TeleDisassembler.decode(platform(), targetMethod.codeStart(), targetMethod.code(), targetMethod.encodedInlineDataDescriptors());
+                this.instructionCount = this.instructions.size();
+
+                byte[] bytecodes = null;
+                if (teleClassMethodActor != null) {
+                    final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
+                    if (teleCodeAttribute != null) {
+                        bytecodes = teleCodeAttribute.readBytecodes();
+                    }
+                }
+
+                this.javaFrameDescriptors = getJavaFrameDescriptors(targetMethod);
+
+                // Non-null if we have a precise map between bytecode and machine code instructions
+                this.bytecodeToMachineCodePositionMap = getBytecodeToMachineCodePositionMap(targetMethod);
+
+                // First, gather general information from target method, indexed by
+                // bytecode positions of instructions (byte offset from code start)
+
+                /**
+                 * Map:  machine code position (bytes offset from start) -> the kind of stop, null if not a stop.
+                 */
+                CodeStopKind[] positionToStopKindMap = null;
+                if (stopPositions != null) {
+                    positionToStopKindMap = new CodeStopKind[this.codeLength];
+
+                    final int directCallCount = targetMethod.numberOfDirectCalls();
+                    final int indirectCallCount = targetMethod.numberOfIndirectCalls();
+                    final int safepointCount = targetMethod.numberOfSafepoints();
+                    assert directCallCount + indirectCallCount + safepointCount == stopPositions.length();
+
+                    for (int stopIndex = 0; stopIndex < directCallCount; stopIndex++) {
+                        if (stopPositions.isNativeFunctionCall(stopIndex)) {
+                            positionToStopKindMap[stopPositions.get(stopIndex)] = CodeStopKind.NATIVE_CALL;
+                        } else {
+                            positionToStopKindMap[stopPositions.get(stopIndex)] = CodeStopKind.DIRECT_CALL;
+                        }
+                    }
+                    for (int stopIndex = directCallCount; stopIndex < directCallCount + indirectCallCount; stopIndex++) {
+                        positionToStopKindMap[stopPositions.get(stopIndex)] = CodeStopKind.INDIRECT_CALL;
+                    }
+                    for (int stopIndex = directCallCount + indirectCallCount; stopIndex < stopPositions.length(); stopIndex++) {
+                        positionToStopKindMap[stopPositions.get(stopIndex)] = CodeStopKind.SAFE;
+                    }
+                }
+
+                final BytecodeLocation[] positionToBytecodeLocationMap = getPositionToBytecodeLocationMap(targetMethod, instructions, codeLength, stopPositions);
+
+                instructionLocations = new MachineCodeLocation[instructionCount];
+                codeStopKinds = new CodeStopKind[instructionCount];
+                bytecodeLocations = new BytecodeLocation[instructionCount];
+                opcodes = new int[instructionCount];
+                Arrays.fill(opcodes, -1);
+                callees = new int[instructionCount];
+                Arrays.fill(callees, -1);
+
+                // Fill in list of labels (index of instruction)
+                final List<Integer> labels = new ArrayList<Integer>();
+
+                int bytecodeIndex = 0; // position cursor in the original bytecode stream, used if we have a bytecode-> machine code map
+                for (int index = 0; index < instructionCount; index++) {
+                    final TargetCodeInstruction instruction = instructions.get(index);
+                    instructionLocations[index] = codeManager().createMachineCodeLocation(instruction.address, "native target code instruction");
+                    if (instruction.label != null) {
+                        labels.add(index);
+                    }
+
+                    // offset in bytes of this machine code instruction from beginning
+                    final int position = instruction.position;
+
+                    // Ensure that the reported instruction position is legitimate.
+                    // The disassembler sometimes seems to report wild positions
+                    // when disassembling random binary; this can happen when
+                    // viewing some unknown native code whose length we must guess.
+                    if (position < 0 || position >= codeLength) {
+                        continue;
+                    }
+
+                    if (positionToBytecodeLocationMap != null) {
+                        bytecodeLocations[index] = positionToBytecodeLocationMap[position];
+                    }
+
+                    if (positionToStopKindMap != null) {
+                        final CodeStopKind codeStopKind = positionToStopKindMap[position];
+                        if (codeStopKind != null) {
+                            // We're at a stop
+                            codeStopKinds[index] = codeStopKind;
+                            final BytecodeLocation bytecodeLocation = bytecodeLocations[index];
+                            // TODO (mlvdv) only works for non-inlined calls
+                            if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(classMethodActor()) && bytecodeLocation.bytecodePosition >= 0) {
+                                callees[index] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
+                            }
+                        }
+                    }
+                    if (bytecodeToMachineCodePositionMap != null) {
+                        // Add more information if we have a precise map from bytecode to machine code instructions
+                        final int bytecodePosition = bytecodeIndex;
+                        // To check if we're crossing a bytecode boundary in the JITed code, compare the offset of the instruction at the current row with the offset recorded by the JIT
+                        // for the start of bytecode template.
+                        if (bytecodePosition < bytecodeToMachineCodePositionMap.length &&
+                                        position == bytecodeToMachineCodePositionMap[bytecodePosition]) {
+                            // This is the start of the machine code block implementing the next bytecode
+                            int opcode = Bytes.beU1(bytecodes, bytecodeIndex);
+                            if (opcode == Bytecodes.WIDE) {
+                                opcode = Bytes.beU1(bytecodes, bytecodeIndex + 1);
+                            }
+                            opcodes[index] = opcode;
+                            // Move bytecode position cursor to start of next instruction
+                            do {
+                                ++bytecodeIndex;
+                            } while (bytecodeIndex < bytecodeToMachineCodePositionMap.length &&
+                                            bytecodeToMachineCodePositionMap[bytecodeIndex] == 0);
+                        }
+                    }
+                }
+                labelIndexes = Collections.unmodifiableList(labels);
+            }
+        }
+
+        public int length() {
+            return instructionCount;
+        }
+
+        public TargetCodeInstruction instruction(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            return instructions.get(index);
+        }
+
+        public int findInstructionIndex(Address address) {
+            if (instructionCount > 0 && address.greaterEqual(instructions.get(0).address)) {
+                for (int index = 1; index < instructionCount; index++) {
+                    instructions.get(index);
+                    if (address.lessThan(instructions.get(index).address)) {
+                        return index - 1;
+                    }
+                }
+                final TargetCodeInstruction lastInstruction = instructions.get(instructionCount - 1);
+                if (address.lessThan(lastInstruction.address.plus(lastInstruction.bytes.length))) {
+                    return instructionCount - 1;
+                }
+            }
+            return -1;
+        }
+
+        public MachineCodeLocation instructionLocation(int index) {
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            return instructionLocations[index];
+        }
+
+        public boolean isStop(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            return codeStopKinds[index] != null;
+        }
+
+        public boolean isCall(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            final CodeStopKind stopKind = codeStopKinds[index];
+            return stopKind != null && stopKind != CodeStopKind.SAFE;
+        }
+
+        public boolean isNativeCall(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            final CodeStopKind stopKind = codeStopKinds[index];
+            return stopKind == CodeStopKind.NATIVE_CALL;
+        }
+
+        public boolean isBytecodeBoundary(int index) throws IllegalArgumentException {
+            assert targetMethod != null;
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            return opcodes[index] >= 0;
+        }
+
+        public BytecodeLocation bytecodeLocation(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            return bytecodeLocations[index];
+        }
+
+        public TargetJavaFrameDescriptor targetFrameDescriptor(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            final TargetCodeInstruction instruction = instructions.get(index);
+            if (javaFrameDescriptors != null) {
+                if (stopPositions != null) {
+                    for (int i = 0; i < stopPositions.length(); i++) {
+                        if (stopPositions.get(i) == instruction.position) {
+                            return javaFrameDescriptors.get(i);
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public int opcode(int index) throws IllegalArgumentException {
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            return opcodes[index];
+        }
+
+        public int calleeConstantPoolIndex(int index) {
+            if (index < 0 || index >= instructionCount) {
+                throw new IllegalArgumentException();
+            }
+            return callees[index];
+        }
+
+        public List<Integer> labelIndexes() {
+            return labelIndexes;
+        }
+
+        public int[] bytecodeToMachineCodePositionMap() {
+            return bytecodeToMachineCodePositionMap;
+        }
+
+        /**
+         * @return whether the {@link TargetMethod} being cached has been copied from the VM yet.
+         */
+        private boolean isLoaded() {
+            return targetMethod != null;
+        }
+
+        private byte[] code() {
+            return targetMethod.code();
+        }
+
+        /**
+         * @return address of the first instruction in the method compilation's code
+         */
+        private Pointer codeStart() {
+            return codeStart;
+        }
+
+        private Address callEntryAddress() {
+            return callEntryAddress;
+        }
+
+        /**
+         * @param bytecodes
+         * @param bytecodePosition byte offset into bytecodes
+         * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
+         */
+        private int findCalleeIndex(byte[] bytecodes, int bytecodePosition) {
+            if (bytecodes == null || bytecodePosition >= bytecodes.length) {
+                return -1;
+            }
+            final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefIndexFinder.reset());
+            bytecodeScanner.scanInstruction(bytecodes, bytecodePosition);
+            return methodRefIndexFinder.methodRefIndex();
+        }
+
     }
 
     /**
@@ -460,142 +613,183 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return Collections.emptyList();
     }
 
-    private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
+    private final TeleClassMethodActor teleClassMethodActor;
 
     /**
-     * Cached copy of the {@link TargetMethod} from the VM, replaced whenever the code is observed to have been patched.
+     * The cache of the actual compiled code in the {@link TargetMethod} is represented as
+     * a single immutable object for thread safety.  The cache object encapsulates a copy
+     * of the {@link TargetMethod} along with a collection of derived information.
+     * <p>
+     * A generation count of the cache is kept.  The initial state of the cache is
+     * generation 0, contains no {@link TargetMethod}, and is considered to be "unloaded".
+     * The initial state of the VM is considered to be generation 1.
+     * As soon as the cache object is replaced, the state of the cache is henceforth
+     * considered "loaded".
+     * <p>
+     * The cache is intended to include only the kind of detailed information about the
+     * method's machine code that is needed under uncommon circumstances, for example when
+     * a user is inspecting the code directly.  The cache is not loaded (and after that
+     * reloaded) unless the detailed information is needed.
+     * <p>
+     * The cache field is protected by the method {@link #targetMethod()}, which refreshes it
+     * only if needed.  Only those methods that deal with cache consistency should access
+     * this variable directly; all others should use {@link #targetMethodCache}.
+     *
+     * @see #targetMethodCache
+     * @see #isLoaded()
+     * @see #isCurrent()
      */
-    private TargetMethod targetMethodCache;
-
+    private TargetMethodCache targetMethodCache = new TargetMethodCache(null, 0, null);
     /**
-     * Process epoch at the last time the target method in the VM was observed to have changed (been patched).
+     * Counter for the versions of the {@link TargetMethod} during its lifetime in the VM, starting with
+     * its original version, which we call 1. Note that the initial (null) instance of the cache
+     * is set to generation 0, which means that the cache begins life as not current.  This is important
+     * so that we do perform expensive derivations on the code that are needed far less often than
+     * simple meta information about the code.
      */
-    private long lastCodeChangeEpoch = -1L;
-
-    /**
-     * Cache of the code from the last time the local copy of the target method was made,
-     * used for comparison to see if it has changed.
-     */
-    private byte[] codeCache = null;
-
-    /**
-     * Cache of the machine instructions disassembled from code the last time the code changed.
-     */
-    private List<TargetCodeInstruction> instructionCache;
-
-    /**
-     * Cache of the map built around disassembled machine code instructions.
-     */
-    private InstructionMap instructionMapCache;
-
-    /**
-     * @see  StopPositions
-     * @see  TargetMethod#stopPositions()
-     */
-    protected StopPositions stopPositions;
-
-    private TeleClassMethodActor teleClassMethodActor;
+    private int vmCodeGenerationCount = 1;
 
     protected TeleTargetMethod(TeleVM vm, Reference targetMethodReference) {
         super(vm, targetMethodReference);
+
+        final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(targetMethodReference);
+        teleClassMethodActor = (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
+
         // Register every method compilation, so that they can be located by code address.
         // Note that this depends on the basic location information already being read by
         // superclass constructors.
         vm.codeCache().register(this);
     }
 
-    /**
-     * Creates and caches a local copy of the {@link TargetMethod} in the VM.
+    /** {@inheritDoc}
+     * <p>
+     * Compiled machine code generally doesn't change, so the code and disassembled instructions are cached.
+     * This update checks for cases where the code has changed since last seen, i.e. has been patched.
+     * <p>
+     * If the code has been changed since the last time we saw it, then just make a note that the generation
+     * in the VM is one greater than the one cached; this isn't a true generation counter for the code, since
+     * it only gets updated when (a) it has been noticed to be different than the cache, and (b) there is a
+     * call to get the cache, which triggers a refill of the cache from the VM.
+     *
+     * @see #targetMethod()
      */
-    private void loadMethodCache() {
-        targetMethodCache = (TargetMethod) deepCopy();
-        codeCache = targetMethodCache.code();
-        instructionCache = null;
-        instructionMapCache = null;
+    @Override
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
+        }
+        if (!targetMethodCache.isLoaded()) {
+            // Don't update if we've never loaded the code; delay that until actually needed.
+            return true;
+        }
+        if (!isCurrent()) {
+            // If we've already discovered that the loaded copy is not current, don't bother to
+            // check again. It won't be reloaded until needed.
+            return true;
+        }
+        try {
+            final Reference byteArrayReference = vm().teleFields().TargetMethod_code.readReference(reference());
+            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) heap().makeTeleObject(byteArrayReference);
+            final byte[] codeInVM = (byte[]) teleByteArrayObject.shallowCopy();
+            if (!Arrays.equals(codeInVM, targetMethodCache.code())) {
+                // The code in the VM is different than in the cache.
+                // Set the VM generation count to one more than the cached copy.  This
+                // makes the cache not "current", essentially marking it dirty.
+                vmCodeGenerationCount = targetMethodCache.codeGenerationCount + 1;
+                Trace.line(1, tracePrefix() + "TargetMethod patched for " + classMethodActor().name());
+            }
+        } catch (DataIOError dataIOError) {
+            // If something goes wrong, delay the cache update until next time.
+            return false;
+        }
+        return true;
     }
 
-    /**
-     * Clears all cached data from the {@link TargetMethod} in the VM that must
-     * be recomputed if the machine code is discovered to have changed.
-     */
-    private void flushMethodCache() {
-        targetMethodCache = null;
-        codeCache = null;
-        instructionCache = null;
-        instructionMapCache = null;
+    @Override
+    protected DeepCopier newDeepCopier() {
+        return new ReducedDeepCopier();
     }
 
     /** {@inheritDoc}
-     * <br>
-     * Compiled machine code generally doesn't change, so the code and disassembled instructions are cached, but
-     * this update checks for cases where the code does change (i.e. has been patched), in which case the caches
-     * are flushed and the epoch of the change recorded.
+     * <p>
+     * Assume that the memory described by a {@link TargetMethod} (method compilation) object does not move.  That memory is
+     * allocated in the code cache and contains the arrays produced by compilation.
      */
     @Override
-    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        super.updateObjectCache(epoch, statsPrinter);
-        // Flush caches if the code in the VM is different than the cache (i.e. has been patched)
-        if (isLoaded()) {
-            if (vm().tryLock()) {
-                try {
-                    final Reference byteArrayReference = vm().teleFields().TargetMethod_code.readReference(reference());
-                    final TeleArrayObject teleByteArrayObject = (TeleArrayObject) heap().makeTeleObject(byteArrayReference);
-                    final byte[] newCode = (byte[]) teleByteArrayObject.shallowCopy();
-                    if (!Arrays.equals(codeCache, newCode)) {
-                        flushMethodCache();
-                        lastCodeChangeEpoch = epoch;
-                        Trace.line(1, tracePrefix() + "TargetMethod patched for " + getTeleClassMethodActor().classMethodActor().name());
-                    }
-                } catch (DataIOError dataIOError) {
-                    // If something goes wrong, delay the cache flush until next time.
-                } finally {
-                    vm().unlock();
+    public boolean isRelocatable() {
+        return false;
+    }
+
+    /**
+     * Gets the cache of information information about the {@link TargetMethod} in the VM,
+     * attempting to update it if needed.
+     *
+     * @return the most recent cache of the information that we can get
+     */
+    private TargetMethodCache targetMethodCache() {
+        if (!isCurrent() && vm().tryLock()) {
+            try {
+                final TargetMethod targetMethod = (TargetMethod) deepCopy();
+                targetMethodCache = new TargetMethodCache(targetMethod, vmCodeGenerationCount, teleClassMethodActor);
+            } catch (DataIOError dataIOError) {
+                if (teleClassMethodActor != null) {
+                    Trace.line(TRACE_VALUE, "WARNING: failed to update TargetMethod for " + teleClassMethodActor.getName());
+                } else {
+                    Trace.line(TRACE_VALUE, "WARNING: failed to update class actor");
                 }
+            } finally {
+                vm().unlock();
             }
-        }
-    }
-
-    /**
-     * @return whether a copy of the {@link TargetMethod} in the VM has been created and cached.
-     */
-    public final boolean isLoaded() {
-        return targetMethodCache != null;
-    }
-
-    /**
-     * @return a lazily created local copy of the {@link TargetMethod} in the VM.
-     */
-    public final TargetMethod targetMethod() {
-        if (targetMethodCache == null) {
-            loadMethodCache();
         }
         return targetMethodCache;
     }
 
-    public int compilationIndex() {
-        // Lazily computed to avoid circularity during construction.
-        final TeleClassMethodActor teleClassMethodActor = getTeleClassMethodActor();
-        return teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(this);
+    /**
+     * @return whether the current cache is up to date with the state of the {@link TargetMethod}
+     * in the VM.
+     */
+    private boolean isCurrent() {
+        return !targetMethodCache.codeStart().isZero() && targetMethodCache.codeGenerationCount == vmCodeGenerationCount;
     }
 
     /**
-     * @return disassembled target code instructions
+     * Determines whether we have ever copied information about the {@link TargetMethod} from
+     * the VM, which is done only on demand.
+     *
+     * @return whether a copy of the {@link TargetMethod} in the VM has been created and cached.
      */
-    protected final List<TargetCodeInstruction> getInstructions() {
-        if (instructionCache == null) {
-            final byte[] code = getCode();
-            if (code != null) {
-                instructionCache = TeleDisassembler.decode(platform(), getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
-            }
-        }
-        return instructionCache;
+    public final boolean isLoaded() {
+        return targetMethodCache.isLoaded();
+    }
+
+    /**
+     * @return count of the generation of the {@link TargetMethod} in the VM, as of the last
+     * check.
+     */
+    public final int vmCodeGenerationCount() {
+        return vmCodeGenerationCount;
+    }
+
+    /**
+     * @return a local copy of the {@link TargetMethod} in the VM, the most recent generation.
+     */
+    public final TargetMethod targetMethod() {
+        return targetMethodCache().targetMethod;
+    }
+
+    /**
+     * @return surrogate for the {@link ClassMethodActor} in the VM for which this code was compiled.
+     */
+    public final TeleClassMethodActor getTeleClassMethodActor() {
+        return teleClassMethodActor;
+    }
+
+    public final int compilationIndex() {
+        return teleClassMethodActor == null ? 0 : teleClassMethodActor.compilationIndexOf(this);
     }
 
     public final InstructionMap getInstructionMap() {
-        if (instructionMapCache == null) {
-            instructionMapCache = new CompiledCodeInstructionMap(vm());
-        }
-        return instructionMapCache;
+        return targetMethodCache();
     }
 
     /**
@@ -604,170 +798,79 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * @see TargetMethod#codeStart()
      */
     public final Pointer getCodeStart() {
-        return targetMethod().codeStart();
+        return targetMethodCache().codeStart();
     }
 
+    // TODO (mlvdv) compute this in the constructor?  meta information in TeleTargetMethod,
+    // consider ourselves dirty if this is 0?  Maybe only for the code start in parents,
+    // if they're zero
     /**
-     * Gets the call entry memory location for this method.
+     * Gets the call entry memory location in the VM for this method.
      *
      * @return {@link Address#zero()} if this target method has not yet been compiled
      */
     public final Address callEntryPoint() {
-        Address callEntryAddress = Address.zero();
-        final Pointer codeStart = getCodeStart();
-        if (!codeStart.isZero()) {
-            callEntryAddress = codeStart;
-            TeleObject teleCallEntryPoint = null;
-            if (vm().tryLock()) {
-                try {
-                    final Reference callEntryPointReference = vm().teleFields().TargetMethod_callEntryPoint.readReference(reference());
-                    teleCallEntryPoint = heap().makeTeleObject(callEntryPointReference);
-                } finally {
-                    vm().unlock();
-                }
-            }
-            if (teleCallEntryPoint != null) {
-                final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
-                if (callEntryPoint != null) {
-                    callEntryAddress = codeStart.plus(callEntryPoint.offset());
-                }
-            }
-        }
-        return callEntryAddress;
+        return targetMethodCache().callEntryAddress();
     }
 
-    /**
-     * Gets the method actor in the VM for this target method.
-     *
-     * @return {@code null} if the class method actor is null the target method
-     */
-    public final TeleClassMethodActor getTeleClassMethodActor() {
-        if (teleClassMethodActor == null && vm().tryLock()) {
-            try {
-                final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
-                teleClassMethodActor = (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
-            } finally {
-                vm().unlock();
-            }
-        }
-        return teleClassMethodActor;
-    }
 
-    /**
-     * Gets the locations in compiled code (by byte offset from the start)
-     * of stop positions:  calls and safepoints.
-     *
-     * @return the stop positions for the compiled code.
-     * @see TargetMethod#stopPositions()
-     */
-    private StopPositions getStopPositions() {
-        if (stopPositions == null) {
-            if (targetMethod().stopPositions() != null) {
-                stopPositions = new StopPositions(targetMethod().stopPositions());
-            }
-        }
-        return stopPositions;
-    }
+//    public final Address callEntryAddress() {
+//        Address callEntryAddress = Address.zero();
+//        final Pointer codeStart = codeStart();
+//        if (!codeStart.isZero()) {
+//            callEntryAddress = codeStart;
+//            TeleObject teleCallEntryPoint = null;
+//            if (vm().tryLock()) {
+//                try {
+//                    final Reference callEntryPointReference = vm().teleFields().TargetMethod_callEntryPoint.readReference(reference());
+//                    teleCallEntryPoint = heap().makeTeleObject(callEntryPointReference);
+//                    if (teleCallEntryPoint != null) {
+//                        final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
+//                        if (callEntryPoint != null) {
+//                            callEntryAddress = codeStart.plus(callEntryPoint.offset());
+//                        }
+//                    }
+//                } finally {
+//                    vm().unlock();
+//                }
+//            }
+//
+//        }
+//        return callEntryAddress;
+//    }
 
-    /**
-     * @return the process epoch at the last time when the code was observed to have changed.
-     */
-    public final long lastCodeChangeEpoch() {
-        return lastCodeChangeEpoch;
-    }
 
     /**
      * Gets the local mirror of the class method actor associated with this target method. This may be null.
      */
     public final ClassMethodActor classMethodActor() {
-        final TeleClassMethodActor teleClassMethodActor = getTeleClassMethodActor();
         return teleClassMethodActor == null ? null : teleClassMethodActor.classMethodActor();
-    }
-
-    /**
-     * Gets the byte array containing the target-specific machine code of this target method in the VM.
-     * @see TargetMethod#code()
-     */
-    private byte[] getCode() {
-        return targetMethod().code();
-    }
-
-    /**
-     * Gets the length of the byte array containing the target-specific machine code of this target method in the VM.
-     * @see TargetMethod#codeLength()
-     */
-    protected final int getCodeLength() {
-        return targetMethod().codeLength();
-    }
-
-    /**
-     * Creates a map:  instruction position (bytes offset from start) -> the kind of stop, null if not a stop.
-     */
-    private CodeStopKind[] getPositionToStopKindMap() {
-        final StopPositions stopPositions = getStopPositions();
-        if (stopPositions == null) {
-            return null;
-        }
-        final CodeStopKind[] stopKinds = new CodeStopKind[getCodeLength()];
-
-        final int directCallCount = targetMethod().numberOfDirectCalls();
-        final int indirectCallCount = targetMethod().numberOfIndirectCalls();
-        final int safepointCount = targetMethod().numberOfSafepoints();
-        assert directCallCount + indirectCallCount + safepointCount == stopPositions.length();
-
-        for (int stopIndex = 0; stopIndex < directCallCount; stopIndex++) {
-            if (stopPositions.isNativeFunctionCall(stopIndex)) {
-                stopKinds[stopPositions.get(stopIndex)] = CodeStopKind.NATIVE_CALL;
-            } else {
-                stopKinds[stopPositions.get(stopIndex)] = CodeStopKind.DIRECT_CALL;
-            }
-        }
-        for (int stopIndex = directCallCount; stopIndex < directCallCount + indirectCallCount; stopIndex++) {
-            stopKinds[stopPositions.get(stopIndex)] = CodeStopKind.INDIRECT_CALL;
-        }
-        for (int stopIndex = directCallCount + indirectCallCount; stopIndex < stopPositions.length(); stopIndex++) {
-            stopKinds[stopPositions.get(stopIndex)] = CodeStopKind.SAFE;
-        }
-        return stopKinds;
     }
 
     /**
      * Creates a map:  instruction position (bytes offset from start) -> bytecode location  (as much as can be determined).
      */
-    protected BytecodeLocation[] getPositionToBytecodeLocationMap() {
-        final StopPositions stopPositions = getStopPositions();
-        if (stopPositions == null) {
-            return null;
-        }
-        BytecodeLocation[] bytecodeLocations = new BytecodeLocation[getCodeLength()];
-        for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
-            bytecodeLocations[stopPositions.get(stopIndex)] = getBytecodeLocation(stopIndex);
-        }
-        return bytecodeLocations;
-    }
-
-    protected int[] getBytecodeToMachineCodePositionMap() {
-        return null;
-    }
-
-    protected List<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
-        return null;
-    }
-
-    private TargetJavaFrameDescriptor getTargetFrameDescriptor(int instructionIndex) {
-        final TargetCodeInstruction instruction = getInstructions().get(instructionIndex);
-        final List<TargetJavaFrameDescriptor> javaFrameDescriptors = getJavaFrameDescriptors();
-        if (javaFrameDescriptors != null) {
-            final StopPositions stopPositions = getStopPositions();
-            if (stopPositions != null) {
-                for (int i = 0; i < stopPositions.length(); i++) {
-                    if (stopPositions.get(i) == instruction.position) {
-                        return javaFrameDescriptors.get(i);
-                    }
-                }
+    protected BytecodeLocation[] getPositionToBytecodeLocationMap(TargetMethod targetMethod, List<TargetCodeInstruction> instructions, int codeLength, StopPositions stopPositions) {
+        if (stopPositions != null) {
+            final BytecodeLocation[] bytecodeLocations = new BytecodeLocation[codeLength];
+            for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
+                bytecodeLocations[stopPositions.get(stopIndex)] = targetMethod.getBytecodeLocationFor(stopIndex);
             }
+            return bytecodeLocations;
         }
         return null;
+    }
+
+    protected int[] getBytecodeToMachineCodePositionMap(TargetMethod targetMethod) {
+        return null;
+    }
+
+    protected List<TargetJavaFrameDescriptor> getJavaFrameDescriptors(TargetMethod targetMethod) {
+        return null;
+    }
+
+    protected final List<TargetJavaFrameDescriptor> javaFrameDescriptors() {
+        return targetMethodCache().javaFrameDescriptors;
     }
 
     /**
@@ -779,7 +882,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
      * @see TargetMethod#getBytecodeLocationFor(int)
      */
     public BytecodeLocation getBytecodeLocation(int stopIndex) {
-        return targetMethod().getBytecodeLocationFor(stopIndex);
+        return targetMethodCache().targetMethod.getBytecodeLocationFor(stopIndex);
     }
 
     /**
@@ -792,10 +895,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return null;
     }
 
-    private byte[] encodedInlineDataDescriptors() {
-        return targetMethod().encodedInlineDataDescriptors();
-    }
-
     /**
      * Disassembles this target method's code to a given writer.
      */
@@ -804,7 +903,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
 
     // [tw] Warning: duplicated code!
     public MachineCodeInstructionArray getTargetCodeInstructions() {
-        final List<TargetCodeInstruction> instructions = getInstructions();
+        final List<TargetCodeInstruction> instructions = targetMethodCache.instructions;
         final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.size()];
         for (int i = 0; i < result.length; i++) {
             final TargetCodeInstruction ins = instructions.get(i);
@@ -818,22 +917,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     }
 
     @Override
-    protected DeepCopier newDeepCopier() {
-        return new ReducedDeepCopier();
-    }
-
-    @Override
     public ReferenceTypeProvider getReferenceType() {
         return vm().vmAccess().getReferenceType(getClass());
-    }
-
-    /** {@inheritDoc}
-     * <br>
-     * Assume that a {@link TargetMethod} (method compilation) region does not move (see class comment).
-     */
-    @Override
-    public boolean isRelocatable() {
-        return false;
     }
 
     public void writeSummary(PrintStream printStream) {
@@ -843,7 +928,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         disassemble(writer);
         writer.flush();
         final Platform platform = platform();
-        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(encodedInlineDataDescriptors());
+        final InlineDataDecoder inlineDataDecoder =
+            InlineDataDecoder.createFrom(targetMethodCache().targetMethod.encodedInlineDataDescriptors());
         final Address startAddress = getCodeStart();
         final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
             @Override
@@ -862,7 +948,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
                 return string;
             }
         };
-        com.sun.max.asm.dis.Disassembler.disassemble(printStream, getCode(), platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
+        com.sun.max.asm.dis.Disassembler.disassemble(printStream, targetMethodCache.code(), platform.isa, platform.wordWidth(), startAddress.toLong(), inlineDataDecoder, disassemblyPrinter);
     }
-}
 
+}

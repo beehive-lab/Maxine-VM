@@ -630,7 +630,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 if (bytecodePosition == -1) {
                     targetCodePosition = AdapterGenerator.prologueSizeForCallee(teleTargetMethod.targetMethod());
                 } else {
-                    targetCodePosition = teleJitTargetMethod.getBytecodeToMachineCodePositionMap()[bytecodePosition];
+                    targetCodePosition = teleJitTargetMethod.getInstructionMap().bytecodeToMachineCodePositionMap()[bytecodePosition];
                 }
                 address = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                 Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint for offset " + targetCodePosition + " in " + teleTargetMethod);

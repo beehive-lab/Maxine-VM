@@ -68,13 +68,16 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
      */
     InstructionMap getInstructionMap();
 
-    // TODO (mlvdv) This should be reported in terms of VM states, not process epoch.
     /**
-     * Gets the most recent process epoch at which the contents of the machine code was observed to have changed.
+     * Gets the count of the times the code has been observed to have changed in the VM,
+     * starting with 0, the initial state of the code the first time it was observed.
+     * <p>
+     * Any client of this interface should reloaded any cached information whenever the
+     * generation is observed to have changed.
      *
-     * @return last epoch of most recent code change
+     * @return generation count of most recent observed code change in the VM.
      */
-    long lastChangedEpoch();
+    int vmCodeGeneration();
 
     /**
      * Gets the human-readable name of a data location that can be addressed by machine
@@ -177,6 +180,12 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
         List<Integer> labelIndexes();
 
         // TODO (mlvdv) should abstract this interface further so this doesn't need to be exposed.
+        /**
+         * Builds a map from the beginning of byte code instruction to the beginning of the
+         * machine code instructions generated from it.
+         *
+         * @return Map: byte positions in bytecode -> byte positions in machine code, null if information not available
+         */
         int[] bytecodeToMachineCodePositionMap();
 
     }
