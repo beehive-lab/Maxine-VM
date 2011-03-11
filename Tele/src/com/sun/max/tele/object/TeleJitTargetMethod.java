@@ -30,6 +30,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.Entry;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
@@ -49,8 +50,8 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
     }
 
     @Override
-    public int[] getBytecodeToMachineCodePositionMap() {
-        JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod();
+    protected int[] getBytecodeToMachineCodePositionMap(TargetMethod targetMethod) {
+        JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
         return jitTargetMethod.bytecodeToTargetCodePositionMap();
     }
 
@@ -65,33 +66,33 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
      * code locations.
      */
     @Override
-    public BytecodeLocation[] getPositionToBytecodeLocationMap() {
-        BytecodeLocation[] bytecodeLocations = new BytecodeLocation[getCodeLength()];
-        final int[] bytecodeToTargetCodePositionMap = getBytecodeToMachineCodePositionMap();
-        if (bytecodeToTargetCodePositionMap == null) {
-            return super.getPositionToBytecodeLocationMap();
-        }
-        final List<TargetCodeInstruction> instructions = getInstructions();
-        int bytecodeIndex = 0; // position cursor in the original bytecode stream, used if we have a bytecode-> machine code map
-        for (int index = 0; index < instructions.size(); index++) {
-            final TargetCodeInstruction instruction = instructions.get(index);
-            // offset in bytes of this machine code instruction from beginning
-            final int position = instruction.position;
-            final int bytecodePosition = bytecodeIndex;
-            // To check if we're crossing a bytecode boundary in the JITed code,
-            ///compare the offset of the instruction at the current row with the offset recorded by the JIT
-            // for the start of bytecode template.
-            if (bytecodePosition < bytecodeToTargetCodePositionMap.length &&
-                            position == bytecodeToTargetCodePositionMap[bytecodePosition]) {
-                // This is the start of the machine code block implementing the next bytecode
-                bytecodeLocations[position] = targetMethod().getBytecodeLocationFor(instruction.address.asPointer(), false);
-                do {
-                    ++bytecodeIndex;
-                } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length &&
-                                bytecodeToTargetCodePositionMap[bytecodeIndex] == 0);
+    public BytecodeLocation[] getPositionToBytecodeLocationMap(TargetMethod targetMethod, List<TargetCodeInstruction> instructions, int codeLength, StopPositions stopPositions) {
+        final int[] bytecodeToTargetCodePositionMap = getBytecodeToMachineCodePositionMap(targetMethod);
+        if (bytecodeToTargetCodePositionMap != null) {
+            BytecodeLocation[] bytecodeLocations = new BytecodeLocation[codeLength];
+            int bytecodeIndex = 0; // position cursor in the original bytecode stream, used if we have a bytecode-> machine code map
+            for (int index = 0; index < instructions.size(); index++) {
+                final TargetCodeInstruction instruction = instructions.get(index);
+                // offset in bytes of this machine code instruction from beginning
+                final int position = instruction.position;
+                final int bytecodePosition = bytecodeIndex;
+                // To check if we're crossing a bytecode boundary in the JITed code,
+                ///compare the offset of the instruction at the current row with the offset recorded by the JIT
+                // for the start of bytecode template.
+                if (bytecodePosition < bytecodeToTargetCodePositionMap.length &&
+                                position == bytecodeToTargetCodePositionMap[bytecodePosition]) {
+                    // This is the start of the machine code block implementing the next bytecode
+                    bytecodeLocations[position] = targetMethod.getBytecodeLocationFor(instruction.address.asPointer(), false);
+                    do {
+                        ++bytecodeIndex;
+                    } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length &&
+                                    bytecodeToTargetCodePositionMap[bytecodeIndex] == 0);
+                }
             }
+            return bytecodeLocations;
+        } else {
+            return super.getPositionToBytecodeLocationMap(targetMethod, instructions, codeLength, stopPositions);
         }
-        return bytecodeLocations;
     }
 
     @Override

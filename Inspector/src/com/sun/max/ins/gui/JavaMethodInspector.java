@@ -67,9 +67,9 @@ public class JavaMethodInspector extends MethodInspector {
     private final MaxCompiledCode compiledCode;
 
     /**
-     * The last process epoch at which the code was observed to have changed and the views reconstructed.
+     * The generation count for the code in the VM, the last time this classed accessed any information.
      */
-    private long lastCodeChangedEpoch = -1L;
+    private int vmCodeGeneration = -1;
 
     /**
      * The kinds of code views it is possible to create for this method.
@@ -148,7 +148,7 @@ public class JavaMethodInspector extends MethodInspector {
         this.methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
         this.compiledCode = compiledCode;
-        this.lastCodeChangedEpoch = compiledCode.lastChangedEpoch();
+        this.vmCodeGeneration = compiledCode.vmCodeGeneration();
 
         // Determine which code viewers it is possible to present for this method.
         // This doesn't change.
@@ -286,9 +286,9 @@ public class JavaMethodInspector extends MethodInspector {
 
     @Override
     protected void refreshState(boolean force) {
-        if (compiledCode.lastChangedEpoch() > lastCodeChangedEpoch) {
+        if (compiledCode.vmCodeGeneration() > vmCodeGeneration) {
             reconstructView();
-            lastCodeChangedEpoch = compiledCode.lastChangedEpoch();
+            vmCodeGeneration = compiledCode.vmCodeGeneration();
             Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + teleClassMethodActor.getName());
 
         } else if (getJComponent().isShowing() || force) {

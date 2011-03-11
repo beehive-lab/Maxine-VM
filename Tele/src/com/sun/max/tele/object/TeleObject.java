@@ -191,8 +191,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
         tracer().begin(getObjectUpdateTraceValue(epoch));
 
         if (epoch > lastUpdateEpoch) {
-            updateObjectCache(epoch, statsPrinter);
-            lastUpdateEpoch = epoch;
+            if (updateObjectCache(epoch, statsPrinter)) {
+                lastUpdateEpoch = epoch;
+            }
         } else {
             statsPrinter.addStat("Redundant update skipped");
             Trace.line(UPDATE_TRACE_VALUE, tracePrefix() + " redundant update epoch=" + epoch + ": " + this);
@@ -218,13 +219,15 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements TeleVMC
 
     /**
      * Internal call to subclasses to update their state, wrapped in the {@link TeleObject} class to provide timing and
-     * update statistics reporting.
+     * update statistics reporting and to handle a uniform method for avoiding redundant updates.
      *
      * @param epoch the process epoch at the time of this update.
      * @param statsPrinters list of objects that report statistics for updates performed on this object so far (with no
      *            newlines)
+     * @returns whether the object's cache was successfully updated.
      */
-    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        return true;
     }
 
     public final TeleObjectMemory.State getTeleObjectMemoryState() {

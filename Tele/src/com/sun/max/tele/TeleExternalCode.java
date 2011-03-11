@@ -316,8 +316,9 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
      * <p>
      * We don't bother to check if native code has changed once we have read and disassembled it.
      */
-    public long lastChangedEpoch() {
-        return 0L;
+    @Override
+    public int vmCodeGeneration() {
+        return 0;
     }
 
     public Address getCodeStart() {
