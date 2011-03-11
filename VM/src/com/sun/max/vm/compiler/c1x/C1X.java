@@ -202,6 +202,7 @@ public class C1X implements RuntimeCompiler {
     }
 
     public void resetMetrics() {
+        C1XTimers.reset();
         for (Field f : C1XMetrics.class.getFields()) {
             if (f.getType() == int.class) {
                 try {

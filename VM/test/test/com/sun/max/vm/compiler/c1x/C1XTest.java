@@ -41,8 +41,8 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -51,6 +51,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.profile.*;
 
 /**
  * A harness to run the C1X or T1X compiler and test it in various modes.
@@ -108,6 +109,8 @@ public class C1XTest {
         "Compile with T1X.");
     private static final Option<Boolean> jitOption = options.newBooleanOption("jit", false,
         "Compile with CPS based template JIT.");
+    private static final Option<Boolean> profOption = options.newBooleanOption("prof", true,
+        "Emit method profiling in baseline compiled methods.");
 
     static {
         // add all the fields from C1XOptions as options
@@ -187,12 +190,16 @@ public class C1XTest {
 
         Trace.on(traceOption.getValue());
 
+        if (profOption.getValue()) {
+            MethodInstrumentation.enable(500);
+        }
+
         boolean useBaseline = t1xOption.getValue();
         if (t1xOption.getValue()) {
-            RuntimeCompiler.baselineCompilerOption.setValue(Classes.forName("com.sun.max.vm.t1x.T1XCompiler").getName());
+            RuntimeCompiler.baselineCompilerOption.setValue(RuntimeCompiler.aliases.get("T1X"));
             useBaseline = true;
         } else if (jitOption.getValue()) {
-            RuntimeCompiler.baselineCompilerOption.setValue(Classes.forName("com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler").getName());
+            RuntimeCompiler.baselineCompilerOption.setValue(RuntimeCompiler.aliases.get("JIT"));
             useBaseline = true;
         }
 

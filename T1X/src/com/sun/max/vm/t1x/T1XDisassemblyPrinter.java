@@ -64,14 +64,14 @@ public class T1XDisassemblyPrinter extends DisassemblyPrinter {
             Object[] directCallees = method.directCallees();
 
             int frameRefMapSize = method.frameRefMapSize;
-            int totalRefMapSize = method.totalRefMapSize();
             int regRefMapSize = T1XTargetMethod.regRefMapSize();
+            int refMapSize = method.refMapSize();
 
             for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
                 int pos = stopPositions.get(stopIndex);
 
-                CiBitMap frameRefMap = new CiBitMap(method.referenceMaps(), stopIndex * totalRefMapSize, frameRefMapSize);
-                CiBitMap regRefMap = new CiBitMap(method.referenceMaps(), (stopIndex * totalRefMapSize) + frameRefMapSize, regRefMapSize);
+                CiBitMap frameRefMap = new CiBitMap(method.referenceMaps(), stopIndex * refMapSize, frameRefMapSize);
+                CiBitMap regRefMap = new CiBitMap(method.referenceMaps(), (stopIndex * refMapSize) + frameRefMapSize, regRefMapSize);
 
                 CiDebugInfo debugInfo = new CiDebugInfo(null, regRefMap, frameRefMap);
                 stopDebugInfo.put(pos, debugInfo);

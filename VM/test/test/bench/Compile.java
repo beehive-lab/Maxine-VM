@@ -221,7 +221,6 @@ public class Compile {
         // compile a single method
         ClassMethodActor classMethodActor = (ClassMethodActor) method;
         Throwable thrown = null;
-        //out.println(compiler.getClass().getSimpleName() + ": " + classMethodActor);
         CiStatistics stats = new CiStatistics();
         final long startNs = System.nanoTime();
         try {
