@@ -65,6 +65,7 @@ import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForWr
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveVirtualMethod;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
@@ -457,10 +458,14 @@ public class MaxXirGenerator implements RiXirGenerator {
 
 
     private boolean useTLABs() {
+        if (DebugHeap.isTagging()) {
+            // The XIR for TLAB allocation does not handle this (yet)
+            return false;
+        }
         // TODO: second clause in each of the two conditions below should disappear. This is just to evaluate the impact of
         // inlined tlab allocation on performance.
         if (MaxineVM.isHosted()) {
-            return vmConfig().heapScheme()instanceof HeapSchemeWithTLAB && Heap.genInlinedTLAB;
+            return vmConfig().heapScheme() instanceof HeapSchemeWithTLAB && Heap.genInlinedTLAB;
         }
         return vmConfig().heapScheme().usesTLAB() && HeapSchemeWithTLAB.GenInlinedTLABAlloc;
     }

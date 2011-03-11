@@ -123,7 +123,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitBreakpoint() {
-        masm.emitByte(0xcc);
+        masm.int3();
     }
 
     @Override

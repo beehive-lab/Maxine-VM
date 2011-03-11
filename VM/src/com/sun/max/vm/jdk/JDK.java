@@ -55,6 +55,7 @@ public class JDK {
     public static final ClassRef java_lang_ref_Finalizer                   = new ClassRef("java.lang.ref.Finalizer");
     public static final ClassRef java_lang_ref_Finalizer$FinalizerThread   = new ClassRef("java.lang.ref.Finalizer$FinalizerThread");
     public static final ClassRef java_lang_ref_Reference                   = new ClassRef(java.lang.ref.Reference.class);
+    public static final ClassRef java_lang_ref_SoftReference               = new ClassRef(java.lang.ref.SoftReference.class);
     public static final ClassRef java_lang_ref_Reference$ReferenceHandler  = new ClassRef(java.lang.ref.Reference.class, "ReferenceHandler");
     public static final ClassRef java_lang_ref_ReferenceQueue              = new ClassRef(java.lang.ref.ReferenceQueue.class);
 
