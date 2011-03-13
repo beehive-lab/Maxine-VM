@@ -276,7 +276,6 @@ function get_project_cp() {
 projects=( \
     CRI:src                       \
     C1X:src                       \
-    C0X:src                       \
     Base:src,test                 \
     Assembler:src,test            \
     VM:src,test                   \
