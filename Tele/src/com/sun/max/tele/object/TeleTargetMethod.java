@@ -659,7 +659,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
         return Collections.emptyList();
     }
 
-    private final TeleClassMethodActor teleClassMethodActor;
+    private TeleClassMethodActor teleClassMethodActor = null;
 
     /**
      * The cache of the actual compiled code in the {@link TargetMethod} is represented as
@@ -699,8 +699,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     protected TeleTargetMethod(TeleVM vm, Reference targetMethodReference) {
         super(vm, targetMethodReference);
 
-        final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(targetMethodReference);
-        teleClassMethodActor = (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
+        // Delay initialization of classMethodActor because of the circularity that
+        // the compilation history of the classMethodActor refers to this.
 
         // Register every method compilation, so that they can be located by code address.
         // Note that this depends on the basic location information already being read by
@@ -756,6 +756,10 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TargetM
     protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
         if (!super.updateObjectCache(epoch, statsPrinter)) {
             return false;
+        }
+        if (teleClassMethodActor == null) {
+            final Reference classMethodActorReference = vm().teleFields().TargetMethod_classMethodActor.readReference(reference());
+            teleClassMethodActor = (TeleClassMethodActor) heap().makeTeleObject(classMethodActorReference);
         }
         if (!targetMethodCache.isLoaded()) {
             // Don't update if we've never loaded the code; delay that until actually needed.
