@@ -28,7 +28,6 @@ import static com.sun.max.vm.actor.member.LivenessAdapter.*;
 import java.lang.reflect.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -82,7 +81,7 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     public final NativeFunction nativeFunction;
 
-    private RiExceptionHandler[] exceptionHandlers;
+    private CiExceptionHandler[] exceptionHandlers;
 
     public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, int intrinsic) {
         super(name, descriptor, flags, intrinsic);
@@ -158,38 +157,14 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     @Override
-    public RiExceptionHandler[] exceptionHandlers() {
+    public CiExceptionHandler[] exceptionHandlers() {
         if (exceptionHandlers != null) {
             // return the cached exception handlers
             return exceptionHandlers;
         }
 
-        ExceptionHandlerEntry[] exceptionHandlerTable = ExceptionHandlerEntry.NONE;
         CodeAttribute codeAttribute = originalCodeAttribute(true);
-        if (codeAttribute != null) {
-            exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
-        }
-        if (exceptionHandlerTable.length == 0) {
-            exceptionHandlers = RiExceptionHandler.NONE;
-        } else {
-            exceptionHandlers = new RiExceptionHandler[exceptionHandlerTable.length];
-            int i = 0;
-            for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
-                RiType catchType;
-                int catchTypeIndex = entry.catchTypeIndex();
-                if (catchTypeIndex == 0) {
-                    catchType = null;
-                } else {
-                    ConstantPool pool = codeAttribute.constantPool;
-                    catchType = pool.classAt(catchTypeIndex).resolve(pool, catchTypeIndex);
-                }
-                exceptionHandlers[i++] = new CiExceptionHandler(
-                                (char) entry.startPosition(),
-                                (char) entry.endPosition(),
-                                (char) entry.handlerPosition(),
-                                (char) catchTypeIndex, catchType);
-            }
-        }
+        exceptionHandlers = codeAttribute != null ? codeAttribute.exceptionHandlers() : CiExceptionHandler.NONE;
         return exceptionHandlers;
     }
 
@@ -340,23 +315,22 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     /**
-     * Gets a {@link StackTraceElement} object describing the source code location corresponding to a given bytecode
-     * position in this method.
+     * Gets a {@link StackTraceElement} object describing the source code location corresponding to a given BCI in this method.
      *
-     * @param bytecodePosition a bytecode position in this method's {@linkplain #codeAttribute() code}
+     * @param bci a BCI in this method's {@linkplain #codeAttribute() code}
      * @return the stack trace element
      */
-    public StackTraceElement toStackTraceElement(int bytecodePosition) {
+    public StackTraceElement toStackTraceElement(int bci) {
         final ClassActor holder = holder();
-        return new StackTraceElement(holder.name.string, name.string, holder.sourceFileName, sourceLineNumber(bytecodePosition));
+        return new StackTraceElement(holder.name.string, name.string, holder.sourceFileName, sourceLineNumber(bci));
     }
 
     /**
-     * Gets the source line number corresponding to a given bytecode position in this method.
-     * @param bytecodePosition the byte code position
+     * Gets the source line number corresponding to a given BCI in this method.
+     * @param bci the BCI
      * @return -1 if a source line number is not available
      */
-    public int sourceLineNumber(int bytecodePosition) {
+    public int sourceLineNumber(int bci) {
         CodeAttribute codeAttribute = this.codeAttribute;
         if (codeAttribute == null) {
             codeAttribute = this.originalCodeAttribute;
@@ -364,7 +338,7 @@ public abstract class ClassMethodActor extends MethodActor {
         if (codeAttribute == null) {
             return -1;
         }
-        return codeAttribute.lineNumberTable().findLineNumber(bytecodePosition);
+        return codeAttribute.lineNumberTable().findLineNumber(bci);
     }
 
     /**
@@ -436,8 +410,22 @@ public abstract class ClassMethodActor extends MethodActor {
         return TargetState.targetMethodCount(targetState);
     }
 
+    /**
+     * Records if this object returned {@code true} for a call to {@link #hasCompiledCode()} during
+     * boot image building.
+     */
+    @HOSTED_ONLY
+    public boolean mustCompileInImage;
+
     @Override
     public boolean hasCompiledCode() {
+        if (MaxineVM.isHosted()) {
+            if (!isAbstract() && !isBuiltin() && !isIntrinsic()) {
+                mustCompileInImage = true;
+                return true;
+            }
+            return false;
+        }
         return targetMethodCount() > 0;
     }
 }

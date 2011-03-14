@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -213,7 +213,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     private final BranchConditionMap<AMD64InstructionEditor> rel32BranchEditors;
 
     public BytecodeToAMD64TargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, boolean trace) {
-        super(classMethodActor, codeBuffer, templateTable, new AMD64JitStackFrameLayout(classMethodActor, templateTable.maxFrameSlots), trace);
+        super(classMethodActor, codeBuffer, templateTable, new AMD64JVMSFrameLayout(classMethodActor, templateTable.maxFrameSlots), trace);
         rel8BranchEditors = new BranchConditionMap<AMD64InstructionEditor>();
         rel32BranchEditors = new BranchConditionMap<AMD64InstructionEditor>();
         // Make copies of the template. That's because at the moment, the translator works by modifying the template, then
@@ -558,7 +558,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         // Load top of stack into temporary
         asm.mov(valueRegister, 0, TARGET_ABI.stackPointer().indirect());
         // Pop top of stack
-        asm.addq(TARGET_ABI.stackPointer(), JitStackFrameLayout.JIT_SLOT_SIZE);
+        asm.addq(TARGET_ABI.stackPointer(), JVMSFrameLayout.JVMS_SLOT_SIZE);
         asm.rip_lea(tableRegister, valueTable);
         asm.bindLabel(initLastMatchIndex);   // marker for template customization.
         asm.mov(indexRegister, 1);
@@ -602,7 +602,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         // Load top of stack into temporary
         asm.mov(indexRegister, 0, TARGET_ABI.stackPointer().indirect());
         // Pop top of stack
-        asm.addq(TARGET_ABI.stackPointer(), JitStackFrameLayout.JIT_SLOT_SIZE);
+        asm.addq(TARGET_ABI.stackPointer(), JVMSFrameLayout.JVMS_SLOT_SIZE);
         // subtract the low value from the switch index
         asm.bindLabel(indexAdjust);
         asm.sub_EAX(0);

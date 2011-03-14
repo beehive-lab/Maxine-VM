@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import com.sun.max.vm.type.*;
  */
 public class ExceptionDispatcher {
 
-    private final int position;
+    private final int bci;
 
     private boolean isThrowable(BytecodeAssembler assembler, int classConstantIndex) {
         ClassConstant classRef = assembler.constantPool().classAt(classConstantIndex);
@@ -79,7 +79,7 @@ public class ExceptionDispatcher {
                 assembler.pop(Kind.REFERENCE);
 
                 // Leave the exception object on the stack and go to the handler
-                assembler.goto_(h.position());
+                assembler.goto_(h.bci());
 
                 // Ignore subsequent handlers (should never be any anyway)
                 return;
@@ -96,7 +96,7 @@ public class ExceptionDispatcher {
             final Label testNextHandler = assembler.newLabel();
             assembler.ifeq(testNextHandler);
             assembler.checkcast(h.catchTypeIndex());
-            assembler.goto_(h.position());
+            assembler.goto_(h.bci());
 
             testNextHandler.bind();
             h = h.next();
@@ -114,7 +114,7 @@ public class ExceptionDispatcher {
      *            the assembler used for synthesizing the dispatcher bytecode
      */
     ExceptionDispatcher(BytecodeAssembler assembler, ExceptionHandler handler) {
-        position = assembler.currentAddress();
+        bci = assembler.currentAddress();
 
         // Model the exception on the stack
         assert assembler.stack() == 0;
@@ -124,9 +124,9 @@ public class ExceptionDispatcher {
     }
 
     /**
-     * The byte code position of the dispatcher synthesized by this object.
+     * The BCI of the dispatcher synthesized by this object.
      */
-    int position() {
-        return position;
+    int bci() {
+        return bci;
     }
 }

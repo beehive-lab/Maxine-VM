@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
 import com.sun.max.ins.InspectorKeyBindings.KeyBindingMap;
@@ -36,7 +37,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.vm.bytecode.*;
 
 /**
  * Manages persistent general preferences for inspection sessions.
@@ -49,7 +49,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
 
     /**
      * Enum for the mechanism to be used when attempting to
-     * {@linkplain Inspection#viewSourceExternally(BytecodeLocation) view} a source file in an external tool.
+     * {@linkplain Inspection#viewSourceExternally(CiCodePos) view} a source file in an external tool.
      */
     public enum ExternalViewerType {
         /**

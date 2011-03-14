@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.cps.jit;
 
-import static com.sun.max.vm.compiler.target.StopType.*;
+import static com.sun.max.vm.cps.target.StopType.*;
 
 import java.util.*;
 
@@ -33,6 +33,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.Stop.TemplateDirectCall;
 import com.sun.max.vm.cps.jit.Stop.TemplateIndirectCall;
 import com.sun.max.vm.cps.jit.Stop.TemplateSafepoint;
+import com.sun.max.vm.cps.target.*;
 
 /**
  * Represents the {@link StopType stop} related information pertaining to a method compiled by a

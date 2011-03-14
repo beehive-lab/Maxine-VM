@@ -4,12 +4,11 @@
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="src" path="demo"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Base"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Assembler"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/C1X"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/C0X"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/CRI"/>
 	<classpathentry kind="lib" path="classes"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Assembler"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

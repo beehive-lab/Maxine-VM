@@ -141,10 +141,12 @@ public final class ClassID {
 
     public static synchronized ClassActor toClassActor(int id) {
         try {
-            if (MaxineVM.isHosted() && mapping != null) {
-                final ClassActor classActor = mapping.idToClassActor(id);
-                if (classActor != null) {
-                    return classActor;
+            if (MaxineVM.isHosted()) {
+                if (mapping != null) {
+                    final ClassActor classActor = mapping.idToClassActor(id);
+                    if (classActor != null) {
+                        return classActor;
+                    }
                 }
             }
             return idToClassActor.get(id);

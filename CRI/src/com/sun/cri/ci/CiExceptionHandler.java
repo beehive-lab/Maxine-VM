@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,26 +31,28 @@ import com.sun.cri.ri.*;
  */
 public class CiExceptionHandler implements RiExceptionHandler {
 
+    public static final CiExceptionHandler[] NONE = {};
+    
     public final int startBCI;
     public final int endBCI;
     public final int handlerBCI;
-    public final int classCPI;
-    public final RiType classType;
+    public final int catchTypeCPI;
+    public final RiType catchType;
 
     /**
      * Creates a new exception handler with the specified ranges.
      * @param startBCI the start index of the protected range
      * @param endBCI the end index of the protected range
      * @param catchBCI the index of the handler
-     * @param classCPI the index of the throwable class in the constant pool
-     * @param classType the type caught by this exception handler
+     * @param catchTypeCPI the index of the throwable class in the constant pool
+     * @param catchType the type caught by this exception handler
      */
-    public CiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI, RiType classType) {
+    public CiExceptionHandler(int startBCI, int endBCI, int catchBCI, int catchTypeCPI, RiType catchType) {
         this.startBCI = startBCI;
         this.endBCI = endBCI;
         this.handlerBCI = catchBCI;
-        this.classCPI = classCPI;
-        this.classType = classType;
+        this.catchTypeCPI = catchTypeCPI;
+        this.catchType = catchType;
     }
 
     public int startBCI() {
@@ -65,16 +67,16 @@ public class CiExceptionHandler implements RiExceptionHandler {
         return handlerBCI;
     }
 
-    public int catchClassIndex() {
-        return classCPI;
+    public int catchTypeCPI() {
+        return catchTypeCPI;
     }
 
     public boolean isCatchAll() {
-        return classCPI == 0;
+        return catchTypeCPI == 0;
     }
 
-    public RiType catchKlass() {
-        return classType;
+    public RiType catchType() {
+        return catchType;
     }
     
     @Override
@@ -87,7 +89,7 @@ public class CiExceptionHandler implements RiExceptionHandler {
             append(") -> ").
             append(handlerBCI).
             append(" type=").
-            append(classType == null ? "*any*" : classType.name()).
+            append(catchType == null ? "*any*" : catchType.name()).
             toString();
     }
 }

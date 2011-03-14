@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.collect.*;
@@ -124,7 +125,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
                 if (location != null) {
                     final BytecodeVisitor bytecodeVisitor = new BytecodeAdapter() {
                         private void addStaticCall(int index) {
-                            final ConstantPool pool = location.classMethodActor.codeAttribute().constantPool;
+                            final ConstantPool pool = location.classMethodActor.codeAttribute().cp;
                             final MethodActor methodActor = pool.classMethodAt(index).resolve(pool, index);
                             result.add(methodActor);
                         }
@@ -142,8 +143,8 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
                     final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodeVisitor);
                     try {
                         final byte[] bytecode = location.classMethodActor.codeAttribute().code();
-                        if (bytecode != null && location.bytecodePosition < bytecode.length) {
-                            bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition);
+                        if (bytecode != null && location.bci < bytecode.length) {
+                            bytecodeScanner.scanInstruction(bytecode, location.bci);
                         }
                     } catch (Throwable throwable) {
                         ProgramError.unexpected("could not scan byte code", throwable);

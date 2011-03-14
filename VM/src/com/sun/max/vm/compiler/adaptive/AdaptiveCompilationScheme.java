@@ -24,11 +24,11 @@ package com.sun.max.vm.compiler.adaptive;
 
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -128,31 +128,65 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         return baselineCompiler != optimizingCompiler;
     }
 
+    private static final String OPTIMIZING_COMPILER_PROPERTY = AdaptiveCompilationScheme.class.getSimpleName() + "." + optimizingCompilerOption.getName();
+    private static final String BASELINE_COMPILER_PROPERTY = AdaptiveCompilationScheme.class.getSimpleName() + "." + baselineCompilerOption.getName();
+
+    /**
+     * Gets the class name of the optimizing compiler that will be configured when an instance of this scheme is instantiated.
+     */
+    @HOSTED_ONLY
+    public static String optName() {
+        return configValue(OPTIMIZING_COMPILER_PROPERTY, optimizingCompilerOption, aliases);
+    }
+
+    /**
+     * Gets the class name of the baseline compiler that will be configured when an instance of this scheme is instantiated.
+     */
+    @HOSTED_ONLY
+    public static String baselineName() {
+        return configValue(BASELINE_COMPILER_PROPERTY, baselineCompilerOption, aliases);
+    }
+
     /**
      * The constructor for this class initializes a new adaptive compilation.
      */
     @HOSTED_ONLY
     public AdaptiveCompilationScheme() {
-        assert CompilationScheme.optimizingCompilerOption.getValue() != null;
-        optimizingCompiler = instantiateCompiler(CompilationScheme.optimizingCompilerOption.getValue());
-        if (!CompilationScheme.optimizingCompilerOption.getValue().equals(CompilationScheme.baselineCompilerOption.getValue()) && CompilationScheme.baselineCompilerOption.getValue() != null) {
-            baselineCompiler = instantiateCompiler(CompilationScheme.baselineCompilerOption.getValue());
+        assert optimizingCompilerOption.getValue() != null;
+        String optName = optName();
+        String baselineName = baselineName();
+        optimizingCompiler = instantiateCompiler(optName);
+        if (!optName.equals(baselineName) && baselineName != null) {
+            baselineCompiler = instantiateCompiler(baselineName);
         } else {
             baselineCompiler = optimizingCompiler;
         }
     }
 
     @HOSTED_ONLY
-    private static RuntimeCompiler instantiateCompiler(String compilerClassName) {
+    private static RuntimeCompiler instantiateCompiler(String name) {
         try {
-            return (RuntimeCompiler) Classes.forName(compilerClassName).newInstance();
+            return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {
-            throw FatalError.unexpected("Error instantiating compiler " + compilerClassName, e);
+            throw FatalError.unexpected("Error instantiating compiler " + name, e);
         }
     }
 
     public String description() {
         return "compilation: " + mode.name().toLowerCase();
+    }
+
+    @Override
+    public String about() {
+        return super.about() + " [opt=" + optimizingCompiler.getClass().getSimpleName() + ", baseline=" + baselineCompiler.getClass().getSimpleName() + "]";
+    }
+
+    @Override
+    public Properties properties() {
+        Properties props = new Properties();
+        props.put(OPTIMIZING_COMPILER_PROPERTY, optimizingCompiler.getClass().getName());
+        props.put(BASELINE_COMPILER_PROPERTY, baselineCompiler.getClass().getName());
+        return props;
     }
 
     /**
@@ -205,7 +239,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return the target method that results from compiling the specified method
      */
     public TargetMethod synchronousCompile(ClassMethodActor classMethodActor) {
-        boolean retrying = false;
+        RuntimeCompiler retryCompiler = null;
         while (true) {
             Compilation compilation;
             boolean doCompile = true;
@@ -214,16 +248,21 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 Object targetState = classMethodActor.targetState;
                 if (targetState == null) {
                     // this is the first compilation.
-                    RuntimeCompiler compiler = !retrying ? selectCompiler(classMethodActor, true) : optimizingCompiler;
+                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, true) : retryCompiler;
                     compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                     classMethodActor.targetState = compilation;
                 } else if (targetState instanceof Compilation) {
-                    // the method is currently being compiled, just wait for the result
                     compilation = (Compilation) targetState;
-                    doCompile = false;
+                    if (retryCompiler != null) {
+                        assert compilation.compilingThread == Thread.currentThread();
+                        compilation.compiler = retryCompiler;
+                    } else {
+                        // the method is currently being compiled, just wait for the result
+                        doCompile = false;
+                    }
                 } else {
                     // this method has already been compiled once
-                    RuntimeCompiler compiler = !retrying ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0) : optimizingCompiler;
+                    RuntimeCompiler compiler = retryCompiler == null ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0) : retryCompiler;
                     TargetMethod targetMethod = classMethodActor.currentTargetMethod();
                     if (targetMethod != null && compiler.compiledType() == targetMethod.getClass()) {
                         return targetMethod;
@@ -243,12 +282,16 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
                 Log.println(errorMessage);
                 t.printStackTrace(Log.out);
-                if (compilation.compiler != optimizingCompiler && FailOverCompilation) {
-                    Log.println("Retrying with " + optimizingCompiler + "...");
-                    retrying = true;
-                } else {
-                    throw (InternalError) new InternalError(errorMessage).initCause(t);
+                if (!FailOverCompilation || retryCompiler != null || (optimizingCompiler == baselineCompiler)) {
+                    // This is the final failure: no other compilers available or failover is disabled
+                    throw FatalError.unexpected(errorMessage + " (final attempt)", t);
                 }
+                if (compilation.compiler == optimizingCompiler) {
+                    retryCompiler = baselineCompiler;
+                } else {
+                    retryCompiler = optimizingCompiler;
+                }
+                Log.println("Retrying with " + retryCompiler + "...");
             }
         }
     }

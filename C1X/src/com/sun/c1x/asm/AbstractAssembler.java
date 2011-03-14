@@ -30,6 +30,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.CodeComment;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
 
@@ -71,7 +72,7 @@ public abstract class AbstractAssembler {
                 int codeOffset = ei.codeOffset;
                 for (ExceptionHandler handler : ei.exceptionHandlers) {
                     int entryOffset = handler.entryCodeOffset();
-                    RiType caughtType = handler.handler.catchKlass();
+                    RiType caughtType = handler.handler.catchType();
                     targetMethod.recordExceptionHandler(codeOffset, ei.bci, handler.scopeCount(), entryOffset, handler.handlerBCI(), caughtType);
                 }
             }
@@ -223,7 +224,7 @@ public abstract class AbstractAssembler {
         codeBuffer.emitLong(x);
     }
 
-    public void blockComment(String st) {
-        Util.nonFatalUnimplemented();
+    public void blockComment(String s) {
+        targetMethod.addAnnotation(new CodeComment(codeBuffer.position(), s));
     }
 }

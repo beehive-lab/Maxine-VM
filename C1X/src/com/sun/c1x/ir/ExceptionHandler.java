@@ -141,7 +141,7 @@ public final class ExceptionHandler {
     }
 
     public boolean isCatchAll() {
-        return handler.catchClassIndex() == 0;
+        return handler.catchTypeCPI() == 0;
     }
 
     public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiType klass, boolean typeIsExact) {
@@ -156,7 +156,7 @@ public final class ExceptionHandler {
                 // catch of ANY
                 return true;
             }
-            RiType handlerKlass = handler.handler.catchKlass();
+            RiType handlerKlass = handler.handler.catchType();
             // if it's unknown it might be catchable
             if (!handlerKlass.isResolved()) {
                 return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,7 @@ public class Intrinsics extends IntrinsifierClient {
      * @param codeAttribute the code of the method to be processed
      */
     public Intrinsics(ClassMethodActor compilee, CodeAttribute codeAttribute) {
-        this.cp = codeAttribute.constantPool;
+        this.cp = codeAttribute.cp;
         this.compilee = compilee;
         this.codeAttribute = codeAttribute;
         unsafe = compilee.isUnsafe();
@@ -89,7 +89,7 @@ public class Intrinsics extends IntrinsifierClient {
      */
     public boolean run() {
         try {
-            extended = new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, initLocals()).run();
+            extended = new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerBCIs(), codeAttribute.maxStack, initLocals()).run();
             return unsafe;
         } catch (Throwable e) {
             String msg = String.format("Error while intrinsifying " + compilee + "%n" + CodeAttributePrinter.toString(codeAttribute));
@@ -114,7 +114,7 @@ public class Intrinsics extends IntrinsifierClient {
             case ALLOCA             :
             case ALLOCSTKVAR        :
             case JNICALL            :
-            case CALL               :
+            case TEMPLATE_CALL               :
             case ICMP               :
             case WCMP               :
             case RET                :
@@ -141,7 +141,7 @@ public class Intrinsics extends IntrinsifierClient {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
                 int intrinsic = method.intrinsic();
-                if (intrinsic == UNSAFE_CAST || intrinsic == CALL || intrinsic == ALLOCSTKVAR) {
+                if (intrinsic == UNSAFE_CAST || intrinsic == TEMPLATE_CALL || intrinsic == ALLOCSTKVAR) {
                     bi.intrinsify(intrinsic, cpi);
                 } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;

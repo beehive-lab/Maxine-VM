@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,9 @@ import java.util.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -51,15 +54,22 @@ import com.sun.max.vm.type.*;
  */
 public abstract class AdapterGenerator {
 
-    /**
-     * Local alias to {@link CompiledStackFrameLayout#STACK_SLOT_SIZE}.
-     */
-    public static final int OPT_SLOT_SIZE = CompiledStackFrameLayout.STACK_SLOT_SIZE;
+    @HOSTED_ONLY
+    public static void init() {
+        ISA isa = Platform.platform().isa;
+        String className = Classes.getPackageName(AdapterGenerator.class) + "." + isa.toString().toLowerCase() + "." + isa + AdapterGenerator.class.getSimpleName();
+        Classes.forName(className);
+    }
 
     /**
-     * Local alias to {@link JitStackFrameLayout#JIT_SLOT_SIZE}.
+     * Local alias to {@link VMFrameLayout#STACK_SLOT_SIZE}.
      */
-    public static final int JIT_SLOT_SIZE = JitStackFrameLayout.JIT_SLOT_SIZE;
+    public static final int OPT_SLOT_SIZE = VMFrameLayout.STACK_SLOT_SIZE;
+
+    /**
+     * Local alias to {@link JVMSFrameLayout#JVMS_SLOT_SIZE}.
+     */
+    public static final int JIT_SLOT_SIZE = JVMSFrameLayout.JVMS_SLOT_SIZE;
 
     /**
      * A signature denotes the parameter kinds of a call including the receiver kind if applicable.
@@ -200,7 +210,7 @@ public abstract class AdapterGenerator {
             return null;
         }
 
-        if (callee.isTemplate() || callee.isVmEntryPoint()) {
+        if (callee != null && (callee.isTemplate() || callee.isVmEntryPoint())) {
             // Templates do not have adapters as they are not complete methods that are called
             return null;
         }
@@ -253,7 +263,7 @@ public abstract class AdapterGenerator {
      * call as well as emitting code for the prologue of the callee to call the adapter.
      *
      * @param callee the method that must be adapted to
-     * @param out where to emit the prologue. This must be either an {@link Assembler} or {@link OutputStream} instance
+     * @param out where to emit the prologue. This must be either an {@link AbstractAssembler} or {@link OutputStream} instance
      * @return the adapter that will adapt a call to {@code callee}. This will be {@code null} if there is no need to
      *         adapt a call to {@code callee} (e.g. OPT -> JIT call with 0 arguments)
      */
@@ -276,7 +286,7 @@ public abstract class AdapterGenerator {
     /**
      * Emits the prologue that makes a calls to a given adapter.
      *
-     * @param out where to emit the prologue. This must be either an {@link Assembler} or {@link OutputStream} instance
+     * @param out where to emit the prologue. This must be either an {@link AbstractAssembler} or {@link OutputStream} instance
      * @param adapter the adapter that the prologue calls
      * @return the size of the prologue emitted to {@link out}
      */
@@ -287,8 +297,7 @@ public abstract class AdapterGenerator {
      * {@link OutputStream} object.
      *
      * @param buffer the code buffer into which a prologue has been assembled
-     * @param out if this is an {@link OutputStream} instance, then the
-     *            {@linkplain Assembler#output(OutputStream, InlineDataRecorder) output} of {@code asm} is written to it
+     * @param out if this is an {@link OutputStream} instance, then the output is written to it
      */
     protected void copyIfOutputStream(Buffer buffer, Object out) {
         if (out instanceof OutputStream) {

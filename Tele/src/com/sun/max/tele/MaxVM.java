@@ -23,10 +23,10 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
@@ -241,13 +241,13 @@ public interface MaxVM extends MaxEntity<MaxVM> {
     Pointer bootImageStart();
 
     /**
-     * @return how much reliance is placed on the {@link TeleInterpreter} when
+     * @return how much reliance is placed on the {@link TeleXInterpreter} when
      * communicating with the VM (0=none, 1=some, etc)
      */
     int getInterpreterUseLevel();
 
     /**
-     * Controls how much reliance is placed on the {@link TeleInterpreter} when
+     * Controls how much reliance is placed on the {@link TeleXInterpreter} when
      * communicating with the VM.
      *
      * @param interpreterUseLevel  (0=none, 1=some, etc)
@@ -382,7 +382,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @return result of method invocation wrapped as a Value
      * @throws TeleInterpreterException  if an uncaught exception occurs during execution of the method
      */
-    Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException;
+    Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws InvocationTargetException;
 
     /**
      * Resumes execution of the VM.

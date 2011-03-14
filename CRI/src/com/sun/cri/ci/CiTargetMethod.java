@@ -116,10 +116,11 @@ public class CiTargetMethod implements Serializable {
             } else if (globalStubID != null) {
                 sb.append("Global stub call to ");
                 sb.append(globalStubID);
-            } else {
-                assert method != null;
+            } else if (method != null) {
                 sb.append("Method call to ");
                 sb.append(method.toString());
+            } else {
+                sb.append("Template call");
             }
 
             sb.append(" at pos ");
@@ -152,6 +153,86 @@ public class CiTargetMethod implements Serializable {
         }
     }
 
+    /**
+     * Provides extra information about instructions or data at specific positions in {@link CiTargetMethod#targetCode()}.
+     * This is optional information that can be used to enhance a disassembly of the code.
+     */
+    public static abstract class CodeAnnotation {
+        public final int position;
+        
+        public CodeAnnotation(int position) {
+            this.position = position;
+        }
+    }
+
+    /**
+     * A string comment about one or more instructions at a specific position in the code.
+     */
+    public static final class CodeComment extends CodeAnnotation {
+        public final String comment;
+        public CodeComment(int position, String comment) {
+            super(position);
+            this.comment = comment;
+        }
+        
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "@" + position + ": " + comment;
+        }
+    }
+ 
+    /**
+     * Labels some inline data in the code.
+     */
+    public static final class InlineData extends CodeAnnotation {
+        public final int size;
+        public InlineData(int position, int size) {
+            super(position);
+            this.size = size;
+        }
+        
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "@" + position + ": size=" + size;
+        }
+    }
+
+    /**
+     * Describes a table of signed offsets embedded in the code. The offsets are relative to the starting
+     * address of the table. This type of table maybe generated when translating a multi-way branch
+     * based on a key value from a dense value set (e.g. the {@code tableswitch} JVM instruction).
+     *
+     * The table is indexed by the contiguous range of integers from {@link #low} to {@link #high} inclusive.
+     */
+    public static final class JumpTable extends CodeAnnotation {
+        /**
+         * The low value in the key range (inclusive).
+         */
+        public final int low;
+        
+        /**
+         * The high value in the key range (inclusive).
+         */
+        public final int high;
+        
+        /**
+         * The size (in bytes) of each table entry.
+         */
+        public final int entrySize;
+        
+        public JumpTable(int position, int low, int high, int entrySize) {
+            super(position);
+            this.low = low;
+            this.high = high;
+            this.entrySize = entrySize;
+        }
+        
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "@" + position + ": [" + low + " .. " + high + "]";
+        }
+    }
+    
     /**
      * Represents exception handler information for a specific code position. It includes the catch code position as
      * well as the caught exception type.
@@ -230,8 +311,19 @@ public class CiTargetMethod implements Serializable {
     private int frameSize = -1;
     private int customStackAreaOffset = -1;
     private int registerRestoreEpilogueOffset = -1;
+    
+    /**
+     * The buffer containing the emitted machine code. 
+     */
     private byte[] targetCode;
+    
+    /**
+     * The leading number of bytes in {@link #targetCode} containing the emitted machine code.
+     */
     private int targetCodeSize;
+
+    private ArrayList<CodeAnnotation> annotations;
+    
     private CiAssumptions assumptions;
 
     /**
@@ -395,7 +487,21 @@ public class CiTargetMethod implements Serializable {
         return targetCodeSize;
     }
     
+    /**
+     * @return the code annotations or {@code null} if there are none
+     */
+    public List<CodeAnnotation> annotations() {
+        return annotations;
+    }
 
+    public void addAnnotation(CodeAnnotation annotation) {
+        assert annotation != null;
+        if (annotations == null) {
+            annotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
+        }
+        annotations.add(annotation);
+    }
+    
     private static void appendDebugInfo(StringBuilder sb, CiDebugInfo info) {
         if (info != null && info.hasFrame()) {
             sb.append(" #locals=").append(info.frame().numLocals).append(" #expr=").append(info.frame().numStack);

@@ -44,7 +44,7 @@ public class CirOptimizerTestSetup extends CirCompilerTestSetup {
 
     @Override
     protected void initializeVM() {
-        CompilationScheme.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.BcCompiler.class.getName());
+        RuntimeCompiler.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.BcCompiler.class.getName());
         VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

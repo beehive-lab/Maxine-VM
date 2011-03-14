@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -617,14 +617,14 @@ public class ClassfileWriter {
                 @Override
                 protected void jnicall(int nativeFunctionDescriptorIndex) {
                     final Utf8Constant name = SymbolTable.makeSymbol("callnative_" + nativeFunctionDescriptorIndex);
-                    final ConstantPool pool = codeAttribute.constantPool;
+                    final ConstantPool pool = codeAttribute.cp;
                     final SignatureDescriptor signature = SignatureDescriptor.create(pool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
                     final ClassMethodRefConstant method = PoolConstantFactory.createClassMethodConstant(pool.holder(), name, signature);
                     final int index = cf.indexOf(method);
-                    final int position = bytecodeScanner().currentOpcodePosition();
-                    codeCopy[position] = (byte) Bytecodes.INVOKESTATIC;
-                    codeCopy[position + 1] = (byte) (index >> 8);
-                    codeCopy[position + 2] = (byte) index;
+                    final int bci = bytecodeScanner().currentOpcodeBCI();
+                    codeCopy[bci] = (byte) Bytecodes.INVOKESTATIC;
+                    codeCopy[bci + 1] = (byte) (index >> 8);
+                    codeCopy[bci + 2] = (byte) index;
                 }
             };
             new BytecodeScanner(bytecodeAdapter).scan(new BytecodeBlock(code));
@@ -646,9 +646,9 @@ public class ClassfileWriter {
             cf.writeUnsigned1Array(code);
             cf.writeUnsigned2(exceptionHandlerTable.length);
             for (ExceptionHandlerEntry info : exceptionHandlerTable) {
-                cf.writeUnsigned2(info.startPosition()); // start_pc
-                cf.writeUnsigned2(info.endPosition()); // end_pc
-                cf.writeUnsigned2(info.handlerPosition()); // handler_pc
+                cf.writeUnsigned2(info.startBCI()); // start_pc
+                cf.writeUnsigned2(info.endBCI()); // end_pc
+                cf.writeUnsigned2(info.handlerBCI()); // handler_pc
                 cf.writeUnsigned2(info.catchTypeIndex()); // catch_type
             }
             cf.writeAttributes(attributes);

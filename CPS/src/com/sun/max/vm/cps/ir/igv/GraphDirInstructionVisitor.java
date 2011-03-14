@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -198,6 +198,6 @@ class GraphDirInstructionVisitor extends DirAdapter {
         final GraphWriter.Node node = graph.getNode(dirSafepoint.serial());
         node.getProperties().setProperty("name", "safepoint");
         node.getProperties().setProperty("dump_spec", dirSafepoint.toString());
-        node.getProperties().setProperty("bci", Integer.toString(dirSafepoint.javaFrameDescriptor().bytecodePosition));
+        node.getProperties().setProperty("bci", Integer.toString(dirSafepoint.javaFrameDescriptor().bci));
     }
 }

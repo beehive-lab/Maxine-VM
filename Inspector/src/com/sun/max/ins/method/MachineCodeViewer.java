@@ -74,11 +74,15 @@ public abstract class MachineCodeViewer extends CodeViewer {
                 if (teleCodeAttribute != null) {
                     teleConstantPool = teleCodeAttribute.getTeleConstantPool();
                     ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
-                    localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().constantPool;
+                    localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().cp;
                     for (int index = 0; index < instructionMap.length(); index++) {
                         final int opcode = instructionMap.opcode(index);
                         if (instructionMap.isBytecodeBoundary(index) && opcode >= 0) {
-                            rowToTagText[index] = instructionMap.bytecodeLocation(index).bytecodePosition + ": " + Bytecodes.nameOf(opcode);
+                            if (opcode == Integer.MAX_VALUE) {
+                                rowToTagText[index] = "<epilogue>";
+                            } else {
+                                rowToTagText[index] = instructionMap.bytecodeFrames(index).bci + ": " + Bytecodes.nameOf(opcode);
+                            }
                         } else {
                             rowToTagText[index] = "";
                         }

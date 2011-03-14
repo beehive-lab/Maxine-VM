@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.sun.max.vm.actor.member.*;
  * branch counts, and receiver type and method profiles.
  *
  * Typically the instrumentation code that updates the underlying data is not synchronized,
- * so users of this information should be prepared for the occassional oddity (e.g.
+ * so users of this information should be prepared for the occasional oddity (e.g.
  * branch taken + branch not taken != count of entry of block).
  *
  * This class only stores primitive profiling information in the form of ints--i.e. no Objects.

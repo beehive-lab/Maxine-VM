@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,8 +45,8 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public class SameFrameExtended extends StackMapFrame {
 
-    public SameFrameExtended(int positionDelta) {
-        super(positionDelta);
+    public SameFrameExtended(int bciDelta) {
+        super(bciDelta);
     }
 
     public SameFrameExtended(int frameType, ClassfileStream classfileStream) {
@@ -62,7 +62,7 @@ public class SameFrameExtended extends StackMapFrame {
     @Override
     public void write(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
         stream.writeByte(frameType());
-        stream.writeShort(positionDelta());
+        stream.writeShort(bciDelta());
     }
 
     @Override
@@ -73,6 +73,6 @@ public class SameFrameExtended extends StackMapFrame {
     @Override
     public String toString() {
         return "frame_type = " + frameType() + " /* same_frame_extended */\n" +
-               "  offset_delta = " + positionDelta();
+               "  offset_delta = " + bciDelta();
     }
 }

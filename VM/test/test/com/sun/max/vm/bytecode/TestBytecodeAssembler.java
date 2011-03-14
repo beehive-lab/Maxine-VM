@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import static com.sun.max.vm.classfile.constant.SymbolTable.*;
 import java.io.*;
 import java.lang.reflect.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
@@ -57,7 +58,7 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
      *
      * @param isStatic specifies if the generated class method is static
      * @param className the {@linkplain ClassActor#name() name} of the class actor. If null, then the name will be
-     *            derived from the {@code superClass} parameter provided to {@link #compile(Class)}.
+     *            derived from the {@code superClass} parameter provided to {@link #compile(Class, boolean, CiStatistics)}.
      * @param methodName the {@linkplain Actor#name() name} of the class method actor
      * @param signature the {@linkplain MethodActor#descriptor() signature} of the class method actor
      */
@@ -78,8 +79,8 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
     private final SeekableByteArrayOutputStream codeStream;
 
     @Override
-    protected void setWritePosition(int position) {
-        codeStream.seek(position);
+    protected void setWriteBCI(int bci) {
+        codeStream.seek(bci);
     }
 
     @Override

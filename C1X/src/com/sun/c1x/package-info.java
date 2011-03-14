@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,8 @@
  * C1X is intended to be used with multiple JVM's so makes no use of or reference to classes for a specific JVM, for
  * example Maxine.
  *
- * The compiler is represented by the class {@code C1XCompiler} which is a subclass of the abstract
- * {@link com.sun.cri.ci.CiCompiler} class that defines {@link com.sun.cri.ci.CiCompiler#compileMethod}. {@code
- * C1XCompiler} binds a specific target architecture and JVM interface to produce a usable compiler object. There are
+ * The compiler is represented by the class {@code C1XCompiler}. {@code C1XCompiler} binds a specific target
+ * architecture and JVM interface to produce a usable compiler object. There are
  * two variants of {@code compileMethod}, one of which is used when doing <i>on stack replacement</i> (OSR), discussed
  * later. The main variant takes {@link com.sun.cri.ri.RiMethod} and {@link com.sun.cri.xir.RiXirGenerator} arguments.
  * {@code RiMethod} is C1X's representation of a Java method and {@code RiXirGenerator} represents the interface through
@@ -40,7 +39,7 @@
  *
  * <H3>The C1X Compilation Process</H3>
  *
- * {@link com.sun.cri.ci.CiCompiler#compileMethod} creates a {@link C1XCompilation} instance and then returns the result of calling its
+ * {@link com.sun.c1x.C1XCompiler#compileMethod} creates a {@link C1XCompilation} instance and then returns the result of calling its
  * {@link com.sun.c1x.C1XCompilation#compile} method. The {@code C1XCompilation} instance records whether {@code compileMethod} was invoked with
  * the OSR variant, which is used later in the IR generation.
  * <p>

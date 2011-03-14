@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,9 +49,9 @@ public class SameLocalsOneStack extends StackMapFrame {
 
     private final VerificationType singleStackItem;
 
-    public SameLocalsOneStack(int positionDelta, VerificationType singleStackItem) {
-        super(positionDelta);
-        assert positionDelta >= 0 && positionDelta <= (SAME_LOCALS_1_STACK_ITEM_BOUND - SAME_FRAME_BOUND);
+    public SameLocalsOneStack(int bciDelta, VerificationType singleStackItem) {
+        super(bciDelta);
+        assert bciDelta >= 0 && bciDelta <= (SAME_LOCALS_1_STACK_ITEM_BOUND - SAME_FRAME_BOUND);
         this.singleStackItem = singleStackItem;
     }
 
@@ -74,13 +74,13 @@ public class SameLocalsOneStack extends StackMapFrame {
 
     @Override
     public int frameType() {
-        return SAME_FRAME_BOUND + positionDelta();
+        return SAME_FRAME_BOUND + bciDelta();
     }
 
     @Override
     public String toString() {
         return "frame_type = " + frameType() + " /* same_locals_1_stack_item_frame */\n" +
-               "  offset_delta = " + positionDelta() + " /* implicit */\n" +
+               "  offset_delta = " + bciDelta() + " /* implicit */\n" +
                "  stack = [ " + singleStackItem + " ]";
     }
 }

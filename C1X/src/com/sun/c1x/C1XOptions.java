@@ -146,11 +146,14 @@ public final class C1XOptions {
     public static boolean GenSpecialDivChecks           = ____;
     public static boolean GenAssertionCode              = ____;
     public static boolean GenFinalizerRegistration      = true;
-    public static boolean GenTableRanges                = ____;
     public static boolean AlignCallsForPatching         = true;
     public static boolean NullCheckUniquePc             = ____;
     public static boolean InvokeSnippetAfterArguments   = ____;
-    public static boolean ResolveClassBeforStaticInvoke = ____;
+    public static boolean ResolveClassBeforeStaticInvoke = ____;
+
+    // Translating tableswitch instructions
+    public static int     SequentialSwitchLimit         = 4;
+    public static int     RangeTestsSwitchDensity       = 5;
 
     public static int     InitialCodeBufferSize         = 232;
     public static boolean DetailedAsserts               = true;

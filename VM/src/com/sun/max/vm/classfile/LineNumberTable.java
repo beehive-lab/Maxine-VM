@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,19 +42,19 @@ public final class LineNumberTable {
 
     public static final class Entry {
 
-        private final char position;
+        private final char bci;
         private final char lineNumber;
 
-        public int position() {
-            return position;
+        public int bci() {
+            return bci;
         }
 
         public int lineNumber() {
             return lineNumber;
         }
 
-        public Entry(char position, char lineNumber) {
-            this.position = position;
+        public Entry(char bci, char lineNumber) {
+            this.bci = bci;
             this.lineNumber = lineNumber;
         }
     }
@@ -72,7 +72,7 @@ public final class LineNumberTable {
         return entries;
     }
 
-    public LineNumberTable relocate(OpcodePositionRelocator relocator) {
+    public LineNumberTable relocate(OpcodeBCIRelocator relocator) {
         if (encodedEntries.length == 0) {
             return this;
         }
@@ -103,12 +103,12 @@ public final class LineNumberTable {
             encodedEntries = Arrays.copyOf(prefix.encodedEntries, encodedIndex + (length * 2));
         }
         for (int i = 0; i != length; ++i) {
-            final char position = (char) classfileStream.readUnsigned2();
+            final char bci = (char) classfileStream.readUnsigned2();
             final char lineNumber = (char) classfileStream.readUnsigned2();
-            if (position >= codeLength) {
+            if (bci >= codeLength) {
                 throw classFormatError("Invalid address in LineNumberTable entry " + i);
             }
-            encodedEntries[encodedIndex++] = position;
+            encodedEntries[encodedIndex++] = bci;
             encodedEntries[encodedIndex++] = lineNumber;
         }
     }
@@ -117,24 +117,24 @@ public final class LineNumberTable {
         encodedEntries = new char[entries.length * 2];
         int encodedIndex = 0;
         for (Entry entry : entries) {
-            encodedEntries[encodedIndex++] = entry.position;
+            encodedEntries[encodedIndex++] = entry.bci;
             encodedEntries[encodedIndex++] = entry.lineNumber;
         }
     }
 
     /**
-     * Gets the source line number corresponding to a given bytecode position.
+     * Gets the source line number corresponding to a given BCI.
      *
-     * @param bytecodePosition
-     * @return -1 if this line number table does not containing a source line mapping for {@code bytecodePosition}
+     * @param bci
+     * @return -1 if this line number table does not containing a source line mapping for {@code bci}
      */
-    public int findLineNumber(int bytecodePosition) {
+    public int findLineNumber(int bci) {
         int lineNumber = -1;
         if (encodedEntries.length != 0) {
             int index = 0;
             while (index != encodedEntries.length) {
-                final int position = encodedEntries[index++];
-                if (position > bytecodePosition) {
+                final int e = encodedEntries[index++];
+                if (e > bci) {
                     break;
                 }
                 lineNumber = encodedEntries[index++];

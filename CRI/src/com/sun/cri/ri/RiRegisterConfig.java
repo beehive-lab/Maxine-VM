@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,7 @@ public interface RiRegisterConfig {
     CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target);
     
     /**
-     * Gets the complete set of registers that are can be used to pass parameters
+     * Gets the ordered set of registers that are can be used to pass parameters
      * according to a given calling convention.
      * 
      * @param type the type of calling convention

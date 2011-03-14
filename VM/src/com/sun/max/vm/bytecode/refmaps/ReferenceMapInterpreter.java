@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.types.*;
 
 /**
- * An abstract interpreter for computing the reference map for the local variables and operand stack at any position in
+ * An abstract interpreter for computing the reference map for the local variables and operand stack at any BCI in
  * a method. Each concrete interpreter denotes if it is suitable for use in an
  * {@linkplain #performsAllocation() allocation free} context such as during a garbage collection.
  *
@@ -63,8 +63,7 @@ public abstract class ReferenceMapInterpreter {
      * interpreter which can be retrieved by calling {@link #from(Object)} on the returned value.
      */
     public static Object createFrames(ReferenceMapInterpreterContext context) {
-        final ClassMethodActor classMethodActor = context.classMethodActor();
-        final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
+        final CodeAttribute codeAttribute = context.codeAttribute();
         final int maxStack = codeAttribute.maxStack;
         final int maxLocals = codeAttribute.maxLocals;
         final ReferenceMapInterpreter interpreter;
@@ -94,7 +93,7 @@ public abstract class ReferenceMapInterpreter {
     private ConstantPool constantPool;
     private CodeAttribute codeAttribute;
     private byte[] code;
-    private int bytecodePosition;
+    private int bci;
     private int sp;
 
     private ReferenceMapInterpreterContext context;
@@ -119,7 +118,7 @@ public abstract class ReferenceMapInterpreter {
      * Determines if a given {@linkplain VerificationType verification type} denotes a reference type. This method is
      * necessary as the verification type hierarchy does not model the special {@linkplain Word word} types. Decoding of
      * a verification type occurs in the context of a method as certain verification types refer to the constant pool
-     * and bytecode positions of the method.
+     * and BCIs of the method.
      *
      * @param receiverTypeIsWord specifies if the type of 'this' in the enclosing context is a Word type. If the
      *            enclosing context is a static method, this value will be {@code false}.
@@ -133,8 +132,8 @@ public abstract class ReferenceMapInterpreter {
             return !receiverTypeIsWord;
         } else if (VerificationType.UNINITIALIZED.isAssignableFrom(type)) {
             final UninitializedNewType uninitializedNewType = (UninitializedNewType) type;
-            final int positionOfNew = uninitializedNewType.position();
-            final int constantPoolIndex = ((code[positionOfNew + 1] & 0xFF) << 8) | (code[positionOfNew + 2] & 0xFF);
+            final int bciOfNew = uninitializedNewType.bci();
+            final int constantPoolIndex = ((code[bciOfNew + 1] & 0xFF) << 8) | (code[bciOfNew + 2] & 0xFF);
             final TypeDescriptor typeDescriptor = constantPool.classAt(constantPoolIndex).typeDescriptor();
             return typeDescriptor.toKind().isReference;
         } else if (VerificationType.REFERENCE.isAssignableFrom(type)) {
@@ -154,9 +153,6 @@ public abstract class ReferenceMapInterpreter {
         return merge(targetBlock1Index) | merge(targetBlock2Index);
     }
 
-    // Keeping this info around for debugging:
-    private ClassMethodActor classMethodActor;
-
     /**
      * Performs any initialization necessary before interpretation begins.
      * <p>
@@ -165,14 +161,13 @@ public abstract class ReferenceMapInterpreter {
      * call {@code super.resetInterpreter(context)}.
      */
     protected void resetInterpreter(ReferenceMapInterpreterContext context) {
-        this.classMethodActor = context.classMethodActor();
-        final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        this.constantPool = codeAttribute.constantPool;
+        final CodeAttribute codeAttribute = context.codeAttribute();
+        this.constantPool = codeAttribute.cp;
         this.codeAttribute = codeAttribute;
         this.code = codeAttribute.code();
         this.context = context;
         this.sp = 0;
-        this.bytecodePosition = -1;
+        this.bci = -1;
     }
 
     /**
@@ -291,12 +286,12 @@ public abstract class ReferenceMapInterpreter {
             return VerificationType.OBJECT;
         }
 
-        public Subroutine getSubroutine(int entryPosition, int maxLocals) {
+        public Subroutine getSubroutine(int entryBCI, int maxLocals) {
             throw ProgramError.unexpected();
         }
 
-        public UninitializedNewType getUninitializedNewType(int position) {
-            return new UninitializedNewType(position);
+        public UninitializedNewType getUninitializedNewType(int bci) {
+            return new UninitializedNewType(bci);
         }
 
         public VerificationType getVerificationType(TypeDescriptor typeDescriptor) {
@@ -336,19 +331,19 @@ public abstract class ReferenceMapInterpreter {
 
         if (stackMapTable != null) {
             final StackMapFrame[] stackMapFrames = stackMapTable.getFrames(framesInitialization);
-            int previousFramePosition = -1;
+            int previousFrameBCI = -1;
             for (int frameIndex = 0; frameIndex != stackMapFrames.length; ++frameIndex) {
                 final StackMapFrame stackMapFrame = stackMapFrames[frameIndex];
                 stackMapFrame.applyTo(framesInitialization);
-                final int position = stackMapFrame.getPosition(previousFramePosition);
-                final int blockIndex = context.blockIndexFor(position);
-                final int blockStartBytecodePosition = context.blockStartBytecodePosition(blockIndex);
-                if (position == blockStartBytecodePosition) {
+                final int bci = stackMapFrame.getBCI(previousFrameBCI);
+                final int blockIndex = context.blockIndexFor(bci);
+                final int blockStartBCI = context.blockStartBCI(blockIndex);
+                if (bci == blockStartBCI) {
                     merge(blockIndex);
                 } else {
-                    //ProgramWarning.message("Ignoring StackMapTable frame for non-block start position: " + position);
+                    //ProgramWarning.message("Ignoring StackMapTable frame for non-block start BCI: " + bci);
                 }
-                previousFramePosition = position;
+                previousFrameBCI = bci;
             }
         }
         final Object frames = frames();
@@ -410,19 +405,19 @@ public abstract class ReferenceMapInterpreter {
     }
 
     /**
-     * Perform interpretation of the basic blocks containing the bytecode positions yielded by a given bytecode position
+     * Perform interpretation of the basic blocks containing the BCIs yielded by a given BCI
      * iterator.
      * <p>
      * If {@link #performsAllocation()} returns {@code false} for this interpreter, then this method is guaranteed not
      * to perform any allocation.
      *
      * @param context the interpretation context for a method
-     * @param visitor the visitor to notify of reference slots in the frame state at the bytecode positions yielded by
-     *            {@code bytecodePositionIterator}
-     * @param bytecodePositionIterator the bytecode positions at which {@code visitor} should notified of the references
+     * @param visitor the visitor to notify of reference slots in the frame state at the BCIs yielded by
+     *            {@code bciIter}
+     * @param bciIter the BCIs at which {@code visitor} should notified of the references
      *            in the abstract interpretation state
      */
-    public void interpretReferenceSlots(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, BytecodePositionIterator bytecodePositionIterator) {
+    public void interpretReferenceSlots(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, BCIIterator bciIter) {
         boolean trace = traceRefMapInterpretation(context.classMethodActor());
         if (trace) {
             Log.print("Interpreting ref slots for ");
@@ -432,13 +427,13 @@ public abstract class ReferenceMapInterpreter {
         assert this.context == null;
         resetInterpreter(context);
 
-        bytecodePositionIterator.reset();
-        for (int bci = bytecodePositionIterator.bytecodePosition(); bci != -1; bci = bytecodePositionIterator.bytecodePosition()) {
+        bciIter.reset();
+        for (int bci = bciIter.bci(); bci != -1; bci = bciIter.bci()) {
             final int blockIndex = blockIndexFor(bci);
             if (!isFrameInitialized(blockIndex)) {
-                bytecodePositionIterator.next();
+                bciIter.next();
             } else {
-                interpretBlock(blockIndex, bytecodePositionIterator, visitor, trace);
+                interpretBlock(blockIndex, bciIter, visitor, trace);
             }
         }
 
@@ -549,22 +544,22 @@ public abstract class ReferenceMapInterpreter {
     abstract void updateLocal(int index, boolean isRef);
 
     private void skip1() {
-        bytecodePosition++;
+        bci++;
     }
 
     private void skip2() {
-        bytecodePosition += 2;
+        bci += 2;
     }
 
-    private void alignBytecodePosition() {
-        final int remainder = bytecodePosition % 4;
+    private void alignBCI() {
+        final int remainder = bci % 4;
         if (remainder != 0) {
-            bytecodePosition += 4 - remainder;
+            bci += 4 - remainder;
         }
     }
 
     private byte readByte() {
-        return code[bytecodePosition++];
+        return code[bci++];
     }
 
     private int readUnsigned1() {
@@ -591,7 +586,7 @@ public abstract class ReferenceMapInterpreter {
         return b3 | b2 | b1 | b0;
     }
 
-    private void visitReferencesAtCurrentBytecodePosition(ReferenceSlotVisitor visitor, boolean parametersPopped) {
+    private void visitReferencesAtCurrentBCI(ReferenceSlotVisitor visitor, boolean parametersPopped) {
         if (!parametersPopped) {
             for (int i = 0; i < maxLocals(); i++) {
                 if (isLocalRef(i)) {
@@ -606,12 +601,12 @@ public abstract class ReferenceMapInterpreter {
         }
     }
 
-    private int blockIndexFor(int bytecodePosition) {
-        return context.blockIndexFor(bytecodePosition);
+    private int blockIndexFor(int bci) {
+        return context.blockIndexFor(bci);
     }
 
-    private int blockStartBytecodePosition(int blockIndex) {
-        return context.blockStartBytecodePosition(blockIndex);
+    private int blockStartBCI(int blockIndex) {
+        return context.blockStartBCI(blockIndex);
     }
 
     /**
@@ -629,9 +624,9 @@ public abstract class ReferenceMapInterpreter {
      * @return true if the entry state of a control flow successor of this block was modified as a result of the
      *         interpretation
      */
-    private boolean interpretBlock(int blockIndex, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor, boolean trace) {
+    private boolean interpretBlock(int blockIndex, BCIIterator bciIter, ReferenceSlotVisitor visitor, boolean trace) {
         final int sp = resetAtBlock(blockIndex);
-        return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, trace);
+        return interpretBlock0(blockIndex, sp, bciIter, visitor, trace);
     }
 
     /**
@@ -642,28 +637,28 @@ public abstract class ReferenceMapInterpreter {
      */
     abstract int resetAtBlock(int blockIndex);
 
-    private boolean mergeWithExceptionHandlers(int bytecodePosition) {
+    private boolean mergeWithExceptionHandlers(int bci) {
         boolean changed = false;
-        for (ExceptionHandler handler = context.exceptionHandlersActiveAt(bytecodePosition); handler != null; handler = handler.next()) {
-            changed = mergeInto(blockIndexFor(handler.position()), -1) || changed;
+        for (ExceptionHandler handler = context.exceptionHandlersActiveAt(bci); handler != null; handler = handler.next()) {
+            changed = mergeInto(blockIndexFor(handler.bci()), -1) || changed;
         }
         return changed;
     }
 
-//    private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor, boolean trace) {
+//    private boolean interpretBlock0(int blockIndex, int sp, BCIIterator bciIter, ReferenceSlotVisitor visitor, boolean trace) {
 //        if (MaxineVM.isHosted()) {
 //            // This indirection is simply for debugging the interpreter loop.
 //            try {
-//                return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
+//                return interpretBlock0(blockIndex, sp, bciIter, visitor, false);
 //            } catch (Throwable e) {
 //                System.err.println("Re-interpreting block after error: ");
 //                e.printStackTrace();
 //                System.err.println(context);
 //                CodeAttributePrinter.print(System.err, codeAttribute);
-//                return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, true);
+//                return interpretBlock0(blockIndex, sp, bciIter, visitor, true);
 //            }
 //        }
-//        return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, true);
+//        return interpretBlock0(blockIndex, sp, bciIter, visitor, true);
 //    }
 
     @HOSTED_ONLY
@@ -730,16 +725,16 @@ public abstract class ReferenceMapInterpreter {
      *         interpretation
      */
     @INLINE
-    private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor, boolean trace) {
+    private boolean interpretBlock0(int blockIndex, int sp, BCIIterator bciIter, ReferenceSlotVisitor visitor, boolean trace) {
         assert sp >= 0;
-        bytecodePosition = blockStartBytecodePosition(blockIndex);
+        bci = blockStartBCI(blockIndex);
         this.sp = sp;
-        final int endPosition = blockStartBytecodePosition(blockIndex + 1);
+        final int endBCI = blockStartBCI(blockIndex + 1);
         int opcode = -1;
-        int opcodeBytecodePosition;
+        int opcodeBCI;
         boolean changed = false;
 
-        int searchBytecodePosition = bytecodePositionIterator == null ? -1 : bytecodePositionIterator.bytecodePosition();
+        int searchBCI = bciIter == null ? -1 : bciIter.bci();
 
         if (trace) {
             Log.print("Interpreting block ");
@@ -747,25 +742,25 @@ public abstract class ReferenceMapInterpreter {
             Log.print(", sp=");
             Log.print(sp);
             Log.print(", search bci=");
-            Log.println(searchBytecodePosition);
+            Log.println(searchBCI);
         }
 
-        while (bytecodePosition != endPosition) {
-            opcodeBytecodePosition = bytecodePosition;
-            changed = mergeWithExceptionHandlers(opcodeBytecodePosition) || changed;
+        while (bci != endBCI) {
+            opcodeBCI = bci;
+            changed = mergeWithExceptionHandlers(opcodeBCI) || changed;
 
-            final boolean atSearchPosition = opcodeBytecodePosition == searchBytecodePosition;
+            final boolean atSearchBCI = opcodeBCI == searchBCI;
             opcode = readUnsigned1();
 
-            if (atSearchPosition) {
+            if (atSearchBCI) {
                 // Record BEFORE popping invoke parameters,
                 // because this is not the JIT-to-JIT call yet.
-                visitReferencesAtCurrentBytecodePosition(visitor, false);
+                visitReferencesAtCurrentBCI(visitor, false);
             }
 
             if (trace) {
                 logCurrentFrame();
-                Log.print(opcodeBytecodePosition);
+                Log.print(opcodeBCI);
                 Log.print(":  ");
                 Log.println(Bytecodes.baseNameOf(opcode));
             }
@@ -1142,11 +1137,11 @@ public abstract class ReferenceMapInterpreter {
                 case IFLE: {
                     popCategory1();
                     final int offset = readSigned2();
-                    final int targetBytecodePosition = opcodeBytecodePosition + offset;
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    final int targetBCI = opcodeBCI + offset;
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
-                    return merge(blockIndexFor(targetBytecodePosition), blockIndex + 1);
+                    return merge(blockIndexFor(targetBCI), blockIndex + 1);
                 }
                 case IF_ICMPEQ:
                 case IF_ICMPNE:
@@ -1159,27 +1154,27 @@ public abstract class ReferenceMapInterpreter {
                     popCategory1();
                     popCategory1();
                     final int offset = readSigned2();
-                    final int targetBytecodePosition = opcodeBytecodePosition + offset;
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    final int targetBCI = opcodeBCI + offset;
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
-                    return merge(blockIndexFor(targetBytecodePosition), blockIndex + 1);
+                    return merge(blockIndexFor(targetBCI), blockIndex + 1);
                 }
                 case GOTO: {
                     final int offset = readSigned2();
-                    final int targetBytecodePosition = opcodeBytecodePosition + offset;
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    final int targetBCI = opcodeBCI + offset;
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
-                    return merge(blockIndexFor(targetBytecodePosition));
+                    return merge(blockIndexFor(targetBCI));
                 }
                 case GOTO_W: {
                     final int offset = readSigned4();
-                    final int targetBytecodePosition = opcodeBytecodePosition + offset;
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    final int targetBCI = opcodeBCI + offset;
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
-                    return merge(blockIndexFor(targetBytecodePosition));
+                    return merge(blockIndexFor(targetBCI));
                 }
                 case JSR_W:
                 case JSR:
@@ -1188,32 +1183,32 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case TABLESWITCH: {
                     popCategory1();
-                    alignBytecodePosition();
+                    alignBCI();
                     final int defaultOffset = readSigned4();
                     final int lowMatch = readSigned4();
                     final int highMatch = readSigned4();
                     final int numberOfCases = highMatch - lowMatch + 1;
-                    changed = merge(blockIndexFor(opcodeBytecodePosition + defaultOffset));
+                    changed = merge(blockIndexFor(opcodeBCI + defaultOffset));
                     for (int i = 0; i < numberOfCases; i++) {
-                        changed = merge(blockIndexFor(opcodeBytecodePosition + readSigned4())) || changed;
+                        changed = merge(blockIndexFor(opcodeBCI + readSigned4())) || changed;
                     }
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
                     return changed;
                 }
                 case LOOKUPSWITCH: {
                     popCategory1();
-                    alignBytecodePosition();
+                    alignBCI();
                     final int defaultOffset = readSigned4();
                     final int numberOfCases = readSigned4();
-                    changed = merge(blockIndexFor(opcodeBytecodePosition + defaultOffset));
+                    changed = merge(blockIndexFor(opcodeBCI + defaultOffset));
                     for (int i = 0; i < numberOfCases; i++) {
                         readSigned4();
-                        changed = merge(blockIndexFor(opcodeBytecodePosition + readSigned4())) || changed;
+                        changed = merge(blockIndexFor(opcodeBCI + readSigned4())) || changed;
                     }
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
                     return changed;
                 }
@@ -1223,8 +1218,8 @@ public abstract class ReferenceMapInterpreter {
                 case ARETURN:
                 {
                     popCategory1();
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
                     return changed;
                 }
@@ -1232,14 +1227,14 @@ public abstract class ReferenceMapInterpreter {
                 case DRETURN:
                 {
                     popCategory2();
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
                     return changed;
                 }
                 case RETURN: {
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
                     return changed;
                 }
@@ -1311,15 +1306,15 @@ public abstract class ReferenceMapInterpreter {
                     }
                     // Pop the last synthetic parameter which is the native function address
                     popCategory1();
-                    if (atSearchPosition) {
-                        visitReferencesAtCurrentBytecodePosition(visitor, true);
+                    if (atSearchBCI) {
+                        visitReferencesAtCurrentBCI(visitor, true);
                     }
 
                     push(methodSignature.resultKind());
                     break;
                 }
 
-                case CALL:
+                case TEMPLATE_CALL:
                 case INVOKESPECIAL:
                 case INVOKEVIRTUAL:
                 case INVOKEINTERFACE:
@@ -1334,15 +1329,15 @@ public abstract class ReferenceMapInterpreter {
                         final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
                         pop(parameter.toKind());
                     }
-                    if (opcode != Bytecodes.INVOKESTATIC && opcode != CALL) {
+                    if (opcode != Bytecodes.INVOKESTATIC && opcode != TEMPLATE_CALL) {
                         popCategory1(); // receiver
                     }
 
-                    if (atSearchPosition) {
+                    if (atSearchBCI) {
                         // Record AFTER popping the parameters.
                         // They will be accounted for in the callee frame,
                         // with potentially different stack slot kinds - see JVM spec.
-                        visitReferencesAtCurrentBytecodePosition(visitor, true);
+                        visitReferencesAtCurrentBCI(visitor, true);
                     }
 
                     push(methodSignature.resultKind());
@@ -1372,8 +1367,8 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case ATHROW: {
                     popCategory1();
-                    if (atSearchPosition) {
-                        bytecodePositionIterator.next();
+                    if (atSearchBCI) {
+                        bciIter.next();
                     }
                     return changed;
                 }
@@ -1755,9 +1750,9 @@ public abstract class ReferenceMapInterpreter {
                 }
             }
 
-            if (atSearchPosition) {
-                searchBytecodePosition = bytecodePositionIterator.next();
-                if (searchBytecodePosition == -1 || searchBytecodePosition >= endPosition) {
+            if (atSearchBCI) {
+                searchBCI = bciIter.next();
+                if (searchBCI == -1 || searchBCI >= endBCI) {
                     return false;
                 }
             }

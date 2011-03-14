@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,16 +75,16 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     protected final Frame frame;
 
     /**
-     * A map from each bytecode position to the {@linkplain Frame frame state} recorded (in a
-     * {@link StackMapTable}) at that position. A null entry means that there is no recorded stack map frame at
-     * that position.
+     * A map from each BCI to the {@linkplain Frame frame state} recorded (in a
+     * {@link StackMapTable}) at that BCI. A null entry means that there is no recorded stack map frame at
+     * that BCI.
      */
     protected final Frame[] frameMap;
 
     protected final ExceptionHandler[] exceptionHandlerMap;
 
     /**
-     * A bit map indicating the bytecode positions at which an instruction starts.
+     * A bit map indicating the BCIs at which an instruction starts.
      */
     private final boolean[] opcodeMap;
 
@@ -126,20 +126,20 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         if (stackMapTable != null) {
             final StackMapFrame[] stackMapFrames = stackMapTable.getFrames(classVerifier);
-            int previousFramePosition = -1;
+            int previousFrameBCI = -1;
             Frame previousFrame = initialFrame;
             for (int frameIndex = 0; frameIndex != stackMapFrames.length; ++frameIndex) {
                 final Frame frame = previousFrame.copy();
                 final StackMapFrame stackMapFrame = stackMapFrames[frameIndex];
                 stackMapFrame.applyTo(frame);
-                final int position = stackMapFrame.getPosition(previousFramePosition);
+                final int bci = stackMapFrame.getBCI(previousFrameBCI);
                 try {
-                    frameMap[position] = frame;
+                    frameMap[bci] = frame;
                 } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-                    verifyError("Invalid bytecode position (" + position + ") in frame " + frameIndex + " of StackMapTable attribute");
+                    verifyError("Invalid BCI (" + bci + ") in frame " + frameIndex + " of StackMapTable attribute");
                 }
                 previousFrame = frame;
-                previousFramePosition = position;
+                previousFrameBCI = bci;
             }
         }
         return frameMap;
@@ -165,76 +165,76 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             final VerificationType catchType = classVerifier().getObjectType(constantPool().classAt(catchTypeIndex).typeDescriptor());
             verifyIsAssignable(catchType, THROWABLE, "Invalid catch type in exception handler");
         }
-        verifyIsValidInstructionPosition(info.handlerPosition(), "handler_pc in exception handler");
-        verifyIsValidInstructionPosition(info.startPosition(), "start_pc in exception handler");
-        if (info.endPosition() != codeAttribute().code().length) {
-            verifyIsValidInstructionPosition(info.endPosition(), "end_pc in exception handler");
+        verifyIsValidInstructionBCI(info.handlerBCI(), "handler_pc in exception handler");
+        verifyIsValidInstructionBCI(info.startBCI(), "start_pc in exception handler");
+        if (info.endBCI() != codeAttribute().code().length) {
+            verifyIsValidInstructionBCI(info.endBCI(), "end_pc in exception handler");
         }
-        if (info.startPosition() >= info.endPosition()) {
-            verifyError("Exception handler has a start_pc (" + info.startPosition() + ") not less than end_pc (" + info.endPosition() + ")");
+        if (info.startBCI() >= info.endBCI()) {
+            verifyError("Exception handler has a start_pc (" + info.startBCI() + ") not less than end_pc (" + info.endBCI() + ")");
         }
     }
 
     private void verifyStackMapTable() {
-        for (int position = 0; position != frameMap.length; ++position) {
-            final Frame recordedFrame = frameMap[position];
+        for (int bci = 0; bci != frameMap.length; ++bci) {
+            final Frame recordedFrame = frameMap[bci];
             if (recordedFrame != null) {
-                if (!opcodeMap[position]) {
-                    verifyError("Offset (" +  position + ") in a frame of the StackMapTable attribute does not point to an instruction");
+                if (!opcodeMap[bci]) {
+                    verifyError("Offset (" +  bci + ") in a frame of the StackMapTable attribute does not point to an instruction");
                 }
             }
         }
     }
 
-    protected void verifyIsValidInstructionPosition(int position, String positionDescription) {
+    protected void verifyIsValidInstructionBCI(int bci, String bciDescription) {
         try {
-            if (opcodeMap[position]) {
+            if (opcodeMap[bci]) {
                 return;
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
         }
-        verifyError("Invalid bytecode position " + position + "(" + positionDescription + ")");
+        verifyError("Invalid BCI " + bci + "(" + bciDescription + ")");
     }
 
     /**
-     * Gets the frame at a given bytecode position.
+     * Gets the frame at a given BCI.
      *
-     * @param targetDescription if there is not a recorded frame at {@code position}, then a verification error will be
+     * @param targetDescription if there is not a recorded frame at {@code bci}, then a verification error will be
      *            raised and its detail message will incorporate this description of the location for which a frame
      *            should have existed
      */
-    protected Frame frameAt(int position, String targetDescription) {
+    protected Frame frameAt(int bci, String targetDescription) {
         try {
-            final Frame frame = frameMap[position];
+            final Frame frame = frameMap[bci];
             if (frame != null) {
                 return frame;
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
         }
-        throw fatalVerifyError("Missing stackmap frame for bytecode position " + position + " (" + targetDescription + ")");
+        throw fatalVerifyError("Missing stackmap frame for BCI " + bci + " (" + targetDescription + ")");
     }
 
     @Override
-    public int currentOpcodePosition() {
-        return interpreter.currentOpcodePosition();
+    public int currentOpcodeBCI() {
+        return interpreter.currentOpcodeBCI();
     }
 
     /**
      * Called after an opcode has been decoded but before the relevant opcode visitor method is called.
      */
     protected void preInstructionScan() {
-        final int currentOpcodePosition = currentOpcodePosition();
+        final int currentOpcodeBCI = currentOpcodeBCI();
 
         if (!fallsThrough) {
-            final Frame targetFrame = frameAt(currentOpcodePosition, "instruction can only be reached by a branch");
+            final Frame targetFrame = frameAt(currentOpcodeBCI, "instruction can only be reached by a branch");
             if (targetFrame != frame) {
                 frame.reset(targetFrame);
             }
         } else {
-            if (currentOpcodePosition < frameMap.length) {
-                final Frame recordedFrame = frameMap[currentOpcodePosition];
+            if (currentOpcodeBCI < frameMap.length) {
+                final Frame recordedFrame = frameMap[currentOpcodeBCI];
                 if (recordedFrame != null) {
-                    recordedFrame.mergeFrom(frame, currentOpcodePosition, -1);
+                    recordedFrame.mergeFrom(frame, currentOpcodeBCI, -1);
                     frame.reset(recordedFrame);
                 }
             }
@@ -242,16 +242,16 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         if (verbose) {
             Log.println(Strings.indent(frame.toString(), "    "));
-            Log.println(currentOpcodePosition + ": " + Bytecodes.nameOf(interpreter.currentOpcode()));
+            Log.println(currentOpcodeBCI + ": " + Bytecodes.nameOf(interpreter.currentOpcode()));
             Log.println();
         }
 
-        opcodeMap[currentOpcodePosition] = true;
+        opcodeMap[currentOpcodeBCI] = true;
 
-        for (ExceptionHandler handler = exceptionHandlerMap[currentOpcodePosition]; handler != null; handler = handler.next()) {
-            final int handlerPosition = handler.position();
-            final Frame handlerEntryFrame = frameAt(handlerPosition, "exception handler entry point");
-            handlerEntryFrame.mergeFrom(frame, handlerPosition, handler.catchTypeIndex());
+        for (ExceptionHandler handler = exceptionHandlerMap[currentOpcodeBCI]; handler != null; handler = handler.next()) {
+            final int handlerBCI = handler.bci();
+            final Frame handlerEntryFrame = frameAt(handlerBCI, "exception handler entry point");
+            handlerEntryFrame.mergeFrom(frame, handlerBCI, handler.catchTypeIndex());
         }
 
         fallsThrough = true;
@@ -325,22 +325,22 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
      * Verifies that the current type state is {@linkplain Frame#mergeInto(Frame, int) compatible} with the type state
      * at the destination of a control flow instruction.
      *
-     * @param position the destination of a control flow instruction
+     * @param bci the destination of a control flow instruction
      */
-    protected void performBranch(int position) {
-        final Frame targetFrame = frameAt(position, "branch target");
-        targetFrame.mergeFrom(frame, position, -1);
+    protected void performBranch(int bci) {
+        final Frame targetFrame = frameAt(bci, "branch target");
+        targetFrame.mergeFrom(frame, bci, -1);
     }
 
     protected void performIfCompareBranch(int offset, VerificationType type) {
         frame.pop(type);
         frame.pop(type);
-        performBranch(currentOpcodePosition() + offset);
+        performBranch(currentOpcodeBCI() + offset);
     }
 
     void performIfBranch(int offset, VerificationType type) {
         frame.pop(type);
-        performBranch(currentOpcodePosition() + offset);
+        performBranch(currentOpcodeBCI() + offset);
     }
 
     protected void performStore(VerificationType type, int index) {
@@ -970,7 +970,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void goto_(int offset) {
-            performBranch(currentOpcodePosition() + offset);
+            performBranch(currentOpcodeBCI() + offset);
             fallsThrough = false;
         }
 
@@ -1285,7 +1285,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 // Java source compiler will produce such code. As such, the instruction is
                 // re-written to use invokevirtual instead.
                 final byte[] code = bytecodeScanner().bytecodeBlock().code();
-                code[bytecodeScanner().currentOpcodePosition()] = (byte) Bytecodes.INVOKEVIRTUAL;
+                code[bytecodeScanner().currentOpcodeBCI()] = (byte) Bytecodes.INVOKEVIRTUAL;
             }
 
             pushMethodResult(methodSignature);
@@ -1320,7 +1320,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
                 if (uninitializedObject instanceof UninitializedNewType) {
                     final UninitializedNewType object = (UninitializedNewType) uninitializedObject;
-                    initializedObject = getObjectType(getTypeDescriptorFromNewBytecode(object.position()));
+                    initializedObject = getObjectType(getTypeDescriptorFromNewBytecode(object.bci()));
                 } else {
                     assert uninitializedObject instanceof UninitializedThisType;
                     initializedObject = getObjectType(classActor().typeDescriptor);
@@ -1344,15 +1344,15 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         }
 
         /**
-         * Gets the type of object constructed by a {@link Bytecodes#NEW} instruction at a given position.
+         * Gets the type of object constructed by a {@link Bytecodes#NEW} instruction at a given BCI.
          */
-        private TypeDescriptor getTypeDescriptorFromNewBytecode(int position) {
+        private TypeDescriptor getTypeDescriptorFromNewBytecode(int bci) {
             final byte[] bytecodes = bytecodeScanner().bytecodeBlock().code();
             try {
-                final int constantPoolIndex = ((bytecodes[position + 1] & 0xFF) << 8) | (bytecodes[position + 2] & 0xFF);
+                final int constantPoolIndex = ((bytecodes[bci + 1] & 0xFF) << 8) | (bytecodes[bci + 2] & 0xFF);
                 return constantPool().classAt(constantPoolIndex).typeDescriptor();
             } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-                throw fatalVerifyError("Invalid NEW instruction at bytecode position " + position);
+                throw fatalVerifyError("Invalid NEW instruction at BCI " + bci);
             }
         }
 
@@ -1586,7 +1586,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         @Override
         public void lookupswitch(int defaultOffset, int numberOfCases) {
             frame.pop(INTEGER);
-            performBranch(currentOpcodePosition() + defaultOffset);
+            performBranch(currentOpcodeBCI() + defaultOffset);
             final BytecodeScanner scanner = bytecodeScanner();
             int lastMatch = 0;
             for (int i = 0; i < numberOfCases; i++) {
@@ -1595,7 +1595,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 if (i > 0 && match < lastMatch) {
                     verifyError("Unordered lookupswitch (case " + i + " < case " + (i - 1) + ")");
                 }
-                performBranch(currentOpcodePosition() + offset);
+                performBranch(currentOpcodeBCI() + offset);
                 lastMatch = match;
             }
             fallsThrough = false;
@@ -1707,7 +1707,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void new_(int index) {
-            final UninitializedNewType value = classVerifier().getUninitializedNewType(currentOpcodePosition());
+            final UninitializedNewType value = classVerifier().getUninitializedNewType(currentOpcodeBCI());
             if (frame.isTypeOnStack(value)) {
                 verifyError("Uninitialized type already exists on the stack: " + value);
             }
@@ -1805,10 +1805,10 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             if (lowMatch > highMatch) {
                 verifyError("Low match greater than high match in TABLESWITCH: " + lowMatch + " > " + highMatch);
             }
-            performBranch(currentOpcodePosition() + defaultOffset);
+            performBranch(currentOpcodeBCI() + defaultOffset);
             final BytecodeScanner scanner = bytecodeScanner();
             for (int i = 0; i < numberOfCases; i++) {
-                performBranch(currentOpcodePosition() + scanner.readSwitchOffset());
+                performBranch(currentOpcodeBCI() + scanner.readSwitchOffset());
             }
 
             fallsThrough = false;
@@ -1970,7 +1970,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     jnicall(operand);
                     break;
                 }
-                case CALL: {
+                case TEMPLATE_CALL: {
                     final MethodRefConstant methodConstant = constantPool().methodAt(operand);
                     final SignatureDescriptor methodSignature = methodConstant.signature(constantPool());
                     popMethodParameters(methodSignature);
@@ -2012,6 +2012,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case ALLOCA             : frame.pop(INTEGER); frame.push(WORD); break;
                 case ALLOCSTKVAR        : performAllocStkVar(); break;
 
+                case INCREG             : frame.pop(INTEGER); break;
                 case READREG            : frame.push(WORD); break;
                 case WRITEREG           : frame.pop(WORD); break;
 

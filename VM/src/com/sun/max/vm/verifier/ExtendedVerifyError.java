@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,13 +37,13 @@ public class ExtendedVerifyError extends VerifyError {
 
     public final ClassMethodActor classMethodActor;
     public final CodeAttribute codeAttribute;
-    public final int position;
+    public final int bci;
 
-    public ExtendedVerifyError(String detailMessage, ClassMethodActor classMethodActor, CodeAttribute codeAttribute, int position) {
+    public ExtendedVerifyError(String detailMessage, ClassMethodActor classMethodActor, CodeAttribute codeAttribute, int bci) {
         super(detailMessage);
         this.classMethodActor = classMethodActor;
         this.codeAttribute = codeAttribute;
-        this.position = position;
+        this.bci = bci;
     }
 
     @Override
@@ -54,12 +54,12 @@ public class ExtendedVerifyError extends VerifyError {
 
     /**
      * Prefixes the detailed message describing this verification error with the name of the method and
-     * the bytecode position at which the error occurred.
+     * the BCI at which the error occurred.
      */
     public String getContextualMessage() {
         final StringBuilder sb = new StringBuilder();
-        if (position != -1) {
-            sb.append(" at offset ").append(position);
+        if (bci != -1) {
+            sb.append(" at BCI ").append(bci);
         }
         if (classMethodActor != null) {
             sb.append(" in method ").append(classMethodActor.format("%H.%n(%p)"));

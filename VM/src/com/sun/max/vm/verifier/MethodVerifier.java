@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ public abstract class MethodVerifier {
         this.classVerifier = classVerifier;
         this.codeAttribute = codeAttribute;
         this.classMethodActor = classMethodActor;
-        this.constantPool = codeAttribute.constantPool;
+        this.constantPool = codeAttribute.cp;
         this.classLoader = constantPool.classLoader();
         if (classVerifier.verbose) {
             this.verbose = true;
@@ -104,13 +104,13 @@ public abstract class MethodVerifier {
     public abstract void verify();
 
     /**
-     * Gets the position of the instruction currently being verified.
+     * Gets the BCI of the instruction currently being verified.
      */
-    public abstract int currentOpcodePosition();
+    public abstract int currentOpcodeBCI();
 
-    public final int currentOpcodePositionOrMinusOne() {
+    public final int currentOpcodeBCIOrMinusOne() {
         try {
-            return currentOpcodePosition();
+            return currentOpcodeBCI();
         } catch (RuntimeException e) {
             return -1;
         }
@@ -124,13 +124,13 @@ public abstract class MethodVerifier {
     }
 
     public VerifyError fatalVerifyError(String message) {
-        final int currentOpcodePosition = currentOpcodePositionOrMinusOne();
+        final int currentOpcodeBCI = currentOpcodeBCIOrMinusOne();
         try {
-            int sourceLine = currentOpcodePosition == -1 ? -1 : classMethodActor.sourceLineNumber(currentOpcodePosition);
+            int sourceLine = currentOpcodeBCI == -1 ? -1 : classMethodActor.sourceLineNumber(currentOpcodeBCI);
             String sourceFile = classMethodActor.holder().sourceFileName;
             Object source = sourceLine == -1 || sourceFile == null ? "" : " (" + sourceFile + ":" + sourceLine + ")";
-            ErrorContext.enterContext("verifying " + classMethodActor.format("%H.%n(%p)") + (currentOpcodePosition == -1 ? "" : " at bytecode position " + currentOpcodePosition) + source);
-            throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
+            ErrorContext.enterContext("verifying " + classMethodActor.format("%H.%n(%p)") + (currentOpcodeBCI == -1 ? "" : " at BCI " + currentOpcodeBCI) + source);
+            throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodeBCI);
         } finally {
             ErrorContext.exitContext();
         }

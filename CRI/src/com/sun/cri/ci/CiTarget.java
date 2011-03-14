@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ public class CiTarget {
 
     /**
      * Specifies how {@code long} and {@code double} constants are to be stored
-     * in {@linkplain CiDebugInfo.Frame frames}. This is useful for VMs such as HotSpot
+     * in {@linkplain CiFrame frames}. This is useful for VMs such as HotSpot
      * where convention the interpreter uses is that the second local
      * holds the first raw word of the native long or double representation.
      * This is actually reasonable, since locals and stack arrays

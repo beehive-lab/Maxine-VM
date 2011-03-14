@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,11 +61,6 @@ public class VMOption {
         NON_STANDARD(22, 92, "-X"),
 
         /**
-         * Constant denoting options that start with "C1X".
-         */
-        C1X_SPECIFIC(42, 122, "-C1X"),
-
-        /**
          * Constant denoting options that start with "-XX".
          */
         IMPLEMENTATION_SPECIFIC(42, 122, "-XX");
@@ -93,12 +88,35 @@ public class VMOption {
             return name;
         }
 
+        static boolean isImplementationSpecificPrefixChar(char c) {
+            if (c >= 'A' && c <= 'Z') {
+                return true;
+            }
+            if (c >= '0' && c <= '9') {
+                return true;
+            }
+            return false;
+        }
+
         public static Category from(String prefix) {
+            int colon = prefix.indexOf(':');
+            if (colon != -1) {
+                int i = 1;
+                while (i < colon) {
+                    char c = prefix.charAt(i);
+                    if (!isImplementationSpecificPrefixChar(c)) {
+                        break;
+                    }
+                    i++;
+                }
+                if (i == colon) {
+                    return Category.IMPLEMENTATION_SPECIFIC;
+                }
+            }
+
+
             if (prefix.startsWith("-XX")) {
                 return Category.IMPLEMENTATION_SPECIFIC;
-            }
-            if (prefix.startsWith("-C1X")) {
-                return Category.C1X_SPECIFIC;
             }
             if (prefix.startsWith("-X")) {
                 return Category.NON_STANDARD;
