@@ -43,6 +43,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -93,7 +94,10 @@ public class T1X implements RuntimeCompiler {
     public TargetMethod compile(ClassMethodActor method, boolean install, CiStatistics stats) {
         T1XCompilation c = compilation.get();
         if (c.method != null) {
-            throw new InternalError("T1X is not re-entrant");
+            // Re-entrant call to T1X - use a new compilation object that will be discarded
+            // once the compilation is done. This should be a very rare occurrence.
+            c = new T1XCompilation(this);
+            Log.println("Created temporary compilation object for re-entrant T1X compilation");
         }
 
         long startTime = 0;
