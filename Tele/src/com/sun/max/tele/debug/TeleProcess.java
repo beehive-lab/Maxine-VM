@@ -34,6 +34,7 @@ import com.sun.max.gui.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
@@ -154,6 +155,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                         }
                         throw new ProcessTerminatedException("normal exit");
                     }
+                    processState = newState;
+
                     Trace.line(TRACE_VALUE + 1, tracePrefix() + "Execution stopped: " + request);
 
                     if (lastSingleStepThread != null) {
@@ -268,7 +271,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
         private void updateCache(TeleEventRequest request) {
             try {
                 TeleProcess.this.updateCache(epoch);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
                 ThrowableDialog.showLater(e, null, tracePrefix() + "Uncaught exception updating cache while processing " + request);
             }
@@ -282,7 +285,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
         private void updateVMCaches(TeleEventRequest request, long epoch) {
             try {
                 vm().updateVMCaches(epoch);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
                 ThrowableDialog.showLater(e, null, tracePrefix() + "Uncaught exception updating VM caches while processing " + request);
             }
@@ -742,7 +745,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
             throw new DataIOError(address, "Attempt to read the memory when the process is in state " + TERMINATED);
         }
         if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
-        //    TeleWarning.message("Reading from process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
+            throw new DataIOError(address, "Reading from process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
+       //    TeleWarning.message("Reading from process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
         }
         DataIO.Static.checkRead(buffer, offset, length);
         final int bytesRead = read0(address, buffer, offset, length);

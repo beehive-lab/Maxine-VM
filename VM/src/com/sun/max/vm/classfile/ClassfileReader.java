@@ -45,7 +45,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
@@ -399,8 +398,8 @@ public final class ClassfileReader {
                 while (nAttributes-- != 0) {
                     final int attributeNameIndex = classfileStream.readUnsigned2();
                     final String attributeName = constantPool.utf8At(attributeNameIndex, "attribute name").toString();
-                    final Size attributeSize = classfileStream.readSize4();
-                    final Address startPosition = classfileStream.getPosition();
+                    final int attributeSize = classfileStream.readSize4();
+                    final int startPosition = classfileStream.getPosition();
                     if (isStatic && attributeName.equals("ConstantValue")) {
                         if (constantValueIndex != 0) {
                             throw classFormatError("Duplicate ConstantValue attribute");
@@ -427,7 +426,7 @@ public final class ClassfileReader {
                         classfileStream.skip(attributeSize);
                     }
 
-                    if (!attributeSize.equals(classfileStream.getPosition().minus(startPosition))) {
+                    if (attributeSize != classfileStream.getPosition() - startPosition) {
                         throw classFormatError("Invalid attribute_length for " + attributeName + " attribute");
                     }
                 }
@@ -567,7 +566,7 @@ public final class ClassfileReader {
     }
 
     // CheckStyle: stop parameter assignment check
-    protected Map<LocalVariableTable.Entry, LocalVariableTable.Entry> readLocalVariableTable(int maxLocals, Size codeLength, Map<LocalVariableTable.Entry, LocalVariableTable.Entry> localVariableTableEntries, boolean forLVTT) {
+    protected Map<LocalVariableTable.Entry, LocalVariableTable.Entry> readLocalVariableTable(int maxLocals, int codeLength, Map<LocalVariableTable.Entry, LocalVariableTable.Entry> localVariableTableEntries, boolean forLVTT) {
         final int count = classfileStream.readUnsigned2();
         if (count == 0) {
             return localVariableTableEntries;
@@ -577,7 +576,7 @@ public final class ClassfileReader {
         }
         for (int i = 0; i != count; ++i) {
             final LocalVariableTable.Entry entry = new LocalVariableTable.Entry(classfileStream, forLVTT);
-            entry.verify(constantPool, codeLength.toInt(), maxLocals, forLVTT);
+            entry.verify(constantPool, codeLength, maxLocals, forLVTT);
             if (localVariableTableEntries.put(entry, entry) != null) {
                 throw classFormatError("Duplicated " + (forLVTT ? "LocalVariableTypeTable" : "LocalVariableTable") + " entry at index " + i);
             }
@@ -589,10 +588,10 @@ public final class ClassfileReader {
     protected CodeAttribute readCodeAttribute(int methodAccessFlags) {
         final char maxStack = (char) classfileStream.readUnsigned2();
         final char maxLocals = (char) classfileStream.readUnsigned2();
-        final Size codeLength = classfileStream.readSize4();
-        if (codeLength.lessEqual(0)) {
+        final int codeLength = classfileStream.readSize4();
+        if (codeLength <= 0) {
             throw classFormatError("The value of code_length must be greater than 0");
-        } else if (codeLength.greaterEqual(0xFFFF)) {
+        } else if (codeLength >= 0xFFFF) {
             throw classFormatError("Method code longer than 64 KB");
         }
 
@@ -609,10 +608,10 @@ public final class ClassfileReader {
         while (nAttributes-- != 0) {
             final int attributeNameIndex = classfileStream.readUnsigned2();
             final String attributeName = constantPool.utf8At(attributeNameIndex, "attribute name").toString();
-            final Size attributeSize = classfileStream.readSize4();
-            final Address startPosition = classfileStream.getPosition();
+            final int attributeSize = classfileStream.readSize4();
+            final int startPosition = classfileStream.getPosition();
             if (attributeName.equals("LineNumberTable")) {
-                lineNumberTable = new LineNumberTable(lineNumberTable, classfileStream, codeLength.toInt());
+                lineNumberTable = new LineNumberTable(lineNumberTable, classfileStream, codeLength);
             } else if (attributeName.equals("StackMapTable")) {
                 if (stackMapTable != null) {
                     throw classFormatError("Duplicate stack map attribute");
@@ -630,7 +629,7 @@ public final class ClassfileReader {
                 classfileStream.skip(attributeSize);
             }
 
-            if (!attributeSize.equals(classfileStream.getPosition().minus(startPosition))) {
+            if (attributeSize != classfileStream.getPosition() - startPosition) {
                 throw classFormatError("Invalid attribute length for " + attributeName + " attribute");
             }
         }
@@ -717,8 +716,16 @@ public final class ClassfileReader {
         return annotations;
     }
 
-    // TODO avoid explicit class name of optional package
-    private static final Class BYTECODE_TEMPLATE = Classes.forName("com.sun.max.vm.cps.template.BYTECODE_TEMPLATE");
+    @HOSTED_ONLY
+    private static final Class CPS_BYTECODE_TEMPLATE = Classes.forName("com.sun.max.vm.cps.template.BYTECODE_TEMPLATE");
+
+    @HOSTED_ONLY
+    private static final Class T1X_TEMPLATE = Classes.forName("com.sun.max.vm.t1x.T1X_TEMPLATE");
+
+    @HOSTED_ONLY
+    private static boolean isBytecodeTemplate(Class<? extends Annotation> anno) {
+        return anno == T1X_TEMPLATE || anno == CPS_BYTECODE_TEMPLATE;
+    }
 
     protected MethodActor[] readMethods(boolean isInterface) {
         final int numberOfMethods = classfileStream.readUnsigned2();
@@ -792,8 +799,8 @@ public final class ClassfileReader {
                 while (nAttributes-- != 0) {
                     final int attributeNameIndex = classfileStream.readUnsigned2();
                     final String attributeName = constantPool.utf8At(attributeNameIndex, "attribute name").toString();
-                    final Size attributeSize = classfileStream.readSize4();
-                    final Address startPosition = classfileStream.getPosition();
+                    final int attributeSize = classfileStream.readSize4();
+                    final int startPosition = classfileStream.getPosition();
                     if (attributeName.equals("Code")) {
                         if (codeAttribute != null) {
                             throw classFormatError("Duplicate Code attribute");
@@ -826,11 +833,9 @@ public final class ClassfileReader {
                         classfileStream.skip(attributeSize);
                     }
 
-                    final Address distance = classfileStream.getPosition().minus(startPosition);
-                    if (!attributeSize.equals(distance)) {
-                        final int size = attributeSize.toInt();
-                        final int dist = distance.toInt();
-                        final String message = "Invalid attribute_length for " + attributeName + " attribute (reported " + size + " != parsed " + dist + ")";
+                    final int distance = classfileStream.getPosition() - startPosition;
+                    if (attributeSize != distance) {
+                        final String message = "Invalid attribute_length for " + attributeName + " attribute (reported " + attributeSize + " != parsed " + distance + ")";
                         throw classFormatError(message);
                     }
                 }
@@ -901,7 +906,7 @@ public final class ClassfileReader {
                             if (!Platform.platform().isAcceptedBy((PLATFORM) annotation)) {
                                 continue nextMethod;
                             }
-                        } else if (annotation.annotationType() == BYTECODE_TEMPLATE) {
+                        } else if (isBytecodeTemplate(annotation.annotationType())) {
                             flags |= TEMPLATE | UNSAFE;
                         } else if (annotation.annotationType() == INLINE.class) {
                             flags |= INLINE;
@@ -1205,8 +1210,8 @@ public final class ClassfileReader {
         while (nAttributes-- != 0) {
             final int attributeNameIndex = classfileStream.readUnsigned2();
             final String attributeName = constantPool.utf8At(attributeNameIndex, "attribute name").toString();
-            final Size attributeSize = classfileStream.readSize4();
-            final Address startPosition = classfileStream.getPosition();
+            final int attributeSize = classfileStream.readSize4();
+            final int startPosition = classfileStream.getPosition();
             if (attributeName.equals("SourceFile")) {
                 if (sourceFileName != null) {
                     throw classFormatError("Duplicate SourceFile attribute");
@@ -1238,7 +1243,7 @@ public final class ClassfileReader {
                 classfileStream.skip(attributeSize);
             }
 
-            if (!attributeSize.equals(classfileStream.getPosition().minus(startPosition))) {
+            if (attributeSize != classfileStream.getPosition() - startPosition) {
                 throw classFormatError("Invalid attribute length for " + name + " attribute");
             }
         }
@@ -1257,7 +1262,7 @@ public final class ClassfileReader {
         }
 
         // is this a Java Reference object class?
-        if (name.equals("java.lang.ref.Reference")) {
+        if (MaxineVM.isHosted() && name.equals("java.lang.ref.Reference")) {
             classFlags |= Actor.SPECIAL_REFERENCE;
             // find the "referent" field and mark it as a special reference too.
             for (int i = 0; i < fieldActors.length; i++) {

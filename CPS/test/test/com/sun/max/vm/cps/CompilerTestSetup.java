@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,7 +65,7 @@ public abstract class CompilerTestSetup<Method_Type> extends VmTestSetup {
      */
     public final Disassembler disassemblerFor(TargetMethod targetMethod) {
         Platform platform = Platform.platform();
-        InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        InlineDataDecoder inlineDataDecoder = targetMethod.inlineDataDecoder();
         return createDisassembler(platform.isa, platform.wordWidth(), targetMethod.codeStart().toLong(), inlineDataDecoder);
     }
 

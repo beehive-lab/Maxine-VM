@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -35,10 +34,9 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.collect.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Java frame descriptors carrying target location information.
@@ -58,21 +56,21 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
     }
 
     /**
-     * Converts this descriptor object to a {@link Frame} object.
+     * Converts this descriptor object to a {@link CiFrame} object.
      *
-     * @param dict a map used to canonicalize the {@link Frame} objects produced when translating more than one
+     * @param dict a map used to canonicalize the {@link CiFrame} objects produced when translating more than one
      *            {@link TargetJavaFrameDescriptor}. This can be {@code null} if no canonicalization is to be performed.
      */
-    public Frame toFrame(Map<TargetJavaFrameDescriptor, Frame> dict) {
+    public CiFrame toFrame(Map<TargetJavaFrameDescriptor, CiFrame> dict) {
         TargetJavaFrameDescriptor parent = this.parent();
         if (dict != null) {
-            Frame frame = dict.get(this);
+            CiFrame frame = dict.get(this);
             if (frame != null) {
                 return frame;
             }
         }
 
-        Frame caller = null;
+        CiFrame caller = null;
         if (parent != null) {
             caller = parent.toFrame(dict);
         }
@@ -86,7 +84,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
             TargetLocation loc = stackSlots[i];
             values[i + locals.length] = loc.toCiValue();
         }
-        Frame frame = new Frame(caller, classMethodActor, bytecodePosition, values, locals.length, stackSlots.length, 0);
+        CiFrame frame = new CiFrame(caller, classMethodActor, bci, values, locals.length, stackSlots.length, 0);
         if (dict != null) {
             dict.put(this, frame);
         }
@@ -224,7 +222,8 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
             final int numberOfMethods = reader.readCount();
             final ClassMethodActor[] methods = new ClassMethodActor[numberOfMethods];
             for (int i = 0; i != numberOfMethods; ++i) {
-                methods[i] = (ClassMethodActor) MethodActor.read(stream);
+                MethodActor mth = MethodActor.read(stream);
+                methods[i] = (ClassMethodActor) mth;
             }
 
             final int numberOfParents = reader.readCount();
@@ -370,7 +369,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
 
             final int methodSerial = methodToSerial.get(descriptor.classMethodActor);
             writeSerial(methodSerial);
-            stream.writeShort(descriptor.bytecodePosition);
+            stream.writeShort(descriptor.bci);
             writeTargetLocations(stream, descriptor.locals);
             writeTargetLocations(stream, descriptor.stackSlots);
         }

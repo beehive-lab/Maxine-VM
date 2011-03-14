@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,9 +108,9 @@ public class BirToCirMethodTranslation {
         } else {
             exceptionDispatcherBlockStateMap = new BlockState[birMethod.code().length];
             for (ExceptionHandlerEntry exceptionDispatcherEntry : birMethod.exceptionDispatcherTable()) {
-                final BlockState dispatcherBlockState = blockStateMap[exceptionDispatcherEntry.handlerPosition()];
+                final BlockState dispatcherBlockState = blockStateMap[exceptionDispatcherEntry.handlerBCI()];
                 assert dispatcherBlockState != null;
-                for (int i = exceptionDispatcherEntry.startPosition(); i != exceptionDispatcherEntry.endPosition(); ++i) {
+                for (int i = exceptionDispatcherEntry.startBCI(); i != exceptionDispatcherEntry.endBCI(); ++i) {
                     // This checks the invariant established by generating exception dispatchers in bytecode
                     ProgramError.check(exceptionDispatcherBlockStateMap[i] == null, "no more than one exception handler should cover a bytecode address");
                     exceptionDispatcherBlockStateMap[i] = dispatcherBlockState;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -137,7 +137,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         private final BirBlock[] blocks;
         private final ExceptionHandler[] exceptionHandlerMap;
         private final ReferenceMap[] referenceMaps;
-        private final BytecodePositionIterator bytecodePositionIterator;
+        private final BCIIterator bytecodePositionIterator;
 
         InterpreterMapMaker(BirMethod birMethod) {
             classMethodActor = birMethod.classMethodActor();
@@ -151,16 +151,16 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             final BytecodeAdapter bytecodeAdapter = new BytecodeAdapter() {
                 @Override
                 protected void opcodeDecoded() {
-                    final int bytecodePosition = bytecodeScanner().currentOpcodePosition();
+                    final int bytecodePosition = bytecodeScanner().currentOpcodeBCI();
                     bytecodePositions.add(bytecodePosition);
                     referenceMaps[bytecodePosition] = new ReferenceMap(codeAttribute.maxLocals, codeAttribute.maxStack);
                 }
             };
             new BytecodeScanner(bytecodeAdapter).scan(classMethodActor);
 
-            bytecodePositionIterator = new BytecodePositionIterator() {
+            bytecodePositionIterator = new BCIIterator() {
                 private int index;
-                public int bytecodePosition() {
+                public int bci() {
                     if (index < bytecodePositions.size()) {
                         return bytecodePositions.get(index);
                     }
@@ -193,11 +193,15 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             return blocks.length - 1;
         }
 
-        public int blockStartBytecodePosition(int blockIndex) {
+        public int blockStartBCI(int blockIndex) {
             if (blockIndex == blocks.length) {
-                return classMethodActor().codeAttribute().code().length;
+                return codeAttribute().code().length;
             }
             return blocks[blockIndex].bytecodeBlock().start;
+        }
+
+        public CodeAttribute codeAttribute() {
+            return classMethodActor.codeAttribute();
         }
 
         public ClassMethodActor classMethodActor() {
@@ -216,13 +220,13 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         }
 
         public void visitReferenceInLocalVariable(int localVariableIndex) {
-            final ReferenceMap map = referenceMaps[bytecodePositionIterator.bytecodePosition()];
+            final ReferenceMap map = referenceMaps[bytecodePositionIterator.bci()];
             map.locals[localVariableIndex] = true;
         }
 
         public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
             if (!parametersPopped) {
-                final ReferenceMap map = referenceMaps[bytecodePositionIterator.bytecodePosition()];
+                final ReferenceMap map = referenceMaps[bytecodePositionIterator.bci()];
                 map.stack[operandStackIndex] = true;
             }
         }
@@ -321,16 +325,16 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         final String[] framesAsStrings = interpreterMapMaker.framesAsStrings();
         final int numberOfBlocks = interpreterMapMaker.numberOfBlocks();
         for (int blockIndex = 0; blockIndex != numberOfBlocks; ++blockIndex) {
-            final int bytecodePosition = interpreterMapMaker.blockStartBytecodePosition(blockIndex);
+            final int bytecodePosition = interpreterMapMaker.blockStartBCI(blockIndex);
             if (blockIndex != 0) {
-                final BytecodeBlock bytecodeBlock = new BytecodeBlock(codeAttribute.code(), interpreterMapMaker.blockStartBytecodePosition(blockIndex - 1), bytecodePosition - 1);
-                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool, bytecodeBlock, "        ", "\n", 0);
+                final BytecodeBlock bytecodeBlock = new BytecodeBlock(codeAttribute.code(), interpreterMapMaker.blockStartBCI(blockIndex - 1), bytecodePosition - 1);
+                final String disassembly = BytecodePrinter.toString(codeAttribute.cp, bytecodeBlock, "        ", "\n", 0);
                 annotatedDisassembly.append(disassembly);
             }
             annotatedDisassembly.append(String.format("      %s%n", framesAsStrings[blockIndex]));
             if (blockIndex == numberOfBlocks - 1) {
-                final BytecodeBlock bytecodeBlock = new BytecodeBlock(codeAttribute.code(), interpreterMapMaker.blockStartBytecodePosition(blockIndex), codeLength - 1);
-                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool, bytecodeBlock, "        ", "\n", 0);
+                final BytecodeBlock bytecodeBlock = new BytecodeBlock(codeAttribute.code(), interpreterMapMaker.blockStartBCI(blockIndex), codeLength - 1);
+                final String disassembly = BytecodePrinter.toString(codeAttribute.cp, bytecodeBlock, "        ", "\n", 0);
                 annotatedDisassembly.append(disassembly);
             }
         }
@@ -365,7 +369,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                 @Override
                 protected void preInstructionScan() {
                     super.preInstructionScan();
-                    final int currentOpcodePosition = currentOpcodePosition();
+                    final int currentOpcodePosition = currentOpcodeBCI();
                     verifiedMaps[currentOpcodePosition] = new ReferenceMap(receiverTypeIsWord, codeAttribute().code(), constantPool(), frame, maxLocals, maxStack);
                 }
             };
@@ -382,7 +386,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                 @Override
                 protected void preInstructionScan() {
                     super.preInstructionScan();
-                    final int currentOpcodePosition = currentOpcodePosition();
+                    final int currentOpcodePosition = currentOpcodeBCI();
                     verifiedMaps[currentOpcodePosition] = new ReferenceMap(receiverTypeIsWord, codeAttribute().code(), constantPool(), frame, maxLocals, maxStack);
                 }
             }.verify();

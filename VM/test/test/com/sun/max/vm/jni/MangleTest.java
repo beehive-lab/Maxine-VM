@@ -65,9 +65,9 @@ public class MangleTest extends MaxTestCase {
         }
     }
 
-    private static boolean isOverloaded(Method method) {
+    private static boolean isOverloadedNative(Method method) {
         for (Method m : method.getDeclaringClass().getDeclaredMethods()) {
-            if (!m.equals(method) && m.getName().equals(method.getName())) {
+            if (Modifier.isNative(m.getModifiers()) && !m.equals(method) && m.getName().equals(method.getName())) {
                 return true;
             }
         }
@@ -80,7 +80,7 @@ public class MangleTest extends MaxTestCase {
 
     private String mangleAndDemangle(Method method) {
         assert Modifier.isNative(method.getModifiers());
-        final String mangled = Mangle.mangleMethod(method, isOverloaded(method));
+        final String mangled = Mangle.mangleMethod(method, isOverloadedNative(method));
         final Mangle.DemangledMethod demangled = Mangle.demangleMethod(mangled);
         assertEquals(demangled.mangle(), mangled);
         if (containedByTopLevelClass(method)) {
@@ -125,7 +125,7 @@ public class MangleTest extends MaxTestCase {
                         headerFile = javah(declaringClass);
                         headerFileGenerated = true;
                     }
-                    final String mangled = mangleAndDemangle(method);
+                    String mangled = mangleAndDemangle(method);
                     if (headerFile != null && !headerFile.contains(mangled)) {
                         if (containedByTopLevelClass(method)) {
                             fail("can't find '" + mangled + "' in javah generated file");

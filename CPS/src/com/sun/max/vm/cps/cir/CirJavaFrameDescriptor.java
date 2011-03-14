@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,9 @@ package com.sun.max.vm.cps.cir;
 
 import com.sun.max.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Java frame descriptors carrying CIR location information.
@@ -52,12 +52,12 @@ public final class CirJavaFrameDescriptor extends JavaFrameDescriptor<CirValue> 
 
     /**
      * Creates and returns a copy of this Java frame descriptor. The {@linkplain #parent() parent},
-     * {@linkplain #classMethodActor() method} and {@linkplain #bytecodePosition() bytecode position} of the copy is
+     * {@linkplain #classMethodActor() method} and {@linkplain #bci() bytecode position} of the copy is
      * shared with this objects but the {@linkplain #locals() locals} and {@linkplain #stackSlots() stack} are not.
      */
     public CirJavaFrameDescriptor copy() {
         final CirJavaFrameDescriptor p = (parent() == null) ? null : parent().copy();
-        return new CirJavaFrameDescriptor(p, classMethodActor, bytecodePosition, locals.clone(), stackSlots.clone());
+        return new CirJavaFrameDescriptor(p, classMethodActor, bci, locals.clone(), stackSlots.clone());
     }
 
     /**
@@ -68,9 +68,9 @@ public final class CirJavaFrameDescriptor extends JavaFrameDescriptor<CirValue> 
      */
     private CirJavaFrameDescriptor extended(CirJavaFrameDescriptor extension) {
         if (parent() == null) {
-            return new CirJavaFrameDescriptor(extension.copy(), classMethodActor, bytecodePosition, locals.clone(), stackSlots.clone());
+            return new CirJavaFrameDescriptor(extension.copy(), classMethodActor, bci, locals.clone(), stackSlots.clone());
         }
-        return new CirJavaFrameDescriptor(parent().extended(extension), classMethodActor, bytecodePosition, locals.clone(), stackSlots.clone());
+        return new CirJavaFrameDescriptor(parent().extended(extension), classMethodActor, bci, locals.clone(), stackSlots.clone());
     }
 
     private void propagateValue(CirValue value, CirBlock block, CirScopedBlockUpdating scopedBlockUpdating) {

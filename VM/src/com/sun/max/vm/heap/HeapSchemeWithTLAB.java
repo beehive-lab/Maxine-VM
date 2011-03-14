@@ -38,6 +38,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.thread.VmThreadLocal.Nature;
 
 /**
  * A HeapScheme adaptor with support for thread local allocation buffers (TLABs). The adaptor factors out methods for
@@ -67,7 +68,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     @INLINE
     public static boolean traceTLAB() {
-        return MaxineVM.isDebug() && TraceTLAB;
+        return TraceTLAB;
     }
 
     private static boolean PrintTLABStats;
@@ -87,9 +88,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     /**
      * A VM option for disabling use of TLABs.
      */
-    protected static final VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB",
-        "Use thread-local object allocation."), MaxineVM.Phase.PRISTINE);
-
+    public static boolean UseTLAB = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "UseTLAB", HeapSchemeWithTLAB.class, "Use thread-local object allocation", MaxineVM.Phase.PRISTINE);
+    }
 
     /**
      * A VM option for specifying the size of a TLAB. Default is 64 K.
@@ -259,7 +261,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
-            useTLAB = useTLABOption.getValue();
+            useTLAB = UseTLAB;
             initialTlabSize = tlabSizeOption.getValue();
             if (initialTlabSize.lessThan(0)) {
                 FatalError.unexpected("Specified TLAB size is too small");

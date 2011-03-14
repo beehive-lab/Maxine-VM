@@ -31,10 +31,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.Inspect;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -42,7 +42,7 @@ import com.sun.max.vm.thread.*;
  *
  * @author Ben L. Titzer
  */
-public class Compilation implements Future<TargetMethod> {
+public class Compilation /*implements Future<TargetMethod>*/ {
 
     /**
      * Used to detect re-entrant compilation which indicates the boot image closure was not incomplete.
@@ -73,7 +73,7 @@ public class Compilation implements Future<TargetMethod> {
     private static long compilationTime;
 
     public final CompilationScheme compilationScheme;
-    public final RuntimeCompiler compiler;
+    public RuntimeCompiler compiler;
     public final ClassMethodActor classMethodActor;
     public final Compilation parent;
     @INSPECTED
@@ -99,8 +99,8 @@ public class Compilation implements Future<TargetMethod> {
         this.compilingThread = compilingThread;
 
         for (Compilation scope = parent; scope != null; scope = scope.parent) {
-            if (scope.classMethodActor.equals(classMethodActor)) {
-                FatalError.unexpected("Recursive compilation of " + classMethodActor);
+            if (scope.classMethodActor.equals(classMethodActor) && scope.compiler == compiler) {
+                FatalError.unexpected("Recursive compilation of " + classMethodActor + " by " + compiler);
             }
         }
         COMPILATION.set(this);
@@ -181,7 +181,7 @@ public class Compilation implements Future<TargetMethod> {
         String methodString = "";
         try {
 
-            Inspect.notifyCompilationStart(classMethodActor);
+            InspectableCodeInfo.notifyCompilationEvent(classMethodActor, null);
 
             methodString = logBeforeCompilation(compiler);
             if (!MaxineVM.isHosted()) {
@@ -196,11 +196,14 @@ public class Compilation implements Future<TargetMethod> {
             }
 
             // attempt the compilation
-            targetMethod = compiler.compile(classMethodActor);
+            targetMethod = compiler.compile(classMethodActor, true, null);
 
             if (targetMethod == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }
+
+            InspectableCodeInfo.notifyCompilationEvent(targetMethod.classMethodActor, targetMethod);
+
             if (startCompile != 0) {
                 compilationTime += System.currentTimeMillis() - startCompile;
             }

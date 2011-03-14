@@ -36,8 +36,14 @@ import com.sun.cri.ri.RiType.*;
  */
 public abstract interface RiXirGenerator {
 
+    /**
+     * Note: may return {@code null}
+     */
     public XirSnippet genPrologue(XirSite site, RiMethod method);
 
+    /**
+     * Note: may return {@code null} in which case the compiler will not emit a return instruction
+     */
     public XirSnippet genEpilogue(XirSite site, RiMethod method);
 
     public XirSnippet genSafepoint(XirSite site);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +30,10 @@ import java.nio.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
@@ -45,8 +45,6 @@ import com.sun.max.vm.reference.*;
  * @author Bernd Mathiske
  */
 public final class ObjectAccess {
-
-    private static final ClassActor DirectByteBuffer = ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));
 
     protected ObjectAccess() {
     }
@@ -191,7 +189,7 @@ public final class ObjectAccess {
      * Creates a new instance of the package private class java.nio.DirectByteBuffer.
      */
     public static ByteBuffer createDirectByteBuffer(long address, int capacity) {
-        Object buffer = Heap.createTuple(DirectByteBuffer.dynamicHub());
+        Object buffer = Heap.createTuple(JDK.java_nio_DirectByteBuffer.classActor().dynamicHub());
         asThis(buffer).init(address, capacity);
         ByteBuffer directBuffer = (ByteBuffer) buffer;
         return directBuffer;

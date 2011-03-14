@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@ public class ActorIrMethod extends AbstractIrMethod {
             writer.println("maxStack: " + codeAttribute.maxStack);
             writer.println("maxLocals: " + codeAttribute.maxLocals);
             writer.outdent();
-            final ConstantPool constantPool = codeAttribute.constantPool;
+            final ConstantPool constantPool = codeAttribute.cp;
             writer.print(BytecodePrinter.toString(constantPool, new BytecodeBlock(codeAttribute.code())));
             if (codeAttribute.exceptionHandlerTable().length != 0) {
                 writer.println("Exception handlers:");

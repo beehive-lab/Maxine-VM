@@ -46,12 +46,12 @@ public class BirCompilerTestSetup extends CompilerTestSetup<BirMethod> {
 
     @Override
     public BirMethod translate(ClassMethodActor classMethodActor) {
-        return birGenerator().makeIrMethod(classMethodActor);
+        return birGenerator().makeIrMethod(classMethodActor, true);
     }
 
     @Override
     protected void initializeVM() {
-        CompilationScheme.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.BCompiler.class.getName());
+        RuntimeCompiler.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.BCompiler.class.getName());
         VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

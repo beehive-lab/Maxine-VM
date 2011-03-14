@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,7 +54,7 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
             new VirtualSynchronizedMethodTransformer(this, allocateLocal(Kind.REFERENCE));
         synchronizedMethodTransformer.acquireMonitor();
         trackingStack = false;
-        final OpcodePositionRelocator relocator = synchronizedMethodTransformer.transform(new BytecodeBlock(codeAttribute.code()));
+        final OpcodeBCIRelocator relocator = synchronizedMethodTransformer.transform(new BytecodeBlock(codeAttribute.code()));
         trackingStack = true;
 
         final Kind resultKind = classMethodActor.resultKind();
@@ -106,8 +106,8 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
     private final CodeAttribute result;
 
     @Override
-    protected void setWritePosition(int position) {
-        codeStream.seek(position);
+    protected void setWriteBCI(int bci) {
+        codeStream.seek(bci);
     }
 
     @Override
@@ -141,7 +141,7 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
     private ExceptionHandlerEntry[] fixupExceptionHandlerTable(int returnInstructionAddress,
                                                                        int monitorExitHandlerAddress,
                                                                        int monitorExitHandlerEndAddress,
-                                                                       byte[] code, ExceptionHandlerEntry[] exceptionHandlerTable, OpcodePositionRelocator relocator) {
+                                                                       byte[] code, ExceptionHandlerEntry[] exceptionHandlerTable, OpcodeBCIRelocator relocator) {
         final int codeLength = code.length;
         final int relocatedCodeStartAddress = relocator.relocate(0);
         assert (code[codeLength - 1] & 0xff) == Bytecodes.ATHROW;
@@ -159,12 +159,12 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
         int previousEntryEndAddress = relocatedCodeStartAddress;
         for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
             final ExceptionHandlerEntry relocatedEntry = entry.relocate(relocator);
-            if (previousEntryEndAddress < relocatedEntry.startPosition()) {
+            if (previousEntryEndAddress < relocatedEntry.startBCI()) {
                 // There's a gap between the previous catch range and the current catch range. Insert a range with whose handler is the monitor exit handler.
-                table.add(new ExceptionHandlerEntry(previousEntryEndAddress, relocatedEntry.startPosition(), monitorExitHandlerAddress, 0));
+                table.add(new ExceptionHandlerEntry(previousEntryEndAddress, relocatedEntry.startBCI(), monitorExitHandlerAddress, 0));
             }
             table.add(relocatedEntry);
-            previousEntryEndAddress = relocatedEntry.endPosition();
+            previousEntryEndAddress = relocatedEntry.endBCI();
         }
 
         if (returnInstructionAddress != -1) {

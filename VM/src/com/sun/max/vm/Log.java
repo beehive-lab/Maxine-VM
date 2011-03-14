@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.io.*;
@@ -920,6 +921,9 @@ public final class Log {
      *         entered).
      */
     public static boolean lock() {
+        if (isHosted()) {
+            return true;
+        }
         boolean wasDisabled = Safepoint.disable();
         Log.log_lock();
         return !wasDisabled;
@@ -934,8 +938,11 @@ public final class Log {
      *            this call will re-enable them.
      */
     public static void unlock(boolean lockDisabledSafepoints) {
+        if (isHosted()) {
+            return;
+        }
         Log.log_unlock();
-        FatalError.check(Safepoint.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Debug.lock() and Debug.unlock()");
+        ProgramError.check(Safepoint.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Debug.lock() and Debug.unlock()");
         if (lockDisabledSafepoints) {
             Safepoint.enable();
         }

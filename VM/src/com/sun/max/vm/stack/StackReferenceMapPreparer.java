@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,7 @@ public final class StackReferenceMapPreparer {
     /**
      * Flag controlling tracing of stack root scanning (SRS).
      */
-    private static boolean TraceSRS;
+    public static boolean TraceSRS;
 
     /**
      * Disables -XX:+TraceStackRootScanning if greater than 0.
@@ -113,7 +113,7 @@ public final class StackReferenceMapPreparer {
     private Pointer ttla;
     private Pointer referenceMap;
     private Pointer lowestStackSlot;
-    private boolean completingReferenceMap;
+    private Pointer completingReferenceMapLimit;
     private final boolean verify;
     private final boolean prepare;
     private long preparationTime;
@@ -478,13 +478,21 @@ public final class StackReferenceMapPreparer {
 
         // walk the stack and prepare references for each stack frame
         StackFrameWalker stackFrameWalker = vmThread.unwindingOrReferenceMapPreparingStackFrameWalker();
-        completingReferenceMap = true;
+        completingReferenceMapLimit = highestSlot;
         stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
-        completingReferenceMap = false;
+        completingReferenceMapLimit = Pointer.zero();
 
         traceStackRootScanEnd(lockDisabledSafepoints);
         timer.stop();
         preparationTime += timer.getLastElapsedTime();
+    }
+
+    /**
+     * Gets the lowest stack address for which a stack map has already been completed.
+     * A zero return value indicates that this preparer is not currently in a call to {@link #completeStackReferenceMap(Pointer)}.
+     */
+    public Pointer completingReferenceMapLimit() {
+        return completingReferenceMapLimit;
     }
 
     public void setReferenceMapBit(Pointer slotAddress) {

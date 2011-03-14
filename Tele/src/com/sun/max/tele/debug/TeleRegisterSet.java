@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -242,6 +243,8 @@ public final class TeleRegisterSet extends AbstractTeleVMHolder implements TeleV
             if (vm().tryLock()) {
                 try {
                     updateCache(epoch);
+                } catch (DataIOError e) {
+                    //e.printStackTrace();
                 } finally {
                     vm().unlock();
                 }

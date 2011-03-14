@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.code;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -33,6 +33,8 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -76,38 +78,52 @@ public abstract class CodeManager {
     }
 
     /**
-     * Allocates memory in a code region for the code-related arrays of a given target method
+     * Allocates memory for the code-related arrays of a given target method
      * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
      *
-     * @param targetBundleLayout describes the layout of the arrays in the allocate space
+     * @param targetBundleLayout describes the layout of the arrays in the allocated space
      * @param targetMethod the target method for which the code-related arrays are allocated
+     * @param inHeap specifies if the memory should be allocated in a code region or on the heap
      */
-    synchronized void allocate(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod) {
+    synchronized void allocate(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod, boolean inHeap) {
         final Size bundleSize = targetBundleLayout.bundleSize();
         int codeLength = targetBundleLayout.length(ArrayField.code);
         int scalarLiteralsLength = targetBundleLayout.length(ArrayField.scalarLiterals);
         int referenceLiteralsLength = targetBundleLayout.length(ArrayField.referenceLiterals);
         final Size allocationSize;
-        CodeRegion currentCodeRegion;
+        CodeRegion currentCodeRegion = null;
 
         allocationSize = bundleSize;
+        Object allocationTraceDescription = Code.TraceCodeAllocation ? (targetMethod.classMethodActor() == null ? targetMethod.regionName() : targetMethod.classMethodActor()) : null;
 
-        if (!MaxineVM.isHosted()) {
-            // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
+        Pointer start;
+        if (inHeap) {
+            assert !isHosted();
+            int byteArraySize = allocationSize.minus(Layout.byteArrayLayout().headerSize()).toInt();
+            byte[] buf = new byte[byteArraySize];
+
+            // 'buf' must not move until it has been reformatted
             Safepoint.disable();
-            Heap.disableAllocationForCurrentThread();
-            currentCodeRegion = runtimeCodeRegion;
+
+            start = Layout.originToCell(Reference.fromJava(buf).toOrigin());
         } else {
-            currentCodeRegion = Code.bootCodeRegion;
+            if (!isHosted()) {
+                // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
+                Safepoint.disable();
+                Heap.disableAllocationForCurrentThread();
+                currentCodeRegion = runtimeCodeRegion;
+            } else {
+                currentCodeRegion = Code.bootCodeRegion();
+            }
+            start = currentCodeRegion.allocate(allocationSize, false);
         }
 
-        Object allocationTraceDescription = Code.traceAllocation.getValue() ? (targetMethod.classMethodActor() == null ? targetMethod.regionName() : targetMethod.classMethodActor()) : null;
-        Pointer start = currentCodeRegion.allocate(allocationSize, false);
-        traceChunkAllocation(allocationTraceDescription, allocationSize, start);
+        traceChunkAllocation(allocationTraceDescription, allocationSize, start, inHeap);
         if (start.isZero()) {
             Safepoint.enable();
             Heap.enableAllocationForCurrentThread();
-            throw new OutOfMemoryError("PermGen: try larger value for -XX:ReservedCodeCacheSize=<n>)");
+            Log.println("PermGen: try larger value for -XX:ReservedCodeCacheSize=<n>)");
+            MaxineVM.exit(11, true);
         }
 
         targetMethod.setStart(start);
@@ -133,7 +149,7 @@ public abstract class CodeManager {
                 final Pointer referenceLiteralsCell = targetBundleLayout.cell(start, ArrayField.referenceLiterals);
                 referenceLiterals = (Object[]) Cell.plantArray(referenceLiteralsCell, ClassActor.fromJava(Object[].class).dynamicHub(), referenceLiteralsLength);
             }
-            if (Code.traceAllocation.getValue()) {
+            if (Code.TraceCodeAllocation) {
                 traceAllocation(targetBundleLayout, bundleSize, scalarLiteralsLength, referenceLiteralsLength, start, codeCell);
             }
         }
@@ -144,10 +160,14 @@ public abstract class CodeManager {
         if (!MaxineVM.isHosted()) {
             // It is now safe again to perform operations that may block and/or trigger a garbage collection
             Safepoint.enable();
-            Heap.enableAllocationForCurrentThread();
+            if (!inHeap) {
+                Heap.enableAllocationForCurrentThread();
+            }
         }
 
-        currentCodeRegion.add(targetMethod);
+        if (currentCodeRegion != null) {
+            currentCodeRegion.add(targetMethod);
+        }
     }
 
     private void traceAllocation(TargetBundleLayout targetBundleLayout, Size bundleSize, int scalarLiteralsLength, int referenceLiteralsLength, Pointer start, Pointer codeCell) {
@@ -177,11 +197,15 @@ public abstract class CodeManager {
         Log.unlock(lockDisabledSafepoints);
     }
 
-    private void traceChunkAllocation(Object purpose, Size size, Pointer cell) {
+    private void traceChunkAllocation(Object purpose, Size size, Pointer cell, boolean inHeap) {
         if (!cell.isZero() && purpose != null) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
-            Log.print(": Allocated chunk in CodeManager for ");
+            if (inHeap) {
+                Log.print(": Allocated chunk in heap for ");
+            } else {
+                Log.print(": Allocated chunk in code cache for ");
+            }
             if (purpose instanceof MethodActor) {
                 Log.printMethod((MethodActor) purpose, false);
             } else {
@@ -207,8 +231,8 @@ public abstract class CodeManager {
      *         the code pointer lies outside of all code regions
      */
     CodeRegion codePointerToCodeRegion(Address codePointer) {
-        if (Code.bootCodeRegion.contains(codePointer)) {
-            return Code.bootCodeRegion;
+        if (Code.bootCodeRegion().contains(codePointer)) {
+            return Code.bootCodeRegion();
         }
         if (runtimeCodeRegion.contains(codePointer)) {
             return runtimeCodeRegion;
@@ -240,7 +264,7 @@ public abstract class CodeManager {
      */
     void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
         if (includeBootCode) {
-            CodeRegion codeRegion = Code.bootCodeRegion;
+            CodeRegion codeRegion = Code.bootCodeRegion();
             Pointer firstCell = codeRegion.start().asPointer();
             Pointer cell = firstCell;
             while (cell.lessThan(codeRegion.getAllocationMark())) {

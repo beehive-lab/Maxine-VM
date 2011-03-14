@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -142,11 +142,11 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
 
     @Override
     protected void setupParameters(EirLocation[] locations, Value... arguments) {
-        final AMD64JitStackFrameLayout layout = new AMD64JitStackFrameLayout(executionState.last().method(), 2);
+        final AMD64JVMSFrameLayout layout = new AMD64JVMSFrameLayout(executionState.last().method(), 2);
 
         // Push parameter locals.
         for (int i = 0; i < layout.numberOfParameterSlots(); i++) {
-            decrementStackPointer(CompiledStackFrameLayout.STACK_SLOT_SIZE);
+            decrementStackPointer(VMFrameLayout.STACK_SLOT_SIZE);
             cpu().push(arguments[i]);
         }
 
@@ -156,7 +156,7 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
 
         // Reserve space for all other frame elments.
         final int offset = layout.localVariableOffset(layout.numberOfParameterSlots() - 1) - layout.localVariableOffset(layout.numberOfParameterSlots());
-        decrementStackPointer(offset - AMD64JitStackFrameLayout.JIT_SLOT_SIZE);
+        decrementStackPointer(offset - AMD64JVMSFrameLayout.JVMS_SLOT_SIZE);
 
         // +-------------+-------+-------+-----+
         // | P P P P ... | xxxxx | xxxxx | xxx |
@@ -164,7 +164,7 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
 
         // Push remaining slot values.
         for (int i = layout.numberOfParameterSlots(); i < arguments.length; i++) {
-            decrementStackPointer(JitStackFrameLayout.STACK_SLOT_SIZE);
+            decrementStackPointer(JVMSFrameLayout.STACK_SLOT_SIZE);
             cpu().push(arguments[i]);
         }
     }

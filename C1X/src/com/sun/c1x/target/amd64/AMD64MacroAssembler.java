@@ -139,7 +139,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
         } else {
             if (target.inlineObjects) {
                 recordDataReferenceInCode(obj);
-                mov64(dst, 0xDEADDEADDEADDEADL);
+                movq(dst, 0xDEADDEADDEADDEADL);
             } else {
                 movq(dst, recordDataReferenceInCode(obj));
             }
@@ -152,7 +152,7 @@ public class AMD64MacroAssembler extends AMD64Assembler {
     }
 
     void mov64(CiAddress dst, long src) {
-        mov64(rscratch1, src);
+        movq(rscratch1, src);
         movq(dst, rscratch1);
     }
 

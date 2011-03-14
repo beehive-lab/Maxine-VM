@@ -179,7 +179,7 @@ public final class BootImageGenerator {
             PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
-            options.addOptions(CompilationScheme.compilers);
+            options.addOptions(RuntimeCompiler.compilers);
 
             programArguments = VMOption.extractVMArgs(programArguments);
             options.parseArguments(programArguments);
@@ -231,8 +231,8 @@ public final class BootImageGenerator {
             if (treeOption.getValue()) {
                 // write the tree file only if specified by the user.
                 writeObjectTree(dataPrototype, graphPrototype, new File(vmDirectory, IMAGE_OBJECT_TREE_FILE_NAME));
+                writeMethodTree(graphPrototype.compiledPrototype, new File(vmDirectory, IMAGE_METHOD_TREE_FILE_NAME));
             }
-            writeMethodTree(graphPrototype.compiledPrototype, new File(vmDirectory, IMAGE_METHOD_TREE_FILE_NAME));
 
         } catch (IOException ioException) {
             ProgramError.unexpected("could not write file ", ioException);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,11 @@ public final class Buffer {
         this.data = new byte[C1XOptions.InitialCodeBufferSize];
     }
 
+    public void reset() {
+        position = 0;
+        mark = -1;
+    }
+
     /**
      * Closes this buffer. No extra data can be written to this buffer after this call.
      *
@@ -56,6 +61,15 @@ public final class Buffer {
         byte[] result = trimmedCopy ? Arrays.copyOf(data, position()) : data;
         data = null;
         return result;
+    }
+
+    public int emitBytes(byte[] arr, int off, int len) {
+        assert data != null : "must not use buffer after calling finished!";
+        int oldPos = position;
+        ensureSize(position + len);
+        System.arraycopy(arr, off, data, position, len);
+        position += len;
+        return oldPos;
     }
 
     public int emitByte(int b) {
@@ -181,11 +195,57 @@ public final class Buffer {
         return position;
     }
 
-    public int getByte(int i) {
-        return Bytes.beU1(data, i);
+    public void setPosition(int position) {
+        assert position >= 0 && position <= data.length;
+        this.position = position;
     }
 
-    public byte[] getData(int start, int end) {
+    public int getByte(int pos) {
+        return Bytes.beU1(data, pos);
+    }
+
+    public int getShort(int pos) {
+        if (byteOrder == ByteOrder.BigEndian) {
+            return
+                (data[pos + 0] & 0xff) << 8 |
+                (data[pos + 1] & 0xff) << 0;
+        } else {
+            assert byteOrder == ByteOrder.LittleEndian;
+            return
+                (data[pos + 1] & 0xff) << 8  |
+                (data[pos + 0] & 0xff) << 0;
+        }
+    }
+
+    public int getInt(int pos) {
+        if (byteOrder == ByteOrder.BigEndian) {
+            return
+                (data[pos + 0] & 0xff) << 24 |
+                (data[pos + 1] & 0xff) << 16 |
+                (data[pos + 2] & 0xff) << 8  |
+                (data[pos + 3] & 0xff) << 0;
+        } else {
+            assert byteOrder == ByteOrder.LittleEndian;
+            return
+                (data[pos + 3] & 0xff) << 24 |
+                (data[pos + 2] & 0xff) << 16 |
+                (data[pos + 1] & 0xff) << 8  |
+                (data[pos + 0] & 0xff) << 0;
+        }
+    }
+
+    public byte[] copyData(int start, int end) {
         return Arrays.copyOfRange(data, start, end);
+    }
+
+    /**
+     * Copies the data from this buffer into a given array.
+     *
+     * @param dst the destination array
+     * @param off starting position in {@code dst}
+     * @param len number of bytes to copy
+     */
+    public void copyInto(byte[] dst, int off, int len) {
+        System.arraycopy(data, 0, dst, off, len);
     }
 }

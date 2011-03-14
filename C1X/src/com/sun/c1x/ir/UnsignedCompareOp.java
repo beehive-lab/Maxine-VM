@@ -23,9 +23,8 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.debug.*;
-import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.*;
+import com.sun.cri.bytecode.Bytecodes.UnsignedComparisons;
 import com.sun.cri.ci.*;
 
 /**
@@ -35,8 +34,6 @@ import com.sun.cri.ci.*;
  * @see UnsignedComparisons
  */
 public final class UnsignedCompareOp extends Op2 {
-
-    private FrameState stateBefore;
 
     /**
      * One of the constants defined in {@link UnsignedComparisons} denoting the type of this comparison.
@@ -56,15 +53,6 @@ public final class UnsignedCompareOp extends Op2 {
         super(CiKind.Int, opcode, x, y);
         assert opcode == Bytecodes.UWCMP || opcode == Bytecodes.UCMP;
         this.op = op;
-    }
-
-    /**
-     * Gets the frame state before the comparison is performed.
-     * @return the state before the comparison is performed
-     */
-    @Override
-    public FrameState stateBefore() {
-        return stateBefore;
     }
 
     @Override

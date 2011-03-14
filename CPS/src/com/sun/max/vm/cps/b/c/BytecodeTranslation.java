@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,7 +105,7 @@ import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWord;
 import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWordAtIntOffset;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AboveEqual;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AboveThan;
-import com.sun.max.vm.compiler.builtin.SpecialBuiltin.AdjustJitStack;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.IncrementIntegerRegister;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BarMemory;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BelowEqual;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.BelowThan;
@@ -180,7 +180,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         this.frame = blockState.frame();
         this.stack = blockState.stack();
         this.methodTranslation = methodTranslation;
-        this.constantPool = methodTranslation.classMethodActor().codeAttribute().constantPool;
+        this.constantPool = methodTranslation.classMethodActor().codeAttribute().cp;
         final CirCall body = blockState.cirBlock().closure().body();
         this.currentCall = body;
         isUnsafe = methodTranslation.classMethodActor().isUnsafe();
@@ -199,7 +199,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     protected CirValue getCurrentExceptionContinuation() {
-        final BlockState dispatcherState = methodTranslation.getExceptionDispatcherState(currentOpcodePosition());
+        final BlockState dispatcherState = methodTranslation.getExceptionDispatcherState(currentOpcodeBCI());
         if (dispatcherState == null) {
             return methodTranslation.variableFactory().exceptionContinuationParameter();
         }
@@ -217,11 +217,11 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private CirContinuation getBranchContinuation(int offset) {
-        return getBlockContinuation(currentOpcodePosition() + offset);
+        return getBlockContinuation(currentOpcodeBCI() + offset);
     }
 
     private CirContinuation getAdjacentContinuation() {
-        return getBlockContinuation(currentBytePosition());
+        return getBlockContinuation(currentBCI());
     }
 
     public void terminateBlock() {
@@ -321,7 +321,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private void createJavaFrameDescriptor() {
-        currentCall.setJavaFrameDescriptor(new CirJavaFrameDescriptor(methodTranslation.classMethodActor().compilee(), currentOpcodePosition(), frame.makeDescriptor(), stack.makeDescriptor()));
+        currentCall.setJavaFrameDescriptor(new CirJavaFrameDescriptor(methodTranslation.classMethodActor().compilee(), currentOpcodeBCI(), frame.makeDescriptor(), stack.makeDescriptor()));
     }
 
     protected void call(CirRoutine cirRoutine, CirValue[] regularArguments, CirValue normalContinuation) {
@@ -377,7 +377,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     protected boolean isEndOfBlock() {
-        return currentBytePosition() == methodTranslation.getBlockStateAt(currentOpcodePosition()).birBlock().bytecodeBlock().end + 1;
+        return currentBCI() == methodTranslation.getBlockStateAt(currentOpcodeBCI()).birBlock().bytecodeBlock().end + 1;
     }
 
     private void conditionalBranch(CirValue value1, CirSwitch cirSwitch, CirValue value2, int offset) {
@@ -1992,15 +1992,16 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
             case READREG:                readreg(Role.VALUES.get(operand)); break;
             case WRITEREG:               writereg(Role.VALUES.get(operand)); break;
+            case INCREG:                 increg(Role.VALUES.get(operand)); break;
             case ALLOCA:                 stackCall(StackAllocate.BUILTIN); break;
             case ALLOCSTKVAR:            stackCall(MakeStackVariable.BUILTIN); break;
             case PAUSE:                  stackCall(Pause.BUILTIN); break;
-            case ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;
+            case ADD_SP:                 stackCall(IncrementIntegerRegister.BUILTIN); break;
             case FLUSHW:                 stackCall(FlushRegisterWindows.BUILTIN); break;
             case LSB:                    stackCall(LeastSignificantBit.BUILTIN); break;
             case MSB:                    stackCall(MostSignificantBit.BUILTIN); break;
 
-            case CALL: {
+            case TEMPLATE_CALL: {
                 Invocation inv = invoke(operand, 0);
                 completeInvocation(new Call(inv.sig), inv.sig.resultKind(), inv.args);
                 break;
@@ -2036,5 +2037,9 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     private void writereg(VMRegister.Role role) {
         callAndPush(new JavaBuiltinOperator(SetIntegerRegister.BUILTIN), CirConstant.fromObject(role), pop(Kind.WORD));
+    }
+
+    private void increg(VMRegister.Role role) {
+        callAndPush(new JavaBuiltinOperator(IncrementIntegerRegister.BUILTIN), CirConstant.fromObject(role), pop(Kind.INT));
     }
 }

@@ -173,7 +173,12 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     @INLINE
     public final boolean noSafepoints() {
-        return noSafepoints(flags());
+        return noSafepoints(flags()) || isTemplate();
+    }
+
+    public boolean minimalDebugInfo() {
+        // Code pos and frame info are not needed for templates
+        return isTemplate();
     }
 
     /**
@@ -327,7 +332,12 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         if (isClassInitializer() || isMiranda()) {
             return null;
         }
-        return toJava().getAnnotation(annotationClass);
+        try {
+            return toJava().getAnnotation(annotationClass);
+        } catch (NoSuchMethodError e) {
+            // Handles methods that are hidden to reflection (e.g. Unsage.getUnsafe())
+            return null;
+        }
     }
 
     @Override
@@ -510,8 +520,8 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
         return null;
     }
 
-    public RiExceptionHandler[] exceptionHandlers() {
-        return RiExceptionHandler.NONE;
+    public CiExceptionHandler[] exceptionHandlers() {
+        return CiExceptionHandler.NONE;
     }
 
     public boolean hasBalancedMonitors() {

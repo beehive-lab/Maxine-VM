@@ -30,10 +30,12 @@ import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.gen.LIRGenerator.*;
+import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -55,6 +57,7 @@ public final class C1XCompilation {
     public final CiStatistics stats;
     public final int osrBCI;
     public final CiAssumptions assumptions = new CiAssumptions();
+    public final FrameState placeholderState;
 
     private boolean hasExceptionHandlers;
     private final C1XCompilation parent;
@@ -93,8 +96,9 @@ public final class C1XCompilation {
      * @param compiler the compiler
      * @param method the method to be compiled or {@code null} if generating code for a stub
      * @param osrBCI the bytecode index for on-stack replacement, if requested
+     * @param stats externally supplied statistics object to be used if not {@code null}
      */
-    public C1XCompilation(C1XCompiler compiler, RiMethod method, int osrBCI) {
+    public C1XCompilation(C1XCompiler compiler, RiMethod method, int osrBCI, CiStatistics stats) {
         this.parent = currentCompilation.get();
         currentCompilation.set(this);
         this.compiler = compiler;
@@ -102,8 +106,9 @@ public final class C1XCompilation {
         this.runtime = compiler.runtime;
         this.method = method;
         this.osrBCI = osrBCI;
-        this.stats = new CiStatistics();
+        this.stats = stats == null ? new CiStatistics() : stats;
         this.registerConfig = method == null ? compiler.globalStubRegisterConfig : runtime.getRegisterConfig(method);
+        this.placeholderState = method != null && method.minimalDebugInfo() ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
 
         CFGPrinter cfgPrinter = null;
         if (C1XOptions.PrintCFGToFile && method != null && !TTY.isSuppressed()) {
@@ -222,7 +227,7 @@ public final class C1XCompilation {
             }
         }
         map.cleanup();
-        stats.byteCount += map.numberOfBytes();
+        stats.bytecodeCount += map.numberOfBytes();
         stats.blockCount += map.numberOfBlocks();
         return map;
     }
@@ -353,7 +358,7 @@ public final class C1XCompilation {
 
             if (cfgPrinter() != null) {
                 cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);
-                cfgPrinter().printMachineCode(runtime.disassemble(targetMethod));
+                cfgPrinter().printMachineCode(runtime.disassemble(targetMethod), null);
             }
 
             if (C1XOptions.PrintTimers) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -234,7 +234,7 @@ public abstract class TypeDescriptor extends Descriptor {
     public boolean isResolvableWithoutClassLoading(final ClassLoader classLoader) {
         TypeDescriptor typeDescriptor = this;
         if (MaxineVM.isHosted()) {
-            // When running the compiler in a prototype environment (e.g. for JUnit testing), it's
+            // When running the compiler in a hosted environment, it's
             // desirable to minimize the startup time of the compiler. That is, we do not want to
             // eagerly load all the classes normally loaded in a JavaPrototype. However, these
             // classes must appear to be loaded when they are referenced by code being compiled.
@@ -262,10 +262,6 @@ public abstract class TypeDescriptor extends Descriptor {
 
             if (Classes.getPackageName(className).equals("java.lang")) {
                 return true;
-            }
-
-            if (javaClass.getName().startsWith("jtt")) {
-                System.console();
             }
 
             if (MaxineVM.isHostedOnly(javaClass)) {

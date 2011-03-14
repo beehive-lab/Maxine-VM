@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -175,7 +175,7 @@ public class BytecodePrinter extends BytecodeVisitor {
         if (instructionPrefix != null && !instructionPrefix.isEmpty()) {
             writer.print(instructionPrefix);
         }
-        writer.print(currentOpcodePosition() + ": ");
+        writer.print(currentOpcodeBCI() + ": ");
         if (isCurrentOpcodeWidened()) {
             writer.print("wide ");
         }
@@ -183,10 +183,10 @@ public class BytecodePrinter extends BytecodeVisitor {
 
     protected void epilog() {
         if (printBytes) {
-            final int endAddress = currentBytePosition();
+            final int endAddress = currentBCI();
             writer.print(" |");
             final byte[] bytes = code();
-            for (int i = currentOpcodePosition(); i < endAddress; i++) {
+            for (int i = currentOpcodeBCI(); i < endAddress; i++) {
                 writer.print(" " + (bytes[i] & 0xff));
             }
         }
@@ -211,7 +211,7 @@ public class BytecodePrinter extends BytecodeVisitor {
     public void printInstructionWithOffset(int offset) {
         prolog();
         printOpcode();
-        printImmediate(currentOpcodePosition() + offset);
+        printImmediate(currentOpcodeBCI() + offset);
         epilog();
     }
 
@@ -1090,12 +1090,12 @@ public class BytecodePrinter extends BytecodeVisitor {
     public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
         prolog();
         printOpcode();
-        printImmediate(" default:", currentOpcodePosition() + defaultOffset);
+        printImmediate(" default:", currentOpcodeBCI() + defaultOffset);
         printImmediate(" low:", lowMatch);
         printImmediate(" high:", highMatch);
         for (int i = 0; i < numberOfCases; i++) {
             final int key = lowMatch + i;
-            printImmediate(" " + key + ":", currentOpcodePosition() + bytecodeScanner().readSwitchOffset());
+            printImmediate(" " + key + ":", currentOpcodeBCI() + bytecodeScanner().readSwitchOffset());
         }
         epilog();
     }
@@ -1104,10 +1104,10 @@ public class BytecodePrinter extends BytecodeVisitor {
     public void lookupswitch(int defaultOffset, int numberOfCases) {
         prolog();
         printOpcode();
-        printImmediate(" default:", currentOpcodePosition() + defaultOffset);
+        printImmediate(" default:", currentOpcodeBCI() + defaultOffset);
         for (int i = 0; i < numberOfCases; i++) {
             printImmediate(bytecodeScanner().readSwitchCase());
-            printImmediate(":", currentOpcodePosition() + bytecodeScanner().readSwitchOffset());
+            printImmediate(":", currentOpcodeBCI() + bytecodeScanner().readSwitchOffset());
         }
         epilog();
     }

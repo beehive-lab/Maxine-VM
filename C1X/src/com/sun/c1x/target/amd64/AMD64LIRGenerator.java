@@ -26,7 +26,7 @@ package com.sun.c1x.target.amd64;
 import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.alloc.OperandPool.*;
+import com.sun.c1x.alloc.OperandPool.VariableFlag;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
@@ -82,6 +82,9 @@ public class AMD64LIRGenerator extends LIRGenerator {
     @Override
     protected boolean canInlineAsConstant(Value v) {
         if (v.kind == CiKind.Long) {
+            if (v.isConstant() && Util.isInt(v.asConstant().asLong())) {
+                return true;
+            }
             return false;
         }
         return v.kind != CiKind.Object || v.isNullConstant();
@@ -114,7 +117,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             if (CiUtil.isPowerOf2(c + 1)) {
                 lir.move(left, tmp);
                 lir.shiftLeft(left, CiUtil.log2(c + 1), left);
-                lir.sub(left, tmp, result, null);
+                lir.sub(left, tmp, result);
                 return true;
             } else if (CiUtil.isPowerOf2(c - 1)) {
                 lir.move(left, tmp);
@@ -440,17 +443,20 @@ public class AMD64LIRGenerator extends LIRGenerator {
     public void visitCompareOp(CompareOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
-        if (x.x().kind.isLong()) {
+        if (!x.kind.isVoid() && x.x().kind.isLong()) {
             left.setDestroysRegister();
         }
         left.loadItem();
         right.loadItem();
-        CiValue reg = createResultVariable(x);
 
-        if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
+        if (x.kind.isVoid()) {
+            lir.cmp(Condition.TRUE, left.result(), right.result());
+        } else if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
+            CiValue reg = createResultVariable(x);
             int code = x.opcode;
             lir.fcmp2int(left.result(), right.result(), reg, (code == Bytecodes.FCMPL || code == Bytecodes.DCMPL));
         } else if (x.x().kind.isLong() || x.x().kind.isWord()) {
+            CiValue reg = createResultVariable(x);
             lir.lcmp2int(left.result(), right.result(), reg);
         } else {
             Util.unimplemented();

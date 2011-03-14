@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ri.*;
 
 /**
@@ -559,7 +558,7 @@ public class CiUtil {
      * @param separator the string to be inserted between each slot-value string.
      * @return the value of {@code sb}
      */
-    public static StringBuilder appendValues(StringBuilder sb, Frame frame, String separator) {
+    public static StringBuilder appendValues(StringBuilder sb, CiFrame frame, String separator) {
         String sep = "";
         if (frame.numLocals != 0) {
             for (int i = 0; i < frame.numLocals; i++) {
@@ -589,10 +588,10 @@ public class CiUtil {
      * @param frame the frame to format and append to {@code sb}
      * @return the value of {@code sb}
      */
-    public static StringBuilder append(StringBuilder sb, Frame frame) {
+    public static StringBuilder append(StringBuilder sb, CiFrame frame) {
         appendLocation(sb.append("at "), frame.method, frame.bci);
         String sep = NEW_LINE + "  ";
-        if (frame.values.length > 0) {
+        if (frame.values != null && frame.values.length > 0) {
             sb.append(sep);
             appendValues(sb, frame, sep);
         }
@@ -618,7 +617,7 @@ public class CiUtil {
         if (info.hasStackRefMap()) {
             sb.append("frame-ref-map: ").append(info.frameRefMap).append(nl);
         }
-        Frame frame = info.frame();
+        CiFrame frame = info.frame();
         if (frame != null) {
             append(sb, frame);
         } else {

@@ -147,6 +147,13 @@ public abstract class FrameState {
         return copy(bci, true, false, true);
     }
 
+    /**
+     * Gets an immutable copy of this frame state but without the frame info.
+     */
+    public FrameState immutableCopyCodePosOnly() {
+        return copy(bci, false, false, false);
+    }
+
     public boolean isSameAcrossScopes(FrameState other) {
         assert stackSize() == other.stackSize();
         assert localsSize() == other.localsSize();
@@ -568,20 +575,25 @@ public abstract class FrameState {
         StringBuilder sb = new StringBuilder();
         String nl = String.format("%n");
         while (fs != null) {
-            CiUtil.appendLocation(sb, fs.scope.method, fs.bci).append(nl);
-            for (int i = 0; i < fs.localsSize(); ++i) {
-                Value value = fs.localAt(i);
-                sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+            if (fs.scope == null) {
+                sb.append("<no method>").append(" [bci: ").append(fs.bci).append(']');
+                break;
+            } else {
+                CiUtil.appendLocation(sb, fs.scope.method, fs.bci).append(nl);
+                for (int i = 0; i < fs.localsSize(); ++i) {
+                    Value value = fs.localAt(i);
+                    sb.append(String.format("  local[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+                }
+                for (int i = 0; i < fs.stackSize(); ++i) {
+                    Value value = fs.stackAt(i);
+                    sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+                }
+                for (int i = 0; i < fs.locksSize(); ++i) {
+                    Value value = fs.lockAt(i);
+                    sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
+                }
+                fs = fs.callerState();
             }
-            for (int i = 0; i < fs.stackSize(); ++i) {
-                Value value = fs.stackAt(i);
-                sb.append(String.format("  stack[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
-            }
-            for (int i = 0; i < fs.locksSize(); ++i) {
-                Value value = fs.lockAt(i);
-                sb.append(String.format("  lock[%d] = %-8s : %s%n", i, value == null ? "bogus" : value.kind.javaName, value));
-            }
-            fs = fs.callerState();
         }
         return sb.toString();
     }
@@ -624,6 +636,7 @@ public abstract class FrameState {
         System.arraycopy(callerState.values, 0, res.values, 0, callerState.values.length);
         System.arraycopy(values, maxLocals, res.values, res.maxLocals + callerState.stackIndex, stackIndex);
         res.stackIndex = callerState.stackIndex + stackIndex;
+        assert res.stackIndex >= 0;
         res.replaceLocks(callerState);
         return res;
     }

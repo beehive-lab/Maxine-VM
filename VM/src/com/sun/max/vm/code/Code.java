@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.code;
 
-import static com.sun.max.vm.VMOptions.*;
-
 import java.lang.management.*;
 
 import com.sun.max.annotate.*;
@@ -44,8 +42,10 @@ public final class Code {
     private Code() {
     }
 
-    public static final VMBooleanXXOption traceAllocation = register(new VMBooleanXXOption("-XX:-TraceCodeAllocation", "Trace allocation from the code cache."), MaxineVM.Phase.STARTING);
-
+    static boolean TraceCodeAllocation;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceCodeAllocation", "Trace allocation from the code cache.");
+    }
 
     /**
      * Used by the Inspector to uniquely identify the special boot code region.
@@ -57,7 +57,8 @@ public final class Code {
      * The code region that contains the boot code.
      */
     @INSPECTED
-    public static final CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).wordAligned(), Size.fromInt(Integer.MAX_VALUE / 4), CODE_BOOT_NAME);
+    @CONSTANT_WHEN_NOT_ZERO
+    private static CodeRegion bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).wordAligned(), Size.fromInt(Integer.MAX_VALUE / 4), CODE_BOOT_NAME);
 
 
     /**
@@ -80,12 +81,25 @@ public final class Code {
     /**
      * Allocates space in a code region for the code-related arrays of a given target method
      * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
+     * The target method cannot be executed. This option exists for the purpose of testing
+     * or benchmarking a compiler at runtime without polluting the code cache.
      *
      * @param targetBundleLayout describes the layout of the arrays in the allocate space
      * @param targetMethod the target method for which the code-related arrays are allocated
      */
     public static void allocate(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod) {
-        codeManager.allocate(targetBundleLayout, targetMethod);
+        codeManager.allocate(targetBundleLayout, targetMethod, false);
+    }
+
+    /**
+     * Allocates space in the heap for the code-related arrays of a given target method
+     * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
+     *
+     * @param targetBundleLayout describes the layout of the arrays in the allocate space
+     * @param targetMethod the target method for which the code-related arrays are allocated
+     */
+    public static void allocateInHeap(TargetBundleLayout targetBundleLayout, TargetMethod targetMethod) {
+        codeManager.allocate(targetBundleLayout, targetMethod, true);
     }
 
     /**
@@ -151,10 +165,19 @@ public final class Code {
         return new CodeMemoryManagerMXBean("Code");
     }
 
+    public static CodeRegion bootCodeRegion() {
+        return bootCodeRegion;
+    }
+
+    @HOSTED_ONLY
+    public static void resetBootCodeRegion() {
+        bootCodeRegion = new CodeRegion(bootCodeRegion.start(), bootCodeRegion.size(), bootCodeRegion.regionName());
+    }
+
     private static class CodeMemoryManagerMXBean extends MemoryManagerMXBeanAdaptor {
         CodeMemoryManagerMXBean(String name) {
             super(name);
-            add(new CodeMemoryPoolMXBean(bootCodeRegion, this));
+            add(new CodeMemoryPoolMXBean(bootCodeRegion(), this));
             add(new CodeMemoryPoolMXBean(codeManager.getRuntimeCodeRegion(), this));
 
         }

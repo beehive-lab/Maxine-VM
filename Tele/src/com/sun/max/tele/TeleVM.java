@@ -44,6 +44,7 @@ import com.sun.max.program.Classpath.Entry;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.channel.*;
 import com.sun.max.tele.channel.tcp.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.BytecodeBreakpointManager;
 import com.sun.max.tele.debug.no.*;
@@ -1399,6 +1400,9 @@ public abstract class TeleVM implements MaxVM {
     public final String getString(Reference stringReference)  throws InvalidReferenceException {
         checkReference(stringReference);
         final Reference charArrayReference = teleFields().String_value.readReference(stringReference);
+        if (charArrayReference.isZero()) {
+            return null;
+        }
         checkReference(charArrayReference);
         int offset = teleFields().String_offset.readInt(stringReference);
         final int count = teleFields().String_count.readInt(stringReference);
@@ -1600,7 +1604,7 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    public final Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
+    public final Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws InvocationTargetException {
         return TeleInterpreter.execute(this, classMethodActor, arguments);
     }
 

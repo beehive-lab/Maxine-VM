@@ -41,7 +41,6 @@ import com.sun.c1x.value.*;
 import com.sun.c1x.value.FrameState.PhiProcedure;
 import com.sun.c1x.value.FrameState.ValueProcedure;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ri.*;
 
 /**
@@ -1225,7 +1224,7 @@ public final class LinearScan {
                 final int opId = op.id;
 
                 // add a temp range for each register if operation destroys caller-save registers
-                if (op.hasCall()) {
+                if (op.hasCall) {
                     for (CiRegister r : callerSaveRegs) {
                         if (attributes(r).isAllocatable) {
                             addTemp(r.asValue(), opId, RegisterPriority.None, CiKind.Illegal);
@@ -2033,7 +2032,7 @@ public final class LinearScan {
     }
 
     void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, CiBitMap frameRefMap, CiBitMap regRefMap) {
-        computeOopMap(iw, op, info, op.hasCall(), frameRefMap, regRefMap);
+        computeOopMap(iw, op, info, op.hasCall, frameRefMap, regRefMap);
         if (op instanceof LIRCall) {
             List<CiValue> pointerSlots = ((LIRCall) op).pointerSlots;
             if (pointerSlots != null) {
@@ -2106,8 +2105,8 @@ public final class LinearScan {
         }
     }
 
-    Frame computeFrameForState(int opId, FrameState state, CiBitMap frameRefMap) {
-        CiDebugInfo.Frame callerFrame = null;
+    CiFrame computeFrameForState(int opId, FrameState state, CiBitMap frameRefMap) {
+        CiFrame callerFrame = null;
 
         FrameState callerState = state.callerState();
         if (callerState != null) {
@@ -2140,7 +2139,7 @@ public final class LinearScan {
             }
         }
 
-        return new Frame(callerFrame, state.scope().method, state.bci, values, state.localsSize(), state.stackSize(), state.locksSize());
+        return new CiFrame(callerFrame, state.scope().method, state.bci, values, state.localsSize(), state.stackSize(), state.locksSize());
     }
 
     private void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
@@ -2162,8 +2161,8 @@ public final class LinearScan {
                 int frameSize = compilation.frameMap().frameSize();
                 int frameWords = frameSize / compilation.target.spillSlotSize;
                 CiBitMap frameRefMap = new CiBitMap(frameWords);
-                CiBitMap regRefMap = !op.hasCall() ? new CiBitMap(compilation.target.arch.registerReferenceMapBitCount) : null;
-                Frame frame = computeFrame(info.state, op.id, frameRefMap);
+                CiBitMap regRefMap = !op.hasCall ? new CiBitMap(compilation.target.arch.registerReferenceMapBitCount) : null;
+                CiFrame frame = compilation.placeholderState != null ? null : computeFrame(info.state, op.id, frameRefMap);
                 computeOopMap(iw, op, info, frameRefMap, regRefMap);
                 info.debugInfo = new CiDebugInfo(frame, regRefMap, frameRefMap);
             } else if (C1XOptions.DetailedAsserts) {
@@ -2172,7 +2171,7 @@ public final class LinearScan {
         }
     }
 
-    Frame computeFrame(FrameState state, int opId, CiBitMap frameRefMap) {
+    CiFrame computeFrame(FrameState state, int opId, CiBitMap frameRefMap) {
         if (C1XOptions.TraceLinearScanLevel >= 3) {
             TTY.println("creating debug information at opId %d", opId);
         }
