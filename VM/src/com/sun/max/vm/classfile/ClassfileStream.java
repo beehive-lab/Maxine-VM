@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 
 import java.io.*;
 
-import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
 /**
@@ -40,7 +39,7 @@ public class ClassfileStream {
 
     private final int length;
     private final DataInputStream stream;
-    private Address position = Address.zero();
+    private int pos;
 
     public ClassfileStream(byte[] bytes) {
         this(bytes, 0, bytes.length);
@@ -54,7 +53,7 @@ public class ClassfileStream {
     public byte readByte() {
         try {
             final byte value = stream.readByte();
-            position = position.plus(1);
+            pos = pos++;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -66,7 +65,7 @@ public class ClassfileStream {
     public short readShort() {
         try {
             final short value = stream.readShort();
-            position = position.plus(2);
+            pos += 2;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -78,7 +77,7 @@ public class ClassfileStream {
     public char readChar() {
         try {
             final char value = stream.readChar();
-            position = position.plus(2);
+            pos += 2;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -90,7 +89,7 @@ public class ClassfileStream {
     public int readInt() {
         try {
             final int value = stream.readInt();
-            position = position.plus(4);
+            pos += 4;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -102,7 +101,7 @@ public class ClassfileStream {
     public float readFloat() {
         try {
             final float value = stream.readFloat();
-            position = position.plus(4);
+            pos += 4;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -114,7 +113,7 @@ public class ClassfileStream {
     public long readLong() {
         try {
             final long value = stream.readLong();
-            position = position.plus(8);
+            pos += 8;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -126,7 +125,7 @@ public class ClassfileStream {
     public double readDouble() {
         try {
             final double value = stream.readDouble();
-            position = position.plus(8);
+            pos += 8;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -138,7 +137,7 @@ public class ClassfileStream {
     public int readUnsigned1() {
         try {
             final int value = stream.readUnsignedByte();
-            position = position.plus(1);
+            pos++;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -150,7 +149,7 @@ public class ClassfileStream {
     public int readUnsigned2() {
         try {
             final int value = stream.readUnsignedShort();
-            position = position.plus(2);
+            pos += 2;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -159,10 +158,10 @@ public class ClassfileStream {
         }
     }
 
-    public Size readSize4() {
+    public int readSize4() {
         try {
-            final Size value = Size.fromUnsignedInt(stream.readInt());
-            position = position.plus(4);
+            final int value = stream.readInt();
+            pos += 4;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -174,7 +173,7 @@ public class ClassfileStream {
     public int readSigned1() {
         try {
             final byte value = stream.readByte();
-            position = position.plus(1);
+            pos++;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -186,7 +185,7 @@ public class ClassfileStream {
     public int readSigned2() {
         try {
             final short value = stream.readShort();
-            position = position.plus(2);
+            pos += 2;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -198,7 +197,7 @@ public class ClassfileStream {
     public int readSigned4() {
         try {
             final int value = stream.readInt();
-            position = position.plus(4);
+            pos += 4;
             return value;
         } catch (EOFException eofException) {
             throw eofError();
@@ -207,11 +206,11 @@ public class ClassfileStream {
         }
     }
 
-    public byte[] readByteArray(Size len) {
+    public byte[] readByteArray(int len) {
         try {
-            final byte[] bytes = new byte[len.toInt()];
+            final byte[] bytes = new byte[len];
             stream.readFully(bytes);
-            position = position.plus(len);
+            pos += len;
             return bytes;
         } catch (EOFException eofException) {
             throw eofError();
@@ -224,7 +223,7 @@ public class ClassfileStream {
         try {
             final int utflen = stream.readUnsignedShort();
             final String value = Utf8.readUtf8(stream, true, utflen);
-            position = position.plus(2 + utflen);
+            pos += 2 + utflen;
             return value;
         } catch (Utf8Exception e) {
             throw classFormatError("Invalid UTF-8 encoded string", e);
@@ -235,10 +234,10 @@ public class ClassfileStream {
         }
     }
 
-    public void skip(Size nBytes) {
+    public void skip(int nBytes) {
         try {
-            position = position.plus(nBytes);
-            stream.skipBytes(nBytes.toInt());
+            pos += nBytes;
+            stream.skipBytes(nBytes);
         } catch (EOFException eofException) {
             throw eofError();
         } catch (IOException ioException) {
@@ -247,7 +246,7 @@ public class ClassfileStream {
     }
 
     public boolean isAtEndOfFile() {
-        return position.toLong() == length;
+        return pos == length;
     }
 
     public void checkEndOfFile() {
@@ -256,9 +255,8 @@ public class ClassfileStream {
         }
     }
 
-    public Address getPosition() {
-        // Prevent sharing by reference of _position when not bootstrapped:
-        return position.asAddress();
+    public int getPosition() {
+        return pos;
     }
 
     public void close() {

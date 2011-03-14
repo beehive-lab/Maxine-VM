@@ -153,9 +153,7 @@ public abstract class LIRAssembler {
         }
 
         if (C1XOptions.PrintLIRWithAssembly) {
-            // don't print Phi's
-            InstructionPrinter ip = new InstructionPrinter(TTY.out(), false, compilation.target);
-            ip.printBlock(block);
+            block.printWithoutPhis(TTY.out());
         }
 
         assert block.lir() != null : "must have LIR";
@@ -196,7 +194,7 @@ public abstract class LIRAssembler {
     }
 
     private void printAssembly(AbstractAssembler asm) {
-        byte[] currentBytes = asm.codeBuffer.getData(lastDecodeStart, asm.codeBuffer.position());
+        byte[] currentBytes = asm.codeBuffer.copyData(lastDecodeStart, asm.codeBuffer.position());
         if (currentBytes.length > 0) {
             String disasm = compilation.runtime.disassemble(currentBytes, lastDecodeStart);
             if (disasm.length() != 0) {
@@ -251,6 +249,10 @@ public abstract class LIRAssembler {
                 emitNativeCall((String) op.target, op.info, op.targetAddress());
                 break;
             }
+            case TemplateCall: {
+                emitTemplateCall(op.targetAddress());
+                break;
+            }
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -277,8 +279,6 @@ public abstract class LIRAssembler {
                 break;
             case Return:
                 emitReturn(op.operand());
-                break;
-            case Branch:
                 break;
             case Neg:
                 emitNegate((LIRNegate) op);
@@ -309,9 +309,6 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case Label:
                 throw Util.shouldNotReachHere();
-            case StdEntry:
-                asm.verifiedEntry();
-                break;
             case OsrEntry:
                 emitOsrEntry();
                 break;
@@ -503,6 +500,8 @@ public abstract class LIRAssembler {
 
     protected abstract void emitBranch(LIRBranch branch);
 
+    protected abstract void emitTableSwitch(LIRTableSwitch tableSwitch);
+
     protected abstract void emitConvert(LIRConvert convert);
 
     protected abstract void emitOp3(LIROp3 op3);
@@ -516,6 +515,8 @@ public abstract class LIRAssembler {
     protected abstract void emitDirectCall(Object target, LIRDebugInfo info);
 
     protected abstract void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress);
+
+    protected abstract void emitTemplateCall(CiValue address);
 
     protected abstract void emitCallAlignment(LIROpcode code);
 

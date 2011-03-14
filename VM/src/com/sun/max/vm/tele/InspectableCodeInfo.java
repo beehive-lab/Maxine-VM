@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -133,7 +133,11 @@ public final class InspectableCodeInfo {
                     if (breakpointClassTypeDescriptor.equals(typeDescriptorString)) {
                         // Match:  the method just compiled is in a class on the list of type descriptors written into the VM by the Inspector.
                         // Call the method that the Inspector is watching.
-                        inspectableCompilationEvent(typeDescriptorString, method.name.string, method.descriptor.string, targetMethod);
+                        if (targetMethod == null) {
+                            inspectableCompilationStarted(typeDescriptorString, method.name.string, method.descriptor.string);
+                        } else {
+                            inspectableCompilationCompleted(typeDescriptorString, method.name.string, method.descriptor.string, targetMethod);
+                        }
                         break;
                     }
                 }
@@ -151,11 +155,26 @@ public final class InspectableCodeInfo {
      * @param holderType type description for class holding the method
      * @param methodName name of the the method
      * @param signature argument type descriptors for the method
-     * @param targetMethod the result of the method compilation or {@code null} if this is a pre-compilation notification
      */
     @NEVER_INLINE
     @INSPECTED
-    private static void inspectableCompilationEvent(String holderType, String methodName, String signature, TargetMethod targetMethod) {
+    private static void inspectableCompilationStarted(String holderType, String methodName, String signature) {
     }
 
+    /**
+     * An empty method whose purpose is to be interrupted by the Inspector when it needs to monitor method compilation events
+     * in the VM. The arguments are deliberately made simple so that they can be read with low-level mechanisms in the
+     * Inspector. <br>
+     * <strong>Important:</strong> The Inspector assumes that this method is loaded and compiled in the boot image and
+     * that it will never be dynamically recompiled.
+     *
+     * @param holderType type description for class holding the method
+     * @param methodName name of the the method
+     * @param signature argument type descriptors for the method
+     * @param targetMethod the result of the method compilation
+     */
+    @NEVER_INLINE
+    @INSPECTED
+    private static void inspectableCompilationCompleted(String holderType, String methodName, String signature, TargetMethod targetMethod) {
+    }
 }

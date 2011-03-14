@@ -28,7 +28,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ri.*;
 
 /**
@@ -210,10 +209,6 @@ public class Util {
         }
     }
 
-    public static boolean is8bit(long l) {
-        return l < 128 && l >= -128;
-    }
-
     public static void warning(String string) {
         TTY.println("WARNING: " + string);
     }
@@ -326,20 +321,60 @@ public class Util {
         return 0 <= x && x < 32;
     }
 
+    /**
+     * Determines if a given {@code int} value is the range of unsigned byte values.
+     */
+    public static boolean isUByte(int x) {
+        return (x & 0xff) == x;
+    }
+
+    /**
+     * Determines if a given {@code int} value is the range of signed byte values.
+     */
     public static boolean isByte(int x) {
-        return 0 <= x && x < 0x100;
+        return (byte) x == x;
     }
 
-    public static boolean is8bit(int x) {
-        return -0x80 <= x && x < 0x80;
+    /**
+     * Determines if a given {@code long} value is the range of unsigned byte values.
+     */
+    public static boolean isUByte(long x) {
+        return (x & 0xffL) == x;
     }
 
-    public static boolean is16bit(int x) {
-        return -0x8000 <= x && x < 0x8000;
+    /**
+     * Determines if a given {@code long} value is the range of signed byte values.
+     */
+    public static boolean isByte(long l) {
+        return (byte) l == l;
+    }
+
+    /**
+     * Determines if a given {@code long} value is the range of unsigned int values.
+     */
+    public static boolean isUInt(long x) {
+        return (x & 0xffffffffL) == x;
+    }
+
+    /**
+     * Determines if a given {@code long} value is the range of signed int values.
+     */
+    public static boolean isInt(long l) {
+        return (int) l == l;
+    }
+    /**
+     * Determines if a given {@code int} value is the range of signed short values.
+     */
+    public static boolean isShort(int x) {
+        return (short) x == x;
+    }
+
+    public static boolean is32bit(long x) {
+        return -0x80000000L <= x && x < 0x80000000L;
     }
 
     public static short safeToShort(int v) {
-        assert is16bit(v);
+        assert isShort(v);
         return (short) v;
     }
 
@@ -429,8 +464,8 @@ public class Util {
             while (pos != null) {
                 TTY.println(CiUtil.appendLocation(new StringBuilder(indent), pos.method, pos.bci).append(refMaps).toString());
                 refMaps.setLength(0);
-                if (pos instanceof Frame) {
-                    Frame frame = (Frame) pos;
+                if (pos instanceof CiFrame) {
+                    CiFrame frame = (CiFrame) pos;
                     String sep = "\n" + indentTwice;
                     TTY.println(CiUtil.appendValues(new StringBuilder(indentTwice), frame, sep).toString());
                 }

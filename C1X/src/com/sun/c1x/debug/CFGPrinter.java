@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,6 @@ import com.sun.c1x.lir.LIRInstruction.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiDebugInfo.Frame;
 import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
 
@@ -221,7 +220,7 @@ public class CFGPrinter {
                 while (i < stackSize) {
                     Value value = state.stackAt(i);
                     out.disableIndentation();
-                    out.print(InstructionPrinter.stateString(i, value, block));
+                    out.print(block.stateString(i, value));
                     printOperand(value);
                     out.println();
                     out.enableIndentation();
@@ -242,7 +241,7 @@ public class CFGPrinter {
                 for (int i = 0; i < state.locksSize(); ++i) {
                     Value value = state.lockAt(i);
                     out.disableIndentation();
-                    out.print(InstructionPrinter.stateString(i, value, block));
+                    out.print(block.stateString(i, value));
                     printOperand(value);
                     out.println();
                     out.enableIndentation();
@@ -258,7 +257,7 @@ public class CFGPrinter {
                 Value value = state.localAt(i);
                 if (value != null) {
                     out.disableIndentation();
-                    out.print(InstructionPrinter.stateString(i, value, block));
+                    out.print(block.stateString(i, value));
                     printOperand(value);
                     out.println();
                     out.enableIndentation();
@@ -393,8 +392,8 @@ public class CFGPrinter {
         do {
             buf.append(CiUtil.toLocation(codePos.method, codePos.bci));
             buf.append('\n');
-            if (codePos instanceof Frame) {
-                Frame frame = (Frame) codePos;
+            if (codePos instanceof CiFrame) {
+                CiFrame frame = (CiFrame) codePos;
                 if (frame.numStack > 0) {
                     int i = 0;
                     buf.append("stack: ");
@@ -496,7 +495,7 @@ public class CFGPrinter {
                     op += "|" + operand.kind.typeChar;
                 }
                 if (asStateOrHIROperandResult) {
-                    op = " \"" + op + "\" ";
+                    op = " \"" + op.replace('"', '\'') + "\" ";
                 }
                 return op;
             }
@@ -565,7 +564,7 @@ public class CFGPrinter {
         }
 
         out.print("instruction ");
-        new InstructionPrinter(out, true, target).printInstruction(i);
+        i.print(out);
         out.print(COLUMN_END).print(' ').println(COLUMN_END);
     }
 
@@ -657,9 +656,14 @@ public class CFGPrinter {
         out.println();
     }
 
-    public void printMachineCode(String code) {
+    public void printMachineCode(String code, String label) {
         if (code.length() == 0) {
             return;
+        }
+        if (label != null) {
+            begin("cfg");
+            out.print("name \"").print(label).println('"');
+            end("cfg");
         }
         begin("nmethod");
         out.print(code);

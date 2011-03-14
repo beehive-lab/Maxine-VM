@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,6 @@ package com.sun.cri.ri;
  */
 public interface RiExceptionHandler {
     
-    static RiExceptionHandler[] NONE = {};
-    
     /**
      * Gets the start bytecode index of the protected range of this handler.
      * @return the start bytecode index
@@ -50,11 +48,11 @@ public interface RiExceptionHandler {
     int handlerBCI();
 
     /**
-     * Gets the index into the constant pool representing the type of exceptions
+     * Gets the index into the constant pool representing the type of exception
      * caught by this handler.
      * @return the constant pool index of the catch type
      */
-    int catchClassIndex();
+    int catchTypeCPI();
 
     /**
      * Checks whether this handler catches all exceptions.
@@ -63,9 +61,9 @@ public interface RiExceptionHandler {
     boolean isCatchAll();
 
     /**
-     * The type of exceptions that are caught by this exception handler.
+     * The type of exception caught by this exception handler.
      *
      * @return the exception type
      */
-    RiType catchKlass();
+    RiType catchType();
 }

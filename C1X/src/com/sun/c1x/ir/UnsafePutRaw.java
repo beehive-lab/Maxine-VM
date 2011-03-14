@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -52,20 +53,12 @@ public final class UnsafePutRaw extends UnsafeRawOp {
         return value;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         value = closure.apply(value);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitUnsafePutRaw(this);
@@ -73,5 +66,14 @@ public final class UnsafePutRaw extends UnsafeRawOp {
 
     public int log2scale() {
         return log2Scale;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("UnsafePutRaw.(base ").print(base());
+        if (hasIndex()) {
+            out.print(", index ").print(index()).print(", log2_scale ").print(log2Scale());
+        }
+        out.print(", value ").print(value()).print(')');
     }
 }

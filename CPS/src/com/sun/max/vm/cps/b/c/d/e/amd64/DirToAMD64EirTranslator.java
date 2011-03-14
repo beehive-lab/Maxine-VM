@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,9 +41,9 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
     }
 
     @Override
-    protected void generateIrMethod(EirMethod eirMethod) {
+    protected void generateIrMethod(EirMethod eirMethod, boolean install) {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) compilerScheme();
-        final DirMethod dirMethod = dirGeneratorScheme.dirGenerator().makeIrMethod(eirMethod.classMethodActor());
+        final DirMethod dirMethod = dirGeneratorScheme.dirGenerator().makeIrMethod(eirMethod.classMethodActor(), install);
 
         final DirToAMD64EirMethodTranslation translation = new DirToAMD64EirMethodTranslation(this, eirMethod, dirMethod);
         translation.translateMethod();

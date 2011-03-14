@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,7 +70,7 @@ public class GraphIrObserver extends IrObserverAdapter {
     private void setInputMethodObject(final GraphWriter.Group group, final IrMethod irMethod) {
         final byte[] bytecodes = irMethod.classMethodActor().codeAttribute().code();
         final BytecodeBlock bytecodeBlock = new BytecodeBlock(bytecodes, 0, bytecodes.length - 1);
-        String bytecodesAsString = BytecodePrinter.toString(irMethod.classMethodActor().codeAttribute().constantPool, bytecodeBlock);
+        String bytecodesAsString = BytecodePrinter.toString(irMethod.classMethodActor().codeAttribute().cp, bytecodeBlock);
         bytecodesAsString = bytecodesAsString.replace(":", "");
         final String methodName = irMethod.classMethodActor().format("%H.%n(%p)");
         final String shortName = irMethod.classMethodActor().simpleName();

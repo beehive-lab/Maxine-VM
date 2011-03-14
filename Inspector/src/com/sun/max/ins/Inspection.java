@@ -45,7 +45,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 
 /**
@@ -593,16 +592,16 @@ public final class Inspection implements InspectionHolder {
      * source file location corresponding to a given bytecode location. The view attempt is only made if an existing
      * source file and source line number can be derived from the given bytecode location.
      *
-     * @param bytecodeLocation specifies a bytecode position in a class method actor
+     * @param codePos specifies a bytecode position in a class method actor
      * @return true if a file viewer was opened
      */
-    public boolean viewSourceExternally(BytecodeLocation bytecodeLocation) {
+    public boolean viewSourceExternally(CiCodePos codePos) {
         if (preferences.externalViewerType() == ExternalViewerType.NONE) {
             return false;
         }
-        final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor;
+        final ClassMethodActor classMethodActor = (ClassMethodActor) codePos.method;
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(bytecodeLocation.bytecodePosition);
+        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(codePos.bci);
         if (lineNumber == -1) {
             return false;
         }

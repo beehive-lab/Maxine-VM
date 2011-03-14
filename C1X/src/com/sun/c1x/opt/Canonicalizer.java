@@ -622,6 +622,9 @@ public class Canonicalizer extends DefaultValueVisitor {
 
     @Override
     public void visitCompareOp(CompareOp i) {
+        if (i.kind.isVoid()) {
+            return;
+        }
         // we can reduce a compare op if the two inputs are the same,
         // or if both are constants
         Value x = i.x();

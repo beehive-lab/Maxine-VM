@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.io.*;
@@ -464,7 +465,7 @@ public final class Log {
             final String s = string == null ? "null" : string;
             int i = 0;
             while (i < s.length()) {
-                i = CString.writePartialUtf8(s, i, buffer.address(), buffer.size());
+                i += CString.writePartialUtf8(s, i, s.length() - i, buffer.address(), buffer.size()) - 1;
                 log_print_buffer(buffer.address());
             }
         }
@@ -920,6 +921,9 @@ public final class Log {
      *         entered).
      */
     public static boolean lock() {
+        if (isHosted()) {
+            return true;
+        }
         boolean wasDisabled = Safepoint.disable();
         Log.log_lock();
         return !wasDisabled;
@@ -934,8 +938,11 @@ public final class Log {
      *            this call will re-enable them.
      */
     public static void unlock(boolean lockDisabledSafepoints) {
+        if (isHosted()) {
+            return;
+        }
         Log.log_unlock();
-        FatalError.check(Safepoint.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Debug.lock() and Debug.unlock()");
+        ProgramError.check(Safepoint.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Debug.lock() and Debug.unlock()");
         if (lockDisabledSafepoints) {
             Safepoint.enable();
         }

@@ -110,11 +110,10 @@ public abstract class TypeCheck extends StateSplit {
     }
 
     /**
-     * Checks where this comparison is a direct compare.
+     * Checks where this comparison is a direct compare, because the class compared to is a leaf class.
      * @return {@code true} if this typecheck is a direct compare
      */
     public boolean isDirectCompare() {
-        // XXX: what does direct compare mean? leaf class?
         return checkFlag(Flag.DirectCompare);
     }
 }

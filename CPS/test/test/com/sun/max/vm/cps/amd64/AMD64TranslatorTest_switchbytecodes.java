@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -150,7 +150,7 @@ public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<CPSTar
 
     public void test_arrayCopyBackward() throws ClassNotFoundException, IOException, AssemblyException {
         final TargetMethod targetMethod = compilerTestSetup().translate(getClassMethodActor("arrayCopyBackward", SignatureDescriptor.create(int.class, int.class)));
-        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        final InlineDataDecoder inlineDataDecoder = targetMethod.inlineDataDecoder();
         AMD64Disassembler disassembler = new AMD64Disassembler(0L, inlineDataDecoder);
         targetMethod.traceBundle(IndentWriter.traceStreamWriter());
         disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), inlineDataDecoder);
@@ -253,7 +253,7 @@ public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<CPSTar
 
     public void test_tableswitch_1() throws IOException, AssemblyException {
         final TargetMethod targetMethod = compilerTestSetup().translate(getClassMethodActor("perform_tableswitch_1", SignatureDescriptor.create(int.class, int.class)));
-        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        final InlineDataDecoder inlineDataDecoder = targetMethod.inlineDataDecoder();
         AMD64Disassembler disassembler = new AMD64Disassembler(0L, inlineDataDecoder);
         targetMethod.traceBundle(IndentWriter.traceStreamWriter());
         disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), inlineDataDecoder);
@@ -264,7 +264,7 @@ public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<CPSTar
 
     public void test_lookupswitch_1() throws IOException, AssemblyException {
         final TargetMethod targetMethod = compilerTestSetup().translate(getClassMethodActor("perform_lookupswitch_1", SignatureDescriptor.create(int.class, int.class)));
-        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        final InlineDataDecoder inlineDataDecoder = targetMethod.inlineDataDecoder();
         AMD64Disassembler disassembler = new AMD64Disassembler(0L, inlineDataDecoder);
         targetMethod.traceBundle(IndentWriter.traceStreamWriter());
         disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), inlineDataDecoder);
@@ -290,7 +290,7 @@ public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<CPSTar
 
     public void test_lookupswitch_3() throws IOException, AssemblyException {
         final TargetMethod targetMethod = compileMethod("perform_lookupswitch_3");
-        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        final InlineDataDecoder inlineDataDecoder = targetMethod.inlineDataDecoder();
         AMD64Disassembler disassembler = new AMD64Disassembler(0L, inlineDataDecoder);
         new BytecodeConfirmation(targetMethod.classMethodActor()) {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ public class JITTest_stackManipulations extends CompilerTestCase<CPSTargetMethod
         static int popInt2() {
             final Pointer sp = VMRegister.getAbiStackPointer();
             final int value = sp.readInt(0);
-            SpecialBuiltin.adjustJitStack(1);
+            SpecialBuiltin.incrementIntegerRegister(VMRegister.Role.ABI_STACK_POINTER, Word.size());
             return value;
         }
 
@@ -144,7 +144,7 @@ public class JITTest_stackManipulations extends CompilerTestCase<CPSTargetMethod
 
     @INLINE
     static void removeSlots(int numberOfSlots) {
-        VMRegister.addWordsToAbiStackPointer(numberOfSlots * SLOT_WORDS);
+        VMRegister.adjustAbiStackPointer(numberOfSlots * JIT_SLOT_SIZE);
     }
 
     @INLINE

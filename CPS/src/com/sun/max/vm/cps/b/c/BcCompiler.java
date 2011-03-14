@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,7 +76,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
                 cirGenerator().notifyBeforeGeneration(cirSnippet);
                 final ClassMethodActor classMethodActor = cirSnippet.classMethodActor();
                 final CirVariableFactory cirVariableFactory = new CirVariableFactory();
-                final CirClosure cirClosure = birToCirTranslator.translateMethod(birGenerator().makeIrMethod(classMethodActor), cirSnippet, cirVariableFactory);
+                final CirClosure cirClosure = birToCirTranslator.translateMethod(birGenerator().makeIrMethod(classMethodActor, true), cirSnippet, cirVariableFactory);
                 cirSnippet.setGenerated(cirClosure);
                 cirGenerator().setCirMethod(classMethodActor, cirSnippet);
                 cirGenerator().notifyAfterGeneration(cirSnippet);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -125,7 +125,7 @@ public class BirToCirTranslator extends CirGenerator {
     }
 
     @Override
-    protected void generateIrMethod(CirMethod cirMethod) {
+    protected void generateIrMethod(CirMethod cirMethod, boolean install) {
         final ClassMethodActor compilee = cirMethod.classMethodActor().compilee();
         if (!compilee.isHiddenToReflection()) {
             if (compilee.isStatic() && compilee.isDeclaredFoldable() && compilee.descriptor().numberOfParameters() == 0) {
@@ -135,7 +135,7 @@ public class BirToCirTranslator extends CirGenerator {
         }
 
         final BirGeneratorScheme birGeneratorScheme = (BirGeneratorScheme) compilerScheme();
-        final BirMethod birMethod = birGeneratorScheme.birGenerator().makeIrMethod(cirMethod.classMethodActor());
+        final BirMethod birMethod = birGeneratorScheme.birGenerator().makeIrMethod(cirMethod.classMethodActor(), install);
         final CirVariableFactory variableFactory = new CirVariableFactory();
         final CirClosure cirClosure = translateMethod(birMethod, cirMethod, variableFactory);
 

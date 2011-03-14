@@ -47,9 +47,25 @@ public abstract class LIRInstruction {
 
     public static final OperandMode[] OPERAND_MODES = OperandMode.values();
 
+    /**
+     * Constants denoting how a LIR instruction uses an operand. Any combination of these modes
+     * can be applied to an operand as long as every operand has at least one mode applied to it.
+     */
     public enum OperandMode {
+        /**
+         * An operand that is defined by a LIR instruction and is live after the code emitted for a LIR instruction.
+         */
         Output,
+
+        /**
+         * An operand that is used by a LIR instruction and is live before the code emitted for a LIR instruction.
+         * Unless such an operand is also an output or temp operand, it must not be modified by a LIR instruction.
+         */
         Input,
+
+        /**
+         * An operand that is both modified and used by a LIR instruction.
+         */
         Temp
     }
 
@@ -78,11 +94,38 @@ public abstract class LIRInstruction {
      */
     public int id;
 
+    /**
+     * Determines if all caller-saved registers are destroyed by this instruction.
+     */
     public final boolean hasCall;
 
-    private byte outputCount;
+    /**
+     * The number of variable or register output operands for this instruction.
+     * These operands are at indexes {@code [0 .. allocatorOutputCount-1]} in {@link #allocatorOperands}.
+     *
+     * @see OperandMode#Output
+     */
+    private byte allocatorOutputCount;
+
+    /**
+     * The number of variable or register input operands for this instruction.
+     * These operands are at indexes {@code [allocatorOutputCount .. (allocatorInputCount+allocatorOutputCount-1)]} in {@link #allocatorOperands}.
+     *
+     * @see OperandMode#Input
+     */
     private byte allocatorInputCount;
+
+    /**
+     * The number of variable or register temp operands for this instruction.
+     * These operands are at indexes {@code [allocatorInputCount+allocatorOutputCount .. (allocatorTempCount+allocatorInputCount+allocatorOutputCount-1)]} in {@link #allocatorOperands}.
+     *
+     * @see OperandMode#Temp
+     */
     private byte allocatorTempCount;
+
+    /**
+     * The number of variable or register input or temp operands for this instruction.
+     */
     private byte allocatorTempInputCount;
 
     /**
@@ -91,30 +134,50 @@ public abstract class LIRInstruction {
      * that are already fixed to a specific register.
      * This set excludes all constant operands as well as operands that are bound to
      * a stack slot in the {@linkplain CiStackSlot#inCallerFrame() caller's frame}.
+     * This array is partitioned as follows.
+     * <pre>
+     *
+     *   <-- allocatorOutputCount --> <-- allocatorInputCount --> <-- allocatorTempCount -->
+     *  +----------------------------+---------------------------+--------------------------+
+     *  |       output operands      |       input operands      |      temp operands       |
+     *  +----------------------------+---------------------------+--------------------------+
+     *
+     * <pre>
      */
     final List<CiValue> allocatorOperands;
 
     /**
-     * Constructs a new LIR instruction.
+     * Constructs a new LIR instruction that has no input or temp operands.
      *
      * @param opcode the opcode of the new instruction
      * @param result the operand that holds the operation result of this instruction. This will be
      *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
      * @param info the {@link LIRDebugInfo} info that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
-     * @param hasCall
+     * @param hasCall specifies if all caller-saved registers are destroyed by this instruction
      */
     public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall) {
         this(opcode, result, info, hasCall, 0, 0, NO_OPERANDS);
     }
 
     /**
-     * Constructs a new LIR instruction.
+     * Constructs a new LIR instruction. The {@code operands} array is partitioned as follows:
+     * <pre>
+     *
+     *                              <------- tempInput -------> <--------- temp --------->
+     *  +--------------------------+---------------------------+--------------------------+
+     *  |       input operands     |   input+temp operands     |      temp operands       |
+     *  +--------------------------+---------------------------+--------------------------+
+     *
+     * <pre>
      *
      * @param opcode the opcode of the new instruction
      * @param result the operand that holds the operation result of this instruction. This will be
      *            {@link CiValue#IllegalValue} for instructions that do not produce a result.
      * @param info the {@link LIRDebugInfo} that is to be preserved for the instruction. This will be {@code null} when no debug info is required for the instruction.
-     * @param hasCall
+     * @param hasCall specifies if all caller-saved registers are destroyed by this instruction
+     * @param tempInput the number of operands that are both {@linkplain OperandMode#Input input} and {@link OperandMode#Temp temp} operands for this instruction
+     * @param temp the number of operands that are {@link OperandMode#Temp temp} operands for this instruction
+     * @param operands the input and temp operands for the instruction
      */
     public LIRInstruction(LIROpcode opcode, CiValue result, LIRDebugInfo info, boolean hasCall, int tempInput, int temp, CiValue... operands) {
         this.code = opcode;
@@ -147,9 +210,9 @@ public abstract class LIRInstruction {
                 return new LIROperand(output);
             }
 
-            assert allocatorOperands.size() == outputCount;
+            assert allocatorOperands.size() == allocatorOutputCount;
             allocatorOperands.add(output);
-            outputCount++;
+            allocatorOutputCount++;
             return new LIRVariableOperand(allocatorOperands.size() - 1);
         } else {
             return ILLEGAL_SLOT;
@@ -202,7 +265,7 @@ public abstract class LIRInstruction {
                 // no variables to add
                 return new LIROperand(operand);
             } else {
-                assert allocatorOperands.size() == outputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
+                assert allocatorOperands.size() == allocatorOutputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
                 allocatorOperands.add(operand);
 
                 if (isInput && isTemp) {
@@ -395,13 +458,9 @@ public abstract class LIRInstruction {
         return allocatorOperands.size() > 0;
     }
 
-    public final boolean hasCall() {
-        return hasCall;
-    }
-
     public final int operandCount(OperandMode mode) {
         if (mode == OperandMode.Output) {
-            return outputCount;
+            return allocatorOutputCount;
         } else if (mode == OperandMode.Input) {
             return allocatorInputCount + allocatorTempInputCount;
         } else {
@@ -412,31 +471,32 @@ public abstract class LIRInstruction {
 
     public final CiValue operandAt(OperandMode mode, int index) {
         if (mode == OperandMode.Output) {
-            assert index < outputCount;
+            assert index < allocatorOutputCount;
             return allocatorOperands.get(index);
         } else if (mode == OperandMode.Input) {
             assert index < allocatorInputCount + allocatorTempInputCount;
-            return allocatorOperands.get(index + outputCount);
+            return allocatorOperands.get(index + allocatorOutputCount);
         } else {
             assert mode == OperandMode.Temp;
             assert index < allocatorTempInputCount + allocatorTempCount;
-            return allocatorOperands.get(index + outputCount + allocatorInputCount);
+            return allocatorOperands.get(index + allocatorOutputCount + allocatorInputCount);
         }
     }
 
     public final void setOperandAt(OperandMode mode, int index, CiValue location) {
         assert index < operandCount(mode);
         assert location.kind != CiKind.Illegal;
+        assert operandAt(mode, index).isVariable();
         if (mode == OperandMode.Output) {
-            assert index < outputCount;
+            assert index < allocatorOutputCount;
             allocatorOperands.set(index, location);
         } else if (mode == OperandMode.Input) {
             assert index < allocatorInputCount + allocatorTempInputCount;
-            allocatorOperands.set(index + outputCount, location);
+            allocatorOperands.set(index + allocatorOutputCount, location);
         } else {
             assert mode == OperandMode.Temp;
             assert index < allocatorTempInputCount + allocatorTempCount;
-            allocatorOperands.set(index + outputCount + allocatorInputCount, location);
+            allocatorOperands.set(index + allocatorOutputCount + allocatorInputCount, location);
         }
     }
 

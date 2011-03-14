@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,9 +35,9 @@ import com.sun.cri.ci.*;
  */
 public abstract class AccessIndexed extends AccessArray {
 
-    Value index;
-    Value length;
-    final CiKind elementType;
+    private Value index;
+    private Value length;
+    private final CiKind elementType;
 
     /**
      * Create an new AccessIndexed instruction.
@@ -100,10 +100,6 @@ public abstract class AccessIndexed extends AccessArray {
         return needsNullCheck() || needsBoundsCheck();
     }
 
-    /**
-     * Iterates over the input values of this instruction.
-     * @param closure the closure to apply to each of the input values
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);

@@ -33,9 +33,12 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
+import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
 import com.sun.max.platform.*;
@@ -47,7 +50,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -70,7 +72,7 @@ public class MaxRiRuntime implements RiRuntime {
      * @return the compiler interface constant pool for the specified method
      */
     public RiConstantPool getConstantPool(RiMethod method) {
-        return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().constantPool;
+        return asClassMethodActor(method, "getConstantPool()").compilee().codeAttribute().cp;
     }
 
     /**
@@ -84,16 +86,6 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     /**
-     * Remove once C1X can compile native method stubs.
-     */
-    public static final boolean CAN_COMPILE_NATIVE_METHODS = "true".equals(System.getenv("C1X_CAN_COMPILE_NATIVE_METHODS"));
-
-    /**
-     * Remove once C1X implements the semantics of the ACCESSOR annotation.
-     */
-    public static final boolean CAN_COMPILE_ACCESSOR_METHODS = "true".equals(System.getenv("C1X_CAN_COMPILE_ACCESSOR_METHODS"));
-
-    /**
      * Checks whether the runtime requires inlining of the specified method.
      * @param method the method to inline
      * @return {@code true} if the method must be inlined; {@code false}
@@ -103,14 +95,7 @@ public class MaxRiRuntime implements RiRuntime {
         if (!method.isResolved()) {
             return false;
         }
-        final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        if (classMethodActor.accessor() != null && !CAN_COMPILE_ACCESSOR_METHODS) {
-            return false;
-        }
-        if (classMethodActor.isNative() && !CAN_COMPILE_NATIVE_METHODS) {
-            return false;
-        }
-        return classMethodActor.isInline();
+        return asClassMethodActor(method, "mustNotInline()").isInline();
     }
 
     /**
@@ -124,13 +109,6 @@ public class MaxRiRuntime implements RiRuntime {
             return false;
         }
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        if (classMethodActor.accessor() != null && !CAN_COMPILE_ACCESSOR_METHODS) {
-            return true;
-        }
-        if (classMethodActor.isNative() && !CAN_COMPILE_NATIVE_METHODS) {
-            return true;
-        }
-
         return classMethodActor.originalCodeAttribute(true) == null || classMethodActor.isNeverInline();
     }
 
@@ -193,7 +171,17 @@ public class MaxRiRuntime implements RiRuntime {
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
             writer.flush();
             final Platform platform = Platform.platform();
-            final InlineDataDecoder inlineDataDecoder = null;
+            ArrayList<InlineDataDescriptor> descriptors = new ArrayList<InlineDataDescriptor>();
+            List<CodeAnnotation> annotations = targetMethod.annotations();
+            if (annotations != null) {
+                for (CodeAnnotation a : annotations) {
+                    if (a instanceof JumpTable) {
+                        JumpTable jt = (JumpTable) a;
+                        descriptors.add(new JumpTable32(jt.position, jt.low, jt.high));
+                    }
+                }
+            }
+            final InlineDataDecoder inlineDataDecoder = new InlineDataDecoder(descriptors);
             final Pointer startAddress = Pointer.fromInt(0);
             final DisassemblyPrinter disassemblyPrinter = new MaxDisassemblyPrinter(targetMethod);
             byte[] code = Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize());
@@ -338,10 +326,6 @@ public class MaxRiRuntime implements RiRuntime {
 
     public boolean compareConstantObjects(Object x, Object y) {
         return x == y;
-    }
-
-    public boolean recordLeafMethodAssumption(RiMethod method) {
-        return ClassDirectory.recordLeafMethodAssumption(method);
     }
 
     public RiRegisterConfig getRegisterConfig(RiMethod method) {

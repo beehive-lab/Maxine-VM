@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ public enum LIROpcode {
     // @formatter:off
     BeginOp0,
         Label,
-        StdEntry,
         OsrEntry,
         Here,
         Info,
@@ -42,14 +41,15 @@ public enum LIROpcode {
         Pause,
         RuntimeCall,
         Membar,
+        Branch,
+        CondFloatBranch,
     EndOp0,
     BeginOp1,
         NullCheck,
         Return,
         Lea,
         Neg,
-        Branch,
-        CondFloatBranch,
+        TableSwitch,
         Move,
         Prefetchr,
         Prefetchw,
@@ -100,6 +100,7 @@ public enum LIROpcode {
     DirectCall,
     ConstDirectCall,
     IndirectCall,
+    TemplateCall,
     InstanceOf,
     CheckCast,
     StoreCheck,

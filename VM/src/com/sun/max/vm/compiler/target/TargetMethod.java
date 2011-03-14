@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
@@ -30,6 +31,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -42,8 +44,6 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
@@ -161,19 +161,14 @@ public abstract class TargetMethod extends MemoryRegion {
      * @see #stopPositions()
      * @see StopPositions
      */
-    @INSPECTED
     protected int[] stopPositions;
 
-    @INSPECTED
     protected Object[] directCallees;
 
-    @INSPECTED
     private int numberOfIndirectCalls;
 
-    @INSPECTED
     private int numberOfSafepoints;
 
-    @INSPECTED
     protected byte[] scalarLiterals;
 
     @INSPECTED
@@ -234,21 +229,17 @@ public abstract class TargetMethod extends MemoryRegion {
      * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
-    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
-        return null;
-    }
-
-    public CiDebugInfo getDebugInfo(Pointer instructionPointer, boolean implicitExceptionPoint) {
+    public CiCodePos getCodePos(Pointer instructionPointer, boolean ipIsReturnAddress) {
         return null;
     }
 
     /**
-     * Gets the bytecode locations for the inlining chain rooted at a given stop.
+     * Gets the bytecode frame(s) for a given stop.
      *
      * @param stopIndex an index of a stop within this method
-     * @return the bytecode locations for the inlining chain rooted at the denoted stop
+     * @return the bytecode frame(s) at the denoted stop
      */
-    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
+    public CiFrame getBytecodeFrames(int stopIndex) {
         return null;
     }
 
@@ -435,21 +426,28 @@ public abstract class TargetMethod extends MemoryRegion {
             for (int i = 0; i < directCallees.length; i++) {
                 final int offset = getCallEntryOffset(directCallees[i], i);
                 Object currentDirectCallee = directCallees[i];
-                final TargetMethod callee = getTargetMethod(currentDirectCallee);
-                if (callee == null) {
-                    if (MaxineVM.isHosted()) {
-                        assert !classMethodActor.isTemplate() : "template must not have patchable call site";
-                    }
-                    linkedAll = false;
-                    final int pos = stopPosition(i);
-                    final Address callSite = codeStart.plus(pos);
-                    if (!isPatchableCallSite(callSite)) {
-                        FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
-                                        " [0x" + codeStart.toHexString() + "+" + pos + "]");
-                    }
-                    fixupCallSite(pos, vm().stubs.staticTrampoline().codeStart.plus(offset));
+                if (currentDirectCallee == null) {
+                    // template call
+                    assert classMethodActor.isTemplate();
                 } else {
-                    fixupCallSite(stopPosition(i), callee.codeStart().plus(offset));
+                    final TargetMethod callee = getTargetMethod(currentDirectCallee);
+                    if (callee == null) {
+                        if (MaxineVM.isHosted() && classMethodActor.isTemplate()) {
+                            assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
+                            // leave call site unpatched
+                        } else {
+                            linkedAll = false;
+                            final int pos = stopPosition(i);
+                            final Address callSite = codeStart.plus(pos);
+                            if (!isPatchableCallSite(callSite)) {
+                                FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
+                                                " [0x" + codeStart.toHexString() + "+" + pos + "]");
+                            }
+                            fixupCallSite(pos, vm().stubs.staticTrampoline().codeStart.plus(offset));
+                        }
+                    } else {
+                        fixupCallSite(stopPosition(i), callee.codeStart().plus(offset));
+                    }
                 }
             }
         }
@@ -460,7 +458,7 @@ public abstract class TargetMethod extends MemoryRegion {
         return linkedAll;
     }
 
-    public TargetMethod getTargetMethod(Object o) {
+    public final TargetMethod getTargetMethod(Object o) {
         TargetMethod result = null;
         if (o instanceof ClassMethodActor) {
             result = CompilationScheme.Static.getCurrentTargetMethod((ClassMethodActor) o);
@@ -480,16 +478,19 @@ public abstract class TargetMethod extends MemoryRegion {
         return false;
     }
 
-    public boolean isCalleeSaved() {
+    public final boolean isCalleeSaved() {
         return registerRestoreEpilogueOffset >= 0;
     }
 
-    public byte[] encodedInlineDataDescriptors() {
+    /**
+     * Gets an object to help decode inline data in this target method's code.
+     */
+    public InlineDataDecoder inlineDataDecoder() {
         return null;
     }
 
     /**
-     * Gets the array recording the positions of the {@link StopType stops} in this target method.
+     * Gets the array recording the positions of the stops in this target method.
      * <p>
      * This array is composed of three contiguous segments. The first segment contains the positions of the direct call
      * stops and the indexes in this segment match the entries of the {@link #directCallees} array). The second segment
@@ -505,7 +506,6 @@ public abstract class TargetMethod extends MemoryRegion {
      * </pre>
      * The methods and constants defined in {@link StopPositions} should be used to decode the entries of this array.
      *
-     * @see StopType
      * @see StopPositions
      */
     public final int[] stopPositions() {
@@ -535,38 +535,51 @@ public abstract class TargetMethod extends MemoryRegion {
      *         -1 if {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will
      *         be the case when {@code instructionPointer} is in the adapter frame stub code, prologue or epilogue.
      */
-    public final int targetCodePositionFor(Pointer instructionPointer) {
-        final int targetCodePosition = instructionPointer.minus(codeStart).toInt();
-        if (targetCodePosition >= 0 && targetCodePosition < code.length) {
-            return targetCodePosition;
+    public final int posFor(Pointer instructionPointer) {
+        final int pos = instructionPointer.minus(codeStart).toInt();
+        if (pos >= 0 && pos < code.length) {
+            return pos;
         }
         return -1;
     }
 
     /**
+     * Gets a mapping from bytecode positions to target code positions. A non-zero value
+     * {@code val} at index {@code i} in the array encodes that there is a bytecode instruction whose opcode is at index
+     * {@code i} in the bytecode array and whose target code position is {@code val}. Unless {@code i} is equal to the
+     * length of the bytecode array in which case {@code val} denotes the target code position one byte past the
+     * last target code byte emitted for the last bytecode instruction.
+     *
+     * @return {@code null} if there is no such mapping available
+     */
+    public int[] bciToPosMap() {
+        return null;
+    }
+
+    /**
      * Gets the position of the next call (direct or indirect) in this target method after a given position.
      *
-     * @param targetCodePosition the position from which to start searching
+     * @param pos the position from which to start searching
      * @param nativeFunctionCall if {@code true}, then the search is refined to only consider
      *            {@linkplain #isNativeFunctionCall(int) native function calls}.
      *
      * @return -1 if the search fails
      */
-    public int findNextCall(int targetCodePosition, boolean nativeFunctionCall) {
-        if (stopPositions == null || targetCodePosition < 0 || targetCodePosition > code.length) {
+    public int findNextCall(int pos, boolean nativeFunctionCall) {
+        if (stopPositions == null || pos < 0 || pos > code.length) {
             return -1;
         }
 
-        int closestCallPosition = Integer.MAX_VALUE;
+        int closestCallPos = Integer.MAX_VALUE;
         final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
         for (int stopIndex = 0; stopIndex < numberOfCalls; stopIndex++) {
             final int callPosition = stopPosition(stopIndex);
-            if (callPosition > targetCodePosition && callPosition < closestCallPosition && (!nativeFunctionCall || StopPositions.isNativeFunctionCall(stopPositions, stopIndex))) {
-                closestCallPosition = callPosition;
+            if (callPosition > pos && callPosition < closestCallPos && (!nativeFunctionCall || StopPositions.isNativeFunctionCall(stopPositions, stopIndex))) {
+                closestCallPos = callPosition;
             }
         }
-        if (closestCallPosition != Integer.MAX_VALUE) {
-            return closestCallPosition;
+        if (closestCallPos != Integer.MAX_VALUE) {
+            return closestCallPos;
         }
         return -1;
     }
@@ -585,8 +598,8 @@ public abstract class TargetMethod extends MemoryRegion {
      * @see #stopPositions()
      */
     public int findClosestStopIndex(Pointer instructionPointer) {
-        final int targetCodePosition = targetCodePositionFor(instructionPointer);
-        if (stopPositions == null || targetCodePosition < 0 || targetCodePosition > code.length) {
+        final int pos = posFor(instructionPointer);
+        if (stopPositions == null || pos < 0 || pos > code.length) {
             return -1;
         }
 
@@ -595,36 +608,36 @@ public abstract class TargetMethod extends MemoryRegion {
         // Check for matching safepoints first
         int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
         for (int i = numberOfCalls; i < numberOfStopPositions(); i++) {
-            if (stopPosition(i) == targetCodePosition) {
+            if (stopPosition(i) == pos) {
                 return i;
             }
         }
 
         // Check for native calls
         for (int i = 0; i < numberOfCalls; i++) {
-            if (stopPosition(i) == targetCodePosition && StopPositions.isNativeFunctionCall(stopPositions, i)) {
+            if (stopPosition(i) == pos && StopPositions.isNativeFunctionCall(stopPositions, i)) {
                 return i;
             }
         }
 
         // Since this is not a safepoint, it must be a call.
-        final int adjustedTargetCodePosition;
+        final int adjustedPos;
         if (platform().isa.offsetToReturnPC == 0) {
             // targetCodePostion is the instruction after the call (which might be another call).
             // We need to the find the call at which we actually stopped.
-            adjustedTargetCodePosition = targetCodePosition - 1;
+            adjustedPos = pos - 1;
         } else {
-            adjustedTargetCodePosition = targetCodePosition;
+            adjustedPos = pos;
         }
 
-        int stopIndexWithClosestPosition = -1;
+        int stopIndexWithClosestPos = -1;
         for (int i = numberOfDirectCalls() - 1; i >= 0; --i) {
             final int directCallPosition = stopPosition(i);
-            if (directCallPosition <= adjustedTargetCodePosition) {
-                if (directCallPosition == adjustedTargetCodePosition) {
+            if (directCallPosition <= adjustedPos) {
+                if (directCallPosition == adjustedPos) {
                     return i; // perfect match; no further searching needed
                 }
-                stopIndexWithClosestPosition = i;
+                stopIndexWithClosestPos = i;
                 break;
             }
         }
@@ -633,13 +646,13 @@ public abstract class TargetMethod extends MemoryRegion {
         // so we find the closest one. This can be avoided if we sort the stopPositions array first, but the runtime cost of this is unknown.
         for (int i = numberOfCalls - 1; i >= numberOfDirectCalls(); i--) {
             final int indirectCallPosition = stopPosition(i);
-            if (indirectCallPosition <= adjustedTargetCodePosition && (stopIndexWithClosestPosition < 0 || indirectCallPosition > stopPosition(stopIndexWithClosestPosition))) {
-                stopIndexWithClosestPosition = i;
+            if (indirectCallPosition <= adjustedPos && (stopIndexWithClosestPos < 0 || indirectCallPosition > stopPosition(stopIndexWithClosestPos))) {
+                stopIndexWithClosestPos = i;
                 break;
             }
         }
 
-        return stopIndexWithClosestPosition;
+        return stopIndexWithClosestPos;
     }
 
     @Override
@@ -673,23 +686,26 @@ public abstract class TargetMethod extends MemoryRegion {
     @HOSTED_ONLY
     public void disassemble(OutputStream out) {
         final Platform platform = Platform.platform();
-        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(encodedInlineDataDescriptors());
+        final InlineDataDecoder inlineDataDecoder = inlineDataDecoder();
         final Pointer startAddress = codeStart();
         final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
             @Override
             protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
                 String string = super.disassembledObjectString(disassembler, disassembledObject);
                 if (string.startsWith("call ")) {
-
                     final Pointer instructionPointer = startAddress.plus(disassembledObject.startPosition());
-                    final BytecodeLocation bytecodeLocation = getBytecodeLocationFor(instructionPointer, true);
-                    if (bytecodeLocation != null) {
-                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
-                        if (methodRef != null) {
-                            final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
-                            string += " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                    CiCodePos codePos = getCodePos(instructionPointer, true);
+                    if (codePos != null) {
+                        byte[] code = codePos.method.code();
+                        int bci = codePos.bci;
+                        byte opcode = code[bci];
+                        if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
+                            int cpi = Bytes.beU2(code, bci + 1);
+                            RiMethod callee = vm().runtime.getConstantPool(codePos.method).lookupMethod(cpi, opcode);
+                            string += " [" + callee + "]";
                         }
                     }
+
                     if (StopPositions.isNativeFunctionCallPosition(stopPositions(), disassembledObject.startPosition())) {
                         string += " <native function call>";
                     }
@@ -824,21 +840,6 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param writer where the trace is written
      */
     public abstract void traceExceptionHandlers(IndentWriter writer);
-
-    /**
-     * Gets the bytecode position for a machine code call site address.
-     *
-     * @param returnInstructionPointer an instruction pointer that denotes a call site in this target method. The pointer
-     *        is passed as was written to the platform-specific link register.  E.g. on SPARC, the instructionPointer is
-     *        the PC of the call itself.  On AMD64, the instructionPointer is the PC of the instruction following the call.
-     * @return the start position of the bytecode instruction that is implemented at the instruction pointer or -1 if
-     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will be
-     *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
-     *         code, prologue or epilogue.
-     */
-    public int bytecodePositionForCallSite(Pointer returnInstructionPointer) {
-        throw FatalError.unimplemented();
-    }
 
     /**
      * Prepares the reference map for the current frame (and potentially for registers stored in a callee frame).

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.debug.IRChecker.IRCheckException;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.value.*;
@@ -116,6 +115,12 @@ public class IR {
             verifyAndPrint("After unsafe cast elimination");
         }
 
+        if (compilation.compiler.extensions != null) {
+            for (C1XCompilerExtension ext : compilation.compiler.extensions) {
+                ext.run(this);
+            }
+        }
+
         // do basic optimizations
         if (C1XOptions.PhiSimplify) {
             new PhiSimplifier(this);
@@ -183,7 +188,7 @@ public class IR {
     private void print(boolean cfgOnly) {
         if (!TTY.isSuppressed()) {
             TTY.println("IR for " + compilation.method);
-            final InstructionPrinter ip = new InstructionPrinter(TTY.out(), true, compilation.target);
+            final InstructionPrinter ip = new InstructionPrinter(TTY.out());
             final BlockPrinter bp = new BlockPrinter(this, ip, cfgOnly, false);
             startBlock.iteratePreOrder(bp);
         }
@@ -194,35 +199,21 @@ public class IR {
      * @param phase the name of the phase for printing
      */
     public void verifyAndPrint(String phase) {
-        verify(phase);
         printToCFGFile(phase);
         printToTTY(phase);
     }
 
-    void printToTTY(String phase) {
+    private void printToTTY(String phase) {
         if (C1XOptions.PrintHIR && !TTY.isSuppressed()) {
             TTY.println(phase);
             print(false);
         }
     }
 
-    void printToCFGFile(String phase) {
+    private void printToCFGFile(String phase) {
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
         if (cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
-        }
-    }
-
-    void verify(String phase) {
-        if (C1XOptions.IRChecking) {
-            try {
-                new IRChecker(this, phase).check();
-            } catch (IRCheckException e) {
-                // Print the CFG (to TTY and CFG file) so that the error message context makes sense
-                print(false);
-                printToCFGFile(phase);
-                throw e;
-            }
         }
     }
 

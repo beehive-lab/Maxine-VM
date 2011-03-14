@@ -27,6 +27,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
@@ -88,6 +89,9 @@ public abstract class CPSAbstractCompiler implements CPSCompiler {
         }
     }
 
+    public void resetMetrics() {
+    }
+
     @HOSTED_ONLY
     public void createBuiltins(PackageLoader packageLoader) {
         packageLoader.loadAndInitializeAll(Builtin.class);
@@ -123,16 +127,24 @@ public abstract class CPSAbstractCompiler implements CPSCompiler {
         return null;
     }
 
-    public final TargetMethod compile(ClassMethodActor classMethodActor) {
-        IrMethod method = compileIR(classMethodActor);
+    public final ThreadLocal<CiStatistics> stats = new ThreadLocal<CiStatistics>();
+
+    public final TargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
+        if (stats != null) {
+            assert this.stats.get() == null;
+            this.stats.set(stats);
+            stats.bytecodeCount += classMethodActor.codeAttribute().code().length;
+        }
+        IrMethod method = compileIR(classMethodActor, install);
+        this.stats.set(null);
         if (method instanceof TargetMethod) {
             return (TargetMethod) method;
         }
         return null;
     }
 
-    public final IrMethod compileIR(ClassMethodActor classMethodActor) {
-        return irGenerator().makeIrMethod(classMethodActor);
+    public final IrMethod compileIR(ClassMethodActor classMethodActor, boolean install) {
+        return irGenerator().makeIrMethod(classMethodActor, install);
     }
 
     @HOSTED_ONLY

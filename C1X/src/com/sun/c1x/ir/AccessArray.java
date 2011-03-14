@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.sun.cri.ci.*;
  */
 public abstract class AccessArray extends StateSplit {
 
-    Value array;
+    protected Value array;
 
     /**
      * Creates a new AccessArray instruction.
@@ -66,10 +66,6 @@ public abstract class AccessArray extends StateSplit {
         }
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each of the input values.
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         array = closure.apply(array);

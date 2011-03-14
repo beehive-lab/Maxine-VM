@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.sun.max.vm.classfile.constant.ClassConstant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.dir.*;
 import com.sun.max.vm.cps.hotpath.*;
 import com.sun.max.vm.cps.hotpath.compiler.Console.*;
@@ -61,10 +62,10 @@ public class TirRecorder {
     }
 
     public void record(BytecodeLocation location) {
-        state.last().setPc(location.bytecodePosition);
+        state.last().setPc(location.bci);
         visitor.setMethod(location.classMethodActor);
         final byte[] bytecode = location.classMethodActor.codeAttribute().code();
-        scanner.scanInstruction(bytecode, location.bytecodePosition);
+        scanner.scanInstruction(bytecode, location.bci);
     }
 
     public void recordNesting(final TreeAnchor anchor, Bailout bailout) {
@@ -510,7 +511,7 @@ public class TirRecorder {
             if (target.isNative()) {
                 call(target, takeSnapshot());
             } else {
-                final int invokeReturnPosition = currentBytePosition();
+                final int invokeReturnPosition = currentBCI();
                 state.enter(target, invokeReturnPosition);
                 if (printState.getValue()) {
                     Console.println(Color.LIGHTRED, "invoked: method: " + method.toString());
@@ -529,7 +530,7 @@ public class TirRecorder {
 
         @Override
         protected ConstantPool constantPool() {
-            return method.codeAttribute().constantPool;
+            return method.codeAttribute().cp;
         }
 
         protected ClassActor classActor() {
@@ -542,7 +543,7 @@ public class TirRecorder {
             if (printState.getValue()) {
                 state.println(NameMap.COMPACT);
                 Console.println();
-                Console.println(Color.LIGHTRED, "recording opcode: method: " + state.last().method() + " pc: " + currentOpcodePosition() + ", op: " + currentOpcode());
+                Console.println(Color.LIGHTRED, "recording opcode: method: " + state.last().method() + " pc: " + currentOpcodeBCI() + ", op: " + currentOpcode());
             }
         }
 
@@ -563,7 +564,7 @@ public class TirRecorder {
      */
     public TirState takeSnapshot(TreeAnchor anchor) {
         final TirState state = this.state.copy();
-        state.last().setPc(anchor.location().bytecodePosition);
+        state.last().setPc(anchor.location().bci);
         return state;
     }
 }

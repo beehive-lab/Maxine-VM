@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@ package com.sun.max.vm.classfile;
 
 import java.io.*;
 
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.bytecode.*;
@@ -41,7 +43,7 @@ public final class CodeAttribute {
     public static final ExceptionHandlerEntry[] NO_EXCEPTION_HANDLER_TABLE = ExceptionHandlerEntry.NONE;
 
     @INSPECTED
-    public final ConstantPool constantPool;
+    public final ConstantPool cp;
     public final char maxStack;
     public final char maxLocals;
 
@@ -63,7 +65,7 @@ public final class CodeAttribute {
                     LineNumberTable lineNumberTable,
                     LocalVariableTable localVariableTable,
                     StackMapTable stackMapTable) {
-        this.constantPool = constantPool;
+        this.cp = constantPool;
         this.code = code;
         this.maxStack = maxStack;
         this.maxLocals = maxLocals;
@@ -136,15 +138,39 @@ public final class CodeAttribute {
      *
      * @return {@code null} if this code attribute has no exception handlers
      */
-    public int[] exceptionHandlerPositions() {
+    public int[] exceptionHandlerBCIs() {
         if (exceptionHandlerTableOffset == -1) {
             return null;
         }
         try {
-            return ExceptionHandlerEntry.decodeHandlerPositions(encodedData(exceptionHandlerTableOffset));
+            return ExceptionHandlerEntry.decodeHandlerBCIs(encodedData(exceptionHandlerTableOffset));
         } catch (IOException e) {
             throw ProgramError.unexpected(e);
         }
+    }
+
+    public CiExceptionHandler[] exceptionHandlers() {
+        ExceptionHandlerEntry[] exceptionHandlerTable = exceptionHandlerTable();
+        if (exceptionHandlerTable.length == 0) {
+            return CiExceptionHandler.NONE;
+        }
+        CiExceptionHandler[] handlers = new CiExceptionHandler[exceptionHandlerTable.length];
+        int i = 0;
+        for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
+            RiType catchType;
+            int catchTypeIndex = entry.catchTypeIndex();
+            if (catchTypeIndex == 0) {
+                catchType = null;
+            } else {
+                catchType = cp.classAt(catchTypeIndex).resolve(cp, catchTypeIndex);
+            }
+            handlers[i++] = new CiExceptionHandler(
+                            (char) entry.startBCI(),
+                            (char) entry.endBCI(),
+                            (char) entry.handlerBCI(),
+                            (char) catchTypeIndex, catchType);
+        }
+        return handlers;
     }
 
     public ExceptionHandlerEntry[] exceptionHandlerTable() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,18 +34,18 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public final class UninitializedNewType extends UninitializedType {
 
-    private final int position;
+    private final int bci;
 
-    public UninitializedNewType(int position) {
-        assert position != -1;
-        this.position = position;
+    public UninitializedNewType(int bci) {
+        assert bci != -1;
+        this.bci = bci;
     }
 
     /**
-     * Gets the bytecode position of the {@link Bytecodes#NEW} instruction that created the uninitialized object denoted by this type.
+     * Gets the BCI of the {@link Bytecodes#NEW} instruction that created the uninitialized object denoted by this type.
      */
-    public int position() {
-        return position;
+    public int bci() {
+        return bci;
     }
 
     @Override
@@ -56,12 +56,12 @@ public final class UninitializedNewType extends UninitializedType {
 
     @Override
     public void writeInfo(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
-        stream.writeShort(position);
+        stream.writeShort(bci);
     }
 
     @Override
     public String toString() {
-        return "uninitialized[new@" + position + "]";
+        return "uninitialized[new@" + bci + "]";
     }
 
     @Override

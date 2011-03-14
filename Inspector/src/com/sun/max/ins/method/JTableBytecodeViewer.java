@@ -34,6 +34,7 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
@@ -42,7 +43,7 @@ import com.sun.max.ins.util.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.actor.member.*;
 
 /**
  * A table-based viewer for an (immutable) block of bytecodes.
@@ -359,7 +360,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 case OPERAND2:
                     return instruction.operand2;
                 case SOURCE_LINE:
-                    return new BytecodeLocation(teleClassMethodActor().classMethodActor(), instruction.position);
+                    return new CiCodePos(null, teleClassMethodActor().classMethodActor(), instruction.position);
                 case BYTES:
                     return instruction.instructionBytes;
                 default:
@@ -609,25 +610,26 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     }
 
     private final class SourceLineRenderer extends PlainLabel implements TableCellRenderer {
-        private BytecodeLocation lastBytecodeLocation;
+        private CiCodePos lastCodePos;
         SourceLineRenderer() {
             super(JTableBytecodeViewer.this.inspection(), null);
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    final BytecodeLocation bytecodeLocation = lastBytecodeLocation;
-                    if (bytecodeLocation != null) {
-                        inspection().viewSourceExternally(bytecodeLocation);
+                    final CiCodePos codePos = lastCodePos;
+                    if (codePos != null) {
+                        inspection().viewSourceExternally(codePos);
                     }
                 }
             });
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BytecodeLocation bytecodeLocation = (BytecodeLocation) value;
+            final CiCodePos codePos = (CiCodePos) value;
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
-            final String sourceFileName = bytecodeLocation.sourceFileName();
-            final int lineNumber = bytecodeLocation.sourceLineNumber();
+            ClassMethodActor method = (ClassMethodActor) codePos.method;
+            final String sourceFileName = method.holder().sourceFileName;
+            final int lineNumber = method.sourceLineNumber(codePos.bci);
             if (sourceFileName != null && lineNumber >= 0) {
                 setText(String.valueOf(lineNumber));
                 setWrappedToolTipText("Source location =<br>" + sourceFileName + ":" + lineNumber);
@@ -636,7 +638,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 setWrappedToolTipText("Source line not available");
             }
             setBackgroundForRow(this, row);
-            lastBytecodeLocation = bytecodeLocation;
+            lastCodePos = codePos;
             return this;
         }
     }

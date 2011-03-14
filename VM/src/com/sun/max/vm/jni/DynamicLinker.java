@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,7 +106,7 @@ public final class DynamicLinker {
         if (absolutePath == null) {
             handle = mainHandle;
         } else {
-            final int i = CString.writePartialUtf8(absolutePath, 0, buffer.address(), buffer.size());
+            final int i = CString.writePartialUtf8(absolutePath, 0, absolutePath.length(), buffer.address(), buffer.size()) - 1;
             FatalError.check(i == absolutePath.length(), "Dynamic library path is too long for buffer");
             handle = nativeOpenDynamicLibrary(buffer.address());
         }
@@ -147,17 +147,17 @@ public final class DynamicLinker {
      * Looks up a symbol from a given dynamically loaded native library.
      *
      * @param handle a handle to a native library dynamically loaded by {@link #load}
-     * @param name the name of the symbol to lookup
+     * @param symbol the symbol to lookup
      * @return the address of the symbol or null if it is not found in the library
      */
-    public static Word lookupSymbol(Word handle, String name) {
+    public static Word lookupSymbol(Word handle, String symbol) {
         Word h = handle;
         if (h.isZero()) {
-            if ("nativeOpenDynamicLibrary".equals(name)) {
+            if ("nativeOpenDynamicLibrary".equals(symbol)) {
                 return nativeOpenDynamicLibrary;
-            } else if ("dlsym".equals(name)) {
+            } else if ("dlsym".equals(symbol)) {
                 return dlsym;
-            } else if ("dlerror".equals(name)) {
+            } else if ("dlerror".equals(symbol)) {
                 return dlerror;
             }
             h = mainHandle;
@@ -165,16 +165,45 @@ public final class DynamicLinker {
                 // N.B. the first call to dlsym will cause a recursive call to this
                 // method since it is not yet resolved. The recursion is broken by the
                 // explicit check above.
-                final int i = CString.writePartialUtf8(name, 0, buffer.address(), buffer.size());
-                FatalError.check(i == name.length(), "Symbol name is too long for buffer");
-                return dlsym(h, buffer.address());
+                return dlsym(symbol, h);
             }
         }
         synchronized (buffer) {
-            final int i = CString.writePartialUtf8(name, 0, buffer.address(), buffer.size());
-            FatalError.check(i == name.length(), "Symbol name is too long for buffer");
-            return dlsym(h, buffer.address());
+            return dlsym(symbol, h);
         }
+    }
+
+    /**
+     * Looks up a symbol in a given library.
+     *
+     * @param symbol one or two symbols to be used for the lookup (see {@link Mangle#mangleMethod(TypeDescriptor, String, SignatureDescriptor, boolean)})
+     * @param h a handle to a native library dynamically loaded by {@link #load}
+     * @return the address or null if it is not found in the library
+     */
+    private static Word dlsym(String symbol, Word h) {
+        int delim = symbol.indexOf(Mangle.LONG_NAME_DELIMITER);
+        if (delim == -1) {
+            BootMemory buf = buffer;
+            int bufRem = buf.size();
+            final int i = CString.writePartialUtf8(symbol, 0, symbol.length(), buf.address(), bufRem);
+            FatalError.check(i == symbol.length() + 1, "Symbol name is too long for buffer");
+            return dlsym(h, buf.address());
+        }
+
+        BootMemory buf = buffer;
+        int shortNameLength = delim;
+        int i = CString.writePartialUtf8(symbol, 0, shortNameLength, buf.address(), buf.size());
+        FatalError.check(i == shortNameLength + 1, "Symbol name is too long for buffer");
+
+        Word addr = dlsym(h, buf.address());
+        if (!addr.isZero()) {
+            return addr;
+        }
+
+        int longNameSuffixLength = symbol.length() - (delim + 1);
+        i = CString.writePartialUtf8(symbol, delim + 1, longNameSuffixLength, buf.address().plus(shortNameLength), buf.size() - i);
+        FatalError.check(i == longNameSuffixLength + 1, "Symbol name is too long for buffer");
+        return dlsym(h, buf.address());
     }
 
     public static void close(Word handle) {

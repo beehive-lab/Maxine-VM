@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.CodeComment;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.ri.*;
 
@@ -51,14 +52,9 @@ public abstract class AbstractAssembler {
     }
 
     public final void bind(Label l) {
-        if (l.isBound()) {
-            // Assembler can bind a label more than once to the same place.
-            assert l.position() == codeBuffer.position() : "attempt to redefine label";
-        } else {
-            // bind the label and patch any references to it
-            l.bind(codeBuffer.position());
-            l.patchInstructions(this);
-        }
+        assert !l.isBound() : "can bind label only once";
+        l.bind(codeBuffer.position());
+        l.patchInstructions(this);
     }
 
     public void setFrameSize(int frameSize) {
@@ -76,7 +72,7 @@ public abstract class AbstractAssembler {
                 int codeOffset = ei.codeOffset;
                 for (ExceptionHandler handler : ei.exceptionHandlers) {
                     int entryOffset = handler.entryCodeOffset();
-                    RiType caughtType = handler.handler.catchKlass();
+                    RiType caughtType = handler.handler.catchType();
                     targetMethod.recordExceptionHandler(codeOffset, ei.bci, handler.scopeCount(), entryOffset, handler.handlerBCI(), caughtType);
                 }
             }
@@ -204,21 +200,6 @@ public abstract class AbstractAssembler {
         return targetMethod.recordMark(codeBuffer.position(), id, references);
     }
 
-    protected int target(Label l) {
-        if (l.isBound()) {
-            return l.position();
-        } else {
-            int branchPc = codeBuffer.position();
-            l.addPatchAt(branchPc);
-            // Need to return a pc, doesn't matter what it is since it will be
-            // replaced during resolution later.
-            // Don't return null or badAddress, since branches shouldn't overflow.
-            // Don't return base either because that could overflow displacements
-            // for shorter branches. It will get checked when bound.
-            return branchPc;
-        }
-    }
-
     public abstract void nop();
 
     public abstract void nullCheck(CiRegister r);
@@ -243,11 +224,7 @@ public abstract class AbstractAssembler {
         codeBuffer.emitLong(x);
     }
 
-    public void blockComment(String st) {
-        Util.nonFatalUnimplemented();
-    }
-
-    public void verifiedEntry() {
-        Util.nonFatalUnimplemented();
+    public void blockComment(String s) {
+        targetMethod.addAnnotation(new CodeComment(codeBuffer.position(), s));
     }
 }

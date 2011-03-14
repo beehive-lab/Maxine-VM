@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 package com.sun.max.vm.cps.jit;
 
 import com.sun.max.vm.bytecode.refmaps.*;
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 
 /**
  * An iterator over a map from bytecode positions to {@linkplain StopType stops}. The context of the bytecode positions
@@ -35,7 +35,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Doug Simon
  */
-public class BytecodeStopsIterator implements BytecodePositionIterator {
+public class BytecodeStopsIterator implements BCIIterator {
 
     /**
      * Tag for elements in {@link #map} denoting opcode positions.
@@ -81,7 +81,7 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
      * @return {@code -1} if this iterator is already at the end of the map
      * @see #next()
      */
-    public int bytecodePosition() {
+    public int bci() {
         if (bytecodePositionCursor < map.length) {
             assert (map[bytecodePositionCursor] & BCP_BIT) != 0;
             return map[bytecodePositionCursor] & ~BCP_BIT;
@@ -172,7 +172,7 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
     public String toString() {
         final BytecodeStopsIterator copy = new BytecodeStopsIterator(map);
         final StringBuilder sb = new StringBuilder();
-        for (int bytecodePosition = copy.bytecodePosition(); bytecodePosition != -1; bytecodePosition = copy.next()) {
+        for (int bytecodePosition = copy.bci(); bytecodePosition != -1; bytecodePosition = copy.next()) {
             if (sb.length() != 0) {
                 sb.append(", ");
             }

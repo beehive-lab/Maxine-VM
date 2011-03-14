@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.debug.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.bytecode.Bytecodes.*;
+import com.sun.cri.bytecode.Bytecodes.UnsignedComparisons;
 import com.sun.cri.ci.*;
 
 /**
@@ -34,8 +34,6 @@ import com.sun.cri.ci.*;
  * @see UnsignedComparisons
  */
 public final class UnsignedCompareOp extends Op2 {
-
-    FrameState stateBefore;
 
     /**
      * One of the constants defined in {@link UnsignedComparisons} denoting the type of this comparison.
@@ -57,21 +55,17 @@ public final class UnsignedCompareOp extends Op2 {
         this.op = op;
     }
 
-    /**
-     * Gets the frame state before the comparison is performed.
-     * @return the state before the comparison is performed
-     */
-    @Override
-    public FrameState stateBefore() {
-        return stateBefore;
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitUnsignedCompareOp(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(x()).
+        print(' ').
+        print(Bytecodes.operator(opcode)).
+        print(' ').
+        print(y());
     }
 }

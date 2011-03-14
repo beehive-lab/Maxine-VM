@@ -30,6 +30,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
@@ -44,16 +45,13 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
-import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -1980,7 +1978,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void procedure() {
-            inspection().viewSourceExternally(new BytecodeLocation(teleClassMethodActor.classMethodActor(), 0));
+            inspection().viewSourceExternally(new CiCodePos(null, teleClassMethodActor.classMethodActor(), 0));
         }
     }
 
@@ -4518,8 +4516,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             try {
                 final Value returnValue = vm().interpretMethod(classMethodActor, arguments);
                 gui().informationMessage("Method " + classMethodActor.name + " returned " + returnValue.toString());
-            } catch (TeleInterpreterException teleInterpreterException) {
-                InspectorError.unexpected("Interpreter failure", teleInterpreterException);
+            } catch (InvocationTargetException e) {
+                InspectorError.unexpected("Interpreter failure", e);
             }
         }
     }
@@ -4548,11 +4546,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * Action:  displays and highlights an inspection of the current Java frame descriptor.
      */
-    final class InspectJavaFrameDescriptorAction extends InspectorAction {
-        private static final String DEFAULT_TITLE = "Inspect Java frame descriptor";
-        private TargetJavaFrameDescriptor targetJavaFrameDescriptor;
+    final class InspectBytecodeFramesAction extends InspectorAction {
+        private static final String DEFAULT_TITLE = "Inspect Java frames";
+        private CiFrame bytecodeFrames;
 
-        InspectJavaFrameDescriptorAction(String actionTitle) {
+        InspectBytecodeFramesAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
             focus().addListener(new InspectionFocusAdapter() {
@@ -4565,13 +4563,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            assert targetJavaFrameDescriptor != null;
+            assert bytecodeFrames != null;
             if (focus().hasCodeLocation()) {
                 final Address instructionAddress = focus().codeLocation().address();
                 if (instructionAddress != null && !instructionAddress.isZero()) {
                     final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
                     if (compiledCode != null) {
-                        TargetJavaFrameDescriptorInspector.make(inspection(), targetJavaFrameDescriptor, compiledCode).highlight();
+                        BytecodeFramesInspector.make(inspection(), bytecodeFrames, compiledCode).highlight();
                     }
                 }
             } else {
@@ -4580,7 +4578,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         /**
-         * @return whether there is a Java frame descriptor at the focus machine code location
+         * @return whether there is bytecode frame info at the focus machine code location
          */
         private boolean inspectable() {
             if (focus().hasCodeLocation()) {
@@ -4590,15 +4588,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     if (compiledCode != null) {
                         final InstructionMap instructionMap = compiledCode.getInstructionMap();
                         final int instructionIndex = instructionMap.findInstructionIndex(instructionAddress);
-                        targetJavaFrameDescriptor = instructionMap.targetFrameDescriptor(instructionIndex);
-                        if (targetJavaFrameDescriptor == null) {
-                            return false;
+                        if (instructionIndex >= 0) {
+                            bytecodeFrames = instructionMap.bytecodeFrames(instructionIndex);
+                            if (bytecodeFrames == null) {
+                                return false;
+                            }
                         }
                         return true;
                     }
                 }
             }
-            targetJavaFrameDescriptor = null;
+            bytecodeFrames = null;
             return false;
         }
 
@@ -4608,7 +4608,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private InspectorAction inspectJavaFrameDescriptor = new InspectJavaFrameDescriptorAction(null);
+    private InspectorAction inspectJavaFrameDescriptor = new InspectBytecodeFramesAction(null);
 
     /**
      * @return an Action that will display an inspection of the current Java frame descriptor.

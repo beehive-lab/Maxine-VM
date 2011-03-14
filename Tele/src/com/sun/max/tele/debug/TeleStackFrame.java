@@ -95,9 +95,9 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
      * @return a newly created instance of {@link TeleStackFrame}
      */
     public static TeleStackFrame createFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame stackFrame) {
-        if (stackFrame instanceof CompiledStackFrame) {
-            final CompiledStackFrame compiledStackFrame = (CompiledStackFrame) stackFrame;
-            return new CompiledFrame(teleVM, teleStack, position, compiledStackFrame);
+        if (stackFrame instanceof VMStackFrame) {
+            final VMStackFrame compiledStackFrame = (VMStackFrame) stackFrame;
+            return new TeleVMFrame(teleVM, teleStack, position, compiledStackFrame);
         }
         if (stackFrame instanceof NativeStackFrame) {
             final NativeStackFrame nativeStackFrame = (NativeStackFrame) stackFrame;
@@ -202,12 +202,12 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         return Integer.toString(position) + ":  " + entityName();
     }
 
-    static final class CompiledFrame extends TeleStackFrame<CompiledStackFrame> implements MaxStackFrame.Compiled {
+    static final class TeleVMFrame extends TeleStackFrame<VMStackFrame> implements MaxStackFrame.Compiled {
 
         private final StackFrameMemoryRegion stackFrameMemoryRegion;
         private final String entityDescription;
 
-        protected CompiledFrame(TeleVM teleVM, TeleStack teleStack, int position, CompiledStackFrame compiledStackFrame) {
+        protected TeleVMFrame(TeleVM teleVM, TeleStack teleStack, int position, VMStackFrame compiledStackFrame) {
             super(teleVM, teleStack, position, compiledStackFrame);
             final String description = teleStack.thread().entityName() + " frame(" + position() + ")";
             this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), layout().frameSize());
@@ -230,7 +230,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
             return stackFrameMemoryRegion.contains(address);
         }
 
-        public CompiledStackFrameLayout layout() {
+        public VMFrameLayout layout() {
             return stackFrame.layout;
         }
 

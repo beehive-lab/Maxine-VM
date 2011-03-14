@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -124,7 +124,7 @@ final class EdgeMoveOptimizer {
         assert numPreds > 1 : "do not call otherwise";
         assert !block.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry) : "exception handlers not allowed";
 
-        // setup a list with the lir-instructions of all predecessors
+        // setup a list with the LIR instructions of all predecessors
         for (int i = 0; i < numPreds; i++) {
             BlockBegin pred = block.predAt(i);
             List<LIRInstruction> predInstructions = pred.lir().instructionsList();

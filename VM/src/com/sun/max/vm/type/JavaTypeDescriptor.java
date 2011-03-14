@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -492,33 +492,17 @@ public final class JavaTypeDescriptor {
 
     private static int parseClassName(String string, int startIndex, int index, final char separator) throws ClassFormatError {
         int position = index;
-        boolean inIdentifier = false;
         final int length = string.length();
         while (position < length) {
             final char nextch = string.charAt(position);
-            if (inIdentifier) {
-                if (Character.isJavaIdentifierPart(nextch)) {
-                    // continue in identifier.
-                } else if (nextch == separator) {
-                    // if a slash, then we aren't in an identifier anymore
-                    inIdentifier = false;
-                } else {
-                    // break out of the loop. failure.
-                    break;
+            if (nextch == '.' || nextch == '/') {
+                if (separator != nextch) {
+                    return position;
                 }
-            } else {
-                // not in an identifier, must start one now
-                if (Character.isJavaIdentifierStart(nextch)) {
-                    inIdentifier = true;
-                } else {
-                    // break out of the loop. failure.
-                    break;
-                }
+            } else if (nextch == ';' || nextch == '[') {
+                return position;
             }
             position++;
-        }
-        if (!inIdentifier) {
-            return -1;
         }
         return position;
     }

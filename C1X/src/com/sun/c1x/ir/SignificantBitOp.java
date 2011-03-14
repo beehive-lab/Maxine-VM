@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -60,10 +61,6 @@ public class SignificantBitOp extends Instruction {
         return value;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply to each value
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         value = closure.apply(value);
@@ -88,5 +85,10 @@ public class SignificantBitOp extends Instruction {
             return value == o.value && op == o.op;
         }
         return false;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(Bytecodes.nameOf(op) + " [").print(this).print("] ");
     }
 }

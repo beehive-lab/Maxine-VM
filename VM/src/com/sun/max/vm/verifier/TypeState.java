@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ import com.sun.max.vm.verifier.types.*;
 public class TypeState extends Frame {
 
     /**
-     * The instruction at this target or null if this type state is not fixed at an position.
+     * The instruction at this target or null if this type state is not fixed at a BCI.
      */
     private Instruction targetedInstruction;
 
@@ -71,8 +71,8 @@ public class TypeState extends Frame {
         visited = true;
     }
 
-    public int position() {
-        return targetedInstruction == null ? -1 : targetedInstruction.position();
+    public int bci() {
+        return targetedInstruction == null ? -1 : targetedInstruction.bci();
     }
 
     @Override
@@ -213,17 +213,17 @@ public class TypeState extends Frame {
         return (TypeInferencingMethodVerifier) methodVerifier;
     }
 
-    public boolean mergeStackFrom(TypeState fromTypeState, int thisPosition) {
+    public boolean mergeStackFrom(TypeState fromTypeState, int thisBCI) {
         boolean changed = false;
         if (stackSize != fromTypeState.stackSize) {
-            verifyError("Inconsistent height for stacks being merged at bytecode position " + thisPosition);
+            verifyError("Inconsistent height for stacks being merged at BCI " + thisBCI);
         }
 
         for (int i = 0; i < stackSize; i++) {
             if (!stack[i].isAssignableFrom(fromTypeState.stack[i])) {
                 final VerificationType mergedType = stack[i].mergeWith(fromTypeState.stack[i]);
                 if (mergedType == TOP) {
-                    verifyError("Incompatible types in slot " + i + " of stacks being merged at bytecode position " + thisPosition);
+                    verifyError("Incompatible types in slot " + i + " of stacks being merged at BCI " + thisBCI);
                 }
                 assert mergedType != stack[i];
                 stack[i] = mergedType;
@@ -233,7 +233,7 @@ public class TypeState extends Frame {
         return changed;
     }
 
-    public boolean mergeLocalsFrom(TypeState fromTypeState, int thisPosition) {
+    public boolean mergeLocalsFrom(TypeState fromTypeState, int thisBCI) {
         boolean changed = false;
         int activeLocals = 0;
         for (int i = 0; i < this.activeLocals; i++) {
@@ -274,7 +274,7 @@ public class TypeState extends Frame {
     }
 
     @Override
-    public void mergeFrom(Frame fromFrame, int thisPosition, int catchTypeIndex) {
+    public void mergeFrom(Frame fromFrame, int thisBCI, int catchTypeIndex) {
         final TypeState fromTypeState = (TypeState) fromFrame;
         if (!visited) {
             reset(fromTypeState);
@@ -293,9 +293,9 @@ public class TypeState extends Frame {
             verifier().enqueChangedTypeState(this);
         } else {
             boolean changed = mergeSubroutineFrames(fromTypeState);
-            changed = mergeLocalsFrom(fromTypeState, thisPosition) || changed;
+            changed = mergeLocalsFrom(fromTypeState, thisBCI) || changed;
             if (catchTypeIndex == -1) {
-                changed = mergeStackFrom(fromTypeState, thisPosition) || changed;
+                changed = mergeStackFrom(fromTypeState, thisBCI) || changed;
             }
             if (changed) {
                 verifier().enqueChangedTypeState(this);
@@ -348,47 +348,67 @@ public class TypeState extends Frame {
             return VerificationType.NO_TYPES;
         }
         int stackMapTypesLength = 0;
+        boolean safeToCopy = true;
         for (int i = 0; i != length; ++i) {
-            if (types[i].classfileTag() != -1) {
+            VerificationType type = types[i];
+            if (type.classfileTag() == -1) {
+                assert type.isSecondWordType();
+                assert i > 0;
+                VerificationType prev = types[i - 1];
+                if (!prev.isCategory2()) {
+                    // A 'left-over' second-word type
+                    ++stackMapTypesLength;
+                    safeToCopy = false;
+                }
+            } else {
                 ++stackMapTypesLength;
             }
         }
 
-        if (stackMapTypesLength == length) {
+        if (stackMapTypesLength == length && safeToCopy) {
             // No category 2 types
             return Arrays.copyOf(types, stackMapTypesLength);
         }
         final VerificationType[] stackMapTypes = new VerificationType[stackMapTypesLength];
         stackMapTypesLength = 0;
         for (int i = 0; i != length; ++i) {
-            if (types[i].classfileTag() != -1) {
-                stackMapTypes[stackMapTypesLength++] = types[i];
+            VerificationType type = types[i];
+            if (type.classfileTag() == -1) {
+                assert type.isSecondWordType();
+                assert i > 0;
+                VerificationType prev = types[i - 1];
+                if (!prev.isCategory2()) {
+                    stackMapTypes[stackMapTypesLength++] = VerificationType.TOP;
+                }
+            } else {
+                assert !type.isSecondWordType();
+                stackMapTypes[stackMapTypesLength++] = type;
             }
         }
         return stackMapTypes;
     }
 
     public StackMapFrame asStackMapFrame(TypeState previousTypeState) {
-        final int previousPosition = previousTypeState.position();
-        final int positionDelta = previousPosition == 0 ? position() : position() - previousPosition - 1;
+        final int previousBCI = previousTypeState.bci();
+        final int bciDelta = previousBCI == 0 ? bci() : bci() - previousBCI - 1;
 
         final VerificationType[] locals = asStackMapTypes(this.locals, activeLocals);
         final VerificationType[] previousLocals = asStackMapTypes(previousTypeState.locals, previousTypeState.activeLocals);
 
         if (stackSize == 1) {
             if (locals.length == previousLocals.length && diff(previousLocals, locals) == 0) {
-                if (positionDelta < StackMapTable.SAME_FRAME_BOUND) {
-                    return new SameLocalsOneStack(positionDelta, stack[0]);
+                if (bciDelta < StackMapTable.SAME_FRAME_BOUND) {
+                    return new SameLocalsOneStack(bciDelta, stack[0]);
                 }
-                return new SameLocalsOneStackExtended(positionDelta, stack[0]);
+                return new SameLocalsOneStackExtended(bciDelta, stack[0]);
             }
         } else if (stackSize == 0) {
             final int diffLength = diff(previousLocals, locals);
             if (diffLength == 0) {
-                if (positionDelta < StackMapTable.SAME_FRAME_BOUND) {
-                    return new SameFrame(positionDelta);
+                if (bciDelta < StackMapTable.SAME_FRAME_BOUND) {
+                    return new SameFrame(bciDelta);
                 }
-                return new SameFrameExtended(positionDelta);
+                return new SameFrameExtended(bciDelta);
             } else if (-MAX_LOCAL_LENGTH_DIFF < diffLength && diffLength < 0) {
                 // APPEND
                 final VerificationType[] localsDiff = new VerificationType[-diffLength];
@@ -396,14 +416,14 @@ public class TypeState extends Frame {
                 for (int i = previousLocals.length; i < locals.length; i++, j++) {
                     localsDiff[j] = locals[i];
                 }
-                return new AppendFrame(positionDelta, localsDiff);
+                return new AppendFrame(bciDelta, localsDiff);
             } else if (0 < diffLength && diffLength < MAX_LOCAL_LENGTH_DIFF) {
                 // CHOP
-                return new ChopFrame(positionDelta, diffLength);
+                return new ChopFrame(bciDelta, diffLength);
             }
         }
 
         // FULL_FRAME
-        return new FullFrame(positionDelta, locals, asStackMapTypes(stack, stackSize));
+        return new FullFrame(bciDelta, locals, asStackMapTypes(stack, stackSize));
     }
 }

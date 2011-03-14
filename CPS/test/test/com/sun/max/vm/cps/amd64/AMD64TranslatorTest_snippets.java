@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,7 @@ public class AMD64TranslatorTest_snippets extends CompilerTestCase {
             Trace.line(1, "snippet " + snippet.name + ":");
             final CPSTargetMethod targetMethod = (CPSTargetMethod) compilerTestSetup().translate(snippet.executable);
             targetMethod.traceBundle(IndentWriter.traceStreamWriter());
-            disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
+            disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), targetMethod.inlineDataDecoder());
             final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(targetMethod.code()));
             disassembler.scanAndPrint(stream, Trace.stream());
         }

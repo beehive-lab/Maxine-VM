@@ -34,13 +34,15 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.gen.LIRGenerator.*;
+import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.target.amd64.AMD64Assembler.ConditionFlag;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.Scale;
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
@@ -121,7 +123,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitBreakpoint() {
-        masm.emitByte(0xcc);
+        masm.int3();
     }
 
     @Override
@@ -150,20 +152,18 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        masm.mov64(dst, constant);
+        masm.movq(dst, constant);
     }
 
     private void const2reg(CiRegister dst, Object constant) {
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        if (target.inlineObjects) {
-            if (constant == null) {
-                masm.mov64(dst, 0x0L);
-            } else {
-                masm.recordDataReferenceInCode(CiConstant.forObject(constant));
-                masm.mov64(dst, 0xDEADDEADDEADDEADL);
-            }
+        if (constant == null) {
+            masm.movq(dst, 0x0L);
+        } else if (target.inlineObjects) {
+            masm.recordDataReferenceInCode(CiConstant.forObject(constant));
+            masm.movq(dst, 0xDEADDEADDEADDEADL);
         } else {
             masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
         }
@@ -230,8 +230,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
             case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
             case Object  : masm.movoop(frameMap.toStackAddress(slot), CiConstant.forObject(c.asObject())); break;
-            case Long    : masm.movptr(frameMap.toStackAddress(slot), c.asLong()); break;
-            case Double  : masm.movptr(frameMap.toStackAddress(slot), doubleToRawLongBits(c.asDouble())); break;
+            case Long    : masm.mov64(frameMap.toStackAddress(slot), c.asLong()); break;
+            case Double  : masm.mov64(frameMap.toStackAddress(slot), doubleToRawLongBits(c.asDouble())); break;
             default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
         }
     }
@@ -254,10 +254,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Float   : masm.movl(addr, floatToRawIntBits(constant.asFloat())); break;
             case Object  : masm.movoop(addr, CiConstant.forObject(constant.asObject())); break;
             case Word:
-            case Long    : masm.mov64(rscratch1, constant.asLong());
+            case Long    : masm.movq(rscratch1, constant.asLong());
                            nullCheckHere = codePos();
                            masm.movq(addr, rscratch1); break;
-            case Double  : masm.mov64(rscratch1, doubleToRawLongBits(constant.asDouble()));
+            case Double  : masm.movq(rscratch1, doubleToRawLongBits(constant.asDouble()));
                            nullCheckHere = codePos();
                            masm.movq(addr, rscratch1); break;
             default      : throw Util.shouldNotReachHere();
@@ -453,6 +453,74 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         return true;
     }
 
+    private boolean assertEmitTableSwitch(LIRTableSwitch op) {
+        assert op.defaultTarget != null;
+        branchTargetBlocks.add(op.defaultTarget);
+        for (BlockBegin target : op.targets) {
+            assert target != null;
+            branchTargetBlocks.add(target);
+        }
+        return true;
+    }
+
+    @Override
+    protected void emitTableSwitch(LIRTableSwitch op) {
+
+        assert assertEmitTableSwitch(op);
+
+        CiRegister value = op.value().asRegister();
+        final Buffer buf = masm.codeBuffer;
+
+        // Compare index against jump table bounds
+        int highKey = op.lowKey + op.targets.length - 1;
+        if (op.lowKey != 0) {
+            // subtract the low value from the switch value
+            masm.subl(value, op.lowKey);
+            masm.cmpl(value, highKey - op.lowKey);
+        } else {
+            masm.cmpl(value, highKey);
+        }
+
+        // Jump to default target if index is not within the jump table
+        masm.jcc(ConditionFlag.above, op.defaultTarget.label());
+
+        // Set scratch to address of jump table
+        int leaPos = buf.position();
+        buf.mark();
+        masm.leaq(rscratch1, new CiAddress(CiKind.Word, InstructionRelative.asValue(), 0));
+
+        // Load jump table entry into scratch and jump to it
+        masm.movslq(value, new CiAddress(CiKind.Int, rscratch1.asValue(), value.asValue(), Scale.Times4, 0));
+        masm.addq(rscratch1, value);
+        masm.jmp(rscratch1);
+
+        // Inserting padding so that jump table address is 4-byte aligned
+        if ((buf.position() & 0x3) != 0) {
+            masm.nop(4 - (buf.position() & 0x3));
+        }
+
+        // Patch LEA instruction above now that we know the position of the jump table
+        int jumpTablePos = buf.position();
+        buf.setPosition(leaPos);
+        buf.mark();
+        masm.leaq(rscratch1, new CiAddress(CiKind.Word, InstructionRelative.asValue(), jumpTablePos - leaPos));
+        buf.setPosition(jumpTablePos);
+
+        // Emit jump table entries
+        for (BlockBegin target : op.targets) {
+            Label label = target.label();
+            label.addPatchAt(buf.position());
+            int offsetToJumpTableBase = buf.position() - jumpTablePos;
+
+            buf.emitByte(0); // psuedo-opcode for jump table entry
+            buf.emitShort(offsetToJumpTableBase);
+            buf.emitByte(0); // padding to make jump table entry 4 bytes wide
+        }
+
+        JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);
+        masm.targetMethod.addAnnotation(jt);
+    }
+
     @Override
     protected void emitBranch(LIRBranch op) {
 
@@ -571,7 +639,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case F2L: {
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
                 masm.cvttss2siq(dest.asRegister(), asXmmFloatReg(src));
-                masm.mov64(rscratch1, java.lang.Long.MIN_VALUE);
+                masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
                 masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
@@ -582,7 +650,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case D2L: {
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
                 masm.cvttsd2siq(dest.asRegister(), asXmmDoubleReg(src));
-                masm.mov64(rscratch1, java.lang.Long.MIN_VALUE);
+                masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.notEqual, endLabel);
                 masm.callGlobalStub(op.globalStub, null, dest.asRegister(), src);
@@ -840,7 +908,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         default  : throw Util.shouldNotReachHere();
                     }
                 } else {
-                    // register - constant
                     assert target.sizeInBytes(kind) == 8;
                     if (right.isStackSlot()) {
                         // register - stack
@@ -854,11 +921,19 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         // register - constant
                         assert right.isConstant();
                         long c = ((CiConstant) right).asLong();
-                        masm.mov64(rscratch1, c);
-                        switch (code) {
-                            case Add : masm.addq(lreg, rscratch1); break;
-                            case Sub : masm.subq(lreg, rscratch1); break;
-                            default  : throw Util.shouldNotReachHere();
+                        if (Util.isInt(c)) {
+                            switch (code) {
+                                case Add : masm.addq(lreg, (int) c); break;
+                                case Sub : masm.subq(lreg, (int) c); break;
+                                default  : throw Util.shouldNotReachHere();
+                            }
+                        } else {
+                            masm.movq(rscratch1, c);
+                            switch (code) {
+                                case Add : masm.addq(lreg, rscratch1); break;
+                                case Sub : masm.subq(lreg, rscratch1); break;
+                                default  : throw Util.shouldNotReachHere();
+                            }
                         }
                     }
                 }
@@ -943,7 +1018,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             CiRegister lreg = left.asRegister();
             if (right.isConstant()) {
                 CiConstant rightConstant = (CiConstant) right;
-                masm.mov64(rscratch1, rightConstant.asLong());
+                masm.movq(rscratch1, rightConstant.asLong());
                 switch (code) {
                     case LogicAnd : masm.andq(lreg, rscratch1); break;
                     case LogicOr  : masm.orq(lreg, rscratch1); break;
@@ -1058,7 +1133,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         if (C1XOptions.GenSpecialDivChecks) {
             // check for special case of Long.MIN_VALUE / -1
             Label normalCase = new Label();
-            masm.mov64(AMD64.rdx, java.lang.Long.MIN_VALUE);
+            masm.movq(AMD64.rdx, java.lang.Long.MIN_VALUE);
             masm.cmpq(AMD64.rax, AMD64.rdx);
             masm.jcc(ConditionFlag.notEqual, normalCase);
             if (code == LIROpcode.Lrem) {
@@ -1180,7 +1255,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         if (c.asLong() == 0) {
                             masm.cmpq(reg1, 0);
                         } else {
-                            masm.mov64(rscratch1, c.asLong());
+                            masm.movq(rscratch1, c.asLong());
                             masm.cmpq(reg1, rscratch1);
 
                         }
@@ -1270,6 +1345,22 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
         masm.nativeCall(reg, symbol, info);
+    }
+
+    @Override
+    protected void emitTemplateCall(CiValue address) {
+        if (address == null) {
+            masm.directCall(null, null);
+            return;
+        }
+
+        CiRegister reg = rscratch1;
+        if (address.isRegister()) {
+            reg = address.asRegister();
+        } else {
+            moveOp(address, reg.asValue(address.kind), address.kind, null, false);
+        }
+        masm.indirectCall(reg, null, null);
     }
 
     @Override
@@ -1676,6 +1767,18 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     break;
 
                 case PointerCAS:
+
+                    if ((Boolean) inst.extra && info != null) {
+                        asm.recordImplicitException(codePos(), info);
+                    }
+                    assert operands[inst.x().index].asRegister().equals(AMD64.rax) : "wrong input x: " + operands[inst.x().index];
+
+                    CiValue exchangedVal = operands[inst.y().index];
+                    CiValue exchangedAddress = operands[inst.x().index];
+                    CiRegisterValue pointerRegister = assureInRegister(exchangedAddress);
+                    CiAddress addr = new CiAddress(CiKind.Word, pointerRegister);
+                    masm.cmpxchgq(exchangedVal.asRegister(), addr);
+
                     break;
 
                 case CallStub: {
@@ -1779,9 +1882,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 }
 
                 case Bind: {
-                    if (C1XOptions.PrintAssembly) {
-                        TTY.println("Binding label to " + asm.codeBuffer.position());
-                    }
                     XirLabel l = (XirLabel) inst.extra;
                     Label label = labels[l.index];
                     asm.bind(label);

@@ -32,6 +32,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
@@ -46,7 +47,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -250,7 +251,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
             if (mouseEvent.getClickCount() > 1) {
                 // Depends on the first click selecting the row, and that changing the current
-                // code location focus to the location under the mouse event.7
+                // code location focus to the location under the mouse event.
                 actions().toggleMachineCodeBreakpoint().perform();
             }
         }
@@ -690,27 +691,27 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     private final class SourceLineRenderer extends PlainLabel implements TableCellRenderer {
 
-        private BytecodeLocation lastBytecodeLocation;
+        private CiFrame lastFrame;
 
         SourceLineRenderer() {
             super(JTableMachineCodeViewer.this.inspection(), null);
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    final BytecodeLocation bytecodeLocation = lastBytecodeLocation;
-                    if (bytecodeLocation != null) {
+                    final CiCodePos frame = lastFrame;
+                    if (frame != null) {
                         final InspectorPopupMenu menu = new InspectorPopupMenu();
-                        for (BytecodeLocation location = bytecodeLocation; location != null; location = location.parent()) {
-                            final StackTraceElement stackTraceElement = location.toStackTraceElement();
+                        for (CiCodePos location = frame; location != null; location = location.caller) {
+                            final StackTraceElement stackTraceElement = location.method.toStackTraceElement(location.bci);
                             final String fileName = stackTraceElement.getFileName();
                             if (fileName != null) {
                                 final int lineNumber = stackTraceElement.getLineNumber();
                                 if (lineNumber > 0) {
-                                    if (vm().findJavaSourceFile(location.classMethodActor.holder()) != null) {
-                                        final BytecodeLocation locationCopy = location;
+                                    if (vm().findJavaSourceFile(((MethodActor) location.method).holder()) != null) {
+                                        final CiCodePos codePosCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
                                             public void actionPerformed(ActionEvent e) {
-                                                inspection().viewSourceExternally(locationCopy);
+                                                inspection().viewSourceExternally(codePosCopy);
                                             }
                                         });
                                     }
@@ -735,24 +736,24 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BytecodeLocation bytecodeLocation = instructionMap().bytecodeLocation(row);
+            final CiFrame frame = instructionMap().bytecodeFrames(row);
             setText("");
             setToolTipPrefix(tableModel.getRowDescription(row) + "<br>");
             setWrappedToolTipText("Source location not available");
             setBackgroundForRow(this, row);
-            if (bytecodeLocation != null) {
-                final StackTraceElement stackTraceElement = bytecodeLocation.toStackTraceElement();
+            if (frame != null) {
+                final StackTraceElement stackTraceElement = frame.method.toStackTraceElement(frame.bci);
                 final StringBuilder stackTrace = new StringBuilder("<table cellpadding=\"1%\"><tr><td></td><td>").append(toolTipText(stackTraceElement)).append("</td></tr>");
                 StackTraceElement top = stackTraceElement;
-                for (BytecodeLocation parent = bytecodeLocation.parent(); parent != null; parent = parent.parent()) {
-                    StackTraceElement parentSTE = parent.toStackTraceElement();
+                for (CiCodePos caller = frame.caller; caller != null; caller = caller.caller) {
+                    StackTraceElement parentSTE = caller.method.toStackTraceElement(caller.bci);
                     stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parentSTE)).append("</td></tr>");
                     top = parentSTE;
                 }
                 setWrappedToolTipText("Source location = " + stackTrace.append("</table>").toString());
                 setText(String.valueOf(top.getLineNumber()));
             }
-            lastBytecodeLocation = bytecodeLocation;
+            lastFrame = frame;
             setBorderForRow(this, row);
             return this;
         }

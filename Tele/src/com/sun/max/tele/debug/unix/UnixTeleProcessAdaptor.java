@@ -33,6 +33,7 @@ import com.sun.max.platform.*;
 import com.sun.max.tele.MaxWatchpoint.WatchpointSettings;
 import com.sun.max.tele.*;
 import com.sun.max.tele.channel.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;

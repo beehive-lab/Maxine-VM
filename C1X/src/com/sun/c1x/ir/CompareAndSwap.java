@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 
@@ -62,10 +63,6 @@ public final class CompareAndSwap extends PointerOp {
         setFlag(Flag.LiveStore);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitCompareAndSwap(this);
@@ -84,5 +81,12 @@ public final class CompareAndSwap extends PointerOp {
         super.inputValuesDo(closure);
         expectedValue = closure.apply(expectedValue);
         newValue = closure.apply(newValue);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print(Bytecodes.nameOf(opcode)).print("(").print(pointer());
+        out.print(" + ").print(offset());
+        out.print(", ").print(expectedValue()).print(", ").print(newValue()).print(')');
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,9 +43,9 @@ public interface VerificationRegistry {
 
     /**
      * Gets the canonical type of an uninitialized object created by a {@link Bytecodes#NEW} instruction at a given
-     * bytecode position.
+     * BCI.
      */
-    UninitializedNewType getUninitializedNewType(int position);
+    UninitializedNewType getUninitializedNewType(int bci);
 
     /**
      * Gets the canonical type for a TypeDescriptor.
@@ -53,9 +53,9 @@ public interface VerificationRegistry {
     VerificationType getVerificationType(TypeDescriptor typeDescriptor);
 
     /**
-     * Gets the canonical representation of a subroutine entered at a given position.
+     * Gets the canonical representation of a subroutine entered at a given BCI.
      */
-    Subroutine getSubroutine(int entryPosition, int maxLocals);
+    Subroutine getSubroutine(int entryBCI, int maxLocals);
 
     /**
      * Clears all recorded subroutines.

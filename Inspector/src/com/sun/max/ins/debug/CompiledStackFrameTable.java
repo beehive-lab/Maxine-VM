@@ -38,8 +38,8 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.ValueMode;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.stack.CompiledStackFrameLayout.Slot;
-import com.sun.max.vm.stack.CompiledStackFrameLayout.Slots;
+import com.sun.max.vm.stack.VMFrameLayout.Slot;
+import com.sun.max.vm.stack.VMFrameLayout.Slots;
 import com.sun.max.vm.value.*;
 
 /**

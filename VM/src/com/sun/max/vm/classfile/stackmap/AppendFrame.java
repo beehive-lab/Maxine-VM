@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,8 +62,8 @@ public class AppendFrame extends StackMapFrame {
 
     private final VerificationType[] locals;
 
-    public AppendFrame(int positionDelta, VerificationType[] locals) {
-        super(positionDelta);
+    public AppendFrame(int bciDelta, VerificationType[] locals) {
+        super(bciDelta);
         assert locals.length > 0 && locals.length <= 3;
         this.locals = locals;
     }
@@ -84,7 +84,7 @@ public class AppendFrame extends StackMapFrame {
     @Override
     public void write(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
         stream.writeByte(frameType());
-        stream.writeShort(positionDelta());
+        stream.writeShort(bciDelta());
         for (int i = 0; i < locals.length; i++) {
             locals[i].write(stream, constantPoolEditor);
         }
@@ -98,7 +98,7 @@ public class AppendFrame extends StackMapFrame {
     @Override
     public String toString() {
         return "frame_type = " + frameType() + " /* append_frame */\n" +
-               "  offset_delta = " + positionDelta() + "\n" +
+               "  offset_delta = " + bciDelta() + "\n" +
                "  locals = [ " + Utils.toString(locals, ", ") + " ]";
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.sun.max.vm.stack.*;
  *
  * @author Doug Simon
  */
-public class AMD64JavaStackFrame extends CompiledStackFrame {
+public class AMD64JavaStackFrame extends VMStackFrame {
 
     public AMD64JavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer ip, Pointer fp, Pointer sp) {
         super(callee, new OptoStackFrameLayout(targetMethod.frameSize(), true), targetMethod, ip, fp, sp);

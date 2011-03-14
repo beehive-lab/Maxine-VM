@@ -41,6 +41,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -472,6 +473,8 @@ public final class TeleClassRegistry extends AbstractTeleVMHolder implements Max
         public ClassActor idToClassActor(int id) {
             if (usingTeleClassIDs.get()) {
                 return findClassActorByID(id);
+            } else {
+                FatalError.unexpected("Who is resolving class IDs in the context of the host?");
             }
             return null;
         }

@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 
 /**
@@ -52,10 +53,6 @@ public final class Return extends BlockEnd {
         return result;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         if (result != null) {
@@ -63,12 +60,17 @@ public final class Return extends BlockEnd {
         }
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
     @Override
     public void accept(ValueVisitor v) {
         v.visitReturn(this);
+    }
+
+    @Override
+    public void print(LogStream out) {
+        if (result == null) {
+            out.print("return");
+        } else {
+            out.print(kind.typeChar).print("return ").print(result);
+        }
     }
 }

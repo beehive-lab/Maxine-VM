@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ public class BytecodeConfirmation extends BytecodeAdapter {
      * Thus it will be checked if the corresponding byte codes occur as it should.
      */
     protected void confirmPresence() {
-        int opcode = code()[currentOpcodePosition()] & 0xff;
+        int opcode = code()[currentOpcodeBCI()] & 0xff;
         switch (pass) {
             case REQUEST:
                 isOpcodePresenceRequested[opcode] = true;
@@ -110,7 +110,7 @@ public class BytecodeConfirmation extends BytecodeAdapter {
             case CONFIRM:
                 isOpcodePresent[opcode] = true;
                 if (opcode == WIDE) {
-                    opcode = code()[currentOpcodePosition() + 1] & 0xff;
+                    opcode = code()[currentOpcodeBCI() + 1] & 0xff;
                     isOpcodePresent[opcode] = true;
                 }
                 break;

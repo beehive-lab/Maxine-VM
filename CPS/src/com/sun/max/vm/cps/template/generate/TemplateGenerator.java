@@ -77,7 +77,7 @@ public class TemplateGenerator {
 
     public TargetMethod generateTargetTemplate(final ClassMethodActor sourceTemplate) {
         ProgramError.check(hasStackParameters(sourceTemplate), "Template must not have *any* stack parameters: " + sourceTemplate);
-        final TargetMethod targetMethod = targetGenerator().compile(sourceTemplate);
+        final TargetMethod targetMethod = targetGenerator().compile(sourceTemplate, true, null);
         ProgramError.check(targetMethod.referenceLiterals() == null, "Template must not have *any* reference literals: " + targetMethod);
         ProgramError.check(targetMethod.scalarLiterals() == null, "Template must not have *any* scalar literals: " + targetMethod);
         return targetMethod;

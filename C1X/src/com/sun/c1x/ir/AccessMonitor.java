@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ public abstract class AccessMonitor extends StateSplit {
     /**
      * The object locked or unlocked by this instruction.
      */
-    Value object;
+    private Value object;
 
     /**
      * The address of the on-stack lock object or {@code null} if the runtime does not place locks on the stack.
@@ -77,10 +77,6 @@ public abstract class AccessMonitor extends StateSplit {
         return lockAddress;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);

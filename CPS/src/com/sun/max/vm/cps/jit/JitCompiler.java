@@ -24,6 +24,7 @@ package com.sun.max.vm.cps.jit;
 
 import static com.sun.max.platform.Platform.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
@@ -42,12 +43,15 @@ public abstract class JitCompiler implements RuntimeCompiler {
     @HOSTED_ONLY
     private boolean isInitialized;
 
+    private boolean createdCPSCompiler;
+
     @HOSTED_ONLY
     protected JitCompiler() {
         CPSCompiler compiler = CPSCompiler.Static.compiler();
         if (compiler == null) {
             if (platform().isa == ISA.AMD64) {
                 compiler = new AMD64CPSCompiler();
+                createdCPSCompiler = true;
             } else {
                 throw FatalError.unimplemented();
             }
@@ -57,6 +61,10 @@ public abstract class JitCompiler implements RuntimeCompiler {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        if (createdCPSCompiler) {
+            CPSCompiler.Static.compiler().initialize(phase);
+        }
+
         if (MaxineVM.isHosted() && phase == MaxineVM.Phase.COMPILING) {
             init();
         }
@@ -79,10 +87,14 @@ public abstract class JitCompiler implements RuntimeCompiler {
 
     protected abstract TemplateBasedTargetGenerator targetGenerator();
 
-    public JitTargetMethod compile(ClassMethodActor classMethodActor) {
+    public JitTargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
         if (MaxineVM.isHosted()) {
             init();
         }
-        return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor);
+        TemplateBasedTargetGenerator gen = targetGenerator();
+        return (JitTargetMethod) gen.makeIrMethod(classMethodActor, install);
+    }
+
+    public void resetMetrics() {
     }
 }

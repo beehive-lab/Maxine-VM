@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,18 +62,15 @@ public final class Label {
      */
     public void bind(int pos) {
         this.position = pos;
+        assert isBound();
     }
 
     public boolean isBound() {
         return position >= 0;
     }
 
-    public boolean isUnbound() {
-        return position == -1 && patchPositions.size() > 0;
-    }
-
     public void addPatchAt(int branchLocation) {
-        assert position == -1 : "Label is unbound";
+        assert !isBound() : "Label is already bound";
         patchPositions.add(branchLocation);
     }
 

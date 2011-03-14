@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.sun.cri.bytecode.*;
 
 /**
  * Implemented by clients interested in knowing which local variables and operand stack slots contain a reference at the
- * bytecode positions denoted by {@link BytecodePositionIterator} during {@linkplain ReferenceMapInterpreter
+ * BCIs denoted by {@link BCIIterator} during {@linkplain ReferenceMapInterpreter
  * interpretation} of a method.
  *
  * @author Doug Simon
@@ -34,7 +34,7 @@ import com.sun.cri.bytecode.*;
 public interface ReferenceSlotVisitor {
     /**
      * Notifies this client that the operand stack slot at a given index contains an object reference at the current
-     * interpretation position.
+     * interpretation BCI.
      *
      * @param parametersPopped if {@code true}, then the interpreter is interpreting an
      *            invoke... or {@link Bytecodes#JNICALL} instruction and has already
@@ -44,7 +44,7 @@ public interface ReferenceSlotVisitor {
 
     /**
      * Notifies this client that the local variable at a given index contains an object reference at the current
-     * interpretation position.
+     * interpretation BCI.
      */
     void visitReferenceInLocalVariable(int localVariableIndex);
 }

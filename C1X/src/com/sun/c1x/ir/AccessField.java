@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,8 +36,8 @@ import com.sun.cri.ri.*;
  */
 public abstract class AccessField extends StateSplit {
 
-    Value object;
-    final RiField field;
+    private Value object;
+    protected final RiField field;
 
     /**
      * Constructs a new access field object.
@@ -59,7 +59,7 @@ public abstract class AccessField extends StateSplit {
         }
         initFlag(Flag.IsLoaded, isLoaded);
         initFlag(Flag.IsStatic, isStatic);
-        if (isLoaded && object != null && object.isNonNull()) {
+        if (isLoaded && object.isNonNull()) {
             eliminateNullCheck();
         }
         assert object != null : "every field access must reference some object";
@@ -131,11 +131,6 @@ public abstract class AccessField extends StateSplit {
         return needsPatching() || needsNullCheck();
     }
 
-    /**
-     * Iterates over the input values to this instruction. In this case,
-     * it is only the receiver object of the field access.
-     * @param closure the closure to apply to each value
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);

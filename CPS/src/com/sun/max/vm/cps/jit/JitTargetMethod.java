@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
-import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -53,14 +52,13 @@ import com.sun.max.vm.stack.*;
 public abstract class JitTargetMethod extends CPSTargetMethod {
 
     protected int frameReferenceMapOffset;
-    @INSPECTED
+
     private final AtomicReference referenceMapEditor = new AtomicReference();
 
     /**
      * The stack frame layout object is required by {@link StackReferenceMapPreparer#prepareTrampolineFrameForJITCaller}.
      */
-    @INSPECTED
-    private JitStackFrameLayout stackFrameLayout;
+    private JVMSFrameLayout stackFrameLayout;
 
     /**
      * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
@@ -78,23 +76,23 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
      * length of the bytecode array in which case {@code val} denotes the target code position one byte past the
      * last target code byte emitted for the last bytecode instruction.
      */
-    @INSPECTED
-    private int[] bytecodeToTargetCodePositionMap;
+    private int[] bciToPosMap;
 
     protected JitTargetMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor, CallEntryPoint.JIT_ENTRY_POINT);
     }
 
-    public int[] bytecodeToTargetCodePositionMap() {
-        return bytecodeToTargetCodePositionMap;
+    @Override
+    public int[] bciToPosMap() {
+        return bciToPosMap;
     }
 
     public int sizeOfNonParameterLocals() {
-        return JitStackFrameLayout.JIT_SLOT_SIZE * (classMethodActor.codeAttribute().maxLocals - classMethodActor.numberOfParameterSlots());
+        return JVMSFrameLayout.JVMS_SLOT_SIZE * (classMethodActor.codeAttribute().maxLocals - classMethodActor.numberOfParameterSlots());
     }
 
     public int sizeOfParameters() {
-        return classMethodActor.numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE;
+        return classMethodActor.numberOfParameterSlots() * JVMSFrameLayout.JVMS_SLOT_SIZE;
     }
 
     @HOSTED_ONLY
@@ -120,29 +118,22 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     }
 
     public int targetCodePositionFor(int bytecodePosition) {
-        return bytecodeToTargetCodePositionMap[bytecodePosition];
+        return bciToPosMap[bytecodePosition];
     }
 
     @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
+    public CiFrame getBytecodeFrames(int stopIndex) {
+        int bci = bciFor(stopPosition(stopIndex));
+        return stackFrameLayout.asFrame(classMethodActor, bci);
+    }
+
+    @Override
+    public CiCodePos getCodePos(Pointer ip, boolean ipIsReturnAddress) {
         if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
             ip = ip.minus(1);
         }
-        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(ip.asPointer()));
-    }
-
-    @Override
-    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
-        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(stopPosition(stopIndex)));
-    }
-
-    @Override
-    public CiDebugInfo getDebugInfo(Pointer instructionPointer, boolean implicitExceptionPoint) {
-        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
-            instructionPointer = instructionPointer.minus(1);
-        }
-        int bci = bytecodePositionFor(instructionPointer.asPointer());
-        return new CiDebugInfo(new CiCodePos(null, classMethodActor, bci), null, null);
+        int bci = bciFor(ip.asPointer());
+        return new CiCodePos(null, classMethodActor, bci);
     }
 
     /**
@@ -154,18 +145,18 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
      *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
      *         code, prologue or epilogue.
      */
-    public int bytecodePositionFor(Pointer instructionPointer) {
-        assert bytecodeToTargetCodePositionMap != null;
-        assert bytecodeToTargetCodePositionMap.length > 0;
-        final int targetCodePosition = targetCodePositionFor(instructionPointer);
-        return bytecodePositionFor(targetCodePosition);
+    public int bciFor(Pointer instructionPointer) {
+        assert bciToPosMap != null;
+        assert bciToPosMap.length > 0;
+        final int targetCodePosition = posFor(instructionPointer);
+        return bciFor(targetCodePosition);
     }
 
     /**
      * This method is guaranteed not to perform allocation.
      */
     @Override
-    public final JitStackFrameLayout stackFrameLayout() {
+    public final JVMSFrameLayout stackFrameLayout() {
         if (stackFrameLayout == null) {
             FatalError.unexpected("Cannot get JIT stack frame layout for incomplete JIT method");
         }
@@ -181,9 +172,9 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
      *         {@code targetCodePosition} is outside the range(s) of target code positions in this target method that
      *         correlate with a bytecode.
      */
-    public int bytecodePositionFor(int targetCodePosition) {
-        assert bytecodeToTargetCodePositionMap != null;
-        assert bytecodeToTargetCodePositionMap.length > 0;
+    public int bciFor(int targetCodePosition) {
+        assert bciToPosMap != null;
+        assert bciToPosMap.length > 0;
         int bytecodePosition;
         if (targetCodePosition >= targetCodePositionFor(0)) {
             bytecodePosition = -1;
@@ -191,7 +182,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             // no target code was emitted. The search is for the first bytecode
             // position that maps to a non-zero target code position less than or
             // equal to 'targetCodePosition'
-            for (int i = bytecodeToTargetCodePositionMap.length - 1; i >= 0; --i) {
+            for (int i = bciToPosMap.length - 1; i >= 0; --i) {
                 int pos = targetCodePositionFor(i);
                 if (pos != 0) {
                     if (pos <= targetCodePosition) {
@@ -227,7 +218,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             int[] bytecodeToTargetCodePositionMap,
             int numberOfBlocks,
             boolean[] blockStarts,
-            JitStackFrameLayout jitStackFrameLayout,
+            JVMSFrameLayout jitStackFrameLayout,
             TargetABI abi) {
         setGenerated(
                 catchRangePositions,
@@ -246,7 +237,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
                 jitStackFrameLayout.frameReferenceMapSize()
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
-        this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
+        this.bciToPosMap = bytecodeToTargetCodePositionMap;
         this.frameReferenceMapOffset = jitStackFrameLayout.frameReferenceMapOffset();
         this.stackFrameLayout = jitStackFrameLayout;
         if (stopPositions != null) {

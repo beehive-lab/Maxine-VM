@@ -56,7 +56,7 @@ import com.sun.cri.ci.*;
  */
 public class NullCheckEliminator extends DefaultValueVisitor {
 
-    static class IfEdge {
+    private static class IfEdge {
         final BlockBegin ifBlock;
         final BlockBegin succ;
         final Value checked;
@@ -68,7 +68,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         }
     }
 
-    static class BlockInfo {
+    private static class BlockInfo {
         // used in first pass
         final BlockBegin block;
         boolean marked;
@@ -84,7 +84,7 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         }
     }
 
-    static class ValueInfo {
+    private static class ValueInfo {
         final Value value;
         final int globalIndex;
 
@@ -382,6 +382,14 @@ public class NullCheckEliminator extends DefaultValueVisitor {
     }
 
     @Override
+    public void visitUnsafeCast(UnsafeCast i) {
+        if (processUse(i, i.value(), false)) {
+            // if the object is non null, the result of the cast is as well
+            i.setFlag(Value.Flag.NonNull);
+        }
+    }
+
+    @Override
     public void visitLoadField(LoadField i) {
         Value object = i.object();
         if (object != null) {
@@ -534,6 +542,10 @@ public class NullCheckEliminator extends DefaultValueVisitor {
         int index = getValueInfo(value).globalIndex;
         bitmap.grow(index + 1);
         bitmap.set(index);
+        if (value instanceof UnsafeCast) {
+            // An unsafe cast is just an alias
+            setValue(((UnsafeCast) value).value(), bitmap);
+        }
     }
 
     private boolean checkValue(Value value, CiBitMap bitmap) {

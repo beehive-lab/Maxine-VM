@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,8 +83,8 @@ public final class TeleDisassembler {
      *
      * @return the code disassembled into instructions.
      */
-    public static List<TargetCodeInstruction> decode(Platform platform, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors) {
-        final Disassembler disassembler = createDisassembler(platform, codeStart, InlineDataDecoder.createFrom(encodedInlineDataDescriptors));
+    public static List<TargetCodeInstruction> decode(Platform platform, Address codeStart, byte[] code, InlineDataDecoder inlineDataDecoder) {
+        final Disassembler disassembler = createDisassembler(platform, codeStart, inlineDataDecoder);
         final LoadLiteralParser literalParser = createLiteralParser(platform, disassembler, codeStart, code);
         return create(codeStart, code, disassembler, literalParser);
     }

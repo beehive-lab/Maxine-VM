@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,7 +87,7 @@ public class BirMethod extends AbstractIrMethod {
         this.exceptionDispatcherTable = exceptionDispatcherTable;
 
         for (ExceptionHandlerEntry exceptionDispatcherEntry : exceptionDispatcherTable()) {
-            final BirBlock birBlock = blockMap[exceptionDispatcherEntry.handlerPosition()];
+            final BirBlock birBlock = blockMap[exceptionDispatcherEntry.handlerBCI()];
             birBlock.setRole(IrBlock.Role.EXCEPTION_DISPATCHER);
         }
     }
@@ -103,7 +103,7 @@ public class BirMethod extends AbstractIrMethod {
             writer.outdent();
             if (blocks != null) {
                 for (BirBlock block : blocks) {
-                    final ConstantPool constantPool = classMethodActor().codeAttribute().constantPool;
+                    final ConstantPool constantPool = classMethodActor().codeAttribute().cp;
                     writer.print(BytecodePrinter.toString(constantPool, block.bytecodeBlock()));
                 }
                 for (BirBlock block : blocks) {

@@ -86,11 +86,11 @@ public interface CPSCompiler extends RuntimeCompiler {
 
         @HOSTED_ONLY
         public static boolean isCompiler(VMConfiguration vmConfiguration) {
-            String value = CompilationScheme.optimizingCompilerOption.getValue();
+            String value = RuntimeCompiler.optimizingCompilerOption.getValue();
             if (value.startsWith("com.sun.max.vm.cps")) {
                 return true;
             }
-            value = CompilationScheme.baselineCompilerOption.getValue();
+            value = RuntimeCompiler.baselineCompilerOption.getValue();
             if (value != null && value.startsWith("com.sun.max.vm.cps")) {
                 return true;
             }

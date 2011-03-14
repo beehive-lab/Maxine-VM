@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import org.junit.runner.*;
 import sun.reflect.*;
 import test.com.sun.max.vm.*;
 import test.com.sun.max.vm.bytecode.*;
+import test.com.sun.max.vm.cps.bytecode.create.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -48,7 +49,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.create.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
@@ -422,10 +422,10 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
                         CodeAttribute codeAttribute = method.classMethodActor().codeAttribute();
                         ProgramWarning.message("Failed " + boxing + " stub execution or result comparison for " + classMethodActor);
                         System.err.println("original method:");
-                        System.err.println(BytecodePrinter.toString(codeAttribute.constantPool, new BytecodeBlock(codeAttribute.code())));
+                        System.err.println(BytecodePrinter.toString(codeAttribute.cp, new BytecodeBlock(codeAttribute.code())));
                         codeAttribute = stub.classMethodActor().codeAttribute();
                         System.err.println("stub: " + stub.classMethodActor());
-                        System.err.println(BytecodePrinter.toString(codeAttribute.constantPool, new BytecodeBlock(codeAttribute.code())));
+                        System.err.println(BytecodePrinter.toString(codeAttribute.cp, new BytecodeBlock(codeAttribute.code())));
                         System.err.println("stub IR:");
                         System.err.println(stub.traceToString());
                         e.printStackTrace();

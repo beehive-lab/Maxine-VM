@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,27 @@ public final class Utils {
      */
     public static <T> T[] newArray(Class<T[]> type, int length) {
         return cast(type, new Object[length]);
+    }
+
+    /**
+     * Adds a set of key-value pairs to a given map.
+     *
+     * @param <K>
+     * @param <V>
+     * @param map
+     * @param keyValuePairs
+     * @return
+     */
+    public static <K, V> Map<K, V> addEntries(Map<K, V> map, Object... keyValuePairs) {
+        assert keyValuePairs.length % 2 == 0;
+        for (int i = 0; i < keyValuePairs.length; i += 2) {
+            Object key = keyValuePairs[i];
+            Object value = keyValuePairs[i + 1];
+            Class<K> keyType = null;
+            Class<V> valueType = null;
+            map.put(cast(keyType, key), cast(valueType, value));
+        }
+        return map;
     }
 
     /**

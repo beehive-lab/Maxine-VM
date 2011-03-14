@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm;
 
+import java.util.*;
+
 
 /**
  * @author Bernd Mathiske
@@ -36,10 +38,24 @@ public interface VMScheme {
     Class<? extends VMScheme> specification();
 
     /**
+     * Gets a very brief description of this configuration.
+     * Often, simply returning the name of the implementation class is sufficient.
+     */
+    String about();
+
+    /**
      * Performs any scheme specific actions when entering a given VM phase.
      *
      * @param phase the VM phase that has just been entered
      */
     void initialize(MaxineVM.Phase phase);
 
+    /**
+     * Gets the set of system properties which if non-null are used to configure this scheme.
+     * The returned properties object provides the property names as well as the
+     * values reflecting the current configuration of this scheme.
+     *
+     * @return {@code null} if this scheme doesn't use any system properties to configure itself
+     */
+    Properties properties();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,8 +50,8 @@ public class SameLocalsOneStackExtended extends StackMapFrame {
 
     private final VerificationType singleStackItem;
 
-    public SameLocalsOneStackExtended(int positionDelta, VerificationType singleStackItem) {
-        super(positionDelta);
+    public SameLocalsOneStackExtended(int bciDelta, VerificationType singleStackItem) {
+        super(bciDelta);
         this.singleStackItem = singleStackItem;
     }
 
@@ -69,7 +69,7 @@ public class SameLocalsOneStackExtended extends StackMapFrame {
     @Override
     public void write(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
         stream.writeByte(frameType());
-        stream.writeShort(positionDelta());
+        stream.writeShort(bciDelta());
         singleStackItem.write(stream, constantPoolEditor);
     }
 
@@ -81,7 +81,7 @@ public class SameLocalsOneStackExtended extends StackMapFrame {
     @Override
     public String toString() {
         return "frame_type = " + frameType() + " /* same_locals_1_stack_item_frame_extended */\n" +
-               "  offset_delta = " + positionDelta() + "\n" +
+               "  offset_delta = " + bciDelta() + "\n" +
                "  stack = [ " + singleStackItem + " ]";
     }
 }

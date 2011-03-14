@@ -22,14 +22,13 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import static com.sun.max.vm.VMOptions.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
@@ -131,14 +130,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
     static final int bitIndexInWordMask = LAST_BIT_INDEX_IN_WORD;
 
-
-    static final VMBooleanXXOption useRescanMapOption =
-        register(new VMBooleanXXOption("-XX:-", "UseRescanMap", "Use a rescan map when recovering from mark stack overflow"),
-                        MaxineVM.Phase.PRISTINE);
-
-    static final VMBooleanXXOption useDeepMarkStackFlushOption =
-        register(new VMBooleanXXOption("-XX:+", "UseDeepMarkStackFlush", "Visit flushed cells and mark their reference grey when flushing the mark stack"),
-                        MaxineVM.Phase.PRISTINE);
+    static boolean UseRescanMap;
+    static boolean UseDeepMarkStackFlush = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "UseRescanMap", TricolorHeapMarker.class, "Use a rescan map when recovering from mark stack overflow", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "UseDeepMarkStackFlush", TricolorHeapMarker.class, "Visit flushed cells and mark their reference grey when flushing the mark stack", Phase.PRISTINE);
+    }
 
     /**
      * Return the index within a word of the bit index.
@@ -345,7 +342,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         base = bitmapStorage;
         int baseBias = start.unsignedShiftedRight(log2BitmapWord).toInt();
         biasedBitmapBase = colorMap.start().minus(baseBias);
-        if (useRescanMapOption.getValue()) {
+        if (UseRescanMap) {
             overflowScanState = overflowScanWithRescanMapState;
         } else {
             overflowScanState = overflowLinearScanState;
@@ -1267,7 +1264,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
 
         @Override
         void initialize() {
-            setMarkingStackFlusher(useDeepMarkStackFlushOption.getValue() ? deepMarkStackFlusher : shallowMarkStackFlusher);
+            setMarkingStackFlusher(UseDeepMarkStackFlush ? deepMarkStackFlusher : shallowMarkStackFlusher);
             super.initialize();
         }
 

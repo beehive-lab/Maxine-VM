@@ -478,7 +478,7 @@ public final class BlockMap {
         successorMap[bci] = list.toArray(new BlockBegin[list.size()]);
     }
 
-    void moveSuccessorLists() {
+    private void moveSuccessorLists() {
         // move successor lists from the block-ending bytecodes that created them
         // to the basic blocks which they end.
         // also handle fall-through cases from backwards branches into the middle of a block
@@ -508,7 +508,7 @@ public final class BlockMap {
         assert current == null : "fell off end of code, should end with successor list";
     }
 
-    void computeBlockNumbers() {
+    private void computeBlockNumbers() {
         // compute the block number for all blocks
         int blockNum = this.blockNum;
         int numBlocks = blockNum - firstBlock;
@@ -516,7 +516,7 @@ public final class BlockMap {
         this.blockNum = blockNum; // _blockNum is used to compute the number of blocks later
     }
 
-    boolean numberBlock(BlockBegin block, CiBitMap visited, CiBitMap active) {
+    private boolean numberBlock(BlockBegin block, CiBitMap visited, CiBitMap active) {
         // number a block with its reverse post-order traversal number
         int blockIndex = block.blockID - firstBlock;
 
@@ -562,7 +562,7 @@ public final class BlockMap {
         loopBlocks.add(block);
     }
 
-    void processLoopBlocks() {
+    private void processLoopBlocks() {
         if (loopBlocks == null) {
             return;
         }
@@ -588,7 +588,7 @@ public final class BlockMap {
         }
     }
 
-    int processWideStore(int opcode, byte[] code, int bci) {
+    private int processWideStore(int opcode, byte[] code, int bci) {
         switch (opcode) {
             case IINC:     storeOne(Bytes.beU2(code, bci + 2)); return 6;
             case ISTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
@@ -600,7 +600,7 @@ public final class BlockMap {
         return lengthOf(code, bci);
     }
 
-    int processStore(int opcode, byte[] code, int bci) {
+    private int processStore(int opcode, byte[] code, int bci) {
         switch (opcode) {
             case IINC:     storeOne(code[bci + 1] & 0xff); return 3;
             case ISTORE:   storeOne(code[bci + 1] & 0xff); return 2;
@@ -637,20 +637,20 @@ public final class BlockMap {
         throw Util.shouldNotReachHere();
     }
 
-    void storeOne(int local) {
+    private void storeOne(int local) {
         storesInLoops.set(local);
     }
 
-    void storeTwo(int local) {
+    private void storeTwo(int local) {
         storesInLoops.set(local);
         storesInLoops.set(local + 1);
     }
 
-    void succ2(int bci, int s1, int s2) {
+    private void succ2(int bci, int s1, int s2) {
         successorMap[bci] = new BlockBegin[] {make(s1), make(s2)};
     }
 
-    void succ1(int bci, int s1) {
+    private void succ1(int bci, int s1) {
         successorMap[bci] = new BlockBegin[] {make(s1)};
     }
 

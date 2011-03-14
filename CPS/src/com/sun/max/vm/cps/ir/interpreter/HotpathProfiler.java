@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.sun.max.vm.cps.ir.interpreter;
 import com.sun.max.collect.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.hotpath.*;
 import com.sun.max.vm.cps.hotpath.compiler.*;
 import com.sun.max.vm.cps.hotpath.compiler.Console.*;
@@ -44,7 +44,7 @@ public class HotpathProfiler implements Profiler {
 
     public void jump(BytecodeLocation fromlocation, BytecodeLocation toLocation, BirState state) {
         assert fromlocation.classMethodActor == toLocation.classMethodActor;
-        if (toLocation.bytecodePosition < fromlocation.bytecodePosition) {
+        if (toLocation.bci < fromlocation.bci) {
             backwardJump(fromlocation, toLocation, state);
         }
     }
