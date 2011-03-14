@@ -23,6 +23,9 @@
 package com.sun.max.vm.heap;
 
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+
+import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -70,11 +73,6 @@ public class SpecialReferenceManager {
         Reference getForwardRefence(Reference ref);
     }
 
-    private static final FieldActor nextField = getReferenceClassField("next");
-    private static final FieldActor discoveredField = getReferenceClassField("discovered");
-    private static final FieldActor referentField = getReferenceClassField("referent");
-    private static final FieldActor pendingField = getReferenceClassField("pending");
-
     /**
      * The lock object associated with managing special references. This lock must
      * be held by the GC when it is updating the list of pending special references.
@@ -88,14 +86,45 @@ public class SpecialReferenceManager {
     }
 
     /**
-     * The head of the list of discovered reference.
-     * Use an opaque pointer to avoid this to be subject to read/write barriers and reference map.
-     * FIXME: maybe using annotation to do this would be better.
+     * The head of the list of discovered references.
+     * This field must only be used by the GC. Accessing it should not trigger any read/write barriers.
      */
-    private static Pointer discoveredList;
+    private static java.lang.ref.Reference discoveredList;
 
     /**
-     * This method processes the special reference objects that were
+     * An alias type for accessing the fields in java.lang.ref.Reference without
+     * having to use reflection.
+     */
+    public static class JDKRefAlias {
+        @ALIAS(declaringClass = java.lang.ref.Reference.class)
+        static java.lang.ref.Reference pending;
+
+        @ALIAS(declaringClass = java.lang.ref.Reference.class)
+        java.lang.ref.Reference next;
+
+        /**
+         * Next ref in a linked list used by the GC to communicate discovered references
+         * from the {@linkplain SpecialReferenceManager#discoverSpecialReference(Pointer) discovery} phase
+         * to the {@linkplain SpecialReferenceManager#processDiscoveredSpecialReferences(ReferenceForwarder) processing} phase.
+         */
+        @ALIAS(declaringClass = java.lang.ref.Reference.class)
+        public java.lang.ref.Reference discovered;
+
+        @ALIAS(declaringClass = java.lang.ref.Reference.class)
+        Object referent;
+
+        @ALIAS(declaringClass = java.lang.ref.Reference.class)
+        public java.lang.ref.ReferenceQueue queue;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static native JDKRefAlias asJDKRefAlias(Object o);
+
+    @INTRINSIC(UNSAFE_CAST)
+    static native java.lang.ref.Reference asJDKRef(Object o);
+
+    /**
+     * Processes the special reference objects that were
      * {@linkplain #discoverSpecialReference(Reference) discovered} during the
      * GC's exploration of the heap. These live reference objects must be checked to see whether
      * their "referent" objects have been collected. If so, they must be enqueued as "pending"
@@ -110,30 +139,37 @@ public class SpecialReferenceManager {
     public static void processDiscoveredSpecialReferences(ReferenceForwarder refForwarder) {
         // the first pass over the list finds the references that have referents that are no longer reachable
 
-        java.lang.ref.Reference ref = UnsafeCast.asJDKReference(Reference.fromOrigin(Layout.cellToOrigin(discoveredList)).toJava());
-        java.lang.ref.Reference last = UnsafeCast.asJDKReference(pendingField.getObject(null));
+        java.lang.ref.Reference ref = discoveredList;
+        java.lang.ref.Reference last = JDKRefAlias.pending;
         final boolean isForwardingGC = refForwarder.isForwarding();
 
-        while (ref != null) {
-            final Reference referent = Reference.fromJava(ref).readReference(referentField.offset());
+        while (ref != sentinel) {
+            JDKRefAlias refAlias = asJDKRefAlias(ref);
+            final Reference referent = Reference.fromJava(refAlias.referent);
             if (referent.isZero()) {
-                TupleAccess.writeObject(ref, nextField.offset(), last);
-                last = ref;
+                // Do not add 'ref' to the pending list as weak references
+                // with already null referents are not added to ReferenceQueues
             } else if (!refForwarder.isReachable(referent)) {
-                TupleAccess.writeObject(ref, referentField.offset(), null);
-                TupleAccess.writeObject(ref, nextField.offset(), last);
-                last = ref;
+                if (refAlias.queue == null) {
+                    // This can only occur if there is a GC in the constructor for java.lang.ref.Reference
+                    // between the initialization of 'referent' and 'queue'.
+                    Log.println("WARNING: cannot add weak reference with null 'queue' field to pending list");
+                } else {
+                    refAlias.referent = null;
+                    refAlias.next = last;
+                    last = ref;
+                }
             } else if (isForwardingGC) {
                 // this object is reachable, however the "referent" field was not scanned.
                 // we need to update this field manually
-                TupleAccess.writeObject(ref, referentField.offset(), refForwarder.getForwardRefence(referent));
+                refAlias.referent = refForwarder.getForwardRefence(referent).toJava();
             }
 
-            java.lang.ref.Reference r = ref;
-            ref = UnsafeCast.asJDKReference(TupleAccess.readObject(ref, discoveredField.offset()));
-            TupleAccess.writeObject(r, discoveredField.offset(), null);
+            JDKRefAlias r = refAlias;
+            ref = refAlias.discovered;
+            r.discovered = null;
 
-            if (TraceReferenceGC) {
+            if (TraceReferenceGC || Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Processed ");
                 Log.print(ObjectAccess.readClassActor(r).name.string);
@@ -146,7 +182,7 @@ public class SpecialReferenceManager {
                 }
                 Log.print(" whose referent ");
                 Log.print(referent.toOrigin());
-                final Object newReferent = TupleAccess.readObject(r, referentField.offset());
+                final Object newReferent = r.referent;
                 if (newReferent == null) {
                     Log.println(" was unreachable");
                 } else {
@@ -156,8 +192,9 @@ public class SpecialReferenceManager {
                 Log.unlock(lockDisabledSafepoints);
             }
         }
-        TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
-        discoveredList = Pointer.zero();
+        JDKRefAlias.pending = last;
+        FatalError.check(ref == sentinel, "end of discovered list should be sentinel");
+        discoveredList = sentinel;
 
         // Special reference map of Inspector
         if (Inspectable.isVmInspected()) {
@@ -181,7 +218,7 @@ public class SpecialReferenceManager {
                 } else {
                     rootsPointer.setWord(i, Pointer.zero());
                 }
-                if (TraceReferenceGC) {
+                if (TraceReferenceGC || Heap.traceGC()) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Processed root table entry ");
                     Log.print(i);
@@ -205,13 +242,13 @@ public class SpecialReferenceManager {
      */
     public static void discoverSpecialReference(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
+        java.lang.ref.Reference ref = asJDKRef(Reference.fromOrigin(origin));
+        JDKRefAlias refAlias = asJDKRefAlias(ref);
 
-        if (origin.readWord(nextField.offset()).isZero()) {
-            // the "next" field of this object is null, queue it for later processing
+        if (refAlias.discovered == null) {
+            // the discovered field of this object is null, queue it for later processing
             if (MaxineVM.isDebug()) {
-                boolean hasNullDiscoveredField = origin.readWord(discoveredField.offset()).isZero();
-                boolean isHeadOfDiscoveredList = cell.equals(discoveredList);
-                if (!(hasNullDiscoveredField && !isHeadOfDiscoveredList)) {
+                if (ref == discoveredList) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Discovered reference ");
                     Log.print(cell);
@@ -220,9 +257,9 @@ public class SpecialReferenceManager {
                     FatalError.unexpected(": already discovered");
                 }
             }
-            origin.writeWord(discoveredField.offset(), discoveredList);
-            discoveredList = cell;
-            if (TraceReferenceGC) {
+            refAlias.discovered = discoveredList;
+            discoveredList = ref;
+            if (TraceReferenceGC || Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
                 Log.print(cell);
@@ -249,6 +286,14 @@ public class SpecialReferenceManager {
         }
     }
 
+    static final class SentinelReference extends java.lang.ref.WeakReference<Object> {
+        public SentinelReference() {
+            super(null);
+        }
+    }
+
+    private static final SentinelReference sentinel = new SentinelReference();
+
     /**
      * Initialize the SpecialReferenceManager when starting the VM. Normally, on the host
      * VM, the {@link java.lang.ref.Reference} and {@link java.lang.ref.Finalizer} classes create
@@ -260,14 +305,24 @@ public class SpecialReferenceManager {
      */
     public static void initialize(Phase phase) {
         if (phase == Phase.PRISTINE) {
+            clock = System.currentTimeMillis();
+            discoveredList = sentinel;
+            JDKRefAlias sentinelAlias = asJDKRefAlias(sentinel);
+            sentinelAlias.discovered = null;
+            sentinelAlias.next = null;
+            sentinelAlias.queue = null;
+            sentinelAlias.referent = null;
             startReferenceHandlerThread();
             startFinalizerThread();
         }
     }
 
+    @ALIAS(declaringClass = java.lang.ref.SoftReference.class)
+    private static long clock;
+
     @HOSTED_ONLY
-    private static FieldActor getReferenceClassField(String name) {
-        final ClassActor referenceClass = ClassActor.fromJava(java.lang.ref.Reference.class);
+    private static FieldActor getReferenceClassField(String name, Class c) {
+        final ClassActor referenceClass = ClassActor.fromJava(c);
         FieldActor fieldActor = referenceClass.findLocalStaticFieldActor(name);
         if (fieldActor == null) {
             fieldActor = referenceClass.findLocalInstanceFieldActor(name);
