@@ -30,6 +30,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.Options;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Interactive, visual tool for debugging a running instance of the Maxine VM.
@@ -71,8 +72,11 @@ public final class MaxineInspector {
 
         try {
             final MaxVM maxVM = TeleVM.create(options);
-            SwingUtilities.invokeLater(new Runnable() {
 
+            // The VmThread class needs to be initialized while the main thread is still alive
+            VmThread.current();
+
+            SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                     initializeSwing();
                     final Inspection inspection = new Inspection(maxVM, options);
