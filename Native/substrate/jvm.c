@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -204,15 +204,20 @@ void JVM_OnExit(void (*func)(void)) {
     UNIMPLEMENTED();
 }
 
+
 /*
  * java.lang.Runtime
  */
 void JVM_Exit(jint code) {
-    exit(code); // TODO: finalizers may need to be run here.
+    JNIEnv *env = currentJniEnv();
+     JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/MaxineVM", "exit", "(IZ)V");
+     (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, code, JNI_FALSE);
 }
 
 void JVM_Halt(jint code) {
-    exit(code); // TODO: are shutdown services necessary?
+    JNIEnv *env = currentJniEnv();
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/MaxineVM", "exit", "(IZ)V");
+    (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, code, JNI_TRUE);
 }
 
 void JVM_GC(void) {

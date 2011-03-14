@@ -554,7 +554,7 @@ public final class BootImageObjectTree {
     /**
      * GUI class.
      */
-    private static class ObjectTreeView extends JPanel {
+    static class ObjectTreeView extends JPanel {
 
         JTextArea info;
         JPanel navigation;
@@ -693,7 +693,7 @@ public final class BootImageObjectTree {
     /**
      * Class for representing object tree nodes in the GUI.
      */
-    private static class ObjectTreeNode extends DefaultMutableTreeNode {
+    static class ObjectTreeNode extends DefaultMutableTreeNode {
 
         Node node;
         String treeStringRep;

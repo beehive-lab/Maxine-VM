@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import java.util.concurrent.locks.*;
 
 import com.sun.max.*;
 import com.sun.max.lang.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
@@ -134,12 +135,19 @@ public final class LinuxTask {
         return tid();
     }
 
-    private static final ReentrantLock processLock = new ReentrantLock();
+    private static class Monitor extends ReentrantLock {
+        @Override
+        public void lock() {
+            if (!super.tryLock()) {
+                throw new ConcurrentDataIOError("Failed concurrent attempt by " + Thread.currentThread() + " to access VM [lock held by " + getOwner() + "]");
+            }
+        }
+    }
+
+    private static final Monitor processLock = new Monitor();
 
     static <V> V execute(Function<V> function) {
-        if (!processLock.tryLock()) {
-            throw new DataIOError(Address.zero(), "Failed concurrent attempt by " + Thread.currentThread() + " to access VM");
-        }
+        processLock.lock();
         try {
             return SingleThread.execute(function);
         } finally {
@@ -148,9 +156,7 @@ public final class LinuxTask {
     }
 
     static <V> V executeWithException(Function<V> function) throws Exception {
-        if (!processLock.tryLock()) {
-            throw new DataIOError(Address.zero(), "Failed concurrent attempt by " + Thread.currentThread() + " to access VM");
-        }
+        processLock.lock();
         try {
             return SingleThread.executeWithException(function);
         } finally {

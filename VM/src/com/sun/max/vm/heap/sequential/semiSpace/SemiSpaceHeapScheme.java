@@ -106,10 +106,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * It's enabled by default as the primary goal of this collector are simplicity and robustness,
      * not high performance.
      */
-    private static final VMBooleanXXOption verifyReferencesOption =
-        register(new VMBooleanXXOption("-XX:+VerifyReferences", "Do extra verification for each reference scanned by the GC."), MaxineVM.Phase.PRISTINE);
-
-    private boolean verifyReferences;
+    private static boolean VerifyReferences = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "VerifyReferences", SemiSpaceHeapScheme.class, "Do extra verification for each reference scanned by the GC", MaxineVM.Phase.PRISTINE);
+    }
 
     /**
      * Procedure used to verify GC root reference well-formedness.
@@ -217,8 +217,9 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             if (MaxineVM.isDebug()) {
                 zapRegion(toSpace, "at GC initialization");
             }
-
-            verifyReferences = MaxineVM.isDebug() || verifyReferencesOption.getValue();
+            if (MaxineVM.isDebug()) {
+                VerifyReferences = true;
+            }
 
             lastGCTime = System.currentTimeMillis();
 
@@ -552,7 +553,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             if (!forwardRef.isZero()) {
                 return forwardRef;
             }
-            if (verifyReferences) {
+            if (VerifyReferences) {
                 DebugHeap.verifyRefAtIndex(Address.zero(), 0, ref, toSpace, fromSpace);
             }
             final Pointer fromCell = Layout.originToCell(fromOrigin);
@@ -986,7 +987,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * @param when a description of the current GC phase
      */
     private void verifyObjectSpaces(String when) {
-        if (!MaxineVM.isDebug() && !verifyReferences) {
+        if (!MaxineVM.isDebug() && !VerifyReferences) {
             return;
         }
 

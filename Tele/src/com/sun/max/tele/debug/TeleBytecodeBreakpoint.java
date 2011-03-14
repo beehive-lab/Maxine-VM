@@ -303,6 +303,55 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      */
     public static final class BytecodeBreakpointManager extends AbstractTeleVMHolder {
 
+        /**
+         * @author Doug Simon
+         *
+         */
+        protected final class CompilationEventHandler implements VMTriggerEventHandler {
+            final boolean preCompilationEvent;
+
+            public CompilationEventHandler(boolean preCompilationEvent) {
+                this.preCompilationEvent = preCompilationEvent;
+            }
+
+            public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+
+                final TeleIntegerRegisters teleIntegerRegisters = teleNativeThread.registers().teleIntegerRegisters();
+                final String holderTypeDescriptorString = vm().getStringUnsafe(vm().wordToTemporaryReference(teleIntegerRegisters.getValue(parameter0)));
+                final String methodName = vm().getStringUnsafe(vm().wordToTemporaryReference(teleIntegerRegisters.getValue(parameter1)));
+                final String signatureDescriptorString = vm().getStringUnsafe(vm().wordToTemporaryReference(teleIntegerRegisters.getValue(parameter2)));
+                if (Trace.hasLevel(COMPILATION_TRACE_VALUE)) {
+                    String eventPrefix = preCompilationEvent ? "VM about to compile: " : "VM just compiled: ";
+                    Trace.line(COMPILATION_TRACE_VALUE, eventPrefix + holderTypeDescriptorString + " " + methodName + " " + signatureDescriptorString);
+                }
+
+                for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : breakpointCache) {
+                    // Streamlined comparison using as little Inspector machinery as possible, since we take this break at every VM compilation
+                    if (holderTypeDescriptorString.equals(teleBytecodeBreakpoint.holderTypeDescriptorString) &&
+                                    methodName.equals(teleBytecodeBreakpoint.methodName) &&
+                                    signatureDescriptorString.equals(teleBytecodeBreakpoint.signatureDescriptorString)) {
+                        if (preCompilationEvent) {
+                            return true;
+                        }
+                        // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
+                        final Reference targetMethodReference = vm().wordToReference(teleIntegerRegisters.getValue(parameter3));
+                        if (targetMethodReference.isZero()) {
+                            ProgramWarning.message("targetMethod parameter to post-compilation trigger method was null");
+                            continue;
+                        }
+                        TeleTargetMethod teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
+                        try {
+                            teleBytecodeBreakpoint.handleNewCompilation(teleTargetMethod);
+                        } catch (MaxVMBusyException maxVMBusyException) {
+                            TeleError.unexpected("Unable to create target breakpoint for new compilation of " + teleBytecodeBreakpoint);
+                        }
+                    }
+                }
+                // Handling done; now resume VM execution.
+                return false;
+            }
+        }
+
         public static boolean usePrecompilationBreakpoints;
 
         private static final List<TeleBytecodeBreakpoint> EMPTY_BREAKPOINT_SEQUENCE = Collections.emptyList();
@@ -327,10 +376,16 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private List<TeleBytecodeBreakpoint> breakpointCache = EMPTY_BREAKPOINT_SEQUENCE;
 
         /**
+         * A breakpoint that interrupts the compiler just as it starts compiling a method.  Non-null and active
+         * iff there are one or more bytecode breakpoints in existence.
+         */
+        private TeleTargetBreakpoint compilationStartedBreakpoint = null;
+
+        /**
          * A breakpoint that interrupts the compiler just as it finishes compiling a method.  Non-null and active
          * iff there are one or more bytecode breakpoints in existence.
          */
-        private TeleTargetBreakpoint compilerTargetCodeBreakpoint = null;
+        private TeleTargetBreakpoint compilationCompletedBreakpoint = null;
 
         private List<MaxBreakpointListener> breakpointListeners = new CopyOnWriteArrayList<MaxBreakpointListener>();
 
@@ -494,7 +549,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private TeleBytecodeBreakpoint createBreakpoint(CodeLocation codeLocation, MethodPositionKey key, BreakpointKind kind) throws MaxVMBusyException {
             if (breakpoints.size() == 0) {
-                createCompilerBreakpoint();
+                createCompilerBreakpoints();
             }
             final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(vm(), this, codeLocation, kind, key);
             breakpoint.setDescription(codeLocation.description());
@@ -520,7 +575,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             TeleWarning.check(removedBreakpoint != null, "Failed to remove breakpoint" + teleBytecodeBreakpoint);
             if (breakpoints.size() == 0) {
                 try {
-                    removeCompilerBreakpoint();
+                    removeCompilerBreakpoints();
                 } catch (MaxVMBusyException maxVMBusyException) {
                     TeleError.unexpected("Unable to remove compiler breakpont for " + teleBytecodeBreakpoint);
                 }
@@ -533,72 +588,46 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * Sets a target code breakpoint on a method known to be called at completion of each method
-         * compilation in the VM.  Arguments identify the method just compiled.
+         * Sets target code breakpoints on methods known to be called before and after of each method
+         * compilation in the VM.  Arguments identify the method being compiled.
          * <br>
          * The arguments are read using low-level, type-unsafe techniques.  The order and types
          * of arguments processed here must match those of the compiler method where the
          * breakpoint is set.
          * @throws MaxVMBusyException
          *
-         * @see InspectableCodeInfo#compilationComplete(String, String, String, com.sun.max.vm.compiler.target.TargetMethod)
+         * @see InspectableCodeInfo#notifyCompilationEvent(ClassMethodActor, TargetMethod)
          */
-        private void createCompilerBreakpoint() throws MaxVMBusyException {
-            assert compilerTargetCodeBreakpoint == null;
-            compilerTargetCodeBreakpoint = teleTargetBreakpointManager.makeSystemBreakpoint(vm().teleMethods().compilationEvent(), null);
-            compilerTargetCodeBreakpoint.setDescription("System trap for VM compiler");
-            compilerTargetCodeBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
-                public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-
-                    // The new compilation; don't bother to construct a representation of it unless there's a match and it's needed.
-                    TeleTargetMethod teleTargetMethod = null;
-
-                    final TeleIntegerRegisters teleIntegerRegisters = teleNativeThread.registers().teleIntegerRegisters();
-                    final String holderTypeDescriptorString = vm().getStringUnsafe(vm().wordToTemporaryReference(teleIntegerRegisters.getValue(parameter0)));
-                    final String methodName = vm().getStringUnsafe(vm().wordToTemporaryReference(teleIntegerRegisters.getValue(parameter1)));
-                    final String signatureDescriptorString = vm().getStringUnsafe(vm().wordToTemporaryReference(teleIntegerRegisters.getValue(parameter2)));
-                    Trace.line(COMPILATION_TRACE_VALUE, "VM just compiled: " + holderTypeDescriptorString + " " + methodName + " " + signatureDescriptorString);
-                    for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : breakpointCache) {
-                        // Streamlined comparison using as little Inspector machinery as possible, since we take this break at every VM compilation
-                        if (holderTypeDescriptorString.equals(teleBytecodeBreakpoint.holderTypeDescriptorString) &&
-                                        methodName.equals(teleBytecodeBreakpoint.methodName) &&
-                                        signatureDescriptorString.equals(teleBytecodeBreakpoint.signatureDescriptorString)) {
-                            // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
-                            if (teleTargetMethod == null) {
-                                final Reference targetMethodReference = vm().wordToReference(teleIntegerRegisters.getValue(parameter3));
-                                if (targetMethodReference.isZero()) {
-                                    // Pre-compilation notification
-                                    if (usePrecompilationBreakpoints) {
-                                        return true;
-                                    }
-                                    continue;
-                                }
-                                teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
-                            }
-                            try {
-                                teleBytecodeBreakpoint.handleNewCompilation(teleTargetMethod);
-                            } catch (MaxVMBusyException maxVMBusyException) {
-                                TeleError.unexpected("Unable to create target breakpoint for new compilation of " + teleBytecodeBreakpoint);
-                            }
-                        }
-                    }
-                    // Handling done; now resume VM execution.
-                    return false;
-                }
-            });
-            Trace.line(TRACE_VALUE, tracePrefix + "creating compiler breakpoint=" + compilerTargetCodeBreakpoint);
+        private void createCompilerBreakpoints() throws MaxVMBusyException {
+            assert compilationStartedBreakpoint == null;
+            assert compilationCompletedBreakpoint == null;
+            if (usePrecompilationBreakpoints) {
+                compilationStartedBreakpoint = teleTargetBreakpointManager.makeSystemBreakpoint(vm().teleMethods().compilationStarted(), null);
+                compilationStartedBreakpoint.setDescription("System trap for compilation start");
+                compilationStartedBreakpoint.setTriggerEventHandler(new CompilationEventHandler(true));
+                Trace.line(TRACE_VALUE, tracePrefix + "creating compilation started breakpoint=" + compilationStartedBreakpoint);
+            }
+            compilationCompletedBreakpoint = teleTargetBreakpointManager.makeSystemBreakpoint(vm().teleMethods().compilationCompleted(), null);
+            compilationCompletedBreakpoint.setDescription("System trap for compilation end");
+            compilationCompletedBreakpoint.setTriggerEventHandler(new CompilationEventHandler(false));
+            Trace.line(TRACE_VALUE, tracePrefix + "creating compilation completed breakpoint=" + compilationCompletedBreakpoint);
         }
 
         /**
-         * Removes the special target breakpoint set on a method called after each compilation in the VM.
+         * Removes the special target breakpoints set on a method called before and after each compilation in the VM.
          * Don't incur the overhead of a break if there are no bytecode breakpoints enabled.
          * @throws MaxVMBusyException
          */
-        private void removeCompilerBreakpoint() throws MaxVMBusyException {
-            assert compilerTargetCodeBreakpoint != null;
-            Trace.line(TRACE_VALUE, tracePrefix + "removing compiler breakpoint=" + compilerTargetCodeBreakpoint);
-            compilerTargetCodeBreakpoint.remove();
-            compilerTargetCodeBreakpoint = null;
+        private void removeCompilerBreakpoints() throws MaxVMBusyException {
+            assert compilationCompletedBreakpoint != null;
+            Trace.line(TRACE_VALUE, tracePrefix + "removing compilation completed breakpoint=" + compilationCompletedBreakpoint);
+            compilationCompletedBreakpoint.remove();
+            compilationCompletedBreakpoint = null;
+            if (compilationStartedBreakpoint != null) {
+                Trace.line(TRACE_VALUE, tracePrefix + "removing compilation started breakpoint=" + compilationStartedBreakpoint);
+                compilationStartedBreakpoint.remove();
+                compilationStartedBreakpoint = null;
+            }
         }
 
         /**
@@ -622,23 +651,18 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private List<TeleTargetBreakpoint> createTeleTargetBreakpoints(final TeleBytecodeBreakpoint owner, TeleTargetMethod teleTargetMethod) throws MaxVMBusyException {
             assert owner != null;
             final List<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkedList<TeleTargetBreakpoint>();
-            final int bytecodePosition = owner.methodPositionKey.bytecodePosition;
+            final int bci = owner.methodPositionKey.bytecodePosition;
             Address address = Address.zero();
-            if (teleTargetMethod instanceof TeleJitTargetMethod) {
-                final TeleJitTargetMethod teleJitTargetMethod = (TeleJitTargetMethod) teleTargetMethod;
-                final int targetCodePosition;
-                if (bytecodePosition == -1) {
-                    targetCodePosition = AdapterGenerator.prologueSizeForCallee(teleTargetMethod.targetMethod());
-                } else {
-                    targetCodePosition = teleJitTargetMethod.getInstructionMap().bytecodeToMachineCodePositionMap()[bytecodePosition];
-                }
-                address = teleTargetMethod.getCodeStart().plus(targetCodePosition);
-                Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint for offset " + targetCodePosition + " in " + teleTargetMethod);
+            if (bci == -1) {
+                int pos = AdapterGenerator.prologueSizeForCallee(teleTargetMethod.targetMethod());
+                address = teleTargetMethod.getCodeStart().plus(pos);
+                Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint at method entry in " + teleTargetMethod);
             } else {
-                if (bytecodePosition == -1) {
-                    // Specifies the code start, at the beginning of the method prologue
-                    address = teleTargetMethod.callEntryPoint();
-                    Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint at method entry in " + teleTargetMethod);
+                int[] bciToPosMap = teleTargetMethod.bciToPosMap();
+                if (bciToPosMap != null && bci < bciToPosMap.length) {
+                    int pos = bciToPosMap[bci];
+                    address = teleTargetMethod.getCodeStart().plus(pos);
+                    Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint for offset " + pos + " in " + teleTargetMethod);
                 } else {
                     TeleError.unexpected(tracePrefix + "Non-entry bytecode breakpoint unimplemented for target method=" + teleTargetMethod);
                 }

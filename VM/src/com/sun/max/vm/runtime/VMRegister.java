@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -193,8 +193,9 @@ public final class VMRegister {
     public static native void setCpuFramePointer(Word value);
 
     @INLINE
-    public static void addWordsToAbiStackPointer(int numberOfWords) {
-        SpecialBuiltin.adjustJitStack(numberOfWords);
+    @INTRINSIC(INCREG | (ABI_SP << 8))
+    public static void adjustAbiStackPointer(int delta) {
+        SpecialBuiltin.incrementIntegerRegister(Role.ABI_STACK_POINTER, delta);
     }
 
     @INLINE

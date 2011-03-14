@@ -98,12 +98,12 @@ public class ControlFlowAnalyzer extends ControlFlowAdapter {
 
     @Override
     public void terminate() {
-        terminate(currentBytePosition());
+        terminate(currentBCI());
     }
 
     @Override
     public void jump(int toAddress) {
-        jump(currentBytePosition(), toAddress);
+        jump(currentBCI(), toAddress);
     }
 
     /**
@@ -127,22 +127,22 @@ public class ControlFlowAnalyzer extends ControlFlowAdapter {
 
     @Override
     protected void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
-        final int successorAddress = currentBytePosition() + (numberOfCases * 4);
-        jump(successorAddress, currentOpcodePosition() + defaultOffset);
+        final int successorAddress = currentBCI() + (numberOfCases * 4);
+        jump(successorAddress, currentOpcodeBCI() + defaultOffset);
         for (int i = 0; i < numberOfCases; i++) {
             final BytecodeScanner scanner = bytecodeScanner();
-            jump(successorAddress, currentOpcodePosition() + scanner.readSwitchOffset());
+            jump(successorAddress, currentOpcodeBCI() + scanner.readSwitchOffset());
         }
     }
 
     @Override
     protected void lookupswitch(int defaultOffset, int numberOfCases) {
-        final int successorAddress = currentBytePosition() + (numberOfCases * 8);
-        jump(successorAddress, currentOpcodePosition() + defaultOffset);
+        final int successorAddress = currentBCI() + (numberOfCases * 8);
+        jump(successorAddress, currentOpcodeBCI() + defaultOffset);
         for (int i = 0; i < numberOfCases; i++) {
             final BytecodeScanner scanner = bytecodeScanner();
             scanner.readSwitchCase(); // ignore case value
-            jump(successorAddress, currentOpcodePosition() + scanner.readSwitchOffset());
+            jump(successorAddress, currentOpcodeBCI() + scanner.readSwitchOffset());
         }
     }
 

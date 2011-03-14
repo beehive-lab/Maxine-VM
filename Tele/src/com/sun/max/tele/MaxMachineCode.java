@@ -25,12 +25,10 @@ package com.sun.max.tele;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.target.*;
 
 /**
  * Description of a single machine code routine in the VM, either compiled from a Java method or a block of external native code.
@@ -78,15 +76,6 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
      * @return generation count of most recent observed code change in the VM.
      */
     int vmCodeGeneration();
-
-    /**
-     * Gets the human-readable name of a data location that can be addressed by machine
-     * code instructions in this method.
-     *
-     * @param machineCodetLocation
-     * @return the name of the data location
-     */
-    String machineCodeLocationToString(TargetLocation machineCodetLocation);
 
     /**
      * Writes a textual disassembly of the machine code instructions.
@@ -145,22 +134,17 @@ public interface MaxMachineCode<MachineCode_Type extends MaxMachineCode> extends
         boolean isBytecodeBoundary(int index) throws IllegalArgumentException;
 
         /**
-         * @return the bytecode location corresponding to the instruction at the beginning
+         * @return the bytecode frames corresponding to the instruction at the beginning
          * of a sequence of instructions that implement a bytecode, if known, else null
          * @throws IllegalArgumentException unless {@code 0 <= index < length()}
          */
-        BytecodeLocation bytecodeLocation(int index) throws IllegalArgumentException;
+        CiFrame bytecodeFrames(int index) throws IllegalArgumentException;
 
         /**
-         * @return the target frame descriptor for the instruction; null if none.
-         *
-         * @throws IllegalArgumentException unless {@code 0 <= index < length()}
-         */
-        TargetJavaFrameDescriptor targetFrameDescriptor(int index) throws IllegalArgumentException;
-
-        /**
-         * @return the opcode corresponding the instruction at the beginning
+         * @return the opcode corresponding to the instruction at the beginning
          * of a sequence of instructions that implement a bytecode, if known, else -1.
+         * The special value of {@link Integer#MAX_VALUE} is returned to indicate
+         * that the instruction is the first one in the epilogue of the method
          *
          * @throws IllegalArgumentException unless {@code 0 <= index < length()}
          */

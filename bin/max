@@ -76,6 +76,7 @@ make_arg=
 cp_suffix=
 cp_prefix=
 remote=0
+trace_level=1
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -138,6 +139,10 @@ while [ "${1:0:1}" = "-" ]; do
             ;;
         -cp/a:* )
             cp_suffix="${1/-cp\/a:/}"
+            ;;
+        -trace )
+            shift
+            trace_level=$1
             ;;
         * )
             unknown_option=$1
@@ -275,10 +280,12 @@ projects=( \
     Base:src,test                 \
     Assembler:src,test            \
     VM:src,test                   \
+    T1X:src                       \
     CPS:src,test                  \
     MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \
+    TeleCPS:test                  \
     JDWP:src                      \
     TeleJDWP:src                  \
     Inspector:src,test            \
@@ -1016,7 +1023,7 @@ function run_image() {
         shift
     done
 
-	run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=1 -run=java $image_args
+	run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=$trace_level -run=java $image_args
 }
 
 #=======================================
@@ -1092,6 +1099,30 @@ c1x_help="process a list of methods with the C1X compiler
 function run_c1x() {
     c1x_cp=${maxine_cp}:`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
     run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
+}
+
+#=======================================
+# 't1x' command
+#=======================================
+
+t1x_usage="[options] patterns..."
+t1x_help="process a list of methods with the T1X compiler
+
+    See Patterns below for a description of the format expected for \"patterns...\"
+    
+    The output traced by this command is not guaranteed to be the same as the output
+    for a compilation performed at runtime. The code produced by a compiler is sensitive
+    to the compilation context such as what classes have been resolved etc.
+
+    Use \"max t1x -help\" to see what other options this command accepts.
+    
+    --- Patterns ---
+    
+    $method_finder_pattern_help"
+
+function run_t1x() {
+    c1x_cp=${maxine_cp}:`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
+    run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest -t1x $@
 }
 
 #=======================================
@@ -1388,9 +1419,9 @@ function run_inspect() {
         run sudo -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+        ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
     else
-        run ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+        run ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
     fi
 }
 
@@ -1443,7 +1474,7 @@ view_help="browse the boot image under the Inspector
     Use \"max view -help\" to see what the Inspector options are."
 
 function run_view() {
-    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=1 -vmdir=$MAXVM_DIR -mode=image $@
+    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level -vmdir=$MAXVM_DIR -mode=image $@
 }
 
 #=======================================

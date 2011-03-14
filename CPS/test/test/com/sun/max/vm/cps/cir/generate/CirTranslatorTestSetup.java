@@ -45,7 +45,7 @@ public class CirTranslatorTestSetup extends CirCompilerTestSetup {
     @Override
     protected void initializeVM() {
         BcCompiler.disableOptimizing();
-        CompilationScheme.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.BcCompiler.class.getName());
+        RuntimeCompiler.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.BcCompiler.class.getName());
         VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,20 +31,25 @@ import static com.sun.max.vm.stack.amd64.AMD64OptStackWalking.*;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.Site;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
+import com.sun.max.asm.*;
+import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
+import com.sun.max.lang.Bytes;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
@@ -62,7 +67,7 @@ import com.sun.max.vm.stack.amd64.*;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public class C1XTargetMethod extends TargetMethod implements Cloneable {
+public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     /**
      * An array of pairs denoting the code positions protected by an exception handler.
@@ -86,32 +91,36 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
      * <pre>
      * referenceMaps {
      *     {
-     *         u1 frameMap[frameReferenceMapSize];
-     *         u1 registerMap[registerReferenceMapSize];
+     *         u1 frameMap[frameRefMapSize];
+     *         u1 regMap[regRefMapSize];
      *     } directCallMaps[numberOfDirectCalls]
      *     {
-     *         u1 frameMap[frameReferenceMapSize];
-     *         u1 registerMap[registerReferenceMapSize];
+     *         u1 frameMap[frameRefMapSize];
+     *         u1 regMap[regRefMapSize];
      *     } indirectCallMaps[numberOfIndirectCalls]
      *     {
-     *         u1 frameMap[frameReferenceMapSize];
-     *         u1 registerMap[registerReferenceMapSize];
+     *         u1 frameMap[frameRefMapSize];
+     *         u1 regMap[regRefMapSize];
      *     } safepointMaps[numberOfSafepoints]
      * }
      * </pre>
      */
-    private byte[] referenceMaps;
+    private byte[] refMaps;
 
     private Object sourceInfo;
 
     private ClassMethodActor[] sourceMethods;
 
+    private final CodeAnnotation[] annotations;
+
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
-    public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
+    public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        init(ciTargetMethod);
+        List<CodeAnnotation> annotations = ciTargetMethod.annotations();
+        this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
+        init(ciTargetMethod, install);
 
         if (PrintTargetMethods != null) {
             if (classMethodActor.format("%H.%n").contains(PrintTargetMethods)) {
@@ -122,7 +131,9 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     public C1XTargetMethod(Flavor flavor, String stubName, CiTargetMethod ciTargetMethod) {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        init(ciTargetMethod);
+        List<CodeAnnotation> annotations = ciTargetMethod.annotations();
+        this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
+        init(ciTargetMethod, true);
 
         if (PrintTargetMethods != null) {
             if (stubName.contains(PrintTargetMethods)) {
@@ -131,14 +142,14 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
-    private void init(CiTargetMethod ciTargetMethod) {
+    private void init(CiTargetMethod ciTargetMethod, boolean install) {
 
         if (MaxineVM.isHosted()) {
             // Save the target method for later gathering of calls and duplication
             this.bootstrappingCiTargetMethod = ciTargetMethod;
         }
 
-        initCodeBuffer(ciTargetMethod);
+        initCodeBuffer(ciTargetMethod, install);
         initFrameLayout(ciTargetMethod);
         initStopPositions(ciTargetMethod);
         initExceptionTable(ciTargetMethod);
@@ -149,13 +160,41 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             if (generator != null) {
                 adapter = generator.make(classMethodActor);
             }
-            linkDirectCalls(adapter);
+            if (install) {
+                linkDirectCalls(adapter);
+            } else {
+                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+            }
         }
+    }
+
+    public static InlineDataDecoder inlineDataDecoder(CodeAnnotation[] annotations) {
+        if (annotations == null) {
+            return null;
+        }
+        ArrayList<InlineDataDescriptor> descriptors = new ArrayList<InlineDataDescriptor>();
+        for (CodeAnnotation c : annotations) {
+            if (c instanceof JumpTable) {
+                JumpTable jt = (JumpTable) c;
+                if (jt.entrySize == 4) {
+                    descriptors.add(new JumpTable32(jt.position, jt.low, jt.high));
+                }
+            }
+        }
+        if (descriptors.isEmpty()) {
+            return null;
+        }
+        return new InlineDataDecoder(descriptors);
+    }
+
+    @Override
+    public InlineDataDecoder inlineDataDecoder() {
+        return inlineDataDecoder(annotations);
     }
 
     @Override
     public byte[] referenceMaps() {
-        return referenceMaps;
+        return refMaps;
     }
 
     /**
@@ -163,7 +202,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
      * The bit position of a register in the bit map is the register's {@linkplain CiRegister#encoding encoding}.
      */
     @FOLD
-    private static int registerReferenceMapSize() {
+    public static int regRefMapSize() {
         return ByteArrayBitMap.computeBitMapSize(target().arch.registerReferenceMapBitCount);
     }
 
@@ -178,18 +217,18 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     /**
      * @return the size (in bytes) of a reference map covering an activation frame for this target method.
      */
-    private int frameReferenceMapSize() {
+    public int frameRefMapSize() {
         return ByteArrayBitMap.computeBitMapSize(frameWords());
     }
 
     /**
-     * @return the number of bytes in {@link #referenceMaps} corresponding to one stop position.
+     * @return the number of bytes in {@link #refMaps} corresponding to one stop position.
      */
-    private int totalReferenceMapSize() {
-        return registerReferenceMapSize() + frameReferenceMapSize();
+    public int totalRefMapSize() {
+        return regRefMapSize() + frameRefMapSize();
     }
 
-    private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
+    private void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
         // Create the arrays for the scalar and the object reference literals
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         List<Object> objectReferences = new ArrayList<Object>();
@@ -199,7 +238,11 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize());
-        Code.allocate(targetBundleLayout, this);
+        if (install) {
+            Code.allocate(targetBundleLayout, this);
+        } else {
+            Code.allocateInHeap(targetBundleLayout, this);
+        }
         this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
 
         // Patch relative instructions in the code buffer
@@ -306,7 +349,11 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     private void patchRelativeInstruction(int codePos, int displacement) {
-        X86InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
+        if (platform().isa == ISA.AMD64) {
+            X86InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     private void initFrameLayout(CiTargetMethod ciTargetMethod) {
@@ -319,8 +366,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         int numberOfSafepoints = ciTargetMethod.safepoints.size();
         int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints;
 
-        int totalRefMapSize = totalReferenceMapSize();
-        referenceMaps = new byte[totalRefMapSize * totalStopPositions];
+        int totalRefMapSize = totalRefMapSize();
+        refMaps = new byte[totalRefMapSize * totalStopPositions];
 
         int index = 0;
         int[] stopPositions = new int[totalStopPositions];
@@ -333,19 +380,21 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             int refmapIndex = index * totalRefMapSize;
             hasInlinedMethods |= initStopPosition(index, refmapIndex, stopPositions, site.pcOffset, site.debugInfo, debugInfos);
 
-            RiMethod riMethod = site.method;
-            if (riMethod != null) {
-                final ClassMethodActor cma = (ClassMethodActor) riMethod;
+            RiMethod method = site.method;
+            if (method != null) {
+                final ClassMethodActor cma = (ClassMethodActor) method;
                 assert cma != null : "unresolved direct call!";
                 directCallees[index] = cma;
             } else if (site.runtimeCall != null) {
                 final ClassMethodActor cma = C1XRuntimeCalls.getClassMethodActor(site.runtimeCall);
                 assert cma != null : "unresolved runtime call!";
                 directCallees[index] = cma;
-            } else {
-                assert site.globalStubID != null;
+            } else if (site.globalStubID != null) {
                 TargetMethod globalStubMethod = (TargetMethod) site.globalStubID;
                 directCallees[index] = globalStubMethod;
+            } else {
+                // template call
+                directCallees[index] = null;
             }
             index++;
         }
@@ -377,16 +426,16 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             // copy the stack map
             int frameRefMapBytes;
             if (debugInfo.hasStackRefMap()) {
-                frameRefMapBytes = debugInfo.frameRefMap.copyTo(referenceMaps, refmapIndex, -1);
-                assert new CiBitMap(referenceMaps, refmapIndex, frameReferenceMapSize()).equals(debugInfo.frameRefMap);
+                frameRefMapBytes = debugInfo.frameRefMap.copyTo(refMaps, refmapIndex, -1);
+                assert new CiBitMap(refMaps, refmapIndex, frameRefMapSize()).equals(debugInfo.frameRefMap);
             } else {
                 frameRefMapBytes = 0;
             }
             // copy the register map
             if (debugInfo.hasRegisterRefMap()) {
-                int regRefMapSize = registerReferenceMapSize();
-                debugInfo.registerRefMap.copyTo(referenceMaps, refmapIndex + frameRefMapBytes, regRefMapSize);
-                assert new CiBitMap(referenceMaps, refmapIndex + frameRefMapBytes, regRefMapSize).equals(debugInfo.registerRefMap);
+                int regRefMapSize = regRefMapSize();
+                debugInfo.registerRefMap.copyTo(refMaps, refmapIndex + frameRefMapBytes, regRefMapSize);
+                assert new CiBitMap(refMaps, refmapIndex + frameRefMapBytes, regRefMapSize).equals(debugInfo.registerRefMap);
             }
             return debugInfo.codePos != null && debugInfo.codePos.caller != null;
         }
@@ -517,25 +566,19 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     @UNSAFE
     @Override
-    public final void fixupCallSite(int callOffset, Address callEntryPoint) {
-        final int displacement = callEntryPoint.asAddress().minus(codeStart().plus(callOffset)).toInt();
-        X86InstructionDecoder.patchRelativeInstruction(code(), callOffset, displacement);
+    public void fixupCallSite(int callOffset, Address callEntryPoint) {
+        AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
     @UNSAFE
     @Override
-    public final void patchCallSite(int callOffset, Address callEntryPoint) {
+    public void patchCallSite(int callOffset, Address callEntryPoint) {
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        forwardTo(this, newTargetMethod);
-    }
-
-    @UNSAFE
-    public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
-        AMD64TargetMethodUtil.forwardTo(oldTargetMethod, newTargetMethod);
+        AMD64TargetMethodUtil.forwardTo(this, newTargetMethod);
     }
 
     @UNSAFE
@@ -672,8 +715,6 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
-    private static final boolean C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES = System.getProperty("C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES") != null;
-
     /**
      * Prepares the reference map for this frame.
      * @param current the current frame
@@ -686,53 +727,49 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         Pointer registerState = Pointer.zero();
         CiCalleeSaveArea csa = null;
         switch (calleeKind) {
+            case NONE:
+                // 'current' is a C1X method trapped at a safepoint/implicit exception.
+                // The register save area in the trap stub frame will be processed
+                // when completing the stack reference map
+                assert preparer.completingReferenceMapLimit().isZero();
+                break;
+            case JAVA:
+                // Normal call - no registers need scanning
+                break;
             case TRAMPOLINE:
-                if (callee.targetMethod() instanceof C1XTargetMethod) {
-                    if (C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES) {
-                        // can simply use the register ref map at the call site
-                        RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
-                        csa = registerConfig.getCalleeSaveArea();
-                        registerState = callee.sp();
-                    } else {
-                        prepareTrampolineRefMap(current, callee, preparer);
-                    }
-                } else {
-                    // compute the register reference map from the call at this site
-                    prepareTrampolineRefMap(current, callee, preparer);
-                }
+                prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
-                // get the register state from the callee's frame
+                // The register state *is* the trap stub frame
                 registerState = callee.sp();
                 if (Trap.Number.isStackOverflow(registerState)) {
-                    // a method can never catch stack overflow for itself
+                    // a method can never catch stack overflow for itself so there
+                    // is no need to prepare the map for the registers of the trapped method
                     return;
                 }
+
+                assert callee.targetMethod().getRegisterConfig() == vm().registerConfigs.trapStub;
+                csa = callee.targetMethod().getRegisterConfig().getCalleeSaveArea();
                 break;
             case CALLEE_SAVED:
-                if (callee.targetMethod() instanceof C1XTargetMethod) {
-                    // can simply use the register ref map at the call site
-                    C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
-                    csa = c1xCallee.getRegisterConfig().getCalleeSaveArea();
-                    if (c1xCallee.is(GlobalStub)) {
-                        // The register state *is* the frame
-                        registerState = callee.sp();
-                    } else {
-                        assert c1xCallee.is(Standard);
-                        // Register state/callee save area directly is at the top of the frame.
-                        registerState = callee.sp().plus(c1xCallee.frameSize());
-                    }
-                } else {
-                    FatalError.unexpected("Only C1XTargetMethods can be callee-saved");
-                    // get the register state from the callee's frame
+                // can simply use the register ref map at the call site
+                TargetMethod calleeMethod = callee.targetMethod();
+                csa = calleeMethod.getRegisterConfig().getCalleeSaveArea();
+                if (calleeMethod.is(GlobalStub)) {
+                    // The register state *is* the frame
                     registerState = callee.sp();
+                } else {
+                    assert calleeMethod.is(Standard);
+
+                    // (dns) I want to step through this in the Inspector to ensure it's correct
+                    Bytecodes.breakpointTrap();
+
+                    // Register state/callee save area is at the top of the frame.
+                    Pointer calleeSaveAreaEnd = callee.sp().plus(calleeMethod.frameSize());
+                    registerState = calleeSaveAreaEnd.minus(csa.size);
                 }
                 break;
             case NATIVE:
-                // no register state.
-                break;
-            case JAVA:
-                // no register state.
                 break;
         }
         int stopIndex = findClosestStopIndex(current.ip());
@@ -741,17 +778,18 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             throw FatalError.unexpected("could not find stop index");
         }
 
-        int frameReferenceMapSize = frameReferenceMapSize();
+        int frameRefMapSize = frameRefMapSize();
         if (!registerState.isZero()) {
+            assert csa != null;
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = registerState;
-            int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize;
+            int byteIndex = stopIndex * totalRefMapSize() + frameRefMapSize;
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
             if (csa != null) {
                 // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
-                for (int i = 0; i < registerReferenceMapSize(); i++) {
-                    int b = referenceMaps[byteIndex] & 0xff;
+                for (int i = 0; i < regRefMapSize(); i++) {
+                    int b = refMaps[byteIndex] & 0xff;
                     int reg = i * 8;
                     while (b != 0) {
                         if ((b & 1) != 0) {
@@ -769,8 +807,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
                 }
             } else {
                 // The reg ref map already specified the frame slots in the callee for the registers
-                for (int i = 0; i < registerReferenceMapSize(); i++) {
-                    preparer.setReferenceMapBits(callee, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
+                for (int i = 0; i < regRefMapSize(); i++) {
+                    preparer.setReferenceMapBits(callee, slotPointer, refMaps[byteIndex] & 0xff, Bytes.WIDTH);
                     slotPointer = slotPointer.plusWords(Bytes.WIDTH);
                     byteIndex++;
                 }
@@ -780,9 +818,9 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         // prepare the map for this stack frame
         Pointer slotPointer = current.sp();
         preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X stack frame");
-        int byteIndex = stopIndex * totalReferenceMapSize();
-        for (int i = 0; i < frameReferenceMapSize; i++) {
-            preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
+        int byteIndex = stopIndex * totalRefMapSize();
+        for (int i = 0; i < frameRefMapSize; i++) {
+            preparer.setReferenceMapBits(current, slotPointer, refMaps[byteIndex] & 0xff, Bytes.WIDTH);
             slotPointer = slotPointer.plusWords(Bytes.WIDTH);
             byteIndex++;
         }
@@ -820,20 +858,7 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public CiDebugInfo getDebugInfo(Pointer ip, boolean implicitExceptionPoint) {
-        if (!implicitExceptionPoint && Platform.platform().isa.offsetToReturnPC == 0) {
-            ip = ip.minus(1);
-        }
-
-        int stopIndex = findClosestStopIndex(ip);
-        if (stopIndex < 0) {
-            return null;
-        }
-        return decodeDebugInfo(classMethodActor, sourceInfo, sourceMethods, stopIndex);
-    }
-
-    @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean ipIsReturnAddress) {
+    public CiCodePos getCodePos(Pointer ip, boolean ipIsReturnAddress) {
         if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
             ip = ip.minus(1);
         }
@@ -842,53 +867,18 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         if (stopIndex < 0) {
             return null;
         }
-        return decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, stopIndex);
+        return decodeBytecodeFrames(classMethodActor, sourceInfo, sourceMethods, stopIndex);
     }
 
     @Override
-    public BytecodeLocation getBytecodeLocationFor(int stopIndex) {
+    public CiFrame getBytecodeFrames(int stopIndex) {
         if (classMethodActor == null) {
             return null;
         }
-        return decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, stopIndex);
+        return decodeBytecodeFrames(classMethodActor, sourceInfo, sourceMethods, stopIndex);
     }
 
-    public static BytecodeLocation decodeBytecodeLocation(ClassMethodActor classMethodActor, Object sourceInfoObject, ClassMethodActor[] sourceMethods, int index) {
-        if (sourceInfoObject instanceof int[]) {
-            int[] sourceInfo = (int[]) sourceInfoObject;
-            if (index < 0) {
-                return null;
-            }
-            int start = index * 3;
-            int sourceMethodIndex = sourceInfo[start];
-            if (sourceMethodIndex < 0) {
-                return null;
-            }
-            ClassMethodActor sourceMethod = sourceMethods[sourceMethodIndex];
-            int bci = sourceInfo[start + 1];
-            int parentIndex = sourceInfo[start + 2];
-            final BytecodeLocation parent = decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, parentIndex);
-            return new BytecodeLocation(sourceMethod, bci) {
-                @Override
-                public BytecodeLocation parent() {
-                    return parent;
-                }
-            };
-        } else if (sourceInfoObject instanceof char[]) {
-            // no inlined methods; just recover the bytecode index
-            char[] array = (char[]) sourceInfoObject;
-            char sourceMethodIndex = array[index];
-            if (sourceMethodIndex < 0 || classMethodActor == null) {
-                return null;
-            }
-            return new BytecodeLocation(classMethodActor, sourceMethodIndex);
-        } else {
-            return null;
-        }
-
-    }
-
-    public static CiDebugInfo decodeDebugInfo(ClassMethodActor classMethodActor, Object sourceInfoObject, ClassMethodActor[] sourceMethods, int index) {
+    public static CiFrame decodeBytecodeFrames(ClassMethodActor classMethodActor, Object sourceInfoObject, ClassMethodActor[] sourceMethods, int index) {
         if (sourceInfoObject instanceof int[]) {
             int[] sourceInfo = (int[]) sourceInfoObject;
             if (index < 0) {
@@ -898,13 +888,12 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
             ClassMethodActor sourceMethod = sourceMethods[sourceInfo[start]];
             int bci = sourceInfo[start + 1];
             int parentIndex = sourceInfo[start + 2];
-            final CiDebugInfo caller = decodeDebugInfo(classMethodActor, sourceInfo, sourceMethods, parentIndex);
-            CiCodePos callerPos = caller == null ? null : caller.codePos;
-            return new CiDebugInfo(new CiCodePos(callerPos, sourceMethod, bci), null, null);
+            final CiFrame caller = decodeBytecodeFrames(classMethodActor, sourceInfo, sourceMethods, parentIndex);
+            return new CiFrame(caller, sourceMethod, bci, null, 0, 0, 0);
         } else if (sourceInfoObject instanceof char[]) {
             // no inlined methods; just recover the bytecode index
             char[] array = (char[]) sourceInfoObject;
-            return new CiDebugInfo(new CiCodePos(null, classMethodActor, array[index]), null, null);
+            return new CiFrame(null, classMethodActor, array[index], null, 0, 0, 0);
         } else {
             return null;
         }

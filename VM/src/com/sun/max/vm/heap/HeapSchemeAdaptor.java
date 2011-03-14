@@ -210,12 +210,13 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     }
 
     @INLINE(override = true)
-    public boolean supportsTagging() {
-        return true;
+    public int objectAlignment() {
+        return Word.size();
     }
 
     @INLINE(override = true)
-    public void trackCreation(Pointer cell, Hub hub, boolean isArray) {
+    public boolean supportsTagging() {
+        return true;
     }
 
     @INLINE(override = true)

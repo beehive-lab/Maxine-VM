@@ -48,6 +48,7 @@ import com.sun.max.vm.hosted.CompiledPrototype.Link.Relationship;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.run.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -59,20 +60,29 @@ import com.sun.max.vm.type.*;
  */
 public class CompiledPrototype extends Prototype {
 
-    private class ClassInfo {
-        private final HashSet<MethodActor> indirectCalls = new HashSet<MethodActor>();
-        private final HashSet<ClassActor> subClasses = new HashSet<ClassActor>();
-        private final HashSet<ClassActor> implementors = new HashSet<ClassActor>();
+    class ClassInfo {
+        public ClassInfo(ClassActor classActor) {
+            this.classActor = classActor;
+        }
+        final ClassActor classActor;
+        final HashSet<MethodActor> indirectCalls = new HashSet<MethodActor>();
+        final HashSet<ClassActor> subClasses = new HashSet<ClassActor>();
+        final HashSet<ClassActor> implementors = new HashSet<ClassActor>();
+        @Override
+        public String toString() {
+            return classActor.toString();
+        }
     }
 
     private final HashMap<ClassActor, ClassInfo> classActorInfo = new HashMap<ClassActor, ClassInfo>();
     private final HashMap<MethodActor, Set<ClassActor>> anonymousClasses = new HashMap<MethodActor, Set<ClassActor>>();
 
     private final HashMap<MethodActor, Link> methodActors = new HashMap<MethodActor, Link>();
+    private final HashMap<String, Link> stubs = new HashMap<String, Link>();
     private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
 
     /**
-     * The link from a <i>referrer</i> method to a <i>referent</i> method where the referrer caused the referent to be
+     * The link from a <i>parent</i> method to a <i>child</i> method where the parent caused the child to be
      * compiled in the image.
      */
     public static class Link {
@@ -85,64 +95,68 @@ public class CompiledPrototype extends Prototype {
             IMPLEMENTS("is implemented by", "implements"),
             OVERRIDES("is overridden by", "overrides");
 
-            final String asReferrer;
-            final String asReferent;
+            final String asParent;
+            final String asChild;
 
-            private Relationship(String asReferrer, String asReferent) {
-                this.asReferrer = asReferrer;
-                this.asReferent = asReferent;
+            private Relationship(String asParent, String asChild) {
+                this.asParent = asParent;
+                this.asChild = asChild;
             }
         }
-        final MethodActor referent;
-        final MethodActor referrer;
-        final Relationship relationship;
+        public final Object child;
+        public final Object parent;
+        public final Relationship relationship;
 
-        public Link(MethodActor referent, MethodActor referrer, Relationship relationship) {
-            assert referent != null;
-            //assert referent != referrer;
-            this.referent = referent;
-            this.referrer = referrer;
+        public Link(Object child, Object parent, Relationship relationship) {
+            assert child != null;
+            assert (parent == null) == (relationship == null);
+            assert child != parent;
+            assert parent == null || !id(child).equals(id(parent)) : child;
+            this.child = child;
+            this.parent = parent;
             this.relationship = relationship;
         }
 
-        private static String name(MethodActor methodActor) {
-            if (methodActor == null) {
+        static String id(Object object) {
+            if (object == null) {
                 return null;
             }
-            return methodActor.format("%H.%n(%p)") + ":" + methodActor.descriptor().resultDescriptor().toJavaString(false);
+            if (object instanceof TargetMethod) {
+                TargetMethod targetMethod = (TargetMethod) object;
+                if (targetMethod.classMethodActor != null) {
+                    return targetMethod.classMethodActor.format("%H.%n(%P):%R");
+                }
+                return targetMethod.toString();
+            }
+            if (object instanceof MethodActor) {
+                MethodActor methodActor = (MethodActor) object;
+                return methodActor.format("%H.%n(%P):%R");
+            }
+            return String.valueOf(object);
         }
 
-        public String referrerName() {
-            return name(referrer);
+        public String parentId() {
+            return id(parent);
         }
 
-        public String referentName() {
-            return name(referent);
-        }
-
-        public MethodActor referent() {
-            return referent;
-        }
-
-        public MethodActor referrer() {
-            return referrer;
-        }
-
-        public Relationship relationship() {
-            return relationship;
+        public String childId() {
+            return id(child);
         }
 
         @Override
         public String toString() {
-            if (referrer == null) {
-                return referentName() + " is a VM entry point";
+            if (parent == null) {
+                return childId() + " is a VM entry point";
             }
-            return referrerName() + " " + relationship.asReferrer + " " + referentName();
+            return parentId() + " " + relationship.asParent + " " + childId();
         }
     }
 
     public Collection<Link> links() {
-        return methodActors.values();
+        ArrayList<Link> links = new ArrayList<Link>(methodActors.size() + stubs.size());
+        links.addAll(methodActors.values());
+        links.addAll(stubs.values());
+        return links;
     }
 
     private ClassInfo lookupInfo(ClassActor classActor) {
@@ -152,7 +166,7 @@ public class CompiledPrototype extends Prototype {
     private ClassInfo getInfo(ClassActor classActor) {
         ClassInfo info = classActorInfo.get(classActor);
         if (info == null) {
-            info = new ClassInfo();
+            info = new ClassInfo(classActor);
             classActorInfo.put(classActor, info);
         }
         return info;
@@ -238,15 +252,15 @@ public class CompiledPrototype extends Prototype {
 
     }
 
-    private <M extends MethodActor> void addMethods(MethodActor referrer, Iterable<M> methodActors, Relationship relationship) {
-        for (M methodActor : methodActors) {
-            add(methodActor, referrer, relationship);
+    private <M extends MethodActor> void addMethods(Object parent, Iterable<M> children, Relationship relationship) {
+        for (M child : children) {
+            add(child, parent, relationship);
         }
     }
 
-    private void addMethods(MethodActor referrer, MethodActor[] methodActors, Relationship relationship) {
-        for (MethodActor methodActor : methodActors) {
-            add(methodActor, referrer, relationship);
+    private void addMethods(Object parent, MethodActor[] children, Relationship relationship) {
+        for (MethodActor child : children) {
+            add(child, parent, relationship);
         }
     }
 
@@ -284,7 +298,7 @@ public class CompiledPrototype extends Prototype {
         if (targetMethod.referenceLiterals() != null) {
             for (Object literal : targetMethod.referenceLiterals()) {
                 if (literal instanceof MethodActor) {
-                    add((MethodActor) literal, classMethodActor, Relationship.LITERAL);
+                    add((MethodActor) literal, targetMethod, Relationship.LITERAL);
                 }
             }
         }
@@ -294,12 +308,14 @@ public class CompiledPrototype extends Prototype {
         final Set<MethodActor> inlinedMethods = new HashSet<MethodActor>();
         // gather all direct, virtual, and interface calls and add them
         targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls, inlinedMethods);
-        addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
-        addMethods(classMethodActor, virtualCalls, Relationship.VIRTUAL_CALL);
-        addMethods(classMethodActor, interfaceCalls, Relationship.INTERFACE_CALL);
+        addMethods(targetMethod, directCalls, Relationship.DIRECT_CALL);
+        addMethods(targetMethod, virtualCalls, Relationship.VIRTUAL_CALL);
+        addMethods(targetMethod, interfaceCalls, Relationship.INTERFACE_CALL);
 
         // if this method (or any that it inlines) contains anonymous classes, add them:
-        inlinedMethods.add(classMethodActor);
+        if (classMethodActor != null) {
+            inlinedMethods.add(classMethodActor);
+        }
         for (MethodActor m : inlinedMethods) {
             if (m != null) {
                 final Set<ClassActor> anonymousClasses = lookupAnonymousClasses(m);
@@ -330,46 +346,60 @@ public class CompiledPrototype extends Prototype {
         return relationship == Relationship.VIRTUAL_CALL || relationship == Relationship.INTERFACE_CALL;
     }
 
-    boolean add(MethodActor methodActor, MethodActor referrer, Relationship relationship) {
-        if (methodActor == null) {
+    boolean add(MethodActor child, Object parent, Relationship relationship) {
+        if (child == null) {
+            return false;
+        }
+        if (child == parent) {
             return false;
         }
 
         if (isIndirectCall(relationship)) {
             // if this is an indirect call that has not been seen before, add all possibly reaching implementations
             // --even if this actual method implementation may not be compiled.
-            final ClassInfo info = getInfo(methodActor.holder());
-            if (!info.indirectCalls.contains(methodActor)) {
-                info.indirectCalls.add(methodActor);
+            final ClassInfo info = getInfo(child.holder());
+            if (!info.indirectCalls.contains(child)) {
+                info.indirectCalls.add(child);
                 if (relationship == Relationship.VIRTUAL_CALL) {
                     for (ClassActor subClass : info.subClasses) {
-                        add(subClass.findVirtualMethodActor(methodActor), methodActor, Relationship.OVERRIDES);
+                        add(subClass.findVirtualMethodActor(child.name, child.descriptor()), child, Relationship.OVERRIDES);
                     }
                 }
                 if (relationship == Relationship.INTERFACE_CALL) {
                     for (ClassActor subClass : info.implementors) {
-                        add(subClass.findVirtualMethodActor(methodActor), methodActor, Relationship.IMPLEMENTS);
+                        add(subClass.findVirtualMethodActor(child.name, child.descriptor()), child, Relationship.IMPLEMENTS);
                     }
                 }
             }
         }
-        if (methodActors.containsKey(methodActor)) {
+        if (methodActors.containsKey(child)) {
             // this method is already processed or on the queue.
             return false;
         }
 
-        if (Actor.isDeclaredFoldable(methodActor.flags())) {
+        if (Actor.isDeclaredFoldable(child.flags())) {
             // All foldable methods must have their stubs precompiled in the image
-            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
-            addMethods(referrer, stubClassActor.localVirtualMethodActors(), relationship);
+            final ClassActor stubClassActor = ClassActor.fromJava(child.makeInvocationStub().getClass());
+            addMethods(parent, stubClassActor.localVirtualMethodActors(), relationship);
         }
-        methodActors.put(methodActor, new Link(methodActor, referrer, relationship));
-        worklist.add(methodActor);
+        Link existing = methodActors.put(child, new Link(child, parent, relationship));
+        assert existing == null : existing;
+        worklist.add(child);
         return true;
     }
 
     private void addMethodsReferencedByExistingTargetCode() {
-        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+            ClassMethodActor classMethodActor = targetMethod.classMethodActor;
+            if (classMethodActor != null) {
+                Link existing = methodActors.put(classMethodActor, new Link(classMethodActor, null, null));
+                assert existing == null : existing;
+            } else {
+                // stub
+                Link link = new Link(targetMethod, null, null);
+                Link existing = stubs.put(targetMethod.toString(), link);
+                assert existing == null : existing;
+            }
             processNewTargetMethod(targetMethod);
         }
     }
@@ -466,15 +496,15 @@ public class CompiledPrototype extends Prototype {
     }
 
     private void addStaticAndVirtualMethods(ClassActor classActor) {
-        addMethods(null, classActor.localVirtualMethodActors(), (classActor instanceof InterfaceActor) ? Relationship.INTERFACE_CALL : Relationship.VIRTUAL_CALL);
-        addMethods(null, classActor.localStaticMethodActors(), Relationship.DIRECT_CALL);
+        addMethods(null, classActor.localVirtualMethodActors(), null);
+        addMethods(null, classActor.localStaticMethodActors(), null);
     }
 
     private int totalCompilations;
 
     private boolean compileWorklist() {
         Trace.begin(1, "compile: " + worklist.size() + " new methods");
-        final CodeRegion region = Code.bootCodeRegion;
+        final CodeRegion region = Code.bootCodeRegion();
         final Address oldMark = region.getAllocationMark();
         final int initialNumberOfCompilations = totalCompilations;
         final CompilationScheme compilationScheme = vmConfig().compilationScheme();
@@ -550,24 +580,26 @@ public class CompiledPrototype extends Prototype {
 
     private ProgramError reportCompilationError(final MethodActor classMethodActor, Throwable error) throws ProgramError {
         System.err.println("Error occurred while compiling " + classMethodActor + ": " + error);
-        System.err.println("Referrer chain:");
+        System.err.println("Parent chain:");
         System.err.println("    " + classMethodActor.format("%H.%n(%p)"));
-        MethodActor referent = classMethodActor;
-        while (referent != null) {
-            final Link link = methodActors.get(referent);
+        MethodActor child = classMethodActor;
+        while (child != null) {
+            final Link link = methodActors.get(child);
             if (link == null) {
-                System.err.println("  (no referrer chain available)");
+                System.err.println("  (no parent chain available)");
                 break;
             }
-            if (referent == link.referrer) {
+            if (child == link.parent) {
                 System.err.println("  which references itself recursively");
                 break;
             }
-            referent = link.referrer;
-            if (referent == null) {
-                System.err.println("    which is a VM entry point");
-            } else {
-                System.err.println("    which " + link.relationship.asReferent + " " + referent.format("%H.%n(%p)"));
+            if (link.parent instanceof MethodActor) {
+                child = (MethodActor) link.parent;
+                if (child == null) {
+                    System.err.println("    which is a VM entry point");
+                } else {
+                    System.err.println("    which " + link.relationship.asChild + " " + child.format("%H.%n(%p)"));
+                }
             }
         }
         error.printStackTrace(System.err);
@@ -603,6 +635,20 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "compiling foldable methods");
     }
 
+    public void checkRequiredImageMethods() {
+        Trace.begin(1, "checking methods that must be compiled");
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
+            forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
+                public void run(ClassMethodActor classMethodActor) {
+                    if (classMethodActor.mustCompileInImage && classMethodActor.targetMethodCount() == 0) {
+                        FatalError.unexpected("Method must be compiled in image: " + classMethodActor);
+                    }
+                }
+            });
+        }
+        Trace.end(1, "checking methods that must be compiled");
+    }
+
     private boolean hasCode(MethodActor methodActor) {
         return methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
@@ -612,7 +658,7 @@ public class CompiledPrototype extends Prototype {
 
     public void addEntrypoints() {
         // 1. create bootcode region.
-        final CodeRegion region = Code.bootCodeRegion;
+        final CodeRegion region = Code.bootCodeRegion();
         region.setSize(Size.fromInt(Integer.MAX_VALUE / 4)); // enable virtually infinite allocations
         // 2. add only entrypoint methods and methods not to be compiled.
         addMethodsReferencedByExistingTargetCode();
@@ -634,7 +680,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
-        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
             if (!(targetMethod instanceof Adapter)) {
                 Adapter adapter = null;
                 ClassMethodActor classMethodActor = targetMethod.classMethodActor;

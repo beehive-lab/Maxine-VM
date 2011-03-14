@@ -95,7 +95,7 @@ public class XirTemplate {
      */
     public final XirTemp[] temps;
     /**
-     * Constant5s used in the template.
+     * Constants used in the template.
      */
     public final XirConstant[] constants;
     /**

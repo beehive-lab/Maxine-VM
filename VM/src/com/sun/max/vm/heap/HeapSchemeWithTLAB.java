@@ -38,6 +38,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.thread.VmThreadLocal.Nature;
 
 /**
  * A HeapScheme adaptor with support for thread local allocation buffers (TLABs). The adaptor factors out methods for
@@ -54,6 +55,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public static final String TLAB_MARK_THREAD_LOCAL_NAME = "TLAB_MARK";
     public static final String TLAB_DISABLED_THREAD_LOCAL_NAME = "TLAB_DISABLED";
 
+
+    // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
+    public static boolean GenInlinedTLABAlloc;
+
     private static boolean TraceTLAB;
 
     /**
@@ -63,20 +68,30 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     @INLINE
     public static boolean traceTLAB() {
-        return MaxineVM.isDebug() && TraceTLAB;
+        return TraceTLAB;
     }
+
+    private static boolean PrintTLABStats;
 
     static {
         if (MaxineVM.isDebug()) {
             VMOptions.addFieldOption("-XX:", "TraceTLAB", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "TraceTLAB"), "Trace TLAB.", MaxineVM.Phase.PRISTINE);
         }
+        VMOptions.addFieldOption("-XX:", "PrintTLABStats", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "PrintTLABStats"),
+                        "Print TLAB statistics at end of program.", MaxineVM.Phase.PRISTINE);
+
+        // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
+        VMOptions.addFieldOption("-XX:", "InlineTLAB", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "GenInlinedTLABAlloc"),
+                        "XIR generate inlined TLAB allocations.", MaxineVM.Phase.PRISTINE);
     }
 
     /**
      * A VM option for disabling use of TLABs.
      */
-    protected static final VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB",
-        "Use thread-local object allocation."), MaxineVM.Phase.PRISTINE);
+    public static boolean UseTLAB = true;
+    static {
+        VMOptions.addFieldOption("-XX:", "UseTLAB", HeapSchemeWithTLAB.class, "Use thread-local object allocation", MaxineVM.Phase.PRISTINE);
+    }
 
     /**
      * A VM option for specifying the size of a TLAB. Default is 64 K.
@@ -88,14 +103,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
      * {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_TOP
+    public static final VmThreadLocal TLAB_TOP
         = new VmThreadLocal(TLAB_TOP_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: top of current TLAB, zero if not used", Nature.Single);
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_MARK
+    public static final VmThreadLocal TLAB_MARK
         = new VmThreadLocal(TLAB_MARK_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used", Nature.Single);
 
     /**
@@ -192,6 +207,52 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     private Size initialTlabSize;
 
+    /*
+     * TLAB statistics. For now, something simple shared by all threads without synchronization.
+     * Will need to get per-thread, with statistics gathered globally at safepoint,
+     * and with more elaborated statistics (especially wrt to TLAB refills).
+     */
+    class TLABStats {
+        /**
+         * Count of calls to slow path from inlined tlab allocation request.
+         */
+        private volatile long inlinedSlowPathAllocateCount = 0L;
+        /**
+         * Count of all calls to slow path (inlined and runtime).
+         */
+        private volatile long runtimeSlowPathAllocateCount = 0L;
+
+        /**
+         * Count TLAB overflows.
+         */
+        private volatile long tlabOverflowCount = 0L;
+
+        /**
+         * Leftover after refill.
+         */
+        private volatile long leftover = 0L;
+
+        private void printTLABStats() {
+            Log.println("\n\n Summary TLAB stats");
+            Log.print("   inlined allocation slow-path count: ");
+            Log.println(inlinedSlowPathAllocateCount);
+            Log.print("   runtime allocation slow-path count: ");
+            Log.println(runtimeSlowPathAllocateCount);
+            Log.print("   tlab overflow count               :");
+            Log.println(tlabOverflowCount);
+            Log.print("   leftover at TLAB refill           :");
+            if (leftover > Size.K.toLong()) {
+                Log.print(Size.K.plus(leftover).unsignedShiftedRight(10).toLong());
+                Log.println(" K");
+            } else {
+                Log.print(leftover);
+                Log.println(" bytes");
+            }
+        }
+    }
+
+    final TLABStats globalTlabStats = new TLABStats();
+
     @HOSTED_ONLY
     public HeapSchemeWithTLAB() {
     }
@@ -200,10 +261,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
-            useTLAB = useTLABOption.getValue();
+            useTLAB = UseTLAB;
             initialTlabSize = tlabSizeOption.getValue();
             if (initialTlabSize.lessThan(0)) {
                 FatalError.unexpected("Specified TLAB size is too small");
+            }
+        } else if (phase == MaxineVM.Phase.TERMINATING) {
+            if (PrintTLABStats) {
+                globalTlabStats.printTLABStats();
             }
         }
     }
@@ -254,7 +319,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @INLINE(override = true)
     @Override
-    public boolean usesTLAB() {
+    public final boolean usesTLAB() {
         return useTLAB;
     }
 
@@ -277,8 +342,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer tlabTop = tlab.plus(size); // top of the new TLAB
         final Pointer allocationMark = TLAB_MARK.load(etla);
         if (!allocationMark.isZero()) {
+            final Pointer oldTop = TLAB_TOP.load(etla);
+            globalTlabStats.leftover += oldTop.minus(allocationMark).toLong();
             // It is a refill, not an initial fill. So invoke handler.
-            doBeforeTLABRefill(allocationMark, TLAB_TOP.load(etla));
+            doBeforeTLABRefill(allocationMark, oldTop);
         } else {
             ProgramError.check(CUSTOM_ALLOCATION_ENABLED.load(etla).isZero(),
                 "Must not refill TLAB when in custom allocator is set");
@@ -354,11 +421,17 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return cell;
     }
 
+    public final Pointer slowPathAllocate(Size size, Pointer etla) {
+        globalTlabStats.inlinedSlowPathAllocateCount++;
+        return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
+    }
+
     protected abstract Pointer customAllocate(Pointer customAllocator, Size size, boolean adjustForDebugTag);
 
     @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     @NEVER_INLINE
     private Pointer slowPathAllocate(Size size, final Pointer etla, final Pointer oldAllocationMark, final Pointer tlabEnd) {
+        globalTlabStats.runtimeSlowPathAllocateCount++;
         // Slow path may be taken because of a genuine refill request, because allocation was disabled,
         // or because allocation in immortal heap was requested.
         // Check for the second here.
@@ -369,6 +442,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (!customAllocator.isZero()) {
             return customAllocate(customAllocator, size, true);
         }
+        globalTlabStats.tlabOverflowCount++;
         // This path will always be taken if TLAB allocation is not enabled.
         return handleTLABOverflow(size, etla, oldAllocationMark, tlabEnd);
     }
@@ -390,7 +464,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
-        trackCreation(cell, dynamicHub, true);
 
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -400,8 +473,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createTuple(Hub hub) {
         Pointer cell = tlabAllocate(hub.tupleSize);
 
-        trackCreation(cell, hub, false);
-
         return Cell.plantTuple(cell, hub);
     }
 
@@ -409,8 +480,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
-
-        trackCreation(cell, hub, false);
 
         return Cell.plantHybrid(cell, size, hub);
     }
@@ -463,6 +532,5 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public void notifyCurrentThreadDetach() {
         tlabReset(currentTLA());
     }
-
 }
 

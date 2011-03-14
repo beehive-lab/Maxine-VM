@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 package com.sun.max.vm.cps.template.source;
+
+import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -51,19 +53,19 @@ public final class JitStackFrameOperation {
     private JitStackFrameOperation() {
     }
 
-    private static final int WORDS_PER_SLOT = JitStackFrameLayout.JIT_SLOT_SIZE / Word.size();
-    private static final int BIAS = JitStackFrameLayout.JIT_STACK_BIAS;
+    private static final int WORDS_PER_SLOT = JVMS_SLOT_SIZE / Word.size();
+    private static final int BIAS = JVMS_STACK_BIAS;
 
-    private static final int HALFWORD_OFFSET_IN_WORD = JitStackFrameLayout.offsetWithinWord(Kind.INT);
+    private static final int HALFWORD_OFFSET_IN_WORD = JVMSFrameLayout.offsetWithinWord(Kind.INT);
 
     @INLINE
     public static void addSlots(int numberOfSlots) {
-        VMRegister.addWordsToAbiStackPointer(-(numberOfSlots * WORDS_PER_SLOT));
+        VMRegister.adjustAbiStackPointer(-(numberOfSlots * JVMS_SLOT_SIZE));
     }
 
     @INLINE
     public static void removeSlots(int numberOfSlots) {
-        VMRegister.addWordsToAbiStackPointer(numberOfSlots * WORDS_PER_SLOT);
+        VMRegister.adjustAbiStackPointer(numberOfSlots * JVMS_SLOT_SIZE);
     }
 
     @INLINE
@@ -73,22 +75,22 @@ public final class JitStackFrameOperation {
 
     @INLINE
     public static int peekInt(int index) {
-        return VMRegister.getAbiStackPointer().readInt(BIAS + index * JitStackFrameLayout.JIT_SLOT_SIZE + HALFWORD_OFFSET_IN_WORD);
+        return VMRegister.getAbiStackPointer().readInt(BIAS + index * JVMSFrameLayout.JVMS_SLOT_SIZE + HALFWORD_OFFSET_IN_WORD);
     }
 
     @INLINE
     public static float peekFloat(int index) {
-        return VMRegister.getAbiStackPointer().readFloat(BIAS + index * JitStackFrameLayout.JIT_SLOT_SIZE + HALFWORD_OFFSET_IN_WORD);
+        return VMRegister.getAbiStackPointer().readFloat(BIAS + index * JVMSFrameLayout.JVMS_SLOT_SIZE + HALFWORD_OFFSET_IN_WORD);
     }
 
     @INLINE
     public static long peekLong(int index) {
-        return VMRegister.getAbiStackPointer().readLong(BIAS + index * JitStackFrameLayout.JIT_SLOT_SIZE);
+        return VMRegister.getAbiStackPointer().readLong(BIAS + index * JVMSFrameLayout.JVMS_SLOT_SIZE);
     }
 
     @INLINE
     public static double peekDouble(int index) {
-        return VMRegister.getAbiStackPointer().readDouble(BIAS + index * JitStackFrameLayout.JIT_SLOT_SIZE);
+        return VMRegister.getAbiStackPointer().readDouble(BIAS + index * JVMSFrameLayout.JVMS_SLOT_SIZE);
     }
 
     @INLINE
@@ -108,22 +110,22 @@ public final class JitStackFrameOperation {
 
     @INLINE
     public static void pokeInt(int index, int value) {
-        VMRegister.getAbiStackPointer().writeInt(BIAS + index * JitStackFrameLayout.JIT_SLOT_SIZE + HALFWORD_OFFSET_IN_WORD, value);
+        VMRegister.getAbiStackPointer().writeInt(BIAS + index * JVMSFrameLayout.JVMS_SLOT_SIZE + HALFWORD_OFFSET_IN_WORD, value);
     }
 
     @INLINE
     public static void pokeFloat(int index, float value) {
-        VMRegister.getAbiStackPointer().writeFloat(BIAS + index * JitStackFrameLayout.JIT_SLOT_SIZE + HALFWORD_OFFSET_IN_WORD, value);
+        VMRegister.getAbiStackPointer().writeFloat(BIAS + index * JVMSFrameLayout.JVMS_SLOT_SIZE + HALFWORD_OFFSET_IN_WORD, value);
     }
 
     @INLINE
     public static void pokeLong(int index, long value) {
-        VMRegister.getAbiStackPointer().writeLong(BIAS + index * JitStackFrameLayout.JIT_SLOT_SIZE, value);
+        VMRegister.getAbiStackPointer().writeLong(BIAS + index * JVMSFrameLayout.JVMS_SLOT_SIZE, value);
     }
 
     @INLINE
     public static void pokeDouble(int index, double value) {
-        VMRegister.getAbiStackPointer().writeDouble(BIAS + index * JitStackFrameLayout.JIT_SLOT_SIZE, value);
+        VMRegister.getAbiStackPointer().writeDouble(BIAS + index * JVMSFrameLayout.JVMS_SLOT_SIZE, value);
     }
 
     @INLINE

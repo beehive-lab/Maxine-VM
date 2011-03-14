@@ -34,24 +34,27 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
+import com.sun.max.*;
 import com.sun.max.config.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.profile.*;
 
 /**
- * A simple harness to run the C1X compiler and test it in various modes, without
- * needing JUnit.
+ * A harness to run the C1X or T1X compiler and test it in various modes.
  *
  * @author Ben L. Titzer
  */
@@ -72,8 +75,6 @@ public class C1XTest {
         "Print the size of bailed out methods, which helps choosing the simplest failure case for debugging..");
     private static final Option<File> outFileOption = options.newFileOption("o", (File) null,
         "A file to which output should be sent. If not specified, then output is sent to stdout.");
-    private static final Option<Boolean> nowarnOption = options.newBooleanOption("nowarn", false,
-        "Do not print ClassNotFoundException warnings.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false,
@@ -104,10 +105,25 @@ public class C1XTest {
         "Set the overall optimization level of C1X (-1 to use default settings)");
     private static final Option<List<String>> metricsOption = options.newStringListOption("print-metrics", new String[0],
         "A list of metrics from the C1XMetrics class to print.");
+    private static final Option<Boolean> t1xOption = options.newBooleanOption("t1x", false,
+        "Compile with T1X.");
+    private static final Option<Boolean> jitOption = options.newBooleanOption("jit", false,
+        "Compile with CPS based template JIT.");
+    private static final Option<Boolean> profOption = options.newBooleanOption("prof", true,
+        "Emit method profiling in baseline compiled methods.");
 
     static {
         // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "C1X", C1XCompilerScheme.getHelpMap());
+        options.addFieldOptions(C1XOptions.class, "C1X", C1X.getHelpMap());
+
+        // add all the fields from T1XOptions as options
+        Class t1xOptionsClass = Classes.forName("com.sun.max.vm.t1x.T1XOptions");
+        try {
+            Map<String, String> m = Utils.cast(Classes.getDeclaredMethod(t1xOptionsClass, "getHelpMap").invoke(null));
+            options.addFieldOptions(t1xOptionsClass, "T1X", m);
+        } catch (Throwable e) {
+            //e.printStackTrace();
+        }
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -170,10 +186,22 @@ public class C1XTest {
             failFastOption.setValue(false);
             printBailoutOption.setValue(false);
             C1XOptions.DetailedAsserts = false;
-            C1XOptions.IRChecking = false;
         }
 
         Trace.on(traceOption.getValue());
+
+        if (profOption.getValue()) {
+            MethodInstrumentation.enable(500);
+        }
+
+        boolean useBaseline = t1xOption.getValue();
+        if (t1xOption.getValue()) {
+            RuntimeCompiler.baselineCompilerOption.setValue(RuntimeCompiler.aliases.get("T1X"));
+            useBaseline = true;
+        } else if (jitOption.getValue()) {
+            RuntimeCompiler.baselineCompilerOption.setValue(RuntimeCompiler.aliases.get("JIT"));
+            useBaseline = true;
+        }
 
         vmConfigurator.create(true);
 
@@ -188,20 +216,24 @@ public class C1XTest {
 
         // create MaxineRuntime
         VMConfiguration configuration = vmConfig();
-        final RuntimeCompiler compilerScheme = ((AdaptiveCompilationScheme) configuration.compilationScheme()).optimizingCompiler;
-
+        AdaptiveCompilationScheme adc = (AdaptiveCompilationScheme) configuration.compilationScheme();
+        final RuntimeCompiler compiler = useBaseline ? adc.baselineCompiler : adc.optimizingCompiler;
+        compiler.initialize(Phase.COMPILING);
 
         String searchCp = searchCpOption.getValue();
         final Classpath classpath = searchCp == null || searchCp.length() == 0 ? Classpath.fromSystem() : new Classpath(searchCp);
         final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, C1XTest.class.getClassLoader(), null);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
-        doWarmup(compilerScheme, methods);
-        doCompile(compilerScheme, methods, progress);
+        doWarmup(compiler, methods);
+        doCompile(compiler, methods, progress);
 
         if (verboseOption.getValue() > 0) {
             progress.report();
         }
+
+        compiler.initialize(Phase.TERMINATING);
+
         reportTimings();
         reportMetrics();
 
@@ -209,7 +241,7 @@ public class C1XTest {
         System.exit(progress.failed());
     }
 
-    private static void doCompile(RuntimeCompiler compilerScheme, List<MethodActor> methods, ProgressPrinter progress) {
+    private static void doCompile(RuntimeCompiler compiler, List<MethodActor> methods, ProgressPrinter progress) {
         if (timingOption.getValue() > 0) {
             // do a timing run
             int max = timingOption.getValue();
@@ -218,23 +250,25 @@ public class C1XTest {
                 if (i > 0 && resetMetricsOption.getValue()) {
                     resetMetrics();
                 }
-                doTimingRun(compilerScheme, methods);
+                doTimingRun(compiler, methods);
+                Code.resetBootCodeRegion();
+                System.gc();
             }
         } else {
             // compile all the methods and report progress
             for (MethodActor methodActor : methods) {
                 progress.begin(methodActor.toString());
-                boolean result;
-                if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
-                    C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
-                    result = compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, methodActor, printBailoutOption.getValue(), false);
+                Throwable error;
+                if (compiler instanceof C1X && !compileTargetMethod.getValue()) {
+                    C1X c1x = (C1X) compiler;
+                    error = compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, methodActor, printBailoutOption.getValue(), false);
                 } else {
-                    result = compile(compilerScheme, methodActor, printBailoutOption.getValue(), false);
+                    error = compile(compiler, methodActor, printBailoutOption.getValue(), false);
                 }
-                if (result) {
+                if (error == null) {
                     progress.pass();
                 } else {
-                    progress.fail("failed");
+                    progress.fail(error.toString());
                     if (failFastOption.getValue()) {
                         out.println("");
                         break;
@@ -256,7 +290,7 @@ public class C1XTest {
         }
     }
 
-    private static void doTimingRun(RuntimeCompiler compilerScheme, List<MethodActor> methods) {
+    private static void doTimingRun(RuntimeCompiler compiler, List<MethodActor> methods) {
         C1XTimers.reset();
         long start = System.nanoTime();
         totalBytes = 0;
@@ -264,16 +298,16 @@ public class C1XTest {
         totalNs = 0;
         totalInstrs = 0;
         totalFailures = 0;
-        if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
-            C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
+        if (compiler instanceof C1X && !compileTargetMethod.getValue()) {
+            C1X c1x = (C1X) compiler;
             for (MethodActor methodActor : methods) {
-                if (!compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, methodActor, false, true)) {
+                if (compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, methodActor, false, true) != null) {
                     totalFailures++;
                 }
             }
         } else {
             for (MethodActor methodActor : methods) {
-                if (!compile(compilerScheme, methodActor, false, true)) {
+                if (compile(compiler, methodActor, false, true) != null) {
                     totalFailures++;
                 }
             }
@@ -281,13 +315,9 @@ public class C1XTest {
         cumulNs += totalNs;
         lastRunNs = System.nanoTime() - start;
         reportAverage();
-
-        if (C1XOptions.PrintTimers) {
-            C1XTimers.print();
-        }
     }
 
-    private static void doWarmup(RuntimeCompiler compilerScheme, List<MethodActor> methods) {
+    private static void doWarmup(RuntimeCompiler compiler, List<MethodActor> methods) {
         // compile all the methods in the list some number of times first to warmup the host VM
         int max = warmupOption.getValue();
         if (max > 0) {
@@ -295,7 +325,7 @@ public class C1XTest {
             for (int i = 0; i < max; i++) {
                 out.print(".");
                 out.flush();
-                C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
+                C1X c1x = (C1X) compiler;
                 for (MethodActor actor : methods) {
                     compile(c1x.compiler(), c1x.runtime, c1x.xirGenerator, actor, false, false);
                 }
@@ -304,13 +334,13 @@ public class C1XTest {
         }
     }
 
-    private static boolean compile(RuntimeCompiler compilerScheme, MethodActor method, boolean printBailout, boolean timing) {
+    private static Throwable compile(RuntimeCompiler compiler, MethodActor method, boolean printBailout, boolean timing) {
         // compile a single method
         ClassMethodActor classMethodActor = (ClassMethodActor) method;
         Throwable thrown = null;
         final long startNs = System.nanoTime();
         try {
-            compilerScheme.compile(classMethodActor);
+            compiler.compile(classMethodActor, true, null);
         } catch (Throwable t) {
             thrown = t;
         }
@@ -327,26 +357,26 @@ public class C1XTest {
             thrown.printStackTrace();
         }
 
-        return thrown == null;
+        return thrown;
     }
 
-    private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
+    private static Throwable compile(C1XCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
         final long startNs = System.nanoTime();
-        CiResult result = compiler.compileMethod(method, -1, xirGenerator);
+        CiResult result = compiler.compileMethod(method, -1, xirGenerator, null);
         if (timing && result.bailout() == null) {
             long timeNs = System.nanoTime() - startNs;
-            recordTime(method, result.statistics().byteCount, result.statistics().nodeCount, timeNs);
+            recordTime(method, result.statistics().bytecodeCount, result.statistics().nodeCount, timeNs);
         }
         if (printBailout && result.bailout() != null) {
             out.println("");
             out.println(method);
             if (printBailoutSizeOption.getValue()) {
-                out.println(result.statistics().byteCount + " bytes");
+                out.println(result.statistics().bytecodeCount + " bytes");
             }
             result.bailout().printStackTrace();
         }
 
-        return result.bailout() == null;
+        return result.bailout();
     }
 
     static class MyMethodFinder extends MethodFinder {
@@ -368,11 +398,8 @@ public class C1XTest {
 
         private static boolean isCompilable(MethodActor method) {
             if (method.isNative()) {
-                if (((ClassMethodActor) method).compilee() == method) {
-                    // Non-substituted native method
-                    if (!MaxRiRuntime.CAN_COMPILE_NATIVE_METHODS) {
-                        return false;
-                    }
+                if (t1xOption.getValue()) {
+                    return false;
                 }
             }
             return method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic();
@@ -417,10 +444,6 @@ public class C1XTest {
     }
 
     private static void reportTimings() {
-        if (C1XOptions.PrintTimers) {
-            C1XTimers.print();
-        }
-
         if (timingOption.getValue() > 0 && !averageOption.getValue()) {
             long longerThan = longerThanOption.getValue();
             long slowerThan = slowerThanOption.getValue();
@@ -491,9 +514,6 @@ public class C1XTest {
     }
 
     private static void reportMetrics() {
-        if (C1XOptions.PrintMetrics) {
-            C1XMetrics.print();
-        }
         List<String> metrics = metricsOption.getValue();
         if (metrics.size() > 0) {
             for (String s : metrics) {

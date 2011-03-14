@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -307,16 +307,16 @@ public class Frame implements FrameModel {
      * Merges the state of a given frame into this frame.
      *
      * @param fromFrame the frame to merge from
-     * @param thisPosition the bytecode position of this frame
+     * @param thisBCI the BCI of this frame
      * @param catchTypeIndex if -1, then this value is ignored and the operand stack state of {@code fromFrame} is
      *            merged into the operand stack state of this frame. Otherwise this value is a constant pool index of
      *            the exception type caught by the exception handler whose entry state is represented by this frame.
      */
-    public void mergeFrom(Frame fromFrame, int thisPosition, int catchTypeIndex) {
+    public void mergeFrom(Frame fromFrame, int thisBCI, int catchTypeIndex) {
         if (catchTypeIndex == -1) {
-            verifyStackIsAssignableFrom(fromFrame, thisPosition);
+            verifyStackIsAssignableFrom(fromFrame, thisBCI);
         }
-        verifyLocalsAreAssignableFrom(fromFrame, thisPosition);
+        verifyLocalsAreAssignableFrom(fromFrame, thisBCI);
     }
 
     static String inconsistentFramesMessageSuffix(Frame targetFrame, Frame derivedFrame) {
@@ -330,18 +330,18 @@ public class Frame implements FrameModel {
      * from} the same slot in the given frame.
      *
      * @param fromFrame a frame that must be assignable to this frame
-     * @param thisPosition the bytecode position of this frame
+     * @param thisBCI the BCI of this frame
      */
-    public final void verifyStackIsAssignableFrom(Frame fromFrame, int thisPosition) {
+    public final void verifyStackIsAssignableFrom(Frame fromFrame, int thisBCI) {
         if (stackSize != fromFrame.stackSize) {
-            verifyError("Inconsistent stackmap frame for bytecode position " + thisPosition + " (stack sizes differ)" +
+            verifyError("Inconsistent stackmap frame for BCI " + thisBCI + " (stack sizes differ)" +
                 inconsistentFramesMessageSuffix(fromFrame, this));
         }
 
         for (int i = 0; i < stackSize; i++) {
             if (!stack[i].isAssignableFrom(fromFrame.stack[i])) {
                 if (!VerificationType.isTypeIncompatibilityBetweenPointerAndAccessor(fromFrame.stack[i], stack[i])) {
-                    verifyError("Stack slot " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
+                    verifyError("Stack slot " + i + " is incompatible with stackmap frame for BCI " + thisBCI +
                         inconsistentFramesMessageSuffix(this, fromFrame));
                 }
             }
@@ -353,18 +353,18 @@ public class Frame implements FrameModel {
      * is assignable from} the same variable in a given frame.
      *
      * @param fromFrame a frame that must be assignable to this frame
-     * @param thisPosition the bytecode position of this frame
+     * @param thisBCI the BCI of this frame
      */
-    public final void verifyLocalsAreAssignableFrom(Frame fromFrame, int thisPosition) {
+    public final void verifyLocalsAreAssignableFrom(Frame fromFrame, int thisBCI) {
         if (fromFrame.activeLocals < activeLocals) {
-            verifyError("Inconsistent stackmap frame for bytecode position " + thisPosition + " (less live locals than implied by stackmap frame)" +
+            verifyError("Inconsistent stackmap frame for BCI " + thisBCI + " (less live locals than implied by stackmap frame)" +
                 inconsistentFramesMessageSuffix(fromFrame, this));
         }
 
         for (int i = 0; i < fromFrame.activeLocals; i++) {
             if (!locals[i].isAssignableFrom(fromFrame.locals[i])) {
                 if (!VerificationType.isTypeIncompatibilityBetweenPointerAndAccessor(fromFrame.locals[i], locals[i])) {
-                    verifyError("Local variable " + i + " is incompatible with stackmap frame for bytecode position " + thisPosition +
+                    verifyError("Local variable " + i + " is incompatible with stackmap frame for BCI " + thisBCI +
                         inconsistentFramesMessageSuffix(this, fromFrame));
                 }
             }

@@ -27,7 +27,6 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
@@ -95,13 +94,10 @@ public final class BreakpointsTable extends InspectorTable {
     }
 
     @Override
-    public void valueChanged(ListSelectionEvent listSelectionEvent) {
-        // TODO: Add MaxBreakpoint interface and generalize this code (cf. WatchpointsTable)
-        // Row selection changed, perhaps by user mouse click or navigation;
-        // update user focus to follow the selection.
-        super.valueChanged(listSelectionEvent);
-        if (!listSelectionEvent.getValueIsAdjusting()) {
-            final int row = getSelectedRow();
+    protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() > 1) {
+            // Depends on the first click selecting the row, and that changing the current
+            // code location focus to the location under the mouse event.
             if (row >= 0) {
                 final BreakpointData breakpointData = tableModel.get(row);
                 if (breakpointData != null) {

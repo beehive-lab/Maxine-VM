@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -355,22 +355,6 @@ public final class VMOptions {
             }
         }, MaxineVM.Phase.PRISTINE);
 
-        register(new VMOption("-C1X ", "Print help on C1X options") {
-            @Override
-            public boolean parseValue(Pointer optionValue) {
-                printUsage(Category.C1X_SPECIFIC);
-                return true;
-            }
-            @Override
-            protected boolean haltsVM() {
-                return true;
-            }
-            @Override
-            public Category category() {
-                return Category.NON_STANDARD;
-            }
-        }, MaxineVM.Phase.PRISTINE);
-
         register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
             @Override
             public boolean parseValue(Pointer optionValue) {
@@ -414,7 +398,9 @@ public final class VMOptions {
     @HOSTED_ONLY
     private static VMOption[] addOption(VMOption[] options, VMOption option, Set<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
-            final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
+            int colon = option.prefix.indexOf(':');
+            assert colon != -1;
+            final int prefixLength = option instanceof VMBooleanXXOption ? colon + 2 : colon + 1;
             final String name = option.prefix.substring(prefixLength);
             ProgramError.check(Character.isUpperCase(name.charAt(0)), "Option with \"-XX:\" prefix must start with an upper-case letter: " + option);
         }
@@ -564,7 +550,6 @@ public final class VMOptions {
                     case NON_STANDARD:
                         option = new SimpleBooleanFieldOption(prefix + name, help, field);
                         break;
-                    case C1X_SPECIFIC:
                     case IMPLEMENTATION_SPECIFIC:
                         option = new BooleanFieldOption(prefix + (defaultValue ? '+' : '-'), name, help, field);
                         break;
@@ -651,10 +636,6 @@ public final class VMOptions {
         }
         if (category == Category.NON_STANDARD) {
             Log.println("Non-standard options:");
-            printOptions(category);
-        }
-        if (category == Category.C1X_SPECIFIC) {
-            Log.println("C1X options:");
             printOptions(category);
         }
         if (category == Category.IMPLEMENTATION_SPECIFIC) {

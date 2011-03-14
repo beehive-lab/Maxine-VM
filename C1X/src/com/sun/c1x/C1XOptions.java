@@ -91,7 +91,6 @@ public final class C1XOptions {
     public static boolean PrintInlinedIntrinsics             = ____;
 
     // IR checking
-    public static boolean IRChecking                         = ____;
     public static boolean InterpretInvokedMethods            = ____;
     public static boolean PrintStateInInterpreter            = ____;
 
@@ -125,7 +124,7 @@ public final class C1XOptions {
     public static boolean OptMoveElimination;
 
     // optimistic optimization settings
-    public static boolean UseAssumptions                = ____;
+    public static boolean UseAssumptions                = true;
 
     // state merging settings
     public static boolean AssumeVerifiedBytecode        = ____;
@@ -147,11 +146,14 @@ public final class C1XOptions {
     public static boolean GenSpecialDivChecks           = ____;
     public static boolean GenAssertionCode              = ____;
     public static boolean GenFinalizerRegistration      = true;
-    public static boolean GenTableRanges                = ____;
     public static boolean AlignCallsForPatching         = true;
     public static boolean NullCheckUniquePc             = ____;
     public static boolean InvokeSnippetAfterArguments   = ____;
-    public static boolean ResolveClassBeforStaticInvoke = ____;
+    public static boolean ResolveClassBeforeStaticInvoke = ____;
+
+    // Translating tableswitch instructions
+    public static int     SequentialSwitchLimit         = 4;
+    public static int     RangeTestsSwitchDensity       = 5;
 
     public static int     InitialCodeBufferSize         = 232;
     public static boolean DetailedAsserts               = true;

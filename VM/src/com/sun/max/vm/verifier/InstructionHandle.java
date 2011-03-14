@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,7 +73,7 @@ final class InstructionHandle {
      */
     public final SubroutineCall subroutineCall;
 
-    public int position;
+    public int bci;
 
     /**
      * Link in a linked list of handles representing the copies of an original instruction in the rewritten method (each
@@ -88,11 +88,11 @@ final class InstructionHandle {
         this.subroutineCall = caller;
         this.next = next;
         this.flag = NORMAL;
-        this.position = -1;
+        this.bci = -1;
     }
 
     @Override
     public String toString() {
-        return (position == -1 ? "?" : position) + "[" + instruction.position() + "] " + instruction.toString();
+        return (bci == -1 ? "?" : bci) + "[" + instruction.bci() + "] " + instruction.toString();
     }
 }

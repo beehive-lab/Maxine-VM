@@ -27,15 +27,14 @@ import static com.sun.max.platform.Platform.*;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.ci.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.target.*;
 
 /**
  * Holds information about a block of code in
@@ -178,14 +177,10 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
             return false;
         }
 
-        public BytecodeLocation bytecodeLocation(int index) throws IllegalArgumentException {
+        public CiFrame bytecodeFrames(int index) throws IllegalArgumentException {
             if (index < 0 || index >= instructions.size()) {
                 throw new IllegalArgumentException();
             }
-            return null;
-        }
-
-        public TargetJavaFrameDescriptor targetFrameDescriptor(int index) throws IllegalArgumentException {
             return null;
         }
 
@@ -334,10 +329,6 @@ public final class TeleExternalCode extends AbstractTeleVMHolder implements MaxE
     }
 
     public CodeLocation getCallEntryLocation() {
-        return null;
-    }
-
-    public String machineCodeLocationToString(TargetLocation targetLocation) {
         return null;
     }
 

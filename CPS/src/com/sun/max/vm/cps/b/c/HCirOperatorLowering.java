@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -392,7 +392,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                         ce());
                 CirJavaFrameDescriptor jfd = HCirOperatorLowering.this.call.javaFrameDescriptor();
                 final MethodProfile methodProfile = getMethodProfile(jfd.classMethodActor);
-                final Hub mostFrequentHub = MethodInstrumentation.computeMostFrequentHub(methodProfile, jfd.bytecodePosition, 1500, 0.9f);
+                final Hub mostFrequentHub = MethodInstrumentation.computeMostFrequentHub(methodProfile, jfd.bci, 1500, 0.9f);
 
                 if (mostFrequentHub != null) {
                     final CirValue cont = arguments[arguments.length - 2];

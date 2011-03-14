@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.sun.max.vm.actor.member;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -49,25 +48,6 @@ public class NativeFunction {
     }
 
     /**
-     * Determines if this method actor has the same name as any other native method actor defined in the same class.
-     */
-    @NEVER_INLINE
-    private boolean isOverloadedByNativeMethod() {
-        ClassActor holder = classMethodActor.holder();
-        for (MethodActor method : holder.localVirtualMethodActors()) {
-            if (method != classMethodActor && method.isNative() && method.name.equals(classMethodActor.name())) {
-                return true;
-            }
-        }
-        for (MethodActor method : holder.localStaticMethodActors()) {
-            if (method != classMethodActor && method.isNative() && method.name.equals(classMethodActor.name())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * Gets the native symbol derived from the method this native function implements.
      *
      * Only the first call to this method can cause allocation. Subsequent calls return the value cached by the
@@ -76,7 +56,7 @@ public class NativeFunction {
     public String makeSymbol() {
         if (symbol == null) {
             final ClassMethodActor m = classMethodActor;
-            symbol = m.isCFunction() ? m.name.toString() : Mangle.mangleMethod(m.holder().typeDescriptor, m.name.toString(), isOverloadedByNativeMethod() ? m.descriptor() : null);
+            symbol = m.isCFunction() ? m.name.toString() : Mangle.mangleMethod(m.holder().typeDescriptor, m.name.toString(), m.descriptor(), true);
         }
         return symbol;
     }

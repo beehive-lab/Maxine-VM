@@ -325,10 +325,6 @@ public final class MaxineVM {
         boolean result = false; // default assumption
         final String pkgName = getPackageName(javaClass);
 
-        if (pkgName.startsWith("test")) {
-            System.console();
-        }
-
         // Direct part of definition
 
         if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
@@ -432,12 +428,12 @@ public final class MaxineVM {
      */
     @VM_ENTRY_POINT
     public static int run(Pointer etla, Pointer bootHeapRegionStart, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
+        Safepoint.setLatchRegister(etla);
+
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
-
-        Safepoint.setLatchRegister(etla);
 
         // The dynamic linker must be initialized before linking critical native methods
         DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);
@@ -561,5 +557,17 @@ public final class MaxineVM {
         Log.print(" bytes of memory for ");
         Log.println(memoryAreaName);
         MaxineVM.native_exit(1);
+    }
+
+    /**
+     * Application-requested exit.
+     * @param exitCode code to exit the VM process with.
+     * @param halt  true if this is a halt, not an exit.
+     */
+    public static void exit(int exitCode, boolean halt) {
+        // TODO: need to revisit this. Likely, we would want to bring all
+        // threads to a safepoint before running the terminating phase.
+        vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
+        native_exit(exitCode);
     }
 }

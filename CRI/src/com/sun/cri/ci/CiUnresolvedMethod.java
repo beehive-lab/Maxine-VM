@@ -79,11 +79,11 @@ public class CiUnresolvedMethod implements RiMethod {
     }
 
     public int accessFlags() {
-        throw unresolved("maxStackSize()");
+        throw unresolved("accessFlags()");
     }
 
     public boolean isLeafMethod() {
-        throw unresolved("maxStackSize()");
+        throw unresolved("isLeafMethod()");
     }
     
     public RiMethod uniqueConcreteMethod() {
@@ -91,23 +91,27 @@ public class CiUnresolvedMethod implements RiMethod {
     }
 
     public boolean isClassInitializer() {
-        throw unresolved("maxStackSize()");
+        throw unresolved("isClassInitializer()");
     }
 
     public boolean isConstructor() {
-        throw unresolved("maxStackSize()");
+        throw unresolved("isConstructor()");
     }
 
     public boolean isOverridden() {
-        throw unresolved("maxStackSize()");
+        throw unresolved("isOverridden()");
     }
 
     public boolean noSafepoints() {
-        throw unresolved("isUninterruptible()");
+        throw unresolved("noSafepoints()");
+    }
+    
+    public boolean minimalDebugInfo() {
+        throw unresolved("minimalDebugInfo()");
     }
     
     public RiMethodProfile methodData() {
-        throw unresolved("maxStackSize()");
+        throw unresolved("methodData()");
     }
 
     public CiBitMap[] livenessMap() {
@@ -115,11 +119,11 @@ public class CiUnresolvedMethod implements RiMethod {
     }
 
     public boolean canBeStaticallyBound() {
-        throw unresolved("maxStackSize()");
+        throw unresolved("canBeStaticallyBound()");
     }
 
     public RiExceptionHandler[] exceptionHandlers() {
-        throw unresolved("maxStackSize()");
+        throw unresolved("exceptionHandlers()");
     }
 
     private CiUnresolvedException unresolved(String operation) {

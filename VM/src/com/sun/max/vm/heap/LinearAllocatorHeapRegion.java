@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,7 +108,7 @@ public class LinearAllocatorHeapRegion extends LinearAllocationMemoryRegion {
                         if (tracing) {
                             final Pointer address = start().asPointer().plus(regionWordIndex * Word.size());
                             final Address value = address.readWord(0).asAddress();
-                            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion.contains(value)) {
+                            if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
                                 Log.print("    Slot: ");
                                 logSlot(regionWordIndex, address);
                             }

@@ -38,7 +38,7 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.Value.*;
+import com.sun.c1x.ir.Value.Flag;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.opt.*;
@@ -46,10 +46,16 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.value.FrameState.PhiProcedure;
 import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
-import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.CiXirAssembler.XirConstant;
+import com.sun.cri.xir.CiXirAssembler.XirInstruction;
+import com.sun.cri.xir.CiXirAssembler.XirOperand;
+import com.sun.cri.xir.CiXirAssembler.XirParameter;
+import com.sun.cri.xir.CiXirAssembler.XirRegister;
+import com.sun.cri.xir.CiXirAssembler.XirTemp;
 import com.sun.cri.xir.*;
 
 /**
@@ -66,40 +72,14 @@ public abstract class LIRGenerator extends ValueVisitor {
      * Helper class for inserting memory barriers as necessary to implement the Java Memory Model
      * with respect to volatile field accesses.
      *
-     * Comment copied from templateTable_i486.cpp in HotSpot.
-     * <pre>
-     * Volatile variables demand their effects be made known to all CPU's in
-     * order.  Store buffers on most chips allow reads & writes to reorder; the
-     * JMM's ReadAfterWrite.java test fails in -Xint mode without some kind of
-     * memory barrier (i.e., it's not sufficient that the interpreter does not
-     * reorder volatile references, the hardware also must not reorder them).
-     *
-     * According to the new Java Memory Model (JMM):
-     * (1) All volatiles are serialized wrt to each other.
-     * ALSO reads & writes act as acquire & release, so:
-     * (2) A read cannot let unrelated NON-volatile memory refs that happen after
-     * the read float up to before the read.  It's OK for non-volatile memory refs
-     * that happen before the volatile read to float down below it.
-     * (3) Similarly, a volatile write cannot let unrelated NON-volatile memory refs
-     * that happen BEFORE the write float down to after the write.  It's OK for
-     * non-volatile memory refs that happen after the volatile write to float up
-     * before it.
-     *
-     * We only put in barriers around volatile refs (they are expensive), not
-     * _between_ memory refs (which would require us to track the flavor of the
-     * previous memory refs).  Requirements (2) and (3) require some barriers
-     * before volatile stores and after volatile loads.  These nearly cover
-     * requirement (1) but miss the volatile-store-volatile-load case.  This final
-     * case is placed after volatile-stores although it could just as well go
-     * before volatile-loads.
-     * </pre>
+     * @see MemoryBarriers
      */
     class VolatileMemoryAccess {
         /**
          * Inserts any necessary memory barriers before a volatile write as required by the JMM.
          */
         void preVolatileWrite() {
-            int barriers = compilation.target.arch.requiredBarriers(LOAD_STORE | STORE_STORE);
+            int barriers = compilation.target.arch.requiredBarriers(JMM_PRE_VOLATILE_WRITE);
             if (compilation.target.isMP && barriers != 0) {
                 lir.membar(barriers);
             }
@@ -109,7 +89,7 @@ public abstract class LIRGenerator extends ValueVisitor {
          * Inserts any necessary memory barriers after a volatile write as required by the JMM.
          */
         void postVolatileWrite() {
-            int barriers = compilation.target.arch.requiredBarriers(STORE_LOAD | STORE_STORE);
+            int barriers = compilation.target.arch.requiredBarriers(JMM_POST_VOLATILE_WRITE);
             if (compilation.target.isMP && barriers != 0) {
                 lir.membar(barriers);
             }
@@ -119,7 +99,10 @@ public abstract class LIRGenerator extends ValueVisitor {
          * Inserts any necessary memory barriers before a volatile read as required by the JMM.
          */
         void preVolatileRead() {
-            // no-op
+            int barriers = compilation.target.arch.requiredBarriers(JMM_PRE_VOLATILE_READ);
+            if (compilation.target.isMP && barriers != 0) {
+                lir.membar(barriers);
+            }
         }
 
         /**
@@ -196,8 +179,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected final IR ir;
     protected final XirSupport xirSupport;
     protected final RiXirGenerator xir;
-    protected final boolean is32;
-    protected final boolean is64;
     protected final boolean isTwoOperand;
 
     private BlockBegin currentBlock;
@@ -218,8 +199,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         this.ir = compilation.hir();
         this.xir = compilation.compiler.xir;
         this.xirSupport = new XirSupport();
-        this.is32 = compilation.target.arch.is32bit();
-        this.is64 = compilation.target.arch.is64bit();
         this.isTwoOperand = compilation.target.arch.twoOperandMode();
         this.vma = new VolatileMemoryAccess();
 
@@ -291,10 +270,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitBase(Base x) {
-        // Emit moves from physical registers / stack slots to variables
-
-        // increment invocation counters if needed
-
         // emit phi-instruction move after safepoint since this simplifies
         // describing the state at the safepoint.
         moveToPhi(x.stateAfter());
@@ -423,8 +398,13 @@ public abstract class LIRGenerator extends ValueVisitor {
                 res = x.asConstant();
             }
             if (res.isConstant()) {
-                CiVariable reg = createResultVariable(x);
-                lir.move(res, reg);
+                if (isUsedForValue(x)) {
+                    CiVariable reg = createResultVariable(x);
+                    lir.move(res, reg);
+                } else {
+                    assert x.checkFlag(Value.Flag.LiveDeopt);
+                    x.setOperand(res);
+                }
             } else {
                 setResult(x, (CiVariable) res);
             }
@@ -465,12 +445,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         moveToPhi(x.stateAfter());
 
         lir.jump(x.defaultSuccessor());
-    }
-
-    @Override
-    public void visitIfInstanceOf(IfInstanceOf i) {
-        // This is unimplemented in C1
-        Util.shouldNotReachHere();
     }
 
     @Override
@@ -650,11 +624,31 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue callAddress = load(x.address());
         CiKind[] signature = Util.signatureToKinds(x.signature, null);
         CiCallingConvention cc = compilation.frameMap().getCallingConvention(signature, NativeCall);
-        List<CiValue> pointerSlots = new ArrayList<CiValue>();
-        List<CiValue> argList = visitInvokeArguments(cc, x.arguments, pointerSlots);
-        assert pointerSlots.size() == 0;
+        List<CiValue> argList = visitInvokeArguments(cc, x.arguments, null);
         argList.add(callAddress);
-        lir.callNative(callAddress, x.nativeMethod.jniSymbol(), resultOperand, argList, info, null, pointerSlots);
+        lir.callNative(x.nativeMethod.jniSymbol(), resultOperand, argList, info, null);
+        if (resultOperand.isLegal()) {
+            CiValue result = createResultVariable(x);
+            lir.move(resultOperand, result);
+        }
+    }
+
+    @Override
+    public void visitTemplateCall(TemplateCall x) {
+        CiValue resultOperand = resultOperandFor(x.kind);
+        List<CiValue> argList;
+        if (x.receiver() != null) {
+            CiCallingConvention cc = compilation.frameMap().getCallingConvention(new CiKind[] {CiKind.Object}, JavaCall);
+            argList = visitInvokeArguments(cc, new Value[] {x.receiver()}, null);
+        } else {
+            argList = new ArrayList<CiValue>();
+        }
+
+        if (x.address() != null) {
+            CiValue callAddress = load(x.address());
+            argList.add(callAddress);
+        }
+        lir.templateCall(resultOperand, argList);
         if (resultOperand.isLegal()) {
             CiValue result = createResultVariable(x);
             lir.move(resultOperand, result);
@@ -691,15 +685,26 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
             // address is [pointer + disp + (index * scale)]
             assert (x.opcode & 0xff) == PGET || (x.opcode & 0xff) == PSET;
-            assert x.displacement().isConstant() : "displacement for pointer load/store not constant: " + x.displacement();
-            int displacement = x.displacement().asConstant().asInt();
-            int kindSize = compilation.target.sizeInBytes(kind);
-            Scale scale = Scale.fromInt(kindSize);
-            if (index.isConstant()) {
-                displacement += index.asConstant().asInt() * kindSize;
-                addr = new CiAddress(kind, pointer, displacement);
+            if (!x.displacement().isConstant()) {
+                CiVariable tmp = newVariable(CiKind.Word);
+                arithmeticOpLong(Bytecodes.LADD, tmp, pointer, load(x.displacement()), null);
+                int kindSize = compilation.target.sizeInBytes(kind);
+                Scale scale = Scale.fromInt(kindSize);
+                if (index.isConstant()) {
+                    addr = new CiAddress(kind, tmp, index.asConstant().asInt() * kindSize);
+                } else {
+                    addr = new CiAddress(kind, tmp, load(index), scale, 0);
+                }
             } else {
-                addr = new CiAddress(kind, pointer, load(index), scale, displacement);
+                int displacement = x.displacement().asConstant().asInt();
+                int kindSize = compilation.target.sizeInBytes(kind);
+                Scale scale = Scale.fromInt(kindSize);
+                if (index.isConstant()) {
+                    displacement += index.asConstant().asInt() * kindSize;
+                    addr = new CiAddress(kind, pointer, displacement);
+                } else {
+                    addr = new CiAddress(kind, pointer, load(index), scale, displacement);
+                }
             }
         }
         return addr;
@@ -842,15 +847,15 @@ public abstract class LIRGenerator extends ValueVisitor {
         // move values into phi locations
         moveToPhi(x.stateAfter());
 
-        if (C1XOptions.GenTableRanges) {
-            visitSwitchRanges(createLookupRanges(x), tag, x.defaultSuccessor());
-        } else {
+        if (x.numberOfCases() == 0 || x.numberOfCases() < C1XOptions.SequentialSwitchLimit) {
             int len = x.numberOfCases();
             for (int i = 0; i < len; i++) {
                 lir.cmp(Condition.EQ, tag, x.keyAt(i));
                 lir.branch(Condition.EQ, CiKind.Int, x.suxAt(i));
             }
             lir.jump(x.defaultSuccessor());
+        } else {
+            visitSwitchRanges(createLookupRanges(x), tag, x.defaultSuccessor());
         }
     }
 
@@ -882,18 +887,24 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitReturn(Return x) {
         if (x.kind.isVoid()) {
-            emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
-            lir.returnOp(IllegalValue);
+            XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
+            if (epilogue != null) {
+                emitXir(epilogue, x, stateFor(x, x.stateAfter()), compilation.method, false);
+                lir.returnOp(IllegalValue);
+            }
         } else {
             CiValue operand = resultOperandFor(x.kind);
             CiValue result = force(x.result(), operand);
-            emitXir(xir.genEpilogue(site(x), compilation.method), x, stateFor(x, x.stateAfter()), compilation.method, false);
-            lir.returnOp(result);
+            XirSnippet epilogue = xir.genEpilogue(site(x), compilation.method);
+            if (epilogue != null) {
+                emitXir(epilogue, x, stateFor(x, x.stateAfter()), compilation.method, false);
+                lir.returnOp(result);
+            }
         }
         setNoResult(x);
     }
 
-    private XirArgument toXirArgument(CiValue v) {
+    protected XirArgument toXirArgument(CiValue v) {
         if (v == null) {
             return null;
         }
@@ -1067,6 +1078,21 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
+    public void visitIncrementRegister(IncrementRegister x) {
+        CiValue reg = x.register.asValue(CiKind.Word);
+        if (x.delta().isConstant()) {
+            int delta = x.delta().asConstant().asInt();
+            if (delta < 0) {
+                lir.sub(reg, CiConstant.forInt(-delta), reg);
+            } else {
+                lir.add(reg, CiConstant.forInt(delta), reg);
+            }
+        } else {
+            lir.add(reg, makeOperand(x.delta()), reg);
+        }
+    }
+
+    @Override
     public void visitStoreRegister(StoreRegister x) {
         CiValue reg = x.register.asValue(x.kind);
         lir.move(makeOperand(x.value()), reg);
@@ -1098,7 +1124,13 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitTableSwitch(TableSwitch x) {
-        CiValue tag = load(x.value());
+
+        LIRItem value = new LIRItem(x.value(), this);
+        // Making a copy of the switch value is necessary when generating a jump table
+        value.setDestroysRegister();
+        value.loadItem();
+
+        CiValue tag = value.result();
         setNoResult(x);
 
         if (x.isSafepoint()) {
@@ -1108,16 +1140,25 @@ public abstract class LIRGenerator extends ValueVisitor {
         // move values into phi locations
         moveToPhi(x.stateAfter());
 
-        int loKey = x.lowKey();
-        int len = x.numberOfCases();
-        if (C1XOptions.GenTableRanges) {
-            visitSwitchRanges(createLookupRanges(x), tag, x.defaultSuccessor());
-        } else {
+        // TODO: tune the defaults for the controls used to determine what kind of translation to use
+        if (x.numberOfCases() == 0 || x.numberOfCases() <= C1XOptions.SequentialSwitchLimit) {
+            int loKey = x.lowKey();
+            int len = x.numberOfCases();
             for (int i = 0; i < len; i++) {
                 lir.cmp(Condition.EQ, tag, i + loKey);
                 lir.branch(Condition.EQ, CiKind.Int, x.suxAt(i));
             }
             lir.jump(x.defaultSuccessor());
+        } else {
+            SwitchRange[] switchRanges = createLookupRanges(x);
+            int rangeDensity = x.numberOfCases() / switchRanges.length;
+            if (rangeDensity >= C1XOptions.RangeTestsSwitchDensity) {
+                visitSwitchRanges(switchRanges, tag, x.defaultSuccessor());
+            } else {
+                List<BlockBegin> nonDefaultSuccessors = x.successors().subList(0, x.numberOfCases());
+                BlockBegin[] targets = nonDefaultSuccessors.toArray(new BlockBegin[nonDefaultSuccessors.size()]);
+                lir.tableswitch(tag, x.lowKey(), x.defaultSuccessor(), targets);
+            }
         }
     }
 
@@ -1316,7 +1357,10 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         lir.branchDestination(block.label());
         if (block == ir.startBlock) {
-            emitXir(xir.genPrologue(null, compilation.method), null, null, null, false);
+            XirSnippet prologue = xir.genPrologue(null, compilation.method);
+            if (prologue != null) {
+                emitXir(prologue, null, null, null, false);
+            }
             setOperandsForLocals(block.end().stateAfter());
         }
     }
@@ -1367,29 +1411,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         return result;
     }
 
-    protected void profileBranch(If ifInstr, Condition cond) {
-        if (false) {
-            // generate counting of taken / not taken
-            RiMethodProfile md = null;
-            int bci = 0;
-            if (md != null) {
-                int takenCountOffset = md.branchTakenCountOffset(bci);
-                int notTakenCountOffset = md.branchNotTakenCountOffset(bci);
-                CiValue mdReg = newVariable(CiKind.Object);
-                lir.move(md.encoding(), mdReg);
-                CiValue dataOffsetReg = newVariable(CiKind.Int);
-                lir.cmove(cond, CiConstant.forInt(takenCountOffset), CiConstant.forInt(notTakenCountOffset), dataOffsetReg);
-                CiValue dataReg = newVariable(CiKind.Int);
-                CiAddress dataAddr = new CiAddress(CiKind.Int, mdReg, dataOffsetReg);
-                lir.move(dataAddr, dataReg);
-                CiValue fakeIncrValue = new CiAddress(CiKind.Int, dataReg, 1);
-                // Use leal instead of add to avoid destroying condition codes on x86
-                lir.lea(fakeIncrValue, dataReg);
-                lir.move(dataReg, dataAddr);
-            }
-        }
-    }
-
     /**
      * Allocates a variable operand to hold the result of a given instruction.
      * This can only be performed once for any given instruction.
@@ -1420,9 +1441,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private void visitSwitchRanges(SwitchRange[] x, CiValue value, BlockBegin defaultSux) {
-        int lng = x.length;
-
-        for (int i = 0; i < lng; i++) {
+        for (int i = 0; i < x.length; i++) {
             SwitchRange oneRange = x[i];
             int lowKey = oneRange.lowKey;
             int highKey = oneRange.highKey;
@@ -1482,7 +1501,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 break;
             case DSUB:
             case FSUB:
-                lir.sub(leftOp, right, result, null);
+                lir.sub(leftOp, right, result);
                 break;
             case FDIV:
             case DDIV:
@@ -1525,7 +1544,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 }
                 break;
             case ISUB:
-                lir.sub(leftOp, right, result, null);
+                lir.sub(leftOp, right, result);
                 break;
             default:
                 // idiv and irem are handled elsewhere
@@ -1550,7 +1569,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 lir.mul(leftOp, right, result);
                 break;
             case LSUB:
-                lir.sub(leftOp, right, result, null);
+                lir.sub(leftOp, right, result);
                 break;
             default:
                 // ldiv and lrem are handled elsewhere
@@ -1911,6 +1930,10 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected LIRDebugInfo stateFor(Instruction x, FrameState state) {
+        if (compilation.placeholderState != null) {
+            state = compilation.placeholderState;
+        }
+
         return new LIRDebugInfo(state, x.exceptionHandlers());
     }
 
@@ -1935,7 +1958,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                         lir.move(param.result(), slot);
                     }
 
-                    if (arg.kind == CiKind.Object) {
+                    if (arg.kind == CiKind.Object && pointerSlots != null) {
                         // This slot must be marked explicitedly in the pointer map.
                         pointerSlots.add(slot);
                     }
@@ -1982,10 +2005,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         return returnRegister.asValue(kind);
     }
 
-    public Value currentInstruction() {
-        return currentInstruction;
-    }
-
     protected XirSupport site(Value x) {
         return xirSupport.site(x);
     }
@@ -1993,7 +2012,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void maybePrintCurrentInstruction() {
         if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
             lastInstructionPrinted = currentInstruction;
-            InstructionPrinter ip = new InstructionPrinter(TTY.out(), true, compilation.target);
+            InstructionPrinter ip = new InstructionPrinter(TTY.out());
             ip.printInstructionListing(currentInstruction);
         }
     }
@@ -2137,5 +2156,4 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.cmp(typeEqualityCheck.condition.negate(), leftValue, rightValue);
         emitGuard(typeEqualityCheck);
     }
-
 }

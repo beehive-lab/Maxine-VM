@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,9 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -69,20 +71,13 @@ public final class NewMultiArray extends NewArray {
         return dimensions.length;
     }
 
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply
-     */
     @Override
     public void inputValuesDo(ValueClosure closure) {
         for (int i = 0; i < dimensions.length; i++) {
             dimensions[i] = closure.apply(dimensions[i]);
         }
     }
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
+
     @Override
     public void accept(ValueVisitor v) {
         v.visitNewMultiArray(this);
@@ -94,5 +89,18 @@ public final class NewMultiArray extends NewArray {
      */
     public RiType elementType() {
         return elementKind;
+    }
+
+    @Override
+    public void print(LogStream out) {
+        out.print("new multi array [");
+        final Value[] dimensions = dimensions();
+        for (int i = 0; i < dimensions.length; i++) {
+          if (i > 0) {
+              out.print(", ");
+          }
+          out.print(dimensions[i]);
+        }
+        out.print("] ").print(CiUtil.toJavaName(elementKind));
     }
 }

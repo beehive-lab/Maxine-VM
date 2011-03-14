@@ -489,7 +489,8 @@ public abstract class CiXirAssembler {
          */
         RepeatMoveBytes,
         /**
-         * TBD.
+         * Compare value at at address {@code x} with value in {@code y} and store value {@code z} at address {@code x} 
+         * if it was equal to {@code y}. 
          */
         PointerCAS,
         /**
@@ -688,8 +689,8 @@ public abstract class CiXirAssembler {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, disp, scale), PointerStoreDisp, VOID, pointer, index, value));
     }
 
-    public void pcas(CiKind kind, XirOperand result, XirOperand pointer, XirOperand value, XirOperand expectedValue) {
-        append(new XirInstruction(kind, PointerLoad, result, pointer, value, expectedValue));
+    public void pcas(CiKind kind, XirOperand result, XirOperand pointer, XirOperand newValue, XirOperand oldValue) {
+        append(new XirInstruction(kind, null, PointerCAS, result, pointer, newValue, oldValue));
     }
 
     public void jmp(XirLabel l) {

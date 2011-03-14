@@ -26,7 +26,7 @@ package com.sun.c1x.target.amd64;
 import static com.sun.cri.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.alloc.OperandPool.*;
+import com.sun.c1x.alloc.OperandPool.VariableFlag;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
@@ -41,7 +41,7 @@ import com.sun.cri.ci.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public final class AMD64LIRGenerator extends LIRGenerator {
+public class AMD64LIRGenerator extends LIRGenerator {
 
     private static final CiRegisterValue RAX_I = AMD64.rax.asValue(CiKind.Int);
     private static final CiRegisterValue RAX_L = AMD64.rax.asValue(CiKind.Long);
@@ -63,8 +63,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
 
     public AMD64LIRGenerator(C1XCompilation compilation) {
         super(compilation);
-        assert is32 || is64 : "unknown word size: " + compilation.target.wordSize;
-        assert is32 != is64 : "can't be both 32 and 64 bit";
     }
 
     @Override
@@ -84,6 +82,9 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     @Override
     protected boolean canInlineAsConstant(Value v) {
         if (v.kind == CiKind.Long) {
+            if (v.isConstant() && Util.isInt(v.asConstant().asLong())) {
+                return true;
+            }
             return false;
         }
         return v.kind != CiKind.Object || v.isNullConstant();
@@ -116,7 +117,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             if (CiUtil.isPowerOf2(c + 1)) {
                 lir.move(left, tmp);
                 lir.shiftLeft(left, CiUtil.log2(c + 1), left);
-                lir.sub(left, tmp, result, null);
+                lir.sub(left, tmp, result);
                 return true;
             } else if (CiUtil.isPowerOf2(c - 1)) {
                 lir.move(left, tmp);
@@ -300,7 +301,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
                 boolean useConstant = false;
                 boolean useTmp = false;
                 if (rightArg.result().isConstant()) {
-                    int iconst = rightArg.asInt();
+                    int iconst = rightArg.instruction.asConstant().asInt();
                     if (iconst > 0) {
                         if (CiUtil.isPowerOf2(iconst)) {
                             useConstant = true;
@@ -442,17 +443,20 @@ public final class AMD64LIRGenerator extends LIRGenerator {
     public void visitCompareOp(CompareOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
-        if (x.x().kind.isLong()) {
+        if (!x.kind.isVoid() && x.x().kind.isLong()) {
             left.setDestroysRegister();
         }
         left.loadItem();
         right.loadItem();
-        CiValue reg = createResultVariable(x);
 
-        if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
+        if (x.kind.isVoid()) {
+            lir.cmp(Condition.TRUE, left.result(), right.result());
+        } else if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
+            CiValue reg = createResultVariable(x);
             int code = x.opcode;
             lir.fcmp2int(left.result(), right.result(), reg, (code == Bytecodes.FCMPL || code == Bytecodes.DCMPL));
         } else if (x.x().kind.isLong() || x.x().kind.isWord()) {
+            CiValue reg = createResultVariable(x);
             lir.lcmp2int(left.result(), right.result(), reg);
         } else {
             Util.unimplemented();
@@ -654,7 +658,7 @@ public final class AMD64LIRGenerator extends LIRGenerator {
             xin.setDestroysRegister();
         }
         xin.loadItem();
-        if (kind.isLong() && yin.result().isConstant() && yin.asLong() == 0 && (cond == Condition.EQ || cond == Condition.NE)) {
+        if (kind.isLong() && yin.result().isConstant() && yin.instruction.asConstant().asLong() == 0 && (cond == Condition.EQ || cond == Condition.NE)) {
             // dont load item
         } else if (kind.isLong() || kind.isFloat() || kind.isDouble()) {
             // longs cannot handle constants at right side
@@ -670,7 +674,6 @@ public final class AMD64LIRGenerator extends LIRGenerator {
         CiValue left = xin.result();
         CiValue right = yin.result();
         lir.cmp(cond, left, right);
-        profileBranch(x, cond);
         moveToPhi(x.stateAfter());
         if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
             lir.branch(cond, right.kind, x.trueSuccessor(), x.unorderedSuccessor());

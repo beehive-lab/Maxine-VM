@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -137,7 +137,7 @@ class ExecutionFrame {
     }
 
     public ConstantPool constantPool() {
-        return method.codeAttribute().constantPool;
+        return method.codeAttribute().cp;
     }
 
     public ClassMethodActor method() {
@@ -166,14 +166,14 @@ class ExecutionFrame {
         final int bcp = currentOpcodePosition;
         final ExceptionHandlerEntry[] handlers = method().codeAttribute().exceptionHandlerTable();
         for (ExceptionHandlerEntry handler : handlers) {
-            if (bcp >= handler.startPosition() && bcp < handler.endPosition()) {
+            if (bcp >= handler.startBCI() && bcp < handler.endBCI()) {
                 if (handler.catchTypeIndex() == 0) {
-                    currentBytePosition = handler.handlerPosition();
+                    currentBytePosition = handler.handlerBCI();
                     return true;
                 }
                 final ClassActor catchType = constantPool().classAt(handler.catchTypeIndex()).resolve(constantPool(), handler.catchTypeIndex());
                 if (catchType.isAssignableFrom(throwableClassActor)) {
-                    currentBytePosition = handler.handlerPosition();
+                    currentBytePosition = handler.handlerBCI();
                     return true;
                 }
             }

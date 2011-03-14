@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,31 +35,31 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public abstract class StackMapFrame {
 
-    private final int positionDelta;
+    private final int bciDelta;
 
     /**
      * Creates a stack map frame.
      *
-     * @param positionDelta the value that is used to derive the {@linkplain #getPosition(int) bytecode position} at
-     *            which this frame applies based on the bytecode position at which the previous frame applies
+     * @param bciDelta the value that is used to derive the {@linkplain #getBCI(int) BCI} at
+     *            which this frame applies based on the BCI at which the previous frame applies
      */
-    public StackMapFrame(int positionDelta) {
-        this.positionDelta = positionDelta;
+    public StackMapFrame(int bciDelta) {
+        this.bciDelta = bciDelta;
     }
 
-    public int positionDelta() {
-        return positionDelta;
+    public int bciDelta() {
+        return bciDelta;
     }
 
     /**
-     * Gets the bytecode position at which this frame applies based on the bytecode position at which the previous frame
+     * Gets the BCI at which this frame applies based on the BCI at which the previous frame
      * applies.
      *
-     * @param previousFramePosition the bytecode position at which the previous frame applies or -1 if this is the first
+     * @param previousFrameBCI the BCI at which the previous frame applies or -1 if this is the first
      *            frame
      */
-    public final int getPosition(int previousFramePosition) {
-        return previousFramePosition == -1 ? positionDelta : previousFramePosition + 1 + positionDelta;
+    public final int getBCI(int previousFrameBCI) {
+        return previousFrameBCI == -1 ? bciDelta : previousFrameBCI + 1 + bciDelta;
     }
 
     /**

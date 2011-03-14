@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.sun.max.vm.stack.*;
 
 public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, ReferenceSlotVisitor {
     private final JitTargetMethod targetMethod;
-    private final JitStackFrameLayout stackFrameLayout;
+    private final JVMSFrameLayout stackFrameLayout;
     private final Object blockFrames;
     private final ExceptionHandler[] exceptionHandlerMap;
     private final BytecodeStopsIterator bytecodeStopsIterator;
@@ -66,7 +66,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         blockStartBytecodePositions = null;
     }
 
-    public JitReferenceMapEditor(JitTargetMethod targetMethod, int numberOfBlocks, boolean[] blockStarts, BytecodeStopsIterator bytecodeStopsIterator, JitStackFrameLayout jitStackFrameLayout) {
+    public JitReferenceMapEditor(JitTargetMethod targetMethod, int numberOfBlocks, boolean[] blockStarts, BytecodeStopsIterator bytecodeStopsIterator, JVMSFrameLayout jitStackFrameLayout) {
         assert targetMethod.numberOfStopPositions() != 0;
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         this.targetMethod = targetMethod;
@@ -114,11 +114,15 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         }
     }
 
-    public int blockStartBytecodePosition(int blockIndex) {
+    public int blockStartBCI(int blockIndex) {
         if (blockIndex == blockStartBytecodePositions.length) {
-            return classMethodActor().codeAttribute().code().length;
+            return codeAttribute().code().length;
         }
         return blockStartBytecodePositions[blockIndex];
+    }
+
+    public CodeAttribute codeAttribute() {
+        return classMethodActor().codeAttribute();
     }
 
     public ClassMethodActor classMethodActor() {
@@ -136,7 +140,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         return blockStartBytecodePositions.length;
     }
 
-    public JitStackFrameLayout stackFrameLayout() {
+    public JVMSFrameLayout stackFrameLayout() {
         return stackFrameLayout;
     }
 
@@ -156,7 +160,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
             final boolean lockDisabledSafepoints = Log.lock();
             bytecodeStopsIterator.reset();
             final CodeAttribute codeAttribute = targetMethod.classMethodActor().codeAttribute();
-            for (int bcp = bytecodeStopsIterator.bytecodePosition(); bcp != -1; bcp = bytecodeStopsIterator.next()) {
+            for (int bcp = bytecodeStopsIterator.bci(); bcp != -1; bcp = bytecodeStopsIterator.next()) {
                 for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
                     final int offset = stopIndex * targetMethod.frameReferenceMapSize();
                     Log.print(bcp);

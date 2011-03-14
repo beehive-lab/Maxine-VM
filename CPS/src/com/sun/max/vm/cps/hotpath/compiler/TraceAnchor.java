@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.cps.hotpath.compiler;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.cps.*;
 import com.sun.max.vm.cps.tir.*;
 
 public class TraceAnchor extends Anchor {
@@ -44,7 +44,7 @@ public class TraceAnchor extends Anchor {
 
     @Override
     public String toString() {
-        final int line = location.classMethodActor.codeAttribute().lineNumberTable().findLineNumber(location.bytecodePosition);
+        final int line = location.classMethodActor.codeAttribute().lineNumberTable().findLineNumber(location.bci);
         return "loc: " + location.toString() + ", line: " + line + ", count: " + 0;
     }
 

@@ -423,45 +423,68 @@ public class BootImage {
             HEAP(BootImagePackage.class),
             MONITOR(BootImagePackage.class),
             COMPILATION(BootImagePackage.class),
-            RUN(BootImagePackage.class);
+            RUN(BootImagePackage.class),
+            OPT(String.class),
+            BASELINE(String.class);
 
             Key(Class valueType) {
                 this.valueType = valueType;
             }
             public final Class valueType;
+
+            public static Key toKey(String name) {
+                try {
+                    return valueOf(name);
+                } catch (IllegalArgumentException e) {
+                    return null;
+                }
+            }
         }
 
-        public final EnumMap<Key, String> values = new EnumMap<Key, String>(Key.class);
+        public final Map<String, String> values = new TreeMap<String, String>();
 
         public BuildLevel buildLevel() {
-            return BuildLevel.valueOf(values.get(Key.BUILD));
+            return BuildLevel.valueOf(values.get(Key.BUILD.name()));
         }
 
         public CPU cpu() {
-            return CPU.valueOf(values.get(Key.CPU));
+            return CPU.valueOf(values.get(Key.CPU.name()));
         }
 
         public ISA isa() {
-            return ISA.valueOf(values.get(Key.ISA));
+            return ISA.valueOf(values.get(Key.ISA.name()));
         }
 
         public OS os() {
-            return OS.valueOf(values.get(Key.OS));
+            return OS.valueOf(values.get(Key.OS.name()));
         }
 
         public BootImagePackage bootImagePackage(Key key) {
-            return BootImagePackage.fromName(values.get(key));
+            return BootImagePackage.fromName(values.get(key.name()));
         }
 
         private StringInfo(InputStream inputStream, int offset, Endianness endian) throws IOException, Utf8Exception {
             super(offset);
             int count = endian.readInt(inputStream);
             while (count-- != 0) {
-                put(Key.valueOf(Utf8.readString(inputStream)), Utf8.readString(inputStream));
+                String name = Utf8.readString(inputStream);
+                String value = Utf8.readString(inputStream);
+                put(name, value);
+                Key key = Key.toKey(name);
+                if (key == null) {
+                    // This is a system property used by one of the schemes.
+                    // Set it now so that it is available to the scheme when
+                    // it is instantiated.
+                    System.setProperty(name, value);
+                }
             }
         }
 
         private void put(Key key, Object value) {
+            put(key.name(), value);
+        }
+
+        private void put(String key, Object value) {
             String oldValue = values.put(key, value.toString());
             assert oldValue == null : "Multiple values for " + key + ": " + oldValue + ", " + value;
         }
@@ -478,27 +501,43 @@ public class BootImage {
             put(Key.MONITOR, vmConfig.monitorPackage);
             put(Key.COMPILATION, vmConfig.compilationPackage);
             put(Key.RUN, vmConfig.runPackage);
+
+            for (VMScheme scheme : vmConfig.vmSchemes()) {
+                Properties props = scheme.properties();
+                if (props != null) {
+                    for (Object k : props.keySet()) {
+                        String key = (String) k;
+                        String value = props.getProperty(key);
+                        put(key, value);
+
+                    }
+                }
+            }
         }
 
         public void check() throws BootImageException {
-            for (Map.Entry<Key, String> e : values.entrySet()) {
-                Key key = e.getKey();
-                String value = e.getValue();
-                if (Enum.class.isAssignableFrom(key.valueType)) {
-                    Enum[] enumConstants = (Enum[]) key.valueType.getEnumConstants();
-                    boolean match = false;
-                    if (enumConstants != null) {
-                        for (Enum c : enumConstants) {
-                            if (c.name().equalsIgnoreCase(value)) {
-                                match = true;
-                                break;
+            for (Map.Entry<String, String> e : values.entrySet()) {
+                Key key = Key.toKey(e.getKey());
+                if (key != null) {
+                    String value = e.getValue();
+                    if (Enum.class.isAssignableFrom(key.valueType)) {
+                        Enum[] enumConstants = (Enum[]) key.valueType.getEnumConstants();
+                        boolean match = false;
+                        if (enumConstants != null) {
+                            for (Enum c : enumConstants) {
+                                if (c.name().equalsIgnoreCase(value)) {
+                                    match = true;
+                                    break;
+                                }
                             }
                         }
+                        BootImageException.check(match, "No " + key.valueType.getName() + " constant matches " + value);
+                    } else {
+                        assert key.valueType == BootImagePackage.class;
+                        BootImageException.check(BootImagePackage.fromName(value) instanceof BootImagePackage, "not a VM package: " + value);
                     }
-                    BootImageException.check(match, "No " + key.valueType.getName() + " constant matches " + value);
                 } else {
-                    assert key.valueType == BootImagePackage.class;
-                    BootImageException.check(BootImagePackage.fromName(value) instanceof BootImagePackage, "not a VM package: " + value);
+                    // must be a system property for one of the schemes
                 }
             }
         }
@@ -506,8 +545,8 @@ public class BootImage {
         @Override
         public int size() {
             int size = 4;
-            for (Map.Entry<Key, String> e : values.entrySet()) {
-                size += Utf8.utf8Length(e.getKey().toString()) + 1;
+            for (Map.Entry<String, String> e : values.entrySet()) {
+                size += Utf8.utf8Length(e.getKey()) + 1;
                 size += Utf8.utf8Length(e.getValue()) + 1;
             }
             return size;
@@ -516,8 +555,8 @@ public class BootImage {
         @Override
         public void write(OutputStream outputStream, Endianness endian) throws IOException {
             endian.writeInt(outputStream, values.size());
-            for (Map.Entry<Key, String> e : values.entrySet()) {
-                Utf8.writeString(outputStream, e.getKey().toString());
+            for (Map.Entry<String, String> e : values.entrySet()) {
+                Utf8.writeString(outputStream, e.getKey());
                 Utf8.writeString(outputStream, e.getValue());
             }
         }

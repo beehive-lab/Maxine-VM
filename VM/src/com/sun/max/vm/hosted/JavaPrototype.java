@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.Package;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -262,6 +263,7 @@ public final class JavaPrototype extends Prototype {
         }
 
         loadVMConfigurationPackages();
+        AdapterGenerator.init();
 
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
 
@@ -535,6 +537,7 @@ public final class JavaPrototype extends Prototype {
 
         objectMap.put(Trace.stream(), Log.out);
         objectMap.put(TTY.out(), new LogStream(Log.os));
+        objectMap.put(CFGPrinter.cfgFileStream(), Log.os);
         objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor.initialSystemProperties);
     }
 }

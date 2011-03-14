@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import java.io.*;
 
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.stackmap.*;
 import com.sun.max.vm.verifier.*;
@@ -42,7 +41,7 @@ import com.sun.max.vm.verifier.types.*;
  * {@linkplain TypeCheckingVerifier verification by typechecking}.
  * <p>
  * A stack map attribute consists of zero or more stack map frames. Each stack map frame specifies (either explicitly or
- * implicitly) a bytecode position, the {@linkplain VerificationType verification types} for the local variables, and
+ * implicitly) a BCI, the {@linkplain VerificationType verification types} for the local variables, and
  * the verification types for the operand stack.
  * <p>
  * The type checker deals with and manipulates the expected types of a method's local variables and operand stack.
@@ -68,11 +67,11 @@ import com.sun.max.vm.verifier.types.*;
  * </pre>
  *
  * <p>
- * Each stack_map_frame structure specifies the type state at a particular bytecode position. Each frame type specifies
- * (explicitly or implicitly) a {@link StackMapFrame#positionDelta() delta} that is used to calculate the actual
- * bytecode position at which it applies. The bytecode position at which the frame applies is given by adding
- * {@code 1 + delta} to the position of the previous frame, unless the previous frame is the initial frame of the
- * method, in which case the bytecode position is {@code delta}.
+ * Each stack_map_frame structure specifies the type state at a particular BCI. Each frame type specifies
+ * (explicitly or implicitly) a {@link StackMapFrame#bciDelta() delta} that is used to calculate the actual
+ * BCI at which it applies. The BCI at which the frame applies is given by adding
+ * {@code 1 + delta} to the BCI of the previous frame, unless the previous frame is the initial frame of the
+ * method, in which case the BCI is {@code delta}.
  *
  * @author Doug Simon
  */
@@ -166,7 +165,7 @@ public class StackMapTable {
         attributeData = byteArrayOutputStream.toByteArray();
     }
 
-    public StackMapTable(ClassfileStream classfileStream, final ConstantPool constantPool, Size attributeSize) {
+    public StackMapTable(ClassfileStream classfileStream, final ConstantPool constantPool, int attributeSize) {
         attributeData = classfileStream.readByteArray(attributeSize);
     }
 

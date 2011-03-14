@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,9 +81,11 @@ public final class CirTemplateChecker extends CirVisitor {
         final StringBuilder sb = new StringBuilder("In a bytecode template, the Java stack or locals array must not be updated before a safepoint or call.\n");
         sb.append("[in " + classMethodActor.format("%H.%n(%p)") + " ]\n");
         sb.append("Stack/local update: " + call.procedure() + "(" + Utils.toString(call.arguments(), ", ") + ")\n");
-        sb.append("    at " + call.javaFrameDescriptor().toStackTraceElement() + "\n");
+        CirJavaFrameDescriptor r = call.javaFrameDescriptor();
+        sb.append("    at " + r.classMethodActor.toStackTraceElement(r.bci) + "\n");
         sb.append("Safepoint/call:     " + stop.procedure() + "(" + Utils.toString(stop.arguments(), ", ") + ")\n");
-        sb.append("    at " + stop.javaFrameDescriptor().toStackTraceElement() + "\n");
+        CirJavaFrameDescriptor r1 = stop.javaFrameDescriptor();
+        sb.append("    at " + r1.classMethodActor.toStackTraceElement(r1.bci) + "\n");
         sb.append("Stop reason(s): " + Stoppable.Static.reasonsMayStopToString((Stoppable) stop.procedure()));
         ProgramError.unexpected(sb.toString());
     }

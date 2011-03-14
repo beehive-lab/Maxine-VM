@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -147,11 +147,13 @@ final class ControlFlowOptimizer {
                     newTarget.setBlockFlag(BlockBegin.BlockFlag.BackwardBranchTarget);
                 }
 
-                // update the block references in any LIRBranches
+                // update the block references in any branching LIR instructions
                 for (BlockBegin pred : block.predecessors()) {
                     for (LIRInstruction instr : pred.lir().instructionsList()) {
                         if (instr instanceof LIRBranch) {
                             ((LIRBranch) instr).substitute(block, newTarget);
+                        } else if (instr instanceof LIRTableSwitch) {
+                            ((LIRTableSwitch) instr).substitute(block, newTarget);
                         }
                     }
                 }

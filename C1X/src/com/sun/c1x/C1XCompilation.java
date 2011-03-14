@@ -30,10 +30,12 @@ import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.gen.LIRGenerator.*;
+import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.value.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -55,9 +57,9 @@ public final class C1XCompilation {
     public final CiStatistics stats;
     public final int osrBCI;
     public final CiAssumptions assumptions = new CiAssumptions();
+    public final FrameState placeholderState;
 
     private boolean hasExceptionHandlers;
-
     private final C1XCompilation parent;
 
     /**
@@ -94,8 +96,9 @@ public final class C1XCompilation {
      * @param compiler the compiler
      * @param method the method to be compiled or {@code null} if generating code for a stub
      * @param osrBCI the bytecode index for on-stack replacement, if requested
+     * @param stats externally supplied statistics object to be used if not {@code null}
      */
-    public C1XCompilation(C1XCompiler compiler, RiMethod method, int osrBCI) {
+    public C1XCompilation(C1XCompiler compiler, RiMethod method, int osrBCI, CiStatistics stats) {
         this.parent = currentCompilation.get();
         currentCompilation.set(this);
         this.compiler = compiler;
@@ -103,8 +106,9 @@ public final class C1XCompilation {
         this.runtime = compiler.runtime;
         this.method = method;
         this.osrBCI = osrBCI;
-        this.stats = new CiStatistics();
+        this.stats = stats == null ? new CiStatistics() : stats;
         this.registerConfig = method == null ? compiler.globalStubRegisterConfig : runtime.getRegisterConfig(method);
+        this.placeholderState = method != null && method.minimalDebugInfo() ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
 
         CFGPrinter cfgPrinter = null;
         if (C1XOptions.PrintCFGToFile && method != null && !TTY.isSuppressed()) {
@@ -178,26 +182,6 @@ public final class C1XCompilation {
     }
 
     /**
-     * Records an assumption made by this compilation that the specified type is a leaf class.
-     *
-     * @param type the type that is assumed to be a leaf class
-     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
-     */
-    public boolean recordLeafTypeAssumption(RiType type) {
-        return false;
-    }
-
-    /**
-     * Records an assumption made by this compilation that the specified method is a leaf method.
-     *
-     * @param method the method that is assumed to be a leaf method
-     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
-     */
-    public boolean recordLeafMethodAssumption(RiMethod method) {
-        return runtime.recordLeafMethodAssumption(method);
-    }
-
-    /**
      * Records an assumption that the specified type has no finalizable subclasses.
      *
      * @param receiverType the type that is assumed to have no finalizable subclasses
@@ -205,15 +189,6 @@ public final class C1XCompilation {
      */
     public boolean recordNoFinalizableSubclassAssumption(RiType receiverType) {
         return false;
-    }
-
-    /**
-     * Gets the {@code RiType} corresponding to {@code java.lang.Throwable}.
-     *
-     * @return the compiler interface type for {@link Throwable}
-     */
-    public RiType throwableType() {
-        return runtime.getRiType(Throwable.class);
     }
 
     /**
@@ -252,7 +227,7 @@ public final class C1XCompilation {
             }
         }
         map.cleanup();
-        stats.byteCount += map.numberOfBytes();
+        stats.bytecodeCount += map.numberOfBytes();
         stats.blockCount += map.numberOfBlocks();
         return map;
     }
@@ -324,7 +299,6 @@ public final class C1XCompilation {
     }
 
     public IR emitHIR() {
-
         hir = new IR(this);
         hir.build();
         return hir;
@@ -384,7 +358,7 @@ public final class C1XCompilation {
 
             if (cfgPrinter() != null) {
                 cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);
-                cfgPrinter().printMachineCode(runtime.disassemble(targetMethod));
+                cfgPrinter().printMachineCode(runtime.disassemble(targetMethod), null);
             }
 
             if (C1XOptions.PrintTimers) {
@@ -409,10 +383,4 @@ public final class C1XCompilation {
         assert compilation != null;
         return compilation;
     }
-
-//    public static C1XCompilation setCurrent(C1XCompilation compilation) {
-//        assert compilation == null || currentCompilation.get() == null : "cannot have more than one current compilation per thread";
-//        currentCompilation.set(compilation);
-//        return compilation;
-//    }
 }
