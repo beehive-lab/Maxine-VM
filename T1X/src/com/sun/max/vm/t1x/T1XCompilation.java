@@ -1161,6 +1161,7 @@ public final class T1XCompilation {
             // Emit jump table entries
             for (int i = 0; i < ts.numberOfCases(); i++) {
                 int targetBCI = ts.targetAt(i);
+                startBlock(targetBCI);
                 pos = buf.position();
                 patchInfo.addJumpTableEntry(pos, jumpTablePos, targetBCI);
                 buf.emitInt(0);
@@ -1183,6 +1184,7 @@ public final class T1XCompilation {
                 emitAndRecordStops(template);
 
                 int targetBCI = ls.defaultTarget();
+                startBlock(targetBCI);
                 if (stream.nextBCI() == targetBCI) {
                     // Skip completely if default target is next instruction
                 } else if (targetBCI <= bci) {
@@ -1252,6 +1254,7 @@ public final class T1XCompilation {
                 for (int i = 0; i < ls.numberOfCases(); i++) {
                     int key = ls.keyAt(i);
                     int targetBCI = ls.targetAt(i);
+                    startBlock(targetBCI);
                     patchInfo.addLookupTableEntry(buf.position(), key, lookupTablePos, targetBCI);
                     buf.emitInt(key);
                     buf.emitInt(0);

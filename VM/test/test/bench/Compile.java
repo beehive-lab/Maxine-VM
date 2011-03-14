@@ -41,6 +41,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.adaptive.*;
+import com.sun.max.vm.reflection.*;
 
 /**
  * A harness to benchmark a compiler at runtime.
@@ -85,6 +86,8 @@ public class Compile {
         "Show help message and exit.");
     private static final Option<Boolean> baselineOption = options.newBooleanOption("baseline", false,
         "Compile with the baseline compiler.");
+    private static final Option<Boolean> stubsOption = options.newBooleanOption("stubs", false,
+        "Generate and compile invocation stubs for the specified methods instead.");
 
     private static final List<Timing> timings = new ArrayList<Timing>();
 
@@ -265,7 +268,16 @@ public class Compile {
         @Override
         protected void addMethod(MethodActor method, List<MethodActor> methods) {
             if (isCompilable(method)) {
-                super.addMethod(method, methods);
+                ClassMethodActor classMethodActor = (ClassMethodActor) method;
+                if (stubsOption.getValue() && !InvocationStub.class.isAssignableFrom(classMethodActor.holder().toJava())) {
+                    InvocationStub stub = method.makeInvocationStub();
+                    final ClassActor stubClassActor = ClassActor.fromJava(stub.getClass());
+                    for (MethodActor stubMethod : stubClassActor.localVirtualMethodActors()) {
+                        super.addMethod(stubMethod, methods);
+                    }
+                } else {
+                    super.addMethod(method, methods);
+                }
                 if ((methods.size() % 1000) == 0 && verboseOption.getValue() >= 1) {
                     out.print('.');
                 }
