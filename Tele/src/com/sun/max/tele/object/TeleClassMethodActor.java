@@ -28,6 +28,7 @@ import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.LineNumberTable.Entry;
 import com.sun.max.vm.classfile.*;
@@ -42,7 +43,7 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleClassMethodActor extends TeleMethodActor implements MethodProvider {
 
-    private static final TeleTargetMethod[] NO_TARGET_METHODS = new TeleTargetMethod[0];
+    private static final TeleTargetMethod[] NO_TARGET_METHODS = {};
 
     /**
      * Cached history of compilation for this method in the tele VM.
@@ -113,11 +114,24 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
     private void translateTargetState(TeleObject targetState) {
         if (targetState instanceof TeleTargetMethod) {
-            // the object actually is an instance of TargetMethod
-            teleTargetMethodHistory = new TeleTargetMethod[] {(TeleTargetMethod) targetState};
-
+            // The object actually is an instance of TargetMethod, which means that
+            // it is the first and only compilation so far.
+            TeleTargetMethod teleTargetMethod = (TeleTargetMethod) targetState;
+            if (teleTargetMethodHistory.length == 0) {
+                // We haven't seen this first compilation yet: record it.
+                teleTargetMethodHistory = new TeleTargetMethod[] {teleTargetMethod};
+            } else {
+                // We already have recorded a compilation history, so it
+                // should have only the one compilation and it shouldn't have changed.
+                assert teleTargetMethodHistory.length == 1;
+                if (teleTargetMethodHistory[0] != teleTargetMethod) {
+                    TeleWarning.message("Compilation anomaly in " + getClass().getName());
+                    teleTargetMethodHistory = new TeleTargetMethod[] {teleTargetMethod};
+                }
+            }
         } else if (targetState instanceof TeleArrayObject) {
-            // the object actually is an instance of TargetMethod[]
+            // The object actually is an instance of TargetMethod[], which means that
+            // there has been more than one compilation so far.
             final TeleArrayObject teleTargetMethodHistoryArray = (TeleArrayObject) targetState;
             int numberOfCompilations = teleTargetMethodHistoryArray.length();
             teleTargetMethodHistory = new TeleTargetMethod[numberOfCompilations];
