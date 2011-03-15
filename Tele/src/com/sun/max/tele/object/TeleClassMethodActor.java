@@ -37,6 +37,12 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link ClassMethodActor} in the VM.
+ * <p>
+ * Note that the compilations of a method are recorded a single polymorphic object
+ * field that must be decoded.
+ *
+ * @see ClassMethodActor
+ * @see TargetState
  *
  * @author Michael Van De Vanter
  * @author Ben L. Titzer
@@ -112,20 +118,31 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         return teleTargetMethodHistory;
     }
 
+    /**
+     * Decodes the content of the field in {@link ClassMethodActor} that holds the
+     * compilation history. For efficiency, it is stored differently depending on the
+     * length of the history and whether a compilation is currently underway.  This method
+     * must agree with the design of {@link TargetState}.
+     *
+     * @see ClassMethodActor
+     * @see TargetState
+     * @param targetState
+     */
     private void translateTargetState(TeleObject targetState) {
         if (targetState instanceof TeleTargetMethod) {
-            // The object actually is an instance of TargetMethod, which means that
+            // The state object is an instance of TargetMethod, which means that
             // it is the first and only compilation so far.
-            TeleTargetMethod teleTargetMethod = (TeleTargetMethod) targetState;
             if (teleTargetMethodHistory.length == 0) {
                 // We haven't seen this first compilation yet: record it.
+                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) targetState;
                 teleTargetMethodHistory = new TeleTargetMethod[] {teleTargetMethod};
             } else {
                 // We already have recorded a compilation history, so it
                 // should have only the one compilation and it shouldn't have changed.
                 assert teleTargetMethodHistory.length == 1;
-                if (teleTargetMethodHistory[0] != teleTargetMethod) {
+                if (teleTargetMethodHistory[0] != targetState) {
                     TeleWarning.message("Compilation anomaly in " + getClass().getName());
+                    final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) targetState;
                     teleTargetMethodHistory = new TeleTargetMethod[] {teleTargetMethod};
                 }
             }
@@ -140,9 +157,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
                 final Reference targetMethodReference = teleTargetMethodHistoryArray.readElementValue(i).asReference();
                 teleTargetMethodHistory[numberOfCompilations - i - 1] = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
             }
-
         } else if (targetState.classActorForObjectType().javaClass() == Compilation.class) {
-            // this is a compilation, get the previous target state from it
+            // this is a compilation that is currently underway, get the previous target state from it
             Reference previousTargetStateReference = vm().teleFields().Compilation_previousTargetState.readReference(targetState.reference());
             if (!previousTargetStateReference.isZero()) {
                 translateTargetState(heap().makeTeleObject(previousTargetStateReference));
