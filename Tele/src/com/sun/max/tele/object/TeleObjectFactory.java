@@ -371,11 +371,12 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
             Trace.line(TRACE_VALUE, tracePrefix() + "failed to create object at apparently valid origin=0x" + reference.toOrigin().toHexString());
             return null;
         }
-        oidToTeleObject.put(teleObject.getOID(), new WeakReference<TeleObject>(teleObject));
+        final WeakReference<TeleObject> teleObjectWeakReference = new WeakReference<TeleObject>(teleObject);
+        oidToTeleObject.put(teleObject.getOID(), teleObjectWeakReference);
         //Log.println("OID: " + teleObject.getOID() + " ref: " + teleObject.getCurrentOrigin());
-        assert oidToTeleObject.containsKey(teleObject.getOID());
+        //assert oidToTeleObject.containsKey(teleObject.getOID());
 
-        referenceToTeleObject.put(reference,  new WeakReference<TeleObject>(teleObject));
+        referenceToTeleObject.put(reference,  teleObjectWeakReference);
         teleObject.updateCache(vm().teleProcess().epoch());
         return teleObject;
     }
