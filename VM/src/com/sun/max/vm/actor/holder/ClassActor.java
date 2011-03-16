@@ -130,7 +130,7 @@ public abstract class ClassActor extends Actor implements RiType {
      * no concrete sub-type, or the class id of the java.lang.Object class
      * if there is multiple concrete sub-types.
      */
-    int uniqueConcreteType;
+    volatile int uniqueConcreteType;
 
     public final char majorVersion;
 
@@ -208,7 +208,7 @@ public abstract class ClassActor extends Actor implements RiType {
         this.kind = kind;
         this.componentClassActor = componentClassActor;
         this.id = elementClassActor().makeID(numberOfDimensions());
-        ClassID.register(id, this);
+        ClassID.register(this);
         this.typeDescriptor = typeDescriptor;
         this.superClassActor = superClassActor;
         this.sourceFileName = sourceFileName;

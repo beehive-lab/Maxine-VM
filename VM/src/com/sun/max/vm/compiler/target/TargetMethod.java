@@ -482,6 +482,10 @@ public abstract class TargetMethod extends MemoryRegion {
         return registerRestoreEpilogueOffset >= 0;
     }
 
+    public boolean isMakingValidAssumptions() {
+        return true;
+    }
+
     /**
      * Gets an object to help decode inline data in this target method's code.
      */
