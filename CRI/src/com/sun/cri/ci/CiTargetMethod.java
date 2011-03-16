@@ -169,15 +169,15 @@ public class CiTargetMethod implements Serializable {
      * A string comment about one or more instructions at a specific position in the code.
      */
     public static final class CodeComment extends CodeAnnotation {
-        public final String comment;
+        public final String value;
         public CodeComment(int position, String comment) {
             super(position);
-            this.comment = comment;
+            this.value = comment;
         }
         
         @Override
         public String toString() {
-            return getClass().getSimpleName() + "@" + position + ": " + comment;
+            return getClass().getSimpleName() + "@" + position + ": " + value;
         }
     }
  
@@ -233,6 +233,40 @@ public class CiTargetMethod implements Serializable {
         }
     }
     
+    /**
+     * Describes a table of key and offset pairs. The offset in each table entry is relative to the address of
+     * the table. This type of table maybe generated when translating a multi-way branch
+     * based on a key value from a sparse value set (e.g. the {@code lookupswitch} JVM instruction).
+     */
+    public static final class LookupTable extends CodeAnnotation {
+        /**
+         * The number of entries in the table.
+         */
+        public final int npairs;
+        
+        /**
+         * The size (in bytes) of entry's key.
+         */
+        public final int keySize;
+        
+        /**
+         * The size (in bytes) of entry's offset value.
+         */
+        public final int offsetSize;
+        
+        public LookupTable(int position, int npairs, int keySize, int offsetSize) {
+            super(position);
+            this.npairs = npairs;
+            this.keySize = keySize;
+            this.offsetSize = offsetSize;
+        }
+        
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + "@" + position + ": [npairs=" + npairs + ", keySize=" + keySize + ", offsetSize=" + offsetSize + "]";
+        }
+    }
+
     /**
      * Represents exception handler information for a specific code position. It includes the catch code position as
      * well as the caught exception type.

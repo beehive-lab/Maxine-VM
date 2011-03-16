@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.sun.max.unsafe;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 
-import java.lang.ref.*;
 import java.security.*;
 
 import com.sun.cri.bytecode.*;
@@ -79,7 +78,6 @@ public final class UnsafeCast {
     @INTRINSIC(UNSAFE_CAST) public static StaticMethodActor        asStaticMethodActor(Object object) { return (StaticMethodActor) object; }
     @INTRINSIC(UNSAFE_CAST) public static VirtualMethodActor       asVirtualMethodActor(Object object) { return (VirtualMethodActor) object; }
     @INTRINSIC(UNSAFE_CAST) public static AccessControlContext     asAccessControlContext(Object object) { return (AccessControlContext) object; }
-    @INTRINSIC(UNSAFE_CAST) public static Reference                asJDKReference(Object object) { return (Reference) object; }
     @INTRINSIC(UNSAFE_CAST) public static InterfaceActor           asInterfaceActor(Object object) { return (InterfaceActor) object; }
     @INTRINSIC(UNSAFE_CAST) public static InterfaceMethodActor     asInterfaceMethodActor(Object object) { return (InterfaceMethodActor) object; }
 

@@ -78,7 +78,7 @@ public final class StackReferenceMapPreparer {
     /**
      * Flag controlling tracing of stack root scanning (SRS).
      */
-    private static boolean TraceSRS;
+    public static boolean TraceSRS;
 
     /**
      * Disables -XX:+TraceStackRootScanning if greater than 0.

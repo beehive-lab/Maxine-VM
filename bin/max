@@ -276,7 +276,6 @@ function get_project_cp() {
 projects=( \
     CRI:src                       \
     C1X:src                       \
-    C0X:src                       \
     Base:src,test                 \
     Assembler:src,test            \
     VM:src,test                   \
@@ -1075,6 +1074,20 @@ verify_help="verifies a set methods using the Maxine bytecode verifier
 
 function run_verify() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.verifier.CommandLineVerifier $@
+}
+
+#=======================================
+# 'hcfdis' command
+#=======================================
+
+hcfdis_usage="[options] files..."
+hcfdis_help="disassembles HexCodeFiles embedded in text files
+
+    Run a tool over the input files to convert all embedded HexCodeFiles
+    to a disassembled format."
+
+function run_hcfdis() {
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.HexCodeFileDis $@
 }
 
 #=======================================

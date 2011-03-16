@@ -178,6 +178,9 @@ public final class T1XTargetMethod extends TargetMethod {
             this.refMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
             if (interpreter.performsAllocation() || T1XOptions.EagerRefMaps) {
+                if (isHosted() && T1XOptions.EagerRefMaps) {
+                    StackReferenceMapPreparer.TraceSRS = true;
+                }
                 finalizeReferenceMaps();
             }
         }
@@ -217,12 +220,12 @@ public final class T1XTargetMethod extends TargetMethod {
                                        null);
             newHandlers[handlers.length] = syncMethodHandler;
 
-            // Update the reference maps to cover the
+            // Update the reference maps to cover the local variable holding the copy of the receiver
             if (comp.syncMethodReceiverCopy != -1) {
                 for (int stopIndex = 0; stopIndex < stopPositions.length; stopIndex++) {
                     int pos = StopPositions.get(stopPositions, stopIndex);
                     if (pos >= comp.syncMethodStartPos && pos < comp.syncMethodEndPos) {
-                        final int offset = stopIndex * totalRefMapSize();
+                        final int offset = stopIndex * refMapSize();
                         final int refMapBit = frame.localVariableReferenceMapIndex(comp.syncMethodReceiverCopy);
                         ByteArrayBitMap.set(refMaps, offset, frameRefMapSize, refMapBit);
                     }
@@ -540,7 +543,7 @@ public final class T1XTargetMethod extends TargetMethod {
     /**
      * @return the number of bytes in {@link #refMaps} corresponding to one stop position.
      */
-    int totalRefMapSize() {
+    int refMapSize() {
         return regRefMapSize() + frameRefMapSize;
     }
 
@@ -585,14 +588,14 @@ public final class T1XTargetMethod extends TargetMethod {
         }
 
         int stopIndex = findClosestStopIndex(current.ip());
-        int totalRefMapSize = totalRefMapSize();
+        int refMapSize = refMapSize();
 
         if (!registerState.isZero()) {
             assert csa != null;
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = registerState;
-            int byteIndex = stopIndex * totalRefMapSize() + frameRefMapSize;
+            int byteIndex = (stopIndex * refMapSize) + frameRefMapSize;
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
             // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
             for (int i = 0; i < regRefMapSize(); i++) {
@@ -617,7 +620,7 @@ public final class T1XTargetMethod extends TargetMethod {
         // prepare the map for this stack frame
         Pointer slotPointer = current.fp().plus(frameRefMapOffset);
         preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "T1X frame");
-        int byteIndex = stopIndex * totalRefMapSize;
+        int byteIndex = stopIndex * refMapSize;
         for (int i = 0; i < frameRefMapSize; i++) {
             preparer.setReferenceMapBits(current, slotPointer, refMaps[byteIndex] & 0xff, 8);
             slotPointer = slotPointer.plusWords(8);
