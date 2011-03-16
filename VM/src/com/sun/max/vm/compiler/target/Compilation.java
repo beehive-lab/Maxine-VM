@@ -179,6 +179,8 @@ public class Compilation /*implements Future<TargetMethod>*/ {
 
         Throwable error = null;
         String methodString = "";
+        long startCompile = 0;
+
         try {
 
             InspectableCodeInfo.notifyCompilationEvent(classMethodActor, null);
@@ -190,18 +192,13 @@ public class Compilation /*implements Future<TargetMethod>*/ {
 
             gcIfRequested(classMethodActor, methodString);
 
-            long startCompile = 0;
             if (TIME_COMPILATION.getValue()) {
                 startCompile = System.currentTimeMillis();
             }
-
-            // attempt the compilation
             targetMethod = compiler.compile(classMethodActor, true, null);
-
             if (targetMethod == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }
-
             InspectableCodeInfo.notifyCompilationEvent(targetMethod.classMethodActor, targetMethod);
 
             if (startCompile != 0) {
@@ -228,13 +225,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
                 // notify any waiters on this compilation
                 classMethodActor.notifyAll();
             }
-
-            COMPILATION.set(parent);
-
-            // notify any compilation observers
-            observeAfterCompilation(observers, compiler, targetMethod);
         }
-
         if (error != null) {
             // an error occurred
             logCompilationError(error, compiler, methodString);
@@ -242,6 +233,11 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             // the compilation didn't produce a target method
             FatalError.unexpected("target method should not be null");
         }
+
+        COMPILATION.set(parent);
+
+        // notify any compilation observers
+        observeAfterCompilation(observers, compiler, targetMethod);
 
         return targetMethod;
     }

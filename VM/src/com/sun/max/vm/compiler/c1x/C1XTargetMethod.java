@@ -113,15 +113,13 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private final CodeAnnotation[] annotations;
 
+    private  AssumptionValidity assumptionsValidity;
+
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
     public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-
-        // TODO: for now, just to gather statistics on assumptions
-        ClassDependencyManager.validateAssumptions(ciTargetMethod.assumptions());
-
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
         init(ciTargetMethod, install);
@@ -135,6 +133,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     public C1XTargetMethod(Flavor flavor, String stubName, CiTargetMethod ciTargetMethod) {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        assumptionsValidity = AssumptionValidity.noAssumptionsValidity;
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
         init(ciTargetMethod, true);
@@ -170,6 +169,15 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
         }
+    }
+
+    @Override
+    public boolean isMakingValidAssumptions() {
+        return assumptionsValidity.isValid();
+    }
+
+    public AssumptionValidity assumptionValidity() {
+        return assumptionsValidity;
     }
 
     public static InlineDataDecoder inlineDataDecoder(CodeAnnotation[] annotations) {

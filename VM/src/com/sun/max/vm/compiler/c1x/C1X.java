@@ -37,6 +37,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
@@ -193,12 +194,21 @@ public class C1X implements RuntimeCompiler {
 
     public final TargetMethod compile(final ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
         RiMethod method = classMethodActor;
-        CiTargetMethod compiledMethod = compiler().compileMethod(method, -1, xirGenerator, stats).targetMethod();
-        if (compiledMethod != null) {
-            C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod, install);
-            return c1xTargetMethod;
-        }
-        throw FatalError.unexpected("bailout"); // compilation failed
+        AssumptionValidity assumptionsValidity = AssumptionValidity.noAssumptionsValidity;
+        CiTargetMethod compiledMethod;
+        do {
+            compiledMethod = compiler().compileMethod(method, -1, xirGenerator, stats).targetMethod();
+            if (compiledMethod == null) {
+                throw FatalError.unexpected("bailout"); // compilation failed
+            }
+            assumptionsValidity = ClassDependencyManager.validateAssumptions(compiledMethod.assumptions());
+            if (assumptionsValidity.isValid()) {
+                C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod, install);
+                ClassDependencyManager.registerValidatedTarget(assumptionsValidity, c1xTargetMethod);
+                return c1xTargetMethod;
+            }
+            // Loop back and recompile.
+        } while(true);
     }
 
     public void resetMetrics() {
