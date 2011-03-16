@@ -206,20 +206,20 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
     public TargetMethod makeIrMethod(EirMethod eirMethod) {
         final CPSTargetMethod targetMethod = createIrMethod(eirMethod.classMethodActor());
-        generateTarget(targetMethod, eirMethod);
+        generateTarget(targetMethod, eirMethod, true);
         return targetMethod;
     }
 
     @Override
-    protected void generateIrMethod(CPSTargetMethod targetMethod) {
+    protected void generateIrMethod(CPSTargetMethod targetMethod, boolean install) {
         final EirGeneratorScheme eirGeneratorScheme = (EirGeneratorScheme) compilerScheme();
         final EirGenerator<?> eirGenerator = eirGeneratorScheme.eirGenerator();
-        final EirMethod eirMethod = eirGenerator.makeIrMethod(targetMethod.classMethodActor());
+        final EirMethod eirMethod = eirGenerator.makeIrMethod(targetMethod.classMethodActor(), install);
 
-        generateTarget(targetMethod, eirMethod);
+        generateTarget(targetMethod, eirMethod, install);
     }
 
-    private void generateTarget(CPSTargetMethod targetMethod, final EirMethod eirMethod) throws ProgramError {
+    private void generateTarget(CPSTargetMethod targetMethod, final EirMethod eirMethod, boolean install) throws ProgramError {
         final EirTargetEmitter<?> emitter = createEirTargetEmitter(eirMethod);
 
         Adapter adapter = emitter.adapt(targetMethod.classMethodActor);
@@ -259,7 +259,11 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         }
 
         targetBundleLayout.update(ArrayField.code, code.length);
-        Code.allocate(targetBundleLayout, targetMethod);
+        if (install) {
+            Code.allocate(targetBundleLayout, targetMethod);
+        } else {
+            Code.allocateInHeap(targetBundleLayout, targetMethod);
+        }
 
         final List<EirCall> directCalls = emitter.directCalls();
         final int[] stopPositions = packLabelPositions(emitter.directCallLabels(), emitter.indirectCallLabels(), emitter.safepointLabels());
@@ -295,8 +299,12 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         if (MaxineVM.isHosted()) {
             // the compiled prototype links all methods in a separate phase
         } else {
-            // at target runtime, each method gets linked individually right after generating it:
-            targetMethod.linkDirectCalls(adapter);
+            if (install) {
+                // at target runtime, each method gets linked individually right after generating it:
+                targetMethod.linkDirectCalls(adapter);
+            } else {
+                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+            }
         }
         eirMethod.cleanupAfterEmitting();
     }

@@ -123,7 +123,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitBreakpoint() {
-        masm.emitByte(0xcc);
+        masm.int3();
     }
 
     @Override
@@ -1878,6 +1878,20 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 case Jlteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
                     emitXirCompare(inst, Condition.LE, ConditionFlag.lessEqual, operands, label);
+                    break;
+                }
+
+                case Jbset: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    CiValue pointer = operands[inst.x().index];
+                    CiValue offset = operands[inst.y().index];
+                    CiValue bit = operands[inst.z().index];
+                    assert offset.isConstant() && bit.isConstant();
+                    CiConstant constantOffset = (CiConstant) offset;
+                    CiConstant constantBit = (CiConstant) bit;
+                    CiAddress src = new CiAddress(inst.kind, pointer, constantOffset.asInt());
+                    masm.btli(src, constantBit.asInt());
+                    masm.jcc(ConditionFlag.aboveEqual, label);
                     break;
                 }
 

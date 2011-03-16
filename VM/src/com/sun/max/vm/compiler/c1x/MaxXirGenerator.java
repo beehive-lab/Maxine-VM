@@ -65,6 +65,7 @@ import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForWr
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveVirtualMethod;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
@@ -87,11 +88,11 @@ public class MaxXirGenerator implements RiXirGenerator {
     // (tw) TODO: Up this to 255 / make a loop in the template
     private static final int MAX_MULTIANEWARRAY_RANK = 6;
 
-    static class XirPair {
+    public static class XirPair {
         public final XirTemplate resolved;
         public final XirTemplate unresolved;
 
-        XirPair(XirTemplate resolved, XirTemplate unresolved) {
+        public XirPair(XirTemplate resolved, XirTemplate unresolved) {
             this.resolved = resolved;
             this.unresolved = unresolved;
         }
@@ -157,7 +158,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     private XirTemplate exceptionObjectTemplate;
 
-    private List<XirTemplate> stubs = new ArrayList<XirTemplate>();
+    public final List<XirTemplate> stubs = new ArrayList<XirTemplate>();
 
     @FOLD
     int hubOffset() {
@@ -197,13 +198,9 @@ public class MaxXirGenerator implements RiXirGenerator {
     public MaxXirGenerator() {
     }
 
-    private static Class<? extends RuntimeCalls> runtimeCalls = RuntimeCalls.class;
+    private static final Class<? extends RuntimeCalls> runtimeCalls = RuntimeCalls.class;
 
-    protected static void setRuntimeCalls(Class<? extends RuntimeCalls> rtc) {
-        runtimeCalls = rtc;
-    }
-
-    protected CiXirAssembler asm;
+    private CiXirAssembler asm;
 
     @Override
     public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
@@ -295,7 +292,6 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         return stubs;
     }
-
 
     @Override
     public XirSnippet genPrologue(XirSite site, RiMethod method) {
@@ -462,10 +458,14 @@ public class MaxXirGenerator implements RiXirGenerator {
 
 
     private boolean useTLABs() {
+        if (DebugHeap.isTagging()) {
+            // The XIR for TLAB allocation does not handle this (yet)
+            return false;
+        }
         // TODO: second clause in each of the two conditions below should disappear. This is just to evaluate the impact of
         // inlined tlab allocation on performance.
         if (MaxineVM.isHosted()) {
-            return vmConfig().heapScheme()instanceof HeapSchemeWithTLAB && Heap.genInlinedTLAB;
+            return vmConfig().heapScheme() instanceof HeapSchemeWithTLAB && Heap.genInlinedTLAB;
         }
         return vmConfig().heapScheme().usesTLAB() && HeapSchemeWithTLAB.GenInlinedTLABAlloc;
     }
@@ -619,12 +619,12 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirSnippet(exceptionObjectTemplate);
     }
 
-    private ResolutionGuard guardFor(RiField unresolvedField, ResolutionSnippet snippet) {
+    public ResolutionGuard guardFor(RiField unresolvedField, ResolutionSnippet snippet) {
         UnresolvedField f = (UnresolvedField) unresolvedField;
         return makeResolutionGuard(f.constantPool, f.cpi, snippet);
     }
 
-    protected ResolutionGuard guardFor(RiMethod unresolvedMethod, ResolutionSnippet snippet) {
+    public ResolutionGuard guardFor(RiMethod unresolvedMethod, ResolutionSnippet snippet) {
         UnresolvedMethod m = (UnresolvedMethod) unresolvedMethod;
         return makeResolutionGuard(m.constantPool, m.cpi, snippet);
     }
@@ -693,7 +693,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    protected XirTemplate buildArrayStore(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck, boolean genStoreCheck, boolean genWriteBarrier) {
+    private XirTemplate buildArrayStore(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck, boolean genStoreCheck, boolean genWriteBarrier) {
         asm.restart(CiKind.Void);
         XirParameter array = asm.createInputParameter("array", CiKind.Object);
         XirParameter index = asm.createInputParameter("index", CiKind.Int);
@@ -740,7 +740,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    protected XirTemplate buildArrayLoad(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck) {
+    private XirTemplate buildArrayLoad(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck) {
         XirOperand result = asm.restart(kind);
         XirParameter array = asm.createInputParameter("array", CiKind.Object);
         XirParameter index = asm.createInputParameter("index", CiKind.Int);
@@ -1273,12 +1273,12 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    protected XirPair buildPutFieldTemplates(CiKind kind, boolean genWriteBarrier, boolean isStatic) {
+    private XirPair buildPutFieldTemplates(CiKind kind, boolean genWriteBarrier, boolean isStatic) {
         return new XirPair(buildPutFieldTemplate(kind, genWriteBarrier, isStatic, true), buildPutFieldTemplate(kind, genWriteBarrier, isStatic, false));
     }
 
     @HOSTED_ONLY
-    protected XirTemplate buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier, boolean isStatic, boolean resolved) {
+    private XirTemplate buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier, boolean isStatic, boolean resolved) {
         XirTemplate xirTemplate;
         if (resolved) {
             // resolved case
@@ -1313,12 +1313,12 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    protected XirPair buildGetFieldTemplates(CiKind kind, boolean isStatic) {
+    private XirPair buildGetFieldTemplates(CiKind kind, boolean isStatic) {
         return new XirPair(buildGetFieldTemplate(kind, isStatic, true), buildGetFieldTemplate(kind, isStatic, false));
     }
 
     @HOSTED_ONLY
-    protected XirTemplate buildGetFieldTemplate(CiKind kind, boolean isStatic, boolean resolved) {
+    private XirTemplate buildGetFieldTemplate(CiKind kind, boolean isStatic, boolean resolved) {
         XirTemplate xirTemplate;
         if (resolved) {
             // resolved case
@@ -1561,7 +1561,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    protected XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {
+    public XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {
         final XirTemplate template = asm.finishTemplate(result, name);
         if (C1XOptions.PrintXirTemplates) {
             template.print(Log.out);
@@ -1569,7 +1569,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         return template;
     }
 
-    protected XirTemplate finishTemplate(CiXirAssembler asm, String name) {
+    public XirTemplate finishTemplate(CiXirAssembler asm, String name) {
         final XirTemplate template = asm.finishTemplate(name);
         if (C1XOptions.PrintXirTemplates) {
             template.print(Log.out);
@@ -1582,50 +1582,64 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    protected void callRuntimeThroughStub(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
+    private void callRuntimeThroughStub(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
         XirTemplate stub = runtimeCallStubs.get(method);
         if (stub == null) {
-            // search for the runtime call and create the stub
-            for (Method m : runtimeCalls.getMethods()) {
-                int flags = m.getModifiers();
-                if (Modifier.isStatic(flags) && Modifier.isPublic(flags) && m.getName().equals(method)) {
-                    // runtime call found. create a global stub that calls the runtime method
-                    MethodActor methodActor = MethodActor.fromJava(m);
-                    SignatureDescriptor signature = methodActor.descriptor();
-                    if (result == null) {
-                        assert signature.resultKind() == Kind.VOID;
-                    } else {
-                        CiKind ciKind = signature.resultKind().ciKind;
-                        assert ciKind == result.kind : "return type mismatch in call to " + method;
-                    }
-
-                    assert signature.numberOfParameters() == args.length : "parameter mismatch in call to " + method;
-                    CiXirAssembler stubAsm = asm.copy();
-                    XirOperand resultVariable = stubAsm.restart(signature.resultKind().ciKind);
-
-                    XirParameter[] rtArgs = new XirParameter[signature.numberOfParameters()];
-                    for (int i = 0; i < signature.numberOfParameters(); i++) {
-                        // create a parameter for each parameter to the runtime call
-                        CiKind ciKind = signature.parameterDescriptorAt(i).toKind().ciKind;
-                        assert ciKind == args[i].kind : "type mismatch in call to " + method;
-                        rtArgs[i] = stubAsm.createInputParameter("rtArgs[" + i + "]", ciKind);
-                    }
-                    stubAsm.callRuntime(methodActor, resultVariable, rtArgs);
-                    stub = stubAsm.finishStub("stub-" + method);
-
-                    if (C1XOptions.PrintXirTemplates) {
-                        stub.print(Log.out);
-                    }
-                    runtimeCallStubs.put(method, stub);
-                }
-            }
-
-            stubs.add(stub);
+            stub = addCallRuntimeThroughStub(stubs, runtimeCalls, runtimeCallStubs, asm, method, result, args);
         }
         if (stub == null) {
             throw ProgramError.unexpected("could not find runtime call: " + method);
         }
         asm.callStub(stub, result, args);
+    }
+
+    @HOSTED_ONLY
+    public XirTemplate getStub(String method) {
+        return runtimeCallStubs.get(method);
+    }
+
+    @HOSTED_ONLY
+    public XirTemplate addCallRuntimeThroughStub(List<XirTemplate> stubs, Class<? extends RuntimeCalls> runtimeCalls,
+                    HashMap<String, XirTemplate> runtimeCallStubs,
+                    CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
+        XirTemplate stub = null;
+        // search for the runtime call and create the stub
+        for (Method m : runtimeCalls.getMethods()) {
+            int flags = m.getModifiers();
+            if (Modifier.isStatic(flags) && Modifier.isPublic(flags) && m.getName().equals(method)) {
+                // runtime call found. create a global stub that calls the runtime method
+                MethodActor methodActor = MethodActor.fromJava(m);
+                SignatureDescriptor signature = methodActor.descriptor();
+                if (result == null) {
+                    assert signature.resultKind() == Kind.VOID;
+                } else {
+                    CiKind ciKind = signature.resultKind().ciKind;
+                    assert ciKind == result.kind : "return type mismatch in call to " + method;
+                }
+
+                assert signature.numberOfParameters() == args.length : "parameter mismatch in call to " + method;
+                CiXirAssembler stubAsm = asm.copy();
+                XirOperand resultVariable = stubAsm.restart(signature.resultKind().ciKind);
+
+                XirParameter[] rtArgs = new XirParameter[signature.numberOfParameters()];
+                for (int i = 0; i < signature.numberOfParameters(); i++) {
+                    // create a parameter for each parameter to the runtime call
+                    CiKind ciKind = signature.parameterDescriptorAt(i).toKind().ciKind;
+                    assert ciKind == args[i].kind : "type mismatch in call to " + method;
+                    rtArgs[i] = stubAsm.createInputParameter("rtArgs[" + i + "]", ciKind);
+                }
+                stubAsm.callRuntime(methodActor, resultVariable, rtArgs);
+                stub = stubAsm.finishStub("stub-" + method);
+
+                if (C1XOptions.PrintXirTemplates) {
+                    stub.print(Log.out);
+                }
+                final XirTemplate existing = runtimeCallStubs.put(method, stub);
+                assert existing == null : "stub for " + method + "redefined";
+            }
+        }
+        stubs.add(stub);
+        return stub;
     }
 
     private void callRuntime(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {

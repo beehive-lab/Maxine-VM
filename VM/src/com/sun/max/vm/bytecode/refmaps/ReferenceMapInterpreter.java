@@ -1190,7 +1190,8 @@ public abstract class ReferenceMapInterpreter {
                     final int numberOfCases = highMatch - lowMatch + 1;
                     changed = merge(blockIndexFor(opcodeBCI + defaultOffset));
                     for (int i = 0; i < numberOfCases; i++) {
-                        changed = merge(blockIndexFor(opcodeBCI + readSigned4())) || changed;
+                        int targetBCI = opcodeBCI + readSigned4();
+                        changed = merge(blockIndexFor(targetBCI)) || changed;
                     }
                     if (atSearchBCI) {
                         bciIter.next();
@@ -1205,7 +1206,8 @@ public abstract class ReferenceMapInterpreter {
                     changed = merge(blockIndexFor(opcodeBCI + defaultOffset));
                     for (int i = 0; i < numberOfCases; i++) {
                         readSigned4();
-                        changed = merge(blockIndexFor(opcodeBCI + readSigned4())) || changed;
+                        int targetBCI = opcodeBCI + readSigned4();
+                        changed = merge(blockIndexFor(targetBCI)) || changed;
                     }
                     if (atSearchBCI) {
                         bciIter.next();

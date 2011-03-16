@@ -23,6 +23,7 @@
 package com.sun.max.vm.t1x;
 
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import static com.sun.max.vm.t1x.T1XCompilation.*;
 
@@ -30,10 +31,7 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.max.annotate.PLATFORM;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.annotate.FOLD;
-import com.sun.max.annotate.NEVER_INLINE;
+import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.io.*;
 import com.sun.max.memory.*;
@@ -135,7 +133,7 @@ public final class T1XTargetMethod extends TargetMethod {
 
     public final CiExceptionHandler[] handlers;
 
-    public T1XTargetMethod(T1XCompilation comp) {
+    public T1XTargetMethod(T1XCompilation comp, boolean install) {
         super(comp.method, CallEntryPoint.JIT_ENTRY_POINT);
 
         codeAttribute = comp.codeAttribute;
@@ -156,7 +154,11 @@ public final class T1XTargetMethod extends TargetMethod {
 
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.referenceLiterals.size(), comp.buf.position());
-        Code.allocate(targetBundleLayout, this);
+        if (install) {
+            Code.allocate(targetBundleLayout, this);
+        } else {
+            Code.allocateInHeap(targetBundleLayout, this);
+        }
 
         // Copy code
         comp.buf.copyInto(code, 0, code.length);
@@ -176,12 +178,19 @@ public final class T1XTargetMethod extends TargetMethod {
             this.refMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
             if (interpreter.performsAllocation() || T1XOptions.EagerRefMaps) {
+                if (isHosted() && T1XOptions.EagerRefMaps) {
+                    StackReferenceMapPreparer.TraceSRS = true;
+                }
                 finalizeReferenceMaps();
             }
         }
 
         if (!MaxineVM.isHosted()) {
-            linkDirectCalls(comp.adapter);
+            if (install) {
+                linkDirectCalls(comp.adapter);
+            } else {
+                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+            }
         }
     }
 
@@ -211,12 +220,12 @@ public final class T1XTargetMethod extends TargetMethod {
                                        null);
             newHandlers[handlers.length] = syncMethodHandler;
 
-            // Update the reference maps to cover the
+            // Update the reference maps to cover the local variable holding the copy of the receiver
             if (comp.syncMethodReceiverCopy != -1) {
                 for (int stopIndex = 0; stopIndex < stopPositions.length; stopIndex++) {
                     int pos = StopPositions.get(stopPositions, stopIndex);
                     if (pos >= comp.syncMethodStartPos && pos < comp.syncMethodEndPos) {
-                        final int offset = stopIndex * totalRefMapSize();
+                        final int offset = stopIndex * refMapSize();
                         final int refMapBit = frame.localVariableReferenceMapIndex(comp.syncMethodReceiverCopy);
                         ByteArrayBitMap.set(refMaps, offset, frameRefMapSize, refMapBit);
                     }
@@ -534,7 +543,7 @@ public final class T1XTargetMethod extends TargetMethod {
     /**
      * @return the number of bytes in {@link #refMaps} corresponding to one stop position.
      */
-    int totalRefMapSize() {
+    int refMapSize() {
         return regRefMapSize() + frameRefMapSize;
     }
 
@@ -542,24 +551,76 @@ public final class T1XTargetMethod extends TargetMethod {
     public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         finalizeReferenceMaps();
 
+        CiCalleeSaveArea csa = null;
+        Pointer registerState = Pointer.zero();
         CalleeKind calleeKind = callee.calleeKind();
-        if (calleeKind == CalleeKind.TRAMPOLINE) {
-            prepareTrampolineRefMap(current, preparer);
-        } else if (calleeKind == CalleeKind.TRAP_STUB) {
-            FatalError.unimplemented();
-        } else if (calleeKind != CalleeKind.JAVA) {
-            Log.print("Unexpected callee kind: ");
-            Log.println(calleeKind.name());
-            FatalError.unexpected("should not reach here");
+        switch (calleeKind) {
+            case NONE:
+                // 'current' is a T1X method trapped at a safepoint/implicit exception.
+                // The register save area in the trap stub frame will be processed
+                // when completing the stack reference map
+                assert preparer.completingReferenceMapLimit().isZero();
+                break;
+            case JAVA:
+                // Normal call - no registers need scanning
+                break;
+            case TRAMPOLINE:
+                prepareTrampolineRefMap(current, preparer);
+                break;
+            case TRAP_STUB:
+                // The register state *is* the trap stub frame
+                registerState = callee.sp();
+                if (Trap.Number.isStackOverflow(registerState)) {
+                    // a method can never catch stack overflow for itself so there
+                    // is no need to scan the registers of the trapped method
+                    return;
+                }
+
+                assert callee.targetMethod().getRegisterConfig() == vm().registerConfigs.trapStub;
+                csa = callee.targetMethod().getRegisterConfig().getCalleeSaveArea();
+                break;
+            case CALLEE_SAVED:
+                FatalError.unexpected("T1X methods never directly calls callee-saved methods");
+                break;
+            case NATIVE:
+                FatalError.unexpected("T1X methods never directly calls native methods");
+                break;
         }
 
         int stopIndex = findClosestStopIndex(current.ip());
-        int totalRefMapSize = totalRefMapSize();
+        int refMapSize = refMapSize();
+
+        if (!registerState.isZero()) {
+            assert csa != null;
+            // the callee contains register state from this frame;
+            // use register reference maps in this method to fill in the map for the callee
+            Pointer slotPointer = registerState;
+            int byteIndex = (stopIndex * refMapSize) + frameRefMapSize;
+            preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
+            // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
+            for (int i = 0; i < regRefMapSize(); i++) {
+                int b = refMaps[byteIndex] & 0xff;
+                int reg = i * 8;
+                while (b != 0) {
+                    if ((b & 1) != 0) {
+                        int offset = csa.offsetOf(reg);
+                        if (traceStackRootScanning()) {
+                            Log.print("    register: ");
+                            Log.println(csa.registers[reg].name);
+                        }
+                        preparer.setReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
+                    }
+                    reg++;
+                    b = b >>> 1;
+                }
+                byteIndex++;
+            }
+        }
 
         // prepare the map for this stack frame
         Pointer slotPointer = current.fp().plus(frameRefMapOffset);
         preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "T1X frame");
-        int byteIndex = stopIndex * totalRefMapSize;
+        int byteIndex = stopIndex * refMapSize;
         for (int i = 0; i < frameRefMapSize; i++) {
             preparer.setReferenceMapBits(current, slotPointer, refMaps[byteIndex] & 0xff, 8);
             slotPointer = slotPointer.plusWords(8);
@@ -574,7 +635,7 @@ public final class T1XTargetMethod extends TargetMethod {
         Address catchAddress = throwAddressToCatchAddress(current.isTopFrame(), throwAddress, throwable.getClass());
 
         if (!catchAddress.isZero()) {
-            if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+            if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(throwAddress.minus(codeStart()).toInt());
                 Log.print(" is ");

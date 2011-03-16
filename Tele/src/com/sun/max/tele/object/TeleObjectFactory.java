@@ -366,8 +366,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
                 } catch (IllegalAccessException e) {
                     TeleError.unexpected();
                 } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                    TeleError.unexpected();
+                    TeleError.unexpected(e);
                 }
             }
         } else {

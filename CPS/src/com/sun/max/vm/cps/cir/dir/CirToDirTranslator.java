@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,10 +42,10 @@ public class CirToDirTranslator extends DirGenerator {
     }
 
     @Override
-    protected void generateIrMethod(DirMethod dirMethod) {
+    protected void generateIrMethod(DirMethod dirMethod, boolean install) {
         final CirGeneratorScheme cirGeneratorScheme = (CirGeneratorScheme) compilerScheme();
         final CirGenerator cirGenerator = cirGeneratorScheme.cirGenerator();
-        final CirMethod cirMethod = cirGenerator.makeIrMethod(dirMethod.classMethodActor());
+        final CirMethod cirMethod = cirGenerator.makeIrMethod(dirMethod.classMethodActor(), install);
 
         Trace.begin(3, "CIR->DIR " + cirMethod.getQualifiedName());
 

@@ -27,6 +27,7 @@ import static com.sun.max.vm.classfile.constant.SymbolTable.*;
 import java.io.*;
 import java.lang.reflect.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
@@ -57,7 +58,7 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
      *
      * @param isStatic specifies if the generated class method is static
      * @param className the {@linkplain ClassActor#name() name} of the class actor. If null, then the name will be
-     *            derived from the {@code superClass} parameter provided to {@link #compile(Class)}.
+     *            derived from the {@code superClass} parameter provided to {@link #compile(Class, boolean, CiStatistics)}.
      * @param methodName the {@linkplain Actor#name() name} of the class method actor
      * @param signature the {@linkplain MethodActor#descriptor() signature} of the class method actor
      */

@@ -22,8 +22,15 @@
  */
 package com.sun.max.vm.compiler;
 
+import java.util.*;
+
+import com.sun.cri.ci.*;
+import com.sun.max.*;
+import com.sun.max.annotate.*;
+import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -36,6 +43,30 @@ import com.sun.max.vm.compiler.target.*;
 public interface RuntimeCompiler {
 
     /**
+     * A map from aliases to qualified class names for the known compilers.
+     */
+    @HOSTED_ONLY
+    Map<String, String> aliases = Utils.addEntries(new HashMap<String, String>(),
+                    "CPS", "com.sun.max.vm.cps.b.c.d.e.amd64.target.AMD64CPSCompiler",
+                    "JIT", "com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler",
+                    "T1X", "com.sun.max.vm.t1x.T1X",
+                    "C1X", C1X.class.getName());
+
+    @HOSTED_ONLY
+    OptionSet compilers = new OptionSet();
+
+    /**
+     * The option whose value (if non-null) specifies the class name of the optimizing compiler to use.
+     */
+    @HOSTED_ONLY
+    Option<String> optimizingCompilerOption = compilers.newStringOption("opt", "C1X", "Specifies the class name of the optimizing compiler.");
+    /**
+     * The option whose value (if non-null) specifies the class name of the baseline compiler to use.
+     */
+    @HOSTED_ONLY
+    Option<String> baselineCompilerOption = compilers.newStringOption("baseline", "T1X", "Specifies the baseline compiler class.");
+
+    /**
      * Performs any specific initialization when entering a given VM phase.
      *
      * @param phase the VM phase that has just been entered
@@ -46,14 +77,23 @@ public interface RuntimeCompiler {
      * Compiles a method to an internal representation.
      *
      * @param classMethodActor the method to compile
+     * @param install specifies if the method should be installed in the code cache. Only methods in a code region can
+     *            be executed. This option exists for the purpose of testing or benchmarking a compiler at runtime
+     *            without polluting the code cache.
+     * @param stats externally supplied statistics object to be used if not {@code null}
      * @return a reference to the target method created by this compiler for {@code classMethodActor}
      */
-    TargetMethod compile(ClassMethodActor classMethodActor);
+    TargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats);
+
+    /**
+     * Resets any metrics gathered by this compiler.
+     */
+    void resetMetrics();
 
     /**
      * Gets the exact subtype of {@link TargetMethod} produces by this compiler.
      *
-     * @param <Type> the exact type of the object returned by {@link #compile(ClassMethodActor)}
+     * @param <Type> the exact type of the object returned by {@link #compile(ClassMethodActor, boolean, CiStatistics)}
      */
     <Type extends TargetMethod> Class<Type> compiledType();
 

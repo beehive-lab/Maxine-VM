@@ -96,8 +96,9 @@ public final class C1XCompilation {
      * @param compiler the compiler
      * @param method the method to be compiled or {@code null} if generating code for a stub
      * @param osrBCI the bytecode index for on-stack replacement, if requested
+     * @param stats externally supplied statistics object to be used if not {@code null}
      */
-    public C1XCompilation(C1XCompiler compiler, RiMethod method, int osrBCI) {
+    public C1XCompilation(C1XCompiler compiler, RiMethod method, int osrBCI, CiStatistics stats) {
         this.parent = currentCompilation.get();
         currentCompilation.set(this);
         this.compiler = compiler;
@@ -105,7 +106,7 @@ public final class C1XCompilation {
         this.runtime = compiler.runtime;
         this.method = method;
         this.osrBCI = osrBCI;
-        this.stats = new CiStatistics();
+        this.stats = stats == null ? new CiStatistics() : stats;
         this.registerConfig = method == null ? compiler.globalStubRegisterConfig : runtime.getRegisterConfig(method);
         this.placeholderState = method != null && method.minimalDebugInfo() ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
 
@@ -226,7 +227,7 @@ public final class C1XCompilation {
             }
         }
         map.cleanup();
-        stats.byteCount += map.numberOfBytes();
+        stats.bytecodeCount += map.numberOfBytes();
         stats.blockCount += map.numberOfBlocks();
         return map;
     }

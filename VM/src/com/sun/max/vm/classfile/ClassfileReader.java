@@ -1262,7 +1262,7 @@ public final class ClassfileReader {
         }
 
         // is this a Java Reference object class?
-        if (name.equals("java.lang.ref.Reference")) {
+        if (MaxineVM.isHosted() && name.equals("java.lang.ref.Reference")) {
             classFlags |= Actor.SPECIAL_REFERENCE;
             // find the "referent" field and mark it as a special reference too.
             for (int i = 0; i < fieldActors.length; i++) {

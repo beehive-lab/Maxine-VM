@@ -27,7 +27,7 @@ import java.util.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.LineNumberTable.Entry;
 import com.sun.max.vm.classfile.*;

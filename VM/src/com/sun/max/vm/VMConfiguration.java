@@ -117,6 +117,7 @@ public final class VMConfiguration {
         for (BootImagePackage pkg : BootImagePackage.getTransitiveSubPackages(
                         HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath(),
                         new com.sun.max.config.Package())) {
+
             if (pkg.isPartOfMaxineVM(this)) {
                 bootImagePackages.add(pkg);
             }
@@ -274,7 +275,7 @@ public final class VMConfiguration {
         out.println(indent + "Build level: " + buildLevel);
         for (VMScheme vmScheme : vmSchemes()) {
             final String specification = vmScheme.specification().getSimpleName();
-            out.println(indent + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
+            out.println(indent + specification.replace("Scheme", " scheme") + ": " + vmScheme.about());
         }
     }
 

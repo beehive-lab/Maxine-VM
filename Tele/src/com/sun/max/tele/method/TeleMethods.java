@@ -33,7 +33,6 @@ import com.sun.max.tele.field.*;
 import com.sun.max.tele.field.TeleFields.InspectedMemberReifier;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.tele.*;
@@ -58,7 +57,6 @@ public class TeleMethods extends AbstractTeleVMHolder {
 
     // START GENERATED CONTENT
     public final TeleStaticMethodAccess Code_codePointerToTargetMethod = new TeleStaticMethodAccess(vm(), Code.class, "codePointerToTargetMethod", SignatureDescriptor.fromJava(TargetMethod.class, Address.class));
-    public final TeleStaticMethodAccess CompilationScheme$Inspect_inspectableCompilationComplete = new TeleStaticMethodAccess(vm(), CompilationScheme.Inspect.class, "inspectableCompilationComplete", SignatureDescriptor.fromJava(void.class, TargetMethod.class));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableDecreaseMemoryRequested = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableDecreaseMemoryRequested", SignatureDescriptor.fromJava(void.class, Size.class));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCCompleted = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCCompleted", SignatureDescriptor.fromJava(void.class));
     public final TeleStaticMethodAccess HeapScheme$Inspect_inspectableGCStarted = new TeleStaticMethodAccess(vm(), HeapScheme.Inspect.class, "inspectableGCStarted", SignatureDescriptor.fromJava(void.class));
@@ -98,7 +96,6 @@ public class TeleMethods extends AbstractTeleVMHolder {
         methods.add(CodeLocation.createMachineCodeLocation(vm(), HeapScheme$Inspect_inspectableGCStarted, "Start of GC"));
         methods.add(CodeLocation.createMachineCodeLocation(vm(), HeapScheme$Inspect_inspectableGCCompleted, "End of GC"));
         methods.add(CodeLocation.createMachineCodeLocation(vm(), HeapScheme$Inspect_inspectableObjectRelocated, "Object relocated"));
-        methods.add(CodeLocation.createMachineCodeLocation(vm(), CompilationScheme$Inspect_inspectableCompilationComplete, "End of method compilation"));
         clientInspectableMethods = Collections.unmodifiableList(methods);
     }
 

@@ -52,6 +52,8 @@ class T1XTemplate {
             public final int mask = 1 << ordinal();
         }
 
+        public static final int NO_BSM_INDEX = Integer.MIN_VALUE;
+
         public T1XStop() {
         }
 
@@ -70,6 +72,10 @@ class T1XTemplate {
         ClassMethodActor callee;
         CiBitMap frameRefMap;
         CiBitMap regRefMap;
+
+        /**
+         * Index of this stop in the bytecode stops map.
+         */
         int bsmIndex;
 
         int bsmIndex() {
@@ -84,12 +90,19 @@ class T1XTemplate {
                     sb.append(f).append(' ');
                 }
             }
-            return sb.append("@ ").
+            sb.append("@ ").
                 append(pos).
                 append(" [bci: ").
                 append(bci).
                 append(", bsmIndex: ").
-                append(bsmIndex()).append("]").toString();
+                append(bsmIndex == NO_BSM_INDEX ? "<none>" : String.valueOf(bsmIndex()));
+            if (frameRefMap != null) {
+                sb.append(", frameRefMap:").append(frameRefMap);
+            }
+            if (regRefMap != null) {
+                sb.append(", regRefMap:").append(regRefMap);
+            }
+            return sb.append("]").toString();
         }
     }
 
@@ -196,12 +209,12 @@ class T1XTemplate {
                 }
                 last = stop;
             } else {
-                stop.bsmIndex = Integer.MIN_VALUE;
+                stop.bsmIndex = T1XStop.NO_BSM_INDEX;
             }
         }
 
         int insertInBSM(int[] bsm, T1XStop stop) {
-            if (stop.bsmIndex < 0 && stop.bsmIndex != Integer.MIN_VALUE) {
+            if (stop.bsmIndex < 0 && stop.bsmIndex != T1XStop.NO_BSM_INDEX) {
                 stop.bsmIndex = -stop.bsmIndex;
                 bsm[stop.bsmIndex - 1] = stop.bci | BytecodeStopsIterator.BCP_BIT;
             }
@@ -288,7 +301,8 @@ class T1XTemplate {
 
             if (numberOfStopPositions > 0) {
                 assert frameRefMapSize > 0 || numberOfSafepoints > 0;
-                refMaps = new byte[numberOfStopPositions * (frameRefMapSize + regRefMapSize)];
+                int refMapSize = frameRefMapSize + regRefMapSize;
+                refMaps = new byte[numberOfStopPositions * refMapSize];
                 stopPositions = new int[numberOfStopPositions];
                 int[] bsm = new int[last.bsmIndex() + 1];
                 last = null;
@@ -297,7 +311,7 @@ class T1XTemplate {
                     directCallees = new ClassMethodActor[numberOfDirectCalls];
                 }
 
-                final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps, 0, frameRefMapSize);
+                final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps, 0, 0);
 
                 int stopIndex = 0;
                 for (int i = 0; i < numberOfDirectCalls; ++i, ++stopIndex) {
@@ -314,6 +328,8 @@ class T1XTemplate {
                         }
 
                         if (stop.frameRefMap != null) {
+                            bitMap.setOffset(stopIndex * refMapSize);
+                            bitMap.setSize(frameRefMapSize);
                             for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
                                 bitMap.set(bit + firstTemplateSlot);
                             }
@@ -335,6 +351,8 @@ class T1XTemplate {
 
                     if ((stop.flags & InTemplate.mask) != 0) {
                         if (stop.frameRefMap != null) {
+                            bitMap.setOffset(stopIndex * refMapSize);
+                            bitMap.setSize(frameRefMapSize);
                             for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
                                 bitMap.set(bit + firstTemplateSlot);
                             }
@@ -357,8 +375,17 @@ class T1XTemplate {
 
                     if ((stop.flags & InTemplate.mask) != 0) {
                         if (stop.frameRefMap != null) {
+                            bitMap.setOffset(stopIndex * refMapSize);
+                            bitMap.setSize(frameRefMapSize);
                             for (int bit = stop.frameRefMap.nextSetBit(0); bit >= 0; bit = stop.frameRefMap.nextSetBit(bit + 1)) {
                                 bitMap.set(bit + firstTemplateSlot);
+                            }
+                        }
+                        if (stop.regRefMap != null) {
+                            bitMap.setOffset((stopIndex * refMapSize) + frameRefMapSize);
+                            bitMap.setSize(regRefMapSize);
+                            for (int bit = stop.regRefMap.nextSetBit(0); bit >= 0; bit = stop.regRefMap.nextSetBit(bit + 1)) {
+                                bitMap.set(bit);
                             }
                         }
 

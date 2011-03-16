@@ -112,7 +112,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
     protected JitTargetMethod compileMethod(final ClassMethodActor classMethodActor) {
         Trace.line(2, "Compiling " + classMethodActor.name);
         try {
-            final JitTargetMethod method = compiler().compile(classMethodActor);
+            final JitTargetMethod method = compiler().compile(classMethodActor, true, null);
             assertNotNull(method);
             if (Trace.hasLevel(1)) {
                 if (jitTestSetup().disassembleCompiledMethods()) {

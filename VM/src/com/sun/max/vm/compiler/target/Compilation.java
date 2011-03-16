@@ -31,10 +31,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.Inspect;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -181,7 +181,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
         String methodString = "";
         try {
 
-            Inspect.notifyCompilationStart(classMethodActor);
+            InspectableCodeInfo.notifyCompilationEvent(classMethodActor, null);
 
             methodString = logBeforeCompilation(compiler);
             if (!MaxineVM.isHosted()) {
@@ -196,13 +196,13 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             }
 
             // attempt the compilation
-            targetMethod = compiler.compile(classMethodActor);
+            targetMethod = compiler.compile(classMethodActor, true, null);
 
             if (targetMethod == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }
 
-            Inspect.notifyCompilationComplete(targetMethod);
+            InspectableCodeInfo.notifyCompilationEvent(targetMethod.classMethodActor, targetMethod);
 
             if (startCompile != 0) {
                 compilationTime += System.currentTimeMillis() - startCompile;
