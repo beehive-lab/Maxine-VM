@@ -439,6 +439,14 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(0xC8 | encode);
     }
 
+    public final void btli(CiAddress src, int imm8) {
+        prefixq(src);
+        emitByte(0x0F);
+        emitByte(0xBA);
+        emitOperandHelper(rsp, src);
+        emitByte(imm8);
+    }
+
     public final void nativeCall(CiRegister dst, String symbol, LIRDebugInfo info) {
         int before = codeBuffer.position();
         int encode = prefixAndEncode(dst.encoding);

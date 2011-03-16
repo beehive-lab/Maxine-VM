@@ -22,9 +22,11 @@
  */
 package com.sun.max.vm.cps.jit.amd64;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.Bytes;
 import com.sun.max.unsafe.*;
@@ -218,12 +220,78 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         finalizeReferenceMaps();
 
-        if (callee.calleeKind() == StackFrameWalker.CalleeKind.TRAMPOLINE) {
-            prepareTrampolineRefMap(current, preparer);
+        CiCalleeSaveArea csa = null;
+        Pointer registerState = Pointer.zero();
+        switch (callee.calleeKind()) {
+            case NONE:
+                // 'current' is a JIT method trapped at a safepoint/implicit exception.
+                // The register save area in the trap stub frame will be processed
+                // when completing the stack reference map
+                assert preparer.completingReferenceMapLimit().isZero();
+                break;
+            case JAVA:
+                // Normal bytecode or runtime call - no registers need scanning
+                break;
+            case CALLEE_SAVED:
+            case NATIVE:
+                FatalError.unexpected("JIT methods never directly call native or callee-saved mehods");
+                break;
+            case TRAMPOLINE:
+                prepareTrampolineRefMap(current, preparer);
+                break;
+            case TRAP_STUB:
+                // The register state *is* the trap stub frame
+                registerState = callee.sp();
+                if (Trap.Number.isStackOverflow(registerState)) {
+                    // a method can never catch stack overflow for itself so there
+                    // is no need to prepare the map for the registers of the trapped method
+                    return;
+                }
+
+                assert callee.targetMethod().getRegisterConfig() == vm().registerConfigs.trapStub;
+                csa = callee.targetMethod().getRegisterConfig().getCalleeSaveArea();
+                break;
         }
 
         int stopIndex = findClosestStopIndex(current.ip());
         int frameReferenceMapSize = frameReferenceMapSize();
+
+        if (!registerState.isZero()) {
+            assert csa != null;
+            final int safepointIndex = stopIndex - (numberOfDirectCalls() + numberOfIndirectCalls());
+            if (safepointIndex < 0 || safepointIndex >= numberOfSafepoints()) {
+                Log.print("Trapped at non-safepoint at ");
+                Log.print(current.ip().minus(codeStart()).toInt());
+                Log.print(" in ");
+                Log.printMethod(this, true);
+                FatalError.unexpected("Could not find safepoint index");
+            }
+
+            // the callee contains register state from this frame;
+            // use register reference maps in this method to fill in the map for the callee
+            Pointer slotPointer = registerState;
+            int registerReferenceMapSize = registerReferenceMapSize();
+            int byteIndex = frameReferenceMapsSize() + (registerReferenceMapSize * safepointIndex);
+            preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "JIT registers frame");
+            // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
+            for (int i = 0; i < registerReferenceMapSize; i++) {
+                int b = referenceMaps[byteIndex] & 0xff;
+                int reg = i * 8;
+                while (b != 0) {
+                    if ((b & 1) != 0) {
+                        int offset = csa.offsetOf(reg);
+                        if (traceStackRootScanning()) {
+                            Log.print("    register: ");
+                            Log.println(csa.registers[reg].name);
+                        }
+                        preparer.setReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
+                    }
+                    reg++;
+                    b = b >>> 1;
+                }
+                byteIndex++;
+            }
+        }
 
         // prepare the map for this stack frame
         Pointer slotPointer = current.fp().plus(frameReferenceMapOffset);
@@ -243,7 +311,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         Address catchAddress = throwAddressToCatchAddress(current.isTopFrame(), throwAddress, throwable.getClass());
 
         if (!catchAddress.isZero()) {
-            if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+            if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(throwAddress.minus(codeStart()).toInt());
                 Log.print(" is ");

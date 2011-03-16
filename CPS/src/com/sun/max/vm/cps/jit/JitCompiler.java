@@ -24,6 +24,7 @@ package com.sun.max.vm.cps.jit;
 
 import static com.sun.max.platform.Platform.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
@@ -86,10 +87,14 @@ public abstract class JitCompiler implements RuntimeCompiler {
 
     protected abstract TemplateBasedTargetGenerator targetGenerator();
 
-    public JitTargetMethod compile(ClassMethodActor classMethodActor) {
+    public JitTargetMethod compile(ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
         if (MaxineVM.isHosted()) {
             init();
         }
-        return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor);
+        TemplateBasedTargetGenerator gen = targetGenerator();
+        return (JitTargetMethod) gen.makeIrMethod(classMethodActor, install);
+    }
+
+    public void resetMetrics() {
     }
 }

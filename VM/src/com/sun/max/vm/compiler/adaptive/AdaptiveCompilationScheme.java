@@ -24,11 +24,11 @@ package com.sun.max.vm.compiler.adaptive;
 
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -128,31 +128,65 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         return baselineCompiler != optimizingCompiler;
     }
 
+    private static final String OPTIMIZING_COMPILER_PROPERTY = AdaptiveCompilationScheme.class.getSimpleName() + "." + optimizingCompilerOption.getName();
+    private static final String BASELINE_COMPILER_PROPERTY = AdaptiveCompilationScheme.class.getSimpleName() + "." + baselineCompilerOption.getName();
+
+    /**
+     * Gets the class name of the optimizing compiler that will be configured when an instance of this scheme is instantiated.
+     */
+    @HOSTED_ONLY
+    public static String optName() {
+        return configValue(OPTIMIZING_COMPILER_PROPERTY, optimizingCompilerOption, aliases);
+    }
+
+    /**
+     * Gets the class name of the baseline compiler that will be configured when an instance of this scheme is instantiated.
+     */
+    @HOSTED_ONLY
+    public static String baselineName() {
+        return configValue(BASELINE_COMPILER_PROPERTY, baselineCompilerOption, aliases);
+    }
+
     /**
      * The constructor for this class initializes a new adaptive compilation.
      */
     @HOSTED_ONLY
     public AdaptiveCompilationScheme() {
-        assert CompilationScheme.optimizingCompilerOption.getValue() != null;
-        optimizingCompiler = instantiateCompiler(CompilationScheme.optimizingCompilerOption.getValue());
-        if (!CompilationScheme.optimizingCompilerOption.getValue().equals(CompilationScheme.baselineCompilerOption.getValue()) && CompilationScheme.baselineCompilerOption.getValue() != null) {
-            baselineCompiler = instantiateCompiler(CompilationScheme.baselineCompilerOption.getValue());
+        assert optimizingCompilerOption.getValue() != null;
+        String optName = optName();
+        String baselineName = baselineName();
+        optimizingCompiler = instantiateCompiler(optName);
+        if (!optName.equals(baselineName) && baselineName != null) {
+            baselineCompiler = instantiateCompiler(baselineName);
         } else {
             baselineCompiler = optimizingCompiler;
         }
     }
 
     @HOSTED_ONLY
-    private static RuntimeCompiler instantiateCompiler(String compilerClassName) {
+    private static RuntimeCompiler instantiateCompiler(String name) {
         try {
-            return (RuntimeCompiler) Classes.forName(compilerClassName).newInstance();
+            return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {
-            throw FatalError.unexpected("Error instantiating compiler " + compilerClassName, e);
+            throw FatalError.unexpected("Error instantiating compiler " + name, e);
         }
     }
 
     public String description() {
         return "compilation: " + mode.name().toLowerCase();
+    }
+
+    @Override
+    public String about() {
+        return super.about() + " [opt=" + optimizingCompiler.getClass().getSimpleName() + ", baseline=" + baselineCompiler.getClass().getSimpleName() + "]";
+    }
+
+    @Override
+    public Properties properties() {
+        Properties props = new Properties();
+        props.put(OPTIMIZING_COMPILER_PROPERTY, optimizingCompiler.getClass().getName());
+        props.put(BASELINE_COMPILER_PROPERTY, baselineCompiler.getClass().getName());
+        return props;
     }
 
     /**

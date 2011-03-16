@@ -41,9 +41,11 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
+import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -130,7 +132,7 @@ public final class T1XCompilation {
     /**
      * The compiler context.
      */
-    final T1XCompiler compiler;
+    final T1X compiler;
 
     /**
      * Object used to aggregate all the stops for the compiled code.
@@ -146,6 +148,11 @@ public final class T1XCompilation {
      * The set of reference literals.
      */
     final ArrayList<Object> referenceLiterals;
+
+    /**
+     * Code annotations for disassembly jump tables (lazily initialized).
+     */
+    ArrayList<CodeAnnotation> codeAnnotations;
 
     // Fields holding per-compilation info
 
@@ -249,7 +256,7 @@ public final class T1XCompilation {
     /**
      * Creates a compilation object.
      */
-    public T1XCompilation(T1XCompiler compiler) {
+    public T1XCompilation(T1X compiler) {
         this.compiler = compiler;
         AbstractAssembler asm = null;
         if (isAMD64()) {
@@ -347,6 +354,9 @@ public final class T1XCompilation {
         cp = null;
         buf.reset();
         referenceLiterals.clear();
+        if (codeAnnotations != null) {
+            codeAnnotations.clear();
+        }
         patchInfo.reset();
         adapter = null;
         stops.reset(false);
@@ -406,9 +416,9 @@ public final class T1XCompilation {
     /**
      * Translates the bytecode of a given method into a {@link T1XTargetMethod}.
      */
-    public T1XTargetMethod compile(ClassMethodActor method) {
+    public T1XTargetMethod compile(ClassMethodActor method, boolean install) {
         try {
-            return compile1(method, method.originalCodeAttribute(true));
+            return compile1(method, method.originalCodeAttribute(true), install);
         } catch (UnsupportedSubroutineException e) {
             T1XMetrics.MethodsWithSubroutines++;
             if (T1XOptions.PrintJsrRetRewrites) {
@@ -417,11 +427,11 @@ public final class T1XCompilation {
             TypeInferencingVerifier verifier = new TypeInferencingVerifier(method.holder());
             CodeAttribute codeAttribute = verifier.verify(method, this.codeAttribute);
             cleanup();
-            return compile1(method, codeAttribute);
+            return compile1(method, codeAttribute, install);
         }
     }
 
-    public T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute) {
+    public T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute, boolean install) {
         startTimer(T1XTimer.PRE_COMPILE);
         try {
             initCompile(method, codeAttribute);
@@ -445,7 +455,7 @@ public final class T1XCompilation {
 
         startTimer(T1XTimer.INSTALL);
         try {
-            return new T1XTargetMethod(this);
+            return new T1XTargetMethod(this, install);
         } finally {
             stopTimer(T1XTimer.INSTALL);
         }
@@ -795,15 +805,14 @@ public final class T1XCompilation {
                 }
                 assert bciToPos[targetBCI] == 0;
             } else {
-                // Need to emit the safepoint at the source of the branch. We emit the safepoint just before the actual branch instruction:
-                // so it can benefit from the same condition testing as the branch instruction to be performed conditionally (using a conditional move), i.e., we
-                // want the safepoint to occur only if we're branching backward.
-                // Note that the safepoint takes place once the stack frame is in the same state as that of the target bytecode.
-                // The reference maps of the target should be used when at this safepoint.
+                // Ideally, we'd like to emit a safepoint at the target of a backward branch.
+                // However, that would require at least one extra pass to determine where
+                // the backward branches are. Instead, we simply emit a safepoint at the source of
+                // a backward branch. This means the cost of the safepoint is taken even if
+                // the backward branch is not taken but that cost should not be noticeable.
                 byte[] safepointCode = vm().safepoint.code;
                 buf.emitBytes(safepointCode, 0, safepointCode.length);
                 stops.addBytecodeBackwardBranch(bci, pos);
-if (false) ProgramWarning.message("Leave this code until it's proven that the GC maps for bytecode safepoints are correct!");
 
                 // Compute relative offset.
                 final int target = bciToPos[targetBCI];
@@ -1163,10 +1172,17 @@ if (false) ProgramWarning.message("Leave this code until it's proven that the GC
             // Emit jump table entries
             for (int i = 0; i < ts.numberOfCases(); i++) {
                 int targetBCI = ts.targetAt(i);
+                startBlock(targetBCI);
                 pos = buf.position();
                 patchInfo.addJumpTableEntry(pos, jumpTablePos, targetBCI);
                 buf.emitInt(0);
             }
+
+            if (codeAnnotations == null) {
+                codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
+            }
+            codeAnnotations.add(new JumpTable(jumpTablePos, ts.lowKey(), ts.highKey(), 4));
+
         } else {
             unimplISA();
         }
@@ -1185,6 +1201,7 @@ if (false) ProgramWarning.message("Leave this code until it's proven that the GC
                 emitAndRecordStops(template);
 
                 int targetBCI = ls.defaultTarget();
+                startBlock(targetBCI);
                 if (stream.nextBCI() == targetBCI) {
                     // Skip completely if default target is next instruction
                 } else if (targetBCI <= bci) {
@@ -1254,10 +1271,15 @@ if (false) ProgramWarning.message("Leave this code until it's proven that the GC
                 for (int i = 0; i < ls.numberOfCases(); i++) {
                     int key = ls.keyAt(i);
                     int targetBCI = ls.targetAt(i);
+                    startBlock(targetBCI);
                     patchInfo.addLookupTableEntry(buf.position(), key, lookupTablePos, targetBCI);
                     buf.emitInt(key);
                     buf.emitInt(0);
                 }
+                if (codeAnnotations == null) {
+                    codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
+                }
+                codeAnnotations.add(new LookupTable(lookupTablePos, ls.numberOfCases(), 4, 4));
             }
         } else {
             unimplISA();
@@ -1717,7 +1739,7 @@ if (false) ProgramWarning.message("Leave this code until it's proven that the GC
                     case Bytecodes.MEMBAR_STORE_LOAD  : emit(MEMBAR_STORE_LOAD); break;
                     case Bytecodes.MEMBAR_STORE_STORE : emit(MEMBAR_STORE_STORE); break;
 
-                    default                           : throw new InternalError("Unsupported opcode" + errorSuffix());
+                    default                           : throw new CiBailout("Unsupported opcode" + errorSuffix());
                 }
                 break;
             }
@@ -1748,7 +1770,7 @@ if (false) ProgramWarning.message("Leave this code until it's proven that the GC
             case Bytecodes.TEMPLATE_CALL      :
             case Bytecodes.ICMP               :
             case Bytecodes.WCMP               :
-            default                           : throw new InternalError("Unsupported opcode" + errorSuffix());
+            default                           : throw new CiBailout("Unsupported opcode" + errorSuffix());
             // Checkstyle: resume
         }
     }

@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.stack;
 
-import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -51,6 +50,7 @@ import com.sun.max.vm.thread.*;
 public abstract class StackFrameWalker {
 
     public enum CalleeKind {
+        NONE,
         NATIVE,
         JAVA,
         TRAP_STUB,
@@ -60,7 +60,10 @@ public abstract class StackFrameWalker {
     /**
      * A VM option for enabling stack frame walk tracing.
      */
-    public static final VMBooleanXXOption TRACE_STACK_WALK = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
+    public static boolean TraceStackWalk;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceStackWalk", "Trace every stack walk");
+    }
 
     /**
      * The cursor class encapsulates all the state associated with a single stack frame,
@@ -183,6 +186,11 @@ public abstract class StackFrameWalker {
          */
         public CalleeKind calleeKind() {
             if (targetMethod == null) {
+                if (sp.isZero()) {
+                    assert callee == this;
+                    assert current.isTopFrame;
+                    return CalleeKind.NONE;
+                }
                 return CalleeKind.NATIVE;
             }
             if (targetMethod.is(TrapStub)) {
@@ -379,9 +387,14 @@ public abstract class StackFrameWalker {
             // walk the frame for reference map preparation
             StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
             if (preparer.checkIgnoreCurrentFrame()) {
-                return proceed;
+                proceed = true;
+            } else {
+                targetMethod.prepareReferenceMap(current, callee, preparer);
+                Pointer limit = preparer.completingReferenceMapLimit();
+                if (!limit.isZero() && current.sp().greaterEqual(limit)) {
+                    proceed = false;
+                }
             }
-            targetMethod.prepareReferenceMap(current, callee, preparer);
         } else if (purpose == Purpose.EXCEPTION_HANDLING) {
             // walk the frame for exception handling
             Throwable throwable = ((StackUnwindingContext) context).throwable;
@@ -396,19 +409,22 @@ public abstract class StackFrameWalker {
             proceed = visitor.visitFrame(current, callee);
         }
         // in any case, advance to the next frame
-        targetMethod.advance(current);
-        return proceed;
+        if (proceed) {
+            targetMethod.advance(current);
+            return true;
+        }
+        return false;
     }
 
     private void traceWalkPurpose(Purpose purpose) {
-        if (TRACE_STACK_WALK.getValue()) {
+        if (TraceStackWalk) {
             Log.print("StackFrameWalk: Start stack frame walk for purpose ");
             Log.println(purpose);
         }
     }
 
     private void traceCursor(Cursor cursor) {
-        if (TRACE_STACK_WALK.getValue()) {
+        if (TraceStackWalk) {
             if (cursor.targetMethod != null) {
                 Log.print("StackFrameWalk: Frame for ");
                 if (cursor.targetMethod.classMethodActor() == null) {
@@ -571,7 +587,7 @@ public abstract class StackFrameWalker {
                 // native function call. This makes it match the pattern expected by the
                 // StackReferenceMapPreparer where the instruction pointer in all but the
                 // top frame is past the address of the call.
-                if (TRACE_STACK_WALK.getValue() && purpose == Purpose.REFERENCE_MAP_PREPARING) {
+                if (TraceStackWalk && purpose == Purpose.REFERENCE_MAP_PREPARING) {
                     Log.print("IP for stack frame preparation of stub for native method ");
                     Log.print(nativeStubTargetMethod.name());
                     Log.print(" [");
@@ -664,7 +680,7 @@ public abstract class StackFrameWalker {
      * Terminates the current stack walk.
      */
     public final void reset() {
-        if (TRACE_STACK_WALK.getValue()) {
+        if (TraceStackWalk) {
             Log.print("StackFrameWalk: Finish stack frame walk for purpose ");
             Log.println(purpose);
         }
@@ -694,12 +710,12 @@ public abstract class StackFrameWalker {
         return !current.sp.isZero();
     }
 
-    public final Cursor advance(Word ip, Word sp, Word fp, boolean ipIsReturnAddress) {
+    public final void advance(Word ip, Word sp, Word fp, boolean ipIsReturnAddress) {
         if (!(current.targetMethod instanceof Adapter)) {
             // Adapter frames are never of interest when visiting the frame of a caller
             callee.copyFrom(current);
         }
-        return current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer(), ipIsReturnAddress);
+        current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer(), ipIsReturnAddress);
     }
 
     /**

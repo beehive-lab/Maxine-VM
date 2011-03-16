@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.sun.max.tele.*;
+import com.sun.max.tele.data.*;
 import com.sun.max.tele.debug.BreakpointCondition.ExpressionException;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.MachineCodeLocation;

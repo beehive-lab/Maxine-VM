@@ -53,13 +53,13 @@ public class AMD64TranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
 
     @Override
     public CPSTargetMethod translate(ClassMethodActor classMethodActor) {
-        return targetGenerator().makeIrMethod(classMethodActor);
+        return targetGenerator().makeIrMethod(classMethodActor, true);
     }
 
     @Override
     protected void initializeVM() {
         Platform.set(platform().constrainedByInstructionSet(ISA.AMD64));
-        CompilationScheme.optimizingCompilerOption.setValue(CPSCompiler.Static.defaultCPSCompilerClassName());
+        RuntimeCompiler.optimizingCompilerOption.setValue(CPSCompiler.Static.defaultCPSCompilerClassName());
         VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

@@ -205,7 +205,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
     @Override
     public IrMethod translate(ClassMethodActor classMethodActor) {
         CPSAbstractCompiler cpsCompilerScheme = (CPSAbstractCompiler) CPSCompiler.Static.compiler();
-        return cpsCompilerScheme.compileIR(classMethodActor);
+        return cpsCompilerScheme.compileIR(classMethodActor, true);
     }
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {

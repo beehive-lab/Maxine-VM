@@ -51,7 +51,7 @@ public class DirTranslatorTestSetup extends CompilerTestSetup<DirMethod> {
 
     @Override
     public DirMethod translate(ClassMethodActor classMethodActor) {
-        return dirGenerator().makeIrMethod(classMethodActor);
+        return dirGenerator().makeIrMethod(classMethodActor, true);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class DirTranslatorTestSetup extends CompilerTestSetup<DirMethod> {
 
     @Override
     protected void initializeVM() {
-        CompilationScheme.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.d.BcdCompiler.class.getName());
+        RuntimeCompiler.optimizingCompilerOption.setValue(com.sun.max.vm.cps.b.c.d.BcdCompiler.class.getName());
         VMConfigurator.installStandard(BuildLevel.DEBUG);
     }
 }

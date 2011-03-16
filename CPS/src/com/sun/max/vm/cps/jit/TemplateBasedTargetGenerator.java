@@ -77,7 +77,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
     protected abstract BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor);
 
     @Override
-    protected void generateIrMethod(CPSTargetMethod targetMethod) {
+    protected void generateIrMethod(CPSTargetMethod targetMethod, boolean install) {
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
         final BytecodeToTargetTranslator codeGenerator = makeTargetTranslator(classMethodActor);
@@ -105,7 +105,11 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         0,
                         (referenceLiterals == null) ? 0 : referenceLiterals.length,
                         codeGenerator.codeBuffer.currentPosition());
-        Code.allocate(targetBundleLayout, targetMethod);
+        if (install) {
+            Code.allocate(targetBundleLayout, targetMethod);
+        } else {
+            Code.allocateInHeap(targetBundleLayout, targetMethod);
+        }
 
         codeGenerator.setGenerated(
                         targetMethod,
@@ -117,8 +121,12 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         codeGenerator.targetABI());
 
         if (!MaxineVM.isHosted()) {
-            // at target runtime, each method gets linked individually right after generating it:
-            targetMethod.linkDirectCalls(adapter);
+            if (install) {
+                // at target runtime, each method gets linked individually right after generating it:
+                targetMethod.linkDirectCalls(adapter);
+            } else {
+                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+            }
         }
     }
 }

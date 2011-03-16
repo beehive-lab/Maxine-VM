@@ -31,6 +31,7 @@ import static com.sun.max.vm.stack.amd64.AMD64OptStackWalking.*;
 import java.io.*;
 import java.util.*;
 
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
@@ -43,6 +44,7 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.InlineDataDescriptor.JumpTable32;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
+import com.sun.max.lang.Bytes;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -114,11 +116,11 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
-    public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
+    public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
-        init(ciTargetMethod);
+        init(ciTargetMethod, install);
 
         if (PrintTargetMethods != null) {
             if (classMethodActor.format("%H.%n").contains(PrintTargetMethods)) {
@@ -131,7 +133,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
-        init(ciTargetMethod);
+        init(ciTargetMethod, true);
 
         if (PrintTargetMethods != null) {
             if (stubName.contains(PrintTargetMethods)) {
@@ -140,14 +142,14 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
-    private void init(CiTargetMethod ciTargetMethod) {
+    private void init(CiTargetMethod ciTargetMethod, boolean install) {
 
         if (MaxineVM.isHosted()) {
             // Save the target method for later gathering of calls and duplication
             this.bootstrappingCiTargetMethod = ciTargetMethod;
         }
 
-        initCodeBuffer(ciTargetMethod);
+        initCodeBuffer(ciTargetMethod, install);
         initFrameLayout(ciTargetMethod);
         initStopPositions(ciTargetMethod);
         initExceptionTable(ciTargetMethod);
@@ -158,7 +160,11 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
             if (generator != null) {
                 adapter = generator.make(classMethodActor);
             }
-            linkDirectCalls(adapter);
+            if (install) {
+                linkDirectCalls(adapter);
+            } else {
+                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+            }
         }
     }
 
@@ -222,7 +228,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         return regRefMapSize() + frameRefMapSize();
     }
 
-    private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
+    private void initCodeBuffer(CiTargetMethod ciTargetMethod, boolean install) {
         // Create the arrays for the scalar and the object reference literals
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         List<Object> objectReferences = new ArrayList<Object>();
@@ -232,7 +238,11 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize());
-        Code.allocate(targetBundleLayout, this);
+        if (install) {
+            Code.allocate(targetBundleLayout, this);
+        } else {
+            Code.allocateInHeap(targetBundleLayout, this);
+        }
         this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
 
         // Patch relative instructions in the code buffer
@@ -705,8 +715,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         }
     }
 
-    private static final boolean C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES = System.getProperty("C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES") != null;
-
     /**
      * Prepares the reference map for this frame.
      * @param current the current frame
@@ -719,53 +727,49 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         Pointer registerState = Pointer.zero();
         CiCalleeSaveArea csa = null;
         switch (calleeKind) {
+            case NONE:
+                // 'current' is a C1X method trapped at a safepoint/implicit exception.
+                // The register save area in the trap stub frame will be processed
+                // when completing the stack reference map
+                assert preparer.completingReferenceMapLimit().isZero();
+                break;
+            case JAVA:
+                // Normal call - no registers need scanning
+                break;
             case TRAMPOLINE:
-                if (callee.targetMethod() instanceof C1XTargetMethod) {
-                    if (C1X_GENERATES_REG_REF_MAPS_AT_CALL_SITES) {
-                        // can simply use the register ref map at the call site
-                        RiRegisterConfig registerConfig = vm().registerConfigs.trampoline;
-                        csa = registerConfig.getCalleeSaveArea();
-                        registerState = callee.sp();
-                    } else {
-                        prepareTrampolineRefMap(current, callee, preparer);
-                    }
-                } else {
-                    // compute the register reference map from the call at this site
-                    prepareTrampolineRefMap(current, callee, preparer);
-                }
+                prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
-                // get the register state from the callee's frame
+                // The register state *is* the trap stub frame
                 registerState = callee.sp();
                 if (Trap.Number.isStackOverflow(registerState)) {
-                    // a method can never catch stack overflow for itself
+                    // a method can never catch stack overflow for itself so there
+                    // is no need to prepare the map for the registers of the trapped method
                     return;
                 }
+
+                assert callee.targetMethod().getRegisterConfig() == vm().registerConfigs.trapStub;
+                csa = callee.targetMethod().getRegisterConfig().getCalleeSaveArea();
                 break;
             case CALLEE_SAVED:
-                if (callee.targetMethod() instanceof C1XTargetMethod) {
-                    // can simply use the register ref map at the call site
-                    C1XTargetMethod c1xCallee = (C1XTargetMethod) callee.targetMethod();
-                    csa = c1xCallee.getRegisterConfig().getCalleeSaveArea();
-                    if (c1xCallee.is(GlobalStub)) {
-                        // The register state *is* the frame
-                        registerState = callee.sp();
-                    } else {
-                        assert c1xCallee.is(Standard);
-                        // Register state/callee save area directly is at the top of the frame.
-                        registerState = callee.sp().plus(c1xCallee.frameSize());
-                    }
-                } else {
-                    FatalError.unexpected("Only C1XTargetMethods can be callee-saved");
-                    // get the register state from the callee's frame
+                // can simply use the register ref map at the call site
+                TargetMethod calleeMethod = callee.targetMethod();
+                csa = calleeMethod.getRegisterConfig().getCalleeSaveArea();
+                if (calleeMethod.is(GlobalStub)) {
+                    // The register state *is* the frame
                     registerState = callee.sp();
+                } else {
+                    assert calleeMethod.is(Standard);
+
+                    // (dns) I want to step through this in the Inspector to ensure it's correct
+                    Bytecodes.breakpointTrap();
+
+                    // Register state/callee save area is at the top of the frame.
+                    Pointer calleeSaveAreaEnd = callee.sp().plus(calleeMethod.frameSize());
+                    registerState = calleeSaveAreaEnd.minus(csa.size);
                 }
                 break;
             case NATIVE:
-                // no register state.
-                break;
-            case JAVA:
-                // no register state.
                 break;
         }
         int stopIndex = findClosestStopIndex(current.ip());
@@ -776,6 +780,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         int frameRefMapSize = frameRefMapSize();
         if (!registerState.isZero()) {
+            assert csa != null;
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = registerState;

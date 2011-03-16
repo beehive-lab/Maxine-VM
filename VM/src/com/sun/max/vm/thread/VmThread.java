@@ -650,16 +650,17 @@ public class VmThread {
             pendingException.printStackTrace();
         }
 
+        thread.terminationPending();
+
         synchronized (thread.javaThread) {
             // Must set TERMINATED before the notify in case a joiner is already waiting
             thread.state = Thread.State.TERMINATED;
             thread.javaThread.notifyAll();
         }
-        thread.terminationComplete();
 
         thread.traceThreadAfterTermination();
 
-        // GC may now reclaim or prepare any of its resources before the thread vanished forever.
+        // GC may now reclaim or prepare any of its resources before the thread vanishes forever.
         vmConfig().heapScheme().notifyCurrentThreadDetach();
 
         synchronized (VmThreadMap.THREAD_LOCK) {
@@ -1222,11 +1223,13 @@ public class VmThread {
     }
 
     /**
-     * This method is called when the VmThread termination is complete.
+     * This method is called when the VmThread termination is pending.
      * A subclass can override this method to do whatever subclass-specific
      * termination that depends on that invariant.
+     * N.B. In order for this callback to be usable, the state is not
+     * set to TERMINATED until after this method returns.
      */
-    protected void terminationComplete() {
+    protected void terminationPending() {
     }
 
     /**

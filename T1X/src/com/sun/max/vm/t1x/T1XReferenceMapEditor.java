@@ -22,13 +22,16 @@
  */
 package com.sun.max.vm.t1x;
 
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
+import static com.sun.max.vm.stack.VMFrameLayout.*;
+import static com.sun.max.vm.t1x.T1XTargetMethod.*;
 
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -97,7 +100,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
 
     public void visitReferenceInLocalVariable(int localVariableIndex) {
         for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
-            final int offset = stopIndex * t1xMethod.totalRefMapSize();
+            final int offset = stopIndex * t1xMethod.refMapSize();
             final int fpRelativeIndex = frame.localVariableReferenceMapIndex(localVariableIndex);
             ByteArrayBitMap.set(t1xMethod.referenceMaps(), offset, t1xMethod.frameRefMapSize, fpRelativeIndex);
         }
@@ -106,7 +109,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
         for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
             if (parametersPopped != bytecodeStopsIterator.isDirectRuntimeCall()) {
-                final int offset = stopIndex * t1xMethod.totalRefMapSize();
+                final int offset = stopIndex * t1xMethod.refMapSize();
                 final int fpRelativeIndex = frame.operandStackReferenceMapIndex(operandStackIndex);
                 ByteArrayBitMap.set(t1xMethod.referenceMaps(), offset, t1xMethod.frameRefMapSize, fpRelativeIndex);
             }
@@ -161,7 +164,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
             final CodeAttribute codeAttribute = t1xMethod.classMethodActor().codeAttribute();
             for (int bcp = bytecodeStopsIterator.bci(); bcp != -1; bcp = bytecodeStopsIterator.next()) {
                 for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
-                    final int offset = stopIndex * t1xMethod.frameRefMapSize;
+                    final int offset = stopIndex * t1xMethod.refMapSize();
                     Log.print(bcp);
                     Log.print(":");
                     int opc = codeAttribute.code()[bcp] & 0xff;
@@ -180,13 +183,14 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                     }
                     if (interpreter.isFrameInitialized(blockIndexFor(bcp))) {
                         Log.print(", locals={");
+                        byte[] refMaps = t1xMethod.referenceMaps();
                         for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
                             final int fpRelativeIndex = frame.localVariableReferenceMapIndex(localVariableIndex);
-                            if (ByteArrayBitMap.isSet(t1xMethod.referenceMaps(), offset, t1xMethod.frameRefMapSize, fpRelativeIndex)) {
+                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, fpRelativeIndex)) {
                                 Log.print(' ');
                                 Log.print(localVariableIndex);
                                 Log.print("[fp+");
-                                Log.print(fpRelativeIndex * Word.size());
+                                Log.print(fpRelativeIndex * STACK_SLOT_SIZE);
                                 Log.print("]");
                             }
                         }
@@ -194,12 +198,40 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                         Log.print(", stack={");
                         for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack; ++operandStackIndex) {
                             final int fpRelativeIndex = frame.operandStackReferenceMapIndex(operandStackIndex);
-                            if (ByteArrayBitMap.isSet(t1xMethod.referenceMaps(), offset, t1xMethod.frameRefMapSize, fpRelativeIndex)) {
+                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, fpRelativeIndex)) {
                                 Log.print(' ');
                                 Log.print(operandStackIndex);
                                 Log.print("[fp+");
-                                Log.print(fpRelativeIndex * Word.size());
+                                Log.print(fpRelativeIndex * STACK_SLOT_SIZE);
                                 Log.print("]");
+                            }
+                        }
+                        Log.print(" }");
+                        Log.print(", template={");
+                        for (int i = 0; i < frame.numberOfTemplateSlots(); i++) {
+                            int fpRelativeIndex = Unsigned.idiv(-t1xMethod.frameRefMapOffset, STACK_SLOT_SIZE) + i;
+                            if (ByteArrayBitMap.isSet(refMaps, offset, t1xMethod.frameRefMapSize, fpRelativeIndex)) {
+                                Log.print(' ');
+                                Log.print(i);
+                                Log.print("[fp+");
+                                Log.print(fpRelativeIndex * STACK_SLOT_SIZE);
+                                Log.print("]");
+                            }
+                        }
+                        Log.print(" }");
+                        Log.print(", registers={");
+                        CiCalleeSaveArea csa = vm().registerConfigs.trapStub.getCalleeSaveArea();
+                        for (int i = 0; i < regRefMapSize(); i++) {
+                            int b = refMaps[offset + t1xMethod.frameRefMapSize + i] & 0xff;
+                            int bit = i * 8;
+                            while (b != 0) {
+                                if ((b & 1) != 0) {
+                                    CiRegister reg = csa.registerAt(bit);
+                                    Log.print(' ');
+                                    Log.print(reg.name);
+                                }
+                                bit++;
+                                b = b >>> 1;
                             }
                         }
                         Log.println(" }");

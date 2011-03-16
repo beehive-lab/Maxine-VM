@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,14 +44,14 @@ public abstract class CompilerTest_entryPoints extends CompilerTestCase {
     public void test_startupMethod() {
         final ClassMethodActor methodActor = (ClassMethodActor) ClassRegistry.MaxineVM_run;
         assertNotNull(methodActor);
-        final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
+        final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor, true, null).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
         assertTrue(entryPointOffset > 0);
     }
 
     public void test_runMethod() {
         final ClassMethodActor methodActor = (ClassMethodActor) ClassRegistry.VmThread_run;
         assertNotNull(methodActor);
-        final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
+        final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor, true, null).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
         assertTrue(entryPointOffset > 0);
     }
 }
