@@ -27,6 +27,10 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.CodeComment;
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
+import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.cri.ri.*;
 
 /**
@@ -448,6 +452,45 @@ public class CiUtil {
     }
 
     /**
+     * Formats the values in a frame as a tabulated string.
+     * 
+     * @param frame
+     * @return the values in {@code frame} as a tabulated string
+     */
+    public static String tabulateValues(CiFrame frame) {
+        int cols = Math.max(frame.numLocals, Math.max(frame.numStack, frame.numLocks));
+        assert cols > 0;
+        ArrayList<Object> cells = new ArrayList<Object>();
+        cells.add("");
+        for (int i = 0; i < cols; i++) {
+            cells.add(i);
+        }
+        cols++;
+        if (frame.numLocals != 0) {
+            cells.add("locals:");
+            cells.addAll(Arrays.asList(frame.values).subList(0, frame.numLocals));
+            cells.addAll(Collections.nCopies(cols - frame.numLocals - 1, ""));
+        }
+        if (frame.numStack != 0) {
+            cells.add("stack:");
+            cells.addAll(Arrays.asList(frame.values).subList(frame.numLocals, frame.numLocals + frame.numStack));
+            cells.addAll(Collections.nCopies(cols - frame.numStack - 1, ""));
+        }
+        if (frame.numLocks != 0) {
+            cells.add("locks:");
+            cells.addAll(Arrays.asList(frame.values).subList(frame.numLocals + frame.numStack, frame.values.length));
+            cells.addAll(Collections.nCopies(cols - frame.numLocks - 1, ""));
+        }
+        Object[] cellArray = cells.toArray();
+        for (int i = 0; i < cellArray.length; i++) {
+            if ((i % cols) != 0) {
+                cellArray[i] = "|" + cellArray[i];
+            }
+        }
+        return CiUtil.tabulate(cellArray, cols, 1, 1);
+    }
+
+    /**
      * Formats a given table as a string. The value of each cell is produced by {@link String#valueOf(Object)}.
      * 
      * @param cells the cells of the table in row-major order
@@ -552,36 +595,6 @@ public class CiUtil {
     }
 
     /**
-     * Appends the formatted values of a given frame to a {@link StringBuilder}.
-     * 
-     * @param sb the {@link StringBuilder} to append to
-     * @param separator the string to be inserted between each slot-value string.
-     * @return the value of {@code sb}
-     */
-    public static StringBuilder appendValues(StringBuilder sb, CiFrame frame, String separator) {
-        String sep = "";
-        if (frame.numLocals != 0) {
-            for (int i = 0; i < frame.numLocals; i++) {
-                sb.append(sep).append("local[").append(i).append("] = ").append(frame.getLocalValue(i));
-                sep = separator;
-            }
-        }
-        if (frame.numStack != 0) {
-            for (int i = 0; i < frame.numStack; i++) {
-                sb.append(sep).append("stack[").append(i).append("] = ").append(frame.getStackValue(i));
-                sep = separator;
-            }
-        }
-        if (frame.numLocks != 0) {
-            for (int i = 0; i < frame.numLocks; i++) {
-                sb.append(sep).append("lock[").append(i).append("] = ").append(frame.getLockValue(i));
-                sep = separator;
-            }
-        }
-        return sb;
-    }
-
-    /**
      * Appends a formatted frame to a {@link StringBuilder}.
      * 
      * @param sb the {@link StringBuilder} to append to
@@ -593,7 +606,12 @@ public class CiUtil {
         String sep = NEW_LINE + "  ";
         if (frame.values != null && frame.values.length > 0) {
             sb.append(sep);
-            appendValues(sb, frame, sep);
+            String table = tabulateValues(frame);
+            for (String row : table.split(NEW_LINE)) {
+                if (!row.trim().isEmpty()) {
+                    sb.append("  ").append(row).append(NEW_LINE);
+                }
+            }
         }
         if (frame.caller != null) {
             sb.append(NEW_LINE);
@@ -607,22 +625,68 @@ public class CiUtil {
      * 
      * @param sb the {@link StringBuilder} to append to
      * @param info the debug info to format and append to {@code sb}
+     * @param arch if not {@code null}, this object is used to augment the output with register names denoted by the
+     *            register reference map in {@code info}
+     * @param slotSize if {@code -1}, this value is used to augment the output with the slot offsets denoted by the
+     *            frame reference map in {@code info}
      * @return the value of {@code sb}
      */
-    public static StringBuilder append(StringBuilder sb, CiDebugInfo info) {
+    public static StringBuilder append(StringBuilder sb, CiDebugInfo info, CiArchitecture arch, int slotSize) {
         String nl = NEW_LINE;
         if (info.hasRegisterRefMap()) {
-            sb.append("reg-ref-map: ").append(info.registerRefMap).append(nl);
+            sb.append("  reg-ref-map:");
+            CiBitMap bm = info.registerRefMap;
+            if (arch != null) {
+                for (int reg = bm.nextSetBit(0); reg >= 0; reg = bm.nextSetBit(reg + 1)) {
+                    sb.append(" " + arch.registers[reg]);
+                }
+            }
+            sb.append(' ').append(bm).append(nl);
         }
         if (info.hasStackRefMap()) {
-            sb.append("frame-ref-map: ").append(info.frameRefMap).append(nl);
+            sb.append("frame-ref-map:");
+            CiBitMap bm = info.frameRefMap;
+            if (slotSize != -1) {
+                for (int i = bm.nextSetBit(0); i >= 0; i = bm.nextSetBit(i + 1)) {
+                    sb.append(" +" + i * slotSize);
+                }
+            }
+            sb.append(' ').append(bm).append(nl);
         }
         CiFrame frame = info.frame();
         if (frame != null) {
             append(sb, frame);
-        } else {
+        } else if (info.codePos != null) {
             append(sb, info.codePos);
         }
         return sb;
+    }
+
+    /**
+     * Formats a debug info to a string and adds it as a comment to a given {@link CiHexCodeFile}.
+     */
+    public static void addDebugInfo(CiHexCodeFile hcf, int pos, CiDebugInfo info, int slotSize, CiArchitecture arch) {
+        hcf.addComment(pos, append(new StringBuilder(100), info, arch, slotSize).toString());
+    }
+
+    /**
+     * Adds any jump tables, lookup tables or code comments from a list of code annotations.
+     */
+    public static void addAnnotations(CiHexCodeFile hcf, List<CodeAnnotation> annotations) {
+        if (annotations == null || annotations.isEmpty()) {
+            return;
+        }
+        for (CodeAnnotation a : annotations) {
+            if (a instanceof JumpTable) {
+                JumpTable table = (JumpTable) a;
+                hcf.jumpTables.add(table);
+            } else if (a instanceof LookupTable) {
+                LookupTable table = (LookupTable) a;
+                hcf.lookupTables.add(table);
+            } else if (a instanceof CodeComment) {
+                CodeComment comment = (CodeComment) a;
+                hcf.addComment(comment.position, comment.value);
+            }
+        }
     }
 }

@@ -1077,6 +1077,20 @@ function run_verify() {
 }
 
 #=======================================
+# 'hcfdis' command
+#=======================================
+
+hcfdis_usage="[options] files..."
+hcfdis_help="disassembles HexCodeFiles embedded in text files
+
+    Run a tool over the input files to convert all embedded HexCodeFiles
+    to a disassembled format."
+
+function run_hcfdis() {
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.HexCodeFileDis $@
+}
+
+#=======================================
 # 'c1x' command
 #=======================================
 

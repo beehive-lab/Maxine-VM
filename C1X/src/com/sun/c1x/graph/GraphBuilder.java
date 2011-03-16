@@ -2518,7 +2518,7 @@ public final class GraphBuilder {
             case BREAKPOINT:
                 throw new CiBailout("concurrent setting of breakpoint");
             default:
-                throw new CiBailout("unknown bytecode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
+                throw new CiBailout("Unsupported opcode " + opcode + " (" + nameOf(opcode) + ") [bci=" + bci + "]");
         }
         // Checkstyle: resume
     }

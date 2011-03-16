@@ -41,6 +41,9 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
+import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
+import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -145,6 +148,11 @@ public final class T1XCompilation {
      * The set of reference literals.
      */
     final ArrayList<Object> referenceLiterals;
+
+    /**
+     * Code annotations for disassembly jump tables (lazily initialized).
+     */
+    ArrayList<CodeAnnotation> codeAnnotations;
 
     // Fields holding per-compilation info
 
@@ -346,6 +354,9 @@ public final class T1XCompilation {
         cp = null;
         buf.reset();
         referenceLiterals.clear();
+        if (codeAnnotations != null) {
+            codeAnnotations.clear();
+        }
         patchInfo.reset();
         adapter = null;
         stops.reset(false);
@@ -1166,6 +1177,12 @@ public final class T1XCompilation {
                 patchInfo.addJumpTableEntry(pos, jumpTablePos, targetBCI);
                 buf.emitInt(0);
             }
+
+            if (codeAnnotations == null) {
+                codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
+            }
+            codeAnnotations.add(new JumpTable(jumpTablePos, ts.lowKey(), ts.highKey(), 4));
+
         } else {
             unimplISA();
         }
@@ -1259,6 +1276,10 @@ public final class T1XCompilation {
                     buf.emitInt(key);
                     buf.emitInt(0);
                 }
+                if (codeAnnotations == null) {
+                    codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
+                }
+                codeAnnotations.add(new LookupTable(lookupTablePos, ls.numberOfCases(), 4, 4));
             }
         } else {
             unimplISA();
@@ -1718,7 +1739,7 @@ public final class T1XCompilation {
                     case Bytecodes.MEMBAR_STORE_LOAD  : emit(MEMBAR_STORE_LOAD); break;
                     case Bytecodes.MEMBAR_STORE_STORE : emit(MEMBAR_STORE_STORE); break;
 
-                    default                           : throw new InternalError("Unsupported opcode" + errorSuffix());
+                    default                           : throw new CiBailout("Unsupported opcode" + errorSuffix());
                 }
                 break;
             }
@@ -1749,7 +1770,7 @@ public final class T1XCompilation {
             case Bytecodes.TEMPLATE_CALL      :
             case Bytecodes.ICMP               :
             case Bytecodes.WCMP               :
-            default                           : throw new InternalError("Unsupported opcode" + errorSuffix());
+            default                           : throw new CiBailout("Unsupported opcode" + errorSuffix());
             // Checkstyle: resume
         }
     }

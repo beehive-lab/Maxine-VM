@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ package com.sun.cri.ci;
  *
  * @author Ben L. Titzer
  */
-public class CiBailout extends RuntimeException {
+public class CiBailout extends InternalError {
 
     public static final long serialVersionUID = 8974598793458772L;
 
@@ -47,6 +47,7 @@ public class CiBailout extends RuntimeException {
      * @param cause the throwable that was the cause of the bailout
      */
     public CiBailout(String reason, Throwable cause) {
-        super(reason, cause);
+        super(reason);
+        initCause(cause);
     }
 }

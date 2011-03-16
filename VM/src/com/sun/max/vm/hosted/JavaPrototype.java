@@ -44,6 +44,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.Package;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -496,12 +497,17 @@ public final class JavaPrototype extends Prototype {
             }
             return result;
         }
+
         final Object replace = getObjectReplacement(object);
         if (replace != null) {
             return replace == NULL ? null : replace;
         }
         if (object instanceof Thread || object instanceof ThreadGroup) {
-            ProgramError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
+            throw FatalError.unexpected("Instance of thread class " + object.getClass().getName() + " will be null in the image");
+        }
+
+        if (object instanceof FileDescriptor) {
+            throw FatalError.unexpected("Instance of " + object.getClass().getName() + " will have host file descriptor in the image");
         }
         return object;
     }
@@ -535,9 +541,14 @@ public final class JavaPrototype extends Prototype {
         objectMap.put(VmThread.vmOperationThread.javaThread(), VmThread.vmOperationThread.javaThread());
         objectMap.put(VmThread.signalDispatcherThread.javaThread(), VmThread.signalDispatcherThread.javaThread());
 
+        // These are the only FileDescriptors allowed in the image
+        objectMap.put(FileDescriptor.in, FileDescriptor.in);
+        objectMap.put(FileDescriptor.out, FileDescriptor.out);
+        objectMap.put(FileDescriptor.err, FileDescriptor.err);
+
         objectMap.put(Trace.stream(), Log.out);
         objectMap.put(TTY.out(), new LogStream(Log.os));
-        objectMap.put(CFGPrinter.cfgFileStream(), Log.os);
+        objectMap.put(CFGPrinter.cfgFileStream(), NULL);
         objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor.initialSystemProperties);
     }
 }

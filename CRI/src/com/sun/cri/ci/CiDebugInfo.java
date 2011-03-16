@@ -98,6 +98,6 @@ public class CiDebugInfo {
 
     @Override
     public String toString() {
-        return CiUtil.append(new StringBuilder(100), this).toString();
+        return CiUtil.append(new StringBuilder(100), this, null, -1).toString();
     }
 }
