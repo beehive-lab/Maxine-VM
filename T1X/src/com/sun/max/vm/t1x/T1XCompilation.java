@@ -1143,6 +1143,7 @@ public final class T1XCompilation {
             }
 
             // Jump to default target if index is not within the jump table
+            startBlock(ts.defaultTarget());
             int pos = buf.position();
             patchInfo.addJCC(ConditionFlag.above, pos, ts.defaultTarget());
             asm.jcc(ConditionFlag.above, 0, true);
@@ -1241,6 +1242,7 @@ public final class T1XCompilation {
                 asm.jcc(ConditionFlag.carryClear, loopPos, false);
 
                 // Jump to default target
+                startBlock(ls.defaultTarget());
                 patchInfo.addJMP(buf.position(), ls.defaultTarget());
                 asm.jmp(0, true);
 
