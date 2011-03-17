@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,63 +32,63 @@ import java.awt.*;
 public interface InspectorGeometry {
 
     // Main Inspector frame
-    Point inspectorFrameDefaultLocation();
-    Dimension inspectorFrameMinSize();
-    Dimension inspectorFramePrefSize();
+    Point inspectorDefaultFrameLocation();
+    Dimension inspectorMinFrameSize();
+    Dimension inspectorPrefFrameSize();
 
     /**
      * @return default geometry for the {@link ThreadsInspector}.
      */
-    Rectangle threadsFrameDefaultBounds();
+    Rectangle threadsDefaultFrameBounds();
 
     /**
      * @return default geometry for the {@link RegistersInspector}.
      */
-    Rectangle registersFrameDefaultBounds();
+    Rectangle registersDefaultFrameBounds();
 
     /**
      * @return default geometry for the {@link StackInspector}.
      */
-    Rectangle stackFrameDefaultBounds();
+    Rectangle stackDefaultFrameBounds();
 
     /**
      * @return default geometry for the {@link MethodInspector}.
      */
-    Rectangle methodsFrameDefaultBounds();
+    Rectangle methodsDefaultFrameBounds();
 
     /**
      * @return default geometry for the {@link BreakpointsInspector}.
      */
-    Rectangle breakpointsFrameDefaultBounds();
+    Rectangle breakpointsDefaultFrameBounds();
 
     /**
      * @return default geometry for the {@linkWatchpointsInspector}.
      */
-    Rectangle watchpointsFrameDefaultBounds();
+    Rectangle watchpointsDefaultFrameBounds();
 
     /**
      * @return default geometry for the {@link ThreadLocalsInspector}.
      */
-    Rectangle threadLocalsFrameDefaultBounds();
+    Rectangle threadLocalsDefaultFrameBounds();
 
     /**
      * @return default geometry for the {@link MemoryRegionsInspector}.
      */
-    Rectangle memoryRegionsFrameDefaultBounds();
+    Rectangle memoryRegionsDefaultFrameBounds();
 
     /**
      * @return default geometry for the {@link BootImageInspector}.
      */
-    Rectangle bootImageFrameDefaultBounds();
+    Rectangle bootImageDefaultFrameBounds();
 
     /**
      * @return default geometry for the {@link NotepadInspector}.
      */
-    Rectangle notepadFrameDefaultBounds();
+    Rectangle notepadDefaultFrameBounds();
 
     // Java Source Inspector frame
-    Point javaSourceFrameDefaultLocation();
-    Dimension javaSourceFramePrefSize();
+    Point javaSourceDefaultFrameLocation();
+    Dimension javaSourcePrefFrameSize();
 
     // Offset from mouse location for new frames
     int defaultNewFrameXOffset();

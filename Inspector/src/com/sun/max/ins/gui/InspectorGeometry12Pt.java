@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,53 +36,53 @@ public class InspectorGeometry12Pt implements InspectorGeometry {
     private static final Dimension inspectionFrameMinSize = new Dimension(100, 100);
     private static final Dimension inspectionFramePrefSize = new Dimension(1615, 960);
 
-    public Point inspectorFrameDefaultLocation() {
+    public Point inspectorDefaultFrameLocation() {
         return inspectionFrameDefaultLocation;
     }
-    public Dimension inspectorFrameMinSize() {
+    public Dimension inspectorMinFrameSize() {
         return inspectionFrameMinSize;
     }
-    public Dimension inspectorFramePrefSize() {
+    public Dimension inspectorPrefFrameSize() {
         return inspectionFramePrefSize;
     }
 
-    public Rectangle threadsFrameDefaultBounds() {
+    public Rectangle threadsDefaultFrameBounds() {
         return new Rectangle(0, 0, 225, 170);
     }
 
-    public Rectangle registersFrameDefaultBounds() {
+    public Rectangle registersDefaultFrameBounds() {
         return new Rectangle(0, 170, 225, 730);
     }
 
-    public Rectangle stackFrameDefaultBounds() {
+    public Rectangle stackDefaultFrameBounds() {
         return new Rectangle(225, 0, 225, 900);
     }
 
-    public Rectangle methodsFrameDefaultBounds() {
+    public Rectangle methodsDefaultFrameBounds() {
         return new Rectangle(450, 0, 700, 900);
     }
 
-    public Rectangle breakpointsFrameDefaultBounds() {
+    public Rectangle breakpointsDefaultFrameBounds() {
         return new Rectangle(1150, 0, 450, 170);
     }
 
-    public Rectangle watchpointsFrameDefaultBounds() {
+    public Rectangle watchpointsDefaultFrameBounds() {
         return new Rectangle(100, 100, 575, 150);
     }
 
-    public Rectangle threadLocalsFrameDefaultBounds() {
+    public Rectangle threadLocalsDefaultFrameBounds() {
         return new Rectangle(1150, 170, 450, 730);
     }
 
-    public Rectangle memoryRegionsFrameDefaultBounds() {
+    public Rectangle memoryRegionsDefaultFrameBounds() {
         return new Rectangle(100, 100, 450, 250);
     }
 
-    public Rectangle bootImageFrameDefaultBounds() {
+    public Rectangle bootImageDefaultFrameBounds() {
         return new Rectangle(100, 0, 390, 900);
     }
 
-    public Rectangle notepadFrameDefaultBounds() {
+    public Rectangle notepadDefaultFrameBounds() {
         return new Rectangle(200, 200, 200, 200);
     }
 
@@ -90,10 +90,10 @@ public class InspectorGeometry12Pt implements InspectorGeometry {
     private static final Point javaSourceFrameDefaultLocation = new Point(1270, 0);
     private static final Dimension javaSourceFramePrefSize = new Dimension(605, 400);
 
-    public Point javaSourceFrameDefaultLocation() {
+    public Point javaSourceDefaultFrameLocation() {
         return javaSourceFrameDefaultLocation;
     }
-    public Dimension javaSourceFramePrefSize() {
+    public Dimension javaSourcePrefFrameSize() {
         return javaSourceFramePrefSize;
     }
 

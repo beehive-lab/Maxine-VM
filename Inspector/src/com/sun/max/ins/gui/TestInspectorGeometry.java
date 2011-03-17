@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,13 +36,13 @@ public class TestInspectorGeometry implements InspectorGeometry {
     private static final Dimension inspectionFrameMinSize = new Dimension(100, 100);
     private static final Dimension inspectionFramePrefSize = new Dimension(1625, 1040);
 
-    public Point inspectorFrameDefaultLocation() {
+    public Point inspectorDefaultFrameLocation() {
         return inspectionFrameDefaultLocation;
     }
-    public Dimension inspectorFrameMinSize() {
+    public Dimension inspectorMinFrameSize() {
         return inspectionFrameMinSize;
     }
-    public Dimension inspectorFramePrefSize() {
+    public Dimension inspectorPrefFrameSize() {
         return inspectionFramePrefSize;
     }
 
@@ -50,51 +50,51 @@ public class TestInspectorGeometry implements InspectorGeometry {
     private static final Dimension testFramePrefSize = new Dimension(300, 300);
     private static final Rectangle testFrameDefaultBounds = new Rectangle(100, 100, 300, 300);
 
-    public  Rectangle threadsFrameDefaultBounds() {
+    public  Rectangle threadsDefaultFrameBounds() {
         return testFrameDefaultBounds;
     }
 
-    public Rectangle registersFrameDefaultBounds() {
+    public Rectangle registersDefaultFrameBounds() {
         return  testFrameDefaultBounds;
     }
 
-    public Rectangle stackFrameDefaultBounds() {
+    public Rectangle stackDefaultFrameBounds() {
         return testFrameDefaultBounds;
     }
 
-    public Rectangle methodsFrameDefaultBounds() {
+    public Rectangle methodsDefaultFrameBounds() {
         return testFrameDefaultBounds;
     }
 
-    public Rectangle breakpointsFrameDefaultBounds() {
+    public Rectangle breakpointsDefaultFrameBounds() {
         return testFrameDefaultBounds;
     }
 
-    public Rectangle watchpointsFrameDefaultBounds() {
+    public Rectangle watchpointsDefaultFrameBounds() {
         return testFrameDefaultBounds;
     }
 
-    public Rectangle threadLocalsFrameDefaultBounds() {
+    public Rectangle threadLocalsDefaultFrameBounds() {
         return testFrameDefaultBounds;
     }
 
-    public Rectangle memoryRegionsFrameDefaultBounds() {
+    public Rectangle memoryRegionsDefaultFrameBounds() {
         return testFrameDefaultBounds;
     }
 
-    public Rectangle bootImageFrameDefaultBounds() {
+    public Rectangle bootImageDefaultFrameBounds() {
         return testFrameDefaultBounds;
     }
 
-    public Rectangle notepadFrameDefaultBounds() {
+    public Rectangle notepadDefaultFrameBounds() {
         return testFrameDefaultBounds;
     }
 
     // Java Source Inspector frame
-    public Point javaSourceFrameDefaultLocation() {
+    public Point javaSourceDefaultFrameLocation() {
         return testFrameDefaultLocation;
     }
-    public Dimension javaSourceFramePrefSize() {
+    public Dimension javaSourcePrefFrameSize() {
         return testFramePrefSize;
     }
 

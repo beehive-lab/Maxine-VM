@@ -100,7 +100,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     @Override
     protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().breakpointsFrameDefaultBounds();
+        return inspection().geometry().breakpointsDefaultFrameBounds();
     }
 
     @Override
