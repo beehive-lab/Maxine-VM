@@ -1198,6 +1198,7 @@ function run_copyvm() {
 #=======================================
 
 eclipse_usage="[options]"
+eclipse_defaults="-Xms1g -Xmx3g -XX:ReservedCodeCacheSize=512m -XX:+ShowConfiguration"
 eclipse_help="launch Eclipse with the Maxine VM
 
     Run Eclipse under Maxine VM with the given options supplied as
@@ -1206,7 +1207,11 @@ eclipse_help="launch Eclipse with the Maxine VM
     before any other VM options specified on the command line."
 
 function run_eclipse() {
-    run eclipse -vm ${maxine_vm} -vmargs $MAXVM_OPTIONS $@
+    if [ -z "$(type -t eclipse)" ]; then
+        echo "The Eclipse executable 'eclipse' must be on your PATH"
+        exit 1
+    fi
+    run eclipse -vm ${maxine_vm} -vmargs $eclipse_defaults $MAXVM_OPTIONS $@
 }
 
 #=======================================
