@@ -310,6 +310,23 @@ public final class CiConstant extends CiValue {
     }
 
     /**
+     * Gets the default value for a given kind.
+     * 
+     * @return the default value for {@code kind}'s {@linkplain CiKind#stackKind() stack kind}
+     */
+    public static CiConstant defaultValue(CiKind kind) {
+        switch (kind.stackKind()) {
+            case Int: return INT_0;
+            case Long: return LONG_0;
+            case Float: return FLOAT_0;
+            case Double: return DOUBLE_0;
+            case Object: return NULL_OBJECT;
+            case Word: return ZERO;
+        }
+        throw new IllegalArgumentException("Cannot det default CiConstant for kind " + kind);
+    }
+    
+    /**
      * Creates a boxed double constant.
      * @param d the double value to box
      * @return a boxed copy of {@code value}
