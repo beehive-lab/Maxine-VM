@@ -204,8 +204,9 @@ public class C1X implements RuntimeCompiler {
             assumptionsValidity = ClassDependencyManager.validateAssumptions(compiledMethod.assumptions());
             if (assumptionsValidity.isValid()) {
                 C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod, install);
-                ClassDependencyManager.registerValidatedTarget(assumptionsValidity, c1xTargetMethod);
-                return c1xTargetMethod;
+                if (ClassDependencyManager.registerValidatedTarget(assumptionsValidity, c1xTargetMethod)) {
+                    return c1xTargetMethod;
+                }
             }
             // Loop back and recompile.
         } while(true);

@@ -23,7 +23,7 @@
 package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.actor.holder.ClassID.*;
-
+import static com.sun.max.vm.actor.holder.ClassDependencyManager.DependencyTable.BitFields.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -188,57 +188,158 @@ public final class ClassDependencyManager {
     }
 
     /**
-     * Table tracking dependencies on ClassActor.
-     * The table maps class actors used as context in assumptions to an integer array that encode both the assumptions made and
-     * the target method making the assumptions.
-     * Initial statistics shows that the vast majority of target methods have a single concrete method dependencies, and less
-     * than 10 % have some unique concrete type dependencies and typically a single one.
-     * Further, most single concrete method dependencies are on leaf methods, i.e., wherein the context method is the concrete method.
-     * So an encoding of the dependencies should optimized for these case.
-     * We encode dependencies as integer sequences, overlaid over an integer array.
+     * Table tracking assumptions made on class types.
+     * The table maps class types used as context in assumptions to an integer array that encode both the assumptions made and
+     * the target methods making these assumptions.
+      *
+     * We encode dependencies over an integer array. The array starts with a header summarizing the type of assumptions recorded
+     * and their numbers.
+     * The rest of the array is made of two areas: a dependent method area and a dependency area, growing toward each other.
+     * Most class types have few assumptions made on them, although the number of target method making them may be large.
+     *
+     * list of pair of dependent ID, assumptions ID
      * A sequence starts with a header that encodes both a type of dependencies and the number of target methods.
      * The rest of the sequence may include further header information, followed by the integer identifiers assigned to the dependent
      * target methods.
-     * Dependencies types and the format of their sequence are the following:
-     * Unique Concrete Type: list of target method ID
-     * Leaf Concrete Method: index in class method actor, list of target method ID
-     * Unique Concrete Method: index in class method actor, class id of concrete method's holder, list of target method ID.
      *
      * Note: a context can have only one unique concrete type dependency type in its list.
      */
     static class DependencyTable {
-        enum HeaderInfo {
-            HAS_UCT(1, 0),
+
+        enum BitFields {
+            // Header bit fields
+            /**
+             * Header bit indicating whether some dependent methods make a unique concrete sub-type assumption is made on the type.
+             */
+            HAS_UCT(0, 1),
+            /**
+             * Header bit indicating whether unique concrete method assumptions were made on the type.
+             */
             HAS_UCM(1, 1),
-            HAS_LEAF(1, 2),
-            IS_LARGE(1, 3),
-            NUM_ASSUMPTIONS(12, 4),
-            NUM_TARGET_METHODS(16, 16);
+            /**
+             * Header bit indicating whether all the assumed unique concrete methods are the concrete implementation of this type.
+             * A leaner encoding and faster decoding can be used in this case.
+             */
+            LOCAL_UCM_ONLY(2, 1),
+            /**
+             * Header bit indicating whether the numbers of assumptions or target methods doesn't fit in the
+             * header.
+             * In this unlikely event, the next two integers in the int array are stored in the next two int.
+             */
+            IS_LARGE(3, 1),
+            /**
+             * Header field holding the length of the unique concrete method assumptions area for this type.
+             */
+            ASSUMPTIONS_LENGTH(4, 12),
+            /**
+             * Header field holding the number of target methods that make some assumption on this type.
+             * Indicate the current size of the
+             */
+            NUM_DEPENDENTS(16, 16),
+
+            // Dependent info fields
+            /**
+             * Dependent info field holding the index of the dependent target method.
+             * With 20 bits we can support about 10^6 dependent target methods.
+             */
+            DEPENDENT(0, 20),
+            /**
+             * Dependent info field indicating whether the target method assume this type has a unique concrete type.
+             */
+            ASSUMES_UCT(20, 1),
+            /**
+             * Dependent info field indicating that assumptions records are not inlined, but follows in the next integers in the stream.
+             */
+            OUT_OF_LINE(21, 1),
+            /**
+             * If {@link BitFields#OUT_OF_LINE} is set, holds the number assumptions describes in subsequent fields.
+             * Otherwise, holds a bit-set of the assumptions made by the dependent target method.
+             */
+            ASSUMPTIONS(22, 10),
+
+            // Assumption info fields
+            ASSUMPTION_METHOD_ID(0, 16),
+            ASSUMPTION_CLASS_ID(16, 15),
+            ASSUMPTION_NOT_LOCAL(31, 1),
+
+            // Single Target Method Assumption Encoding field.
+            // Assumption validator use a simple format to record a single dependent's assumptions: a list of int.
+            // top most two bits:
+            // 00: denotes a unique concrete type assumptions.
+            // 01: denotes non-local unique concrete method assumptions.
+            // 11: denotes a local unique concrete method
+            //
+            // So that a assumption record starting with
+            // value == 0 : denotes a UCT. No additional info in next int.
+            // value < 0  : denotes a UCM. Local method ID stored in lower 16 bits. Class ID of concrete method holder stored in next int.
+            // value > 0  : denotes a local UCM. Local method ID stored in lower 16 bits.
+
+            TARGET_ASSUMPTION(30, 2),
+            UCM_METHOD_ID(0, 16);
 
             final int mask;
             final int leftmostBitPos;
 
-            int getBitField(int header) {
-                return (header & mask) >> leftmostBitPos;
+            int setBitField(int field, int value) {
+                return field | (value << leftmostBitPos);
             }
 
+            int setBitField(int field, boolean value) {
+                if (MaxineVM.isDebug()) {
+                    FatalError.check(bitWidth() == 1, "must only be used for bit field of width 1");
+                }
+                if (value) {
+                    return field | mask;
+                }
+                return field & ~mask;
+            }
 
-            HeaderInfo(int numBits, int leftmostBitPos) {
+            int getBitField(int field) {
+                return (field & mask) >> leftmostBitPos;
+            }
+
+            boolean isNonZeroBitField(int header) {
+                return (header & mask) != 0;
+            }
+
+            int bitWidth() {
+                return Integer.bitCount(mask);
+            }
+
+            BitFields(int leftmostBitPos, int numBits) {
                 this.leftmostBitPos = leftmostBitPos;
                 this.mask = ((~0) & ((1 << numBits) - 1)) << leftmostBitPos;
             }
 
             static boolean hasUniqueConcreteTypeDependents(int header) {
-                return (HAS_UCT.mask & header) != 0;
+                return HAS_UCT.isNonZeroBitField(header);
             }
+
             static boolean hasUniqueConcreteMethodDependents(int header) {
-                return (header & (HAS_UCM.mask | HAS_LEAF.mask)) != 0;
+                return HAS_UCM.isNonZeroBitField(header);
             }
+
+            static boolean hasLocalUniqueConcreteMethodDependentsOnly(int header) {
+                return LOCAL_UCM_ONLY.isNonZeroBitField(header);
+            }
+
+            static boolean isLarge(int header) {
+                return IS_LARGE.isNonZeroBitField(header);
+            }
+
             static int numAssumptions(int header) {
-                return NUM_ASSUMPTIONS.getBitField(header);
+                return ASSUMPTIONS_LENGTH.getBitField(header);
             }
             static int numDependents(int header) {
-                return NUM_TARGET_METHODS.getBitField(header);
+                return NUM_DEPENDENTS.getBitField(header);
+            }
+
+            static int getDependentID(int dependentInfo) {
+                return DEPENDENT.getBitField(dependentInfo);
+            }
+
+            static int makeHeader(boolean hasUCT, boolean hasUCM, boolean localOnlyUCMs, boolean isLarge) {
+                return IS_LARGE.setBitField(LOCAL_UCM_ONLY.setBitField(HAS_UCM.setBitField(HAS_UCT.setBitField(0, hasUCT), hasUCM), localOnlyUCMs), isLarge);
             }
         }
 
@@ -249,11 +350,146 @@ public final class ClassDependencyManager {
         static final int INITIAL_CAPACITY = 600;
         final ConcurrentHashMap<RiType, int []> dependenciesTable = new ConcurrentHashMap<RiType, int []>(INITIAL_CAPACITY);
 
-        void addDependentToType(int dependentID, RiType type, int [] encodedDependency) {
-            int [] currentDependencies = dependenciesTable.get(type);
-            if (currentDependencies == null) {
+        static final int UCT_ONLY_HEADER = makeHeader(true, false, false, false);
+        static final int UCM_ONLY_HEADER = makeHeader(false, true, false, false);
+        static final int LOCAL_UCM_ONLY_HEADER = makeHeader(false, true, true, false);
+        static final int SINGLE_UCT_HEADER = NUM_DEPENDENTS.setBitField(UCT_ONLY_HEADER, 1);
+        static final int SINGLE_UCM_HEADER = ASSUMPTIONS_LENGTH.setBitField(NUM_DEPENDENTS.setBitField(UCM_ONLY_HEADER, 1), 2);
+        static final int SINGLE_LOCAL_UCM_HEADER = ASSUMPTIONS_LENGTH.setBitField(NUM_DEPENDENTS.setBitField(LOCAL_UCM_ONLY_HEADER, 1), 1);
+        static final int INLINE_DEPENDENT_ASSUMPTION_THRESHOLD = 2 * ASSUMPTIONS.bitWidth();
+        static final int FIRST_LARGE_CLASS_ID = 1 << 15;
 
+        int [] grow(int [] currentAssumptions) {
+            // TODO
+            return currentAssumptions;
+        }
+
+        void addDependentToType(int dependentID, RiType type, int [] assumptionList) {
+            int [] currentAssumptions = dependenciesTable.get(type);
+            int dependentInfo =  DEPENDENT.setBitField(0, dependentID);
+            if (currentAssumptions == null) {
+                if (assumptionList.length <= 3) {
+                    final int assumption = assumptionList[1];
+                    if (assumption == 0) {
+                        currentAssumptions = new int[] {SINGLE_UCT_HEADER, ASSUMES_UCT.setBitField(dependentInfo, true) };
+                    } else if (assumption > 0) {
+                        currentAssumptions = new int[] {SINGLE_LOCAL_UCM_HEADER,
+                                        ASSUMPTIONS.setBitField(dependentInfo, 1), assumption };
+                    } else {
+                        final int classID = assumptionList[3];
+                        currentAssumptions = new int[] {SINGLE_UCM_HEADER,
+                                        ASSUMPTIONS.setBitField(dependentInfo, 1), assumption, classID };
+                    }
+                    dependenciesTable.put(type, currentAssumptions);
+                    return;
+                }
+                int size = assumptionList[0];
+                try {
+                    // Optimistically build a bitset for assumptions.
+                    int assumptionBitSets = 0;
+                    int numAssumptions = 0;
+                    int i = 1; // Skip size field.
+                    int header = SINGLE_LOCAL_UCM_HEADER;
+                    int end = 1 + size;
+                    currentAssumptions = new int[end + 1];
+
+                    while (i < size) {
+                        int assumption = assumptionList[i++];
+                        if (assumption > 0) {
+                            currentAssumptions[end - numAssumptions++] = assumption;
+                        } else if (assumption < 0) {
+                            int classID = assumptionList[i++];
+                            if (classID >= FIRST_LARGE_CLASS_ID) {
+                                throw new InternalError("need large format");
+                            }
+                            currentAssumptions[end - numAssumptions++] =
+                                ASSUMPTION_NOT_LOCAL.setBitField(ASSUMPTION_CLASS_ID.setBitField(assumption, classID), 1);
+                            header = LOCAL_UCM_ONLY.setBitField(header, false);
+                        } else {
+                            dependentInfo = ASSUMES_UCT.setBitField(dependentInfo, true);
+                            header = HAS_UCT.setBitField(header, true);
+                        }
+                        if (numAssumptions > ASSUMPTIONS.bitWidth()) {
+                            throw new InternalError("need large format");
+                        }
+                    }
+
+                    dependentInfo = ASSUMPTIONS.setBitField(dependentInfo, assumptionBitSets);
+                    header = ASSUMPTIONS_LENGTH.setBitField(header, numAssumptions);
+                    currentAssumptions[0] = header;
+                    currentAssumptions[1] = dependentInfo;
+                    dependenciesTable.put(type, currentAssumptions);
+                    return;
+                } catch (InternalError bailout) {
+                    FatalError.unexpected("Unimplemented");
+                }
             }
+            // Add to existing records.
+            int header = currentAssumptions[0];
+            if (IS_LARGE.isNonZeroBitField(header)) {
+                FatalError.unexpected("Unimplemented");
+            }
+            int size = assumptionList[0];
+            int [] newAssumptions = null;
+            int newAssumptionCount = 0;
+
+            int numAssumptions = ASSUMPTIONS_LENGTH.getBitField(header);
+            int spaceLeft = currentAssumptions.length - (numAssumptions + NUM_DEPENDENTS.getBitField(header));
+
+            int i = 1;
+            int assumptionBitSet = 0;
+            do {
+                int assumption = assumptionList[i++];
+                if (assumption == 0) {
+                    dependentInfo = ASSUMES_UCT.setBitField(dependentInfo, true);
+                    header = HAS_UCT.setBitField(header, true);
+                } else {
+                    int bitIndex = hasAssumptionOn(currentAssumptions, numAssumptions, UCM_METHOD_ID.getBitField(assumption));
+                    if (bitIndex == 0) {
+                        // Add assumption to set.
+                        if (newAssumptions == null) {
+                            newAssumptions = new int[size - i];
+                        }
+                        if (assumption > 0) {
+                            newAssumptions[newAssumptionCount] = assumption;
+                        } else {
+                            int classID = assumptionList[i++];
+                            if (classID >= FIRST_LARGE_CLASS_ID) {
+                                FatalError.unexpected("need large format");
+                            }
+                            newAssumptions[newAssumptionCount] =
+                                ASSUMPTION_NOT_LOCAL.setBitField(ASSUMPTION_CLASS_ID.setBitField(assumption, classID), 1);
+                            header = LOCAL_UCM_ONLY.setBitField(header, false);
+                        }
+                        bitIndex = 1 << (numAssumptions + newAssumptionCount);
+                        if (bitIndex >  ASSUMPTIONS.bitWidth()) {
+                            FatalError.unexpected("need large format");
+                        }
+                        newAssumptionCount++;
+                    }
+                    assumptionBitSet |= bitIndex;
+                }
+            } while(i < size);
+        }
+
+        /**
+         * Search the assumptions recorded in the assumption area for an assumption on the specified method.
+         * Note: there can be only one assumption for a given method id.
+         * @param currentAssumptions
+         * @param numAssumptions
+         * @param methodID
+         * @return the bit index in a bitmap for the assumption.
+         */
+        private static int hasAssumptionOn(int [] currentAssumptions, int numAssumptions, int methodID) {
+            int i = 0;
+            int end = currentAssumptions.length - 1;
+            while (i < numAssumptions) {
+                if (ASSUMPTION_METHOD_ID.getBitField(currentAssumptions[end--]) == methodID) {
+                    return 1 << i;
+                }
+                i++;
+            }
+            return 0;
         }
 
         int [] addDependentTargetMethod(int dependentID, HashMap<RiType, int []> dependencies) {
@@ -522,10 +758,16 @@ public final class ClassDependencyManager {
     }
 
     /**
-     * Validate assumptions for a single compiled method and build per class type list of assumptions made on them.
-     * The class type list of assumption are pre-formatted during validation in a format that'll ease updating the global
+     * Validate assumptions for a single compiled method and build lists of assumptions made on class type, one list per type.
+     * Each type list of assumptions are pre-formatted during validation in a format that'll ease updating the global
      * dependency table in case assumptions are valid.
      * All lists are dropped on first invalid assumption met.
+     *
+     * Initial statistics on boot image generation shows that the vast majority of target methods have a single concrete
+     * method dependencies, and less
+     * than 10 % have some unique concrete type dependencies and typically a single one.
+     * Further, most single concrete method dependencies are on leaf methods, i.e., wherein the context method is the concrete method.
+     * So an encoding of the dependencies should optimized for these cases.
      */
     static class AssumptionValidator implements CiAssumptions.AssumptionProcessor {
 
