@@ -999,6 +999,8 @@ public abstract class ClassActor extends Actor implements RiType {
                     result.set(superMethod.vTableIndex() - Hub.vTableStartIndex(), virtualMethodActor);
                     virtualMethodActor.setVTableIndex(superMethod.vTableIndex());
                 }
+            } else {
+                virtualMethodActor.setVTableIndex(VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX);
             }
         }
 
@@ -1651,6 +1653,10 @@ public abstract class ClassActor extends Actor implements RiType {
             return implementation;
         } else if (methodActor instanceof VirtualMethodActor) {
             final int index = ((VirtualMethodActor) methodActor).vTableIndex();
+            assert index != VirtualMethodActor.INVALID_VTABLE_INDEX;
+            if (index == VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX) {
+                return methodActor;
+            }
             final VirtualMethodActor implementation = getVirtualMethodActorByVTableIndex(index);
             return implementation;
         } else {

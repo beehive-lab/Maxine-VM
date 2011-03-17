@@ -404,10 +404,11 @@ public final class T1XCompilation {
      * was encountered when compiling a method.
      */
     @SuppressWarnings("serial")
-    static class UnsupportedSubroutineException extends RuntimeException {
+    class UnsupportedSubroutineException extends RuntimeException {
         final int bci;
         final int opcode;
         public UnsupportedSubroutineException(int opcode, int bci) {
+            super(Bytecodes.nameOf(opcode) + "@" + bci + " in " + method);
             this.bci = bci;
             this.opcode = opcode;
         }

@@ -56,14 +56,14 @@ public final class Throw {
     static {
         VMOptions.addFieldOption("-XX:", "TraceExceptions", Throw.class,
             "Report a stack trace for every exception thrown, regardless of whether the exception is " +
-            "caught or uncaught.", Phase.PRISTINE);
+            "caught or uncaught.", Phase.STARTING);
         VMOptions.addFieldOption("-XX:", "TraceExceptionsRaw", Throw.class,
             "Report a raw stack trace for every exception thrown, regardless of whether the exception is " +
             "caught or uncaught.", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "TraceTheseExceptions", Throw.class,
             "Report a stack trace for every exception thrown whose class name contains <value> " +
             "(or does not contain <value> if <value> starts with '!'), " +
-            "regardless of whether the exception is caught or uncaught.", Phase.PRISTINE);
+            "regardless of whether the exception is caught or uncaught.", Phase.STARTING);
         VMOptions.addFieldOption("-XX:", "ScanStackOnFatalError", Throw.class,
             "Perform a raw stack scan when a fatal VM occurs.", Phase.PRISTINE);
     }
