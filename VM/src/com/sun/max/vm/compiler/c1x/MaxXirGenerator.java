@@ -24,6 +24,8 @@ package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized.*;
+import static com.sun.max.vm.compiler.snippet.Snippet.MakeHolderInitialized.*;
 import static com.sun.max.vm.layout.Layout.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -1678,7 +1680,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         public static Object resolveNew(ResolutionGuard guard) {
             ClassActor classActor = ResolutionSnippet.ResolveClassForNew.resolveClassForNew(guard);
-            classActor.makeInitialized();
+            makeClassInitialized(classActor);
             return classActor.dynamicHub();
         }
 
@@ -1696,24 +1698,27 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         public static int resolveGetStatic(ResolutionGuard.InPool guard) {
             FieldActor fieldActor = ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard);
-            fieldActor.holder().makeInitialized();
+            makeHolderInitialized(fieldActor);
             return fieldActor.offset();
         }
 
         public static int resolvePutStatic(ResolutionGuard.InPool guard) {
             FieldActor fieldActor = ResolutionSnippet.ResolveStaticFieldForWriting.resolveStaticFieldForWriting(guard);
+            makeHolderInitialized(fieldActor);
             fieldActor.holder().makeInitialized();
             return fieldActor.offset();
         }
 
         public static Object resolveStaticTuple(ResolutionGuard guard) {
             ClassActor classActor = ResolveClass.resolveClass(guard);
-            classActor.makeInitialized();
+            makeClassInitialized(classActor);
             return classActor.staticTuple();
         }
 
         public static Word resolveStaticMethod(ResolutionGuard.InPool guard) {
-            return CompilationScheme.Static.compile(ResolutionSnippet.ResolveStaticMethod.resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+            StaticMethodActor methodActor = ResolutionSnippet.ResolveStaticMethod.resolveStaticMethod(guard);
+            makeHolderInitialized(methodActor);
+            return CompilationScheme.Static.compile(methodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
 
         public static int resolveVirtualMethod(ResolutionGuard.InPool guard) {
