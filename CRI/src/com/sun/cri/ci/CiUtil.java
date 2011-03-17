@@ -603,17 +603,24 @@ public class CiUtil {
      */
     public static StringBuilder append(StringBuilder sb, CiFrame frame) {
         appendLocation(sb.append("at "), frame.method, frame.bci);
-        String sep = NEW_LINE + "  ";
         if (frame.values != null && frame.values.length > 0) {
-            sb.append(sep);
+            sb.append(NEW_LINE);
             String table = tabulateValues(frame);
-            for (String row : table.split(NEW_LINE)) {
+            String[] rows = table.split(NEW_LINE);
+            for (int i = 0; i < rows.length; i++) {
+                String row = rows[i];
                 if (!row.trim().isEmpty()) {
-                    sb.append("  ").append(row).append(NEW_LINE);
+                    sb.append("  ").append(row);
+                    if (i != rows.length - 1) {
+                        sb.append(NEW_LINE);
+                    }
                 }
             }
         }
-        if (frame.caller != null) {
+        if (frame.caller() != null) {
+            sb.append(NEW_LINE);
+            append(sb, frame.caller());
+        } else if (frame.caller != null) {
             sb.append(NEW_LINE);
             append(sb, frame.caller);
         }
