@@ -1271,6 +1271,28 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             } else {
                 throw Util.shouldNotReachHere();
             }
+        } else if (opr1.isStackSlot()) {
+            CiAddress left = asAddress(opr1);
+            if (opr2.isConstant()) {
+                CiConstant right = (CiConstant) opr2;
+                // stack - constant
+                switch (opr1.kind) {
+                    case Boolean :
+                    case Byte    :
+                    case Char    :
+                    case Short   :
+                    case Int     : masm.cmpl(left, right.asInt()); break;
+                    case Long    :
+                    case Word    : assert Util.isInt(right.asLong());
+                                   masm.cmpq(left, right.asInt()); break;
+                    case Object  : assert right.isNull();
+                                   masm.cmpq(left, 0); break;
+                    default      : throw Util.shouldNotReachHere();
+                }
+            } else {
+                throw Util.shouldNotReachHere();
+            }
+
         } else {
             throw Util.shouldNotReachHere(opr1.toString() + " opr2 = " + opr2);
         }
@@ -1553,15 +1575,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void doPeephole(LIRList list) {
         // Do nothing for now
-    }
-
-    public static Object asRegisterOrConstant(CiValue operand) {
-        if (operand.isRegister()) {
-            return operand.asRegister();
-        } else {
-            assert operand.isConstant();
-            return operand;
-        }
     }
 
     @Override
