@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,8 +44,11 @@ public class VirtualMethodActor extends ClassMethodActor {
               codeAttribute, intrinsic);
     }
 
+    public static final int NONVIRTUAL_VTABLE_INDEX = -2;
+    public static final int INVALID_VTABLE_INDEX = -4;
+
     @CONSTANT
-    private int vTableIndex;
+    private int vTableIndex = INVALID_VTABLE_INDEX;
 
     @INLINE
     public final int vTableIndex() {
@@ -53,7 +56,7 @@ public class VirtualMethodActor extends ClassMethodActor {
     }
 
     public void setVTableIndex(int vTableIndex) {
-        assert this.vTableIndex == 0;
+        assert this.vTableIndex == INVALID_VTABLE_INDEX;
         this.vTableIndex = vTableIndex;
     }
 }
