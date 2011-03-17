@@ -249,7 +249,7 @@ public class MaxineTester {
     static void listTests(String filter) {
         listTests(filter, "c1x", MaxineTesterConfiguration.zeeC1XTests.keySet());
         listTests(filter, "dacapo2006", MaxineTesterConfiguration.zeeDacapo2006Tests);
-        listTests(filter, "dacapobach", MaxineTesterConfiguration.zeeDacapo2006Tests);
+        listTests(filter, "dacapobach", MaxineTesterConfiguration.zeeDacapoBachTests);
         listTests(filter, "specjvm98", MaxineTesterConfiguration.zeeSpecjvm98Tests);
         listTests(filter, "specjvm2008", MaxineTesterConfiguration.zeeSpecjvm2008Tests);
         listTests(filter, "shootout", MaxineTesterConfiguration.zeeShootoutTests);
