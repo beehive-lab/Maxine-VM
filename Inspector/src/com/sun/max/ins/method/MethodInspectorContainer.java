@@ -54,7 +54,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
 
     @Override
     protected Rectangle defaultFrameBounds() {
-        return  inspection().geometry().methodsFrameDefaultBounds();
+        return  inspection().geometry().methodsDefaultFrameBounds();
     }
 
     @Override

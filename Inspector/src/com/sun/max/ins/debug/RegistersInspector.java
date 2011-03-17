@@ -81,7 +81,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
     @Override
     protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().registersFrameDefaultBounds();
+        return inspection().geometry().registersDefaultFrameBounds();
     }
 
     @Override

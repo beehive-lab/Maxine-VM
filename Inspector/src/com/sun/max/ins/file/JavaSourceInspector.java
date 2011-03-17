@@ -77,7 +77,7 @@ public final class JavaSourceInspector extends FileInspector {
         textArea.setCaretPosition(0);
 
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), textArea);
-        scrollPane.setPreferredSize(inspection().geometry().javaSourceFramePrefSize());
+        scrollPane.setPreferredSize(inspection().geometry().javaSourcePrefFrameSize());
         //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
         setContentPane(scrollPane);
         gui().moveToMiddle(this);

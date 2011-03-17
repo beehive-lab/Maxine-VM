@@ -256,9 +256,9 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
 
         // Set default geometry; may get overridden by settings when initialized
-        setMinimumSize(inspection.geometry().inspectorFrameMinSize());
-        setPreferredSize(inspection.geometry().inspectorFramePrefSize());
-        setLocation(inspection.geometry().inspectorFrameDefaultLocation());
+        setMinimumSize(inspection.geometry().inspectorMinFrameSize());
+        setPreferredSize(inspection.geometry().inspectorPrefFrameSize());
+        setLocation(inspection.geometry().inspectorDefaultFrameLocation());
 
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {

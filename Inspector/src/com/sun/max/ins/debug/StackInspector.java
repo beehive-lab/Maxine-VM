@@ -52,7 +52,7 @@ import com.sun.max.vm.actor.member.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public class StackInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class StackInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     // Set to null when inspector closed.
     private static StackInspector stackInspector;
@@ -347,7 +347,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().stackFrameDefaultBounds();
+        return inspection().geometry().stackDefaultFrameBounds();
     }
 
     @Override

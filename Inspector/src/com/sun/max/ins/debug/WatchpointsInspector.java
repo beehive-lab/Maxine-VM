@@ -94,7 +94,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
 
     @Override
     protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().watchpointsFrameDefaultBounds();
+        return inspection().geometry().watchpointsDefaultFrameBounds();
     }
 
     @Override

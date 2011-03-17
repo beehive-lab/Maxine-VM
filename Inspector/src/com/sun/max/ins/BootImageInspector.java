@@ -80,7 +80,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
 
     @Override
     protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().bootImageFrameDefaultBounds();
+        return inspection().geometry().bootImageDefaultFrameBounds();
     }
 
     @Override
