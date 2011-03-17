@@ -75,10 +75,30 @@ public final class ClassDependencyManager {
      */
     private static final ReentrantReadWriteLock classHierarchyLock = new ReentrantReadWriteLock();
 
+    // TODO: factor out with similar code in Class ID ?
+    private static final int MINIMAL_DEPENDENT_TARGET_METHOD = 5000;
+
+    /**
+     * The table recording target methods compiled with valid assumptions.
+     * Such target methods are associated with a {@link ValidAssumptions} instance that
+     * records the class ID of the classes upon which assumptions are made. The index to the table slot
+     * is used as a unique identifier for the dependent target method, and is used in per-class records
+     * of dependent target methods.
+     */
+    private static VariableLengthArray<ValidAssumptions> idToValidAssumptions = new VariableLengthArray<ValidAssumptions>(MINIMAL_DEPENDENT_TARGET_METHOD);
+    private static BitSet usedIDs = new BitSet();
+
+    /**
+     * The table mapping class types to their dependent target methods and the assumptions these makes on the class type.
+     * The table is updated whenever a target method compiled with assumption is validated, and inspected to re-assess these
+     * assumptions whenever the class hierarchy is modified with new types.
+     * @see DependencyTable for details.
+     */
+    private static DependencyTable typeWithDependentTargetMethodTable = new DependencyTable();
+
     private static final ObjectThreadLocal<UniqueConcreteMethodSearch> UCM_SEARCH_HELPER =
         new ObjectThreadLocal<UniqueConcreteMethodSearch>("UCM_SEARCH_HELPER", "thread local helper for class dependency management");
 
-    private static final int MINIMAL_DEPENDENT_TARGET_METHOD = 5000;
 
     static class ValidAssumptions extends AssumptionValidity {
         /**
@@ -116,13 +136,13 @@ public final class ClassDependencyManager {
     }
 
     public static boolean registerValidatedTarget(AssumptionValidity validity, TargetMethod targetMethod) {
-        ValidAssumptions validAssumption = ((ValidAssumptions) validity);
+        ValidAssumptions validAssumption = (ValidAssumptions) validity;
         classHierarchyLock.readLock().lock();
         try {
             Object dependencies = validAssumption.dependencies;
             if (dependencies instanceof AssumptionValidator) {
                 AssumptionValidator validator = (AssumptionValidator) dependencies;
-
+                typeWithDependentTargetMethodTable.addDependentTargetMethod(validAssumption.id, validator.typeAssumptions);
 
                 validAssumption.setTargetMethod(targetMethod);
             }
@@ -149,11 +169,6 @@ public final class ClassDependencyManager {
         }
         return AssumptionValidity.noAssumptionsValidity;
     }
-
-    // TODO: factor out with similar code in Class ID ?
-
-    private static VariableLengthArray<ValidAssumptions> idToValidAssumptions = new VariableLengthArray<ValidAssumptions>(MINIMAL_DEPENDENT_TARGET_METHOD);
-    private static BitSet usedIDs = new BitSet();
 
     static int registerValidAssumptions(ValidAssumptions validAssumptions) {
         synchronized (usedIDs) {
@@ -192,10 +207,6 @@ public final class ClassDependencyManager {
      * Note: a context can have only one unique concrete type dependency type in its list.
      */
     static class DependencyTable {
-        static final int LEAF_CONCRETE_METHOD_DEP = 0 << 30;
-        static final int UNIQUE_CONCRETE_METHOD_DEP = 1 << 30;
-        static final int UNIQUE_CONCRETE_TYPE_DEP = 2 << 30;
-
         enum HeaderInfo {
             HAS_UCT(1, 0),
             HAS_UCM(1, 1),
@@ -206,15 +217,31 @@ public final class ClassDependencyManager {
 
             final int mask;
             final int leftmostBitPos;
+
+            int getBitField(int header) {
+                return (header & mask) >> leftmostBitPos;
+            }
+
+
             HeaderInfo(int numBits, int leftmostBitPos) {
                 this.leftmostBitPos = leftmostBitPos;
                 this.mask = ((~0) & ((1 << numBits) - 1)) << leftmostBitPos;
             }
 
-            static boolean hasUniqueConcreteTypeDependency(int h) {
-                return (HAS_UCT.mask & h) == 1;
+            static boolean hasUniqueConcreteTypeDependents(int header) {
+                return (HAS_UCT.mask & header) != 0;
+            }
+            static boolean hasUniqueConcreteMethodDependents(int header) {
+                return (header & (HAS_UCM.mask | HAS_LEAF.mask)) != 0;
+            }
+            static int numAssumptions(int header) {
+                return NUM_ASSUMPTIONS.getBitField(header);
+            }
+            static int numDependents(int header) {
+                return NUM_TARGET_METHODS.getBitField(header);
             }
         }
+
        /**
          * Initial capacity of the table. Based on statistics gathered over boot image generation and VM startup.
          * Needs to be adjusted depending on the dynamic compilation scheme.
@@ -222,19 +249,19 @@ public final class ClassDependencyManager {
         static final int INITIAL_CAPACITY = 600;
         final ConcurrentHashMap<RiType, int []> dependenciesTable = new ConcurrentHashMap<RiType, int []>(INITIAL_CAPACITY);
 
-        void add(int validAssumptionID, RiType type, int [] encodedDependency) {
+        void addDependentToType(int dependentID, RiType type, int [] encodedDependency) {
             int [] currentDependencies = dependenciesTable.get(type);
             if (currentDependencies == null) {
 
             }
         }
 
-        int [] updateDependencyTable(int validAssumptionID, HashMap<RiType, int []> dependencies) {
+        int [] addDependentTargetMethod(int dependentID, HashMap<RiType, int []> dependencies) {
             int [] dependsOnClassID = new int [dependencies.size()];
             int i = 0;
             for (RiType type : dependencies.keySet()) {
                 dependsOnClassID[i++] = ((ClassActor) type).id;
-                add(validAssumptionID, type, dependencies.get(type));
+                addDependentToType(dependentID, type, dependencies.get(type));
             }
             return dependsOnClassID;
         }
@@ -501,12 +528,19 @@ public final class ClassDependencyManager {
      * All lists are dropped on first invalid assumption met.
      */
     static class AssumptionValidator implements CiAssumptions.AssumptionProcessor {
-        static final int [] canonicalizedSingleUCT = new int[] {2, DependencyTable.UNIQUE_CONCRETE_TYPE_DEP};
+
+        static final int LEAF_CONCRETE_METHOD_DEP = 0 << 30;
+
+        static final int UNIQUE_CONCRETE_METHOD_DEP = 1 << 30;
+
+        static final int UNIQUE_CONCRETE_TYPE_DEP = 2 << 30;
+
+        static final int [] canonicalizedSingleUCT = new int[] {2, AssumptionValidator.UNIQUE_CONCRETE_TYPE_DEP};
 
         /**
          * Maps of class types to assumptions made about them.
          */
-        private final HashMap<RiType, int []> dependencies = new HashMap<RiType, int []>(10);
+        private final HashMap<RiType, int []> typeAssumptions = new HashMap<RiType, int []>(10);
 
         /**
          * Result of the validation.
@@ -517,7 +551,7 @@ public final class ClassDependencyManager {
             int length = encodedDependencies.length;
             int [] newEncodedDependencies = new int[length << 1];
             System.arraycopy(encodedDependencies, 0, newEncodedDependencies, 0, length);
-            dependencies.put(context, newEncodedDependencies);
+            typeAssumptions.put(context, newEncodedDependencies);
             return newEncodedDependencies;
         }
 
@@ -535,22 +569,22 @@ public final class ClassDependencyManager {
                 valid = classActor.uniqueConcreteType == subClassActor.id;
             }
             if (valid) {
-                int [] encodedDependencies = dependencies.get(context);
+                int [] encodedDependencies = typeAssumptions.get(context);
                 if (encodedDependencies == null) {
-                    dependencies.put(context, canonicalizedSingleUCT);
+                    typeAssumptions.put(context, canonicalizedSingleUCT);
                 } else if (encodedDependencies != canonicalizedSingleUCT) {
                     int end = encodedDependencies[0];
                     if (end == encodedDependencies.length) {
                         encodedDependencies = grow(context, encodedDependencies);
                     }
-                    encodedDependencies[end++] = DependencyTable.UNIQUE_CONCRETE_TYPE_DEP;
+                    encodedDependencies[end++] = AssumptionValidator.UNIQUE_CONCRETE_TYPE_DEP;
                     encodedDependencies[0] = end;
                 } // otherwise: nothing to do as there can be only one single concrete type.
                 return true;
             }
             validated = false;
             // Drop whatever was built so far.
-            dependencies.clear();
+            typeAssumptions.clear();
             return false;
         }
 
@@ -558,16 +592,16 @@ public final class ClassDependencyManager {
         public boolean processUniqueConcreteMethod(RiMethod context, RiMethod method) {
             if (!isUniqueConcreteMethod(context, method)) {
                 // Drop whatever was built so far.
-                dependencies.clear();
+                typeAssumptions.clear();
                 validated = false;
                 return false;
             }
             final RiType contextHolder = context.holder();
-            int [] encodedDependencies = dependencies.get(contextHolder);
+            int [] encodedDependencies = typeAssumptions.get(contextHolder);
             if (encodedDependencies == null) {
                 encodedDependencies = new int[4];
                 encodedDependencies[0] = 1;
-                dependencies.put(contextHolder, encodedDependencies);
+                typeAssumptions.put(contextHolder, encodedDependencies);
             }
             int end = encodedDependencies[0];
             int contextMethodIndex = ((MethodActor) method).memberIndex();
@@ -575,13 +609,13 @@ public final class ClassDependencyManager {
                 if (end + 2 >= encodedDependencies.length) {
                     encodedDependencies = grow(contextHolder, encodedDependencies);
                 }
-                encodedDependencies[end++] = DependencyTable.LEAF_CONCRETE_METHOD_DEP;
+                encodedDependencies[end++] = AssumptionValidator.LEAF_CONCRETE_METHOD_DEP;
                 encodedDependencies[end++] = contextMethodIndex;
             } else {
                 if (end + 3 >= encodedDependencies.length) {
                     encodedDependencies = grow(contextHolder, encodedDependencies);
                 }
-                encodedDependencies[end++] = DependencyTable.UNIQUE_CONCRETE_METHOD_DEP;
+                encodedDependencies[end++] = AssumptionValidator.UNIQUE_CONCRETE_METHOD_DEP;
                 encodedDependencies[end++] = contextMethodIndex;
                 encodedDependencies[end++] = ((ClassActor) method.holder()).id;
             }
