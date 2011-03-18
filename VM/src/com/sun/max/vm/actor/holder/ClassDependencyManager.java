@@ -96,8 +96,12 @@ public final class ClassDependencyManager {
      */
     private static DependentTargetMethodTable dependentTargetMethodTable = new DependentTargetMethodTable();
 
-    private static final ObjectThreadLocal<UniqueConcreteMethodSearch> UCM_SEARCH_HELPER =
-        new ObjectThreadLocal<UniqueConcreteMethodSearch>("UCM_SEARCH_HELPER", "thread local helper for class dependency management");
+    private static final ObjectThreadLocal<UniqueConcreteMethodSearch> UCM_SEARCH_HELPER = new ObjectThreadLocal<UniqueConcreteMethodSearch>("UCM_SEARCH_HELPER", "thread local helper for class dependency management") {
+        @Override
+        public UniqueConcreteMethodSearch initialValue() {
+            return new UniqueConcreteMethodSearch();
+        }
+    };
 
 
     /**
@@ -264,6 +268,7 @@ public final class ClassDependencyManager {
 
         }
     }
+
     /**
      * Table mappings class types to target method that made assumption on them.
      * Each class types are assigned
@@ -606,6 +611,7 @@ public final class ClassDependencyManager {
         static final int UNIQUE_CONCRETE_TYPE_DEP = 0 << 30;
         static final int LEAF_CONCRETE_METHOD_DEP = 1 << 30;
         static final int UNIQUE_CONCRETE_METHOD_DEP = 2 << 30;
+        static final int TAG_MASK = ~(3 << 30);
 
         static final int [] canonicalizedSingleUCT = new int[] {2, UNIQUE_CONCRETE_TYPE_DEP};
 
@@ -638,6 +644,7 @@ public final class ClassDependencyManager {
         private static final short DEFAULT_SUMMARY_FLAG = CLASS_LOCAL_UCM_ONLY.setBooleanFlag(CLASS_HAS_UCM.setBooleanFlag((short) 0));
         private static final int MAX_ASSUMPTION_LENGTH = 1 << CLASS_ASSUMPTIONS_LENGTH.bitWidth();
 
+
         public short [] packAssumptions() {
             FatalError.check(ClassID.largestClassId() < Short.MAX_VALUE, "Support for 1 << 16 number of classes not supported yet");
             // Pre-compute size of the dependencies arrays:
@@ -659,9 +666,9 @@ public final class ClassDependencyManager {
                     FatalError.check(assumption >= Short.MAX_VALUE, "Not supported");
                     if (assumption > 0) {
                         // A local only unique concrete method.
-                        assumptions[dependenciesIndex++] = (short) assumption;
+                        assumptions[dependenciesIndex++] = (short) (assumption & TAG_MASK);
                     } else if (assumption < 0) {
-                        assumptions[dependenciesIndex++] = (short) assumption;
+                        assumptions[dependenciesIndex++] = (short) (assumption & TAG_MASK);
                         assumptions[dependenciesIndex++] = (short) assumptionList[i++];
                         assumptionsSummary = CLASS_LOCAL_UCM_ONLY.clearBooleanFlag(assumptionsSummary);
                     } else {
@@ -722,18 +729,16 @@ public final class ClassDependencyManager {
             int contextMethodIndex = ((MethodActor) method).memberIndex();
             if (context == method) {
                 totalLocal++;
+                if (end + 1 >= encodedDependencies.length) {
+                    encodedDependencies = grow(contextHolder, encodedDependencies);
+                }
+                encodedDependencies[end++] = contextMethodIndex | AssumptionValidator.LEAF_CONCRETE_METHOD_DEP;
+            } else {
+                totalNonLocal++;
                 if (end + 2 >= encodedDependencies.length) {
                     encodedDependencies = grow(contextHolder, encodedDependencies);
                 }
-                encodedDependencies[end++] = AssumptionValidator.LEAF_CONCRETE_METHOD_DEP;
-                encodedDependencies[end++] = contextMethodIndex;
-            } else {
-                totalNonLocal++;
-                if (end + 3 >= encodedDependencies.length) {
-                    encodedDependencies = grow(contextHolder, encodedDependencies);
-                }
-                encodedDependencies[end++] = AssumptionValidator.UNIQUE_CONCRETE_METHOD_DEP;
-                encodedDependencies[end++] = contextMethodIndex;
+                encodedDependencies[end++] = contextMethodIndex | AssumptionValidator.UNIQUE_CONCRETE_METHOD_DEP;
                 encodedDependencies[end++] = ((ClassActor) method.holder()).id;
             }
             encodedDependencies[0] = end;
@@ -741,7 +746,7 @@ public final class ClassDependencyManager {
         }
     }
 
-    static class AssumptionStatsGatherer implements CiAssumptions.AssumptionProcessor {
+    static class CiAssumptionStatsGatherer implements CiAssumptions.AssumptionProcessor {
         int totalDeps = 0;
         int numDep = 0;
         int numUCT = 0;
@@ -825,13 +830,13 @@ public final class ClassDependencyManager {
         }
     }
 
-    private static AssumptionStatsGatherer assumptionStatsGatherer = new AssumptionStatsGatherer();
+    private static CiAssumptionStatsGatherer assumptionStatsGatherer = new CiAssumptionStatsGatherer();
 
     /**
      * Dump the table in the log.
      */
     public static void dump() {
-        assumptionStatsGatherer.report();
+        // assumptionStatsGatherer.report();
 
         if (!enableDumpOption) {
             return;
