@@ -717,23 +717,11 @@ public final class ClassfileReader {
     }
 
     @HOSTED_ONLY
-    private static final Class CPS_BYTECODE_TEMPLATE = loadClassOrNull("com.sun.max.vm.cps.template.BYTECODE_TEMPLATE");
-
-    @HOSTED_ONLY
-    private static final Class T1X_TEMPLATE = loadClassOrNull("com.sun.max.vm.t1x.T1X_TEMPLATE");
-
-    @HOSTED_ONLY
-    private static Class loadClassOrNull(String name) {
-        try {
-            return Class.forName(name);
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
-    }
+    public static final HashSet<Class<? extends Annotation>> bytecodeTemplateClasses = new HashSet<Class<? extends Annotation>>();
 
     @HOSTED_ONLY
     private static boolean isBytecodeTemplate(Class<? extends Annotation> anno) {
-        return anno == T1X_TEMPLATE || anno == CPS_BYTECODE_TEMPLATE;
+        return bytecodeTemplateClasses.contains(anno);
     }
 
     protected MethodActor[] readMethods(boolean isInterface) {
