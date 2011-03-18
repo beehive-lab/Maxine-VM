@@ -114,12 +114,9 @@ public class Intrinsics extends IntrinsifierClient {
             case ALLOCA             :
             case ALLOCSTKVAR        :
             case JNICALL            :
-            case TEMPLATE_CALL               :
+            case TEMPLATE_CALL      :
             case ICMP               :
-            case WCMP               :
-            case RET                :
-            case JSR_W              :
-            case JSR                : return true;
+            case WCMP               : return true;
             // Checkstyle: resume
         }
         return false;
