@@ -30,14 +30,14 @@ import com.sun.max.annotate.*;
  *
  * @author Laurent Daynes
  */
-public abstract class AssumptionValidity {
+public abstract class ClassHierarchyAssumptions {
     public abstract boolean isValid();
 
-    private static final class CanonicalizedAssumptionValidity extends AssumptionValidity {
+    private static final class CanonicalizedClassHierarchyAssumptions extends ClassHierarchyAssumptions {
         private final boolean validated;
 
         @HOSTED_ONLY
-        CanonicalizedAssumptionValidity(boolean initialValue) {
+        CanonicalizedClassHierarchyAssumptions(boolean initialValue) {
             validated = initialValue;
         }
 
@@ -50,11 +50,11 @@ public abstract class AssumptionValidity {
     /**
      * Canonicalized instance of assumption validity for assumption-less compilations.
      */
-    public static final AssumptionValidity noAssumptionsValidity = new CanonicalizedAssumptionValidity(true);
+    public static final ClassHierarchyAssumptions noAssumptions = new CanonicalizedClassHierarchyAssumptions(true);
     /**
      * Canonicalized instance of assumption validity for all compilations with assumptions
      * that failed their validation phase.
      */
-    public static final AssumptionValidity failedAssumptionsValidity = new CanonicalizedAssumptionValidity(false);
+    public static final ClassHierarchyAssumptions invalidAssumptions = new CanonicalizedClassHierarchyAssumptions(false);
 
 }

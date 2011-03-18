@@ -194,17 +194,17 @@ public class C1X implements RuntimeCompiler {
 
     public final TargetMethod compile(final ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
         RiMethod method = classMethodActor;
-        AssumptionValidity assumptionsValidity = AssumptionValidity.noAssumptionsValidity;
+        ClassHierarchyAssumptions assumptions = ClassHierarchyAssumptions.noAssumptions;
         CiTargetMethod compiledMethod;
         do {
             compiledMethod = compiler().compileMethod(method, -1, xirGenerator, stats).targetMethod();
             if (compiledMethod == null) {
                 throw FatalError.unexpected("bailout"); // compilation failed
             }
-            assumptionsValidity = ClassDependencyManager.validateAssumptions(compiledMethod.assumptions());
-            if (assumptionsValidity.isValid()) {
+            assumptions = ClassDependencyManager.validateAssumptions(compiledMethod.assumptions());
+            if (assumptions.isValid()) {
                 C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod, install);
-                if (ClassDependencyManager.registerValidatedTarget(assumptionsValidity, c1xTargetMethod)) {
+                if (ClassDependencyManager.registerValidatedTarget(assumptions, c1xTargetMethod)) {
                     return c1xTargetMethod;
                 }
             }

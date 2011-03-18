@@ -105,7 +105,7 @@ public final class ClassDependencyManager {
      *
      * @author ldayne
      */
-    static class ValidAssumptions extends AssumptionValidity {
+    static class ValidAssumptions extends ClassHierarchyAssumptions {
         /**
          * Marker used to invalidate valid assumptions on compiled but not already installed target method.
          */
@@ -163,11 +163,20 @@ public final class ClassDependencyManager {
         }
     }
 
-    public static boolean registerValidatedTarget(AssumptionValidity validity, TargetMethod targetMethod) {
-        if (validity == AssumptionValidity.noAssumptionsValidity) {
+    /**
+     * Register the target method produced with a set of validated assumptions.
+     * If assumptions were invalidated in the meantime, the assumptions are dropped and the
+     * compiler that made the assumption must recompile the target method.
+     *
+     * @param assumptions a set of assumptions
+     * @param targetMethod the target methods to associate with the assumptions
+     * @return true if the assumptions are still valid, false if recompilation is required.
+     */
+    public static boolean registerValidatedTarget(ClassHierarchyAssumptions assumptions, TargetMethod targetMethod) {
+        if (assumptions == ClassHierarchyAssumptions.noAssumptions) {
             return true;
         }
-        ValidAssumptions validAssumptions = (ValidAssumptions) validity;
+        ValidAssumptions validAssumptions = (ValidAssumptions) assumptions;
         classHierarchyLock.readLock().lock();
         try {
             if (validAssumptions.isValid()) {
@@ -182,14 +191,14 @@ public final class ClassDependencyManager {
         return false;
     }
 
-    public static AssumptionValidity validateAssumptions(CiAssumptions ciAssumptions) {
+    public static ClassHierarchyAssumptions validateAssumptions(CiAssumptions ciAssumptions) {
         if (ciAssumptions != null) {
             final AssumptionValidator validator = new AssumptionValidator();
             classHierarchyLock.readLock().lock();
             try {
                 ciAssumptions.visit(validator);
                 if (!validator.validated) {
-                    return AssumptionValidity.failedAssumptionsValidity;
+                    return ClassHierarchyAssumptions.invalidAssumptions;
                 }
                 ValidAssumptions result = new ValidAssumptions(validator);
                 return result;
@@ -197,7 +206,7 @@ public final class ClassDependencyManager {
                 classHierarchyLock.readLock().unlock();
             }
         }
-        return AssumptionValidity.noAssumptionsValidity;
+        return ClassHierarchyAssumptions.noAssumptions;
     }
 
     static int registerValidAssumptions(ValidAssumptions validAssumptions) {
