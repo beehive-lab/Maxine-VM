@@ -94,7 +94,7 @@ public final class ClassDependencyManager {
      * assumptions whenever the class hierarchy is modified with new types.
      * @see DependencyTable for details.
      */
-    private static DependencyTable typeWithDependentTargetMethodTable = new DependencyTable();
+    private static DependencyTable dependentTargetMethodTable = new DependencyTable();
 
     private static final ObjectThreadLocal<UniqueConcreteMethodSearch> UCM_SEARCH_HELPER =
         new ObjectThreadLocal<UniqueConcreteMethodSearch>("UCM_SEARCH_HELPER", "thread local helper for class dependency management");
@@ -136,15 +136,18 @@ public final class ClassDependencyManager {
     }
 
     public static boolean registerValidatedTarget(AssumptionValidity validity, TargetMethod targetMethod) {
+        if (validity == AssumptionValidity.noAssumptionsValidity) {
+            return true;
+        }
         ValidAssumptions validAssumption = (ValidAssumptions) validity;
         classHierarchyLock.readLock().lock();
         try {
             Object dependencies = validAssumption.dependencies;
             if (dependencies instanceof AssumptionValidator) {
                 AssumptionValidator validator = (AssumptionValidator) dependencies;
-                typeWithDependentTargetMethodTable.addDependentTargetMethod(validAssumption.id, validator.typeAssumptions);
-
+                dependentTargetMethodTable.addDependentTargetMethod(validAssumption.id, validator.typeAssumptions);
                 validAssumption.setTargetMethod(targetMethod);
+                return true;
             }
         } finally {
             classHierarchyLock.readLock().unlock();
@@ -359,70 +362,95 @@ public final class ClassDependencyManager {
         static final int INLINE_DEPENDENT_ASSUMPTION_THRESHOLD = 2 * ASSUMPTIONS.bitWidth();
         static final int FIRST_LARGE_CLASS_ID = 1 << 15;
 
-        int [] grow(int [] currentAssumptions) {
-            // TODO
-            return currentAssumptions;
+        private int [] grow(int [] currentAssumptions, int minSpaceNeeded) {
+            int header = currentAssumptions[0];
+            int numDependents = NUM_DEPENDENTS.getBitField(header);
+            int assumptionsLength = ASSUMPTIONS_LENGTH.getBitField(header);
+
+            int newSize = currentAssumptions.length;
+            // Provision for several future dependents. Should run stats to figure out heuristic on how to grow this...
+            newSize += numDependents == 1 ? 4 : numDependents << 1;
+            // Provision for future assumptions... We could do a better job by analyzing the class type as
+            // the number of assumptions one can made on a class type is bounded by the number of concrete virtual method.
+            newSize += minSpaceNeeded;
+
+            int [] newAssumptions = new int[newSize];
+            newAssumptions[0] = header;
+            for (int i = 1; i <= numDependents; i++) {
+                newAssumptions[i] = currentAssumptions[i];
+            }
+            int srcPos = currentAssumptions.length - assumptionsLength;
+            int dstPos = newSize - assumptionsLength;
+            while (dstPos < newSize) {
+                newAssumptions[dstPos++] = currentAssumptions[srcPos++];
+            }
+            return newAssumptions;
+        }
+
+        void createNewAssumptions(int dependentInfo, RiType type, int [] assumptionList) {
+            int [] currentAssumptions = null;
+            if (assumptionList.length <= 3) {
+                final int assumption = assumptionList[1];
+                if (assumption == 0) {
+                    currentAssumptions = new int[] {SINGLE_UCT_HEADER, ASSUMES_UCT.setBitField(dependentInfo, true) };
+                } else if (assumption > 0) {
+                    currentAssumptions = new int[] {SINGLE_LOCAL_UCM_HEADER,
+                                    ASSUMPTIONS.setBitField(dependentInfo, 1), assumption };
+                } else {
+                    final int classID = assumptionList[3];
+                    currentAssumptions = new int[] {SINGLE_UCM_HEADER,
+                                    ASSUMPTIONS.setBitField(dependentInfo, 1), assumption, classID };
+                }
+                dependenciesTable.put(type, currentAssumptions);
+                return;
+            }
+            try {
+                // Optimistically build a bitset for assumptions for the new dependent info.
+                int assumptionBitSets = 0;
+                int numAssumptions = 0;
+                int i = 1; // Skip size field.
+                int header = SINGLE_LOCAL_UCM_HEADER;
+                int size = assumptionList[0];
+                int end = 1 + size;
+                currentAssumptions = new int[end + 1];
+
+                while (i < size) {
+                    int assumption = assumptionList[i++];
+                    if (assumption > 0) {
+                        currentAssumptions[end - numAssumptions++] = assumption;
+                    } else if (assumption < 0) {
+                        int classID = assumptionList[i++];
+                        if (classID >= FIRST_LARGE_CLASS_ID) {
+                            throw new InternalError("need large format");
+                        }
+                        currentAssumptions[end - numAssumptions++] =
+                            ASSUMPTION_NOT_LOCAL.setBitField(ASSUMPTION_CLASS_ID.setBitField(assumption, classID), 1);
+                        header = LOCAL_UCM_ONLY.setBitField(header, false);
+                    } else {
+                        dependentInfo = ASSUMES_UCT.setBitField(dependentInfo, true);
+                        header = HAS_UCT.setBitField(header, true);
+                    }
+                    if (numAssumptions > ASSUMPTIONS.bitWidth()) {
+                        throw new InternalError("need large format");
+                    }
+                }
+
+                dependentInfo = ASSUMPTIONS.setBitField(dependentInfo, assumptionBitSets);
+                header = ASSUMPTIONS_LENGTH.setBitField(header, numAssumptions);
+                currentAssumptions[0] = header;
+                currentAssumptions[1] = dependentInfo;
+                dependenciesTable.put(type, currentAssumptions);
+                return;
+            } catch (InternalError bailout) {
+                FatalError.unexpected("Unimplemented");
+            }
         }
 
         void addDependentToType(int dependentID, RiType type, int [] assumptionList) {
             int [] currentAssumptions = dependenciesTable.get(type);
             int dependentInfo =  DEPENDENT.setBitField(0, dependentID);
             if (currentAssumptions == null) {
-                if (assumptionList.length <= 3) {
-                    final int assumption = assumptionList[1];
-                    if (assumption == 0) {
-                        currentAssumptions = new int[] {SINGLE_UCT_HEADER, ASSUMES_UCT.setBitField(dependentInfo, true) };
-                    } else if (assumption > 0) {
-                        currentAssumptions = new int[] {SINGLE_LOCAL_UCM_HEADER,
-                                        ASSUMPTIONS.setBitField(dependentInfo, 1), assumption };
-                    } else {
-                        final int classID = assumptionList[3];
-                        currentAssumptions = new int[] {SINGLE_UCM_HEADER,
-                                        ASSUMPTIONS.setBitField(dependentInfo, 1), assumption, classID };
-                    }
-                    dependenciesTable.put(type, currentAssumptions);
-                    return;
-                }
-                int size = assumptionList[0];
-                try {
-                    // Optimistically build a bitset for assumptions.
-                    int assumptionBitSets = 0;
-                    int numAssumptions = 0;
-                    int i = 1; // Skip size field.
-                    int header = SINGLE_LOCAL_UCM_HEADER;
-                    int end = 1 + size;
-                    currentAssumptions = new int[end + 1];
-
-                    while (i < size) {
-                        int assumption = assumptionList[i++];
-                        if (assumption > 0) {
-                            currentAssumptions[end - numAssumptions++] = assumption;
-                        } else if (assumption < 0) {
-                            int classID = assumptionList[i++];
-                            if (classID >= FIRST_LARGE_CLASS_ID) {
-                                throw new InternalError("need large format");
-                            }
-                            currentAssumptions[end - numAssumptions++] =
-                                ASSUMPTION_NOT_LOCAL.setBitField(ASSUMPTION_CLASS_ID.setBitField(assumption, classID), 1);
-                            header = LOCAL_UCM_ONLY.setBitField(header, false);
-                        } else {
-                            dependentInfo = ASSUMES_UCT.setBitField(dependentInfo, true);
-                            header = HAS_UCT.setBitField(header, true);
-                        }
-                        if (numAssumptions > ASSUMPTIONS.bitWidth()) {
-                            throw new InternalError("need large format");
-                        }
-                    }
-
-                    dependentInfo = ASSUMPTIONS.setBitField(dependentInfo, assumptionBitSets);
-                    header = ASSUMPTIONS_LENGTH.setBitField(header, numAssumptions);
-                    currentAssumptions[0] = header;
-                    currentAssumptions[1] = dependentInfo;
-                    dependenciesTable.put(type, currentAssumptions);
-                    return;
-                } catch (InternalError bailout) {
-                    FatalError.unexpected("Unimplemented");
-                }
+                createNewAssumptions(dependentInfo, type, assumptionList);
             }
             // Add to existing records.
             int header = currentAssumptions[0];
@@ -434,7 +462,6 @@ public final class ClassDependencyManager {
             int newAssumptionCount = 0;
 
             int numAssumptions = ASSUMPTIONS_LENGTH.getBitField(header);
-            int spaceLeft = currentAssumptions.length - (numAssumptions + NUM_DEPENDENTS.getBitField(header));
 
             int i = 1;
             int assumptionBitSet = 0;
@@ -448,6 +475,7 @@ public final class ClassDependencyManager {
                     if (bitIndex == 0) {
                         // Add assumption to set.
                         if (newAssumptions == null) {
+                            // Create a temp buffer to hold all new assumptions.
                             newAssumptions = new int[size - i];
                         }
                         if (assumption > 0) {
@@ -470,7 +498,29 @@ public final class ClassDependencyManager {
                     assumptionBitSet |= bitIndex;
                 }
             } while(i < size);
+            final int spaceLeft = currentAssumptions.length - (numAssumptions + NUM_DEPENDENTS.getBitField(header));
+            final int spaceNeeded = newAssumptionCount + 1;
+            // Is there enough space left to host the new assumptions and the dependent info.
+            if (spaceLeft < spaceNeeded) {
+                currentAssumptions = grow(currentAssumptions, spaceNeeded - spaceLeft);
+                dependenciesTable.put(type, currentAssumptions);
+            }
+            if (newAssumptionCount > 0) {
+                int c = currentAssumptions.length - numAssumptions;
+                int n = 0;
+                while (n < newAssumptionCount) {
+                    currentAssumptions[c--] = newAssumptions[n++];
+                }
+                ASSUMPTIONS_LENGTH.setBitField(header, newAssumptionCount + numAssumptions);
+            }
+            int nextDependentSlot = NUM_DEPENDENTS.getBitField(header);
+            dependentInfo = ASSUMPTIONS.setBitField(dependentInfo, assumptionBitSet);
+            currentAssumptions[nextDependentSlot++] = dependentInfo;
+            NUM_DEPENDENTS.setBitField(header, nextDependentSlot);
+            currentAssumptions[0] = header;
         }
+
+
 
         /**
          * Search the assumptions recorded in the assumption area for an assumption on the specified method.
