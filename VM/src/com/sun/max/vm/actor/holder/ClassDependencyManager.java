@@ -103,9 +103,39 @@ public final class ClassDependencyManager {
         }
     };
 
+    /**
+     * Helper class for statistics purposes only.
+     */
+    static class AssumptionCounter {
+        int assumption = 0;
+        int count = 0;
+
+        AssumptionCounter(int assumption) {
+            this.assumption = assumption;
+        }
+
+        @Override
+        public int hashCode() {
+            return assumption;
+        }
+
+        private static AssumptionCounter key = new AssumptionCounter(0);
+
+        static void increaseCounter(int assumption, HashMap<AssumptionCounter, AssumptionCounter> counters) {
+            key.assumption = assumption;
+            AssumptionCounter counter = counters.get(key);
+            if (counter == null) {
+                counter = new AssumptionCounter(assumption);
+            }
+            counter.count++;
+        }
+    }
 
     /**
      * Valid assumptions made by the compiler and used by a target method.
+     * Instances of this class are recorded in {@link ClassDependencyManager#idToValidAssumptions}, and referenced,
+     * via their index in that table, in the {@link DependentTargetMethodList} of {@link RiType} instances recorded in
+     * {@link ClassDependencyManager#dependentTargetMethodTable}.
      */
     static class ValidAssumptions extends ClassHierarchyAssumptions {
         /**
@@ -126,6 +156,10 @@ public final class ClassDependencyManager {
          */
         volatile short [] assumptions;
 
+        /**
+         * Index in {@link ClassDependencyManager#idToValidAssumptions} where this assumption is recorded.
+         * Serves as unique identifier of the target method in per-type list of dependent target methods.
+         */
         int id;
 
         ValidAssumptions(AssumptionValidator validator) {
@@ -162,6 +196,28 @@ public final class ClassDependencyManager {
             // Called only when modifying the class hierarchy.
             FatalError.check(classHierarchyLock.isWriteLocked(), "Must hold class hierarchy lock in write mode");
             assumptions = INVALIDATED;
+        }
+
+        // Stats support
+
+        void countAssumptionsPerType(int classID, HashMap<AssumptionCounter, AssumptionCounter> assumptionCounters) {
+            final int numAssumptions = assumptions[0];
+            final int firstDependencyIndex = 1 + numAssumptions * 2;
+            int dependencyIndex = firstDependencyIndex;
+            for (int i = 1; i < firstDependencyIndex; i += 2) {
+                if (assumptions[i] == classID) {
+                    final short assumptionFlags = assumptions[i + 1];
+                    if (CLASS_HAS_UCT.isBooleanFlagSet(assumptionFlags)) {
+                        AssumptionCounter.increaseCounter(0, assumptionCounters);
+                    }
+                    final int endAssumptions = dependencyIndex + CLASS_ASSUMPTIONS_LENGTH.getFlag(assumptionFlags);
+                    while (dependencyIndex < endAssumptions) {
+                        AssumptionCounter.increaseCounter(assumptions[dependencyIndex], assumptionCounters);
+                    }
+                }
+                dependencyIndex += CLASS_ASSUMPTIONS_LENGTH.getFlag(assumptions[i + 1]);
+            }
+            FatalError.unexpected("class ID should be in valid assumptions");
         }
     }
 
@@ -228,10 +284,14 @@ public final class ClassDependencyManager {
         }
     }
 
-    static class DependentTargetMethodList {
+    static final class DependentTargetMethodList {
         int [] dependentLists;
         DependentTargetMethodList(int dependent) {
             dependentLists = new int[] {2, dependent };
+        }
+
+        int numDependents() {
+            return dependentLists[0] - 1;
         }
 
         synchronized void add(int dependent) {
@@ -271,7 +331,7 @@ public final class ClassDependencyManager {
      * Table mappings class types to target method that made assumption on them.
      * Each class types are assigned
      */
-    static class DependentTargetMethodTable {
+    static final class DependentTargetMethodTable {
         /**
          * Initial capacity of the table. Based on statistics gathered over boot image generation and VM startup.
          * Needs to be adjusted depending on the dynamic compilation scheme.
@@ -294,6 +354,37 @@ public final class ClassDependencyManager {
                 }
                 list.add(dependentID);
             }
+        }
+
+        /**
+         * Dump statistics.
+         */
+        void dump() {
+            final AssumptionCounter uctCounter = new AssumptionCounter(0);
+            IntegerDistribution numDistinctAssumptionsPerType = ValueMetrics.newIntegerDistribution("numDistinctAssumptionsPerType", 0, 20);
+            IntegerDistribution numUCTAssumptionsPerType = ValueMetrics.newIntegerDistribution("numUCTAssumptionsPerType", 0, 20);
+            IntegerDistribution numAssumptionsPerType = ValueMetrics.newIntegerDistribution("numAssumptionsPerType", 0, 20);
+            IntegerDistribution numDependentPerType = ValueMetrics.newIntegerDistribution("numDependentPerType", 0, 20);
+            HashMap<AssumptionCounter, AssumptionCounter> assumptionsCounters = new HashMap<AssumptionCounter, AssumptionCounter>(20);
+            for (RiType type : typeToDependentTargetMethods.keySet()) {
+                final int classID = ((ClassActor) type).id;
+                final DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
+                final int numDependents = list.numDependents();
+                numDependentPerType.record(numDependents);
+                for (int i = 1; i <= numDependents; i++) {
+                    idToValidAssumptions.get(list.dependentLists[i]).countAssumptionsPerType(classID, assumptionsCounters);
+                }
+                AssumptionCounter c = assumptionsCounters.remove(uctCounter);
+                numUCTAssumptionsPerType.record(c != null ? c.count : 0);
+                numDistinctAssumptionsPerType.record(assumptionsCounters.size());
+                int totalTypeAssumptions = 0;
+                for (AssumptionCounter co : assumptionsCounters.values()) {
+                    totalTypeAssumptions += co.count;
+                }
+                numAssumptionsPerType.record(totalTypeAssumptions);
+            }
+
+
         }
     }
 
@@ -838,13 +929,10 @@ public final class ClassDependencyManager {
         }
     }
 
-    private static CiAssumptionStatsGatherer assumptionStatsGatherer = new CiAssumptionStatsGatherer();
-
     /**
      * Dump the table in the log.
      */
     public static void dump() {
-        // assumptionStatsGatherer.report();
 
         if (!enableDumpOption) {
             return;
