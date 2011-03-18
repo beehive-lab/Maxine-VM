@@ -113,7 +113,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private final CodeAnnotation[] annotations;
 
-    private  AssumptionValidity assumptionsValidity;
+    private  ClassHierarchyAssumptions assumptionsValidity;
 
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
@@ -133,7 +133,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     public C1XTargetMethod(Flavor flavor, String stubName, CiTargetMethod ciTargetMethod) {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-        assumptionsValidity = AssumptionValidity.noAssumptionsValidity;
+        assumptionsValidity = ClassHierarchyAssumptions.noAssumptions;
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
         init(ciTargetMethod, true);
@@ -176,7 +176,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         return assumptionsValidity.isValid();
     }
 
-    public AssumptionValidity assumptionValidity() {
+    public ClassHierarchyAssumptions assumptionValidity() {
         return assumptionsValidity;
     }
 
