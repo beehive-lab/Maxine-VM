@@ -171,6 +171,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case Jlt:
                 case Jlteq:
                 case DecAndJumpNotZero:
+                case Jbset:
                     flags |= HAS_CONTROL_FLOW.mask;
                     break;
                 case Bind:
