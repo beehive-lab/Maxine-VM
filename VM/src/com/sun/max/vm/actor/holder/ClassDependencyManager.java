@@ -106,8 +106,6 @@ public final class ClassDependencyManager {
 
     /**
      * Valid assumptions made by the compiler and used by a target method.
-     *
-     * @author ldayne
      */
     static class ValidAssumptions extends ClassHierarchyAssumptions {
         /**
@@ -287,11 +285,14 @@ public final class ClassDependencyManager {
             for (RiType type : dependsOn) {
                 DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
                 if (list == null) {
-                    DependentTargetMethodList prev = typeToDependentTargetMethods.put(type, new DependentTargetMethodList(dependentID));
-                    FatalError.check(prev == null, "race condition detected !?");
-                } else {
-                    list.add(dependentID);
+                    list = typeToDependentTargetMethods.putIfAbsent(type, new DependentTargetMethodList(dependentID));
+                    if (list == null) {
+                        return;
+                    }
+                    // We've lost a race with another concurrent thread adding a list for the same type.
+                    // Fall off to add to that list.
                 }
+                list.add(dependentID);
             }
         }
     }
@@ -663,12 +664,19 @@ public final class ClassDependencyManager {
                 final int end = assumptionList[0];
                 while (i < end) {
                     int assumption = assumptionList[i++];
-                    FatalError.check(assumption >= Short.MAX_VALUE, "Not supported");
                     if (assumption > 0) {
+                        final int untaggedAssumption = assumption & TAG_MASK;
+                        if (untaggedAssumption >= Short.MAX_VALUE) {
+                            FatalError.unexpected("method index too large for packed assumptions");
+                        }
                         // A local only unique concrete method.
-                        assumptions[dependenciesIndex++] = (short) (assumption & TAG_MASK);
+                        assumptions[dependenciesIndex++] = (short) untaggedAssumption;
                     } else if (assumption < 0) {
-                        assumptions[dependenciesIndex++] = (short) (assumption & TAG_MASK);
+                        final int untaggedAssumption = assumption & TAG_MASK;
+                        if (untaggedAssumption >= Short.MAX_VALUE) {
+                            FatalError.unexpected("method index too large for packed assumptions");
+                        }
+                        assumptions[dependenciesIndex++] = (short) untaggedAssumption;
                         assumptions[dependenciesIndex++] = (short) assumptionList[i++];
                         assumptionsSummary = CLASS_LOCAL_UCM_ONLY.clearBooleanFlag(assumptionsSummary);
                     } else {
