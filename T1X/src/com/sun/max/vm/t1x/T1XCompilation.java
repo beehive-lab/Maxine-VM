@@ -404,10 +404,11 @@ public final class T1XCompilation {
      * was encountered when compiling a method.
      */
     @SuppressWarnings("serial")
-    static class UnsupportedSubroutineException extends RuntimeException {
+    class UnsupportedSubroutineException extends RuntimeException {
         final int bci;
         final int opcode;
         public UnsupportedSubroutineException(int opcode, int bci) {
+            super(Bytecodes.nameOf(opcode) + "@" + bci + " in " + method);
             this.bci = bci;
             this.opcode = opcode;
         }
@@ -1143,6 +1144,7 @@ public final class T1XCompilation {
             }
 
             // Jump to default target if index is not within the jump table
+            startBlock(ts.defaultTarget());
             int pos = buf.position();
             patchInfo.addJCC(ConditionFlag.above, pos, ts.defaultTarget());
             asm.jcc(ConditionFlag.above, 0, true);
@@ -1241,6 +1243,7 @@ public final class T1XCompilation {
                 asm.jcc(ConditionFlag.carryClear, loopPos, false);
 
                 // Jump to default target
+                startBlock(ls.defaultTarget());
                 patchInfo.addJMP(buf.position(), ls.defaultTarget());
                 asm.jmp(0, true);
 

@@ -49,6 +49,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
@@ -65,6 +66,10 @@ import com.sun.max.vm.verifier.*;
 public class T1X implements RuntimeCompiler {
 
     final T1XTemplate[] templates;
+
+    static {
+        ClassfileReader.bytecodeTemplateClasses.add(T1X_TEMPLATE.class);
+    }
 
     /**
      * The number of slots to be reserved in each T1X frame for template spill slots.

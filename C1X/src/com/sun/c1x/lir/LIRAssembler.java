@@ -22,7 +22,6 @@
  */
 package com.sun.c1x.lir;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -30,7 +29,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.FrameMap.*;
+import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
@@ -129,7 +128,7 @@ public abstract class LIRAssembler {
     }
 
     public void emitCode(List<BlockBegin> hir) {
-        if (C1XOptions.PrintLIR) {
+        if (C1XOptions.PrintLIR && !TTY.isSuppressed()) {
             LIRList.printLIR(hir);
         }
 
@@ -172,16 +171,12 @@ public abstract class LIRAssembler {
             if (C1XOptions.CommentedAssembly) {
                 // Only print out branches
                 if (op.code == LIROpcode.Branch) {
-                    ByteArrayOutputStream st = new ByteArrayOutputStream();
-                    LogStream ls = new LogStream(st);
-                    op.printOn(ls);
-                    ls.flush();
-                    asm.blockComment(st.toString());
+                    asm.blockComment(op.toStringWithIdPrefix());
                 }
             }
-            if (C1XOptions.PrintLIRWithAssembly) {
+            if (C1XOptions.PrintLIRWithAssembly && !TTY.isSuppressed()) {
                 // print out the LIR operation followed by the resulting assembly
-                op.printOn(TTY.out());
+                TTY.println(op.toStringWithIdPrefix());
                 TTY.println();
             }
 

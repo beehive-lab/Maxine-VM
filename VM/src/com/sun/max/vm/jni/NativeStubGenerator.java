@@ -114,7 +114,6 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant traceCurrentThreadPrefix = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("traceCurrentThreadPrefix"));
     private static final ClassMethodRefConstant throwPendingException = createClassMethodConstant(VmThread.class, makeSymbol("throwPendingException"));
     private static final ClassMethodRefConstant createStackHandle = createClassMethodConstant(JniHandles.class, makeSymbol("createStackHandle"), Object.class);
-    private static final ClassMethodRefConstant nullHandle = createClassMethodConstant(JniHandle.class, makeSymbol("zero"));
     private static final ClassMethodRefConstant unhandHandle = createClassMethodConstant(JniHandle.class, makeSymbol("unhand"));
     private static final ClassMethodRefConstant handles = createClassMethodConstant(VmThread.class, makeSymbol("jniHandles"));
     private static final ClassMethodRefConstant handlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("top"));
@@ -215,19 +214,9 @@ public final class NativeStubGenerator extends BytecodeAssembler {
                 }
                 case REFERENCE: {
                     assert !isCFunction;
-                    final Label nullHandle = newLabel();
-                    final Label join = newLabel();
 
-                    // Pseudo-code: (arg == null ? JniHandle.zero() : JniHandle.createStackHandle(arg))
-                    aload(parameterLocalIndex);
-                    ifnull(nullHandle);
                     aload(parameterLocalIndex);
                     invokestatic(createStackHandle, 1, 1);
-                    goto_(join);
-                    decStack();
-                    nullHandle.bind();
-                    invokestatic(NativeStubGenerator.nullHandle, 0, 1);
-                    join.bind();
                     nativeParameterDescriptor = JavaTypeDescriptor.JNI_HANDLE;
                     break;
                 }

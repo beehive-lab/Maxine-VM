@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
@@ -446,17 +445,29 @@ public final class JniFunctionsSource {
 
     private static Value CallValueMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         final MethodActor methodActor = MethodID.toMethodActor(methodID);
-        if (methodActor == null || methodActor.isStatic() || methodActor.isInitializer() || methodActor instanceof InterfaceMethodActor) {
-            throw new NoSuchMethodException();
+        if (methodActor == null) {
+            throw new NoSuchMethodException("Invalid method ID " + methodID.asAddress().toLong());
         }
-        final VirtualMethodActor virtualMethodActor = MethodSelectionSnippet.SelectVirtualMethod.quasiFold(object.unhand(), (VirtualMethodActor) methodActor);
+        if (methodActor.isStatic()) {
+            throw new NoSuchMethodException(methodActor.toString() + " is static");
+        }
+        if (methodActor.isInitializer()) {
+            throw new NoSuchMethodException(methodActor.toString() + " is an initializer");
+        }
+        final MethodActor selectedMethod;
+        Object receiver = object.unhand();
+        ClassActor holder = ObjectAccess.readClassActor(receiver);
 
-        final SignatureDescriptor signature = virtualMethodActor.descriptor();
+        if (!methodActor.holder().isAssignableFrom(holder)) {
+            throw new NoSuchMethodException(holder + " is not an instance of " + methodActor.holder());
+        }
+        selectedMethod = (MethodActor) holder.resolveMethodImpl(methodActor);
+        final SignatureDescriptor signature = selectedMethod.descriptor();
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
-        traceReflectiveInvocation(virtualMethodActor);
-        return virtualMethodActor.invoke(argumentValues);
+        traceReflectiveInvocation(selectedMethod);
+        return selectedMethod.invoke(argumentValues);
 
     }
 
@@ -838,15 +849,18 @@ public final class JniFunctionsSource {
     private static Value CallStaticValueMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
         if (!(classActor instanceof TupleClassActor)) {
-            throw new NoSuchMethodException();
+            throw new NoSuchMethodException(classActor + " is not a class with static methods");
         }
 
         final MethodActor methodActor = MethodID.toMethodActor(methodID);
-        if (methodActor == null || !methodActor.isStatic()) {
-            throw new NoSuchMethodException();
+        if (methodActor == null) {
+            throw new NoSuchMethodException("Invalid method ID " + methodID.asAddress().toLong());
+        }
+        if (!methodActor.isStatic()) {
+            throw new NoSuchMethodException(methodActor + " is not static");
         }
         if (!javaClass.isZero() && !methodActor.holder().toJava().isAssignableFrom((Class) javaClass.unhand())) {
-            throw new NoSuchMethodException();
+            throw new NoSuchMethodException(javaClass.unhand() + " is not a subclass of " + methodActor.holder());
         }
 
         final SignatureDescriptor signature = methodActor.descriptor();

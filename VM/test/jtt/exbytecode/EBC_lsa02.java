@@ -37,10 +37,19 @@ public class EBC_lsa02 {
         Pointer addr = MakeStackVariable.makeStackVariable(ref);
         Pointer addr2 = MakeStackVariable.makeStackVariable(ref2);
 
-        if (addr.readReference(0) != ref) {
+        if (ref.isZero()) {
+            if (!addr.isZero()) {
+                return false;
+            }
+        } else if (addr.readReference(0) != ref) {
             return false;
         }
-        if (addr2.readReference(0) != ref2) {
+
+        if (ref2.isZero()) {
+            if (!addr.isZero()) {
+                return false;
+            }
+        } else if (addr2.readReference(0) != ref2) {
             return false;
         }
         return true;

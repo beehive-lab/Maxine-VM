@@ -543,7 +543,9 @@ public class Bytecodes {
      * Allocates and initializes a slot on the native stack frame.
      * <p>
      * Forces the compiler to allocate a native frame slot and initializes it with {@code value}
-     * The result is the address of the native frame slot.
+     * If the {@code value} is 0 or {@code null}, then the result is 0 otherwise the result is the
+     * address of the native frame slot.
+     * <p>
      * The native frame slot will be live for the rest of the method. The type of {@code value} determines
      * if it is a GC root. If {@code value} is an object, any subsequent value written to the slot
      * (via {@code address}) must be an object. If {@code value} is not an object, any subsequent value

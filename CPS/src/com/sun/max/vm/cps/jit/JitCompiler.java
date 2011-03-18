@@ -29,8 +29,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.b.c.d.e.amd64.target.*;
+import com.sun.max.vm.cps.template.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -39,6 +41,10 @@ import com.sun.max.vm.runtime.*;
  * @author Laurent Daynes
  */
 public abstract class JitCompiler implements RuntimeCompiler {
+
+    static {
+        ClassfileReader.bytecodeTemplateClasses.add(BYTECODE_TEMPLATE.class);
+    }
 
     @HOSTED_ONLY
     private boolean isInitialized;

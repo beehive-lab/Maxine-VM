@@ -27,16 +27,26 @@ import com.sun.max.vm.compiler.builtin.*;
 
 /*
  * @Harness: java
- * @Runs: 1=true; 34=true
+ * @Runs: 0=true; 1=true; 34=true
  */
 public class EBC_lsa01 {
     public static boolean test(int i) {
         Pointer addr = MakeStackVariable.makeStackVariable(i);
         Pointer addr2 = MakeStackVariable.makeStackVariable(i + 1);
-        if (addr.readInt(0) != i) {
+
+        if (i == 0) {
+            if (!addr.isZero()) {
+                return false;
+            }
+        } else if (addr.readInt(0) != i) {
             return false;
         }
-        if (addr2.readInt(0) != i + 1) {
+
+        if (i + 1 == 0) {
+            if (!addr2.isZero()) {
+                return false;
+            }
+        } else if (addr2.readInt(0) != i + 1) {
             return false;
         }
         return true;
