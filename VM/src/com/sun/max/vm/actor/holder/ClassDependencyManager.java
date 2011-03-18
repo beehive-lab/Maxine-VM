@@ -22,8 +22,9 @@
  */
 package com.sun.max.vm.actor.holder;
 
+import static com.sun.max.vm.actor.holder.ClassDependencyManager.ClassAssumptionFlags.*;
 import static com.sun.max.vm.actor.holder.ClassID.*;
-import static com.sun.max.vm.actor.holder.ClassDependencyManager.DependencyTable.BitFields.*;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -44,14 +45,13 @@ import com.sun.max.vm.thread.*;
  * Dynamic compilers may issue queries related to these information and may make assumptions to apply certain optimizations
  * (e.g., devirtualization, type check elimination).
  * {@link TargetMethod}s produced by a dynamic compiler keeps track of the assumptions the compiler made in a {@link CiAssumptions} object.
- * This one must be validated by the dependency manager before the code is allowed for uses. If the assumptions are incorrect, because of
- * changed that occured in the class hierarchy since the assumption was made, the code is dropped and a new one must be produced.
+ * This one must be validated by the dependency manager before the code is installed for uses. If the assumptions are incorrect, because of
+ * changes that occurred in the class hierarchy since the assumptions were made, the target method is dropped and a new one must be produced.
  *
- * The dependencies manager is also responsible for recording changes to the class hierarchy and whatever other information that
+ * The dependencies manager is also responsible for recording changes to the class hierarchy and related information that
  * depends on sub-type relationships, and to drive code invalidation (using deoptimization) when assumptions made by existing code
  * become obsolete because of these changes.
  * The dependency manager must be informed of every changes to the class hierarchy when new classes are defined.
- *
  *
  * @author Laurent Daynes.
  */
@@ -92,46 +92,74 @@ public final class ClassDependencyManager {
      * The table mapping class types to their dependent target methods and the assumptions these makes on the class type.
      * The table is updated whenever a target method compiled with assumption is validated, and inspected to re-assess these
      * assumptions whenever the class hierarchy is modified with new types.
-     * @see DependencyTable for details.
+     * @see DependentTargetMethodTable for details.
      */
-    private static DependencyTable dependentTargetMethodTable = new DependencyTable();
+    private static DependentTargetMethodTable dependentTargetMethodTable = new DependentTargetMethodTable();
 
     private static final ObjectThreadLocal<UniqueConcreteMethodSearch> UCM_SEARCH_HELPER =
         new ObjectThreadLocal<UniqueConcreteMethodSearch>("UCM_SEARCH_HELPER", "thread local helper for class dependency management");
 
 
+    /**
+     * Valid assumptions made by the compiler and used by a target method.
+     *
+     * @author ldayne
+     */
     static class ValidAssumptions extends AssumptionValidity {
         /**
          * Marker used to invalidate valid assumptions on compiled but not already installed target method.
          */
-        static final Object INVALIDATED = new Object();
+        static final short [] INVALIDATED = new short[0];
 
         /**
          * The target method produced with the validated assumptions.
          * Needed to apply de-optimization should the assumptions be invalidated by some class definition event.
          */
-        TargetMethod targetState;
+        TargetMethod targetMethod;
         /**
-         * Object listing the class identifiers of the class type the target method depends on.
-         * Maybe an instance of {@link Integer} or an integer array.
+         * Set of assumptions made by the target method, packed into a short array formatted as follows.
+         * The first entry specifies the number of classes the target method makes assumptions on.
+         * The next entries contains two short per class: the first one hold a class ID, the second one a short bit fields
+         * indicate the type of assumption and the length of the assumption area of that class.
          */
-        volatile Object dependencies;
+        volatile short [] assumptions;
 
         int id;
 
         ValidAssumptions(AssumptionValidator validator) {
+            FatalError.check(classHierarchyLock.getReadHoldCount() > 0, "Must hold class hierarchy lock");
             registerValidAssumptions(this);
-            dependencies = validator;
+            assumptions = validator.packAssumptions();
+            dependentTargetMethodTable.addDependentTargetMethod(id, validator.typeAssumptions.keySet());
         }
 
         @Override
         public boolean isValid() {
             // is valid as long as some changes in the class hierarchy haven't invalidated it.
-            return dependencies != INVALIDATED;
+            return assumptions != INVALIDATED;
+        }
+
+        /**
+         * Indicates whether a target method was installed with this validated set of assumptions.
+         * If true, deoptimization is needed to invalidate this set.
+         * @return
+         */
+        boolean hasTargetMethod() {
+            return targetMethod != null;
         }
 
         void setTargetMethod(TargetMethod targetMethod) {
-            targetState = targetMethod;
+            FatalError.check(classHierarchyLock.getReadHoldCount() > 0, "Must hold class hierarchy lock");
+            this.targetMethod = targetMethod;
+        }
+
+        /**
+         * Invalidate this set of assumptions. Must be done only once all references to this record is cleared from the {@link DependentTargetMethodTable}.
+         */
+        void invalidate() {
+            // Called only when modifying the class hierarchy.
+            FatalError.check(classHierarchyLock.isWriteLocked(), "Must hold class hierarchy lock in write mode");
+            assumptions = INVALIDATED;
         }
     }
 
@@ -139,19 +167,18 @@ public final class ClassDependencyManager {
         if (validity == AssumptionValidity.noAssumptionsValidity) {
             return true;
         }
-        ValidAssumptions validAssumption = (ValidAssumptions) validity;
+        ValidAssumptions validAssumptions = (ValidAssumptions) validity;
         classHierarchyLock.readLock().lock();
         try {
-            Object dependencies = validAssumption.dependencies;
-            if (dependencies instanceof AssumptionValidator) {
-                AssumptionValidator validator = (AssumptionValidator) dependencies;
-                dependentTargetMethodTable.addDependentTargetMethod(validAssumption.id, validator.typeAssumptions);
-                validAssumption.setTargetMethod(targetMethod);
+            if (validAssumptions.isValid()) {
+                validAssumptions.setTargetMethod(targetMethod);
                 return true;
             }
         } finally {
             classHierarchyLock.readLock().unlock();
         }
+        // Drop it !
+        clearValidAssumptions(validAssumptions);
         return false;
     }
 
@@ -190,366 +217,68 @@ public final class ClassDependencyManager {
         }
     }
 
-    /**
-     * Table tracking assumptions made on class types.
-     * The table maps class types used as context in assumptions to an integer array that encode both the assumptions made and
-     * the target methods making these assumptions.
-      *
-     * We encode dependencies over an integer array. The array starts with a header summarizing the type of assumptions recorded
-     * and their numbers.
-     * The rest of the array is made of two areas: a dependent method area and a dependency area, growing toward each other.
-     * Most class types have few assumptions made on them, although the number of target method making them may be large.
-     *
-     * list of pair of dependent ID, assumptions ID
-     * A sequence starts with a header that encodes both a type of dependencies and the number of target methods.
-     * The rest of the sequence may include further header information, followed by the integer identifiers assigned to the dependent
-     * target methods.
-     *
-     * Note: a context can have only one unique concrete type dependency type in its list.
-     */
-    static class DependencyTable {
-
-        enum BitFields {
-            // Header bit fields
-            /**
-             * Header bit indicating whether some dependent methods make a unique concrete sub-type assumption is made on the type.
-             */
-            HAS_UCT(0, 1),
-            /**
-             * Header bit indicating whether unique concrete method assumptions were made on the type.
-             */
-            HAS_UCM(1, 1),
-            /**
-             * Header bit indicating whether all the assumed unique concrete methods are the concrete implementation of this type.
-             * A leaner encoding and faster decoding can be used in this case.
-             */
-            LOCAL_UCM_ONLY(2, 1),
-            /**
-             * Header bit indicating whether the numbers of assumptions or target methods doesn't fit in the
-             * header.
-             * In this unlikely event, the next two integers in the int array are stored in the next two int.
-             */
-            IS_LARGE(3, 1),
-            /**
-             * Header field holding the length of the unique concrete method assumptions area for this type.
-             */
-            ASSUMPTIONS_LENGTH(4, 12),
-            /**
-             * Header field holding the number of target methods that make some assumption on this type.
-             * Indicate the current size of the
-             */
-            NUM_DEPENDENTS(16, 16),
-
-            // Dependent info fields
-            /**
-             * Dependent info field holding the index of the dependent target method.
-             * With 20 bits we can support about 10^6 dependent target methods.
-             */
-            DEPENDENT(0, 20),
-            /**
-             * Dependent info field indicating whether the target method assume this type has a unique concrete type.
-             */
-            ASSUMES_UCT(20, 1),
-            /**
-             * Dependent info field indicating that assumptions records are not inlined, but follows in the next integers in the stream.
-             */
-            OUT_OF_LINE(21, 1),
-            /**
-             * If {@link BitFields#OUT_OF_LINE} is set, holds the number assumptions describes in subsequent fields.
-             * Otherwise, holds a bit-set of the assumptions made by the dependent target method.
-             */
-            ASSUMPTIONS(22, 10),
-
-            // Assumption info fields
-            ASSUMPTION_METHOD_ID(0, 16),
-            ASSUMPTION_CLASS_ID(16, 15),
-            ASSUMPTION_NOT_LOCAL(31, 1),
-
-            // Single Target Method Assumption Encoding field.
-            // Assumption validator use a simple format to record a single dependent's assumptions: a list of int.
-            // top most two bits:
-            // 00: denotes a unique concrete type assumptions.
-            // 01: denotes non-local unique concrete method assumptions.
-            // 11: denotes a local unique concrete method
-            //
-            // So that a assumption record starting with
-            // value == 0 : denotes a UCT. No additional info in next int.
-            // value < 0  : denotes a UCM. Local method ID stored in lower 16 bits. Class ID of concrete method holder stored in next int.
-            // value > 0  : denotes a local UCM. Local method ID stored in lower 16 bits.
-
-            TARGET_ASSUMPTION(30, 2),
-            UCM_METHOD_ID(0, 16);
-
-            final int mask;
-            final int leftmostBitPos;
-
-            int setBitField(int field, int value) {
-                return field | (value << leftmostBitPos);
-            }
-
-            int setBitField(int field, boolean value) {
-                if (MaxineVM.isDebug()) {
-                    FatalError.check(bitWidth() == 1, "must only be used for bit field of width 1");
-                }
-                if (value) {
-                    return field | mask;
-                }
-                return field & ~mask;
-            }
-
-            int getBitField(int field) {
-                return (field & mask) >> leftmostBitPos;
-            }
-
-            boolean isNonZeroBitField(int header) {
-                return (header & mask) != 0;
-            }
-
-            int bitWidth() {
-                return Integer.bitCount(mask);
-            }
-
-            BitFields(int leftmostBitPos, int numBits) {
-                this.leftmostBitPos = leftmostBitPos;
-                this.mask = ((~0) & ((1 << numBits) - 1)) << leftmostBitPos;
-            }
-
-            static boolean hasUniqueConcreteTypeDependents(int header) {
-                return HAS_UCT.isNonZeroBitField(header);
-            }
-
-            static boolean hasUniqueConcreteMethodDependents(int header) {
-                return HAS_UCM.isNonZeroBitField(header);
-            }
-
-            static boolean hasLocalUniqueConcreteMethodDependentsOnly(int header) {
-                return LOCAL_UCM_ONLY.isNonZeroBitField(header);
-            }
-
-            static boolean isLarge(int header) {
-                return IS_LARGE.isNonZeroBitField(header);
-            }
-
-            static int numAssumptions(int header) {
-                return ASSUMPTIONS_LENGTH.getBitField(header);
-            }
-            static int numDependents(int header) {
-                return NUM_DEPENDENTS.getBitField(header);
-            }
-
-            static int getDependentID(int dependentInfo) {
-                return DEPENDENT.getBitField(dependentInfo);
-            }
-
-            static int makeHeader(boolean hasUCT, boolean hasUCM, boolean localOnlyUCMs, boolean isLarge) {
-                return IS_LARGE.setBitField(LOCAL_UCM_ONLY.setBitField(HAS_UCM.setBitField(HAS_UCT.setBitField(0, hasUCT), hasUCM), localOnlyUCMs), isLarge);
-            }
+    static class DependentTargetMethodList {
+        int [] dependentLists;
+        DependentTargetMethodList(int dependent) {
+            dependentLists = new int[] {2, dependent };
         }
 
-       /**
+        synchronized void add(int dependent) {
+            int nextSlot = dependentLists[0];
+            if (nextSlot == dependentLists.length) {
+                // extend first.
+                int [] newDependentLists = new int[nextSlot << 1];
+                for (int i = 1; i < nextSlot; i++) {
+                    newDependentLists[i] = dependentLists[i];
+                }
+                dependentLists = newDependentLists;
+            }
+            dependentLists[nextSlot++] = dependent;
+            dependentLists[0] = nextSlot;
+        }
+
+        synchronized void remove(int dependent) {
+            int end = dependentLists[0];
+            int i = 1;
+            while (i < end) {
+                if (dependentLists[i] == dependent) {
+                    int newEnd = end - 1;
+                    if (i < newEnd) {
+                        dependentLists[i] = dependentLists[newEnd];
+                    }
+                    dependentLists[0] = newEnd;
+                    // should we trim the array here if poorly occupied ?
+                    return;
+                }
+                i++;
+            }
+
+        }
+    }
+    /**
+     * Table mappings class types to target method that made assumption on them.
+     * Each class types are assigned
+     */
+    static class DependentTargetMethodTable {
+        /**
          * Initial capacity of the table. Based on statistics gathered over boot image generation and VM startup.
          * Needs to be adjusted depending on the dynamic compilation scheme.
          */
         static final int INITIAL_CAPACITY = 600;
-        final ConcurrentHashMap<RiType, int []> dependenciesTable = new ConcurrentHashMap<RiType, int []>(INITIAL_CAPACITY);
 
-        static final int UCT_ONLY_HEADER = makeHeader(true, false, false, false);
-        static final int UCM_ONLY_HEADER = makeHeader(false, true, false, false);
-        static final int LOCAL_UCM_ONLY_HEADER = makeHeader(false, true, true, false);
-        static final int SINGLE_UCT_HEADER = NUM_DEPENDENTS.setBitField(UCT_ONLY_HEADER, 1);
-        static final int SINGLE_UCM_HEADER = ASSUMPTIONS_LENGTH.setBitField(NUM_DEPENDENTS.setBitField(UCM_ONLY_HEADER, 1), 2);
-        static final int SINGLE_LOCAL_UCM_HEADER = ASSUMPTIONS_LENGTH.setBitField(NUM_DEPENDENTS.setBitField(LOCAL_UCM_ONLY_HEADER, 1), 1);
-        static final int INLINE_DEPENDENT_ASSUMPTION_THRESHOLD = 2 * ASSUMPTIONS.bitWidth();
-        static final int FIRST_LARGE_CLASS_ID = 1 << 15;
+        final ConcurrentHashMap<RiType, DependentTargetMethodList> typeToDependentTargetMethods =
+            new ConcurrentHashMap<RiType, DependentTargetMethodList>(INITIAL_CAPACITY);
 
-        private int [] grow(int [] currentAssumptions, int minSpaceNeeded) {
-            int header = currentAssumptions[0];
-            int numDependents = NUM_DEPENDENTS.getBitField(header);
-            int assumptionsLength = ASSUMPTIONS_LENGTH.getBitField(header);
-
-            int newSize = currentAssumptions.length;
-            // Provision for several future dependents. Should run stats to figure out heuristic on how to grow this...
-            newSize += numDependents == 1 ? 4 : numDependents << 1;
-            // Provision for future assumptions... We could do a better job by analyzing the class type as
-            // the number of assumptions one can made on a class type is bounded by the number of concrete virtual method.
-            newSize += minSpaceNeeded;
-
-            int [] newAssumptions = new int[newSize];
-            newAssumptions[0] = header;
-            for (int i = 1; i <= numDependents; i++) {
-                newAssumptions[i] = currentAssumptions[i];
-            }
-            int srcPos = currentAssumptions.length - assumptionsLength;
-            int dstPos = newSize - assumptionsLength;
-            while (dstPos < newSize) {
-                newAssumptions[dstPos++] = currentAssumptions[srcPos++];
-            }
-            return newAssumptions;
-        }
-
-        void createNewAssumptions(int dependentInfo, RiType type, int [] assumptionList) {
-            int [] currentAssumptions = null;
-            if (assumptionList.length <= 3) {
-                final int assumption = assumptionList[1];
-                if (assumption == 0) {
-                    currentAssumptions = new int[] {SINGLE_UCT_HEADER, ASSUMES_UCT.setBitField(dependentInfo, true) };
-                } else if (assumption > 0) {
-                    currentAssumptions = new int[] {SINGLE_LOCAL_UCM_HEADER,
-                                    ASSUMPTIONS.setBitField(dependentInfo, 1), assumption };
+        void addDependentTargetMethod(int dependentID, Set<RiType> dependsOn) {
+            for (RiType type : dependsOn) {
+                DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
+                if (list == null) {
+                    DependentTargetMethodList prev = typeToDependentTargetMethods.put(type, new DependentTargetMethodList(dependentID));
+                    FatalError.check(prev == null, "race condition detected !?");
                 } else {
-                    final int classID = assumptionList[3];
-                    currentAssumptions = new int[] {SINGLE_UCM_HEADER,
-                                    ASSUMPTIONS.setBitField(dependentInfo, 1), assumption, classID };
+                    list.add(dependentID);
                 }
-                dependenciesTable.put(type, currentAssumptions);
-                return;
             }
-            try {
-                // Optimistically build a bitset for assumptions for the new dependent info.
-                int assumptionBitSets = 0;
-                int numAssumptions = 0;
-                int i = 1; // Skip size field.
-                int header = SINGLE_LOCAL_UCM_HEADER;
-                int size = assumptionList[0];
-                int end = 1 + size;
-                currentAssumptions = new int[end + 1];
-
-                while (i < size) {
-                    int assumption = assumptionList[i++];
-                    if (assumption > 0) {
-                        currentAssumptions[end - numAssumptions++] = assumption;
-                    } else if (assumption < 0) {
-                        int classID = assumptionList[i++];
-                        if (classID >= FIRST_LARGE_CLASS_ID) {
-                            throw new InternalError("need large format");
-                        }
-                        currentAssumptions[end - numAssumptions++] =
-                            ASSUMPTION_NOT_LOCAL.setBitField(ASSUMPTION_CLASS_ID.setBitField(assumption, classID), 1);
-                        header = LOCAL_UCM_ONLY.setBitField(header, false);
-                    } else {
-                        dependentInfo = ASSUMES_UCT.setBitField(dependentInfo, true);
-                        header = HAS_UCT.setBitField(header, true);
-                    }
-                    if (numAssumptions > ASSUMPTIONS.bitWidth()) {
-                        throw new InternalError("need large format");
-                    }
-                }
-
-                dependentInfo = ASSUMPTIONS.setBitField(dependentInfo, assumptionBitSets);
-                header = ASSUMPTIONS_LENGTH.setBitField(header, numAssumptions);
-                currentAssumptions[0] = header;
-                currentAssumptions[1] = dependentInfo;
-                dependenciesTable.put(type, currentAssumptions);
-                return;
-            } catch (InternalError bailout) {
-                FatalError.unexpected("Unimplemented");
-            }
-        }
-
-        void addDependentToType(int dependentID, RiType type, int [] assumptionList) {
-            int [] currentAssumptions = dependenciesTable.get(type);
-            int dependentInfo =  DEPENDENT.setBitField(0, dependentID);
-            if (currentAssumptions == null) {
-                createNewAssumptions(dependentInfo, type, assumptionList);
-            }
-            // Add to existing records.
-            int header = currentAssumptions[0];
-            if (IS_LARGE.isNonZeroBitField(header)) {
-                FatalError.unexpected("Unimplemented");
-            }
-            int size = assumptionList[0];
-            int [] newAssumptions = null;
-            int newAssumptionCount = 0;
-
-            int numAssumptions = ASSUMPTIONS_LENGTH.getBitField(header);
-
-            int i = 1;
-            int assumptionBitSet = 0;
-            do {
-                int assumption = assumptionList[i++];
-                if (assumption == 0) {
-                    dependentInfo = ASSUMES_UCT.setBitField(dependentInfo, true);
-                    header = HAS_UCT.setBitField(header, true);
-                } else {
-                    int bitIndex = hasAssumptionOn(currentAssumptions, numAssumptions, UCM_METHOD_ID.getBitField(assumption));
-                    if (bitIndex == 0) {
-                        // Add assumption to set.
-                        if (newAssumptions == null) {
-                            // Create a temp buffer to hold all new assumptions.
-                            newAssumptions = new int[size - i];
-                        }
-                        if (assumption > 0) {
-                            newAssumptions[newAssumptionCount] = assumption;
-                        } else {
-                            int classID = assumptionList[i++];
-                            if (classID >= FIRST_LARGE_CLASS_ID) {
-                                FatalError.unexpected("need large format");
-                            }
-                            newAssumptions[newAssumptionCount] =
-                                ASSUMPTION_NOT_LOCAL.setBitField(ASSUMPTION_CLASS_ID.setBitField(assumption, classID), 1);
-                            header = LOCAL_UCM_ONLY.setBitField(header, false);
-                        }
-                        bitIndex = 1 << (numAssumptions + newAssumptionCount);
-                        if (bitIndex >  ASSUMPTIONS.bitWidth()) {
-                            FatalError.unexpected("need large format");
-                        }
-                        newAssumptionCount++;
-                    }
-                    assumptionBitSet |= bitIndex;
-                }
-            } while(i < size);
-            final int spaceLeft = currentAssumptions.length - (numAssumptions + NUM_DEPENDENTS.getBitField(header));
-            final int spaceNeeded = newAssumptionCount + 1;
-            // Is there enough space left to host the new assumptions and the dependent info.
-            if (spaceLeft < spaceNeeded) {
-                currentAssumptions = grow(currentAssumptions, spaceNeeded - spaceLeft);
-                dependenciesTable.put(type, currentAssumptions);
-            }
-            if (newAssumptionCount > 0) {
-                int c = currentAssumptions.length - numAssumptions;
-                int n = 0;
-                while (n < newAssumptionCount) {
-                    currentAssumptions[c--] = newAssumptions[n++];
-                }
-                ASSUMPTIONS_LENGTH.setBitField(header, newAssumptionCount + numAssumptions);
-            }
-            int nextDependentSlot = NUM_DEPENDENTS.getBitField(header);
-            dependentInfo = ASSUMPTIONS.setBitField(dependentInfo, assumptionBitSet);
-            currentAssumptions[nextDependentSlot++] = dependentInfo;
-            NUM_DEPENDENTS.setBitField(header, nextDependentSlot);
-            currentAssumptions[0] = header;
-        }
-
-
-
-        /**
-         * Search the assumptions recorded in the assumption area for an assumption on the specified method.
-         * Note: there can be only one assumption for a given method id.
-         * @param currentAssumptions
-         * @param numAssumptions
-         * @param methodID
-         * @return the bit index in a bitmap for the assumption.
-         */
-        private static int hasAssumptionOn(int [] currentAssumptions, int numAssumptions, int methodID) {
-            int i = 0;
-            int end = currentAssumptions.length - 1;
-            while (i < numAssumptions) {
-                if (ASSUMPTION_METHOD_ID.getBitField(currentAssumptions[end--]) == methodID) {
-                    return 1 << i;
-                }
-                i++;
-            }
-            return 0;
-        }
-
-        int [] addDependentTargetMethod(int dependentID, HashMap<RiType, int []> dependencies) {
-            int [] dependsOnClassID = new int [dependencies.size()];
-            int i = 0;
-            for (RiType type : dependencies.keySet()) {
-                dependsOnClassID[i++] = ((ClassActor) type).id;
-                addDependentToType(dependentID, type, dependencies.get(type));
-            }
-            return dependsOnClassID;
         }
     }
 
@@ -807,6 +536,45 @@ public final class ClassDependencyManager {
         }
     }
 
+    enum ClassAssumptionFlags {
+        CLASS_ASSUMPTIONS_LENGTH(0, 13),
+        CLASS_HAS_UCM(13, 1),
+        CLASS_LOCAL_UCM_ONLY(14, 1),
+        CLASS_HAS_UCT(15, 1);
+
+        final int mask;
+        final int leftmostBitPos;
+
+        short setFlag(short flagHolder, short flag) {
+            return (short) (flagHolder | (flag << leftmostBitPos));
+        }
+
+        short getFlag(short flagHolder) {
+            return (short) ((flagHolder & mask) >> leftmostBitPos);
+        }
+
+        short setBooleanFlag(short flagHolder) {
+            return (short) (flagHolder | mask);
+        }
+
+        short clearBooleanFlag(short flagHolder) {
+            return (short) (flagHolder & ~mask);
+        }
+
+        boolean isBooleanFlagSet(short flagHolder) {
+            return (flagHolder & mask) != 0;
+        }
+
+        int bitWidth() {
+            return Integer.bitCount(mask);
+        }
+
+        ClassAssumptionFlags(int leftmostBitPos, int numBits) {
+            this.leftmostBitPos = leftmostBitPos;
+            this.mask = ((~0) & ((1 << numBits) - 1)) << leftmostBitPos;
+        }
+    }
+
     /**
      * Validate assumptions for a single compiled method and build lists of assumptions made on class type, one list per type.
      * Each type list of assumptions are pre-formatted during validation in a format that'll ease updating the global
@@ -821,13 +589,16 @@ public final class ClassDependencyManager {
      */
     static class AssumptionValidator implements CiAssumptions.AssumptionProcessor {
 
-        static final int LEAF_CONCRETE_METHOD_DEP = 0 << 30;
+        // AssumptionList recorded per type are made of methodID with a tag stored in the highest two bits,
+        // so that:
+        // assumption == 0 => UCT dependencies, no method ID
+        // assumption > 0  => local only UCM, methodID == assumption
+        // assumption < 0  => non local UCM, methodID = assumption &~ UNIQUE_CONCRETE_METHOD_DEP
+        static final int UNIQUE_CONCRETE_TYPE_DEP = 0 << 30;
+        static final int LEAF_CONCRETE_METHOD_DEP = 1 << 30;
+        static final int UNIQUE_CONCRETE_METHOD_DEP = 2 << 30;
 
-        static final int UNIQUE_CONCRETE_METHOD_DEP = 1 << 30;
-
-        static final int UNIQUE_CONCRETE_TYPE_DEP = 2 << 30;
-
-        static final int [] canonicalizedSingleUCT = new int[] {2, AssumptionValidator.UNIQUE_CONCRETE_TYPE_DEP};
+        static final int [] canonicalizedSingleUCT = new int[] {2, UNIQUE_CONCRETE_TYPE_DEP};
 
         /**
          * Maps of class types to assumptions made about them.
@@ -838,6 +609,9 @@ public final class ClassDependencyManager {
          * Result of the validation.
          */
         private boolean validated = true;
+
+        private int totalLocal = 0;
+        private int totalNonLocal = 0;
 
         private int [] grow(RiType context, int [] encodedDependencies) {
             int length = encodedDependencies.length;
@@ -850,6 +624,46 @@ public final class ClassDependencyManager {
         private boolean isUniqueConcreteMethod(RiMethod context, RiMethod method) {
             final ClassActor declaredType = (ClassActor) context.holder();
             return UCM_SEARCH_HELPER.get().uniqueConcreteMethod(declaredType, method) == method;
+        }
+
+        private static final short DEFAULT_SUMMARY_FLAG = CLASS_LOCAL_UCM_ONLY.setBooleanFlag(CLASS_HAS_UCM.setBooleanFlag((short) 0));
+        private static final int MAX_ASSUMPTION_LENGTH = 1 << CLASS_ASSUMPTIONS_LENGTH.bitWidth();
+
+        public short [] packAssumptions() {
+            FatalError.check(ClassID.largestClassId() < Short.MAX_VALUE, "Support for 1 << 16 number of classes not supported yet");
+            // Pre-compute size of the dependencies arrays:
+            final int numClasses = typeAssumptions.size();
+            int size = totalLocal + 2 * totalNonLocal + 2 * numClasses + 1;
+            short [] assumptions = new short[size];
+            assumptions[0] = (short) numClasses;
+            int classIndex = 1;
+            int dependenciesIndex = 2 * numClasses + 1;
+            for (RiType type : typeAssumptions.keySet()) {
+                assumptions[classIndex++] = (short) ((ClassActor) type).id;
+                int [] assumptionList = typeAssumptions.get(type);
+                int i = 1;
+                short assumptionsSummary = DEFAULT_SUMMARY_FLAG;
+                final int firstDependencyIndex = dependenciesIndex;
+                final int end = assumptionList[0];
+                while (i < end) {
+                    int assumption = assumptionList[i++];
+                    FatalError.check(assumption >= Short.MAX_VALUE, "Not supported");
+                    if (assumption > 0) {
+                        // A local only unique concrete method.
+                        assumptions[dependenciesIndex++] = (short) assumption;
+                    } else if (assumption < 0) {
+                        assumptions[dependenciesIndex++] = (short) assumption;
+                        assumptions[dependenciesIndex++] = (short) assumptionList[i++];
+                        assumptionsSummary = CLASS_LOCAL_UCM_ONLY.clearBooleanFlag(assumptionsSummary);
+                    } else {
+                        assumptionsSummary = CLASS_HAS_UCT.setBooleanFlag(assumptionsSummary);
+                    }
+                }
+                int assumptionLength = dependenciesIndex - firstDependencyIndex;
+                FatalError.check(assumptionLength < MAX_ASSUMPTION_LENGTH, "too many assumptions.");
+                assumptions[classIndex++] = CLASS_ASSUMPTIONS_LENGTH.setFlag(assumptionsSummary, (short) assumptionLength);
+            }
+            return assumptions;
         }
 
         @Override
@@ -898,12 +712,14 @@ public final class ClassDependencyManager {
             int end = encodedDependencies[0];
             int contextMethodIndex = ((MethodActor) method).memberIndex();
             if (context == method) {
+                totalLocal++;
                 if (end + 2 >= encodedDependencies.length) {
                     encodedDependencies = grow(contextHolder, encodedDependencies);
                 }
                 encodedDependencies[end++] = AssumptionValidator.LEAF_CONCRETE_METHOD_DEP;
                 encodedDependencies[end++] = contextMethodIndex;
             } else {
+                totalNonLocal++;
                 if (end + 3 >= encodedDependencies.length) {
                     encodedDependencies = grow(contextHolder, encodedDependencies);
                 }
