@@ -256,7 +256,7 @@ public abstract class ClassMethodActor extends MethodActor {
                         // The compiler/JIT/interpreter cannot handle JSR or RET instructions. However, these instructions
                         // can legally appear in class files whose version number is less than 50.0. So, we inline them
                         // with the type inferencing verifier if they appear in the bytecode of a pre-version-50.0 class file.
-                        if (codeAttribute != null && containsSubroutines(codeAttribute.code())) {
+                        if (codeAttribute != null && containsSubroutines(codeAttribute)) {
                             verifier = new TypeInferencingVerifier(holder);
                         }
                     } else {
@@ -347,7 +347,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * @param code the byte array of code
      * @return {@link true} if the code contains subroutines
      */
-    private static boolean containsSubroutines(byte[] code) {
+    private boolean containsSubroutines(CodeAttribute codeAttribute) {
         final BytecodeVisitor visitor = new BytecodeAdapter() {
             @Override
             protected void opcodeDecoded() {
@@ -358,7 +358,11 @@ public abstract class ClassMethodActor extends MethodActor {
             }
         };
         final BytecodeScanner scanner = new BytecodeScanner(visitor);
-        scanner.scan(new BytecodeBlock(code));
+        try {
+            scanner.scan(new BytecodeBlock(codeAttribute.code()));
+        } catch (VerifyError e) {
+            throw (InternalError) new InternalError("Error scanning " + this + "\n" + CodeAttributePrinter.toString(codeAttribute)).initCause(e);
+        }
         return scanner.wasStopped();
     }
 
