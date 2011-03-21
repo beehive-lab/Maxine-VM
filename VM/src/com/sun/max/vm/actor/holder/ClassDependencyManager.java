@@ -44,8 +44,8 @@ import com.sun.max.vm.thread.*;
  * Class maintaining class hierarchy and sub-typing relationships information of currently defined classes.
  * Dynamic compilers may issue queries related to these information and may make assumptions to apply certain optimizations
  * (e.g., devirtualization, type check elimination).
- * {@link TargetMethod}s produced by a dynamic compiler keeps track of the assumptions the compiler made in a {@link CiAssumptions} object.
- * This one must be validated by the dependency manager before the code is installed for uses. If the assumptions are incorrect, because of
+ * A dynamic compiler keeps track of the assumptions it makes when compiling a method in a {@link CiAssumptions} object.
+ * The assumptions must be validated by the dependency manager before a target method is installed for uses. If the assumptions are incorrect, because of
  * changes that occurred in the class hierarchy since the assumptions were made, the target method is dropped and a new one must be produced.
  *
  * The dependencies manager is also responsible for recording changes to the class hierarchy and related information that
@@ -60,7 +60,7 @@ public final class ClassDependencyManager {
     private static final int HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK = 0;
     private static final int NO_CONCRETE_SUBTYPE_MARK = NULL_CLASS_ID;
 
-    private static final boolean enableDumpOption = false;
+    private static final boolean enableDumpOption = true;
 
     /**
      * Read-write lock used to synchronize modifications to the class hierarchy with validation of
@@ -126,6 +126,7 @@ public final class ClassDependencyManager {
             AssumptionCounter counter = counters.get(key);
             if (counter == null) {
                 counter = new AssumptionCounter(assumption);
+                counters.put(counter, counter);
             }
             counter.count++;
         }
@@ -143,6 +144,16 @@ public final class ClassDependencyManager {
          */
         static final short [] INVALIDATED = new short[0];
 
+        static final short CLASS_FOLLOWS_FLAG = (short) (1 << 15);
+
+        static boolean class_follows(short assumption) {
+            return (assumption & CLASS_FOLLOWS_FLAG) != 0;
+        }
+
+        static short methodIndex(short assumption) {
+            return (short) (assumption & ~CLASS_FOLLOWS_FLAG);
+        }
+
         /**
          * The target method produced with the validated assumptions.
          * Needed to apply de-optimization should the assumptions be invalidated by some class definition event.
@@ -152,7 +163,8 @@ public final class ClassDependencyManager {
          * Set of assumptions made by the target method, packed into a short array formatted as follows.
          * The first entry specifies the number of classes the target method makes assumptions on.
          * The next entries contains two short per class: the first one hold a class ID, the second one a short bit fields
-         * indicate the type of assumption and the length of the assumption area of that class.
+         * that indicate the type of assumptions and the length of the assumption area of that class.
+         * The bit fields position and width are described in {@link ClassAssumptionFlags}.
          */
         volatile short [] assumptions;
 
@@ -198,6 +210,60 @@ public final class ClassDependencyManager {
             assumptions = INVALIDATED;
         }
 
+        /**
+         * Print assumptions made on class specified by class ID.
+         * @param classID
+         * @param out
+         */
+        void printAssumptions(int classID, PrintStream out) {
+            if (assumptions == INVALIDATED) {
+                out.println("assumptions for " + targetMethod.name() + " have been invalidated");
+                return;
+            }
+            final String indent = "    ";
+            final int numAssumptions = assumptions[0];
+            final int firstDependencyIndex = 1 + numAssumptions * 2;
+            int dependencyIndex = firstDependencyIndex;
+            for (int i = 1; i < firstDependencyIndex; i += 2) {
+                if (assumptions[i] == classID) {
+                    final ClassActor classActor = ClassID.toClassActor(classID);
+                    out.println(targetMethod.name() + " assumptions on class " + classActor + "(id=" + classActor.id + ")");
+                    final short assumptionFlags = assumptions[i + 1];
+                    if (CLASS_HAS_UCT.isBooleanFlagSet(assumptionFlags)) {
+                        out.println(indent + classActor + " has unique concrete implementation");
+                    }
+                    if (CLASS_HAS_UCM.isBooleanFlagSet(assumptionFlags)) {
+                        final int endAssumptions = dependencyIndex + CLASS_ASSUMPTIONS_LENGTH.getFlag(assumptionFlags);
+                        if (CLASS_LOCAL_UCM_ONLY.isBooleanFlagSet(assumptionFlags)) {
+                            while (dependencyIndex < endAssumptions) {
+                                short methodIndex = assumptions[dependencyIndex++];
+                                MethodActor method = classActor.localVirtualMethodActors()[methodIndex];
+                                out.println(indent + "local " + method.name() + " is a unique concrete method of " + classActor);
+                            }
+                            return;
+                        }
+                        while (dependencyIndex < endAssumptions) {
+                            short assumption = assumptions[dependencyIndex++];
+                            if (class_follows(assumption)) {
+                                final int methodIndex = methodIndex(assumption);
+                                final int concreteTypeClassID = assumptions[dependencyIndex++];
+                                final ClassActor concreteMethodHolder = ClassID.toClassActor(concreteTypeClassID);
+                                MethodActor method = concreteMethodHolder.allVirtualMethodActors()[classActor.localVirtualMethodActors()[methodIndex].vTableIndex()];
+                                out.println(indent + concreteMethodHolder + "." + method.name() +
+                                                " is a unique concrete method of " + classActor);
+                            } else {
+                                MethodActor method = classActor.localVirtualMethodActors()[assumption];
+                                out.println(indent + "local " + method.name() + " is a unique concrete method ");
+                            }
+                        }
+                    }
+                    return;
+                }
+                dependencyIndex += CLASS_ASSUMPTIONS_LENGTH.getFlag(assumptions[i + 1]);
+            }
+            FatalError.unexpected("class ID should be in valid assumptions");
+        }
+
         // Stats support
 
         void countAssumptionsPerType(int classID, HashMap<AssumptionCounter, AssumptionCounter> assumptionCounters) {
@@ -212,8 +278,9 @@ public final class ClassDependencyManager {
                     }
                     final int endAssumptions = dependencyIndex + CLASS_ASSUMPTIONS_LENGTH.getFlag(assumptionFlags);
                     while (dependencyIndex < endAssumptions) {
-                        AssumptionCounter.increaseCounter(assumptions[dependencyIndex], assumptionCounters);
+                        AssumptionCounter.increaseCounter(assumptions[dependencyIndex++], assumptionCounters);
                     }
+                    return;
                 }
                 dependencyIndex += CLASS_ASSUMPTIONS_LENGTH.getFlag(assumptions[i + 1]);
             }
@@ -359,18 +426,19 @@ public final class ClassDependencyManager {
         /**
          * Dump statistics.
          */
-        void dump() {
+        void printStatistics() {
             final AssumptionCounter uctCounter = new AssumptionCounter(0);
             IntegerDistribution numDistinctAssumptionsPerType = ValueMetrics.newIntegerDistribution("numDistinctAssumptionsPerType", 0, 20);
             IntegerDistribution numUCTAssumptionsPerType = ValueMetrics.newIntegerDistribution("numUCTAssumptionsPerType", 0, 20);
             IntegerDistribution numAssumptionsPerType = ValueMetrics.newIntegerDistribution("numAssumptionsPerType", 0, 20);
-            IntegerDistribution numDependentPerType = ValueMetrics.newIntegerDistribution("numDependentPerType", 0, 20);
+            IntegerDistribution numDependentsPerType = ValueMetrics.newIntegerDistribution("numDependentPerType", 0, 20);
             HashMap<AssumptionCounter, AssumptionCounter> assumptionsCounters = new HashMap<AssumptionCounter, AssumptionCounter>(20);
+
             for (RiType type : typeToDependentTargetMethods.keySet()) {
                 final int classID = ((ClassActor) type).id;
                 final DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
                 final int numDependents = list.numDependents();
-                numDependentPerType.record(numDependents);
+                numDependentsPerType.record(numDependents);
                 for (int i = 1; i <= numDependents; i++) {
                     idToValidAssumptions.get(list.dependentLists[i]).countAssumptionsPerType(classID, assumptionsCounters);
                 }
@@ -384,7 +452,36 @@ public final class ClassDependencyManager {
                 numAssumptionsPerType.record(totalTypeAssumptions);
             }
 
+            final PrintStream out = System.out;
+            out.println("# types with dependent methods: " + typeToDependentTargetMethods.size());
+            numDependentsPerType.report("# dependents / types", out);
+            numAssumptionsPerType.report("# total assumptions / type", out);
+            numDistinctAssumptionsPerType.report("# distinct assumptions / type", out);
+            numUCTAssumptionsPerType.report("# UCT assumption / type, stream", out);
+        }
 
+        void printDependents(RiType type, PrintStream out) {
+            final int classID = ((ClassActor) type).id;
+            DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
+            out.print("class " + type + " (id = " + classID + ") has ");
+            if (list == null) {
+                out.println("no dependents");
+                return;
+            }
+            final int numDependents = list.numDependents();
+            out.println(numDependents + " dependents");
+            for (int i = 1; i <= numDependents; i++) {
+                idToValidAssumptions.get(list.dependentLists[i]).printAssumptions(classID, out);
+            }
+        }
+
+        void dump(PrintStream out) {
+            out.println("================================================================");
+            out.println("DependentTargetMethodTable has " + typeToDependentTargetMethods.size() + " entries");
+            for (RiType type : typeToDependentTargetMethods.keySet()) {
+                printDependents(type, out);
+            }
+            out.println("================================================================");
         }
     }
 
@@ -642,10 +739,27 @@ public final class ClassDependencyManager {
         }
     }
 
+    /**
+     * Flags stored at dedicated bit location within the entry in the {@link ValidAssumptions#assumptions} short array
+     * describing a target method assumptions.
+     * See {@link ValidAssumptions#assumptions}.
+     */
     enum ClassAssumptionFlags {
+        /**
+         * Length of the area describing the assumptions made on the context class.
+         */
         CLASS_ASSUMPTIONS_LENGTH(0, 13),
+        /**
+         * Flag indicating if some unique concrete methods are assumed for the context class.
+         */
         CLASS_HAS_UCM(13, 1),
+        /**
+         * Flag indicating if all unique concrete method assumptions are local to the context class.
+         */
         CLASS_LOCAL_UCM_ONLY(14, 1),
+        /**
+         * Flag indicating if the context class is assumed a unique concrete sub-type.
+         */
         CLASS_HAS_UCT(15, 1);
 
         final int mask;
@@ -734,6 +848,7 @@ public final class ClassDependencyManager {
         }
 
         private static final short DEFAULT_SUMMARY_FLAG = CLASS_LOCAL_UCM_ONLY.setBooleanFlag(CLASS_HAS_UCM.setBooleanFlag((short) 0));
+        private static final short UCT_ASSUMPTION_ONLY = CLASS_HAS_UCT.setBooleanFlag((short) 0);
         private static final int MAX_ASSUMPTION_LENGTH = 1 << CLASS_ASSUMPTIONS_LENGTH.bitWidth();
 
 
@@ -767,7 +882,7 @@ public final class ClassDependencyManager {
                         if (untaggedAssumption >= Short.MAX_VALUE) {
                             FatalError.unexpected("method index too large for packed assumptions");
                         }
-                        assumptions[dependenciesIndex++] = (short) untaggedAssumption;
+                        assumptions[dependenciesIndex++] = (short) (untaggedAssumption | ValidAssumptions.CLASS_FOLLOWS_FLAG);
                         assumptions[dependenciesIndex++] = (short) assumptionList[i++];
                         assumptionsSummary = CLASS_LOCAL_UCM_ONLY.clearBooleanFlag(assumptionsSummary);
                     } else {
@@ -776,7 +891,11 @@ public final class ClassDependencyManager {
                 }
                 int assumptionLength = dependenciesIndex - firstDependencyIndex;
                 FatalError.check(assumptionLength < MAX_ASSUMPTION_LENGTH, "too many assumptions.");
-                assumptions[classIndex++] = CLASS_ASSUMPTIONS_LENGTH.setFlag(assumptionsSummary, (short) assumptionLength);
+                if (assumptionLength == 0) {
+                    assumptions[classIndex++] = UCT_ASSUMPTION_ONLY;
+                } else {
+                    assumptions[classIndex++] = CLASS_ASSUMPTIONS_LENGTH.setFlag(assumptionsSummary, (short) assumptionLength);
+                }
             }
             return assumptions;
         }
@@ -834,6 +953,9 @@ public final class ClassDependencyManager {
                 encodedDependencies[end++] = contextMethodIndex | AssumptionValidator.LEAF_CONCRETE_METHOD_DEP;
             } else {
                 totalNonLocal++;
+                if (MaxineVM.isHosted()) {
+                    // DEBUGGING ONLY. CLEAN UP
+                }
                 if (end + 2 >= encodedDependencies.length) {
                     encodedDependencies = grow(contextHolder, encodedDependencies);
                 }
@@ -938,7 +1060,8 @@ public final class ClassDependencyManager {
             return;
         }
         classHierarchyLock.readLock().lock();
-
+        dependentTargetMethodTable.dump(System.out);
+        dependentTargetMethodTable.printStatistics();
         try {
             int classId = 0;
             int totalClasses = 0;
