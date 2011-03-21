@@ -353,6 +353,18 @@ public class InspectionSettings {
      * Writes the persistent settings represented by this object to a {@linkplain #settingsFile() file}.
      */
     private synchronized void doSave() {
+        updateSettings();
+        try {
+            final FileWriter fileWriter = new FileWriter(settingsFile);
+            properties.store(fileWriter, null);
+            fileWriter.close();
+        } catch (IOException ioException) {
+            InspectorWarning.message(tracePrefix() + "Error while saving settings to " + settingsFile, ioException);
+        }
+
+    }
+
+    private void updateSettings() {
         final Properties newProperties = new SortedProperties();
         Trace.line(TRACE_VALUE, tracePrefix() + "saving settings to: " + settingsFile.toString());
         for (SaveSettingsListener saveSettingsListener : clients.values()) {
@@ -368,13 +380,17 @@ public class InspectionSettings {
             }
         }
         properties.putAll(newProperties);
-        try {
-            final FileWriter fileWriter = new FileWriter(settingsFile);
-            properties.store(fileWriter, null);
-            fileWriter.close();
-        } catch (IOException ioException) {
-            InspectorWarning.message(tracePrefix() + "Error while saving settings to " + settingsFile, ioException);
-        }
+    }
 
+    /**
+     * Writes a summary, in alphabetical order, of the current settings being saved.
+     */
+    public void writeSummary(PrintStream printStream) {
+        updateSettings();
+        try {
+            properties.store(printStream, "Inspection settings");
+        } catch (IOException e) {
+            InspectorWarning.message("Failed to write settings to console", e);
+        }
     }
 }

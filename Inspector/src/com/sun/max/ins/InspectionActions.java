@@ -871,6 +871,38 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action:  makes visible and highlights the {@link StackFrameInspector}.
+     */
+    final class ViewStackFrameAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "StackFrame";
+
+        ViewStackFrameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            refreshableActions.add(this);
+        }
+
+        @Override
+        protected void procedure() {
+            StackFrameInspector.make(inspection()).highlight();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess() && focus().hasThread());
+        }
+    }
+
+    private InspectorAction viewStackFrame = new ViewStackFrameAction(null);
+
+    /**
+     * @return an Action that will make visible the {@link StackFrameInspector}.
+     */
+    public final InspectorAction viewStackFrame() {
+        return viewStackFrame;
+    }
+
+    /**
      * Action:  makes visible and highlights the {@link ThreadsInspector}.
      */
     final class ViewThreadsAction extends InspectorAction {
@@ -4902,6 +4934,33 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action:  lists to the console current settings.
+     */
+    final class ListSettingsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "List all settings";
+
+        ListSettingsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            inspection().settings().writeSummary(System.out);
+        }
+    }
+
+    private InspectorAction listSettings = new ListSettingsAction(null);
+
+    /**
+     * @return an Action that will list to the console a summary of current settings
+     * in the inspection session.
+     */
+    public final InspectorAction listSettings() {
+        return listSettings;
+    }
+
+    /**
      * @return menu items for memory-related actions that are independent of context
      */
     public InspectorMenuItems genericMemoryMenuItems() {
@@ -5025,6 +5084,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(actions().objectInspectorsMenu());
                 menu.add(actions().viewRegisters());
                 menu.add(actions().viewStack());
+                menu.add(actions().viewStackFrame());
                 menu.add(actions().viewThreads());
                 menu.add(actions().viewVmThreadLocals());
                 if (vm().watchpointManager() != null) {

@@ -180,6 +180,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
             menu.add(actions.listWatchpoints());
         }
         menu.add(actions.listInspectableMethods());
+        menu.add(actions.listSettings());
         return menu;
     }
 
