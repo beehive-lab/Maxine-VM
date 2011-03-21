@@ -702,7 +702,7 @@ public class MaxineTester {
             return;
         }
         List<String> maxvmConfigs = maxvmConfigListOption.getValue();
-        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, outputDir, workingDir, null);
+        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, outputDir, workingDir, inputFile);
         printStartOfRefvm(testName);
         ExternalCommand.Result refResult = commands[0].exec(false, javaRunTimeOutOption.getValue());
         printRefvmResult(testName, refResult);
