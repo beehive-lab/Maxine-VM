@@ -26,7 +26,7 @@ import java.io.*;
 
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.value.*;
 
 public class DataModel {
@@ -74,7 +74,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(float value) {
-        final int intValue = SpecialBuiltin.floatToInt(value);
+        final int intValue = Intrinsics.floatToInt(value);
         return endianness.toBytes(intValue);
     }
 
@@ -83,7 +83,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(double value) {
-        final long longValue = SpecialBuiltin.doubleToLong(value);
+        final long longValue = Intrinsics.doubleToLong(value);
         return endianness.toBytes(longValue);
     }
 

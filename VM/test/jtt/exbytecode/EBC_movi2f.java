@@ -22,14 +22,14 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 
 /*
  * @Harness: java
 */
 public class EBC_movi2f {
     public static float test(int arg) {
-        return SpecialBuiltin.intToFloat(arg);
+        return Intrinsics.intToFloat(arg);
     }
 
 }

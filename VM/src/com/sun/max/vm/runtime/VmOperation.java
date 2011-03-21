@@ -30,10 +30,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.Pointer.Predicate;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallEpilogue;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -73,8 +69,8 @@ import com.sun.max.vm.thread.*;
  * The state pertains to the mutator thread and is recorded in the
  * {@link VmThreadLocal#MUTATOR_STATE} thread local variable of the mutator thread.
  * Each transition describes which thread makes the transition ({@code M} == mutator thread, {@code VM} == VM operation
- * thread), the VM code implementing the transition ({@linkplain NativeCallPrologue#nativeCallPrologue() JNI-Prolog},
- * {@linkplain NativeCallEpilogue#nativeCallEpilogue() JNI-Epilog}, {@linkplain WaitUntilFrozen
+ * thread), the VM code implementing the transition ({@linkplain Snippets#nativeCallPrologue() JNI-Prolog},
+ * {@linkplain Snippets#nativeCallEpilogue() JNI-Epilog}, {@linkplain WaitUntilFrozen
  * WaitUntilFrozen} and {@linkplain ThawThread ThawThread}) and the instruction used to update the state
  * variable ({@code CAS} == atomic compare-and-swap, {@code STORE} == normal memory store).</dd>
  *
@@ -82,8 +78,8 @@ import com.sun.max.vm.thread.*;
  * <dd>Memory fences are used to implement Dekkers algorithm to ensure that a thread is never
  * mutating during a GC. This mechanism uses both the {@link VmThreadLocal#MUTATOR_STATE} and
  * {@link VmThreadLocal#FROZEN} thread local variables of the mutator thread. The operations
- * that access these variables are in {@link NativeCallPrologue#nativeCallPrologue()},
- * {@link NativeCallEpilogue#nativeCallEpilogue()}, {@link WaitUntilFrozen} and
+ * that access these variables are in {@link Snippets#nativeCallPrologue()},
+ * {@link Snippets#nativeCallEpilogue()}, {@link WaitUntilFrozen} and
  * {@link ThawThread}.
  * </dd>
  * </dl>
@@ -264,12 +260,12 @@ public class VmOperation {
         // mean that this thread is now stopped at a safepoint.
         // This invariant is enforced by disabling the ability to call native methods
         // within doAtSafepointBeforeBlocking().
-        NativeStubSnippet.disableNativeCallsForCurrentThread();
+        Snippets.disableNativeCallsForCurrentThread();
 
         doAtSafepointBeforeBlocking(trapState);
 
         // Now re-enable the ability to call native code
-        NativeStubSnippet.enableNativeCallsForCurrentThread();
+        Snippets.enableNativeCallsForCurrentThread();
 
         synchronized (VmThreadMap.THREAD_LOCK) {
             // block on the thread lock which is held by VM operation thread
@@ -612,7 +608,7 @@ public class VmOperation {
 
     /**
      * Determines if a given thread is in the scope of this operation. This method is only called
-     * if this operation is not {@linkplain #VmOperation(String, Object, Mode) created} with a single thread.
+     * if this operation is not {@linkplain #VmOperation(String, VmThread, Mode) created} with a single thread.
      *
      * @param thread a thread in the global thread list
      * @return true if {@code thread} is operated on by this operation
@@ -702,7 +698,7 @@ public class VmOperation {
      */
     private static void waitForThreadFreezePause(VmThread thread, int steps) {
         if (steps < SafepointSpinBeforeYield) {
-            SpecialBuiltin.pause();
+            Intrinsics.pause();
         } else {
             int attempts = steps - SafepointSpinBeforeYield;
             if (attempts < 25) {

@@ -23,6 +23,7 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.object.ArrayAccess.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 
 import com.sun.max.annotate.*;
@@ -33,7 +34,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.ArrayGetSnippet.ReadLength;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
@@ -312,7 +312,7 @@ public final class Throw {
     @NEVER_INLINE
     public static void arrayIndexOutOfBoundsException(Object array, int index) {
         FatalError.check(array != null, "Arguments for raising an ArrayIndexOutOfBoundsException cannot be null");
-        throw new ArrayIndexOutOfBoundsException("Index: " + index + ", Array length: " + ReadLength.readLength(array));
+        throw new ArrayIndexOutOfBoundsException("Index: " + index + ", Array length: " + readArrayLength(array));
     }
 
     /**

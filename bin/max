@@ -280,11 +280,9 @@ projects=( \
     Assembler:src,test            \
     VM:src,test                   \
     T1X:src                       \
-    CPS:src,test                  \
     MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \
-    TeleCPS:test                  \
     JDWP:src                      \
     TeleJDWP:src                  \
     Inspector:src,test            \
@@ -1026,34 +1024,6 @@ function run_image() {
 }
 
 #=======================================
-# 'compile' command
-#=======================================
-
-compile_usage="[options] compilation_specs..."
-compile_help="compile a list of classes and/or methods using the VM's compiler
-
-    A compilation spec is a class name pattern followed by an optional method name
-    pattern separated by a ':'. For example:
-
-        Object:wait String
-
-    will compile all methods in a class whose name contains "Object" where the
-    method name contains "wait" as well as all methods in a class whose name
-    contains "String". The classes searched are those on the class path.
-
-    The compilation phases are traced and the resulting machine code is disassembled.
-
-    The output traced by this command is not guaranteed to be the same as the output
-    for a compilation done at runtime. The code produced by a compiler is very sensitive
-    to the compilation context such as what classes have been resolved etc.
-
-    Use \"max compile -help\" to see what other options this command accepts."
-
-function run_compile() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.cps.CompilerRunner $@
-}
-
-#=======================================
 # 'verify' command
 #=======================================
 
@@ -1631,11 +1601,7 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-image-configs=jtt-cpscps,jtt-mscpscps -fail-fast"
-if [ "$MAXINE_OS" == "linux" ]; then
-    # MSHeapScheme does not yet work on Linux
-    gate_presets="-image-configs=jtt-cpscps -fail-fast"
-fi 
+gate_presets="-image-configs=java -fail-fast"
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
     If this commands exits with a 0 exit code, then the source code is in
@@ -1658,7 +1624,7 @@ function run_gate() {
 #=======================================
 
 msgate_usage="[options]"
-msgate_presets="-image-configs=jtt-mscpscps -fail-fast -tests=output:GC+WeakReference"
+msgate_presets="-image-configs=jtt-msc1xc1x -fail-fast -tests=output:GC+WeakReference"
 
 msgate_help="run the GC tests using the MS heap scheme"
 

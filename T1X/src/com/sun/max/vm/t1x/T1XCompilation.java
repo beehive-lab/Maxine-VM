@@ -53,17 +53,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClassForNew;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForReading;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForWriting;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInterfaceMethod;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveSpecialMethod;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForReading;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForWriting;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveVirtualMethod;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.*;
@@ -419,7 +408,7 @@ public final class T1XCompilation {
      */
     public T1XTargetMethod compile(ClassMethodActor method, boolean install) {
         try {
-            return compile1(method, method.originalCodeAttribute(true), install);
+            return compile1(method, method.codeAttribute(), install);
         } catch (UnsupportedSubroutineException e) {
             T1XMetrics.MethodsWithSubroutines++;
             if (T1XOptions.PrintJsrRetRewrites) {
@@ -522,7 +511,7 @@ public final class T1XCompilation {
     private void emitAndRecordStops(T1XTemplate template) {
         if (template.numberOfStops != 0) {
             int bci = stream.currentBCI();
-            stops.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci);
+            stops.add(template, buf.position(), bci == stream.endBCI() ? -1 : bci, null);
         }
         buf.emitBytes(template.code, 0, template.code.length);
     }
@@ -643,12 +632,10 @@ public final class T1XCompilation {
 
     /**
      * Emit template for a bytecode operating on a (static or dynamic) field.
-     *
-     * @param template one of getfield, putfield, getstatic, putstatic
      * @param index Index to the field ref constant.
-     * @param snippet the resolution snippet to call
+     * @param template one of getfield, putfield, getstatic, putstatic
      */
-    private void emitFieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index, ResolutionSnippet snippet) {
+    private void emitFieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index) {
         FieldRefConstant fieldRefConstant = cp.fieldAt(index);
         Kind fieldKind = fieldRefConstant.type(cp).toKind();
         T1XTemplateTag tag = tags.get(fieldKind.asEnum);
@@ -681,7 +668,7 @@ public final class T1XCompilation {
             }
         }
         T1XTemplate template = getTemplate(tag);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index, snippet));
+        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         // Emit the template unmodified now. It will be modified in the end once all labels to literals are fixed.
         emitAndRecordStops(template);
     }
@@ -732,8 +719,7 @@ public final class T1XCompilation {
         } else {
             template = getTemplate(tag);
             beginBytecode(tag.opcode);
-            ResolutionSnippet snippet = isArray ? ResolutionSnippet.ResolveArrayClass.SNIPPET : ResolutionSnippet.ResolveClass.SNIPPET;
-            assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index, snippet));
+            assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         }
         emitAndRecordStops(template);
     }
@@ -862,6 +848,7 @@ public final class T1XCompilation {
                         tag = INVOKESPECIALS.get(kind.asEnum).resolved;
                         T1XTemplate template = getTemplate(tag);
                         beginBytecode(tag.opcode);
+                        assignIntTemplateArgument(0, receiverStackIndex(signature));
                         recordDirectBytecodeCall(template, virtualMethodActor);
                         return;
 //                    } else if (shouldProfileMethodCall(virtualMethodActor)) {
@@ -892,7 +879,7 @@ public final class T1XCompilation {
         }
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index, ResolveVirtualMethod.SNIPPET));
+        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         assignIntTemplateArgument(1, receiverStackIndex(signature));
         emitAndRecordStops(template);
     }
@@ -931,7 +918,7 @@ public final class T1XCompilation {
         }
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index, ResolveInterfaceMethod.SNIPPET));
+        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         assignIntTemplateArgument(1, receiverStackIndex(signature));
         emitAndRecordStops(template);
     }
@@ -939,12 +926,14 @@ public final class T1XCompilation {
     private void emitInvokespecial(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         Kind kind = invokeKind(classMethodRef.signature(cp));
+        SignatureDescriptor signature = classMethodRef.signature(cp);
         T1XTemplateTag tag = INVOKESPECIALS.get(kind.asEnum);
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
                 T1XTemplate template = getTemplate(tag.resolved);
                 beginBytecode(tag.opcode);
+                assignIntTemplateArgument(0, receiverStackIndex(signature));
                 recordDirectBytecodeCall(template, virtualMethodActor);
                 return;
             }
@@ -953,7 +942,8 @@ public final class T1XCompilation {
         }
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index, ResolveSpecialMethod.SNIPPET));
+        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
+        assignIntTemplateArgument(1, receiverStackIndex(signature));
         emitAndRecordStops(template);
     }
 
@@ -976,28 +966,29 @@ public final class T1XCompilation {
         }
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index, ResolveStaticMethod.SNIPPET));
+        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         emitAndRecordStops(template);
     }
 
     private void recordDirectBytecodeCall(T1XTemplate template, ClassMethodActor callee) {
-        assert template.directCalls.length == 1;
-        assert template.numberOfStops == 1;
         if (isAMD64()) {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
-            final int alignment = 7;
-            final int callSitePosition = buf.position() + template.directCalls[0].pos;
-            final int roundDownMask = ~alignment;
-            final int directCallInstructionLength = 5; // [0xE8] disp32
-            final int endOfCallSite = callSitePosition + (directCallInstructionLength - 1);
-            if ((callSitePosition & roundDownMask) != (endOfCallSite & roundDownMask)) {
-                // Emit nops to align up to next 8-byte boundary
-                asm.nop(8 - (callSitePosition & alignment));
+            if (callee.currentTargetMethod() == null) {
+                // Align unlinked bytecode call site for MT safe patching
+                final int alignment = 7;
+                final int callSitePosition = buf.position() + template.bytecodeCall.pos;
+                final int roundDownMask = ~alignment;
+                final int directCallInstructionLength = 5; // [0xE8] disp32
+                final int endOfCallSite = callSitePosition + (directCallInstructionLength - 1);
+                if ((callSitePosition & roundDownMask) != (endOfCallSite & roundDownMask)) {
+                    // Emit nops to align up to next 8-byte boundary
+                    asm.nop(8 - (callSitePosition & alignment));
+                }
             }
         } else {
             unimplISA();
         }
-        stops.addBytecodeDirectCall(stream.currentBCI(), buf.position(), callee);
+        stops.add(template, buf.position(), stream.currentBCI(), callee);
         buf.emitBytes(template.code, 0, template.code.length);
     }
 
@@ -1016,7 +1007,7 @@ public final class T1XCompilation {
                 } else {
                     T1XTemplate template = getTemplate(LDC$reference);
                     beginBytecode(bytecode);
-                    assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index, ResolutionSnippet.ResolveClass.SNIPPET));
+                    assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
                     emitAndRecordStops(template);
                 }
                 break;
@@ -1085,7 +1076,7 @@ public final class T1XCompilation {
         // Unresolved case
         T1XTemplate template = getTemplate(MULTIANEWARRAY);
         beginBytecode(Bytecodes.MULTIANEWARRAY);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index, ResolutionSnippet.ResolveClass.SNIPPET));
+        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         assignReferenceLiteralTemplateArgument(1, new int[numberOfDimensions]);
         emitAndRecordStops(template);
     }
@@ -1104,7 +1095,7 @@ public final class T1XCompilation {
         }
         T1XTemplate template = getTemplate(NEW);
         beginBytecode(Bytecodes.NEW);
-        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index, ResolveClassForNew.SNIPPET));
+        assignReferenceLiteralTemplateArgument(0, cp.makeResolutionGuard(index));
         emitAndRecordStops(template);
     }
 
@@ -1406,7 +1397,7 @@ public final class T1XCompilation {
         if (isAMD64()) {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
             final CiRegister dst = fpuRegParams[parameterIndex];
-            asm.movl(scratch, SpecialBuiltin.floatToInt(argument));
+            asm.movl(scratch, Intrinsics.floatToInt(argument));
             asm.movdl(dst, scratch);
         } else {
             unimplISA();
@@ -1427,7 +1418,7 @@ public final class T1XCompilation {
         if (isAMD64()) {
             AMD64Assembler asm = (AMD64Assembler) this.asm;
             final CiRegister dst = fpuRegParams[parameterIndex];
-            asm.movq(scratch, SpecialBuiltin.doubleToLong(argument));
+            asm.movq(scratch, Intrinsics.doubleToLong(argument));
             asm.movdq(dst, scratch);
         } else {
             unimplISA();
@@ -1623,10 +1614,10 @@ public final class T1XCompilation {
             case Bytecodes.IFNONNULL          : emitBranch(NE, IFNONNULL, stream.readBranchDest()); break;
             case Bytecodes.GOTO               : emitBranch(null, GOTO, stream.readBranchDest()); break;
             case Bytecodes.GOTO_W             : emitBranch(null, GOTO_W, stream.readFarBranchDest()); break;
-            case Bytecodes.GETFIELD           : emitFieldAccess(GETFIELDS, stream.readCPI(), ResolveInstanceFieldForReading.SNIPPET); break;
-            case Bytecodes.GETSTATIC          : emitFieldAccess(GETSTATICS, stream.readCPI(), ResolveStaticFieldForReading.SNIPPET); break;
-            case Bytecodes.PUTFIELD           : emitFieldAccess(PUTFIELDS, stream.readCPI(), ResolveInstanceFieldForWriting.SNIPPET); break;
-            case Bytecodes.PUTSTATIC          : emitFieldAccess(PUTSTATICS, stream.readCPI(), ResolveStaticFieldForWriting.SNIPPET); break;
+            case Bytecodes.GETFIELD           : emitFieldAccess(GETFIELDS, stream.readCPI()); break;
+            case Bytecodes.GETSTATIC          : emitFieldAccess(GETSTATICS, stream.readCPI()); break;
+            case Bytecodes.PUTFIELD           : emitFieldAccess(PUTFIELDS, stream.readCPI()); break;
+            case Bytecodes.PUTSTATIC          : emitFieldAccess(PUTSTATICS, stream.readCPI()); break;
             case Bytecodes.ANEWARRAY          : emitTemplateWithClassConstant(ANEWARRAY, stream.readCPI()); break;
             case Bytecodes.CHECKCAST          : emitTemplateWithClassConstant(CHECKCAST, stream.readCPI()); break;
             case Bytecodes.INSTANCEOF         : emitTemplateWithClassConstant(INSTANCEOF, stream.readCPI()); break;
@@ -1768,7 +1759,7 @@ public final class T1XCompilation {
             case Bytecodes.INFOPOINT          :
             case Bytecodes.FLUSHW             :
             case Bytecodes.ALLOCA             :
-            case Bytecodes.ALLOCSTKVAR        :
+            case Bytecodes.STACKHANDLE        :
             case Bytecodes.JNICALL            :
             case Bytecodes.TEMPLATE_CALL      :
             case Bytecodes.ICMP               :

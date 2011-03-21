@@ -27,7 +27,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -316,7 +316,7 @@ public final class JniHandles {
      */
     @INLINE
     public static JniHandle createStackHandle(Object object) {
-        return MakeStackVariable.makeStackVariable(Reference.fromJava(object)).asJniHandle();
+        return Intrinsics.stackHandle(Reference.fromJava(object)).asJniHandle();
     }
 
     /**

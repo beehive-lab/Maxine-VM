@@ -105,9 +105,6 @@ public final class JavaTester {
         }
 
         executors.registerClass("reflect", ReflectiveExecutor.class);
-        executors.registerClass("cir", "test.com.sun.max.vm.cps.CIRTestExecutor");
-        executors.registerClass("dir", "test.com.sun.max.vm.cps.DIRTestExecutor");
-        executors.registerClass("eir", "test.com.sun.max.vm.cps.EIRTestExecutor");
 
         // run each executor.
         for (String alias : EXECS.getValue()) {

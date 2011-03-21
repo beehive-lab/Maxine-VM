@@ -50,8 +50,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * This class collects together stack-walking related functionality that is (somewhat) compiler-independent.
- * Mostly, this means stack walking functionality that is shared between methods produced by the
- * CPS and C1X compilers.
  *
  * @author Ben L. Titzer
  */

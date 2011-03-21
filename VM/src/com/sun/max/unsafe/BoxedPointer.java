@@ -23,7 +23,7 @@
 package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 
@@ -131,7 +131,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public float readFloat(Offset offset) {
-        return SpecialBuiltin.intToFloat(readInt(offset));
+        return Intrinsics.intToFloat(readInt(offset));
     }
 
     private static native long nativeReadLong(long pointer, long offset);
@@ -143,7 +143,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public double readDouble(Offset offset) {
-        return SpecialBuiltin.longToDouble(readLong(offset));
+        return Intrinsics.longToDouble(readLong(offset));
     }
 
     @Override
@@ -184,7 +184,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public void writeFloat(Offset offset, float value) {
-        writeInt(offset, SpecialBuiltin.floatToInt(value));
+        writeInt(offset, Intrinsics.floatToInt(value));
     }
 
     private static native void nativeWriteLong(long pointer, long offset, long value);
@@ -196,7 +196,7 @@ public final class BoxedPointer extends Pointer implements Boxed {
 
     @Override
     public void writeDouble(Offset offset, double value) {
-        writeLong(offset, SpecialBuiltin.doubleToLong(value));
+        writeLong(offset, Intrinsics.doubleToLong(value));
     }
 
     @Override

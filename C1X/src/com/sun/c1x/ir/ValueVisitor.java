@@ -55,7 +55,7 @@ public abstract class ValueVisitor {
     public abstract void visitIncrementRegister(IncrementRegister i);
     public abstract void visitInfopoint(Infopoint i);
     public abstract void visitLoadPointer(LoadPointer i);
-    public abstract void visitLoadStackAddress(AllocateStackVariable i);
+    public abstract void visitAllocateStackHandle(StackHandle i);
     public abstract void visitLoadRegister(LoadRegister i);
     public abstract void visitLocal(Local i);
     public abstract void visitLogicOp(LogicOp i);

@@ -40,7 +40,6 @@ public class Unsigned {
      * Performs unsigned integer division.
      */
     @INLINE
-    @UNSAFE
     public static int idiv(int dividend, int divisor) {
         return Address.fromUnsignedInt(dividend).dividedBy(divisor).toInt();
     }
@@ -49,7 +48,6 @@ public class Unsigned {
      * Performs unsigned long division.
      */
     @INLINE
-    @UNSAFE
     public static long ldiv(long dividend, long divisor) {
         return Address.fromLong(dividend).dividedBy(Address.fromLong(divisor)).toLong();
     }
@@ -58,7 +56,6 @@ public class Unsigned {
      * Performs unsigned integer modulus.
      */
     @INLINE
-    @UNSAFE
     public static int irem(int dividend, int divisor) {
         return Address.fromUnsignedInt(dividend).remainder(divisor);
     }
@@ -67,7 +64,6 @@ public class Unsigned {
      * Performs unsigned long modulus.
      */
     @INLINE
-    @UNSAFE
     public static long lrem(long dividend, long divisor) {
         return Address.fromLong(dividend).remainder(Address.fromLong(divisor)).toLong();
     }

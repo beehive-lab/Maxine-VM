@@ -33,7 +33,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -342,16 +341,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
         int flags = classMethodActor.flags() | classMethodActor.compilee().flags();
         if (Actor.isUnsafe(flags)) {
-            if (isHosted() && Builtin.builtinInvocationStubClasses.contains(classMethodActor.holder())) {
-                // Invocation stubs for builtins must be compiled with CPS.
-                // To satisfy this, we simply compile all invocation stubs with CPS for now.
-                return CPSCompiler.Static.compiler();
-            }
-
-            if (classMethodActor.isTemplate()) {
-                // Templates must be compiled with the CPS compiled
-                return CPSCompiler.Static.compiler();
-            }
             return optimizingCompiler;
         }
 
@@ -360,12 +349,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         if (isHosted()) {
             if (compileWithBaseline.contains(classMethodActor.holder().javaClass())) {
                 compiler = baselineCompiler;
-            } else if (classMethodActor.getAnnotation(SNIPPET.class) != null) {
-                // snippets must be compiled with the opt compiler
-                compiler = optimizingCompiler;
-            } else if (Builtin.builtinInvocationStubClasses.contains(classMethodActor.holder())) {
-                // Invocation stubs for builtins must be compiled with CPS.
-                compiler = CPSCompiler.Static.compiler();
             } else {
                 // at prototyping time, default to the opt compiler
                 compiler = optimizingCompiler;
@@ -373,13 +356,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         } else {
             // in optimized mode, default to the optimizing compiler
             if (mode == Mode.OPTIMIZED) {
-                if (classMethodActor.isSynthetic() && firstCompile) {
-                    // we must at first use the baseline for reflective invocation stubs,
-                    // otherwise the CPS compiler may not terminate
-                    compiler = baselineCompiler;
-                } else {
-                    compiler = optimizingCompiler;
-                }
+                compiler = optimizingCompiler;
             } else {
                 // use the baseline if the first compile or in baseline mode
                 if (firstCompile || mode == Mode.BASELINE) {

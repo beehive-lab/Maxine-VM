@@ -102,7 +102,7 @@ public class CommandLineVerifier extends MethodFinder {
                     log.println("Verifying " + method.format("%H.%n(%p)") + " via " + (verifier instanceof TypeCheckingVerifier ? "type-checking" : "type-inferecing"));
                 }
                 try {
-                    verifier.verify(classMethodActor, classMethodActor.originalCodeAttribute(false));
+                    verifier.verify(classMethodActor, classMethodActor.codeAttribute());
                 } catch (LinkageError e) {
                     e.printStackTrace();
                     if (failFast.getValue()) {
@@ -124,7 +124,7 @@ public class CommandLineVerifier extends MethodFinder {
 
     @Override
     protected void addMethod(MethodActor method, List<MethodActor> methods) {
-        if (method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic()) {
+        if (method instanceof ClassMethodActor && !method.isAbstract() && !method.isIntrinsic()) {
             super.addMethod(method, methods);
         }
     }

@@ -509,12 +509,17 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Emit jump table entries
         for (BlockBegin target : op.targets) {
             Label label = target.label();
-            label.addPatchAt(buf.position());
             int offsetToJumpTableBase = buf.position() - jumpTablePos;
+            if (label.isBound()) {
+                int imm32 = label.position() - jumpTablePos;
+                buf.emitInt(imm32);
+            } else {
+                label.addPatchAt(buf.position());
 
-            buf.emitByte(0); // psuedo-opcode for jump table entry
-            buf.emitShort(offsetToJumpTableBase);
-            buf.emitByte(0); // padding to make jump table entry 4 bytes wide
+                buf.emitByte(0); // psuedo-opcode for jump table entry
+                buf.emitShort(offsetToJumpTableBase);
+                buf.emitByte(0); // padding to make jump table entry 4 bytes wide
+            }
         }
 
         JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);

@@ -24,8 +24,6 @@ package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized.*;
-import static com.sun.max.vm.compiler.snippet.Snippet.MakeHolderInitialized.*;
 import static com.sun.max.vm.layout.Layout.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -55,17 +53,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.UnresolvedType.ByAccessingClass;
 import com.sun.max.vm.classfile.constant.UnresolvedType.InPool;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveArrayClass;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClass;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClassForNew;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForReading;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForWriting;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInterfaceMethod;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForReading;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForWriting;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveVirtualMethod;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
@@ -348,7 +335,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     @Override
     public XirSnippet genResolveClass(XirSite site, RiType type, Representation representation) {
-        return new XirSnippet(resolveClassTemplates[representation.ordinal()], guardFor(type, ResolveClass.SNIPPET));
+        return new XirSnippet(resolveClassTemplates[representation.ordinal()], guardFor(type));
     }
 
     @Override
@@ -360,7 +347,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirArgument methodIndex = XirArgument.forInt(methodActor.iIndexInInterface());
             return new XirSnippet(pair.resolved, receiver, interfaceID, methodIndex);
         }
-        XirArgument guard = XirArgument.forObject(guardFor(method, ResolveInterfaceMethod.SNIPPET));
+        XirArgument guard = XirArgument.forObject(guardFor(method));
         return new XirSnippet(pair.unresolved, receiver, guard);
     }
 
@@ -372,7 +359,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirArgument vtableOffset = XirArgument.forInt(methodActor.vTableIndex() * Word.size() + offsetOfFirstArrayElement());
             return new XirSnippet(pair.resolved, receiver, vtableOffset);
         }
-        XirArgument guard = XirArgument.forObject(guardFor(method, ResolveVirtualMethod.SNIPPET));
+        XirArgument guard = XirArgument.forObject(guardFor(method));
         return new XirSnippet(pair.unresolved, receiver, guard);
     }
 
@@ -385,17 +372,18 @@ public class MaxXirGenerator implements RiXirGenerator {
             return new XirSnippet(invokeSpecialTemplates.resolvedNullCheckEliminated, XirArgument.forWord(0));
         }
 
-        XirArgument guard = XirArgument.forObject(guardFor(method, ResolveVirtualMethod.SNIPPET));
+        XirArgument guard = XirArgument.forObject(guardFor(method));
         return new XirSnippet(invokeSpecialTemplates.unresolved, guard);
     }
 
     @Override
     public XirSnippet genInvokeStatic(XirSite site, RiMethod method) {
         if (method.isResolved()) {
+            assert C1XOptions.ResolveClassBeforeStaticInvoke : "need to add class initialization barrier for INVOKESTATIC";
             return new XirSnippet(invokeStaticTemplates.resolved, XirArgument.forWord(0));
         }
 
-        XirArgument guard = XirArgument.forObject(guardFor(method, ResolveStaticMethod.SNIPPET));
+        XirArgument guard = XirArgument.forObject(guardFor(method));
         return new XirSnippet(invokeStaticTemplates.unresolved, guard);
     }
 
@@ -418,7 +406,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             return new XirSnippet(pair.resolved, receiver, offset);
         }
 
-        XirArgument guard = XirArgument.forObject(guardFor(field, ResolveInstanceFieldForReading.SNIPPET));
+        XirArgument guard = XirArgument.forObject(guardFor(field));
         return new XirSnippet(pair.unresolved, receiver, guard);
     }
 
@@ -430,7 +418,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
             return new XirSnippet(pair.resolved, receiver, value, offset);
         }
-        XirArgument guard = XirArgument.forObject(guardFor(field, ResolveInstanceFieldForWriting.SNIPPET));
+        XirArgument guard = XirArgument.forObject(guardFor(field));
         return new XirSnippet(pair.unresolved, receiver, value, guard);
     }
 
@@ -442,7 +430,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
             return new XirSnippet(pair.resolved, staticTuple, offset);
         }
-        XirArgument guard = XirArgument.forObject(guardFor(field, ResolveStaticFieldForReading.SNIPPET));
+        XirArgument guard = XirArgument.forObject(guardFor(field));
         return new XirSnippet(pair.unresolved, staticTuple, guard);
     }
 
@@ -454,7 +442,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirArgument offset = XirArgument.forInt(fieldActor.offset());
             return new XirSnippet(pair.resolved, staticTuple, value, offset);
         }
-        XirArgument guard = XirArgument.forObject(guardFor(field, ResolveStaticFieldForWriting.SNIPPET));
+        XirArgument guard = XirArgument.forObject(guardFor(field));
         return new XirSnippet(pair.unresolved, staticTuple, value, guard);
     }
 
@@ -483,7 +471,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             return new XirSnippet(template, XirArgument.forObject(hub));
         }
-        XirArgument guard = guardFor(type, ResolveClassForNew.SNIPPET);
+        XirArgument guard = guardFor(type);
         return new XirSnippet(templates.unresolved, guard);
     }
 
@@ -516,7 +504,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     public XirSnippet genNewMultiArray(XirSite site, XirArgument[] lengths, RiType type) {
         int rank = lengths.length;
         if (!type.isResolved() || rank >= SMALL_MULTIANEWARRAY_RANK) {
-            XirArgument guard = guardFor(type, ResolveClass.SNIPPET);
+            XirArgument guard = guardFor(type);
             return new XirSnippet(multiNewArrayTemplate[rank].unresolved, Utils.concat(lengths, guard));
         }
         if (rank >= multiNewArrayTemplate.length) {
@@ -548,7 +536,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             return new XirSnippet(template, object, hub);
         }
-        XirArgument guard = guardFor(type, ResolveClass.SNIPPET);
+        XirArgument guard = guardFor(type);
         return new XirSnippet(checkcastForInterfaceTemplate.unresolved, object, guard);
     }
 
@@ -573,7 +561,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             return new XirSnippet(template, object, hub);
         }
-        XirArgument guard = guardFor(type, ResolveClass.SNIPPET);
+        XirArgument guard = guardFor(type);
         return new XirSnippet(instanceofForInterfaceTemplate.unresolved, object, guard);
     }
 
@@ -621,30 +609,30 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirSnippet(exceptionObjectTemplate);
     }
 
-    public ResolutionGuard guardFor(RiField unresolvedField, ResolutionSnippet snippet) {
+    public ResolutionGuard guardFor(RiField unresolvedField) {
         UnresolvedField f = (UnresolvedField) unresolvedField;
-        return makeResolutionGuard(f.constantPool, f.cpi, snippet);
+        return makeResolutionGuard(f.constantPool, f.cpi);
     }
 
-    public ResolutionGuard guardFor(RiMethod unresolvedMethod, ResolutionSnippet snippet) {
+    public ResolutionGuard guardFor(RiMethod unresolvedMethod) {
         UnresolvedMethod m = (UnresolvedMethod) unresolvedMethod;
-        return makeResolutionGuard(m.constantPool, m.cpi, snippet);
+        return makeResolutionGuard(m.constantPool, m.cpi);
     }
 
     private XirArgument guardForComponentType(RiType type) {
         if (type instanceof InPool) {
             InPool unresolvedType = (InPool) type;
-            return XirArgument.forObject(makeResolutionGuard(unresolvedType.pool, unresolvedType.cpi, ResolveArrayClass.SNIPPET));
+            return XirArgument.forObject(makeResolutionGuard(unresolvedType.pool, unresolvedType.cpi));
         }
         return XirArgument.forObject(new ResolutionGuard.InAccessingClass((ByAccessingClass) type));
     }
 
-    private XirArgument guardFor(RiType type, ResolutionSnippet snippet) {
+    private XirArgument guardFor(RiType type) {
         ResolutionGuard guard;
         if (!type.isResolved()) {
             if (type instanceof InPool) {
                 InPool unresolvedType = (InPool) type;
-                guard = makeResolutionGuard(unresolvedType.pool, unresolvedType.cpi, snippet);
+                guard = makeResolutionGuard(unresolvedType.pool, unresolvedType.cpi);
             } else {
                 guard = new ResolutionGuard.InAccessingClass((ByAccessingClass) type);
             }
@@ -655,9 +643,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         return XirArgument.forObject(guard);
     }
 
-    private ResolutionGuard makeResolutionGuard(ConstantPool pool, int cpi, ResolutionSnippet snippet) {
+    private ResolutionGuard makeResolutionGuard(ConstantPool pool, int cpi) {
         assert cpi > 0;
-        return pool.makeResolutionGuard(cpi, snippet);
+        return pool.makeResolutionGuard(cpi);
     }
 
     @HOSTED_ONLY
@@ -1667,74 +1655,74 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     public static class RuntimeCalls {
         public static ClassActor resolveClassActor(ResolutionGuard guard) {
-            return ResolutionSnippet.ResolveClass.resolveClass(guard);
+            return Snippets.resolveClass(guard);
         }
 
         public static Class resolveClassObject(ResolutionGuard guard) {
-            return ResolutionSnippet.ResolveClass.resolveClass(guard).javaClass();
+            return Snippets.resolveClass(guard).javaClass();
         }
 
         public static Object resolveHub(ResolutionGuard guard) {
-            return ResolutionSnippet.ResolveClass.resolveClass(guard).dynamicHub();
+            return Snippets.resolveClass(guard).dynamicHub();
         }
 
         public static Object resolveNew(ResolutionGuard guard) {
-            ClassActor classActor = ResolutionSnippet.ResolveClassForNew.resolveClassForNew(guard);
-            makeClassInitialized(classActor);
+            ClassActor classActor = Snippets.resolveClassForNew(guard);
+            Snippets.makeClassInitialized(classActor);
             return classActor.dynamicHub();
         }
 
         public static Object resolveNewArray(ResolutionGuard guard) {
-            return ResolutionSnippet.ResolveArrayClass.resolveArrayClass(guard).dynamicHub();
+            return Snippets.resolveArrayClass(guard).dynamicHub();
         }
 
         public static int resolveGetField(ResolutionGuard.InPool guard) {
-            return ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard).offset();
+            return Snippets.resolveInstanceFieldForReading(guard).offset();
         }
 
         public static int resolvePutField(ResolutionGuard.InPool guard) {
-            return ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard).offset();
+            return Snippets.resolveInstanceFieldForWriting(guard).offset();
         }
 
         public static int resolveGetStatic(ResolutionGuard.InPool guard) {
-            FieldActor fieldActor = ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard);
-            makeHolderInitialized(fieldActor);
+            FieldActor fieldActor = Snippets.resolveStaticFieldForReading(guard);
+            Snippets.makeHolderInitialized(fieldActor);
             return fieldActor.offset();
         }
 
         public static int resolvePutStatic(ResolutionGuard.InPool guard) {
-            FieldActor fieldActor = ResolutionSnippet.ResolveStaticFieldForWriting.resolveStaticFieldForWriting(guard);
-            makeHolderInitialized(fieldActor);
+            FieldActor fieldActor = Snippets.resolveStaticFieldForWriting(guard);
+            Snippets.makeHolderInitialized(fieldActor);
             fieldActor.holder().makeInitialized();
             return fieldActor.offset();
         }
 
         public static Object resolveStaticTuple(ResolutionGuard guard) {
-            ClassActor classActor = ResolveClass.resolveClass(guard);
-            makeClassInitialized(classActor);
+            ClassActor classActor = Snippets.resolveClass(guard);
+            Snippets.makeClassInitialized(classActor);
             return classActor.staticTuple();
         }
 
         public static Word resolveStaticMethod(ResolutionGuard.InPool guard) {
-            StaticMethodActor methodActor = ResolutionSnippet.ResolveStaticMethod.resolveStaticMethod(guard);
-            makeHolderInitialized(methodActor);
+            StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
+            Snippets.makeHolderInitialized(methodActor);
             return CompilationScheme.Static.compile(methodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
 
         public static int resolveVirtualMethod(ResolutionGuard.InPool guard) {
-            return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex() * Word.size() + vmConfig().layoutScheme().hybridLayout.headerSize();
+            return Snippets.resolveVirtualMethod(guard).vTableIndex() * Word.size() + vmConfig().layoutScheme().hybridLayout.headerSize();
         }
 
         public static Word resolveSpecialMethod(ResolutionGuard.InPool guard) {
-            return CompilationScheme.Static.compile(ResolutionSnippet.ResolveSpecialMethod.resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+            return CompilationScheme.Static.compile(Snippets.resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
 
         public static int resolveInterfaceMethod(ResolutionGuard.InPool guard) {
-            return ResolutionSnippet.ResolveInterfaceMethod.resolveInterfaceMethod(guard).iIndexInInterface();
+            return Snippets.resolveInterfaceMethod(guard).iIndexInInterface();
         }
 
         public static int resolveInterfaceID(ResolutionGuard.InPool guard) {
-            return ResolutionSnippet.ResolveInterfaceMethod.resolveInterfaceMethod(guard).holder().id;
+            return Snippets.resolveInterfaceMethod(guard).holder().id;
         }
 
         public static Object allocatePrimitiveArray(DynamicHub hub, int length) {
@@ -1818,7 +1806,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                     Throw.negativeArraySizeException(length);
                 }
             }
-            ClassActor actor = ResolutionSnippet.ResolveClass.resolveClass(guard);
+            ClassActor actor = Snippets.resolveClass(guard);
             return recursiveNewMultiArray(0, actor, lengths);
         }
 
@@ -1864,14 +1852,14 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static void unresolvedCheckcast(Object object, ResolutionGuard guard) {
-            final ClassActor classActor = ResolutionSnippet.ResolveClass.resolveClass(guard);
+            final ClassActor classActor = Snippets.resolveClass(guard);
             if (!ObjectAccess.readHub(object).isSubClassHub(classActor)) {
                 Throw.classCastException(classActor, object);
             }
         }
 
         public static boolean unresolvedInstanceOf(Object object, ResolutionGuard guard) {
-            final ClassActor classActor = ResolutionSnippet.ResolveClass.resolveClass(guard);
+            final ClassActor classActor = Snippets.resolveClass(guard);
             return ObjectAccess.readHub(object).isSubClassHub(classActor);
         }
 

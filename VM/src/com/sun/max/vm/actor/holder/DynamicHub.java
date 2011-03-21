@@ -30,7 +30,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -117,7 +116,6 @@ public final class DynamicHub extends Hub {
     }
 
     void initializeITable(Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup) {
-        boolean compilerCreatesTargetMethods = compilerCreatesTargetMethods();
         if (classActor.isReferenceClassActor()) {
             for (InterfaceActor interfaceActor : allInterfaceActors) {
                 final int interfaceIndex = getITableIndex(interfaceActor.id);
@@ -127,13 +125,9 @@ public final class DynamicHub extends Hub {
                     final int iIndex = iTableIndex - iTableStartIndex;
                     assert getWord(iTableIndex).isZero();
                     Address iTableEntry;
-                    if (compilerCreatesTargetMethods) {
-                        iTableEntry = checkCompiled(virtualMethodActor);
-                        if (iTableEntry.isZero()) {
-                            iTableEntry = vm().stubs.interfaceTrampoline(iIndex);
-                        }
-                    } else {
-                        iTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
+                    iTableEntry = checkCompiled(virtualMethodActor);
+                    if (iTableEntry.isZero()) {
+                        iTableEntry = vm().stubs.interfaceTrampoline(iIndex);
                     }
                     setWord(iTableIndex, iTableEntry);
                 }

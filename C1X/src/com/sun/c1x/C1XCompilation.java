@@ -383,4 +383,8 @@ public final class C1XCompilation {
         assert compilation != null;
         return compilation;
     }
+
+    public static C1XCompilation compilationOrNull() {
+        return currentCompilation.get();
+    }
 }

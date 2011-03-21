@@ -22,7 +22,7 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 
 // memory -> register
 
@@ -39,7 +39,7 @@ public class EBC_movd2l_02 {
     }
     public static long test(double arg) {
         D d = new D(arg);
-        return SpecialBuiltin.doubleToLong(d.d);
+        return Intrinsics.doubleToLong(d.d);
     }
 
 }

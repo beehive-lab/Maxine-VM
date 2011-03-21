@@ -22,26 +22,33 @@
  */
 package jtt.exbytecode;
 
-
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-
-//register -> memory
 
 /*
  * @Harness: java
- * @Runs: `java.lang.Double.NaN = 0x7ff8000000000000L; 1.0d = 0x3ff0000000000000L; -1.0d = -4616189618054758400L; 473729.5945321d = 4691882224927966680L
-*/
-public class EBC_movd2l_03 {
-    static class L {
-        long l;
-    }
+ * @Runs: 0=true; 1=true; 34=true
+ */
+public class EBC_stackhandle01 {
+    public static boolean test(int i) {
+        Pointer addr = Intrinsics.stackHandle(i);
+        Pointer addr2 = Intrinsics.stackHandle(i + 1);
 
-    public static long test(double arg) {
-        return doTest(new L(), arg);
-    }
+        if (i == 0) {
+            if (!addr.isZero()) {
+                return false;
+            }
+        } else if (addr.readInt(0) != i) {
+            return false;
+        }
 
-    private static long doTest(L l, double arg) {
-        l.l = Intrinsics.doubleToLong(arg);
-        return l.l;
+        if (i + 1 == 0) {
+            if (!addr2.isZero()) {
+                return false;
+            }
+        } else if (addr2.readInt(0) != i + 1) {
+            return false;
+        }
+        return true;
     }
 }

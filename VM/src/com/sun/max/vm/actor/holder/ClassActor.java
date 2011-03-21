@@ -167,7 +167,7 @@ public abstract class ClassActor extends Actor implements RiType {
 
     /**
      * An object representing the initialization state of this class. This value will either be one of the sentinel
-     * objects representing a state (i.e. {@link #VERIFIED}, {@link #PREPARED}, {@link #INITIALIZED}) or be an object
+     * objects representing a state (i.e. {@link #VERIFIED_}, {@link #PREPARED}, {@link #INITIALIZED}) or be an object
      * whose type denotes the state ({@code Throwable == ERROR}, {@code Thread == INITIALIZING}) and whose value gives
      * further details about the state.
      */
@@ -1364,12 +1364,12 @@ public abstract class ClassActor extends Actor implements RiType {
     /**
      * Constant denoting that a class is prepared.
      */
-    private static final Object PREPARED = new Object();
+    private static final Object PREPARED = "PREPARED";
 
     /**
      * Constant denoting that a class is verified.
      */
-    private static final Object VERIFIED = new Object();
+    private static final Object VERIFIED_ = "VERIFIED";
 
     /**
      * Determines if this class actor has a parameterless static method named "<clinit>".
@@ -1398,7 +1398,7 @@ public abstract class ClassActor extends Actor implements RiType {
                 Object initializationState = this.initializationState;
                 if (isPrepared(initializationState)) {
                     verify();
-                    this.initializationState = VERIFIED;
+                    this.initializationState = VERIFIED_;
                 } else if (isVerified(initializationState)) {
                     this.initializationState = Thread.currentThread();
                     if (VMOptions.verboseOption.verboseClass) {
@@ -1436,7 +1436,7 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     private static boolean isVerified(Object initializationState) {
-        return initializationState == VERIFIED;
+        return initializationState == VERIFIED_;
     }
 
     private static boolean isPrepared(Object initializationState) {
@@ -1466,7 +1466,7 @@ public abstract class ClassActor extends Actor implements RiType {
      */
     public void doNotVerify() {
         if (isPrepared(initializationState)) {
-            initializationState = VERIFIED;
+            initializationState = VERIFIED_;
         }
     }
 

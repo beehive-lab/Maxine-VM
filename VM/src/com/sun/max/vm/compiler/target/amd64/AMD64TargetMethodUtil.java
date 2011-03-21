@@ -53,9 +53,6 @@ public final class AMD64TargetMethodUtil {
         // We only update the disp of the call instruction.
         // C1X imposes that disp of the call be aligned to a word boundary.
         // This may cause up to 7 nops to be inserted before a call.
-        // CPS use the less conservative approach of requiring only that the whole
-        // call instructions fits in a single word (and thus, guaranteed to be within a single cache line).
-        // The following takes care of both
         final Address endOfCallSite = callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
         return callSite.plus(1).isWordAligned() ? true :
         // last byte of call site:

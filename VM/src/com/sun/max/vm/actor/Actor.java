@@ -88,15 +88,12 @@ public abstract class Actor {
 
     // VM-internal flags for methods:
     public static final int NO_SAFEPOINTS =        0x00004000;
-    public static final int INLINE_AFTER_SNIPPETS_ARE_COMPILED =
-                                                   0x00010000;
+    public static final int VERIFIED =             0x00010000;
     public static final int TEMPLATE =             0x00200000;
     public static final int INITIALIZER =          0x00400000;
-    public static final int EXTENDED =             0x00800000;
     public static final int C_FUNCTION =           0x01000000;
     public static final int VM_ENTRY_POINT =       0x02000000;
     public static final int FOLD =                 0x04000000;
-    public static final int BUILTIN =              0x08000000;
     public static final int LOCAL_SUBSTITUTE =     0x10000000;
     public static final int UNSAFE =               0x20000000;
     public static final int INLINE =               0x40000000;
@@ -110,8 +107,7 @@ public abstract class Actor {
         UNSAFE |
         FOLD |
         INLINE |
-        NEVER_INLINE |
-        EXTENDED;
+        NEVER_INLINE;
 
     /**
      * Mask of flags used to determine if a given method is unsafe. Unsafe methods
@@ -120,7 +116,6 @@ public abstract class Actor {
     public static final int UNSAFE_FLAGS =
         ACC_NATIVE |
         TEMPLATE |
-        BUILTIN |
         UNSAFE |
         C_FUNCTION |
         VM_ENTRY_POINT |
@@ -175,7 +170,6 @@ public abstract class Actor {
     public static final byte[] NO_RUNTIME_VISIBLE_ANNOTATION_BYTES = null;
 
     @INSPECTED
-    @CONSTANT
     private int flags;
 
     @INSPECTED
@@ -325,6 +319,11 @@ public abstract class Actor {
     }
 
     @INLINE
+    public static boolean isVerified(int flags) {
+        return (flags & VERIFIED) != 0;
+    }
+
+    @INLINE
     public static boolean isStrict(int flags) {
         return (flags & ACC_STRICT) != 0;
     }
@@ -395,11 +394,6 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isBuiltin(int flags) {
-        return (flags & BUILTIN) != 0;
-    }
-
-    @INLINE
     public static boolean isLocalSubstitute(int flags) {
         return (flags & LOCAL_SUBSTITUTE) != 0;
     }
@@ -421,23 +415,13 @@ public abstract class Actor {
     }
 
     @INLINE
+    public final void beVerified() {
+        flags |= VERIFIED;
+    }
+
+    @INLINE
     public static boolean isInline(int flags) {
         return (flags & INLINE) != 0;
-    }
-
-    @INLINE
-    public final void beExtended() {
-        flags |= EXTENDED;
-    }
-
-    @INLINE
-    public static boolean isExtended(int flags) {
-        return (flags & EXTENDED) != 0;
-    }
-
-    @INLINE
-    public static boolean isInlineAfterSnippetsAreCompiled(int flags) {
-        return (flags & INLINE_AFTER_SNIPPETS_ARE_COMPILED) != 0;
     }
 
     @INLINE
@@ -529,13 +513,12 @@ public abstract class Actor {
         appendFlag(sb, isConstantWhenNotZero(flags), "constantWhenNotZero ");
         appendFlag(sb, isInnerClass(flags), "innerClass ");
         appendFlag(sb, isTemplate(flags), "template ");
-        appendFlag(sb, isReflectionStub(flags), "generated ");
-        appendFlag(sb, isClassInitializer(flags), "<clinit> ");
-        appendFlag(sb, isInstanceInitializer(flags), "<init> ");
+        appendFlag(sb, isReflectionStub(flags), "reflection_stub ");
+        appendFlag(sb, isVerified(flags), "verified ");
+        appendFlag(sb, isInitializer(flags), "init ");
         appendFlag(sb, isCFunction(flags), "c_function ");
         appendFlag(sb, isVmEntryPoint(flags), "vm_entry ");
         appendFlag(sb, isDeclaredFoldable(flags), "fold ");
-        appendFlag(sb, isBuiltin(flags), "builtin ");
         appendFlag(sb, isUnsafe(flags), "unsafe ");
         appendFlag(sb, isLocalSubstitute(flags), "substitute ");
 

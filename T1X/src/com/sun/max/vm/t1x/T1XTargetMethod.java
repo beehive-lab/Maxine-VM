@@ -46,7 +46,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
@@ -392,7 +391,7 @@ public final class T1XTargetMethod extends TargetMethod {
             final Object result = this.refMapEditor.compareAndSwap(referenceMapEditor, T1XReferenceMapEditor.SENTINEL);
             if (result == T1XReferenceMapEditor.SENTINEL) {
                 while (this.refMapEditor.get() != null) {
-                    SpecialBuiltin.pause();
+                    Intrinsics.pause();
                 }
             } else if (result != null) {
                 referenceMapEditor.fillInMaps();

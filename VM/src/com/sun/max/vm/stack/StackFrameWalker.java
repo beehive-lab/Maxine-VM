@@ -34,8 +34,6 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologueForC;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;

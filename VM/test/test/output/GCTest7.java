@@ -22,7 +22,6 @@
  */
 package test.output;
 
-import com.sun.max.annotate.UNSAFE;
 
 /**
  * GC Test for large number of object parameters.
@@ -61,7 +60,6 @@ public class GCTest7 {
         }
     }
 
-    @UNSAFE
     private static Object objStackParams(int depth,
                                          String a0, String a1, String a2, String a3, String a4,
                                          String a5, String a6, String a7, String a8, String a9,

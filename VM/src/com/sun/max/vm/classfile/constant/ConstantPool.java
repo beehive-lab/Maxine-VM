@@ -33,14 +33,12 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -202,7 +200,6 @@ public final class ConstantPool implements RiConstantPool {
      */
     int length;
 
-    private final IntHashMap<ResolutionGuard.InPool> guards;
     private final ClassLoader classLoader;
 
     /**
@@ -367,7 +364,6 @@ public final class ConstantPool implements RiConstantPool {
         }
 
         this.constants = poolConstants;
-        guards = new IntHashMap<ResolutionGuard.InPool>(numberOfResolvableConstants);
 
         // Pass 3: second verification pass - checks the strings are of the right format
         i = 1;
@@ -408,7 +404,6 @@ public final class ConstantPool implements RiConstantPool {
     public ConstantPool(ClassLoader classLoader) {
         this.classLoader = classLoader;
         this.constants = new PoolConstant[INITIAL_CAPACITY];
-        this.guards = new IntHashMap<ResolutionGuard.InPool>();
 
         // Index 0 is always invalid
         this.constants[length++] = InvalidConstant.VALUE;
@@ -429,26 +424,15 @@ public final class ConstantPool implements RiConstantPool {
         }
         this.constants = constants;
         this.length = length;
-        this.guards = new IntHashMap<ResolutionGuard.InPool>(length);
     }
 
     /**
      * Creates an object that wraps the result of resolving a resolvable constant for a particular reason.
-     * This ensures that such resolution processing is only performed once for any given constant.
      *
      * @param index the index of a resolvable entry in this constant pool
      */
-    public ResolutionGuard.InPool makeResolutionGuard(int index, ResolutionSnippet snippet) {
-        synchronized (guards) {
-            assert (snippet.serial() & 0xffff) == snippet.serial();
-            final int key = snippet.serial() << 16 | index;
-            ResolutionGuard.InPool guard = guards.get(key);
-            if (guard == null) {
-                guard = snippet.createGuard(this, index);
-                guards.put(key, guard);
-            }
-            return guard;
-        }
+    public ResolutionGuard.InPool makeResolutionGuard(int index) {
+        return new ResolutionGuard.InPool(this, index);
     }
 
     public ClassLoader classLoader() {

@@ -47,8 +47,6 @@ public interface RuntimeCompiler {
      */
     @HOSTED_ONLY
     Map<String, String> aliases = Utils.addEntries(new HashMap<String, String>(),
-                    "CPS", "com.sun.max.vm.cps.b.c.d.e.amd64.target.AMD64CPSCompiler",
-                    "JIT", "com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler",
                     "T1X", "com.sun.max.vm.t1x.T1X",
                     "C1X", C1X.class.getName());
 

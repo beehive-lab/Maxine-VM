@@ -36,7 +36,6 @@ public abstract class Reference implements Accessor {
     protected Reference() {
     }
 
-    @UNSAFE
     @FOLD
     private static ReferenceScheme referenceScheme() {
         return vmConfig().referenceScheme();

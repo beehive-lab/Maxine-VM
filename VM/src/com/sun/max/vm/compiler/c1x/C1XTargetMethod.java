@@ -209,7 +209,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     /**
      * @return the size of an activation frame for this target method in words.
      */
-    @UNSAFE
     private int frameWords() {
         return frameSize() / Word.size();
     }
@@ -304,7 +303,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         return relativeDataPos;
     }
 
-    @UNSAFE
     private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, int[] relativeDataPositions) {
         Offset codeStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
 
@@ -564,13 +562,11 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
     }
 
-    @UNSAFE
     @Override
     public void fixupCallSite(int callOffset, Address callEntryPoint) {
         AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
-    @UNSAFE
     @Override
     public void patchCallSite(int callOffset, Address callEntryPoint) {
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
@@ -581,7 +577,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         AMD64TargetMethodUtil.forwardTo(this, newTargetMethod);
     }
 
-    @UNSAFE
     @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         final int exceptionPos = throwAddress.minus(codeStart).toInt();

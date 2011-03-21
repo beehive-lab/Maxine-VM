@@ -441,6 +441,7 @@ public enum T1XTemplateTag {
     RETHROW_EXCEPTION(-1),
     PROFILE_METHOD_ENTRY(-1),
     TRACE_METHOD_ENTRY(-1),
+    NULL_CHECK(-1),
 
     READREG$fp_cpu,
     READREG$sp_cpu,

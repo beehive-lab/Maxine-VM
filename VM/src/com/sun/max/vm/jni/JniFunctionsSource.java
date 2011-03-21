@@ -39,7 +39,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
@@ -146,7 +145,7 @@ public final class JniFunctionsSource {
         ClassActor caller = ClassActor.fromJava(JDK_sun_reflect_Reflection.getCallerClass(realFramesToSkip));
         ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : caller.classLoader;
         final Class javaClass = findClass(classLoader, className);
-        MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
+        Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
         return JniHandles.createLocalHandle(javaClass);
     }
 
@@ -351,7 +350,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static MethodID GetMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
+        Snippets.makeClassInitialized(classActor);
         try {
             final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
             final SignatureDescriptor descriptor = SignatureDescriptor.lookup(CString.utf8ToJava(descriptorCString));
@@ -712,7 +711,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static FieldID GetFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
+        Snippets.makeClassInitialized(classActor);
         try {
 
             final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
@@ -826,7 +825,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static MethodID GetStaticMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
+        Snippets.makeClassInitialized(classActor);
         try {
             final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
             final SignatureDescriptor descriptor = SignatureDescriptor.create(CString.utf8ToJava(descriptorCString));
@@ -983,7 +982,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static FieldID GetStaticFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
+        Snippets.makeClassInitialized(classActor);
         try {
             final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
             final TypeDescriptor descriptor = TypeDescriptor.lookup(CString.utf8ToJava(descriptorCString));

@@ -28,7 +28,6 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -154,7 +153,7 @@ public @interface METHOD_SUBSTITUTIONS {
                     Trace.line(2, "Substituted " + originalMethodActor.format("%h.%n(%p)"));
                     Trace.line(2, "       with " + substituteMethodActor.format("%h.%n(%p)"));
                     originalMethodActor.setFlagsFromSubstitute(substituteMethodActor);
-                    MaxineVM.registerImageMethod(originalMethodActor); // TODO: loosen this requirement
+                    //MaxineVM.registerImageMethod(originalMethodActor); // TODO: loosen this requirement
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.
                     if (substituteMethod.getAnnotation(INLINE.class) == null &&

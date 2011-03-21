@@ -27,11 +27,11 @@
 
 package jtt.exbytecode;
 
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 
 public class EBC_ucmp_be_01 {
     public static boolean test(int a, int b) {
-        return SpecialBuiltin.belowEqual(a, b);
+        return Intrinsics.belowEqual(a, b);
     }
 
 }

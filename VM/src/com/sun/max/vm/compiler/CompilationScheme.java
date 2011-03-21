@@ -29,7 +29,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 
 /**
@@ -112,9 +111,6 @@ public interface CompilationScheme extends VMScheme {
                 // fast path: method is already compiled just once
                 current = (TargetMethod) targetState;
             } else {
-                if (MaxineVM.isHosted() && CPSCompiler.Static.compiler().compiledType() == null) {
-                    return MethodID.fromMethodActor(classMethodActor).asAddress();
-                }
                 // slower path: method has not been compiled, or been compiled more than once
                 current = vmConfig().compilationScheme().synchronousCompile(classMethodActor);
             }

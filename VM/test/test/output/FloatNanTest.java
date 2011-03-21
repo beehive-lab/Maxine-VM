@@ -22,7 +22,6 @@
  */
 package test.output;
 
-import com.sun.max.vm.compiler.builtin.*;
 
 /**
  * @author Aziz Ghuloum
@@ -89,7 +88,8 @@ public class FloatNanTest {
 
     public static int convertDoubleToInt(double value) {
         if (MAX_DOUBLE_VALUE >= value) {
-            return IEEE754Builtin.ConvertDoubleToInt.convertDoubleToInt(value);
+            return (int) value;
+            //return IEEE754Builtin.ConvertDoubleToInt.convertDoubleToInt(value);
         }
         if (value >= MAX_DOUBLE_VALUE) {
             return -1 >>> 1;
