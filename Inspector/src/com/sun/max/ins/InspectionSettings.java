@@ -247,16 +247,25 @@ public class InspectionSettings {
         final Inspector inspector = saveSettingsListener.inspector();
         final Rectangle oldBounds = inspector.getJComponent().getBounds();
         Rectangle newBounds = saveSettingsListener.defaultBounds();
-        if (get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, -1) >= 0) {
+        // Check to see if we have geometry settings for this component.
+        // We used to check to see if X location was set, with a default of -1 meaning
+        // "not set", but we then discovered some apparently legitimate minus
+        // values (for reasons unknown) on the Darwin platform (at least).
+
+        if (get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, -1) >= 0) {
             newBounds = new Rectangle(
-                get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldBounds.x),
-                get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldBounds.y),
+                Math.max(get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldBounds.x), 0),
+                Math.max(get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldBounds.y), 0),
                 get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldBounds.width),
                 get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldBounds.height));
         }
         if (newBounds != null && !newBounds.equals(oldBounds)) {
             inspector.getJComponent().setBounds(newBounds);
         }
+        // We've forced locations to be >=0, even if on some platforms (Darwin?) we sometimes see
+        // negative locations when a window is positioned close to either the left or top border.
+        // The following test checks to see if the Inspector is completely within the boundaries
+        // of the Inspector's frame, and those negative values would make it appear to be outside.
         inspection.gui().moveToMiddleIfNotVisble(inspector);
     }
 
