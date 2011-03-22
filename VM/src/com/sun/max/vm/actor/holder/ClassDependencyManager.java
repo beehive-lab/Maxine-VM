@@ -217,7 +217,7 @@ public final class ClassDependencyManager {
          */
         void printAssumptions(int classID, PrintStream out) {
             if (assumptions == INVALIDATED) {
-                out.println("assumptions for " + targetMethod.name() + " have been invalidated");
+                out.println("assumptions for " + targetMethod + " have been invalidated");
                 return;
             }
             final String indent = "    ";
@@ -227,7 +227,7 @@ public final class ClassDependencyManager {
             for (int i = 1; i < firstDependencyIndex; i += 2) {
                 if (assumptions[i] == classID) {
                     final ClassActor classActor = ClassID.toClassActor(classID);
-                    out.println(targetMethod.name() + " assumptions on class " + classActor + "(id=" + classActor.id + ")");
+                    out.println(targetMethod + " assumptions on class " + classActor + "(id=" + classActor.id + ")");
                     final short assumptionFlags = assumptions[i + 1];
                     if (CLASS_HAS_UCT.isBooleanFlagSet(assumptionFlags)) {
                         out.println(indent + classActor + " has unique concrete implementation");
@@ -238,7 +238,7 @@ public final class ClassDependencyManager {
                             while (dependencyIndex < endAssumptions) {
                                 short methodIndex = assumptions[dependencyIndex++];
                                 MethodActor method = classActor.localVirtualMethodActors()[methodIndex];
-                                out.println(indent + "local " + method.name() + " is a unique concrete method of " + classActor);
+                                out.println(indent + method + " is a unique concrete method");
                             }
                             return;
                         }
@@ -248,12 +248,12 @@ public final class ClassDependencyManager {
                                 final int methodIndex = methodIndex(assumption);
                                 final int concreteTypeClassID = assumptions[dependencyIndex++];
                                 final ClassActor concreteMethodHolder = ClassID.toClassActor(concreteTypeClassID);
-                                MethodActor method = concreteMethodHolder.allVirtualMethodActors()[classActor.localVirtualMethodActors()[methodIndex].vTableIndex()];
-                                out.println(indent + concreteMethodHolder + "." + method.name() +
+                                MethodActor method = concreteMethodHolder.localVirtualMethodActors()[methodIndex];
+                                out.println(indent + method.name() +
                                                 " is a unique concrete method of " + classActor);
                             } else {
                                 MethodActor method = classActor.localVirtualMethodActors()[assumption];
-                                out.println(indent + "local " + method.name() + " is a unique concrete method ");
+                                out.println(indent + method + " is a unique concrete method");
                             }
                         }
                     }
@@ -944,7 +944,7 @@ public final class ClassDependencyManager {
                 typeAssumptions.put(contextHolder, encodedDependencies);
             }
             int end = encodedDependencies[0];
-            int contextMethodIndex = ((MethodActor) method).memberIndex();
+            final int contextMethodIndex = ((MethodActor) method).memberIndex();
             if (context == method) {
                 totalLocal++;
                 if (end + 1 >= encodedDependencies.length) {
@@ -953,14 +953,17 @@ public final class ClassDependencyManager {
                 encodedDependencies[end++] = contextMethodIndex | AssumptionValidator.LEAF_CONCRETE_METHOD_DEP;
             } else {
                 totalNonLocal++;
-                if (MaxineVM.isHosted()) {
-                    // DEBUGGING ONLY. CLEAN UP
-                }
                 if (end + 2 >= encodedDependencies.length) {
                     encodedDependencies = grow(contextHolder, encodedDependencies);
                 }
                 encodedDependencies[end++] = contextMethodIndex | AssumptionValidator.UNIQUE_CONCRETE_METHOD_DEP;
                 encodedDependencies[end++] = ((ClassActor) method.holder()).id;
+                if (MaxineVM.isHosted()) {
+                    // Check that I can retrieve back the original assumption information.
+                    int i = end - 2;
+                    FatalError.check(ClassID.toClassActor(encodedDependencies[i + 1]).localVirtualMethodActors()[encodedDependencies[i] & TAG_MASK] == method,
+                                    "incorrect encoding");
+                }
             }
             encodedDependencies[0] = end;
             return true;
