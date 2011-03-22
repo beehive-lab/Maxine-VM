@@ -126,18 +126,6 @@ public final class Code {
     }
 
     /**
-     * Performs code update, updating the old target method to the new target method. This typically
-     * involves platform-specific code modifications to forward old code to the new code.
-     *
-     * @param oldTargetMethod the old target method to target to the new target method
-     * @param newTargetMethod the new target method
-     */
-    public static void updateTargetMethod(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
-        oldTargetMethod.forwardTo(newTargetMethod);
-        discardTargetMethod(oldTargetMethod);
-    }
-
-    /**
      * Removes a target method from this code manager, freeing its space when it is safe to do so.
      *
      * @param targetMethod the target method to discard

@@ -24,6 +24,8 @@ package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 import static com.sun.max.vm.runtime.VmOperation.*;
 import static com.sun.max.vm.stack.JavaFrameAnchor.*;
@@ -452,7 +454,7 @@ public class Snippets {
      */
     @INLINE
     public static Address makeEntrypoint(ClassMethodActor classMethodActor) {
-        return CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        return compile(classMethodActor).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
     }
 
     /**

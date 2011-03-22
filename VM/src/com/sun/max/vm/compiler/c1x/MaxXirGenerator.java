@@ -24,6 +24,8 @@ package com.sun.max.vm.compiler.c1x;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.layout.Layout.*;
 import static java.lang.reflect.Modifier.*;
 
@@ -1706,7 +1708,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static Word resolveStaticMethod(ResolutionGuard.InPool guard) {
             StaticMethodActor methodActor = Snippets.resolveStaticMethod(guard);
             Snippets.makeHolderInitialized(methodActor);
-            return CompilationScheme.Static.compile(methodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+            return compile(methodActor).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
         }
 
         public static int resolveVirtualMethod(ResolutionGuard.InPool guard) {
@@ -1714,7 +1716,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static Word resolveSpecialMethod(ResolutionGuard.InPool guard) {
-            return CompilationScheme.Static.compile(Snippets.resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+            return compile(Snippets.resolveSpecialMethod(guard)).getEntryPoint(OPTIMIZED_ENTRY_POINT).asAddress();
         }
 
         public static int resolveInterfaceMethod(ResolutionGuard.InPool guard) {

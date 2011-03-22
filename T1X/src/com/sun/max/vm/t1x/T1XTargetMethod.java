@@ -278,11 +278,6 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethodUtil.forwardTo(this, newTargetMethod);
-    }
-
-    @Override
     public void traceDebugInfo(IndentWriter writer) {
     }
 
