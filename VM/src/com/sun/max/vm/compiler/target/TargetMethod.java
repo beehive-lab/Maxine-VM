@@ -828,8 +828,6 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     public abstract boolean isPatchableCallSite(Address callSite);
 
-    public abstract void forwardTo(TargetMethod newTargetMethod);
-
     /**
      * Traces the debug info for the compiled code represented by this object.
      * @param writer where the trace is written

@@ -573,11 +573,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethodUtil.forwardTo(this, newTargetMethod);
-    }
-
-    @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         final int exceptionPos = throwAddress.minus(codeStart).toInt();
         int count = getExceptionHandlerCount();

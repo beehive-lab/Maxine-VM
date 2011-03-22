@@ -71,10 +71,17 @@ public class T1XTemplateSource {
         T1XRuntime.rethrowException();
     }
 
-    @T1X_TEMPLATE(PROFILE_METHOD_ENTRY)
-    public static void profileMethodEntry(MethodProfile mpo) {
+    @T1X_TEMPLATE(PROFILE_NONSTATIC_METHOD_ENTRY)
+    public static void profileNonstaticMethodEntry(MethodProfile mpo, int dispToRcvr) {
+        Object rcvr = getLocalObject(dispToRcvr);
         // entrypoint counters count down to zero ("overflow")
-        MethodInstrumentation.recordEntrypoint(mpo);
+        MethodInstrumentation.recordEntrypoint(mpo, rcvr);
+    }
+
+    @T1X_TEMPLATE(PROFILE_STATIC_METHOD_ENTRY)
+    public static void profileStaticMethodEntry(MethodProfile mpo) {
+        // entrypoint counters count down to zero ("overflow")
+        MethodInstrumentation.recordEntrypoint(mpo, null);
     }
 
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)

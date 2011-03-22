@@ -358,8 +358,14 @@ public final class T1XCompilation {
     void emitProfileMethodEntry() {
         if (methodProfileBuilder != null) {
             methodProfileBuilder.addEntryCounter(MethodInstrumentation.initialEntryCount);
-            T1XTemplate template = getTemplate(PROFILE_METHOD_ENTRY);
             assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
+            T1XTemplate template;
+            if (method.isStatic()) {
+                template = getTemplate(PROFILE_STATIC_METHOD_ENTRY);
+            } else {
+                template = getTemplate(PROFILE_NONSTATIC_METHOD_ENTRY);
+                assignLocalDisplacementTemplateArgument(1, 0, Kind.REFERENCE);
+            }
             emitAndRecordStops(template);
         }
     }
