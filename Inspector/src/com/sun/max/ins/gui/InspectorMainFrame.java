@@ -455,6 +455,15 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return component.getBounds();
     }
 
+    public  Rectangle moveToExposeDefaultMenu(Inspector inspector) {
+        JComponent component = inspector.getJComponent();
+        final Point location = component.getLocation();
+        if (location.x < 0 || location.y < 0) {
+            component.setLocation(Math.max(location.x, 0), Math.max(location.y, 0));
+        }
+        return component.getBounds();
+    }
+
     public Rectangle resizeToFit(Inspector inspector) {
         final JComponent component = inspector.getJComponent();
         Rectangle geometry = component.getBounds();

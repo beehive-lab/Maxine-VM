@@ -144,6 +144,13 @@ public interface InspectorGUI {
     Rectangle moveToMiddleIfNotVisble(Inspector inspector);
 
     /**
+     * If the inspector is moved out of the frame, either up or to the left, so that the default
+     * menu in the upper left corner of the inspector is not visible, move it down and to the left
+     * enough to make the menu visible.
+     */
+    Rectangle moveToExposeDefaultMenu(Inspector inspector);
+
+    /**
      * Shrink an inspector in each dimension to make it fit within the Inspector's frame.
      */
     Rectangle resizeToFit(Inspector inspector);

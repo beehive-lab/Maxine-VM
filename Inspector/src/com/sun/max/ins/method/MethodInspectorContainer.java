@@ -106,4 +106,11 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     protected void refreshState(boolean force) {
     }
 
+    /**
+     * Relocate the MethodInspector as necessary so that the upper left corner is visible.
+     */
+    public void makeVisible() {
+        gui().moveToExposeDefaultMenu(this);
+    }
+
 }

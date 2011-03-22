@@ -433,6 +433,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      * Calls this inspector to the users attention:  move to front, select, and flash.
      */
     public void highlight() {
+        gui().moveToExposeDefaultMenu(this);
         frame.moveToFront();
         setSelected();
         flash();
