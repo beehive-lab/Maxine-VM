@@ -901,6 +901,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setCodeLocation(focus().thread().ipLocation());
+            // This is kind of awkward.  We've already forced a MethodInspector, and
+            // this the singleton container for all such inspectors, to be visible.
+            // However we also want to be sure that we can move the container's frame
+            // back toward the center of the frame if it's been pushed off the top
+            // or left boundaries.  This is the only way to recover from that situation,
+            // since all other actions that can do this are only available on the frame's
+            // default menu (at its upper left).
+            // This gets handled very simply by the other inspectors; it's just awkward
+            // for the tabbed container.
+            gui().moveToExposeDefaultMenu(MethodInspectorContainer.make(inspection()));
         }
     }
 
