@@ -349,6 +349,114 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action:  resizes an inspector in each dimension to make it fit within the main frame.
+     */
+    final class ResizeToFitAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Resize to fit inside frame";
+        private  final Inspector inspector;
+
+        ResizeToFitAction(Inspector inspector, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.inspector = inspector;
+        }
+
+        @Override
+        protected void procedure() {
+            gui().resizeToFit(inspector);
+        }
+    }
+
+    /**
+     * @return Action that resizes an inspector by shrinking it in each dimension until it
+     * fits completely within the Inspector's frame.
+     */
+    public final InspectorAction resizeToFit(Inspector inspector) {
+        return new ResizeToFitAction(inspector, null);
+    }
+
+    /**
+     * Action:  moves an inspector to the center of the main frame.
+     */
+    final class MoveToCenterAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Move to center of frame";
+        private  final Inspector inspector;
+
+        MoveToCenterAction(Inspector inspector, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.inspector = inspector;
+        }
+
+        @Override
+        protected void procedure() {
+            gui().moveToMiddle(inspector);
+        }
+    }
+
+    /**
+     * @return Action that moves an inspector to the middle of the Inspector's frame.
+     */
+    public final InspectorAction movedToCenter(Inspector inspector) {
+        return new MoveToCenterAction(inspector, null);
+    }
+
+   /**
+     * Action:  resizes an inspector in each dimension to make it fill the main frame.
+     */
+    final class ResizeToFillAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Resize to fill frame";
+        private  final Inspector inspector;
+
+        ResizeToFillAction(Inspector inspector, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.inspector = inspector;
+        }
+
+        @Override
+        protected void procedure() {
+            gui().resizeToFill(inspector);
+        }
+    }
+
+    /**
+     * @return Action that resizes an inspector by shrinking it in each dimension until it
+     * fits completely within the Inspector's frame.
+     */
+    public final InspectorAction resizeToFill(Inspector inspector) {
+        return new ResizeToFillAction(inspector, null);
+    }
+
+
+    /**
+     * Action:  restores the inspector frame to its default geometry.
+     */
+    final class RestoreDefaultGeometryAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Restore size/location to default";
+        private  final Inspector inspector;
+
+        RestoreDefaultGeometryAction(Inspector inspector, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.inspector = inspector;
+        }
+
+        @Override
+        protected void procedure() {
+            gui().restoreDefaultGeometry(inspector);
+        }
+    }
+
+    /**
+     * @return Action that restores the default location and size of an inspector.
+     */
+    public final InspectorAction restoreDefaultGeometry(Inspector inspector) {
+        return new RestoreDefaultGeometryAction(inspector, null);
+    }
+
+
+    /**
      * Action:  quits inspector.
      */
     final class QuitAction extends InspectorAction {

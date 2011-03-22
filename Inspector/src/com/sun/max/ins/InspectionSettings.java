@@ -129,7 +129,7 @@ public class InspectionSettings {
         /**
          * @return geometry to apply to a newly shown component when there have been no geometry settings saved.
          */
-        Rectangle defaultBounds();
+        Rectangle defaultGeometry();
     }
 
     /**
@@ -138,12 +138,12 @@ public class InspectionSettings {
     public abstract static class AbstractSaveSettingsListener implements SaveSettingsListener {
         protected final String name;
         protected final Inspector inspector;
-        protected final Rectangle defaultBounds;
+        protected final Rectangle defaultGeometry;
 
-        private AbstractSaveSettingsListener(String name, Inspector inspector, Rectangle defaultBounds) {
+        private AbstractSaveSettingsListener(String name, Inspector inspector, Rectangle defaultGeometry) {
             this.name = name;
             this.inspector = inspector;
-            this.defaultBounds = defaultBounds;
+            this.defaultGeometry = defaultGeometry;
         }
 
         public AbstractSaveSettingsListener(String name, Inspector inspector) {
@@ -162,8 +162,8 @@ public class InspectionSettings {
             return name;
         }
 
-        public Rectangle defaultBounds() {
-            return defaultBounds;
+        public Rectangle defaultGeometry() {
+            return defaultGeometry;
         }
 
         @Override
@@ -245,22 +245,22 @@ public class InspectionSettings {
      */
     private void repositionInspectorFromSettings(SaveSettingsListener saveSettingsListener) {
         final Inspector inspector = saveSettingsListener.inspector();
-        final Rectangle oldBounds = inspector.getJComponent().getBounds();
-        Rectangle newBounds = saveSettingsListener.defaultBounds();
+        final Rectangle oldGeometry = inspector.getJComponent().getBounds();
+        Rectangle newGeometry = saveSettingsListener.defaultGeometry();
         // Check to see if we have geometry settings for this component.
         // We used to check to see if X location was set, with a default of -1 meaning
         // "not set", but we then discovered some apparently legitimate minus
         // values (for reasons unknown) on the Darwin platform (at least).
 
         if (get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, -1) >= 0) {
-            newBounds = new Rectangle(
-                Math.max(get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldBounds.x), 0),
-                Math.max(get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldBounds.y), 0),
-                get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldBounds.width),
-                get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldBounds.height));
+            newGeometry = new Rectangle(
+                Math.max(get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldGeometry.x), 0),
+                Math.max(get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldGeometry.y), 0),
+                get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldGeometry.width),
+                get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldGeometry.height));
         }
-        if (newBounds != null && !newBounds.equals(oldBounds)) {
-            inspector.getJComponent().setBounds(newBounds);
+        if (newGeometry != null && !newGeometry.equals(oldGeometry)) {
+            inspector.getJComponent().setBounds(newGeometry);
         }
         // We've forced locations to be >=0, even if on some platforms (Darwin?) we sometimes see
         // negative locations when a window is positioned close to either the left or top border.
@@ -381,11 +381,11 @@ public class InspectionSettings {
             saveSettingsListener.saveSettings(saveSettingsEvent);
             final Inspector inspector = saveSettingsListener.inspector();
             if (inspector != null) {
-                final Rectangle bounds = inspector.getJComponent().getBounds();
-                saveSettingsEvent.save(COMPONENT_X_KEY, bounds.x);
-                saveSettingsEvent.save(COMPONENT_Y_KEY, bounds.y);
-                saveSettingsEvent.save(COMPONENT_WIDTH_KEY, bounds.width);
-                saveSettingsEvent.save(COMPONENT_HEIGHT_KEY, bounds.height);
+                final Rectangle geometry = inspector.getJComponent().getBounds();
+                saveSettingsEvent.save(COMPONENT_X_KEY, geometry.x);
+                saveSettingsEvent.save(COMPONENT_Y_KEY, geometry.y);
+                saveSettingsEvent.save(COMPONENT_WIDTH_KEY, geometry.width);
+                saveSettingsEvent.save(COMPONENT_HEIGHT_KEY, geometry.height);
             }
         }
         properties.putAll(newProperties);

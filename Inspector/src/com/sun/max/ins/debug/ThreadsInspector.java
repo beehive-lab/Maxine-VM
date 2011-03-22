@@ -84,8 +84,8 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     }
 
     @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().threadsDefaultFrameBounds();
+    protected Rectangle defaultGeometry() {
+        return inspection().geometry().threadsDefaultFrameGeometry();
     }
 
     @Override

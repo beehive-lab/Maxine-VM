@@ -106,8 +106,8 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
     }
 
     @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().memoryRegionsDefaultFrameBounds();
+    protected Rectangle defaultGeometry() {
+        return inspection().geometry().memoryRegionsDefaultFrameGeometry();
     }
 
     @Override

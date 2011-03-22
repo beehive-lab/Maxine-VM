@@ -48,46 +48,50 @@ public class TestInspectorGeometry implements InspectorGeometry {
 
     private static final Point testFrameDefaultLocation = new Point(100, 100);
     private static final Dimension testFramePrefSize = new Dimension(300, 300);
-    private static final Rectangle testFrameDefaultBounds = new Rectangle(100, 100, 300, 300);
+    private static final Rectangle testFrameDefaultGeometry = new Rectangle(100, 100, 300, 300);
 
-    public  Rectangle threadsDefaultFrameBounds() {
-        return testFrameDefaultBounds;
+    public  Rectangle threadsDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
     }
 
-    public Rectangle registersDefaultFrameBounds() {
-        return  testFrameDefaultBounds;
+    public Rectangle registersDefaultFrameGeometry() {
+        return  testFrameDefaultGeometry;
     }
 
-    public Rectangle stackDefaultFrameBounds() {
-        return testFrameDefaultBounds;
+    public Rectangle stackDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
     }
 
-    public Rectangle methodsDefaultFrameBounds() {
-        return testFrameDefaultBounds;
+    public Rectangle stackFrameDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
     }
 
-    public Rectangle breakpointsDefaultFrameBounds() {
-        return testFrameDefaultBounds;
+    public Rectangle methodsDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
     }
 
-    public Rectangle watchpointsDefaultFrameBounds() {
-        return testFrameDefaultBounds;
+    public Rectangle breakpointsDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
     }
 
-    public Rectangle threadLocalsDefaultFrameBounds() {
-        return testFrameDefaultBounds;
+    public Rectangle watchpointsDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
     }
 
-    public Rectangle memoryRegionsDefaultFrameBounds() {
-        return testFrameDefaultBounds;
+    public Rectangle threadLocalsDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
     }
 
-    public Rectangle bootImageDefaultFrameBounds() {
-        return testFrameDefaultBounds;
+    public Rectangle memoryRegionsDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
     }
 
-    public Rectangle notepadDefaultFrameBounds() {
-        return testFrameDefaultBounds;
+    public Rectangle bootImageDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
+    }
+
+    public Rectangle notepadDefaultFrameGeometry() {
+        return testFrameDefaultGeometry;
     }
 
     // Java Source Inspector frame

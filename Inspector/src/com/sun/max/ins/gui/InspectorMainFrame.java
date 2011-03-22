@@ -295,6 +295,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopMenu.add(actions.objectInspectorsMenu());
         desktopMenu.add(actions.viewRegisters());
         desktopMenu.add(actions.viewStack());
+        desktopMenu.add(actions.viewStackFrame());
         desktopMenu.add(actions.viewThreads());
         desktopMenu.add(actions.viewVmThreadLocals());
         if (inspection.vm().watchpointManager() != null) {
@@ -312,11 +313,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         unavailableDataTableCellRenderer = new UnavailableDataTableCellRenderer(inspection);
         saveSettingsListener = new AbstractSaveSettingsListener(FRAME_SETTINGS_NAME) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-                final Rectangle bounds = getBounds();
-                saveSettingsEvent.save(FRAME_X_KEY, bounds.x);
-                saveSettingsEvent.save(FRAME_Y_KEY, bounds.y);
-                saveSettingsEvent.save(FRAME_WIDTH_KEY, bounds.width);
-                saveSettingsEvent.save(FRAME_HEIGHT_KEY, bounds.height);
+                final Rectangle geometry = getBounds();
+                saveSettingsEvent.save(FRAME_X_KEY, geometry.x);
+                saveSettingsEvent.save(FRAME_Y_KEY, geometry.y);
+                saveSettingsEvent.save(FRAME_WIDTH_KEY, geometry.width);
+                saveSettingsEvent.save(FRAME_HEIGHT_KEY, geometry.height);
             }
         };
         settings.addSaveSettingsListener(saveSettingsListener);
@@ -432,23 +433,52 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return mouseButtonMapper.getButton(mouseEvent);
     }
 
-    public void setLocationRelativeToMouse(Inspector inspector) {
-        setLocationRelativeToMouse(inspector, inspection.geometry().defaultNewFrameXOffset(), inspection.geometry().defaultNewFrameYOffset());
+    public Rectangle setLocationRelativeToMouse(Inspector inspector) {
+        return setLocationRelativeToMouse(inspector, inspection.geometry().defaultNewFrameXOffset(), inspection.geometry().defaultNewFrameYOffset());
     }
 
-    public void setLocationRelativeToMouse(Inspector inspector, int offset) {
-        setLocationRelativeToMouse(inspector, offset, offset);
+    public Rectangle setLocationRelativeToMouse(Inspector inspector, int offset) {
+        return setLocationRelativeToMouse(inspector, offset, offset);
     }
 
-    public void moveToMiddle(Inspector inspector) {
+    public Rectangle moveToMiddle(Inspector inspector) {
         final JComponent component = inspector.getJComponent();
         component.setLocation(getMiddle(component));
+        return component.getBounds();
     }
 
-    public void moveToMiddleIfNotVisble(Inspector inspector) {
-        if (!contains(inspector.getJComponent().getLocation())) {
+    public Rectangle moveToMiddleIfNotVisble(Inspector inspector) {
+        JComponent component = inspector.getJComponent();
+        if (!contains(component.getLocation())) {
             moveToMiddle(inspector);
         }
+        return component.getBounds();
+    }
+
+    public Rectangle resizeToFit(Inspector inspector) {
+        final JComponent component = inspector.getJComponent();
+        Rectangle geometry = component.getBounds();
+        final int newWidth = (Math.min(getWidth(), geometry.x + geometry.width)) - geometry.x;
+        final int newHeight = (Math.min(getHeight(), geometry.y + geometry.height)) - geometry.y;
+        component.setBounds(geometry.x, geometry.y, newWidth, newHeight);
+        return component.getBounds();
+    }
+
+    public Rectangle resizeToFill(Inspector inspector) {
+        final JComponent component = inspector.getJComponent();
+        component.setBounds(0, 0, getWidth(), getHeight());
+        return component.getBounds();
+    }
+
+    public Rectangle restoreDefaultGeometry(Inspector inspector) {
+        final Rectangle defaultFrameGeometry = inspector.defaultGeometry();
+        final JComponent component = inspector.getJComponent();
+        if (defaultFrameGeometry != null) {
+            component.setBounds(defaultFrameGeometry);
+            return defaultFrameGeometry;
+        }
+        moveToMiddle(inspector);
+        return component.getBounds();
     }
 
     public void setLocationRelativeToMouse(JDialog dialog, int offset) {
@@ -490,37 +520,38 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     /**
      * Set frame location to a point displaced by specified amount from the most recently known mouse position.
      */
-    private void setLocationRelativeToMouse(Inspector inspector, int xOffset, int yOffset) {
+    private Rectangle setLocationRelativeToMouse(Inspector inspector, int xOffset, int yOffset) {
         final Point location = mostRecentMouseLocation;
         location.translate(xOffset, yOffset);
-        setLocationOnScreen(inspector, location);
+        return setLocationOnScreen(inspector, location);
     }
 
-    private void setLocationOnScreen(Inspector inspector, Point locationOnScreen) {
+    private Rectangle setLocationOnScreen(Inspector inspector, Point locationOnScreen) {
         final Point origin = getContentPane().getLocationOnScreen();
         final Point location = new Point(locationOnScreen.x - origin.x, locationOnScreen.y - origin.y);
-        final Rectangle r = getBounds();
+        final Rectangle geometry = getBounds();
         final JComponent frame = inspector.getJComponent();
 
-        if (frame.getWidth() > r.width) {
-            frame.setSize(r.width, frame.getHeight());
+        if (frame.getWidth() > geometry.width) {
+            frame.setSize(geometry.width, frame.getHeight());
         }
-        if (frame.getHeight() > r.height) {
-            frame.setSize(frame.getWidth(), r.height);
+        if (frame.getHeight() > geometry.height) {
+            frame.setSize(frame.getWidth(), geometry.height);
         }
 
         if (location.x <= -frame.getWidth()) {
             location.x = 0;
-        } else if (location.x >= r.width) {
-            location.x = r.width - frame.getWidth();
+        } else if (location.x >= geometry.width) {
+            location.x = geometry.width - frame.getWidth();
         }
 
         if (location.y < 0) {
             location.y = 0;
-        } else if (location.y >= r.height) {
-            location.y = r.height - frame.getHeight();
+        } else if (location.y >= geometry.height) {
+            location.y = geometry.height - frame.getHeight();
         }
         frame.setLocation(location);
+        return frame.getBounds();
     }
 
     /**

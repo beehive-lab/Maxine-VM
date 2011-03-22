@@ -22,6 +22,7 @@
  */
 package com.sun.max.ins.memory;
 
+import java.awt.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -72,6 +73,8 @@ public final class MemoryBytesInspector extends Inspector {
         return create(inspection, region.start(), (int) nBytes, 1, 16);
     }
 
+    private final Rectangle originalFrameGeometry;
+
     private MemoryBytesInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
         super(inspection);
         this.address = address;
@@ -94,7 +97,7 @@ public final class MemoryBytesInspector extends Inspector {
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
-        inspection.gui().setLocationRelativeToMouse(this);
+        originalFrameGeometry = inspection.gui().setLocationRelativeToMouse(this);
         memoryInspectors.add(this);
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
     }
@@ -193,6 +196,11 @@ public final class MemoryBytesInspector extends Inspector {
     }
 
     private JPanel contentPane;
+
+    @Override
+    protected Rectangle defaultGeometry() {
+        return originalFrameGeometry;
+    }
 
     @Override
     public String getTextForTitle() {

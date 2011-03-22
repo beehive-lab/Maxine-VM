@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.gui;
 
+import static com.sun.max.ins.gui.Inspector.MenuKind.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -203,10 +205,11 @@ public class JavaMethodInspector extends MethodInspector {
         }
 
         final InspectorFrame frame = createTabFrame(parent);
-        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
-        final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
+
+        final InspectorMenu editMenu = frame.makeMenu(EDIT_MENU);
+        final InspectorMenu objectMenu = frame.makeMenu(OBJECT_MENU);
+        final InspectorMenu codeMenu = frame.makeMenu(CODE_MENU);
+        final InspectorMenu debugMenu = frame.makeMenu(DEBUG_MENU);
         final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at this method entry");
         final InspectorMenu breakAtLabelsMenu = new InspectorMenu("Break at this method labels");
 
@@ -223,7 +226,7 @@ public class JavaMethodInspector extends MethodInspector {
             objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
             objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor, "Method compilations:"));
-            objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+            objectMenu.add(defaultMenuItems(OBJECT_MENU));
         }
         for (final MethodCodeKind codeKind : MethodCodeKind.values()) {
             codeMenu.add(codeViewCheckBoxes[codeKind.ordinal()]);
@@ -231,7 +234,7 @@ public class JavaMethodInspector extends MethodInspector {
         if (teleClassMethodActor != null) {
             codeMenu.add(actions().viewMethodCompilationsMenu(teleClassMethodActor, "View method's compilations"));
         }
-        codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
+        codeMenu.add(defaultMenuItems(CODE_MENU));
 
         if (compiledCode != null) {
             breakOnEntryMenu.add(actions().setMachineCodeBreakpointAtEntry(compiledCode, "Machine code"));

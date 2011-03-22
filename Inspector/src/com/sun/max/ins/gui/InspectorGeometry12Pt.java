@@ -46,43 +46,47 @@ public class InspectorGeometry12Pt implements InspectorGeometry {
         return inspectionFramePrefSize;
     }
 
-    public Rectangle threadsDefaultFrameBounds() {
+    public Rectangle threadsDefaultFrameGeometry() {
         return new Rectangle(0, 0, 225, 170);
     }
 
-    public Rectangle registersDefaultFrameBounds() {
+    public Rectangle registersDefaultFrameGeometry() {
         return new Rectangle(0, 170, 225, 730);
     }
 
-    public Rectangle stackDefaultFrameBounds() {
+    public Rectangle stackDefaultFrameGeometry() {
         return new Rectangle(225, 0, 225, 900);
     }
 
-    public Rectangle methodsDefaultFrameBounds() {
+    public Rectangle stackFrameDefaultFrameGeometry() {
+        return new Rectangle(0, 0, 175, 400);
+    }
+
+    public Rectangle methodsDefaultFrameGeometry() {
         return new Rectangle(450, 0, 700, 900);
     }
 
-    public Rectangle breakpointsDefaultFrameBounds() {
+    public Rectangle breakpointsDefaultFrameGeometry() {
         return new Rectangle(1150, 0, 450, 170);
     }
 
-    public Rectangle watchpointsDefaultFrameBounds() {
+    public Rectangle watchpointsDefaultFrameGeometry() {
         return new Rectangle(100, 100, 575, 150);
     }
 
-    public Rectangle threadLocalsDefaultFrameBounds() {
+    public Rectangle threadLocalsDefaultFrameGeometry() {
         return new Rectangle(1150, 170, 450, 730);
     }
 
-    public Rectangle memoryRegionsDefaultFrameBounds() {
+    public Rectangle memoryRegionsDefaultFrameGeometry() {
         return new Rectangle(100, 100, 450, 250);
     }
 
-    public Rectangle bootImageDefaultFrameBounds() {
+    public Rectangle bootImageDefaultFrameGeometry() {
         return new Rectangle(100, 0, 390, 900);
     }
 
-    public Rectangle notepadDefaultFrameBounds() {
+    public Rectangle notepadDefaultFrameGeometry() {
         return new Rectangle(200, 200, 200, 200);
     }
 

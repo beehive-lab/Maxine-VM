@@ -39,52 +39,57 @@ public interface InspectorGeometry {
     /**
      * @return default geometry for the {@link ThreadsInspector}.
      */
-    Rectangle threadsDefaultFrameBounds();
+    Rectangle threadsDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@link RegistersInspector}.
      */
-    Rectangle registersDefaultFrameBounds();
+    Rectangle registersDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@link StackInspector}.
      */
-    Rectangle stackDefaultFrameBounds();
+    Rectangle stackDefaultFrameGeometry();
+
+    /**
+     * @return default geometry for the {@link StackFrameInspector}.
+     */
+    Rectangle stackFrameDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@link MethodInspector}.
      */
-    Rectangle methodsDefaultFrameBounds();
+    Rectangle methodsDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@link BreakpointsInspector}.
      */
-    Rectangle breakpointsDefaultFrameBounds();
+    Rectangle breakpointsDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@linkWatchpointsInspector}.
      */
-    Rectangle watchpointsDefaultFrameBounds();
+    Rectangle watchpointsDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@link ThreadLocalsInspector}.
      */
-    Rectangle threadLocalsDefaultFrameBounds();
+    Rectangle threadLocalsDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@link MemoryRegionsInspector}.
      */
-    Rectangle memoryRegionsDefaultFrameBounds();
+    Rectangle memoryRegionsDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@link BootImageInspector}.
      */
-    Rectangle bootImageDefaultFrameBounds();
+    Rectangle bootImageDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@link NotepadInspector}.
      */
-    Rectangle notepadDefaultFrameBounds();
+    Rectangle notepadDefaultFrameGeometry();
 
     // Java Source Inspector frame
     Point javaSourceDefaultFrameLocation();
