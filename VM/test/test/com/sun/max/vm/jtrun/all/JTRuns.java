@@ -7276,6 +7276,12 @@ public class JTRuns {
             begin("jtt.exbytecode.EBC_lsa01");
             String runString = null;
             try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.exbytecode.EBC_lsa01.test(0)) {
+                    fail(runString);
+                    return;
+                }
             // (1) == true
                 runString = "(1)";
                 if (true != jtt.exbytecode.EBC_lsa01.test(1)) {
