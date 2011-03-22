@@ -93,6 +93,8 @@ public final class BytecodeScanner {
 
     protected boolean currentOpcodeWidened;
 
+    public boolean canRunOffEnd;
+
     /**
      * @see #currentOpcode()
      */
@@ -1213,7 +1215,9 @@ public final class BytecodeScanner {
     public void skipBytes(int numBytes) {
         currentBCI += numBytes;
         if (currentBCI > bytecodeBlock.end + 1) {
-            throw verifyError("Ran off end of code: " + currentBCI);
+            if (!canRunOffEnd) {
+                throw verifyError("Ran off end of code: " + currentBCI);
+            }
         }
     }
 }

@@ -1409,6 +1409,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         assert dirArguments.length == 1;
         final EirVariable result = (EirVariable) dirToEirValue(dirResult);
         final EirValue value = dirToEirValue(dirArguments[0]);
+        final EirValue zero = createEirVariable(Kind.INT);
 
         final EirVariable stackSlot;
         if (value instanceof EirVariable) {
@@ -1419,7 +1420,10 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         }
         result.setAliasedVariable(stackSlot);
         methodTranslation().addEpilogueStackSlotUse(stackSlot);
+        assign(Kind.WORD, zero, createEirConstant(ReferenceValue.NULL));
+        addInstruction(new CMP_I32(eirBlock(), value, createEirConstant(ReferenceValue.NULL)));
         addInstruction(new LEA_STACK_ADDRESS(eirBlock(), result, stackSlot));
+        addInstruction(new CMOVE_I64(eirBlock(), result, zero));
     }
 
     @Override

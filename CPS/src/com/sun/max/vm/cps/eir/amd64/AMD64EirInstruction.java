@@ -635,6 +635,38 @@ public interface AMD64EirInstruction {
         }
     }
 
+    public static class CMOVE_I64 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
+
+        public CMOVE_I64(EirBlock block, EirValue destination, EirValue source) {
+            super(block, destination, source, true);
+        }
+
+        @Override
+        protected void emit_G_G(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64EirRegister.General sourceRegister) {
+            emitter.assembler().cmove(destinationRegister.as64(), sourceRegister.as64());
+        }
+
+        @Override
+        protected void emit_G_L(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, Label sourceLiteralLabel) {
+            emitter.assembler().rip_cmove(destinationRegister.as64(), sourceLiteralLabel);
+        }
+
+        @Override
+        protected void emit_G_S8(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64IndirectRegister64 sourceBasePointer, byte sourceOffset) {
+            emitter.assembler().cmove(destinationRegister.as64(), sourceOffset, sourceBasePointer);
+        }
+
+        @Override
+        protected void emit_G_S32(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64IndirectRegister64 sourceBasePointer, int sourceOffset) {
+            emitter.assembler().cmove(destinationRegister.as64(), sourceOffset, sourceBasePointer);
+        }
+
+        @Override
+        public void acceptVisitor(AMD64EirInstructionVisitor visitor) {
+            visitor.visit(this);
+        }
+    }
+
     public static class CMOVE_I32 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public CMOVE_I32(EirBlock block, EirValue destination, EirValue source) {

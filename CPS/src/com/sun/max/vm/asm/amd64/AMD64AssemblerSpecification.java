@@ -1340,11 +1340,11 @@ interface AMD64AssemblerSpecification {
 //    void cmove(AMD64GeneralRegister32 destination, byte disp8, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void cmove(AMD64GeneralRegister32 destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void cmove(AMD64GeneralRegister64 destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void cmove(AMD64GeneralRegister64 destination, AMD64GeneralRegister64 source);
+    void cmove(AMD64GeneralRegister64 destination, AMD64GeneralRegister64 source);
 //    void cmove(AMD64GeneralRegister64 destination, byte disp8, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void cmove(AMD64GeneralRegister64 destination, byte disp8, AMD64IndirectRegister64 source);
+    void cmove(AMD64GeneralRegister64 destination, byte disp8, AMD64IndirectRegister64 source);
 //    void cmove(AMD64GeneralRegister64 destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void cmove(AMD64GeneralRegister64 destination, int disp32, AMD64IndirectRegister64 source);
+    void cmove(AMD64GeneralRegister64 destination, int disp32, AMD64IndirectRegister64 source);
 //    void cmovg(AMD64GeneralRegister16 destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void cmovg(AMD64GeneralRegister16 destination, AMD64GeneralRegister16 source);
 //    void cmovg(AMD64GeneralRegister16 destination, AMD64IndirectRegister64 source);
@@ -5293,9 +5293,9 @@ interface AMD64AssemblerSpecification {
 //    void rip_cmovbe(final AMD64GeneralRegister16 destination, final Label label);
 //    void rip_cmovbe(final AMD64GeneralRegister64 destination, final Label label);
 //    void rip_cmove(AMD64GeneralRegister16 destination, int rel32);
-//    void rip_cmove(AMD64GeneralRegister64 destination, int rel32);
+    void rip_cmove(AMD64GeneralRegister64 destination, int rel32);
 //    void rip_cmove(final AMD64GeneralRegister16 destination, final Label label);
-//    void rip_cmove(final AMD64GeneralRegister64 destination, final Label label);
+    void rip_cmove(final AMD64GeneralRegister64 destination, final Label label);
 //    void rip_cmovg(AMD64GeneralRegister16 destination, int rel32);
 //    void rip_cmovg(AMD64GeneralRegister64 destination, int rel32);
 //    void rip_cmovg(final AMD64GeneralRegister16 destination, final Label label);
