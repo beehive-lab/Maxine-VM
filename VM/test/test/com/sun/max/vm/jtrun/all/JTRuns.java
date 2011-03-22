@@ -7272,12 +7272,6 @@ public class JTRuns {
             }
             pass();
         }
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.exbytecode.EBC_lsa01.test(0)) {
-                    fail(runString);
-                    return;
-                }
         static void jtt_exbytecode_EBC_movd2l_01() {
             begin("jtt.exbytecode.EBC_movd2l_01");
             String runString = null;
