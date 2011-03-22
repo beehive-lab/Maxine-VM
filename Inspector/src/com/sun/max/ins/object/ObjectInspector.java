@@ -84,6 +84,8 @@ public abstract class ObjectInspector extends Inspector {
 
     protected final ObjectViewPreferences instanceViewPreferences;
 
+    private Rectangle originalFrameGeometry = null;
+
     protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, final TeleObject teleObject) {
         super(inspection);
         this.factory = factory;
@@ -113,7 +115,7 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public InspectorFrame createFrame(boolean addMenuBar) {
         final InspectorFrame frame = super.createFrame(addMenuBar);
-        gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
+        originalFrameGeometry = gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
 
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
@@ -155,6 +157,11 @@ public abstract class ObjectInspector extends Inspector {
             panel.add(objectHeaderTable, BorderLayout.NORTH);
         }
         setContentPane(panel);
+    }
+
+    @Override
+    protected Rectangle defaultGeometry() {
+        return originalFrameGeometry;
     }
 
     @Override

@@ -86,14 +86,38 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
 
     }
 
-    protected InspectorMenuItems defaultMenuItems(MenuKind menuKind) {
+    /**
+     * Creates a set of standard menu items for this Inspector which are
+     * appropriate to one of the standard menu kinds.
+     *
+     * @param menuKind the kind of menu for which the standard items are intended
+     * @return a new set of menu items
+     */
+    protected final InspectorMenuItems defaultMenuItems(MenuKind menuKind) {
+        return defaultMenuItems(menuKind, Inspector.this);
+    }
+
+    /**
+     * Creates a set of standard menu items for an Inspector which are
+     * appropriate to one of the standard menu kinds.
+     *
+     * @param inspector the inspector for which inspector-specific items will operate
+     * @param menuKind the kind of menu for which the standard items are intended
+     * @return a new set of menu items
+     */
+    protected final InspectorMenuItems defaultMenuItems(MenuKind menuKind, final Inspector inspector) {
 
         switch(menuKind) {
             case DEFAULT_MENU:
                 return new AbstractInspectorMenuItems(inspection()) {
                     public void addTo(InspectorMenu menu) {
-                        menu.add(getCloseAction());
-                        menu.add(actions().closeViews(Inspector.class, Inspector.this, "Close Other Inspectors"));
+                        menu.add(getCloseAction(inspector));
+                        menu.add(actions().closeViews(Inspector.class, inspector, "Close Other Inspectors"));
+                        menu.addSeparator();
+                        menu.add(actions().movedToCenter(inspector));
+                        menu.add(actions().resizeToFit(inspector));
+                        menu.add(actions().resizeToFill(inspector));
+                        menu.add(actions().restoreDefaultGeometry(inspector));
                         menu.addSeparator();
                         menu.add(getPrintAction());
                     }
@@ -180,7 +204,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     /**
      * @return default geometry for this inspector, to be used if no prior settings; null if no default specified.
      */
-    protected Rectangle defaultFrameBounds() {
+    protected Rectangle defaultGeometry() {
         return null;
     }
 
@@ -201,8 +225,8 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         return new AbstractSaveSettingsListener(name, inspector) {
 
             @Override
-            public Rectangle defaultBounds() {
-                return inspector.defaultFrameBounds();
+            public Rectangle defaultGeometry() {
+                return inspector.defaultGeometry();
             }
 
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
@@ -533,11 +557,11 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     /**
      * @return an action that will close this inspector
      */
-    public InspectorAction getCloseAction() {
+    public InspectorAction getCloseAction(final Inspector inspector) {
         return new InspectorAction(inspection(), "Close") {
             @Override
             protected void procedure() {
-                dispose();
+                inspector.dispose();
             }
         };
     }

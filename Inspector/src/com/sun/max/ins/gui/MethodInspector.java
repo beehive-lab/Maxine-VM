@@ -22,6 +22,7 @@
  */
 package com.sun.max.ins.gui;
 
+import static com.sun.max.ins.gui.Inspector.MenuKind.*;
 import static com.sun.max.tele.MaxProcessState.*;
 
 import java.util.*;
@@ -283,22 +284,25 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
 
         final InspectorFrame frame = super.createTabFrame(parent);
 
-        frame.makeMenu(MenuKind.EDIT_MENU);
+        // The default menu operates from the perspective of the parent container.
+        frame.makeMenu(DEFAULT_MENU).add(defaultMenuItems(DEFAULT_MENU, parent));
 
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        frame.makeMenu(EDIT_MENU);
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
         memoryMenu.add(actions().inspectMachineCodeRegionMemoryWords(machineCode()));
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        memoryMenu.add(defaultMenuItems(MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");
         memoryMenu.add(viewMemoryRegionsMenuItem);
 
-        frame.makeMenu(MenuKind.OBJECT_MENU);
+        frame.makeMenu(OBJECT_MENU);
 
-        frame.makeMenu(MenuKind.CODE_MENU);
+        frame.makeMenu(CODE_MENU);
 
-        frame.makeMenu(MenuKind.DEBUG_MENU);
+        frame.makeMenu(DEBUG_MENU);
 
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        frame.makeMenu(VIEW_MENU).add(defaultMenuItems(VIEW_MENU));
         return frame;
     }
 

@@ -193,6 +193,8 @@ public final class MemoryWordsInspector extends Inspector {
     private final InspectorButton cloneButton;
     private final MemoryWordsViewPreferences instanceViewPreferences;
 
+    private final Rectangle originalFrameGeometry;
+
     private MemoryWordsInspector(Inspection inspection, final MaxMemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryWordsViewPreferences instanceViewPreferences) {
         super(inspection);
         assert viewMode != null;
@@ -336,7 +338,7 @@ public final class MemoryWordsInspector extends Inspector {
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
-        gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
+        originalFrameGeometry = gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
 
         table.scrollToOrigin();
        // table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
@@ -514,6 +516,11 @@ public final class MemoryWordsInspector extends Inspector {
                 InspectorError.unknownCase();
         }
         setTitle();
+    }
+
+    @Override
+    protected Rectangle defaultGeometry() {
+        return originalFrameGeometry;
     }
 
     @Override

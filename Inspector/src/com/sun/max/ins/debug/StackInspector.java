@@ -346,8 +346,8 @@ public final class StackInspector extends Inspector implements TableColumnViewPr
     }
 
     @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().stackDefaultFrameBounds();
+    protected Rectangle defaultGeometry() {
+        return inspection().geometry().stackDefaultFrameGeometry();
     }
 
     @Override

@@ -233,8 +233,8 @@ public final class NotepadInspector extends Inspector {
     }
 
     @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().notepadDefaultFrameBounds();
+    protected Rectangle defaultGeometry() {
+        return inspection().geometry().notepadDefaultFrameGeometry();
     }
 
     @Override

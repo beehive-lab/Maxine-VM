@@ -96,8 +96,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().threadLocalsDefaultFrameBounds();
+    protected Rectangle defaultGeometry() {
+        return inspection().geometry().threadLocalsDefaultFrameGeometry();
     }
 
     @Override

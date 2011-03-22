@@ -123,23 +123,40 @@ public interface InspectorGUI {
 
     /**
      * Sets Inspector frame location to a point displaced by a default amount from the most recently known mouse position.
+     * @return the geometry of the frame after the location is set
      */
-    void setLocationRelativeToMouse(Inspector inspector);
+    Rectangle setLocationRelativeToMouse(Inspector inspector);
 
     /**
      * Sets Inspector frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
+     * @return the geometry of the frame after the location is set
      */
-    void setLocationRelativeToMouse(Inspector inspector, int offset);
+    Rectangle setLocationRelativeToMouse(Inspector inspector, int offset);
 
     /**
      * Sets Inspector frame location to middle of Inspection display.
      */
-    void moveToMiddle(Inspector inspector);
+    Rectangle moveToMiddle(Inspector inspector);
 
     /**
      * Sets Inspector frame location to middle of Inspection display if it would otherwise be completely outside the visible area.
      */
-    void moveToMiddleIfNotVisble(Inspector inspector);
+    Rectangle moveToMiddleIfNotVisble(Inspector inspector);
+
+    /**
+     * Shrink an inspector in each dimension to make it fit within the Inspector's frame.
+     */
+    Rectangle resizeToFit(Inspector inspector);
+
+    /**
+     * Grow an inspector in each dimension to make it fill the Inspector's frame.
+     */
+    Rectangle resizeToFill(Inspector inspector);
+
+    /**
+     * Restores the default size and location of an Inspector.
+     */
+    Rectangle restoreDefaultGeometry(Inspector inspector);
 
     /**
      * Moves a {@link JDialog} frame down and to the right of the current mouse location.
