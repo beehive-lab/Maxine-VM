@@ -293,6 +293,13 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
         }
     }
 
+    public void visit(CMOVE_I64 instruction) {
+        if (cpu.test(ZF)) {
+            Word w = cpu.readWord(instruction.sourceOperand().location());
+            cpu.writeWord(instruction.destinationOperand().location(), w);
+        }
+    }
+
     public void visit(CMOVAE_I32 instruction) {
         if (!cpu.test(CF)) {
             final int i = cpu.readInt(instruction.sourceOperand().location());

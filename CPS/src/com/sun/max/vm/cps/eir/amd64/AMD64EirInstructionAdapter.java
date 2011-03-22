@@ -166,6 +166,10 @@ public class AMD64EirInstructionAdapter extends EirInstructionAdapter implements
         visitMove(instruction);
     }
 
+    public void visit(CMOVE_I64 instruction) {
+        visitMove(instruction);
+    }
+
     public void visit(CMOVAE_I32 instruction) {
         visitMove(instruction);
     }

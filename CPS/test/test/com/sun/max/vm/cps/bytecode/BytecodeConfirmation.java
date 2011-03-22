@@ -59,6 +59,7 @@ public class BytecodeConfirmation extends BytecodeAdapter {
     public BytecodeConfirmation(ClassMethodActor classMethodActor) {
         try {
             final BytecodeScanner bytecodeScanner = new BytecodeScanner(this);
+            bytecodeScanner.canRunOffEnd = true;
             final byte[] initBytes = new byte[256];
             for (int opcode = 0; opcode <= LAST_JVM_OPCODE; ++opcode) {
                 if (opcode != XXXUNUSEDXXX) {

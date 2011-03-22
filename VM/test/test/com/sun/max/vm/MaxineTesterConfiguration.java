@@ -303,7 +303,7 @@ public class MaxineTesterConfiguration {
         imageConfig("msc1x",      "-run=java", "-heap=gcx.ms", opt_c1x, baseline_c1x, "--C1X:OptLevel=1");
         imageConfig("msec1x",     "-run=java", "-heap=gcx.mse", opt_c1x, baseline_c1x, "--C1X:OptLevel=1");
 
-        c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt1", "-C1X:OptLevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt2", "-C1X:OptLevel=2", "^jtt", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt3", "-C1X:OptLevel=3", "^jtt", "^com.sun.c1x", "^com.sun.cri");
