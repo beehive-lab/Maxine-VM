@@ -536,21 +536,21 @@ public final class ClassfileReader {
     }
 
     protected ExceptionHandlerEntry readExceptionHandlerEntry(int codeLength) {
-        final int startAddress = classfileStream.readUnsigned2();
-        final int endAddress = classfileStream.readUnsigned2();
-        final int handlerAddress = classfileStream.readUnsigned2();
-        final int catchClassIndex = classfileStream.readUnsigned2();
+        final int startBCI = classfileStream.readUnsigned2();
+        final int endBCI = classfileStream.readUnsigned2();
+        final int catchBCI = classfileStream.readUnsigned2();
+        final int catchTypeCPI = classfileStream.readUnsigned2();
 
-        if (startAddress >= codeLength || endAddress > codeLength || startAddress >= endAddress || handlerAddress >= codeLength) {
+        if (startBCI >= codeLength || endBCI > codeLength || startBCI >= endBCI || catchBCI >= codeLength) {
             throw classFormatError("Invalid exception handler code range");
         }
 
         // Check the index and type of the catch type
-        if (catchClassIndex != 0) {
-            constantPool.classAt(catchClassIndex, "catch type in exception table");
+        if (catchTypeCPI != 0) {
+            constantPool.classAt(catchTypeCPI, "catch type in exception table");
         }
 
-        return new ExceptionHandlerEntry(startAddress, endAddress, handlerAddress, catchClassIndex);
+        return new ExceptionHandlerEntry(startBCI, endBCI, catchBCI, catchTypeCPI);
     }
 
     protected ExceptionHandlerEntry[] readExceptionHandlerTable(int codeLength) {
