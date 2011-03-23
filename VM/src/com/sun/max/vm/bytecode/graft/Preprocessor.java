@@ -102,8 +102,6 @@ public final class Preprocessor {
                 Trace.stream().println("--- AFTER PREPROCESSING ---");
                 CodeAttributePrinter.print(Trace.stream(), codeAttribute);
             }
-
-            ExceptionHandlerEntry.ensureExceptionDispatchersAreDisjoint(codeAttribute.exceptionHandlerTable());
         }
         return codeAttribute;
     }
