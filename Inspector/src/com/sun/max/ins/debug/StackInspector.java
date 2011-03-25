@@ -335,7 +335,7 @@ public final class StackInspector extends Inspector {
         editMenu.add(copyStackToClipboardAction);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectSelectedThreadMemoryWords("Inspect memory for thread"));
+        memoryMenu.add(actions().inspectSelectedThreadStackMemoryWords("Inspect memory for stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");

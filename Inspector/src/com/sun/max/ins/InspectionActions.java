@@ -1479,12 +1479,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     *Action:  inspect the memory allocated to the currently selected thread.
+     *Action:  inspect the memory allocated to the currently selected thread's stack.
      */
-    final class InspectSelectedThreadMemoryWordsAction extends InspectorAction {
+    final class InspectSelectedThreadStackMemoryWordsAction extends InspectorAction {
 
-        public InspectSelectedThreadMemoryWordsAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? "Inspect memory for selected thread" : actionTitle);
+        public InspectSelectedThreadStackMemoryWordsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "Inspect memory for selected thread's stack" : actionTitle);
         }
 
         @Override
@@ -1509,8 +1509,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @return an action that will create a memory words inspector
      * for memory allocated by the currently selected thread
      */
-    public final InspectorAction inspectSelectedThreadMemoryWords(String actionTitle) {
-        return new InspectSelectedThreadMemoryWordsAction(actionTitle);
+    public final InspectorAction inspectSelectedThreadStackMemoryWords(String actionTitle) {
+        return new InspectSelectedThreadStackMemoryWordsAction(actionTitle);
     }
 
     /**
