@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -188,8 +188,23 @@ public final class VirtualMemory {
         virtualMemory_protectPages(address, count);
     }
 
+    /**
+     * Sets access protection for a number of memory pages such that all accesses are allowed.
+     *
+     * @param address an address denoting the first page. This value must be aligned to the
+     *            underlying platform's {@linkplain Platform#pageSize() page size}.
+     * @param count the number of pages to unprotect
+     */
+    @INLINE
+    public static void unprotectPages(Address address, int count) {
+        virtualMemory_unprotectPages(address, count);
+    }
+
     @C_FUNCTION
     private static native void virtualMemory_protectPages(Address address, int count);
+
+    @C_FUNCTION
+    private static native void virtualMemory_unprotectPages(Address address, int count);
 
     @C_FUNCTION
     public static native Address virtualMemory_pageAlign(Address address);

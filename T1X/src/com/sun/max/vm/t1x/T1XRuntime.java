@@ -24,8 +24,6 @@ package com.sun.max.vm.t1x;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
-import static com.sun.max.vm.thread.VmThread.*;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.io.*;
 
@@ -36,8 +34,8 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -743,18 +741,11 @@ public class T1XRuntime {
     }
 
     public static Throwable loadException() {
-        Safepoint.safepoint();
-        Throwable exception = UnsafeCast.asThrowable(EXCEPTION_OBJECT.loadRef(currentTLA()).toJava());
-        EXCEPTION_OBJECT.store3(Reference.zero());
-        FatalError.check(exception != null, "Exception object lost during unwinding");
-        return exception;
+        return VmThread.current().loadExceptionForHandler();
     }
 
     public static void rethrowException() {
-        Safepoint.safepoint();
-        Throwable exception = UnsafeCast.asThrowable(EXCEPTION_OBJECT.loadRef(currentTLA()).toJava());
-        EXCEPTION_OBJECT.store3(Reference.zero());
-        Throw.raise(exception);
+        Throw.raise(VmThread.current().loadExceptionForHandler());
     }
 
     static void monitorenter(Object rcvr) {

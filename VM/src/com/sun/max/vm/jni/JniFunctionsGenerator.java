@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -239,7 +239,7 @@ public class JniFunctionsGenerator {
         out.println("        try {");
         out.print(body);
         out.println("        } catch (Throwable t) {");
-        out.println("            VmThread.fromJniEnv(env).setPendingException(t);");
+        out.println("            VmThread.fromJniEnv(env).setJniException(t);");
         out.println("            return " + errReturnValue + ";");
         out.println("        } finally {");
         out.println("            epilogue(anchor, \"" + decl.name + "\");");
@@ -252,7 +252,7 @@ public class JniFunctionsGenerator {
         out.println("        try {");
         out.print(body);
         out.println("        } catch (Throwable t) {");
-        out.println("            VmThread.fromJniEnv(env).setPendingException(t);");
+        out.println("            VmThread.fromJniEnv(env).setJniException(t);");
         out.println("        } finally {");
         out.println("            epilogue(anchor, \"" + decl.name + "\");");
         out.println("        }");

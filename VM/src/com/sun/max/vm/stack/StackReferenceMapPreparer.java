@@ -360,8 +360,8 @@ public final class StackReferenceMapPreparer {
         boolean lockDisabledSafepoints = traceStackRootScanStart(stackPointer, highestStackSlot, vmThread);
 
         // walk the stack and prepare references for each stack frame
-        StackFrameWalker stackFrameWalker = vmThread.unwindingOrReferenceMapPreparingStackFrameWalker();
-        stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
+        StackFrameWalker sfw = vmThread.referenceMapPreparingStackFrameWalker();
+        sfw.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
 
         traceStackRootScanEnd(lockDisabledSafepoints);
 
@@ -477,9 +477,9 @@ public final class StackReferenceMapPreparer {
         }
 
         // walk the stack and prepare references for each stack frame
-        StackFrameWalker stackFrameWalker = vmThread.unwindingOrReferenceMapPreparingStackFrameWalker();
+        StackFrameWalker sfw = vmThread.referenceMapPreparingStackFrameWalker();
         completingReferenceMapLimit = highestSlot;
-        stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
+        sfw.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
         completingReferenceMapLimit = Pointer.zero();
 
         traceStackRootScanEnd(lockDisabledSafepoints);
@@ -736,7 +736,7 @@ public final class StackReferenceMapPreparer {
         Log.print("invalid ref ### [SRSCount: ");
         Log.print(SRSCount.get());
         Log.print("] ");
-        Throw.StackFrameDumper.dumpFrame(null, cursor.targetMethod(), cursor.ip(), false);
+        Throw.logFrame(null, cursor.targetMethod(), cursor.ip());
         throw FatalError.unexpected("invalid ref");
     }
 

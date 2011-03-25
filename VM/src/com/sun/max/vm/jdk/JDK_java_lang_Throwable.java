@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,9 +86,13 @@ public final class JDK_java_lang_Throwable {
         final Pointer ip = Pointer.fromLong(here());
         final Pointer sp = VMRegister.getCpuStackPointer();
         final Pointer fp = VMRegister.getCpuFramePointer();
-        StackTraceElement[] stackTrace = getStackTrace(sfw, ip, sp, fp, throwableActor, Integer.MAX_VALUE);
         JDK_java_lang_Throwable thisThrowable = asThis(throwable);
-        thisThrowable.stackTrace = stackTrace;
+        try {
+            StackTraceElement[] stackTrace = getStackTrace(sfw, ip, sp, fp, throwableActor, Integer.MAX_VALUE);
+            thisThrowable.stackTrace = stackTrace;
+        } catch (OutOfMemoryError e) {
+            thisThrowable.stackTrace = new StackTraceElement[0];
+        }
         return throwable;
     }
 
@@ -110,7 +114,6 @@ public final class JDK_java_lang_Throwable {
         stv.walk(walker, ip, sp, fp);
         return stv.trace();
     }
-
 
     /**
      * Gets the depth of the stack trace, in the number of stack trace elements.

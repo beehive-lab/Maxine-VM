@@ -119,7 +119,7 @@ public final class JniFunctionsSource {
         } catch (IllegalAccessException illegalAccessException) {
             throw ProgramError.unexpected(illegalAccessException);
         } catch (InvocationTargetException invocationTargetException) {
-            VmThread.fromJniEnv(env).setPendingException(invocationTargetException.getTargetException());
+            VmThread.fromJniEnv(env).setJniException(invocationTargetException.getTargetException());
             return JniHandle.zero();
         }
     }
@@ -195,7 +195,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int Throw(Pointer env, JniHandle throwable) {
-        VmThread.fromJniEnv(env).setPendingException((Throwable) throwable.unhand());
+        VmThread.fromJniEnv(env).setJniException((Throwable) throwable.unhand());
         return JNI_OK;
     }
 
@@ -212,18 +212,18 @@ public final class JniFunctionsSource {
         }
         constructor = Utils.cast(type, throwableClass.unhand()).getConstructor(parameterTypes);
         Throwable throwable = message.isZero() ? constructor.newInstance() : constructor.newInstance(CString.utf8ToJava(message));
-        VmThread.fromJniEnv(env).setPendingException(throwable);
+        VmThread.fromJniEnv(env).setJniException(throwable);
         return JNI_OK;
     }
 
     @VM_ENTRY_POINT
     private static JniHandle ExceptionOccurred(Pointer env) {
-        return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).pendingException());
+        return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).jniException());
     }
 
     @VM_ENTRY_POINT
     private static void ExceptionDescribe(Pointer env) {
-        final Throwable exception = VmThread.fromJniEnv(env).pendingException();
+        final Throwable exception = VmThread.fromJniEnv(env).jniException();
         if (exception != null) {
             exception.printStackTrace();
         }
@@ -231,7 +231,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static void ExceptionClear(Pointer env) {
-        VmThread.fromJniEnv(env).setPendingException(null);
+        VmThread.fromJniEnv(env).setJniException(null);
     }
 
     @VM_ENTRY_POINT
@@ -1762,7 +1762,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static boolean ExceptionCheck(Pointer env) {
-        return VmThread.fromJniEnv(env).pendingException() != null;
+        return VmThread.fromJniEnv(env).jniException() != null;
     }
 
     private static final ClassActor DirectByteBuffer = ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));
