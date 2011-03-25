@@ -528,7 +528,7 @@ public final class Inspection implements InspectionHolder {
         }
         try {
             // Notify all listeners (Inspectors, menu items, etc.() that
-            // there has been a signifiant VM state change.
+            // there has been a significant VM state change.
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint
             // or the memory location that triggered a watchpoint
