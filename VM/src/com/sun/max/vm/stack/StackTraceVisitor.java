@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.stack;
 
-import java.util.*;
-
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -49,83 +47,15 @@ public abstract class StackTraceVisitor extends SourceFrameVisitor {
      */
     final int maxDepth;
 
-    protected TraceStorage traceStorage;
-
-    /**
-     * Abstracts the mechanism for storing the trace.
-     */
-    public interface TraceStorage {
-        /**
-         * Reset the trace.
-         */
-        void clear();
-        /**
-         * Add a trace element.
-         * @param methodActor
-         * @param sourceLineNumber
-         * @return true if the trace gathering should continue.
-         */
-        boolean add(ClassMethodActor methodActor, int sourceLineNumber);
-        /**
-         * Access the trace.
-         * @return
-         */
-        StackTraceElement[] getTrace();
-    }
-
-    /**
-     * Variant where caller provides a custom {@link TraceStorage}.
-     */
-    public static class Custom extends StackTraceVisitor {
-        public Custom(ClassActor exceptionClass, int maxDepth, TraceStorage traceHandler) {
-            super(exceptionClass, maxDepth, traceHandler);
-        }
-    }
-
-    /**
-     * Default implementation, with storage allocated internally for the trace elements.
-     *
-    */
-    public static class Default extends StackTraceVisitor implements TraceStorage {
-        final ArrayList<StackTraceElement> trace = new ArrayList<StackTraceElement>(20);
-
-        public Default(ClassActor exceptionClass, int maxDepth) {
-            super(exceptionClass, maxDepth, null);
-        }
-
-        public void clear() {
-            trace.clear();
-        }
-
-        public boolean add(ClassMethodActor methodActor, int sourceLineNumber) {
-            final ClassActor holder = methodActor.holder();
-            StackTraceElement ste = new StackTraceElement(holder.name.toString(), methodActor.name.toString(), holder.sourceFileName, sourceLineNumber);
-            trace.add(ste);
-            return trace.size() < maxDepth;
-        }
-
-        public StackTraceElement[] getTrace() {
-            return trace.toArray(new StackTraceElement[trace.size()]);
-        }
-
-    }
-
-    protected StackTraceVisitor(ClassActor exceptionClass, int maxDepth, TraceStorage traceHandler) {
+    protected StackTraceVisitor(ClassActor exceptionClass, int maxDepth) {
         this.exceptionClass = exceptionClass;
         this.maxDepth = maxDepth;
-        if (traceStorage != null) {
-            this.traceStorage = traceHandler;
-        } else if (this instanceof TraceStorage) {
-            this.traceStorage = (TraceStorage) this;
-        } else {
-            assert false : "this must be implement TraceStorage or traceHandler must not be null";
-        }
     }
 
     @Override
     public boolean visitSourceFrame(ClassMethodActor method, int bci, boolean trapped, long frameId) {
         if (trapped) {
-            traceStorage.clear();
+            clear();
             exceptionClass = null;
         }
         if (exceptionClass != null) {
@@ -150,11 +80,24 @@ public abstract class StackTraceVisitor extends SourceFrameVisitor {
             }
             sourceLineNumber = bci >= 0 ? method.sourceLineNumber(bci) : -1;
         }
-        return traceStorage.add(method, sourceLineNumber);
+        return add(method, sourceLineNumber);
     }
 
-    public StackTraceElement[] trace() {
-        return traceStorage.getTrace();
-    }
+    /**
+     * Adds an element to the trace.
+     *
+     * @return {@code true} if the stack walk should continue to the next element
+     */
+    public abstract boolean add(ClassMethodActor method, int sourceLineNumber);
+
+    /**
+     * Clears all trace elements.
+     */
+    public abstract void clear();
+
+    /**
+     * Gets the trace elements.
+     */
+    public abstract StackTraceElement[] getTrace();
 }
 
