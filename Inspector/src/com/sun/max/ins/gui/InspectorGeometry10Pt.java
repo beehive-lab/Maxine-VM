@@ -55,11 +55,11 @@ public class InspectorGeometry10Pt implements InspectorGeometry {
     }
 
     public Rectangle stackDefaultFrameGeometry() {
-        return new Rectangle(175, 0, 175, 750);
+        return new Rectangle(175, 0, 175, 250);
     }
 
     public Rectangle stackFrameDefaultFrameGeometry() {
-        return new Rectangle(0, 0, 175, 400);
+        return new Rectangle(175, 250, 175, 500);
     }
 
     public Rectangle methodsDefaultFrameGeometry() {

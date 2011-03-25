@@ -150,6 +150,7 @@ public final class Inspection implements InspectionHolder {
                 RegistersInspector.make(this);
                 ThreadLocalsInspector.make(this);
                 StackInspector.make(this);
+                StackFrameInspector.make(this);
                 BreakpointsInspector.make(this);
                 focus.setCodeLocation(focus.thread().ipLocation());
             } catch (Throwable throwable) {
