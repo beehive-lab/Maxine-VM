@@ -211,7 +211,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             }
 
             // Install the signal handler for dumping threads when SIGHUP is received
-            Signal.handle(new Signal("HUP"), new PrintThreads(true));
+            Signal.handle(new Signal("QUIT"), new PrintThreads(false));
         }
     }
 
