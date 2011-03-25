@@ -259,7 +259,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         }
 
         public String entityName() {
-            return "<Native stack frame>  " + stackFrame.toString();
+            return "Frame: " + stackFrame.toString();
         }
 
         public String entityDescription() {
