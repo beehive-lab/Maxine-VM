@@ -33,7 +33,7 @@ import com.sun.max.vm.actor.member.*;
  * @author Mick Jordan
  *
  */
-public abstract class StackTraceVisitor extends SourceFrameVisitor {
+public class StackTraceVisitor extends SourceFrameVisitor {
     /**
      * The class of the exception for which the stack trace is being constructed.
      * This is used to elide the chain of constructors calls for this class and its super classes.
@@ -88,16 +88,21 @@ public abstract class StackTraceVisitor extends SourceFrameVisitor {
      *
      * @return {@code true} if the stack walk should continue to the next element
      */
-    public abstract boolean add(ClassMethodActor method, int sourceLineNumber);
+    public boolean add(ClassMethodActor method, int sourceLineNumber) {
+        return true;
+    }
 
     /**
      * Clears all trace elements.
      */
-    public abstract void clear();
+    public void clear() {
+    }
 
     /**
      * Gets the trace elements.
      */
-    public abstract StackTraceElement[] getTrace();
+    public StackTraceElement[] getTrace() {
+        return null;
+    }
 }
 
