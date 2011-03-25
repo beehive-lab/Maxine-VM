@@ -82,7 +82,6 @@ public final class ClassActorFactory {
                         innerClasses,
                         outerClass,
                         enclosingMethodInfo);
-        ClassRegistry.put(interfaceActor);
         return interfaceActor;
     }
 
@@ -136,7 +135,6 @@ public final class ClassActorFactory {
                             sourceFileName,
                             innerClasses,
                             outerClass, enclosingMethodInfo);
-        ClassRegistry.put(classActor);
         return classActor;
     }
 
