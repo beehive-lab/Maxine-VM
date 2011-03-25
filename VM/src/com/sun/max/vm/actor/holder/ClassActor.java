@@ -1550,10 +1550,6 @@ public abstract class ClassActor extends Actor implements RiType {
 
     @Override
     public String toString() {
-        final String flags = flagsString();
-        if (flags.isEmpty()) {
-            return name.toString() + " [" + flags + "]";
-        }
         return name.toString();
     }
 

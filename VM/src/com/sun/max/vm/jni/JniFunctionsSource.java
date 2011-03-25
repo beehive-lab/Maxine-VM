@@ -837,7 +837,7 @@ public final class JniFunctionsSource {
             }
             final MethodActor methodActor = classActor.findStaticMethodActor(name, descriptor);
             if (methodActor == null) {
-                throw new NoSuchMethodError(name.string);
+                throw new NoSuchMethodError(classActor + "." + name.string);
             }
             return MethodID.fromMethodActor(methodActor);
         } catch (Utf8Exception utf8Exception) {
