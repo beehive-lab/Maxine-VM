@@ -132,6 +132,94 @@ public final class ClassDependencyManager {
         }
     }
 
+    abstract static class ValidAssumptionsProcessor implements AssumptionProcessor {
+        abstract void processInvalidated();
+    }
+
+    /**
+     * An assumption processor that verifies that assumption made on a given type by a method remains valid if a new
+     * concrete sub-type is added to the descendant of that type.
+     */
+    static final class AssumptionChecker extends ValidAssumptionsProcessor {
+        /**
+         * Type on which the assumption are made.
+         */
+        private RiType context;
+        /**
+         *
+         */
+        private RiType newConcreteSubtype;
+        /**
+         * Result of the check. If true, all assumptions are valid, otherwise, at least one was invalidated.
+         */
+        private boolean valid;
+
+        /**
+         * Reset the checker for a new verification.
+         * @param context
+         * @param newConcreteSubtype
+         */
+        void reset(RiType context, RiType newConcreteSubtype) {
+            this.context = context;
+            this.newConcreteSubtype = newConcreteSubtype;
+            valid = true;
+        }
+
+        void reset() {
+            valid = true;
+        }
+
+        @Override
+        public boolean processUniqueConcreteSubtype(RiType context, RiType subtype) {
+            // This is called only if assumption on a unique concrete sub-type of the context was recorded.
+            // Adding a new concrete sub-type in this case always invalidate this assumption no matter what.
+            FatalError.check(this.context == context && subtype != newConcreteSubtype, "can never happens");
+            valid = false;
+            return false;
+        }
+
+        @Override
+        public boolean processUniqueConcreteMethod(RiMethod context, RiMethod method) {
+            valid = newConcreteSubtype.resolveMethodImpl(context) == method;
+            return valid;
+        }
+
+        @Override
+        void processInvalidated() {
+            valid = false;
+        }
+
+        boolean valid() {
+            return valid;
+        }
+    }
+
+    static final class AssumptionsPrinter extends ValidAssumptionsProcessor {
+        final String indent = "    ";
+        final PrintStream out;
+        AssumptionsPrinter(PrintStream out) {
+            this.out = out;
+        }
+
+        @Override
+        public boolean processUniqueConcreteSubtype(RiType context, RiType subtype) {
+            out.println(indent + context + " has unique concrete implementation" + context);
+            return true;
+        }
+
+        @Override
+        public boolean processUniqueConcreteMethod(RiMethod context, RiMethod method) {
+            out.println(indent + method + " is a unique concrete method");
+            return true;
+        }
+
+        @Override
+        void processInvalidated() {
+            out.println("assumptions have been invalidated");
+        }
+
+    }
+
     /**
      * Valid assumptions made by the compiler and used by a target method.
      * Instances of this class are recorded in {@link ClassDependencyManager#idToValidAssumptions}, and referenced,
@@ -211,26 +299,31 @@ public final class ClassDependencyManager {
         }
 
         /**
-         * Print assumptions made on class specified by class ID.
-         * @param classID
-         * @param out
+         * Return the number of types this valid set of assumptions records assumption on.
+         * @return a number of types
          */
-        void printAssumptions(int classID, PrintStream out) {
+        int numTypes() {
+            return assumptions[0];
+        }
+        /**
+         * Iterate over the assumptions made on the specified class.
+         * @param classID identifier of the class
+         * @param processor processor the assumptions are fed to
+         */
+        void iterate(int classID, ValidAssumptionsProcessor processor) {
             if (assumptions == INVALIDATED) {
-                out.println("assumptions for " + targetMethod + " have been invalidated");
+                processor.processInvalidated();
                 return;
             }
-            final String indent = "    ";
-            final int numAssumptions = assumptions[0];
-            final int firstDependencyIndex = 1 + numAssumptions * 2;
+            final int numTypes = assumptions[0];
+            final int firstDependencyIndex = 1 + numTypes * 2;
             int dependencyIndex = firstDependencyIndex;
             for (int i = 1; i < firstDependencyIndex; i += 2) {
                 if (assumptions[i] == classID) {
                     final ClassActor classActor = ClassID.toClassActor(classID);
-                    out.println(targetMethod + " assumptions on class " + classActor + "(id=" + classActor.id + ")");
                     final short assumptionFlags = assumptions[i + 1];
                     if (CLASS_HAS_UCT.isBooleanFlagSet(assumptionFlags)) {
-                        out.println(indent + classActor + " has unique concrete implementation");
+                        processor.processUniqueConcreteSubtype(classActor, ClassID.toClassActor(classActor.uniqueConcreteType));
                     }
                     if (CLASS_HAS_UCM.isBooleanFlagSet(assumptionFlags)) {
                         final int endAssumptions = dependencyIndex + CLASS_ASSUMPTIONS_LENGTH.getFlag(assumptionFlags);
@@ -238,7 +331,7 @@ public final class ClassDependencyManager {
                             while (dependencyIndex < endAssumptions) {
                                 short methodIndex = assumptions[dependencyIndex++];
                                 MethodActor method = classActor.localVirtualMethodActors()[methodIndex];
-                                out.println(indent + method + " is a unique concrete method");
+                                processor.processUniqueConcreteMethod(method, method);
                             }
                             return;
                         }
@@ -249,11 +342,11 @@ public final class ClassDependencyManager {
                                 final int concreteTypeClassID = assumptions[dependencyIndex++];
                                 final ClassActor concreteMethodHolder = ClassID.toClassActor(concreteTypeClassID);
                                 MethodActor method = concreteMethodHolder.localVirtualMethodActors()[methodIndex];
-                                out.println(indent + method.name() +
-                                                " is a unique concrete method of " + classActor);
+                                MethodActor contextMethod = classActor.findLocalMethodActor(method.name, method.descriptor());
+                                processor.processUniqueConcreteMethod(contextMethod, method);
                             } else {
                                 MethodActor method = classActor.localVirtualMethodActors()[assumption];
-                                out.println(indent + method + " is a unique concrete method");
+                                processor.processUniqueConcreteMethod(method, method);
                             }
                         }
                     }
@@ -261,7 +354,8 @@ public final class ClassDependencyManager {
                 }
                 dependencyIndex += CLASS_ASSUMPTIONS_LENGTH.getFlag(assumptions[i + 1]);
             }
-            FatalError.unexpected("class ID should be in valid assumptions");
+            ClassActor classActor = ClassID.toClassActor(classID);
+            FatalError.unexpected(classActor + "(id = " + classID + ") should be in valid assumptions (#" + id + ") for target method " + targetMethod);
         }
 
         // Stats support
@@ -351,14 +445,71 @@ public final class ClassDependencyManager {
         }
     }
 
+    static class DependentListIterator implements Iterator<ValidAssumptions> {
+        int [] dependentLists;
+        int current;
+        int end;
+
+        DependentListIterator() {
+
+        }
+
+        void reset(DependentTargetMethodList list) {
+            dependentLists = list.dependentLists;
+            current = list.getFirstDependentIndex();
+            end = list.getSize();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return current < end;
+        }
+
+        @Override
+        public ValidAssumptions next() {
+            return idToValidAssumptions.get(dependentLists[current++]);
+        }
+
+        @Override
+        public void remove() {
+            if (current != end) {
+                dependentLists[current] = dependentLists[end];
+            }
+            dependentLists[0] = --end;
+        }
+    }
+
+
+    /**
+     * List of dependent target methods recorded in the concurrent hash map backing a {@link DependentTargetMethodTable}.
+     * Just a wrapper around an array of valid assumptions identifier.
+     * These arrays aren't stored directly in the concurrent hash map to concurrently updating the
+     * hash map in order to replace the array with another when resizing is needed.
+     */
     static final class DependentTargetMethodList {
+        /**
+         * Array of valid assumptions identifier. The first entry records the effective size of the array,
+         * which is always smaller or equal to that length of the array.
+         */
         int [] dependentLists;
         DependentTargetMethodList(int dependent) {
             dependentLists = new int[] {2, dependent };
         }
 
+        void setNumDependents(int numDependents) {
+            dependentLists[0] = numDependents + 1;
+        }
+
         int numDependents() {
             return dependentLists[0] - 1;
+        }
+
+        int getFirstDependentIndex() {
+            return 1;
+        }
+
+        int getSize() {
+            return dependentLists[0];
         }
 
         synchronized void add(int dependent) {
@@ -405,6 +556,10 @@ public final class ClassDependencyManager {
          */
         static final int INITIAL_CAPACITY = 600;
 
+        /**
+         * Iterator over dependent list.
+         */
+
         final ConcurrentHashMap<RiType, DependentTargetMethodList> typeToDependentTargetMethods =
             new ConcurrentHashMap<RiType, DependentTargetMethodList>(INITIAL_CAPACITY);
 
@@ -421,6 +576,82 @@ public final class ClassDependencyManager {
                 }
                 list.add(dependentID);
             }
+        }
+
+        /**
+         * Set that accumulates the target methods whose assumptions are invalidated by the current modification to the class hierarchy.
+         */
+        private HashSet<ValidAssumptions> invalidationSet = null;
+
+        private final DependentListIterator dependentListIterator = new DependentListIterator();
+
+        private final AssumptionChecker assumptionsChecker = new AssumptionChecker();
+
+        /**
+         * Removes any dependents on a type whose assumptions becomes invalid when a new sub-type is added to the type's descendants.
+         * The {@link ValidAssumptions} instances representing the invalid dependents are accumulated in an invalidation set that must
+         * be cleared from other types to complete the flushing of invalid dependents from a {@link DependentTargetMethodTable}.
+         * @see DependentTargetMethodTable#clearInvalidatedAssumptions()
+         * @param type the type whose dependents' assumptions need to be re-validated
+         * @param concreteSubTypeID
+         * @return
+         */
+        void flushInvalidDependentAssumptions(RiType type, RiType newConcreteSubType) {
+            // We hold the classHierarchyLock in write mode.
+            // This means there cannot be any concurrent modifications to the
+            // typeToDependentTargetMethods and the DependentTargetMethodList
+            // recorded in it.
+            DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
+            if (list == null) {
+                return;
+            }
+            final int classID = ((ClassActor) type).id;
+            assumptionsChecker.reset(type, newConcreteSubType);
+            dependentListIterator.reset(list);
+            try {
+                // Otherwise, iterate over the dependents and check their assumptions.
+                while (dependentListIterator.hasNext()) {
+                    ValidAssumptions validAssumptions = dependentListIterator.next();
+                    validAssumptions.iterate(classID, assumptionsChecker);
+                    if (!assumptionsChecker.valid()) {
+                        dependentListIterator.remove();
+                        if (invalidationSet == null) {
+                            invalidationSet = new HashSet<ValidAssumptions>(4);
+                        }
+                        invalidationSet.add(validAssumptions);
+                        assumptionsChecker.reset();
+                    }
+                }
+            } catch (Throwable t) {
+                FatalError.unexpected("DEBUG ME");
+            }
+        }
+
+        /**
+         * Clear any records of the invalidated target method accumulated in the invalidation set so far.
+         *
+         * @return an array holding all the invalidated TargetMethods for further processing, or null if none if
+         * the invalidation set is empty.
+         */
+        TargetMethod [] clearInvalidatedAssumptions() {
+            // Return an array of target method.
+            if (invalidationSet == null || invalidationSet.isEmpty()) {
+                return null;
+            }
+            TargetMethod [] invalidatedMethods = new TargetMethod[invalidationSet.size()];
+            int i = 0;
+            for (ValidAssumptions validAssumptions : invalidationSet) {
+                invalidatedMethods[i++] = validAssumptions.targetMethod;
+                if (validAssumptions.numTypes() > 1) {
+                    // Need to clean up other assumption records this target method appears in.
+                    // TODO: iterate over the assumptions and clean the typeToDependentTargetMethods of any reference to the target method.
+                }
+                // Revisit the following. the invalidate marker may not be needed if this is done under the write lock ...
+                validAssumptions.invalidate();
+                clearValidAssumptions(validAssumptions);
+            }
+            invalidationSet = null;
+            return invalidatedMethods;
         }
 
         /**
@@ -460,6 +691,8 @@ public final class ClassDependencyManager {
             numUCTAssumptionsPerType.report("# UCT assumption / type, stream", out);
         }
 
+        AssumptionsPrinter printer = new AssumptionsPrinter(System.out);
+
         void printDependents(RiType type, PrintStream out) {
             final int classID = ((ClassActor) type).id;
             DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
@@ -471,7 +704,7 @@ public final class ClassDependencyManager {
             final int numDependents = list.numDependents();
             out.println(numDependents + " dependents");
             for (int i = 1; i <= numDependents; i++) {
-                idToValidAssumptions.get(list.dependentLists[i]).printAssumptions(classID, out);
+                idToValidAssumptions.get(list.dependentLists[i]).iterate(classID, printer);
             }
         }
 
@@ -530,25 +763,39 @@ public final class ClassDependencyManager {
         classActor.nextSiblingId = superClassActor.firstSubclassActorId;
         superClassActor.firstSubclassActorId = classActor.id;
     }
+
+    private static void addLocalInterfaces(ClassActor classActor, HashSet<InterfaceActor> set) {
+        for (InterfaceActor implemented : classActor.localInterfaceActors()) {
+            set.add(implemented);
+        }
+    }
     /**
-     * Walk up the ancestry, and update the concrete type information.
-     * @param ancestor
-     * @param uniqueConcreteSubtype
+     * Propagate changes resulting from adding a new sub-type to a type up the ancestry of that type.
+     * The ancestry of the type is walked up, assumptions made on sub-type relationships are re-evaluated, those that
+     * became invalid are removed, and the unique concrete sub-type information is updated.
+     *
+     * @param newConcreteSubtype
+     * @param superType
      */
-    private static void propagateConcreteSubType(ClassActor ancestor, int uniqueConcreteSubtype) {
-        // Update all the ancestors without a concrete sub-type with the unique concrete subtype.
+    private static void propagateConcreteSubType(ClassActor newConcreteSubType, ClassActor superType, HashSet<InterfaceActor> implementedInterfaces) {
+        final int concreteSubtypeID = newConcreteSubType.id;
+        ClassActor ancestor = superType;
+        // Update all the ancestors without a concrete sub-type with the unique concrete sub-type.
         while (ancestor.uniqueConcreteType == NO_CONCRETE_SUBTYPE_MARK) {
             // No single concrete sub-type has been recorded for this ancestor yet.
-            ancestor.uniqueConcreteType = uniqueConcreteSubtype;
+            ancestor.uniqueConcreteType = concreteSubtypeID;
+            addLocalInterfaces(ancestor, implementedInterfaces);
             ancestor = ancestor.superClassActor;
         }
         // We reached an ancestor with at least one concrete sub-type (either it is one itself,
         // or one or more of its other children has a concrete sub-type). From here on, we can only
         // have ancestors with some concrete sub-types.
         while (ancestor.uniqueConcreteType != HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK) {
+            dependentTargetMethodTable.flushInvalidDependentAssumptions(ancestor, newConcreteSubType);
             // Reached an ancestor that had a unique-concrete sub-type.
             // This isn't true anymore, so update the mark.
             ancestor.uniqueConcreteType = HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK;
+            addLocalInterfaces(ancestor, implementedInterfaces);
             ancestor = ancestor.superClassActor;
             if (MaxineVM.isDebug()) {
                 FatalError.check(ancestor.uniqueConcreteType != NO_CONCRETE_SUBTYPE_MARK, "must have at least one concrete sub-type");
@@ -557,6 +804,28 @@ public final class ClassDependencyManager {
         // We reached an ancestor with multiple concrete sub types. From here on, all ancestors can only have
         // more than one concrete sub-type. This is a terminal state that will not change until class
         // unloading occurs.
+        // However, there might still be unique concrete method assumptions that may be invalidated by the new concrete
+        // sub-type. For example, consider A, super-class of concrete type B and C. The unique concrete method foo may be A.foo.
+        // If a new type D, sub-type of C is added to the hierarchy and such that D overrides method foo, then any assumptions
+        // made on foo being a unique concrete method of A should be invalidated.
+        // Hence this loop.
+        while (ancestor != null) {
+            dependentTargetMethodTable.flushInvalidDependentAssumptions(ancestor, newConcreteSubType);
+            addLocalInterfaces(ancestor, implementedInterfaces);
+            ancestor = ancestor.superClassActor;
+        }
+    }
+
+    private static void propagateConcreteSubType(ClassActor newConcreteSubType, InterfaceActor superType) {
+        if (superType.uniqueConcreteType == NO_CONCRETE_SUBTYPE_MARK) {
+            // No single concrete sub-type has been recorded for this ancestor yet.
+            superType.uniqueConcreteType = newConcreteSubType.id;
+        } else {
+            if (superType.uniqueConcreteType != HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK) {
+                superType.uniqueConcreteType = HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK;
+            }
+            dependentTargetMethodTable.flushInvalidDependentAssumptions(superType, newConcreteSubType);
+        }
     }
 
     private static void recordInstanceClassActor(ClassActor classActor) {
@@ -564,20 +833,23 @@ public final class ClassDependencyManager {
         // If new class is abstract, the unique concrete sub-type table relationship doesn't change.
         if (!classActor.isAbstract()) {
             // Recording is made at class definition time, when the class hasn't any sub-type yet.
-            // So the unique concrete sub-type is one self.
-            final int uniqueConcreteSubtype = classActor.id;
-            classActor.uniqueConcreteType = uniqueConcreteSubtype;
+            // So the unique concrete sub-type is oneself.
+            classActor.uniqueConcreteType = classActor.id;
             ClassActor ancestor = classActor.superClassActor;
             if (ancestor == null) {
                 // Can only be the class actor for java.lang.Object
                 return;
             }
+            HashSet<InterfaceActor> implementedInterfaces = new HashSet<InterfaceActor>(10);
             // Next, update unique concrete sub-type information of super-classes.
-            propagateConcreteSubType(ancestor, uniqueConcreteSubtype);
+            propagateConcreteSubType(classActor, ancestor, implementedInterfaces);
 
             // Last, update the unique concrete sub-type of the interfaces the class implements.
             for (ClassActor implemented : classActor.localInterfaceActors()) {
-                propagateConcreteSubType(implemented, uniqueConcreteSubtype);
+                propagateConcreteSubType(classActor, implemented, implementedInterfaces);
+            }
+            for (InterfaceActor implemented : implementedInterfaces) {
+                propagateConcreteSubType(classActor, implemented);
             }
         }
     }
@@ -724,7 +996,9 @@ public final class ClassDependencyManager {
     }
 
     /**
-     * Adds the class to the class hierarchy. This will also trigger invalidating dependencies and deoptimizing code based thereon.
+     * Adds the class to the class hierarchy.
+     * This verifies that assumptions previously made by the compiler on the type hierarchy and invalidate
+     * any target methods whose assumptions aren't valid anymore.
      *
      * @param classActor the class to be added to the global class hierarchy.
      */
@@ -733,7 +1007,14 @@ public final class ClassDependencyManager {
         try {
             prependToSiblingList(classActor);
             recordUniqueConcreteSubtype(classActor);
-            flushDependentsOn(classActor);
+            TargetMethod [] invalidatedTargetMethods = dependentTargetMethodTable.clearInvalidatedAssumptions();
+            if (invalidatedTargetMethods != null) {
+                // TODO. For now just print them...
+                System.out.println("\nINVALID TARGET METHOD:  \n");
+                for (TargetMethod targetMethod : invalidatedTargetMethods) {
+                    System.out.println("  " + targetMethod);
+                }
+            }
         } finally {
             classHierarchyLock.writeLock().unlock();
         }
@@ -807,7 +1088,7 @@ public final class ClassDependencyManager {
      * Further, most single concrete method dependencies are on leaf methods, i.e., wherein the context method is the concrete method.
      * So an encoding of the dependencies should optimized for these cases.
      */
-    static class AssumptionValidator implements CiAssumptions.AssumptionProcessor {
+    static class AssumptionValidator implements AssumptionProcessor {
 
         // AssumptionList recorded per type are made of methodID with a tag stored in the highest two bits,
         // so that:
@@ -970,7 +1251,7 @@ public final class ClassDependencyManager {
         }
     }
 
-    static class CiAssumptionStatsGatherer implements CiAssumptions.AssumptionProcessor {
+    static class CiAssumptionStatsGatherer implements AssumptionProcessor {
         int totalDeps = 0;
         int numDep = 0;
         int numUCT = 0;
