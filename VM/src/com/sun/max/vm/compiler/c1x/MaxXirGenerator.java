@@ -1538,17 +1538,10 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private XirTemplate buildExceptionObject() {
         XirOperand result = asm.restart(CiKind.Object);
-        XirOperand latch = asm.createRegisterTemp("latch", CiKind.Word, AMD64.r14);
-        XirOperand temp = asm.createTemp("temp", CiKind.Word);
         // Emit a safepoint
         asm.safepoint();
-        asm.pload(CiKind.Word, latch, latch, true);
-        // Load safepoints-enabled thread locals pointer
-        asm.pload(CiKind.Word, temp, latch, asm.i(VmThreadLocal.ETLA.offset), false);
-        // Load exception object from thread locals
-        asm.pload(CiKind.Object, result, temp, asm.i(VmThreadLocal.EXCEPTION_OBJECT.offset), false);
-        // Clear the exception object out of thread locals
-        asm.pstore(CiKind.Word, temp, asm.i(VmThreadLocal.EXCEPTION_OBJECT.offset), asm.createConstant(CiConstant.ZERO), false);
+
+        callRuntimeThroughStub(asm, "loadException", result);
         return finishTemplate(asm, "load-exception");
     }
 
@@ -1890,6 +1883,11 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static void monitorExit(Object o) {
             vmConfig().monitorScheme().monitorExit(o);
         }
+
+        public static Throwable loadException() {
+            return VmThread.current().loadExceptionForHandler();
+        }
+
     }
 
     @Override

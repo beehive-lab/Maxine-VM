@@ -244,11 +244,11 @@ public final class JniFunctions {
             } catch (IllegalAccessException illegalAccessException) {
                 throw ProgramError.unexpected(illegalAccessException);
             } catch (InvocationTargetException invocationTargetException) {
-                VmThread.fromJniEnv(env).setPendingException(invocationTargetException.getTargetException());
+                VmThread.fromJniEnv(env).setJniException(invocationTargetException.getTargetException());
                 return JniHandle.zero();
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "DefineClass");
@@ -282,7 +282,7 @@ public final class JniFunctions {
             Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
             return JniHandles.createLocalHandle(javaClass);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "FindClass");
@@ -297,7 +297,7 @@ public final class JniFunctions {
             final MethodActor methodActor = MethodActor.fromJava((Method) reflectedMethod.unhand());
             return MethodID.fromMethodActor(methodActor);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asMethodID(0);
         } finally {
             epilogue(anchor, "FromReflectedMethod");
@@ -312,7 +312,7 @@ public final class JniFunctions {
             final FieldActor fieldActor = FieldActor.fromJava((Field) field.unhand());
             return FieldID.fromFieldActor(fieldActor);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asFieldID(0);
         } finally {
             epilogue(anchor, "FromReflectedField");
@@ -334,7 +334,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(ToReflectedMethod(methodID, isStatic));
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "ToReflectedMethod");
@@ -348,7 +348,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(((Class) subType.unhand()).getSuperclass());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetSuperclass");
@@ -362,7 +362,7 @@ public final class JniFunctions {
         try {
             return ClassActor.fromJava((Class) superType.unhand()).isAssignableFrom(ClassActor.fromJava((Class) subType.unhand()));
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "IsAssignableFrom");
@@ -380,7 +380,7 @@ public final class JniFunctions {
             }
             return JniHandles.createLocalHandle(fieldActor.toJava());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "ToReflectedField");
@@ -392,10 +392,10 @@ public final class JniFunctions {
         // Source: JniFunctionsSource.java:197
         Pointer anchor = prologue(env, "Throw");
         try {
-            VmThread.fromJniEnv(env).setPendingException((Throwable) throwable.unhand());
+            VmThread.fromJniEnv(env).setJniException((Throwable) throwable.unhand());
             return JNI_OK;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "Throw");
@@ -418,10 +418,10 @@ public final class JniFunctions {
             }
             constructor = Utils.cast(type, throwableClass.unhand()).getConstructor(parameterTypes);
             Throwable throwable = message.isZero() ? constructor.newInstance() : constructor.newInstance(CString.utf8ToJava(message));
-            VmThread.fromJniEnv(env).setPendingException(throwable);
+            VmThread.fromJniEnv(env).setJniException(throwable);
             return JNI_OK;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "ThrowNew");
@@ -433,9 +433,9 @@ public final class JniFunctions {
         // Source: JniFunctionsSource.java:220
         Pointer anchor = prologue(env, "ExceptionOccurred");
         try {
-            return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).pendingException());
+            return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).jniException());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "ExceptionOccurred");
@@ -447,12 +447,12 @@ public final class JniFunctions {
         // Source: JniFunctionsSource.java:225
         Pointer anchor = prologue(env, "ExceptionDescribe");
         try {
-            final Throwable exception = VmThread.fromJniEnv(env).pendingException();
+            final Throwable exception = VmThread.fromJniEnv(env).jniException();
             if (exception != null) {
                 exception.printStackTrace();
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ExceptionDescribe");
         }
@@ -463,9 +463,9 @@ public final class JniFunctions {
         // Source: JniFunctionsSource.java:233
         Pointer anchor = prologue(env, "ExceptionClear");
         try {
-            VmThread.fromJniEnv(env).setPendingException(null);
+            VmThread.fromJniEnv(env).setJniException(null);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ExceptionClear");
         }
@@ -482,7 +482,7 @@ public final class JniFunctions {
                 FatalError.unexpected("fatal error with UTF8 error in message");
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "FatalError");
         }
@@ -501,7 +501,7 @@ public final class JniFunctions {
             JniHandles.pushLocalFrame(capacity);
             return JNI_OK;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "PushLocalFrame");
@@ -515,7 +515,7 @@ public final class JniFunctions {
         try {
             return JniHandles.popLocalFrame(res);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "PopLocalFrame");
@@ -529,7 +529,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createGlobalHandle(handle.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewGlobalRef");
@@ -543,7 +543,7 @@ public final class JniFunctions {
         try {
             JniHandles.destroyGlobalHandle(handle);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "DeleteGlobalRef");
         }
@@ -556,7 +556,7 @@ public final class JniFunctions {
         try {
             JniHandles.destroyLocalHandle(handle);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "DeleteLocalRef");
         }
@@ -569,7 +569,7 @@ public final class JniFunctions {
         try {
             return object1.unhand() == object2.unhand();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "IsSameObject");
@@ -583,7 +583,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewLocalRef");
@@ -600,7 +600,7 @@ public final class JniFunctions {
             JniHandles.ensureLocalHandleCapacity(capacity);
             return JNI_OK;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "EnsureLocalCapacity");
@@ -622,7 +622,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(allocObject((Class) javaClass.unhand()));
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "AllocObject");
@@ -664,7 +664,7 @@ public final class JniFunctions {
             traceReflectiveInvocation(virtualMethodActor);
             return JniHandles.createLocalHandle(virtualMethodActor.invokeConstructor(argumentValues).asObject());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewObjectA");
@@ -679,7 +679,7 @@ public final class JniFunctions {
             final Class javaClass = object.unhand().getClass();
             return JniHandles.createLocalHandle(javaClass);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetObjectClass");
@@ -693,7 +693,7 @@ public final class JniFunctions {
         try {
             return ((Class) javaType.unhand()).isInstance(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "IsInstanceOf");
@@ -725,7 +725,7 @@ public final class JniFunctions {
                 throw new NoSuchMethodError();
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asMethodID(0);
         } finally {
             epilogue(anchor, "GetMethodID");
@@ -841,7 +841,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(CallValueMethodA(env, object, methodID, arguments).asObject());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "CallObjectMethodA");
@@ -863,7 +863,7 @@ public final class JniFunctions {
         try {
             return CallValueMethodA(env, object, methodID, arguments).asBoolean();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "CallBooleanMethodA");
@@ -885,7 +885,7 @@ public final class JniFunctions {
         try {
             return CallValueMethodA(env, object, methodID, arguments).asByte();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallByteMethodA");
@@ -907,7 +907,7 @@ public final class JniFunctions {
         try {
             return CallValueMethodA(env, object, methodID, arguments).asChar();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor, "CallCharMethodA");
@@ -929,7 +929,7 @@ public final class JniFunctions {
         try {
             return CallValueMethodA(env, object, methodID, arguments).asShort();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallShortMethodA");
@@ -951,7 +951,7 @@ public final class JniFunctions {
         try {
             return CallValueMethodA(env, object, methodID, arguments).asInt();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallIntMethodA");
@@ -973,7 +973,7 @@ public final class JniFunctions {
         try {
             return CallValueMethodA(env, object, methodID, arguments).asLong();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallLongMethodA");
@@ -995,7 +995,7 @@ public final class JniFunctions {
         try {
             return CallValueMethodA(env, object, methodID, arguments).asFloat();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallFloatMethodA");
@@ -1017,7 +1017,7 @@ public final class JniFunctions {
         try {
             return CallValueMethodA(env, object, methodID, arguments).asDouble();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallDoubleMethodA");
@@ -1063,7 +1063,7 @@ public final class JniFunctions {
         try {
             CallValueMethodA(env, object, methodID, arguments);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "CallVoidMethodA");
         }
@@ -1084,7 +1084,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asObject());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "CallNonvirtualObjectMethodA");
@@ -1106,7 +1106,7 @@ public final class JniFunctions {
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asBoolean();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "CallNonvirtualBooleanMethodA");
@@ -1128,7 +1128,7 @@ public final class JniFunctions {
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asByte();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallNonvirtualByteMethodA");
@@ -1150,7 +1150,7 @@ public final class JniFunctions {
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asChar();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor, "CallNonvirtualCharMethodA");
@@ -1172,7 +1172,7 @@ public final class JniFunctions {
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asShort();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallNonvirtualShortMethodA");
@@ -1194,7 +1194,7 @@ public final class JniFunctions {
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asInt();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallNonvirtualIntMethodA");
@@ -1216,7 +1216,7 @@ public final class JniFunctions {
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asLong();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallNonvirtualLongMethodA");
@@ -1238,7 +1238,7 @@ public final class JniFunctions {
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asFloat();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallNonvirtualFloatMethodA");
@@ -1260,7 +1260,7 @@ public final class JniFunctions {
         try {
             return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asDouble();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallNonvirtualDoubleMethodA");
@@ -1282,7 +1282,7 @@ public final class JniFunctions {
         try {
             CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "CallNonvirtualVoidMethodA");
         }
@@ -1314,7 +1314,7 @@ public final class JniFunctions {
                 throw new NoSuchFieldError();
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asFieldID(0);
         } finally {
             epilogue(anchor, "GetFieldID");
@@ -1328,7 +1328,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(FieldID.toFieldActor(fieldID).getObject(object.unhand()));
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetObjectField");
@@ -1342,7 +1342,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getBoolean(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "GetBooleanField");
@@ -1356,7 +1356,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getByte(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetByteField");
@@ -1370,7 +1370,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getChar(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor, "GetCharField");
@@ -1384,7 +1384,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getShort(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetShortField");
@@ -1398,7 +1398,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getInt(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetIntField");
@@ -1412,7 +1412,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getLong(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetLongField");
@@ -1426,7 +1426,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getFloat(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetFloatField");
@@ -1440,7 +1440,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getDouble(object.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetDoubleField");
@@ -1454,7 +1454,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setObject(object.unhand(), value.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetObjectField");
         }
@@ -1467,7 +1467,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setBoolean(object.unhand(), value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetBooleanField");
         }
@@ -1480,7 +1480,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setByte(object.unhand(), value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetByteField");
         }
@@ -1493,7 +1493,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setChar(object.unhand(), value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetCharField");
         }
@@ -1506,7 +1506,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setShort(object.unhand(), value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetShortField");
         }
@@ -1519,7 +1519,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setInt(object.unhand(), value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetIntField");
         }
@@ -1532,7 +1532,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setLong(object.unhand(), value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetLongField");
         }
@@ -1545,7 +1545,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setFloat(object.unhand(), value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetFloatField");
         }
@@ -1558,7 +1558,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setDouble(object.unhand(), value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetDoubleField");
         }
@@ -1589,7 +1589,7 @@ public final class JniFunctions {
                 throw new NoSuchMethodError();
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asMethodID(0);
         } finally {
             epilogue(anchor, "GetStaticMethodID");
@@ -1635,7 +1635,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(CallStaticValueMethodA(env, javaClass, methodID, arguments).asObject());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "CallStaticObjectMethodA");
@@ -1657,7 +1657,7 @@ public final class JniFunctions {
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments).asBoolean();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "CallStaticBooleanMethodA");
@@ -1679,7 +1679,7 @@ public final class JniFunctions {
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments).asByte();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallStaticByteMethodA");
@@ -1701,7 +1701,7 @@ public final class JniFunctions {
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments).asChar();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor, "CallStaticCharMethodA");
@@ -1723,7 +1723,7 @@ public final class JniFunctions {
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments).asShort();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallStaticShortMethodA");
@@ -1745,7 +1745,7 @@ public final class JniFunctions {
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments).asInt();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallStaticIntMethodA");
@@ -1767,7 +1767,7 @@ public final class JniFunctions {
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments).asLong();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallStaticLongMethodA");
@@ -1789,7 +1789,7 @@ public final class JniFunctions {
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments).asFloat();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallStaticFloatMethodA");
@@ -1811,7 +1811,7 @@ public final class JniFunctions {
         try {
             return CallStaticValueMethodA(env, javaClass, methodID, arguments).asDouble();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "CallStaticDoubleMethodA");
@@ -1833,7 +1833,7 @@ public final class JniFunctions {
         try {
             CallStaticValueMethodA(env, javaClass, methodID, arguments);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "CallStaticVoidMethodA");
         }
@@ -1864,7 +1864,7 @@ public final class JniFunctions {
                 throw new NoSuchFieldError();
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asFieldID(0);
         } finally {
             epilogue(anchor, "GetStaticFieldID");
@@ -1878,7 +1878,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(FieldID.toFieldActor(fieldID).getObject(null));
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetStaticObjectField");
@@ -1892,7 +1892,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getBoolean(null);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "GetStaticBooleanField");
@@ -1906,7 +1906,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getByte(null);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetStaticByteField");
@@ -1920,7 +1920,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getChar(null);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return  (char) JNI_ERR;
         } finally {
             epilogue(anchor, "GetStaticCharField");
@@ -1934,7 +1934,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getShort(null);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetStaticShortField");
@@ -1948,7 +1948,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getInt(null);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetStaticIntField");
@@ -1962,7 +1962,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getLong(null);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetStaticLongField");
@@ -1976,7 +1976,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getFloat(null);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetStaticFloatField");
@@ -1990,7 +1990,7 @@ public final class JniFunctions {
         try {
             return FieldID.toFieldActor(fieldID).getDouble(null);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetStaticDoubleField");
@@ -2004,7 +2004,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setObject(null, value.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetStaticObjectField");
         }
@@ -2017,7 +2017,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setBoolean(null, value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetStaticBooleanField");
         }
@@ -2030,7 +2030,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setByte(null, value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetStaticByteField");
         }
@@ -2043,7 +2043,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setChar(null, value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetStaticCharField");
         }
@@ -2056,7 +2056,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setShort(null, value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetStaticShortField");
         }
@@ -2069,7 +2069,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setInt(null, value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetStaticIntField");
         }
@@ -2082,7 +2082,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setLong(null, value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetStaticLongField");
         }
@@ -2095,7 +2095,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setFloat(null, value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetStaticFloatField");
         }
@@ -2108,7 +2108,7 @@ public final class JniFunctions {
         try {
             FieldID.toFieldActor(fieldID).setDouble(null, value);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetStaticDoubleField");
         }
@@ -2125,7 +2125,7 @@ public final class JniFunctions {
             }
             return JniHandles.createLocalHandle(new String(charArray));
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewString");
@@ -2139,7 +2139,7 @@ public final class JniFunctions {
         try {
             return ((String) string.unhand()).length();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetStringLength");
@@ -2154,7 +2154,7 @@ public final class JniFunctions {
             setCopyPointer(isCopy, true);
             return JniHandles.createLocalHandle(((String) string.unhand()).toCharArray());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetStringChars");
@@ -2168,7 +2168,7 @@ public final class JniFunctions {
         try {
             Memory.deallocate(chars);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseStringChars");
         }
@@ -2185,7 +2185,7 @@ public final class JniFunctions {
                 return JniHandle.zero();
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewStringUTF");
@@ -2199,7 +2199,7 @@ public final class JniFunctions {
         try {
             return Utf8.utf8Length((String) string.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetStringUTFLength");
@@ -2214,7 +2214,7 @@ public final class JniFunctions {
             setCopyPointer(isCopy, true);
             return CString.utf8FromJava((String) string.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetStringUTFChars");
@@ -2228,7 +2228,7 @@ public final class JniFunctions {
         try {
             Memory.deallocate(chars);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseStringUTFChars");
         }
@@ -2241,7 +2241,7 @@ public final class JniFunctions {
         try {
             return Array.getLength(array.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetArrayLength");
@@ -2260,7 +2260,7 @@ public final class JniFunctions {
             }
             return JniHandles.createLocalHandle(array);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewObjectArray");
@@ -2274,7 +2274,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(((Object[]) array.unhand())[index]);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetObjectArrayElement");
@@ -2288,7 +2288,7 @@ public final class JniFunctions {
         try {
             ((Object[]) array.unhand())[index] = value.unhand();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetObjectArrayElement");
         }
@@ -2301,7 +2301,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(new boolean[length]);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewBooleanArray");
@@ -2315,7 +2315,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(new byte[length]);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewByteArray");
@@ -2329,7 +2329,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(new char[length]);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewCharArray");
@@ -2343,7 +2343,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(new short[length]);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewShortArray");
@@ -2357,7 +2357,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(new int[length]);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewIntArray");
@@ -2371,7 +2371,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(new long[length]);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewLongArray");
@@ -2385,7 +2385,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(new float[length]);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewFloatArray");
@@ -2399,7 +2399,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createLocalHandle(new double[length]);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewDoubleArray");
@@ -2413,7 +2413,7 @@ public final class JniFunctions {
         try {
             return getBooleanArrayElements(array, isCopy);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetBooleanArrayElements");
@@ -2437,7 +2437,7 @@ public final class JniFunctions {
         try {
             return getByteArrayElements(array, isCopy);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetByteArrayElements");
@@ -2461,7 +2461,7 @@ public final class JniFunctions {
         try {
             return getCharArrayElements(array, isCopy);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetCharArrayElements");
@@ -2485,7 +2485,7 @@ public final class JniFunctions {
         try {
             return getShortArrayElements(array, isCopy);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetShortArrayElements");
@@ -2509,7 +2509,7 @@ public final class JniFunctions {
         try {
             return getIntArrayElements(array, isCopy);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetIntArrayElements");
@@ -2533,7 +2533,7 @@ public final class JniFunctions {
         try {
             return getLongArrayElements(array, isCopy);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetLongArrayElements");
@@ -2557,7 +2557,7 @@ public final class JniFunctions {
         try {
             return getFloatArrayElements(array, isCopy);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetFloatArrayElements");
@@ -2581,7 +2581,7 @@ public final class JniFunctions {
         try {
             return getDoubleArrayElements(array, isCopy);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetDoubleArrayElements");
@@ -2605,7 +2605,7 @@ public final class JniFunctions {
         try {
             releaseBooleanArrayElements(array, elements, mode);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseBooleanArrayElements");
         }
@@ -2628,7 +2628,7 @@ public final class JniFunctions {
         try {
             releaseByteArrayElements(array, elements, mode);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseByteArrayElements");
         }
@@ -2651,7 +2651,7 @@ public final class JniFunctions {
         try {
             releaseCharArrayElements(array, elements, mode);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseCharArrayElements");
         }
@@ -2674,7 +2674,7 @@ public final class JniFunctions {
         try {
             releaseShortArrayElements(array, elements, mode);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseShortArrayElements");
         }
@@ -2697,7 +2697,7 @@ public final class JniFunctions {
         try {
             releaseIntArrayElements(array, elements, mode);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseIntArrayElements");
         }
@@ -2720,7 +2720,7 @@ public final class JniFunctions {
         try {
             releaseLongArrayElements(array, elements, mode);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseLongArrayElements");
         }
@@ -2743,7 +2743,7 @@ public final class JniFunctions {
         try {
             releaseFloatArrayElements(array, elements, mode);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseFloatArrayElements");
         }
@@ -2766,7 +2766,7 @@ public final class JniFunctions {
         try {
             releaseDoubleArrayElements(array, elements, mode);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseDoubleArrayElements");
         }
@@ -2792,7 +2792,7 @@ public final class JniFunctions {
                 buffer.setBoolean(i, a[start + i]);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetBooleanArrayRegion");
         }
@@ -2808,7 +2808,7 @@ public final class JniFunctions {
                 buffer.setByte(i, a[start + i]);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetByteArrayRegion");
         }
@@ -2824,7 +2824,7 @@ public final class JniFunctions {
                 buffer.setChar(i, a[start + i]);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetCharArrayRegion");
         }
@@ -2840,7 +2840,7 @@ public final class JniFunctions {
                 buffer.setShort(i, a[start + i]);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetShortArrayRegion");
         }
@@ -2856,7 +2856,7 @@ public final class JniFunctions {
                 buffer.setInt(i, a[start + i]);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetIntArrayRegion");
         }
@@ -2872,7 +2872,7 @@ public final class JniFunctions {
                 buffer.setLong(i, a[start + i]);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetLongArrayRegion");
         }
@@ -2888,7 +2888,7 @@ public final class JniFunctions {
                 buffer.setFloat(i, a[start + i]);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetFloatArrayRegion");
         }
@@ -2904,7 +2904,7 @@ public final class JniFunctions {
                 buffer.setDouble(i, a[start + i]);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetDoubleArrayRegion");
         }
@@ -2920,7 +2920,7 @@ public final class JniFunctions {
                 a[start + i] = buffer.getBoolean(i);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetBooleanArrayRegion");
         }
@@ -2936,7 +2936,7 @@ public final class JniFunctions {
                 a[start + i] = buffer.getByte(i);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetByteArrayRegion");
         }
@@ -2952,7 +2952,7 @@ public final class JniFunctions {
                 a[start + i] = buffer.getChar(i);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetCharArrayRegion");
         }
@@ -2968,7 +2968,7 @@ public final class JniFunctions {
                 a[start + i] = buffer.getShort(i);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetShortArrayRegion");
         }
@@ -2984,7 +2984,7 @@ public final class JniFunctions {
                 a[start + i] = buffer.getInt(i);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetIntArrayRegion");
         }
@@ -3000,7 +3000,7 @@ public final class JniFunctions {
                 a[start + i] = buffer.getLong(i);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetLongArrayRegion");
         }
@@ -3016,7 +3016,7 @@ public final class JniFunctions {
                 a[start + i] = buffer.getFloat(i);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetFloatArrayRegion");
         }
@@ -3032,7 +3032,7 @@ public final class JniFunctions {
                 a[start + i] = buffer.getDouble(i);
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetDoubleArrayRegion");
         }
@@ -3086,7 +3086,7 @@ public final class JniFunctions {
             }
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "RegisterNatives");
@@ -3110,7 +3110,7 @@ public final class JniFunctions {
             } while (classActor != null);
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "UnregisterNatives");
@@ -3125,7 +3125,7 @@ public final class JniFunctions {
             Monitor.enter(object.unhand());
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "MonitorEnter");
@@ -3140,7 +3140,7 @@ public final class JniFunctions {
             Monitor.exit(object.unhand());
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "MonitorExit");
@@ -3161,7 +3161,7 @@ public final class JniFunctions {
                 buffer.setChar(i, s.charAt(i + start));
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetStringRegion");
         }
@@ -3177,7 +3177,7 @@ public final class JniFunctions {
             Memory.writeBytes(utf, utf.length, buffer);
             buffer.setByte(utf.length, (byte) 0); // zero termination
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetStringUTFRegion");
         }
@@ -3219,7 +3219,7 @@ public final class JniFunctions {
             }
             return Pointer.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetPrimitiveArrayCritical");
@@ -3261,7 +3261,7 @@ public final class JniFunctions {
                 }
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleasePrimitiveArrayCritical");
         }
@@ -3280,7 +3280,7 @@ public final class JniFunctions {
             }
             return pointer;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetStringCritical");
@@ -3294,7 +3294,7 @@ public final class JniFunctions {
         try {
             Memory.deallocate(chars);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "ReleaseStringCritical");
         }
@@ -3307,7 +3307,7 @@ public final class JniFunctions {
         try {
             return JniHandles.createWeakGlobalHandle(handle.unhand());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewWeakGlobalRef");
@@ -3321,7 +3321,7 @@ public final class JniFunctions {
         try {
             JniHandles.destroyWeakGlobalHandle(handle);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "DeleteWeakGlobalRef");
         }
@@ -3332,9 +3332,9 @@ public final class JniFunctions {
         // Source: JniFunctionsSource.java:1764
         Pointer anchor = prologue(env, "ExceptionCheck");
         try {
-            return VmThread.fromJniEnv(env).pendingException() != null;
+            return VmThread.fromJniEnv(env).jniException() != null;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "ExceptionCheck");
@@ -3351,7 +3351,7 @@ public final class JniFunctions {
             ByteBuffer buffer = ObjectAccess.createDirectByteBuffer(address.toLong(), (int) capacity);
             return JniHandles.createLocalHandle(buffer);
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "NewDirectByteBuffer");
@@ -3370,7 +3370,7 @@ public final class JniFunctions {
             }
             return Pointer.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asPointer(0);
         } finally {
             epilogue(anchor, "GetDirectBufferAddress");
@@ -3388,7 +3388,7 @@ public final class JniFunctions {
             }
             return -1;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetDirectBufferCapacity");
@@ -3406,7 +3406,7 @@ public final class JniFunctions {
             }
             return tag;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetObjectRefType");
@@ -3428,7 +3428,7 @@ public final class JniFunctions {
             }
             return methodActor.descriptor().numberOfParameters();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetNumberOfArguments");
@@ -3450,7 +3450,7 @@ public final class JniFunctions {
                 kinds.setByte(i, (byte) kind.asEnum.ordinal());
             }
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetKindsOfArguments");
         }

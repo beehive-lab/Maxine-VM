@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ public abstract class StackTraceVisitor extends SourceFrameVisitor {
      */
     final int maxDepth;
 
-    TraceStorage traceStorage;
+    protected TraceStorage traceStorage;
 
     /**
      * Abstracts the mechanism for storing the trace.
@@ -91,7 +91,6 @@ public abstract class StackTraceVisitor extends SourceFrameVisitor {
 
         public Default(ClassActor exceptionClass, int maxDepth) {
             super(exceptionClass, maxDepth, null);
-            this.traceStorage = this;
         }
 
         public void clear() {
@@ -114,7 +113,13 @@ public abstract class StackTraceVisitor extends SourceFrameVisitor {
     protected StackTraceVisitor(ClassActor exceptionClass, int maxDepth, TraceStorage traceHandler) {
         this.exceptionClass = exceptionClass;
         this.maxDepth = maxDepth;
-        this.traceStorage = traceHandler;
+        if (traceStorage != null) {
+            this.traceStorage = traceHandler;
+        } else if (this instanceof TraceStorage) {
+            this.traceStorage = (TraceStorage) this;
+        } else {
+            assert false : "this must be implement TraceStorage or traceHandler must not be null";
+        }
     }
 
     @Override

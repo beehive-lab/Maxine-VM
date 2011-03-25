@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -166,8 +166,8 @@ boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int typ
 }
 
 void virtualMemory_protectPages(Address address, int count) {
+/* log_println("---   protected %p .. %p", address, address + (count * virtualMemory_getPageSize())); */
     c_ASSERT(virtualMemory_pageAlign(address) == address);
-
 #if os_SOLARIS || os_DARWIN || os_LINUX
     if (mprotect((void *) address, count * virtualMemory_getPageSize(), PROT_NONE) != 0) {
          int error = errno;
@@ -181,6 +181,7 @@ void virtualMemory_protectPages(Address address, int count) {
 }
 
 void virtualMemory_unprotectPages(Address address, int count) {
+/* log_println("--- unprotected %p .. %p", address, address + (count * virtualMemory_getPageSize())); */
 	c_ASSERT(virtualMemory_pageAlign(address) == address);
 #if os_SOLARIS || os_DARWIN || os_LINUX
 	if (mprotect((void *) address, count * virtualMemory_getPageSize(), PROT_READ| PROT_WRITE) != 0) {

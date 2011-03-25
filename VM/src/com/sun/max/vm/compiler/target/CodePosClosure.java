@@ -20,30 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.stack;
+package com.sun.max.vm.compiler.target;
 
-import com.sun.max.vm.stack.StackFrameWalker.Cursor;
+import com.sun.max.vm.actor.member.*;
 
 /**
- * A visitor for traversing the frames on a thread's stack. This visitor avoids any allocation
- * by the stack frame walker.
+ * Call back for use with {@link TargetMethod#forEachCodePos(CodePosClosure, com.sun.max.unsafe.Pointer, boolean)}.
  *
- * @see StackFrameVisitor
  * @author Doug Simon
  */
-public abstract class RawStackFrameVisitor {
-
-    public static final int IS_TOP_FRAME = 0x0001;
-    public static final int IS_ADAPTER   = 0x0002;
-
+public interface CodePosClosure {
     /**
-     * Processes a given frame that is being traversed as part of a {@linkplain StackFrameWalker#walk stack walk}.
      *
-     * @return true if the walk should continue to the caller of {@code stackFrame}, false if it should terminate now
+     * @param method
+     * @param bci
+     * @return true if the caller should continue to the next code position (if any), false if it should terminate now
      */
-    public abstract boolean visitFrame(Cursor current, Cursor callee);
-
-    public void done() {
-
-    }
+    boolean doCodePos(ClassMethodActor method, int bci);
 }

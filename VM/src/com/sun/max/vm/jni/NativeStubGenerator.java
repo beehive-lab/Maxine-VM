@@ -59,7 +59,7 @@ import com.sun.max.vm.type.*;
  *   <li>Set the last Java instruction pointer in TLS to zero to indicate transition back into Java code.
  *   <li>If the native method returns a reference, {@linkplain JniHandle#unhand() unwrap} the returned handle.</li>
  *   <li>Restore the JNI frame as recorded in the first step.</li>
- *   <li>Throw any {@linkplain VmThread#throwPendingException() pending exception} (if any) for the current thread.</li>
+ *   <li>Throw any {@linkplain VmThread#throwJniException() pending exception} (if any) for the current thread.</li>
  *   <li>Return the result to the caller.</li>
  * </ol>
  * <p>
@@ -112,12 +112,11 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant jniEnv = createClassMethodConstant(VmThread.class, makeSymbol("jniEnv"));
     private static final ClassMethodRefConstant currentThread = createClassMethodConstant(VmThread.class, makeSymbol("current"));
     private static final ClassMethodRefConstant traceCurrentThreadPrefix = createClassMethodConstant(NativeStubGenerator.class, makeSymbol("traceCurrentThreadPrefix"));
-    private static final ClassMethodRefConstant throwPendingException = createClassMethodConstant(VmThread.class, makeSymbol("throwPendingException"));
+    private static final ClassMethodRefConstant throwJniException = createClassMethodConstant(VmThread.class, makeSymbol("throwJniException"));
     private static final ClassMethodRefConstant createStackHandle = createClassMethodConstant(JniHandles.class, makeSymbol("createStackHandle"), Object.class);
     private static final ClassMethodRefConstant unhandHandle = createClassMethodConstant(JniHandle.class, makeSymbol("unhand"));
-    private static final ClassMethodRefConstant handles = createClassMethodConstant(VmThread.class, makeSymbol("jniHandles"));
-    private static final ClassMethodRefConstant handlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("top"));
-    private static final ClassMethodRefConstant resetHandlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("resetTop"), int.class);
+    private static final ClassMethodRefConstant handlesTop = createClassMethodConstant(VmThread.class, makeSymbol("jniHandlesTop"));
+    private static final ClassMethodRefConstant resetHandlesTop = createClassMethodConstant(VmThread.class, makeSymbol("resetJniHandlesTop"), int.class);
     private static final ClassMethodRefConstant logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
     private static final ClassMethodRefConstant logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
     private static final FieldRefConstant traceJNI = createFieldConstant(ClassMethodActor.class, makeSymbol("TraceJNI"));
@@ -133,7 +132,6 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         int nativeFunctionArgSlots = 0;
         final TypeDescriptor nativeResultDescriptor = resultKind.isReference ? JavaTypeDescriptor.JNI_HANDLE : resultDescriptor;
 
-        int jniHandles = 0;
         int top = 0;
 
         int currentThread = -1;
@@ -150,12 +148,8 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             verboseJniEntry();
 
             // Save current JNI frame.
-            jniHandles = allocateLocal(Kind.REFERENCE);
             top = allocateLocal(Kind.INT);
             aload(currentThread);
-            invokevirtual(handles, 1, 1);
-            astore(jniHandles);
-            aload(jniHandles);
             invokevirtual(handlesTop, 1, 1);
             istore(top);
 
@@ -247,7 +241,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             }
 
             // Restore JNI frame.
-            aload(jniHandles);
+            aload(currentThread);
             iload(top);
             invokevirtual(resetHandlesTop, 2, 0);
 
@@ -255,7 +249,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
             // throw (and clear) any pending exception
             aload(currentThread);
-            invokevirtual(throwPendingException, 1, 0);
+            invokevirtual(throwJniException, 1, 0);
         }
 
         // Return result

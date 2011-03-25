@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 package com.sun.max.vm.jni;
 
 import java.lang.ref.*;
-import java.util.*;
 
+import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -124,7 +124,7 @@ public final class JniHandles {
      * Denotes the indexes of handles that have been {@linkplain #freeHandle(int) freed}.
      * No bit will be set for a handle at an index >= {@link #top}.
      */
-    private final BitSet freedHandles = new BitSet(INITIAL_NUMBER_OF_HANDLES);
+    private final CiBitMap freedHandles = new CiBitMap(INITIAL_NUMBER_OF_HANDLES);
 
     /**
      * The index at which the next search for a free bit in {@link #freedHandles} starts.
@@ -158,6 +158,7 @@ public final class JniHandles {
      * Resets the "top" (i.e. current size) of this handle pool to a value
      * equal to or less than its current size.
      */
+    @NO_SAFEPOINTS("cannot stop before pending exception in JNI stub has been processed")
     public void resetTop(int newTop) {
         if (newTop > this.top || newTop < 0) {
             FatalError.unexpected("Cannot reset JNI handle stack to higher stack height");
@@ -167,7 +168,12 @@ public final class JniHandles {
             for (int i = newTop; i != this.top; ++i) {
                 handles[i] = null;
             }
-            freedHandles.clear(newTop, this.top);
+            if (freedHandles.length() >= newTop) {
+                for (int i = freedHandles.nextSetBit(newTop, this.top); i != -1; i = freedHandles.nextSetBit(i, this.top)) {
+                    freedHandles.clear(i);
+                }
+            }
+
             lastFreedIndex = 0;
             this.top = newTop;
         }
@@ -187,6 +193,7 @@ public final class JniHandles {
      */
     private void freeHandle(int index) {
         handles[index] = null;
+        freedHandles.grow(index + 1);
         freedHandles.set(index);
         lastFreedIndex = index;
     }
@@ -284,7 +291,11 @@ public final class JniHandles {
             return jniHandle.asPointer().getReference().toJava();
         }
         if (tag == Tag.LOCAL) {
-            return VmThread.current().jniHandles().get(jniHandleToIndex(jniHandle));
+            JniHandles jniHandles = VmThread.current().jniHandles();
+            if (jniHandles == null) {
+                throw new IllegalArgumentException("invalid JNI handle: " + jniHandle.to0xHexString());
+            }
+            return jniHandles.get(jniHandleToIndex(jniHandle));
         }
         if (tag == Tag.GLOBAL) {
             return globalHandles.get(jniHandleToIndex(jniHandle));
@@ -325,11 +336,11 @@ public final class JniHandles {
      * of the native method. All local references created during the execution of a native method
      * will be freed once the native method returns.
      *
-     * @param threadLocalHandles  the local handles for the current thread
+     * @param jniHandles  the local handles for the current thread
      * @param object the object to handlize
      */
-    public static JniHandle createLocalHandle(JniHandles threadLocalHandles, Object object) {
-        return threadLocalHandles.allocateHandle(object, Tag.LOCAL);
+    public static JniHandle createLocalHandle(JniHandles jniHandles, Object object) {
+        return jniHandles.allocateHandle(object, Tag.LOCAL);
     }
 
     /**
@@ -370,7 +381,11 @@ public final class JniHandles {
             final int tag = tag(jniHandle);
             if (tag != Tag.STACK) {
                 assert tag == Tag.LOCAL;
-                VmThread.current().jniHandles().freeHandle(jniHandleToIndex(jniHandle));
+                JniHandles jniHandles = VmThread.current().jniHandles();
+                if (jniHandles == null) {
+                    throw new IllegalArgumentException("invalid JNI handle: " + jniHandle.to0xHexString());
+                }
+                jniHandles.freeHandle(jniHandleToIndex(jniHandle));
             } else {
                 // Handles to references on a thread's stack are automatically freed
                 // as these handles are also on the stack
@@ -397,14 +412,21 @@ public final class JniHandles {
     }
 
     public static void ensureLocalHandleCapacity(int capacity) {
-        VmThread.current().jniHandles().ensureCapacity(capacity);
+        VmThread.current().makeJniHandles().ensureCapacity(capacity);
     }
 
     public static void pushLocalFrame(int capacity) {
-        VmThread.current().jniHandles().pushFrame(capacity);
+        VmThread.current().makeJniHandles().pushFrame(capacity);
     }
 
     public static JniHandle popLocalFrame(JniHandle result) {
-        return VmThread.current().jniHandles().popFrame(result);
+        JniHandles jniHandles = VmThread.current().jniHandles();
+        if (jniHandles == null) {
+            if (!result.isZero()) {
+                throw new IllegalArgumentException("invalid JNI handle: " + result.to0xHexString());
+            }
+            return JniHandle.zero();
+        }
+        return jniHandles.popFrame(result);
     }
 }
