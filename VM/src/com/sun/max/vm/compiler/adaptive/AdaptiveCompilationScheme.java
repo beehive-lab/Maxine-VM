@@ -279,8 +279,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             } catch (Throwable t) {
                 classMethodActor.targetState = null;
                 String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
-                Log.println(errorMessage);
-                t.printStackTrace(Log.out);
+                if (VMOptions.verboseOption.verboseCompilation) {
+                    Log.println(errorMessage);
+                    t.printStackTrace(Log.out);
+                }
                 if (!FailOverCompilation || retryCompiler != null || (optimizingCompiler == baselineCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled
                     throw FatalError.unexpected(errorMessage + " (final attempt)", t);
@@ -290,7 +292,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 } else {
                     retryCompiler = optimizingCompiler;
                 }
-                Log.println("Retrying with " + retryCompiler + "...");
+                if (VMOptions.verboseOption.verboseCompilation) {
+                    Log.println("Retrying with " + retryCompiler + "...");
+                }
             }
         }
     }
