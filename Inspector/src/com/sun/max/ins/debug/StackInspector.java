@@ -420,6 +420,7 @@ public final class StackInspector extends Inspector {
     private InspectorPopupMenu getPopupMenu(int row, MouseEvent mouseEvent) {
         final MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(row);
         final InspectorPopupMenu menu = new InspectorPopupMenu("Stack Frame");
+
         menu.add(new InspectorAction(inspection(), "Select frame (Left-Button)") {
             @Override
             protected void procedure() {
@@ -430,6 +431,13 @@ public final class StackInspector extends Inspector {
             final MaxStackFrame.Compiled javaStackFrame = (MaxStackFrame.Compiled) stackFrame;
             final String frameName = javaStackFrameName(javaStackFrame);
             menu.add(actions().inspectStackFrameMemoryWords(javaStackFrame, "Inspect memory for frame" + frameName));
+            menu.add(new InspectorAction(inspection(), "View frame " + frameName) {
+                @Override
+                protected void procedure() {
+                    inspection().focus().setStackFrame(stackFrame, false);
+                    actions().viewStackFrame().perform();
+                }
+            });
         }
         if (stackFrame instanceof MaxStackFrame.Native) {
             final Pointer instructionPointer = stackFrame.ip();
