@@ -218,8 +218,6 @@ public class InspectionFocus extends AbstractInspectionHolder {
     private final Map<MaxThread, MaxStackFrame> frameSelections = new HashMap<MaxThread, MaxStackFrame>();
 
     private MaxStackFrame stackFrame;
-    // Since frames don't record what stack they're in, we must keep a reference to the thread of the frame.
-    private MaxThread threadForStackFrame;
 
     private final Object stackFrameFocusTracer = new Object() {
         @Override
@@ -251,9 +249,8 @@ public class InspectionFocus extends AbstractInspectionHolder {
      */
     public void setStackFrame(MaxStackFrame newStackFrame, boolean interactiveForNative) {
         final MaxThread newThread = newStackFrame.stack().thread();
-        if (!newThread.equals(this.threadForStackFrame) || !newStackFrame.isSameFrame(this.stackFrame)) {
+        if (stackFrame == null || !newThread.equals(stackFrame.stack().thread()) || !newStackFrame.isSameFrame(this.stackFrame)) {
             final MaxStackFrame oldStackFrame = this.stackFrame;
-            this.threadForStackFrame = newThread;
             this.stackFrame = newStackFrame;
             frameSelections.put(newThread, newStackFrame);
             Trace.line(TRACE_VALUE, stackFrameFocusTracer);
