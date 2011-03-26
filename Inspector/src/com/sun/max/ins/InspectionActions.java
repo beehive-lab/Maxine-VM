@@ -67,7 +67,7 @@ import com.sun.max.vm.value.*;
  *
  * <li><b>Create an action class:</b>
  * <ul>
- * <li> {@code final class DoSometingAction extends InspectorAction}</li>
+ * <li> {@code final class DoSomethingAction extends InspectorAction}</li>
  * <li> The Action classes are in package scope so that they can be used by {@link InspectorKeyBindings}.</li>
  * <li> Add a title:  {@code private static final DEFAULT_NAME = "do something"}.</li>
  * <li> If the
@@ -1507,10 +1507,79 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @param actionTitle title for the action, uses a default if null
      * @return an action that will create a memory words inspector
-     * for memory allocated by the currently selected thread
+     * for memory allocated by the currently selected stack frame
      */
     public final InspectorAction inspectSelectedThreadStackMemoryWords(String actionTitle) {
         return new InspectSelectedThreadStackMemoryWordsAction(actionTitle);
+    }
+
+    /**
+     *Action:  inspect the memory allocated to the currently selected stack frame.
+     */
+    final class InspectSelectedStackFrameMemoryWordsAction extends InspectorAction {
+
+        public InspectSelectedStackFrameMemoryWordsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "Inspect memory for selected stack frame" : actionTitle);
+            refreshableActions.add(this);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxStackFrame stackFrame = focus().stackFrame();
+            if (stackFrame != null) {
+                final Inspector inspector = new MemoryWordsInspector(inspection(), stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName());
+                inspector.highlight();
+            } else {
+                gui().errorMessage("no stack frame selected");
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(focus().hasStackFrame() && focus().stackFrame().memoryRegion() != null);
+        }
+    }
+
+    /**
+     * @param actionTitle title for the action, uses a default if null
+     * @return an action that will create a memory words inspector
+     * for memory allocated by the currently selected stack frame
+     */
+    public final InspectorAction inspectSelectedStackFrameMemoryWords(String actionTitle) {
+        return new InspectSelectedStackFrameMemoryWordsAction(actionTitle);
+    }
+
+    /**
+     *Action:  inspect the memory allocated to a stack frame.
+     */
+    final class InspectStackFrameMemoryWordsAction extends InspectorAction {
+
+        private final MaxStackFrame stackFrame;
+
+        public InspectStackFrameMemoryWordsAction(MaxStackFrame stackFrame, String actionTitle) {
+            super(inspection(), actionTitle == null ? "Inspect memory for stack frame" : actionTitle);
+            assert stackFrame != null;
+            this.stackFrame = stackFrame;
+        }
+
+        @Override
+        protected void procedure() {
+            if (stackFrame.memoryRegion() != null) {
+                final Inspector inspector = new MemoryWordsInspector(inspection(), stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName());
+                inspector.highlight();
+            } else {
+                gui().errorMessage("stack frame " + stackFrame.entityName() + " null memory region");
+            }
+        }
+    }
+
+    /**
+     * @param actionTitle title for the action, uses a default if null
+     * @return an action that will create a memory words inspector
+     * for memory allocated by the currently selected stack frame
+     */
+    public final InspectorAction inspectStackFrameMemoryWords(MaxStackFrame stackFrame, String actionTitle) {
+        return new InspectStackFrameMemoryWordsAction(stackFrame, actionTitle);
     }
 
     /**
