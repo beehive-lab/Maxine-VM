@@ -29,7 +29,7 @@ import com.sun.max.ins.debug.*;
  *
  * @author Michael Van De Vanter
  */
-public enum MemoryWordsColumnKind implements ColumnKind {
+public enum MemoryColumnKind implements ColumnKind {
     TAG("Tag", "Additional information", true, -1),
     ADDRESS("Addr.", "Memory address", true, -1),
     WORD("Word", "Offset relative to origin (words)", false, 10),
@@ -47,7 +47,7 @@ public enum MemoryWordsColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private MemoryWordsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    private MemoryColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.columnLabel = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

@@ -55,7 +55,7 @@ public class TypeLabel extends InspectorLabel {
                 case MouseEvent.BUTTON1: {
                     if (teleClassActor != null) {
                         if (mouseEvent.isControlDown()) {
-                            actions().inspectObjectMemoryWords(teleClassActor).perform();
+                            actions().inspectObjectMemory(teleClassActor).perform();
                         } else {
                             focus().setHeapObject(teleClassActor);
                         }
@@ -70,7 +70,7 @@ public class TypeLabel extends InspectorLabel {
                     inspectActorAction.setEnabled(enabled);
                     menu.add(inspectActorAction);
 
-                    final InspectorAction inspectMemoryWordsAction = actions().inspectObjectMemoryWords(teleClassActor, "Inspect memory for this type's ClassActor");
+                    final InspectorAction inspectMemoryWordsAction = actions().inspectObjectMemory(teleClassActor, "Inspect memory for this type's ClassActor");
                     inspectMemoryWordsAction.setEnabled(enabled);
                     menu.add(inspectMemoryWordsAction);
 

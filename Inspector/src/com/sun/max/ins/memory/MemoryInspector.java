@@ -46,7 +46,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryWordsInspector extends Inspector {
+public final class MemoryInspector extends Inspector {
 
     private static final String UNKNOWN_REGION_NAME = "unknown region";
     private static final int TRACE_VALUE = 2;
@@ -95,67 +95,67 @@ public final class MemoryWordsInspector extends Inspector {
 
     }
 
-    private static MemoryWordsViewPreferences globalPreferences;
+    private static MemoryViewPreferences globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing these tables..
      */
-    public static MemoryWordsViewPreferences globalPreferences(Inspection inspection) {
+    public static MemoryViewPreferences globalPreferences(Inspection inspection) {
         if (globalPreferences == null) {
-            globalPreferences = new MemoryWordsViewPreferences(inspection);
+            globalPreferences = new MemoryViewPreferences(inspection);
         }
         return globalPreferences;
     }
 
     // Prefix for all persistent column preferences in view
-    private static final String MEMORY_WORDS_COLUMN_PREFERENCE = "memoryWordsViewColumn";
+    private static final String MEMORY_COLUMN_PREFERENCE = "memoryViewColumn";
 
     public static JPanel globalPreferencesPanel(Inspection inspection) {
         return globalPreferences(inspection).getPanel();
     }
 
-    private static class MemoryWordsViewPreferences extends TableColumnVisibilityPreferences<MemoryWordsColumnKind> {
+    private static class MemoryViewPreferences extends TableColumnVisibilityPreferences<MemoryColumnKind> {
 
-        private final MemoryWordsInspector memoryWordsInspector;
+        private final MemoryInspector memoryInspector;
 
         /**
          * Creates global preferences for this inspector.
          */
-        private MemoryWordsViewPreferences(Inspection inspection) {
-            super(inspection, MEMORY_WORDS_COLUMN_PREFERENCE, MemoryWordsColumnKind.values());
-            this.memoryWordsInspector = null;
+        private MemoryViewPreferences(Inspection inspection) {
+            super(inspection, MEMORY_COLUMN_PREFERENCE, MemoryColumnKind.values());
+            this.memoryInspector = null;
         }
 
         /**
          * A per-instance set of view preferences, initialized to the global preferences.
          * @param defaultPreferences the global defaults for this kind of view
          */
-        public MemoryWordsViewPreferences(MemoryWordsViewPreferences globalPreferences, MemoryWordsInspector memoryWordsInspector) {
+        public MemoryViewPreferences(MemoryViewPreferences globalPreferences, MemoryInspector memoryInspector) {
             super(globalPreferences);
-            this.memoryWordsInspector = memoryWordsInspector;
+            this.memoryInspector = memoryInspector;
             // There are no view preferences beyond the column choices, so no additional machinery needed here.
         }
 
         @Override
-        public void setIsVisible(MemoryWordsColumnKind columnKind, boolean visible) {
+        public void setIsVisible(MemoryColumnKind columnKind, boolean visible) {
             super.setIsVisible(columnKind, visible);
-            if (memoryWordsInspector != null) {
-                memoryWordsInspector.reconstructView();
+            if (memoryInspector != null) {
+                memoryInspector.reconstructView();
             }
         }
 
         @Override
-        public MemoryWordsViewPreferences clone() {
-            return new MemoryWordsViewPreferences(this, memoryWordsInspector);
+        public MemoryViewPreferences clone() {
+            return new MemoryViewPreferences(this, memoryInspector);
         }
     }
 
-    private static Set<MemoryWordsInspector> inspectors = new HashSet<MemoryWordsInspector>();
+    private static Set<MemoryInspector> inspectors = new HashSet<MemoryInspector>();
 
     /**
      * @return all existing memory words inspectors, even if hidden or iconic.
      */
-    public static Set<MemoryWordsInspector> inspectors() {
+    public static Set<MemoryInspector> inspectors() {
         return inspectors;
     }
 
@@ -191,11 +191,11 @@ public final class MemoryWordsInspector extends Inspector {
     private final InspectorButton prefsButton;
     private final InspectorButton homeButton;
     private final InspectorButton cloneButton;
-    private final MemoryWordsViewPreferences instanceViewPreferences;
+    private final MemoryViewPreferences instanceViewPreferences;
 
     private final Rectangle originalFrameGeometry;
 
-    private MemoryWordsInspector(Inspection inspection, final MaxMemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryWordsViewPreferences instanceViewPreferences) {
+    private MemoryInspector(Inspection inspection, final MaxMemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryViewPreferences instanceViewPreferences) {
         super(inspection);
         assert viewMode != null;
 
@@ -208,10 +208,10 @@ public final class MemoryWordsInspector extends Inspector {
 
         if (instanceViewPreferences == null) {
             // Clone the global preferences
-            this.instanceViewPreferences = new MemoryWordsViewPreferences(globalPreferences(inspection()), this);
+            this.instanceViewPreferences = new MemoryViewPreferences(globalPreferences(inspection()), this);
         } else {
             // Clone another set of instance preferences
-            this.instanceViewPreferences = new MemoryWordsViewPreferences(instanceViewPreferences, this);
+            this.instanceViewPreferences = new MemoryViewPreferences(instanceViewPreferences, this);
         }
         Address start = memoryRegion.start();
         final Address alignedStart = start.aligned(nBytesInWord);
@@ -229,7 +229,7 @@ public final class MemoryWordsInspector extends Inspector {
         originField = new AddressInputField.Hex(inspection, this.origin) {
             @Override
             public void update(Address value) {
-                if (!value.equals(MemoryWordsInspector.this.origin)) {
+                if (!value.equals(MemoryInspector.this.origin)) {
                     // User model policy:  any adjustment to the region drops into generic word mode
                     clearViewMode();
                     setOrigin(value.aligned(nBytesInWord));
@@ -249,7 +249,7 @@ public final class MemoryWordsInspector extends Inspector {
                 } else if (newWordCount != oldWordCount) {
                     // User model policy:  any adjustment to the region drops into generic word mode
                     clearViewMode();
-                    final MaxVM vm = MemoryWordsInspector.this.vm();
+                    final MaxVM vm = MemoryInspector.this.vm();
                     setMemoryRegion(new MemoryWordRegion(vm, memoryRegion.start(), newWordCount));
                     setTitle();
                 }
@@ -290,7 +290,7 @@ public final class MemoryWordsInspector extends Inspector {
 
         prefsButton = new InspectorButton(inspection(), new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                new SimpleDialog(inspection(), MemoryWordsInspector.this.instanceViewPreferences.getPanel(), "View Preferences", true);
+                new SimpleDialog(inspection(), MemoryInspector.this.instanceViewPreferences.getPanel(), "View Preferences", true);
             }
         });
         prefsButton.setText(null);
@@ -323,8 +323,8 @@ public final class MemoryWordsInspector extends Inspector {
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
-        defaultMenu.add(actions().closeViews(MemoryWordsInspector.class, this, "Close other memory inspectors"));
-        defaultMenu.add(actions().closeViews(MemoryWordsInspector.class, null, "Close all memory inspectors"));
+        defaultMenu.add(actions().closeViews(MemoryInspector.class, this, "Close other memory inspectors"));
+        defaultMenu.add(actions().closeViews(MemoryInspector.class, null, "Close all memory inspectors"));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         setOriginToSelectionAction.refresh(true);
@@ -348,7 +348,7 @@ public final class MemoryWordsInspector extends Inspector {
      * Create a memory inspector for a designated region of memory, with the view
      * mode set to {@link ViewMode#WORD}.
      */
-    public MemoryWordsInspector(Inspection inspection, MaxMemoryRegion memoryRegion) {
+    public MemoryInspector(Inspection inspection, MaxMemoryRegion memoryRegion) {
         this(inspection, memoryRegion, null, memoryRegion.start(), ViewMode.WORD, null);
     }
 
@@ -356,7 +356,7 @@ public final class MemoryWordsInspector extends Inspector {
      * Create a memory inspector for a designated, named region of memory, with the view
      * mode set to {@link ViewMode#WORD}.
      */
-    public MemoryWordsInspector(Inspection inspection, MaxMemoryRegion memoryRegion, String regionName) {
+    public MemoryInspector(Inspection inspection, MaxMemoryRegion memoryRegion, String regionName) {
         this(inspection, memoryRegion, regionName, memoryRegion.start(), ViewMode.WORD, null);
     }
 
@@ -364,7 +364,7 @@ public final class MemoryWordsInspector extends Inspector {
      * Create a memory inspector for the memory holding an object, with the view
      * mode set to {@link ViewMode#OBJECT}.
      */
-    public MemoryWordsInspector(Inspection inspection, TeleObject teleObject) {
+    public MemoryInspector(Inspection inspection, TeleObject teleObject) {
         this(inspection, teleObject.objectMemoryRegion(), null, teleObject.origin(), teleObject.isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
     }
 
@@ -372,7 +372,7 @@ public final class MemoryWordsInspector extends Inspector {
      * Create a memory inspector for a page of memory, with the view
      * mode set to {@link ViewMode#PAGE}.
      */
-    public MemoryWordsInspector(Inspection inspection, Address address) {
+    public MemoryInspector(Inspection inspection, Address address) {
         this(inspection, new InspectorMemoryRegion(inspection.vm(), "", address, inspection.vm().platform().nBytesInPage()), null, address, ViewMode.PAGE, null);
     }
 
@@ -416,8 +416,8 @@ public final class MemoryWordsInspector extends Inspector {
 //                System.out.println(bounds.toString());
 //                System.out.println("Header=" + table.getTableHeader().getHeight());
 //                System.out.println("Row height=" + table.getRowHeight());
-//                System.out.println("Avail=" + ((bounds.height - table.getTableHeader().getHeight()) - (MemoryWordsInspector.this.memoryWordRegion.wordCount * table.getRowHeight())));
-                final long rowCapacity = ((bounds.height - table.getTableHeader().getHeight()) - (MemoryWordsInspector.this.memoryWordRegion.nWords() * table.getRowHeight())) / table.getRowHeight();
+//                System.out.println("Avail=" + ((bounds.height - table.getTableHeader().getHeight()) - (MemoryInspector.this.memoryWordRegion.wordCount * table.getRowHeight())));
+                final long rowCapacity = ((bounds.height - table.getTableHeader().getHeight()) - (MemoryInspector.this.memoryWordRegion.nWords() * table.getRowHeight())) / table.getRowHeight();
 //                System.out.println("Capacity =" + rowCapacity);
 //                System.out.println("Preferred=" + preferredTableHeight());
                 if (rowCapacity > 0) {
@@ -765,8 +765,8 @@ public final class MemoryWordsInspector extends Inspector {
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                final MemoryWordsViewPreferences globalPreferences = globalPreferences(inspection());
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryWordsColumnKind>(inspection(), "View Options", instanceViewPreferences, globalPreferences);
+                final MemoryViewPreferences globalPreferences = globalPreferences(inspection());
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryColumnKind>(inspection(), "View Options", instanceViewPreferences, globalPreferences);
             }
         };
     }
@@ -816,7 +816,7 @@ public final class MemoryWordsInspector extends Inspector {
     private InspectorAction cloneAction = new InspectorAction(inspection(), "Clone") {
         @Override
         protected void procedure() {
-            final Inspector inspector = new MemoryWordsInspector(inspection(), memoryWordRegion, regionName, origin, viewMode(), instanceViewPreferences);
+            final Inspector inspector = new MemoryInspector(inspection(), memoryWordRegion, regionName, origin, viewMode(), instanceViewPreferences);
             inspector.highlight();
         }
     };
@@ -825,7 +825,7 @@ public final class MemoryWordsInspector extends Inspector {
         @Override
         protected void procedure() {
             setOrigin(focus().address());
-            MemoryWordsInspector.this.forceRefresh();
+            MemoryInspector.this.forceRefresh();
         }
 
         @Override
@@ -838,7 +838,7 @@ public final class MemoryWordsInspector extends Inspector {
         @Override
         protected void procedure() {
             table.scrollToAddress(focus().address());
-            MemoryWordsInspector.this.forceRefresh();
+            MemoryInspector.this.forceRefresh();
         }
 
         @Override

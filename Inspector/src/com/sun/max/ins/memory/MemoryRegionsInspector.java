@@ -93,7 +93,7 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectSelectedMemoryRegionWords());
+        memoryMenu.add(actions().inspectSelectedMemoryRegion());
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
 
         final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);

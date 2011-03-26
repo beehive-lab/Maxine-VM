@@ -252,8 +252,8 @@ public final class Inspection implements InspectionHolder {
     /**
      * @return all existing memory inspectors, even if hidden or iconic.
      */
-    public Set<MemoryWordsInspector> memoryWordsInspectors() {
-        return MemoryWordsInspector.inspectors();
+    public Set<MemoryInspector> memoryInspectors() {
+        return MemoryInspector.inspectors();
     }
 
     /**
