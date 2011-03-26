@@ -170,7 +170,6 @@ public final class StackInspector extends Inspector {
 
     private final class StackFrameListCellRenderer extends MachineCodeLabel implements ListCellRenderer {
 
-        // TODO (mlvdv) does this initialization work correctly?
         StackFrameListCellRenderer(Inspection inspection) {
             super(inspection, "");
         }
@@ -409,7 +408,7 @@ public final class StackInspector extends Inspector {
         }
         setContentPane(contentPane);
         forceRefresh();
-        // TODO (mlvdv) try to set frame selection to match global focus; doesn't work.
+        // TODO (mlvdv) try to set frame selection to match global focus at creation; doesn't display.
         stackFrameFocusChanged(null, inspection().focus().stackFrame());
     }
 
@@ -471,6 +470,7 @@ public final class StackInspector extends Inspector {
                 if (stackFrame.isSameFrame(newStackFrame)) {
                     if (index != oldIndex) {
                         stackFrameList.setSelectedIndex(index);
+                        stackFrameList.ensureIndexIsVisible(index);
                     }
                     break;
                 }
