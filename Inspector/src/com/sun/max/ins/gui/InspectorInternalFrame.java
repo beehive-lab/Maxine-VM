@@ -75,6 +75,7 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
             @Override
             public void internalFrameActivated(InternalFrameEvent e) {
                 InspectorInternalFrame.this.inspector.inspectorGetsWindowFocus();
+                refresh(true);
             }
 
             @Override
