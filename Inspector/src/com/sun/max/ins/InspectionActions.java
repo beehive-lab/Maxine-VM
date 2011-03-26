@@ -54,6 +54,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -1511,6 +1512,95 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction inspectSelectedThreadStackMemoryWords(String actionTitle) {
         return new InspectSelectedThreadStackMemoryWordsAction(actionTitle);
+    }
+
+    /**
+     *Action:  inspect the memory allocated to the currently selected thread's locals block.
+     */
+    final class InspectSelectedThreadLocalsBlockMemoryWordsAction extends InspectorAction {
+
+        public InspectSelectedThreadLocalsBlockMemoryWordsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "Inspect memory for selected thread's locals block" : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxThread thread = focus().thread();
+            if (thread != null) {
+                final Inspector inspector = new MemoryWordsInspector(inspection(), thread.localsBlock().memoryRegion(), "Thread locals block " + thread.toShortString());
+                inspector.highlight();
+            } else {
+                gui().errorMessage("no thread selected");
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(focus().hasThread() && focus().thread().localsBlock().memoryRegion() != null);
+        }
+    }
+
+    /**
+     * @param actionTitle title for the action, uses a default if null
+     * @return an action that will create a memory words inspector
+     * for the thread locals block allocated by the currently selected thread
+     */
+    public final InspectorAction inspectSelectedThreadLocalsBlockMemoryWords(String actionTitle) {
+        return new InspectSelectedThreadLocalsBlockMemoryWordsAction(actionTitle);
+    }
+
+    /**
+     *Action:  inspect the memory allocated to one of the currently selected thread's locals areas.
+     */
+    final class InspectSelectedThreadLocalsAreaMemoryWordsAction extends InspectorAction {
+
+        private final Safepoint.State state;
+
+        public InspectSelectedThreadLocalsAreaMemoryWordsAction(Safepoint.State state, String actionTitle) {
+            super(inspection(), actionTitle == null ? "Inspect memory for selected thread's locals area=" + state.name() : actionTitle);
+            this.state = state;
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxMemoryRegion memoryRegion = getMemoryRegion();
+            if (memoryRegion != null) {
+                final String title = "Thread locals area " + state.name() + " for " + focus().thread().toShortString();
+                final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, title);
+                inspector.highlight();
+            } else {
+                gui().errorMessage("no region found");
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(getMemoryRegion() != null);
+        }
+
+        private MaxMemoryRegion getMemoryRegion() {
+            final MaxThread thread = focus().thread();
+            if (thread != null) {
+                final MaxThreadLocalsBlock localsBlock = thread.localsBlock();
+                if (localsBlock != null) {
+                    final MaxThreadLocalsArea tlaFor = localsBlock.tlaFor(state);
+                    if (tlaFor != null) {
+                        final MaxEntityMemoryRegion<MaxThreadLocalsArea> memoryRegion = tlaFor.memoryRegion();
+                        return memoryRegion;
+                    }
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * @param actionTitle title for the action, uses a default if null
+     * @return an action that will create a memory words inspector
+     * for one of the thread locals areas allocated by the currently selected thread
+     */
+    public final InspectorAction inspectSelectedThreadLocalsAreaMemoryWords(Safepoint.State state, String actionTitle) {
+        return new InspectSelectedThreadLocalsAreaMemoryWordsAction(state, actionTitle);
     }
 
     /**
