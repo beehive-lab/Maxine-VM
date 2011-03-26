@@ -33,7 +33,6 @@ import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
@@ -518,11 +517,8 @@ public final class StackInspector extends Inspector {
         });
         if (stackFrame instanceof MaxStackFrame.Compiled) {
             final MaxStackFrame.Compiled javaStackFrame = (MaxStackFrame.Compiled) stackFrame;
-            final int frameSize = javaStackFrame.layout().frameSize();
-            final Pointer stackPointer = javaStackFrame.sp();
-            final MaxMemoryRegion memoryRegion = new InspectorMemoryRegion(vm(), "", stackPointer, frameSize);
             final String frameName = javaStackFrameName(javaStackFrame);
-            menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
+            menu.add(actions().inspectStackFrameMemoryWords(javaStackFrame, "Inspect memory for frame" + frameName));
         }
         if (stackFrame instanceof MaxStackFrame.Native) {
             final Pointer instructionPointer = stackFrame.ip();

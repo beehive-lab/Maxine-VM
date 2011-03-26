@@ -236,6 +236,13 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
+     * Is there a currently selected stack frame.
+     */
+    public boolean hasStackFrame() {
+        return stackFrame != null;
+    }
+
+    /**
      * Shifts the focus of the Inspection to a particular stack frame in a particular thread; notify interested inspectors.
      * Sets the current thread to be the thread of the frame.
      * This is a view state change that can happen when there is no change to VM state.
