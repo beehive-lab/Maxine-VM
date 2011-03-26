@@ -357,7 +357,7 @@ public final class NotepadInspector extends Inspector {
 
         @Override
         protected void procedure() {
-            actions().inspectMemoryWords(address).perform();
+            actions().inspectMemory(address).perform();
             focus().setAddress(address);
         }
 
@@ -384,7 +384,7 @@ public final class NotepadInspector extends Inspector {
 
         @Override
         protected void procedure() {
-            actions().inspectMemoryWords(memoryRegion).perform();
+            actions().inspectMemoryRegion(memoryRegion).perform();
             focus().setAddress(address);
         }
 

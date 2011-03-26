@@ -441,7 +441,7 @@ public abstract class DataLabel extends InspectorLabel {
                         case MouseEvent.BUTTON3: {
                             final InspectorPopupMenu menu = new InspectorPopupMenu("Address");
                             menu.add(actions().copyWord(address, "Copy address to clipboard"));
-                            menu.add(actions().inspectMemoryWords(address));
+                            menu.add(actions().inspectMemory(address));
                             if (vm().watchpointManager() != null) {
                                 menu.add(actions().setWordWatchpoint(address, null));
                             }

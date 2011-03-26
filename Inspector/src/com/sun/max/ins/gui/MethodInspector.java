@@ -290,7 +290,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         frame.makeMenu(EDIT_MENU);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
-        memoryMenu.add(actions().inspectMachineCodeRegionMemoryWords(machineCode()));
+        memoryMenu.add(actions().inspectMachineCodeRegionMemory(machineCode()));
         memoryMenu.add(defaultMenuItems(MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");

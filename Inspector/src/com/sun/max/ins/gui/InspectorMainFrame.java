@@ -158,13 +158,13 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 if (support.isDataFlavorSupported(InspectorTransferable.ADDRESS_FLAVOR)) {
                     final Address address = (Address) transferable.getTransferData(InspectorTransferable.ADDRESS_FLAVOR);
                     Trace.line(TRACE_VALUE, tracePrefix + "address dropped on desktop");
-                    InspectorMainFrame.this.inspection.actions().inspectMemoryWords(address).perform();
+                    InspectorMainFrame.this.inspection.actions().inspectMemory(address).perform();
                     return true;
                 }
                 if (support.isDataFlavorSupported(InspectorTransferable.MEMORY_REGION_FLAVOR)) {
                     final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) transferable.getTransferData(InspectorTransferable.MEMORY_REGION_FLAVOR);
                     Trace.line(TRACE_VALUE, tracePrefix + "memory region dropped on desktop");
-                    InspectorMainFrame.this.inspection.actions().inspectMemoryWords(memoryRegion).perform();
+                    InspectorMainFrame.this.inspection.actions().inspectMemoryRegion(memoryRegion).perform();
                     return true;
                 }
                 if (support.isDataFlavorSupported(InspectorTransferable.TELE_OBJECT_FLAVOR)) {
@@ -288,7 +288,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
         desktopMenu.add(actions.viewBootImage());
         desktopMenu.add(actions.viewBreakpoints());
-        desktopMenu.add(actions.memoryWordsInspectorsMenu());
+        desktopMenu.add(actions.memoryInspectorsMenu());
         desktopMenu.add(actions.viewMemoryRegions());
         desktopMenu.add(actions.viewMethodCode());
         desktopMenu.add(actions.viewNotepad());

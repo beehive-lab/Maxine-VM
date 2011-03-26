@@ -81,7 +81,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         editMenu.add(actions().removeAllWatchpoints());
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectSelectedMemoryWatchpointWordsAction());
+        memoryMenu.add(actions().inspectSelectedMemoryWatchpointAction());
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");

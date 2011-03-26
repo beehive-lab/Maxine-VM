@@ -62,7 +62,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         final InspectorPopupMenu menu = new InspectorPopupMenu();
         final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
         final String regionName = memoryRegion.regionName();
-        menu.add(actions().inspectRegionMemoryWords(memoryRegion, regionName));
+        menu.add(actions().inspectRegionMemory(memoryRegion, regionName));
         // menu.add(actions().setRegionWatchpoint(memoryRegionDisplay, "Watch region memory"));
         menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
         menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));

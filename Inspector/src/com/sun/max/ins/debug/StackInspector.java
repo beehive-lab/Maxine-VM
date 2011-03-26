@@ -244,7 +244,7 @@ public final class StackInspector extends Inspector {
         editMenu.add(copyStackToClipboardAction);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectSelectedThreadStackMemoryWords("Inspect memory for stack"));
+        memoryMenu.add(actions().inspectSelectedThreadStackMemory("Inspect memory for stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");
@@ -430,7 +430,7 @@ public final class StackInspector extends Inspector {
         if (stackFrame instanceof MaxStackFrame.Compiled) {
             final MaxStackFrame.Compiled javaStackFrame = (MaxStackFrame.Compiled) stackFrame;
             final String frameName = javaStackFrameName(javaStackFrame);
-            menu.add(actions().inspectStackFrameMemoryWords(javaStackFrame, "Inspect memory for frame" + frameName));
+            menu.add(actions().inspectStackFrameMemory(javaStackFrame, "Inspect memory for frame" + frameName));
             menu.add(new InspectorAction(inspection(), "View frame " + frameName) {
                 @Override
                 protected void procedure() {
