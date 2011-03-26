@@ -57,7 +57,7 @@ public final class FocusInspector extends Inspector {
 
     private FocusTable table;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "focusInspectorGeometry");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "focusInspectorGeometry");
 
     private FocusInspector(Inspection inspection) {
         super(inspection);

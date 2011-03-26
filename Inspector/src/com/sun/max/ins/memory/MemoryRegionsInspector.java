@@ -60,7 +60,7 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
         return memoryRegionsInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "memoryRegionsInspectorGeometry");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "memoryRegionsInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final MemoryRegionsViewPreferences viewPreferences;

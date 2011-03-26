@@ -58,7 +58,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         return breakpointsInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "breakpointsInspectorGeometry");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "breakpointsInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final BreakpointsViewPreferences viewPreferences;

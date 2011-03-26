@@ -219,9 +219,9 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
-     * Creates a settings client for this inspector that causes window geometry to be saved & restored.
+     * Creates a settings listener for this inspector that causes window geometry to be saved & restored.
      */
-    protected static SaveSettingsListener createGeometrySettingsClient(final Inspector inspector, final String name) {
+    protected static SaveSettingsListener createGeometrySettingsListener(final Inspector inspector, final String name) {
         return new AbstractSaveSettingsListener(name, inspector) {
 
             @Override

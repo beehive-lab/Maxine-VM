@@ -60,7 +60,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
         super(inspection);
         tabbedPane = new InspectorTabbedPane(inspection);
         if (settingsClientName != null) {
-            saveSettingsListener = createGeometrySettingsClient(this, settingsClientName + "Geometry");
+            saveSettingsListener = createGeometrySettingsListener(this, settingsClientName + "Geometry");
         } else {
             saveSettingsListener = null;
         }
