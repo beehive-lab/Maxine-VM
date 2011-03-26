@@ -72,6 +72,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().inspectSelectedThreadLocalsBlockMemoryWords(null));
         memoryMenu.add(actions().inspectSelectedThreadStackMemoryWords(null));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());

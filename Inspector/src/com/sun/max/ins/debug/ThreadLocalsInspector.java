@@ -86,6 +86,10 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().inspectSelectedThreadLocalsBlockMemoryWords("Inspect memory for thread's locals block"));
+        for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+            memoryMenu.add(actions().inspectSelectedThreadLocalsAreaMemoryWords(state, "Inspect memory for thread's " + state.name() + " area"));
+        }
         memoryMenu.add(actions().inspectSelectedThreadStackMemoryWords("Inspect memory for thread's stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
