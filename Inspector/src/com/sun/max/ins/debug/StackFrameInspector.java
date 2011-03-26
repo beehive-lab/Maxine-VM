@@ -180,7 +180,7 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
             errorFramePanel.add(errorFrameTextArea);
             setContentPane(errorFramePanel);
             compiledStackFramePanel = null;
-        } else if (stackFrame instanceof StackInspector.TruncatedStackFrame) {
+        } else if (stackFrame instanceof TruncatedStackFrame) {
             setContentPane(truncatedFramePanel);
             compiledStackFramePanel = null;
         } else if (stackFrame == null) {
