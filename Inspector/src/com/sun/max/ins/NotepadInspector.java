@@ -71,7 +71,7 @@ public final class NotepadInspector extends Inspector {
     }
 
     // TODO (mlvdv)  only geometry settings saved now, but might need view options if add features such as highlighting
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "notepadInspectorGeometry");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "notepadInspectorGeometry");
     private final InspectorNotepad notepad;
     private final JTextArea textArea;
     private final JPopupMenu popupMenu;

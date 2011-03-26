@@ -81,7 +81,7 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
         }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "stackFrameInspectorGeometry");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "stackFrameInspectorGeometry");
 
     private MaxStackFrame stackFrame;
     private final InspectorPanel nullFramePanel;

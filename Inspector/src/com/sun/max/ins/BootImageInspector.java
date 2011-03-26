@@ -53,7 +53,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
         return bootImageInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "bootImageInspectorGeometry");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "bootImageInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final BootImageViewPreferences viewPreferences;

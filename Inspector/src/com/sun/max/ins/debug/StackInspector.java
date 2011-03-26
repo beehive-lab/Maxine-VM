@@ -155,7 +155,7 @@ public final class StackInspector extends Inspector {
     /**
      * Listens for requests to save settings and saves current frame geometry.
      */
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "stackInspectorGeometry");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "stackInspectorGeometry");
 
     /**
      * Listens for mouse events over the stack frame list so that the right button

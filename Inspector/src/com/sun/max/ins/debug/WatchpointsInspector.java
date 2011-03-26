@@ -57,7 +57,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         return watchpointsInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "watchpointsInspectorGeometry");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "watchpointsInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final WatchpointsViewPreferences viewPreferences;
