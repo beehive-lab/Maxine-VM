@@ -208,10 +208,19 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
 
     @Override
     public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame newStackFrame) {
-        // The focus mechanism will suppress calls where the stack frame is either equal or
-        // the "same as" the previous frame, the latter of which happens when the frame is on the
-        // top and gets represented by a different object.
-        reconstructView();
+        // The focus mechanism will suppress calls where the stack frame is identical to the previous frame.
+        if (newStackFrame != null && newStackFrame.isSameFrame(stackFrame)) {
+            // The frame object is different, but it represents the same frame; this typically happens
+            // when there has been a single step that only affects the top frame.
+            this.stackFrame = newStackFrame;
+            if (compiledStackFramePanel != null) {
+                compiledStackFramePanel.setStackFrame(stackFrame);
+            }
+            forceRefresh();
+        } else {
+            // Entirely new frame; start over
+            reconstructView();
+        }
     }
 
     @Override

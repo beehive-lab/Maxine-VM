@@ -248,14 +248,14 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * @param interactiveForNative whether (should a side effect be to land in a native method) the user should be consulted if unknown.
      */
     public void setStackFrame(MaxStackFrame newStackFrame, boolean interactiveForNative) {
-        final MaxThread newThread = newStackFrame.stack().thread();
-        if (stackFrame == null || !newThread.equals(stackFrame.stack().thread()) || !newStackFrame.isSameFrame(this.stackFrame)) {
+        if (this.stackFrame != newStackFrame) {
             final MaxStackFrame oldStackFrame = this.stackFrame;
+            final MaxThread newThread = newStackFrame.stack().thread();
+            // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
+            setThread(newThread);
             this.stackFrame = newStackFrame;
             frameSelections.put(newThread, newStackFrame);
             Trace.line(TRACE_VALUE, stackFrameFocusTracer);
-            // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
-            setThread(newThread);
             for (ViewFocusListener listener : copyListeners()) {
                 listener.stackFrameFocusChanged(oldStackFrame, newStackFrame);
             }
