@@ -115,8 +115,8 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public InspectorFrame createFrame(boolean addMenuBar) {
         final InspectorFrame frame = super.createFrame(addMenuBar);
-        originalFrameGeometry = gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
-
+        gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
+        originalFrameGeometry = getGeometry();
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();

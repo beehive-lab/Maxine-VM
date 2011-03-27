@@ -72,21 +72,19 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
     /**
      * Records the last position of the mouse when it was over a component.
+     * The position is recorded in the coordinates of the desktop pane,
+     * which is the coordinate system we use to place inspector windows.
      */
     private final class MouseLocationListener implements AWTEventListener {
 
         public void eventDispatched(AWTEvent awtEvent) {
             final Component source = (Component) awtEvent.getSource();
             if (source != null) {
-                mostRecentMouseLocation = DEFAULT_LOCATION;
                 // We should only be getting mouse events; others are masked out.
                 final MouseEvent mouseEvent = (MouseEvent) awtEvent;
-                try {
-                    final Point eventLocationOnScreen = source.getLocationOnScreen();
-                    eventLocationOnScreen.translate(mouseEvent.getX(), mouseEvent.getY());
-                    recordMostRecentMouseLocation(eventLocationOnScreen);
-                } catch (IllegalComponentStateException e) {
-                }
+                final Point mouseLocation = mouseEvent.getLocationOnScreen();
+                SwingUtilities.convertPointFromScreen(mouseLocation, scrollPane);
+                recordMostRecentMouseLocation(mouseLocation);
             }
         }
     }
@@ -195,6 +193,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private final SaveSettingsListener saveSettingsListener;
     private final Cursor busyCursor = new Cursor(Cursor.WAIT_CURSOR);
     private final JDesktopPane desktopPane;
+
+    /**
+     * The scroll pane is the "content" pane for this main frame, and
+     * components should be placed relative to its coordinates.
+     */
     private final JScrollPane scrollPane;
     private final InspectorMainMenuBar menuBar;
     private final InspectorPopupMenu desktopMenu;
@@ -268,16 +271,16 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             }
         });
         desktopPane = new JDesktopPane() {
-
-            /**
-             * Any component added to the desktop pane is brought to the front.
-             */
-            @Override
-            public Component add(Component component) {
-                super.add(component);
-                moveToFront(component);
-                return component;
-            }
+//
+//            /**
+//             * Any component added to the desktop pane is brought to the front.
+//             */
+//            @Override
+//            public Component add(Component component) {
+//                super.add(component);
+//                moveToFront(component);
+//                return component;
+//            }
         };
         desktopPane.setOpaque(true);
         desktopPane.setBackground(inspection.style().vmStoppedBackgroundColor(true));
@@ -433,73 +436,81 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return mouseButtonMapper.getButton(mouseEvent);
     }
 
-    public Rectangle setLocationRelativeToMouse(Inspector inspector) {
-        return setLocationRelativeToMouse(inspector, inspection.geometry().defaultNewFrameXOffset(), inspection.geometry().defaultNewFrameYOffset());
+    public void setLocationRelativeToMouse(Inspector inspector, int diagonalOffset) {
+        setLocationRelativeToMouse(inspector, diagonalOffset, diagonalOffset);
     }
 
-    public Rectangle setLocationRelativeToMouse(Inspector inspector, int offset) {
-        return setLocationRelativeToMouse(inspector, offset, offset);
+    public void moveToMiddle(Component component) {
+        final int newX = Math.max(0, (scrollPane.getWidth() - component.getWidth()) / 2);
+        final int newY = Math.max(0, (scrollPane.getHeight() - component.getHeight()) / 2);
+        component.setLocation(newX, newY);
     }
 
-    public Rectangle moveToMiddle(Inspector inspector) {
+    public void moveToMiddle(Inspector inspector) {
+        moveToMiddle(inspector.getJComponent());
+    }
+
+    public void moveToFullyVisible(Inspector inspector) {
         final JComponent component = inspector.getJComponent();
-        component.setLocation(getMiddle(component));
-        return component.getBounds();
+        if (!isFullyVisible(component)) {
+            int x = component.getX();
+            if (x < 0) {
+                // Off the pane to the left
+                x = 0;
+            } else if (x + component.getWidth() > scrollPane.getWidth()) {
+                // Off the pane to the right
+                x = Math.max(0, scrollPane.getWidth() - component.getWidth());
+            }
+            int y = component.getY();
+            if (y < 0) {
+                // Off the top of the pane
+                y = 0;
+            } else if (y + component.getHeight() > scrollPane.getHeight()) {
+                // Off the bottom of the pane
+                y = Math.max(0, scrollPane.getHeight() - component.getHeight());
+            }
+            component.setLocation(x, y);
+        }
     }
 
-    public Rectangle moveToMiddleIfNotVisble(Inspector inspector) {
-        JComponent component = inspector.getJComponent();
-        if (!contains(component.getLocation())) {
+    public void moveToExposeDefaultMenu(Inspector inspector) {
+        final JComponent component = inspector.getJComponent();
+        final int x = component.getX();
+        final int y = component.getY();
+        if (x < 0 || y < 0) {
+            component.setLocation(Math.max(x, 0), Math.max(y, 0));
+        }
+    }
+
+    public void resizeToFit(Inspector inspector) {
+        final JComponent component = inspector.getJComponent();
+        if (!isFullyVisible(component)) {
+            final int x = component.getX();
+            final int y = component.getY();
+            final int width = component.getWidth();
+            final int height = component.getHeight();
+            final int newWidth = (Math.min(scrollPane.getWidth(), x + width)) - x;
+            final int newHeight = (Math.min(scrollPane.getHeight(), y + height)) - y;
+            component.setSize(newWidth, newHeight);
+        }
+    }
+
+    public void resizeToFill(Inspector inspector) {
+        inspector.getJComponent().setBounds(0, 0, scrollPane.getWidth(), scrollPane.getHeight());
+    }
+
+    public void restoreDefaultGeometry(Inspector inspector) {
+        final Rectangle defaultFrameGeometry = inspector.defaultGeometry();
+        if (defaultFrameGeometry != null) {
+            inspector.setGeometry(defaultFrameGeometry);
+        } else {
             moveToMiddle(inspector);
         }
-        return component.getBounds();
     }
 
-    public  Rectangle moveToExposeDefaultMenu(Inspector inspector) {
-        JComponent component = inspector.getJComponent();
-        final Point location = component.getLocation();
-        if (location.x < 0 || location.y < 0) {
-            component.setLocation(Math.max(location.x, 0), Math.max(location.y, 0));
-        }
-        return component.getBounds();
-    }
-
-    public Rectangle resizeToFit(Inspector inspector) {
-        final JComponent component = inspector.getJComponent();
-        Rectangle geometry = component.getBounds();
-        final int newWidth = (Math.min(getWidth(), geometry.x + geometry.width)) - geometry.x;
-        final int newHeight = (Math.min(getHeight(), geometry.y + geometry.height)) - geometry.y;
-        component.setBounds(geometry.x, geometry.y, newWidth, newHeight);
-        return component.getBounds();
-    }
-
-    public Rectangle resizeToFill(Inspector inspector) {
-        final JComponent component = inspector.getJComponent();
-        component.setBounds(0, 0, getWidth(), getHeight());
-        return component.getBounds();
-    }
-
-    public Rectangle restoreDefaultGeometry(Inspector inspector) {
-        final Rectangle defaultFrameGeometry = inspector.defaultGeometry();
-        final JComponent component = inspector.getJComponent();
-        if (defaultFrameGeometry != null) {
-            component.setBounds(defaultFrameGeometry);
-            return defaultFrameGeometry;
-        }
-        moveToMiddle(inspector);
-        return component.getBounds();
-    }
-
-    public void setLocationRelativeToMouse(JDialog dialog, int offset) {
-        final Point location = mostRecentMouseLocation;
-        location.translate(offset, offset);
-        dialog.setLocation(location);
-    }
-
-    public void moveToMiddle(JDialog dialog) {
-        final Point middle = getMiddle(dialog);
-        middle.translate(getX(), getY());
-        dialog.setLocation(middle);
+    public void setLocationRelativeToMouse(JDialog dialog, int diagonalOffset) {
+        final Point mouse = mostRecentMouseLocation;
+        dialog.setLocation(mouse.x + diagonalOffset, mouse.y + diagonalOffset);
     }
 
     public Frame frame() {
@@ -510,57 +521,34 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return unavailableDataTableCellRenderer;
     }
 
-    private Point getMiddle(Component component) {
-        final Point point = new Point((getWidth() / 2) - (component.getWidth() / 2), (getHeight() / 2) - (component.getHeight() / 2));
-        if (point.y < 0) {
-            point.y = 0;
-        }
-        return point;
-    }
-
-    private Point getMiddle(InspectorInternalFrame frame) {
-        final Point point = new Point((getWidth() / 2) - (frame.getWidth() / 2), (getHeight() / 2) - (frame.getHeight() / 2));
-        if (point.y < 0) {
-            point.y = 0;
-        }
-        return point;
-    }
-
     /**
      * Set frame location to a point displaced by specified amount from the most recently known mouse position.
      */
-    private Rectangle setLocationRelativeToMouse(Inspector inspector, int xOffset, int yOffset) {
-        final Point location = mostRecentMouseLocation;
-        location.translate(xOffset, yOffset);
-        return setLocationOnScreen(inspector, location);
+    private void setLocationRelativeToMouse(Inspector inspector, int xOffset, int yOffset) {
+        final JComponent component = inspector.getJComponent();
+        final int width = component.getWidth();
+        final int height = component.getHeight();
+        final Rectangle paneBounds = scrollPane.getBounds();
+        final Point mouse = mostRecentMouseLocation;
+
+        // Try a location down and to the right of the mouse
+        Rectangle newBounds = new Rectangle(mouse.x + xOffset, mouse.y + yOffset, width, height);
+        if (paneBounds.contains(newBounds)) {
+            component.setBounds(newBounds);
+        } else {
+            // Doesn't fit fully; try a location up and to the left
+            newBounds = new Rectangle((mouse.x - xOffset) - width, (mouse.y - yOffset) - height, width, height);
+            if (paneBounds.contains(newBounds)) {
+                component.setBounds(newBounds);
+            } else {
+                // Doesn't fit fully there either; give up and go for the middle.
+                moveToMiddle(component);
+            }
+        }
     }
 
-    private Rectangle setLocationOnScreen(Inspector inspector, Point locationOnScreen) {
-        final Point origin = getContentPane().getLocationOnScreen();
-        final Point location = new Point(locationOnScreen.x - origin.x, locationOnScreen.y - origin.y);
-        final Rectangle geometry = getBounds();
-        final JComponent frame = inspector.getJComponent();
-
-        if (frame.getWidth() > geometry.width) {
-            frame.setSize(geometry.width, frame.getHeight());
-        }
-        if (frame.getHeight() > geometry.height) {
-            frame.setSize(frame.getWidth(), geometry.height);
-        }
-
-        if (location.x <= -frame.getWidth()) {
-            location.x = 0;
-        } else if (location.x >= geometry.width) {
-            location.x = geometry.width - frame.getWidth();
-        }
-
-        if (location.y < 0) {
-            location.y = 0;
-        } else if (location.y >= geometry.height) {
-            location.y = geometry.height - frame.getHeight();
-        }
-        frame.setLocation(location);
-        return frame.getBounds();
+    private boolean isFullyVisible(Component component) {
+        return scrollPane.getBounds().contains(component.getBounds());
     }
 
     /**

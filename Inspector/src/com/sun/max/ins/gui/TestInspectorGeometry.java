@@ -103,17 +103,10 @@ public class TestInspectorGeometry implements InspectorGeometry {
     }
 
     // Offset from mouse location for new frames
-    public static final int defaultNewFrameXOffset = 50;
-    public static final int defaultNewFrameYOffset = 50;
-    public static final int objectInspectorNewFrameDiagonalOffset = 5;
-    public int defaultNewFrameXOffset() {
-        return defaultNewFrameXOffset;
-    }
-    public int defaultNewFrameYOffset() {
-        return defaultNewFrameYOffset;
-    }
-    public int objectInspectorNewFrameDiagonalOffset() {
-        return objectInspectorNewFrameDiagonalOffset;
+    public static final int newFrameDiagonalOffset = 5;
+
+    public int newFrameDiagonalOffset() {
+        return newFrameDiagonalOffset;
     }
 
 }

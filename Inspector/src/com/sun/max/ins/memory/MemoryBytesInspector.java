@@ -96,8 +96,8 @@ public final class MemoryBytesInspector extends Inspector {
         memoryMenu.add(viewMemoryRegionsMenuItem);
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
-        originalFrameGeometry = inspection.gui().setLocationRelativeToMouse(this);
+        inspection.gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
+        originalFrameGeometry = getGeometry();
         memoryInspectors.add(this);
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
     }

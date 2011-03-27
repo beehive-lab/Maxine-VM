@@ -96,7 +96,5 @@ public interface InspectorGeometry {
     Dimension javaSourcePrefFrameSize();
 
     // Offset from mouse location for new frames
-    int defaultNewFrameXOffset();
-    int defaultNewFrameYOffset();
-    int objectInspectorNewFrameDiagonalOffset();
+    int newFrameDiagonalOffset();
 }
