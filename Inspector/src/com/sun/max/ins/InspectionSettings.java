@@ -262,11 +262,7 @@ public class InspectionSettings {
         if (newGeometry != null && !newGeometry.equals(oldGeometry)) {
             inspector.getJComponent().setBounds(newGeometry);
         }
-        // We've forced locations to be >=0, even if on some platforms (Darwin?) we sometimes see
-        // negative locations when a window is positioned close to either the left or top border.
-        // The following test checks to see if the Inspector is completely within the boundaries
-        // of the Inspector's frame, and those negative values would make it appear to be outside.
-        inspection.gui().moveToMiddleIfNotVisble(inspector);
+        inspection.gui().moveToFullyVisible(inspector);
     }
 
     /**

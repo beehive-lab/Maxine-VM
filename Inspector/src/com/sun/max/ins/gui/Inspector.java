@@ -202,11 +202,28 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
-     * @return default geometry for this inspector, to be used if no prior settings; null if no default specified.
+     * @return default geometry for this Inspector, to be used if no prior settings; null if no default specified.
      */
     protected Rectangle defaultGeometry() {
         return null;
     }
+
+    /**
+     * @return the current geometry for this Inspector in the main frame
+     */
+    protected final Rectangle getGeometry() {
+        return getJComponent().getBounds();
+    }
+
+    /**
+     * Sets the geometry of the Inspector in the main frame.
+     *
+     * @param rectangle the new geometry for the Inspector
+     */
+    public final void setGeometry(Rectangle rectangle) {
+        getJComponent().setBounds(rectangle);
+    }
+
 
     /**
      * Gets an object that is an adapter between the inspection's persistent {@linkplain Inspection#settings()}

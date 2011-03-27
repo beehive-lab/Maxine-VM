@@ -337,9 +337,8 @@ public final class MemoryInspector extends Inspector {
         memoryMenu.add(viewMemoryRegionsMenuItem);
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
-        originalFrameGeometry = gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
-
+        gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
+        originalFrameGeometry = getGeometry();
         table.scrollToOrigin();
        // table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
     }
