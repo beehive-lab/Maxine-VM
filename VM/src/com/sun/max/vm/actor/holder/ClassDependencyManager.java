@@ -773,18 +773,16 @@ public final class ClassDependencyManager {
      * Propagate changes resulting from adding a new sub-type to a type up the ancestry of that type.
      * The ancestry of the type is walked up, assumptions made on sub-type relationships are re-evaluated, those that
      * became invalid are removed, and the unique concrete sub-type information is updated.
-     *
-     * @param newConcreteSubtype
      * @param superType
+     * @param newConcreteSubtype
      */
-    private static void propagateConcreteSubType(ClassActor newConcreteSubType, ClassActor superType, HashSet<InterfaceActor> implementedInterfaces) {
+    private static void propagateConcreteSubType(ClassActor newConcreteSubType, ClassActor superType) {
         final int concreteSubtypeID = newConcreteSubType.id;
         ClassActor ancestor = superType;
         // Update all the ancestors without a concrete sub-type with the unique concrete sub-type.
         while (ancestor.uniqueConcreteType == NO_CONCRETE_SUBTYPE_MARK) {
             // No single concrete sub-type has been recorded for this ancestor yet.
             ancestor.uniqueConcreteType = concreteSubtypeID;
-            addLocalInterfaces(ancestor, implementedInterfaces);
             ancestor = ancestor.superClassActor;
         }
         // We reached an ancestor with at least one concrete sub-type (either it is one itself,
@@ -795,7 +793,6 @@ public final class ClassDependencyManager {
             // Reached an ancestor that had a unique-concrete sub-type.
             // This isn't true anymore, so update the mark.
             ancestor.uniqueConcreteType = HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK;
-            addLocalInterfaces(ancestor, implementedInterfaces);
             ancestor = ancestor.superClassActor;
             if (MaxineVM.isDebug()) {
                 FatalError.check(ancestor.uniqueConcreteType != NO_CONCRETE_SUBTYPE_MARK, "must have at least one concrete sub-type");
@@ -811,7 +808,6 @@ public final class ClassDependencyManager {
         // Hence this loop.
         while (ancestor != null) {
             dependentTargetMethodTable.flushInvalidDependentAssumptions(ancestor, newConcreteSubType);
-            addLocalInterfaces(ancestor, implementedInterfaces);
             ancestor = ancestor.superClassActor;
         }
     }
@@ -840,14 +836,15 @@ public final class ClassDependencyManager {
                 // Can only be the class actor for java.lang.Object
                 return;
             }
-            HashSet<InterfaceActor> implementedInterfaces = new HashSet<InterfaceActor>(10);
+            HashSet<InterfaceActor> implementedInterfaces = classActor.getAllInterfaceActors();
             // Next, update unique concrete sub-type information of super-classes.
-            propagateConcreteSubType(classActor, ancestor, implementedInterfaces);
+            propagateConcreteSubType(classActor, ancestor);
 
             // Last, update the unique concrete sub-type of the interfaces the class implements.
             for (ClassActor implemented : classActor.localInterfaceActors()) {
-                propagateConcreteSubType(classActor, implemented, implementedInterfaces);
+                propagateConcreteSubType(classActor, implemented);
             }
+
             for (InterfaceActor implemented : implementedInterfaces) {
                 propagateConcreteSubType(classActor, implemented);
             }
