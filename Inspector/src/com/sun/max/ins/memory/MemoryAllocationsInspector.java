@@ -42,40 +42,40 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryRegionsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class MemoryAllocationsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 2;
 
     // Set to null when inspector closed.
-    private static MemoryRegionsInspector memoryRegionsInspector;
+    private static MemoryAllocationsInspector memoryAllocationsInspector;
 
     /**
-     * Displays the (singleton) MemoryRegions inspector.
-     * @return  The MemoryRegions inspector, possibly newly created.
+     * Displays the (singleton) MemoryAllocations inspector.
+     * @return  the inspector, possibly newly created.
      */
-    public static MemoryRegionsInspector make(Inspection inspection) {
-        if (memoryRegionsInspector == null) {
-            memoryRegionsInspector = new MemoryRegionsInspector(inspection);
+    public static MemoryAllocationsInspector make(Inspection inspection) {
+        if (memoryAllocationsInspector == null) {
+            memoryAllocationsInspector = new MemoryAllocationsInspector(inspection);
         }
-        return memoryRegionsInspector;
+        return memoryAllocationsInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "memoryRegionsInspectorGeometry");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "memoryAllocationsInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final MemoryRegionsViewPreferences viewPreferences;
+    private final MemoryAllocationsViewPreferences viewPreferences;
     private InspectorPanel contentPane;
 
-    private MemoryRegionsTable table;
+    private MemoryAllocationsTable table;
 
     private TableRowFilterToolBar filterToolBar = null;
     private JCheckBoxMenuItem showFilterCheckboxMenuItem;
     private int[] filterMatchingRows = null;
 
-    private MemoryRegionsInspector(Inspection inspection) {
+    private MemoryAllocationsInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1, tracePrefix() + "initializing");
-        viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
+        viewPreferences = MemoryAllocationsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
         showFilterCheckboxMenuItem = new InspectorCheckBox(inspection, "Filter view", "Show Filter Field", false);
         showFilterCheckboxMenuItem.addItemListener(new ItemListener() {
@@ -107,15 +107,15 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
 
     @Override
     protected Rectangle defaultGeometry() {
-        return inspection().geometry().memoryRegionsDefaultFrameGeometry();
+        return inspection().geometry().memoryAllocationsDefaultFrameGeometry();
     }
 
     @Override
     protected void createView() {
-        table = new MemoryRegionsTable(inspection(), viewPreferences);
-        final InspectorScrollPane memoryRegionsScrollPane = new InspectorScrollPane(inspection(), table);
+        table = new MemoryAllocationsTable(inspection(), viewPreferences);
+        final InspectorScrollPane memoryAllocationsScrollPane = new InspectorScrollPane(inspection(), table);
         contentPane = new InspectorPanel(inspection(), new BorderLayout());
-        contentPane.add(memoryRegionsScrollPane, BorderLayout.CENTER);
+        contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);
         setContentPane(contentPane);
     }
 
@@ -164,7 +164,7 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
 
     @Override
     public String getTextForTitle() {
-        return "MemoryRegions";
+        return "MemoryAllocations";
     }
 
     @Override
@@ -172,7 +172,7 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryRegionsColumnKind>(inspection(), "Memory Regions View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryAllocationsColumnKind>(inspection(), "Memory Regions View Options", viewPreferences);
             }
         };
     }
@@ -215,7 +215,7 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        memoryRegionsInspector = null;
+        memoryAllocationsInspector = null;
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
@@ -223,7 +223,7 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
     @Override
     public void vmProcessTerminated() {
         Trace.line(1, tracePrefix() + " closing - process terminated");
-        memoryRegionsInspector = null;
+        memoryAllocationsInspector = null;
         viewPreferences.removeListener(this);
         dispose();
     }

@@ -857,20 +857,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  makes visible and highlights the {@link MemoryRegionsInspector}.
+     * Action:  makes visible and highlights the {@link MemoryAllocationsInspector}.
      */
-    final class ViewMemoryRegionsAction extends InspectorAction {
+    final class ViewMemoryAllocationsAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Memory regions";
+        private static final String DEFAULT_TITLE = "Memory allocations";
 
-        ViewMemoryRegionsAction(String actionTitle) {
+        ViewMemoryAllocationsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
         }
 
         @Override
         protected void procedure() {
-            MemoryRegionsInspector.make(inspection()).highlight();
+            MemoryAllocationsInspector.make(inspection()).highlight();
         }
 
         @Override
@@ -879,13 +879,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private InspectorAction viewMemoryRegions = new ViewMemoryRegionsAction(null);
+    private InspectorAction viewMemoryAllocations = new ViewMemoryAllocationsAction(null);
 
     /**
-     * @return an Action that will make visible the {@link MemoryRegionsInspector}.
+     * @return an Action that will make visible the {@link MemoryAllocationsInspector}.
      */
-    public final InspectorAction viewMemoryRegions() {
-        return viewMemoryRegions;
+    public final InspectorAction viewMemoryAllocations() {
+        return viewMemoryAllocations;
     }
 
     /**
@@ -1363,9 +1363,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Menu: display a sub-menu of commands to inspect the basic allocation
      * regions of the VM.
      */
-    final class InspectMemoryRegionsMenu extends JMenu {
-        public InspectMemoryRegionsMenu() {
-            super("Inspect memory region");
+    final class InspectMemoryAllocationsMenu extends JMenu {
+        public InspectMemoryAllocationsMenu() {
+            super("Inspect memory allocataion");
             addMenuListener(new MenuListener() {
 
                 public void menuCanceled(MenuEvent e) {
@@ -1377,7 +1377,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 public void menuSelected(MenuEvent e) {
                     removeAll();
                     final SortedSet<MaxMemoryRegion> regionSet = new TreeSet<MaxMemoryRegion>(MaxMemoryRegion.Util.nameComparator());
-                    regionSet.addAll(vm().state().memoryRegions());
+                    regionSet.addAll(vm().state().memoryAllocations());
                     for (MaxMemoryRegion memoryRegion : regionSet) {
                         //System.out.println(memoryRegion.toString());
                         add(actions().inspectRegionMemory(memoryRegion, memoryRegion.regionName(), memoryRegion.regionName()));
@@ -1388,7 +1388,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Creates a menu of actions to inspect memory regions.
+     * Creates a menu of actions to inspect allocated memory regions.
      * <br>
      * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
      * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
@@ -1396,8 +1396,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @return a dynamically populated menu that contains an action to inspect each currently allocated
      * region of memory in the VM.
      */
-    public final JMenu inspectMemoryRegionsMenu() {
-        return new InspectMemoryRegionsMenu();
+    public final JMenu inspectMemoryAllocationsMenu() {
+        return new InspectMemoryAllocationsMenu();
     }
 
     /**
@@ -5243,7 +5243,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public InspectorMenuItems genericMemoryMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
-                menu.add(inspectMemoryRegionsMenu());
+                menu.add(inspectMemoryAllocationsMenu());
                 menu.add(inspectMemory());
                 menu.add(inspectMemoryBytes());
                 menu.add(memoryInspectorsMenu());
@@ -5355,7 +5355,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(actions().viewBootImage());
                 menu.add(actions().viewBreakpoints());
                 menu.add(actions().memoryInspectorsMenu());
-                menu.add(actions().viewMemoryRegions());
+                menu.add(actions().viewMemoryAllocations());
                 menu.add(actions().viewMethodCode());
                 menu.add(actions().viewNotepad());
                 menu.add(actions().objectInspectorsMenu());

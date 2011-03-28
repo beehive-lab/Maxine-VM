@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,11 @@ package com.sun.max.ins.memory;
 import com.sun.max.ins.debug.*;
 
 /**
- * Defines the columns that can be displayed describing a memory region in the VM.
+ * Defines the columns that can be displayed describing a region of allocated memory in the VM.
  *
  * @author Michael Van De Vanter
  */
-public enum MemoryRegionsColumnKind implements ColumnKind {
+public enum MemoryAllocationsColumnKind implements ColumnKind {
 
     TAG("Tag", "Additional information", true, -1),
     NAME("Name", "Role played by the region", true, -1) {
@@ -49,7 +49,7 @@ public enum MemoryRegionsColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private MemoryRegionsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    private MemoryAllocationsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;
