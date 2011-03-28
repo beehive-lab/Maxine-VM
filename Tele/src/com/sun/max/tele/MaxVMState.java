@@ -85,7 +85,7 @@ public interface MaxVMState  {
      *
      * @return the regions of memory that the VM has allocated from the OS.
      */
-    List<MaxMemoryRegion> memoryRegions();
+    List<MaxMemoryRegion> memoryAllocations();
 
     /**
      * Enumerates all threads live in the VM at this state transition.

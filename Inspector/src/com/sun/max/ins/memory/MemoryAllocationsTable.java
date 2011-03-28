@@ -41,19 +41,19 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A table specialized for displaying the memory regions in the VM.
+ * A table specialized for displaying the memory allocations in the VM.
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryRegionsTable extends InspectorTable {
+public final class MemoryAllocationsTable extends InspectorTable {
 
-    private final MemoryRegionsTableModel tableModel;
-    private final MemoryRegionsColumnModel columnModel;
+    private final MemoryAllocationsTableModel tableModel;
+    private final MemoryAllocationsColumnModel columnModel;
 
-    MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
+    MemoryAllocationsTable(Inspection inspection, MemoryAllocationsViewPreferences viewPreferences) {
         super(inspection);
-        this.tableModel = new MemoryRegionsTableModel(inspection);
-        this.columnModel = new MemoryRegionsColumnModel(this, this.tableModel, viewPreferences);
+        this.tableModel = new MemoryAllocationsTableModel(inspection);
+        this.columnModel = new MemoryAllocationsColumnModel(this, this.tableModel, viewPreferences);
         configureDefaultTable(tableModel, columnModel);
     }
 
@@ -94,7 +94,7 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     /**
      * {@inheritDoc}.
-     * <br>
+     * <p>
      * Color the text specially in the row where a watchpoint is triggered
      */
     @Override
@@ -116,16 +116,16 @@ public final class MemoryRegionsTable extends InspectorTable {
         tableModel.setDisplayedRows(displayedRows);
     }
 
-    private final class MemoryRegionsColumnModel extends InspectorTableColumnModel<MemoryRegionsColumnKind> {
+    private final class MemoryAllocationsColumnModel extends InspectorTableColumnModel<MemoryAllocationsColumnKind> {
 
-        private MemoryRegionsColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, MemoryRegionsViewPreferences viewPreferences) {
-            super(MemoryRegionsColumnKind.values().length, viewPreferences);
-            addColumn(MemoryRegionsColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(MemoryRegionsColumnKind.NAME, new NameCellRenderer(), null);
-            addColumn(MemoryRegionsColumnKind.START, new StartAddressCellRenderer(), null);
-            addColumn(MemoryRegionsColumnKind.END, new EndAddressCellRenderer(), null);
-            addColumn(MemoryRegionsColumnKind.SIZE, new SizeCellRenderer(), null);
-            addColumn(MemoryRegionsColumnKind.ALLOC, new AllocCellRenderer(), null);
+        private MemoryAllocationsColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, MemoryAllocationsViewPreferences viewPreferences) {
+            super(MemoryAllocationsColumnKind.values().length, viewPreferences);
+            addColumn(MemoryAllocationsColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(MemoryAllocationsColumnKind.NAME, new NameCellRenderer(), null);
+            addColumn(MemoryAllocationsColumnKind.START, new StartAddressCellRenderer(), null);
+            addColumn(MemoryAllocationsColumnKind.END, new EndAddressCellRenderer(), null);
+            addColumn(MemoryAllocationsColumnKind.SIZE, new SizeCellRenderer(), null);
+            addColumn(MemoryAllocationsColumnKind.ALLOC, new AllocCellRenderer(), null);
         }
     }
 
@@ -134,20 +134,20 @@ public final class MemoryRegionsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class MemoryRegionsTableModel extends InspectorMemoryTableModel {
+    private final class MemoryAllocationsTableModel extends InspectorMemoryTableModel {
 
         private MaxMemoryRegion[] sortedRegions = null;
         private int[] displayedRows = null;
 
-        public MemoryRegionsTableModel(Inspection inspection) {
+        public MemoryAllocationsTableModel(Inspection inspection) {
             super(inspection, Address.zero());
             refresh();
         }
 
         @Override
         public void refresh() {
-            final List<MaxMemoryRegion> memoryRegions = vm().state().memoryRegions();
-            sortedRegions = memoryRegions.toArray(new MaxMemoryRegion[memoryRegions.size()]);
+            final List<MaxMemoryRegion> memoryAllocations = vm().state().memoryAllocations();
+            sortedRegions = memoryAllocations.toArray(new MaxMemoryRegion[memoryAllocations.size()]);
             Arrays.sort(sortedRegions, MaxMemoryRegion.Util.startComparator());
             // Flush any filtering
             displayedRows = null;
@@ -164,7 +164,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return MemoryRegionsColumnKind.values().length;
+            return MemoryAllocationsColumnKind.values().length;
         }
 
         @Override
@@ -275,7 +275,7 @@ public final class MemoryRegionsTable extends InspectorTable {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
             InspectorLabel label = regionToLabel.get(memoryRegion);
             if (label == null) {
-                label = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
+                label = new WordValueLabel(inspection(), ValueMode.WORD, MemoryAllocationsTable.this) {
 
                     @Override
                     public Value fetchValue() {
@@ -313,7 +313,7 @@ public final class MemoryRegionsTable extends InspectorTable {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
             InspectorLabel label = regionToLabel.get(memoryRegion);
             if (label == null) {
-                label = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
+                label = new WordValueLabel(inspection(), ValueMode.WORD, MemoryAllocationsTable.this) {
 
                     @Override
                     public Value fetchValue() {
@@ -349,7 +349,7 @@ public final class MemoryRegionsTable extends InspectorTable {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
             InspectorLabel label = regionToLabel.get(memoryRegion);
             if (label == null) {
-                label = new MemoryRegionSizeLabel(inspection(), memoryRegion);
+                label = new MemoryAllocationsSizeLabel(inspection(), memoryRegion);
                 regionToLabel.put(memoryRegion, label);
             }
             // Can't set the prefix (row description) permanently on the label, as they
@@ -381,7 +381,7 @@ public final class MemoryRegionsTable extends InspectorTable {
             final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) value;
             InspectorLabel label = regionToLabel.get(memoryRegion);
             if (label == null) {
-                label = new MemoryRegionAllocationLabel(inspection(), memoryRegion, MemoryRegionsTable.this);
+                label = new MemoryRegionAllocationLabel(inspection(), memoryRegion, MemoryAllocationsTable.this);
                 regionToLabel.put(memoryRegion, label);
             }
             label.setToolTipPrefix(tableModel.getRowDescription(row) + "<br>Alloc = ");

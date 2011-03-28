@@ -26,11 +26,11 @@ import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 /**
- * A label that displays the allocation percentage of a known VM memory region and acts as a drag source.
+ * A label that displays the allocation percentage of an allocated VM memory region and acts as a drag source.
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryRegionSizeLabel extends AbstractMemoryRegionLabel implements Prober {
+public final class MemoryAllocationsSizeLabel extends AbstractMemoryRegionLabel implements Prober {
 
     /**
      * Returns a that displays the name of a known VM memory region
@@ -39,7 +39,7 @@ public final class MemoryRegionSizeLabel extends AbstractMemoryRegionLabel imple
      * @param inspection
      * @param memoryRegion a memory region in the VM
      */
-    public MemoryRegionSizeLabel(Inspection inspection, MaxMemoryRegion memoryRegion) {
+    public MemoryAllocationsSizeLabel(Inspection inspection, MaxMemoryRegion memoryRegion) {
         super(inspection, memoryRegion);
         redisplay();
     }

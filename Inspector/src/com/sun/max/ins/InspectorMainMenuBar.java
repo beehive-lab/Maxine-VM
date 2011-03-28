@@ -110,9 +110,9 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     private InspectorMenu createMemoryMenu() {
         final InspectorMenu menu = new InspectorMenu("Memory");
         menu.add(actions.genericMemoryMenuItems());
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        menu.add(viewMemoryRegionsMenuItem);
+        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
+        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
+        menu.add(viewMemoryAllocationsMenuItem);
         return menu;
     }
 

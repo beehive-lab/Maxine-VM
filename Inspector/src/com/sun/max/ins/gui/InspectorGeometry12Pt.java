@@ -78,7 +78,7 @@ public class InspectorGeometry12Pt implements InspectorGeometry {
         return new Rectangle(1150, 170, 450, 730);
     }
 
-    public Rectangle memoryRegionsDefaultFrameGeometry() {
+    public Rectangle memoryAllocationsDefaultFrameGeometry() {
         return new Rectangle(100, 100, 450, 250);
     }
 

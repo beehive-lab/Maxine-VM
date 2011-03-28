@@ -82,7 +82,7 @@ public class TestInspectorGeometry implements InspectorGeometry {
         return testFrameDefaultGeometry;
     }
 
-    public Rectangle memoryRegionsDefaultFrameGeometry() {
+    public Rectangle memoryAllocationsDefaultFrameGeometry() {
         return testFrameDefaultGeometry;
     }
 

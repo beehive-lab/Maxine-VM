@@ -77,9 +77,9 @@ public interface InspectorGeometry {
     Rectangle threadLocalsDefaultFrameGeometry();
 
     /**
-     * @return default geometry for the {@link MemoryRegionsInspector}.
+     * @return default geometry for the {@link MemoryAllocationsInspector}.
      */
-    Rectangle memoryRegionsDefaultFrameGeometry();
+    Rectangle memoryAllocationsDefaultFrameGeometry();
 
     /**
      * @return default geometry for the {@link BootImageInspector}.

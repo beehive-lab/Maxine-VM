@@ -213,9 +213,9 @@ public final class NotepadInspector extends Inspector {
         final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
         objectMenu.add(inspectSelectedAddressObjectAction);
         objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        memoryMenu.add(viewMemoryRegionsMenuItem);
+        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
+        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
+        memoryMenu.add(viewMemoryAllocationsMenuItem);
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
 

@@ -55,7 +55,7 @@ public final class TeleVMState implements MaxVMState {
     private final MaxProcessState processState;
     private final long serialID;
     private final long epoch;
-    private final List<MaxMemoryRegion> memoryRegions;
+    private final List<MaxMemoryRegion> memoryAllocations;
     private final List<MaxThread> threads;
     private final MaxThread singleStepThread;
     private final List<MaxThread> threadsStarted;
@@ -68,7 +68,7 @@ public final class TeleVMState implements MaxVMState {
     /**
      * @param processState current state of the VM
      * @param epoch current process epoch counter
-     * @param memoryRegions memory regions the VM has allocated from the OS
+     * @param memoryAllocations memory regions the VM has allocated from the OS
      * @param threads threads currently active in the VM
      * @param singleStepThread thread just single-stepped, null if none
      * @param threadsStarted threads created since the previous state
@@ -81,7 +81,7 @@ public final class TeleVMState implements MaxVMState {
     public TeleVMState(
                     ProcessState processState,
                     long epoch,
-                    List<MaxMemoryRegion> memoryRegions,
+                    List<MaxMemoryRegion> memoryAllocations,
                     Collection<TeleNativeThread> threads,
                     TeleNativeThread singleStepThread,
                     List<TeleNativeThread> threadsStarted,
@@ -106,10 +106,10 @@ public final class TeleVMState implements MaxVMState {
         this.epoch = epoch;
 
         // Reuse old list of memory regions if unchanged
-        if (previous != null && previous.memoryRegions.equals(memoryRegions)) {
-            this.memoryRegions = previous.memoryRegions;
+        if (previous != null && previous.memoryAllocations.equals(memoryAllocations)) {
+            this.memoryAllocations = previous.memoryAllocations;
         } else {
-            this.memoryRegions = Collections.unmodifiableList(memoryRegions);
+            this.memoryAllocations = Collections.unmodifiableList(memoryAllocations);
         }
 
         this.singleStepThread = singleStepThread;
@@ -161,8 +161,8 @@ public final class TeleVMState implements MaxVMState {
         return epoch;
     }
 
-    public List<MaxMemoryRegion> memoryRegions() {
-        return memoryRegions;
+    public List<MaxMemoryRegion> memoryAllocations() {
+        return memoryAllocations;
     }
 
     public List<MaxThread> threads() {
@@ -230,11 +230,11 @@ public final class TeleVMState implements MaxVMState {
             if (state.singleStepThread() != null) {
                 printStream.println("\tsingle-stepped=" + state.singleStepThread().toShortString());
             }
-            if (state.previous() != null && state.memoryRegions() == state.previous().memoryRegions()) {
+            if (state.previous() != null && state.memoryAllocations() == state.previous().memoryAllocations()) {
                 printStream.println("\tmemory regions: <unchanged>");
             } else {
                 printStream.println("\tmemory regions:");
-                for (MaxMemoryRegion memoryRegion : state.memoryRegions()) {
+                for (MaxMemoryRegion memoryRegion : state.memoryAllocations()) {
                     printStream.println("\t\t" + memoryRegion.getClass().getName() + "(\"" + memoryRegion.regionName() + "\" @ 0x" + memoryRegion.start().toHexString() + ")");
                 }
             }
