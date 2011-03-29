@@ -2020,7 +2020,7 @@ JVM_Timeout(int fd, long timeout) {
     prevtime = ((Unsigned8)t.tv_sec * 1000)  +  t.tv_usec / 1000;
 
     for(;;) {
-      INTERRUPTIBLE_NORESTART(poll(&pfd, 1, timeout), res, true);
+      int res = poll(&pfd, 1, timeout);
       if(res == OS_ERR && errno == EINTR) {
           if(timeout != -1) {
             gettimeofday(&t, &aNull);
