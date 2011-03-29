@@ -147,7 +147,7 @@ public abstract class Safepoint {
      *     }
      * </pre>
      *
-     * @return true if this call caused safepoints to be disabled (i.e. they were enabled upon entry to this method)
+     * @return true if safepoints were disabled upon entry to this method
      */
     @INLINE
     public static boolean disable() {
