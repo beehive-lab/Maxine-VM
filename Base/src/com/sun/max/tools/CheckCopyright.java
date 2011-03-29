@@ -230,9 +230,13 @@ public class CheckCopyright {
         for (String fileName : fileNames) {
             if (projects == null || isInProjects(fileName, projects)) {
                 Trace.line(1, "checking " + fileName);
-                final List<String> logInfo = hglog(fileName);
-                final Info info = getInfo(fileName, true, logInfo);
-                checkFile(fileName, info);
+                try {
+                    final List<String> logInfo = hglog(fileName);
+                    final Info info = getInfo(fileName, true, logInfo);
+                    checkFile(fileName, info);
+                } catch (ProgramError e) {
+                    System.err.println("COPYRIGHT CHECK WARNING: error while processing " + fileName);
+                }
             }
         }
     }

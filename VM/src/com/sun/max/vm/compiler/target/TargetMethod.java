@@ -222,15 +222,58 @@ public abstract class TargetMethod extends MemoryRegion {
     /**
      * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
      * location in the returned sequence is the one at the closest position less or equal to the position denoted by
-     * {@code instructionPointer}.
+     * {@code ip}.
      *
+     * @param targetMethod the target method to process
      * @param ip a pointer to an instruction within this method
      * @param ipIsReturnAddress
-     * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
-     *         no bytecode location can be determined for {@code instructionPointer}.
+     * @return the bytecode locations for the inlining chain rooted at {@code ip}. This will be null if
+     *         no bytecode location can be determined for {@code ip}.
      */
-    public CiCodePos getCodePos(Pointer instructionPointer, boolean ipIsReturnAddress) {
-        return null;
+    public static CiCodePos getCodePos(TargetMethod targetMethod, Pointer ip, boolean ipIsReturnAddress) {
+        class Caller {
+            final ClassMethodActor method;
+            final int bci;
+            final Caller next;
+            Caller(ClassMethodActor method, int bci, Caller next) {
+                this.method = method;
+                this.bci = bci;
+                this.next = next;
+            }
+            CiCodePos toCiCodePos(CiCodePos caller) {
+                CiCodePos pos = new CiCodePos(caller, method, bci);
+                if (next != null) {
+                    return next.toCiCodePos(pos);
+                }
+                return pos;
+            }
+        }
+        final Caller[] head = {null};
+        CodePosClosure cpc = new CodePosClosure() {
+            public boolean doCodePos(ClassMethodActor method, int bci) {
+                head[0] = new Caller(method, bci, head[0]);
+                return true;
+            }
+        };
+        targetMethod.forEachCodePos(cpc, ip, ipIsReturnAddress);
+        if (head[0] == null) {
+            return null;
+        }
+        return head[0].toCiCodePos(null);
+    }
+
+    /**
+     * Iterates over the bytecode locations for the inlining chain rooted at a given instruction pointer.
+     *
+     * @param cpc a closure called for each bytecode location in the inlining chain rooted at {@code ip} (inner most
+     *            callee first)
+     * @param ip a pointer to an instruction within this method
+     * @param ipIsReturnAddress
+     * @return the number of bytecode locations iterated over (i.e. the number of times
+     *         {@link CodePosClosure#doCodePos(ClassMethodActor, int)} was called
+     */
+    public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
+        return 0;
     }
 
     /**
@@ -529,15 +572,15 @@ public abstract class TargetMethod extends MemoryRegion {
     /**
      * Gets the target code position for a machine code instruction address.
      *
-     * @param instructionPointer
+     * @param ip
      *                an instruction pointer that may denote an instruction in this target method
      * @return the start position of the bytecode instruction that is implemented at the instruction pointer or
-     *         -1 if {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will
-     *         be the case when {@code instructionPointer} is in the adapter frame stub code, prologue or epilogue.
+     *         -1 if {@code ip} denotes an instruction that does not correlate to any bytecode. This will
+     *         be the case when {@code ip} is in the adapter frame stub code, prologue or epilogue.
      */
-    public final int posFor(Pointer instructionPointer) {
-        final int pos = instructionPointer.minus(codeStart).toInt();
-        if (pos >= 0 && pos < code.length) {
+    public final int posFor(Address ip) {
+        final int pos = ip.minus(codeStart).toInt();
+        if (pos >= 0 && pos <= code.length) {
             return pos;
         }
         return -1;
@@ -590,15 +633,15 @@ public abstract class TargetMethod extends MemoryRegion {
      * instruction pointer is equal to a safepoint position, then the index in {@link #stopPositions()} of that
      * safepoint is returned. Otherwise, the index of the highest stop position that is less than or equal to the
      * (possibly adjusted) target code position
-     * denoted by the instruction pointer is returned.  That is, if {@code instructionPointer} does not exactly match a
+     * denoted by the instruction pointer is returned.  That is, if {@code ip} does not exactly match a
      * stop position 'p' for a direct or indirect call, then the index of the highest stop position less than
      * 'p' is returned.
      *
-     * @return -1 if no stop index can be found for {@code instructionPointer}
+     * @return -1 if no stop index can be found for {@code ip}
      * @see #stopPositions()
      */
-    public int findClosestStopIndex(Pointer instructionPointer) {
-        final int pos = posFor(instructionPointer);
+    public int findClosestStopIndex(Pointer ip) {
+        final int pos = posFor(ip);
         if (stopPositions == null || pos < 0 || pos > code.length) {
             return -1;
         }
@@ -693,8 +736,16 @@ public abstract class TargetMethod extends MemoryRegion {
             protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
                 String string = super.disassembledObjectString(disassembler, disassembledObject);
                 if (string.startsWith("call ")) {
-                    final Pointer instructionPointer = startAddress.plus(disassembledObject.startPosition());
-                    CiCodePos codePos = getCodePos(instructionPointer, true);
+                    final Pointer ip = startAddress.plus(disassembledObject.startPosition());
+                    final CiCodePos[] result = {null};
+                    CodePosClosure cpc = new CodePosClosure() {
+                        public boolean doCodePos(ClassMethodActor method, int bci) {
+                            result[0] = new CiCodePos(null, method, bci);
+                            return false;
+                        }
+                    };
+                    forEachCodePos(cpc, ip, true);
+                    CiCodePos codePos = result[0];
                     if (codePos != null) {
                         byte[] code = codePos.method.code();
                         int bci = codePos.bci;
@@ -827,8 +878,6 @@ public abstract class TargetMethod extends MemoryRegion {
      * @return true if mt-safe patching is possible on the specified call site.
      */
     public abstract boolean isPatchableCallSite(Address callSite);
-
-    public abstract void forwardTo(TargetMethod newTargetMethod);
 
     /**
      * Traces the debug info for the compiled code represented by this object.

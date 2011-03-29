@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ package com.sun.max.vm.stack;
  * @see RawStackFrameVisitor
  * @author Doug Simon
  */
-public interface StackFrameVisitor {
+public abstract class StackFrameVisitor {
 
     /**
      * Processes a given frame that is being traversed as part of a {@linkplain StackFrameWalker#walk stack walk}.
@@ -38,5 +38,11 @@ public interface StackFrameVisitor {
      * @param stackFrame an object encapsulating the details of the frame
      * @return true if the walk should continue to the caller of {@code stackFrame}, false if it should terminate now
      */
-    boolean visitFrame(StackFrame stackFrame);
+    public abstract boolean visitFrame(StackFrame stackFrame);
+
+    /**
+     * Notifies this visitor that a stack walk is done.
+     */
+    public void done() {
+    }
 }

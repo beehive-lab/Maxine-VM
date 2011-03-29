@@ -23,6 +23,7 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.vm.object.ArrayAccess.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 
 import com.sun.max.annotate.*;
@@ -30,10 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.ArrayGetSnippet.ReadLength;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
@@ -49,62 +47,41 @@ public final class Throw {
     private Throw() {
     }
 
-    private static boolean TraceExceptions;
+    public static int TraceExceptions;
     private static boolean TraceExceptionsRaw;
-    private static String TraceTheseExceptions;
+    private static int TraceExceptionsRawMaxFrames = 200;
+    private static String TraceExceptionsFilter;
     public static boolean ScanStackOnFatalError;
     static {
         VMOptions.addFieldOption("-XX:", "TraceExceptions", Throw.class,
-            "Report a stack trace for every exception thrown, regardless of whether the exception is " +
-            "caught or uncaught.", Phase.PRISTINE);
+            "Trace exception throwing: 0 = none, 1 = toString(), 2 = printStackTrace().", Phase.STARTING);
         VMOptions.addFieldOption("-XX:", "TraceExceptionsRaw", Throw.class,
-            "Report a raw stack trace for every exception thrown, regardless of whether the exception is " +
-            "caught or uncaught.", Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "TraceTheseExceptions", Throw.class,
-            "Report a stack trace for every exception thrown whose class name contains <value> " +
-            "(or does not contain <value> if <value> starts with '!'), " +
-            "regardless of whether the exception is caught or uncaught.", Phase.PRISTINE);
+            "Report a stack frame dump for every exception thrown.", Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "TraceExceptionsRawMaxFrames", Throw.class,
+            "The max frames to dump for -XX:+TraceExceptionsRaw.", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "ScanStackOnFatalError", Throw.class,
             "Perform a raw stack scan when a fatal VM occurs.", Phase.PRISTINE);
     }
 
-    public static class StackFrameDumper extends RawStackFrameVisitor {
+    static class StackFrameDumper extends RawStackFrameVisitor {
+        int frames;
         @Override
         public boolean visitFrame(Cursor current, Cursor callee) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            // N.B. use "->" to make dumped stacks look slightly different than exception stack traces.
-            dumpFrame("        -> ", current.targetMethod(), current.ip(), current.isTopFrame());
-            Log.unlock(lockDisabledSafepoints);
+            if (frames++ < TraceExceptionsRawMaxFrames) {
+                // N.B. use "->" to make dumped stacks look slightly different than exception stack traces.
+                Throw.logFrame("        -> ", current.targetMethod(), current.ip());
+            }
             return true;
         }
 
-        public static void dumpFrame(String prefix, TargetMethod targetMethod, Pointer ip, boolean isTopFrame) {
-            if (prefix != null) {
-                Log.print(prefix);
+        @Override
+        public void done() {
+            if (frames > TraceExceptionsRawMaxFrames) {
+                Log.print("        [");
+                Log.print(frames);
+                Log.println(" frames elided]");
             }
-            if (targetMethod != null) {
-                final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-
-                if (classMethodActor == null) {
-                    Log.print(targetMethod.regionName());
-                } else {
-                    Log.print(classMethodActor.holder().name);
-                    Log.print(".");
-                    Log.print(classMethodActor.name);
-                    Log.print(classMethodActor.descriptor());
-                }
-                final Pointer codeStart = targetMethod.codeStart();
-                Log.print(" [");
-                Log.print(codeStart);
-                Log.print("+");
-                Log.print(ip.minus(codeStart).toInt());
-                Log.print("]");
-            } else {
-                Log.print("native{");
-                Log.printSymbol(ip);
-                Log.print("}");
-            }
-            Log.println();
+            frames = 0;
         }
     }
 
@@ -116,8 +93,11 @@ public final class Throw {
     /**
      * Unwinds the current thread's stack to the frame containing an exception handler (there is guaranteed to be one).
      *
-     * <b>Safepoints must be {@linkplain Safepoint#disable() disabled} before calling this method.</b> They are
-     * re-enabled just prior jumping to the exception handler.
+     * This method disables safepoints so that GC request (or any other VM operation) cannot interrupt
+     * the unwinding process. Why? A {@linkplain VmThread#unwindingStackFrameWalker(Throwable) shared}
+     * stack walker object is used for unwinding and stack reference map preparation.
+     * Safepoints are re-enabled when the exception object is {@linkplain VmThread#loadExceptionForHandler() loaded}
+     * by the exception handler.
      *
      * @param throwable the object to be passed to the exception handler - must not be null
      * @param stackPointer the stack pointer to be used when determining the point at which exception was raised
@@ -126,7 +106,11 @@ public final class Throw {
      */
     public static void raise(Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");
-        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
+        final VmStackFrameWalker sfw = VmThread.current().unwindingStackFrameWalker(throwable);
+
+        VmThread.current().checkYellowZoneForRaisingException();
+        Safepoint.disable();
+        sfw.unwind(instructionPointer, stackPointer, framePointer, throwable);
         FatalError.unexpected("could not find top-level exception handler");
     }
 
@@ -144,13 +128,6 @@ public final class Throw {
     /**
      * Unwinds the current thread's stack to the frame containing an exception handler (there is guaranteed to be one).
      *
-     * The complete sequence from the call to this method until the transfer of control to the exception handler must be
-     * atomic from the perspective of the garbage collector. To achieve this, safepoints are
-     * {@linkplain Safepoint#disable() disabled} here and must be {@linkplain Safepoint#enable() re-enabled} just prior
-     * jumping to the exception handler. The latter is the responsibility of every implementation of
-     * {@link RuntimeCompiler#walkFrame(com.sun.max.vm.stack.Cursor,com.sun.max.vm.stack.Cursor,com.sun.max.vm.stack.StackFrameWalker.Purpose, Object)}
-     * .
-     *
      * @param throwable throwable the object to be passed to the exception handler. If this value is null, then a
      *            {@link NullPointerException} is instantiated and raised instead.
      */
@@ -159,55 +136,31 @@ public final class Throw {
         if (throwable == null) {
             throwable = new NullPointerException();
         }
-        final VmStackFrameWalker stackFrameWalker = VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker();
-        if (stackFrameWalker.isInUse()) {
-            Log.println("exception thrown while raising another exception");
-            if (!stackFrameWalker.isDumpingFatalStackTrace()) {
-                stackFrameWalker.reset();
-                stackFrameWalker.setIsDumpingFatalStackTrace(true);
-                stackDumpWithException(throwable);
-                stackFrameWalker.setIsDumpingFatalStackTrace(false);
-            }
-            FatalError.unexpected("exception thrown while raising another exception");
-        }
 
-        if (TraceExceptions) {
+        traceThrow(throwable);
+        raise(throwable, getCpuStackPointer(), getCpuFramePointer(), Pointer.fromLong(here()));
+    }
+
+    public static void traceThrow(Throwable throwable) {
+        if (TraceExceptions == 1) {
+            Log.printThread(VmThread.current(), false);
+            Log.println(": Throwing " + throwable);
+        } else if (TraceExceptions == 2) {
+            Log.printThread(VmThread.current(), false);
+            Log.print(": Throwing ");
             throwable.printStackTrace(Log.out);
         }
         if (TraceExceptionsRaw) {
             stackDumpWithException(throwable);
         }
-        if (!TraceExceptions && !TraceExceptionsRaw && TraceTheseExceptions != null) {
-            String filter = TraceTheseExceptions;
-            if (filter != null) {
-                boolean match = false;
-                if (filter.startsWith("!")) {
-                    filter = filter.substring(1);
-                    match = !ObjectAccess.readHub(throwable).classActor.name.string.contains(filter);
-                } else {
-                    match = ObjectAccess.readHub(throwable).classActor.name.string.contains(filter);
-                }
-                if (match) {
-                    throwable.printStackTrace(Log.out);
-                }
-            }
-        }
-        Safepoint.disable();
-        raise(throwable, getCpuStackPointer(), getCpuFramePointer(), Pointer.fromLong(here()));
     }
-    // Checkstyle: resume
 
     public static void stackDumpWithException(Object throwable) {
         stackDump("Throwing " + throwable + ";", Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
     }
 
     /**
-     * Dumps the entire stack of the current thread.
-     * <p>
-     * This stack dump is meant to be more primitive that the dump obtained by {@link Thread#dumpStack()} in that all
-     * the actual frames are dumped, not only the frames of application visible methods. In addition, there is no
-     * attempt to decode Java frame descriptors to show virtual frames (i.e. frames that would have existed if there was
-     * no inlining performed).
+     * Dumps the physical frames of a given stack to the {@link Log} stream.
      *
      * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
      * @param instructionPointer the instruction pointer at which to begin the stack trace
@@ -223,15 +176,12 @@ public final class Throw {
     }
 
     /**
-     * Dumps the entire stack of the thread denoted by a given VM thread locals pointer.
-     * <p>
-     * This stack dump is meant to be more primitive that the dump obtained by {@link Thread#dumpStack()} in that all
-     * the actual frames are dumped, not only the frames of application visible methods. In addition, there is no
-     * attempt to decode Java frame descriptors to show virtual frames (i.e. frames that would have existed if there was
-     * no inlining performed).
+     * Dumps the stack of the thread denoted by a given VM thread locals pointer.
      *
      * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
      * @param tla
+     *
+     * @see #stackDump(String, Pointer, Pointer, Pointer)
      */
     @NEVER_INLINE
     public static void stackDump(String message, final Pointer tla) {
@@ -240,34 +190,28 @@ public final class Throw {
         }
 
         Pointer anchor = JavaFrameAnchor.from(tla);
-        final Pointer instructionPointer = anchor.isZero() ? Pointer.zero() : JavaFrameAnchor.PC.get(anchor);
+        final Pointer ip = anchor.isZero() ? Pointer.zero() : JavaFrameAnchor.PC.get(anchor);
         final VmThread vmThread = VmThread.fromTLA(tla);
-        if (instructionPointer.isZero()) {
+        if (ip.isZero()) {
             Log.print("Cannot dump stack for non-stopped thread ");
             Log.printThread(vmThread, true);
         } else {
-            final Pointer stackPointer = JavaFrameAnchor.SP.get(anchor);
-            final Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
-            vmThread.stackDumpStackFrameWalker().inspect(instructionPointer, stackPointer, framePointer, stackFrameDumper);
+            final Pointer sp = JavaFrameAnchor.SP.get(anchor);
+            final Pointer fp = JavaFrameAnchor.FP.get(anchor);
+            stackDump(null, ip, sp, fp);
         }
     }
 
     /**
-     * Dumps the entire stack of the current thread.
-     * <p>
-     * This stack dump is meant to be more primitive that the dump obtained by {@link Thread#dumpStack()} in that all
-     * the actual frames are dumped, not only the frames of application visible methods. In addition, there is no
-     * attempt to decode Java frame descriptors to show virtual frames (i.e. frames that would have existed if there was
-     * no inlining performed).
+     * Dumps the stack of the current thread.
      *
      * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
+     *
+     * @see #stackDump(String, Pointer, Pointer, Pointer)
      */
     @NEVER_INLINE
     public static void stackDump(String message) {
-        if (message != null) {
-            Log.println(message);
-        }
-        VmThread.current().stackDumpStackFrameWalker().inspect(Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer(), stackFrameDumper);
+        stackDump(message, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
     }
 
     /**
@@ -312,7 +256,7 @@ public final class Throw {
     @NEVER_INLINE
     public static void arrayIndexOutOfBoundsException(Object array, int index) {
         FatalError.check(array != null, "Arguments for raising an ArrayIndexOutOfBoundsException cannot be null");
-        throw new ArrayIndexOutOfBoundsException("Index: " + index + ", Array length: " + ReadLength.readLength(array));
+        throw new ArrayIndexOutOfBoundsException("Index: " + index + ", Array length: " + readArrayLength(array));
     }
 
     /**
@@ -357,5 +301,28 @@ public final class Throw {
     @NEVER_INLINE
     public static void negativeArraySizeException(int length) {
         throw new NegativeArraySizeException(String.valueOf(length));
+    }
+
+    /**
+     * Prints a line to the log stream for a given frame.
+     */
+    public static void logFrame(String prefix, TargetMethod targetMethod, Pointer ip) {
+        if (prefix != null) {
+            Log.print(prefix);
+        }
+        if (targetMethod != null) {
+            Log.printMethod(targetMethod, false);
+            final Pointer codeStart = targetMethod.codeStart();
+            Log.print(" [");
+            Log.print(codeStart);
+            Log.print("+");
+            Log.print(ip.minus(codeStart).toInt());
+            Log.print("]");
+        } else {
+            Log.print("native{");
+            Log.printSymbol(ip);
+            Log.print("}");
+        }
+        Log.println();
     }
 }

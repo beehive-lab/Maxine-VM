@@ -27,7 +27,7 @@ import java.nio.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -134,7 +134,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public float readFloat(Address address) {
-        return SpecialBuiltin.intToFloat(readInt(address));
+        return Intrinsics.intToFloat(readInt(address));
     }
 
     public float readFloat(Address address, Offset offset) {
@@ -162,7 +162,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public double readDouble(Address address) {
-        return SpecialBuiltin.longToDouble(readLong(address));
+        return Intrinsics.longToDouble(readLong(address));
     }
 
     public double readDouble(Address address, Offset offset) {
@@ -284,7 +284,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeFloat(Address address, float value) {
-        writeInt(address, SpecialBuiltin.floatToInt(value));
+        writeInt(address, Intrinsics.floatToInt(value));
     }
 
     public void writeFloat(Address address, Offset offset, float value) {
@@ -312,7 +312,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeDouble(Address address, double value) {
-        writeLong(address, SpecialBuiltin.doubleToLong(value));
+        writeLong(address, Intrinsics.doubleToLong(value));
     }
 
     public void writeDouble(Address address, Offset offset, double value) {

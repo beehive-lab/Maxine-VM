@@ -32,7 +32,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.Category;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
@@ -262,22 +261,7 @@ public abstract class Hub extends Hybrid {
         return Address.zero();
     }
 
-    /**
-     * Determines whether or not the currently configured compiler compiles all the way down to target methods.
-     *
-     * TODO: Remove this once the notion of a compiler not being able to compile to target methods is obsolete.
-     */
-    @FOLD
-    static boolean compilerCreatesTargetMethods() {
-        if (!isHosted()) {
-            return true;
-        }
-        CPSCompiler compiler = CPSCompiler.Static.compiler();
-        return compiler == null || compiler.compiledType() != null;
-    }
-
     void initializeVTable(VirtualMethodActor[] allVirtualMethodActors) {
-        boolean compilerCreatesTargetMethods = compilerCreatesTargetMethods();
         for (int i = 0; i < allVirtualMethodActors.length; i++) {
             final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
             final int vTableIndex = firstWordIndex() + i;
@@ -285,13 +269,9 @@ public abstract class Hub extends Hybrid {
             assert getWord(vTableIndex).isZero();
             Address vTableEntry;
 
-            if (compilerCreatesTargetMethods) {
-                vTableEntry = checkCompiled(virtualMethodActor);
-                if (vTableEntry.isZero()) {
-                    vTableEntry = vm().stubs.virtualTrampoline(vTableIndex);
-                }
-            } else {
-                vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
+            vTableEntry = checkCompiled(virtualMethodActor);
+            if (vTableEntry.isZero()) {
+                vTableEntry = vm().stubs.virtualTrampoline(vTableIndex);
             }
             setWord(vTableIndex, vTableEntry);
         }

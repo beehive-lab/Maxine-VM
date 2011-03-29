@@ -41,7 +41,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.Package;
 import com.sun.max.vm.runtime.*;
@@ -264,11 +263,10 @@ public final class JavaPrototype extends Prototype {
         }
 
         loadVMConfigurationPackages();
+
         AdapterGenerator.init();
 
         ClassActor.DEFERRABLE_QUEUE_1.runAll();
-
-        CPSCompiler.Static.initialize(packageLoader);
 
         loadMethodSubstitutions(config);
 

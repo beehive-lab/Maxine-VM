@@ -29,7 +29,6 @@
  */
 package jtt.max;
 
-import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
@@ -38,7 +37,6 @@ public final class ImmortalHeap_gc {
     private ImmortalHeap_gc() {
     }
 
-    @UNSAFE
     public static boolean test(int nrObjects) {
         String[] strings;
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();

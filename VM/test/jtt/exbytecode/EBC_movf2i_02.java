@@ -22,7 +22,7 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 
 // memory -> register
 
@@ -39,7 +39,7 @@ public class EBC_movf2i_02 {
     }
     public static int test(float arg) {
         F f = new F(arg);
-        return SpecialBuiltin.floatToInt(f.f);
+        return Intrinsics.floatToInt(f.f);
     }
 
 }

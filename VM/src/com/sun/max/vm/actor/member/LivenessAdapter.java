@@ -51,7 +51,7 @@ public final class LivenessAdapter implements FrameModel {
      */
     public LivenessAdapter(ClassMethodActor method) {
         CiBitMap[] livenessMap = NO_LIVENESS_MAP;
-        CodeAttribute codeAttribute = method.originalCodeAttribute(false);
+        CodeAttribute codeAttribute = method.codeAttribute();
         if (codeAttribute != null) {
             StackMapTable stackMapTable = codeAttribute.stackMapTable();
             if (stackMapTable != null) {

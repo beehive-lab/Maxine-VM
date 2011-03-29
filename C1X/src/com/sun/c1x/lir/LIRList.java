@@ -64,9 +64,9 @@ public final class LIRList {
     }
 
     private void append(LIRInstruction op) {
-        if (C1XOptions.PrintIRWithLIR) {
+        if (C1XOptions.PrintIRWithLIR && !TTY.isSuppressed()) {
             generator.maybePrintCurrentInstruction();
-            op.printOn(TTY.out());
+            TTY.println(op.toStringWithIdPrefix());
             TTY.println();
         }
         operations.add(op);
@@ -471,6 +471,9 @@ public final class LIRList {
     }
 
     public static void printLIR(List<BlockBegin> blocks) {
+        if (TTY.isSuppressed()) {
+            return;
+        }
         TTY.println("LIR:");
         int i;
         for (i = 0; i < blocks.size(); i++) {
@@ -483,7 +486,7 @@ public final class LIRList {
 
     private void printInstructions() {
         for (int i = 0; i < operations.size(); i++) {
-            operations.get(i).printOn(TTY.out());
+            TTY.println(operations.get(i).toStringWithIdPrefix());
             TTY.println();
         }
         TTY.println();

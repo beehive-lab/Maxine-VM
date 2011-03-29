@@ -161,7 +161,7 @@ public class T1XReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         if (traceStackRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
             bytecodeStopsIterator.reset();
-            final CodeAttribute codeAttribute = t1xMethod.classMethodActor().codeAttribute();
+            final CodeAttribute codeAttribute = codeAttribute();
             for (int bcp = bytecodeStopsIterator.bci(); bcp != -1; bcp = bytecodeStopsIterator.next()) {
                 for (int stopIndex = bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = bytecodeStopsIterator.nextStopIndex(false)) {
                     final int offset = stopIndex * t1xMethod.refMapSize();

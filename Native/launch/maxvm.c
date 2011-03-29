@@ -88,7 +88,7 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
      * This is done with the bin/mod-maxosx-javalib.sh script. For the latter, the workaround is to set
      * the DYLD_LIBRARY_PATH environment variable to the directory containing the Maxine version of libjvmlinkage.dylib
      * and re-exec the VM. The re-exec is necessary as the DYLD_LIBRARY_PATH is only read at exec.
-     * Note that a similiar work-around is necessary for Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild()
+     * Note that a similiar work-around is necessary for Java_com_sun_max_tele_channel_natives_TeleChannelNatives_createChild()
      * in Native/tele/darwin/darwinTeleProcess.c.
      */
     if (getenv("DYLD_LIBRARY_PATH") == NULL) {

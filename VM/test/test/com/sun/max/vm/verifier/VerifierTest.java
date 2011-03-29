@@ -208,7 +208,7 @@ public class VerifierTest extends VmTestCase {
      * template JIT specific constructs.
      */
     public static boolean suppressVerificationOf(ClassMethodActor method) {
-        if (method.isTemplate() || method.isBuiltin() || method.isAbstract() || method.intrinsic() != 0) {
+        if (method.isTemplate() || method.isAbstract() || method.intrinsic() != 0) {
             return true;
         }
         if (method.holder().kind.isWord) {

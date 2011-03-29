@@ -22,7 +22,7 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 
 // register -> register
 
@@ -34,6 +34,6 @@ import com.sun.max.vm.compiler.builtin.*;
 public class EBC_movf2i_01 {
 
     public static int test(float arg) {
-        return SpecialBuiltin.floatToInt(arg);
+        return Intrinsics.floatToInt(arg);
     }
 }

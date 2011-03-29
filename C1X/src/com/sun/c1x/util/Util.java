@@ -44,19 +44,19 @@ public class Util {
     public static final char SEPERATOR_CHARACTER = '-';
 
     public static RuntimeException unimplemented() {
-        throw new Error("unimplemented");
+        throw new InternalError("unimplemented");
     }
 
     public static RuntimeException unimplemented(String msg) {
-        throw new Error("unimplemented:" + msg);
+        throw new InternalError("unimplemented:" + msg);
     }
 
     public static RuntimeException shouldNotReachHere() {
-        throw new Error("should not reach here");
+        throw new InternalError("should not reach here");
     }
 
     public static RuntimeException shouldNotReachHere(String msg) {
-        throw new Error("Should not reach here: " + msg);
+        throw new InternalError("Should not reach here: " + msg);
     }
 
     public static <T> boolean replaceInList(T a, T b, List<T> list) {
