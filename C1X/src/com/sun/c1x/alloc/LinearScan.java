@@ -2355,7 +2355,7 @@ public final class LinearScan {
     }
 
     void printLir(String label, boolean hirValid) {
-        if (C1XOptions.TraceLinearScanLevel >= 1) {
+        if (C1XOptions.TraceLinearScanLevel >= 1 && !TTY.isSuppressed()) {
             TTY.println();
             TTY.println(label);
             LIRList.printLIR(ir.linearScanOrder());

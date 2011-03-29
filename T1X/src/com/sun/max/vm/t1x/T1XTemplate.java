@@ -111,6 +111,7 @@ class T1XTemplate {
     public final ClassMethodActor method;
     public final T1XTemplateTag tag;
     public final byte[] code;
+    public final T1XStop bytecodeCall;
     public final T1XStop[] directCalls;
     public final T1XStop[] indirectCalls;
     public final T1XStop[] safepoints;
@@ -221,20 +222,6 @@ class T1XTemplate {
             return stop.bsmIndex;
         }
 
-        public void addBytecodeDirectCall(int bci, int pos, ClassMethodActor callee) {
-            T1XStop dst = directCalls.makeNext();
-            dst.bci = bci;
-            dst.pos = pos;
-            dst.callee = callee;
-            dst.flags = DirectCall.mask;
-
-            // No GC maps needed: the template slots are dead for the remainder of the template
-            dst.regRefMap = null;
-            dst.frameRefMap = null;
-            reserveInBSM(dst);
-            bciWithStopCount++;
-        }
-
         public void addBytecodeBackwardBranch(int bci, int pos) {
             T1XStop dst = safepoints.makeNext();
             dst.bci = bci;
@@ -249,15 +236,28 @@ class T1XTemplate {
             bciWithStopCount++;
         }
 
-        public void add(T1XTemplate template, int pos, int bci) {
+        public void add(T1XTemplate template, int pos, int bci, ClassMethodActor directBytecodeCallee) {
             for (T1XStop src : template.directCalls) {
                 T1XStop dst = directCalls.makeNext();
                 dst.bci = bci;
                 dst.pos = pos + src.pos;
-                dst.flags = src.flags;
-                dst.callee = src.callee;
-                dst.frameRefMap = src.frameRefMap;
-                dst.regRefMap = null;
+                if (src == template.bytecodeCall) {
+                    assert directBytecodeCallee != null : "bytecode call in template must bound to a direct bytecode callee";
+                    dst.callee = directBytecodeCallee;
+                    dst.flags = DirectCall.mask;
+
+                    // No GC maps needed: the template slots are dead for the remainder of the template
+                    dst.regRefMap = null;
+                    dst.frameRefMap = null;
+
+                    // Make sure the direct bytecode callee is bound at most once
+                    directBytecodeCallee = null;
+                } else {
+                    dst.flags = src.flags;
+                    dst.callee = src.callee;
+                    dst.frameRefMap = src.frameRefMap;
+                    dst.regRefMap = null;
+                }
                 reserveInBSM(dst);
             }
             for (T1XStop src : template.indirectCalls) {
@@ -419,6 +419,7 @@ class T1XTemplate {
             directCalls = NO_STOPS;
             indirectCalls = NO_STOPS;
             safepoints = NO_STOPS;
+            bytecodeCall = null;
         } else {
             final int numberOfDirectCalls = source.numberOfDirectCalls();
             final int numberOfIndirectCalls = source.numberOfIndirectCalls();
@@ -427,6 +428,7 @@ class T1XTemplate {
             directCalls = new T1XStop[numberOfDirectCalls];
             indirectCalls = new T1XStop[numberOfIndirectCalls];
             safepoints = new T1XStop[numberOfSafepoints];
+            T1XStop bytecodeCall = null;
 
             int frameRefMapSize = source.frameRefMapSize();
             int totalRefMapSize = source.totalRefMapSize();
@@ -434,11 +436,22 @@ class T1XTemplate {
 
             for (int i = 0; i < numberOfDirectCalls; i++) {
                 int stopIndex = i;
-                T1XStop stop = new T1XStop(DirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
-                stop.callee = (ClassMethodActor) source.directCallees()[i];
-                stop.frameRefMap = nullIfEmpty(new CiBitMap(source.referenceMaps(), stopIndex * totalRefMapSize, frameRefMapSize));
-                //stop.regRefMap = nullIfEmpty(CiBitMap(code.referenceMaps(), stopIndex * totalRefMapSize + frameRefMapSize, regRefMapSize));
-                directCalls[i] = stop;
+                if (source.directCallees()[i] == null) {
+                    assert bytecodeCall == null : "template can have at most one TEMPLATE_CALL";
+                    T1XStop stop = new T1XStop(DirectCall.mask, source.stopPosition(stopIndex), -1);
+                    stop.callee = null;
+                    // No GC maps needed: the template slots are dead for the remainder of the template
+                    stop.frameRefMap = null;
+                    stop.regRefMap = null;
+                    bytecodeCall = stop;
+                    directCalls[i] = stop;
+                } else {
+                    T1XStop stop = new T1XStop(DirectCall.mask | InTemplate.mask, source.stopPosition(stopIndex), -1);
+                    stop.callee = (ClassMethodActor) source.directCallees()[i];
+                    stop.frameRefMap = nullIfEmpty(new CiBitMap(source.referenceMaps(), stopIndex * totalRefMapSize, frameRefMapSize));
+                    //stop.regRefMap = nullIfEmpty(CiBitMap(code.referenceMaps(), stopIndex * totalRefMapSize + frameRefMapSize, regRefMapSize));
+                    directCalls[i] = stop;
+                }
             }
             for (int i = 0; i < numberOfIndirectCalls; i++) {
                 int stopIndex = numberOfDirectCalls + i;
@@ -454,6 +467,8 @@ class T1XTemplate {
                 stop.regRefMap = nullIfEmpty(new CiBitMap(source.referenceMaps(), stopIndex * totalRefMapSize + frameRefMapSize, regRefMapSize));
                 safepoints[i] = stop;
             }
+
+            this.bytecodeCall = bytecodeCall;
         }
     }
 }

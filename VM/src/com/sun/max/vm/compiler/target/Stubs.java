@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.CompilationScheme.Static.*;
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -166,7 +167,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address vtableEntryPoint = CompilationScheme.Static.compile(selectedCallee, VTABLE_ENTRY_POINT);
+        final Address vtableEntryPoint = compile(selectedCallee).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
         hub.setWord(vTableIndex, vtableEntryPoint);
         return adjustEntryPointForCaller(vtableEntryPoint, pcInCaller);
     }
@@ -185,7 +186,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address itableEntryPoint = CompilationScheme.Static.compile(selectedCallee, VTABLE_ENTRY_POINT);
+        final Address itableEntryPoint = compile(selectedCallee).getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
         hub.setWord(hub.iTableStartIndex + iIndex, itableEntryPoint);
         return adjustEntryPointForCaller(itableEntryPoint, pcInCaller);
     }
@@ -258,7 +259,7 @@ public class Stubs {
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
         // Use the caller's entry point to get the correct entry point.
-        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.callEntryPoint);
+        final Address calleeEntryPoint = compile(callee).getEntryPoint(caller.callEntryPoint).asAddress();
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, callSite, calleeEntryPoint);
     }
 

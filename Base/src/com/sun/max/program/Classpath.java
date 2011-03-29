@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,6 @@ public class Classpath {
     public static final Classpath EMPTY = new Classpath(EMPTY_LIST);
 
     private final List<Entry> entries;
-
-    private final Map<String, ClasspathFile> classpathFileMap = new HashMap<String, ClasspathFile>();
 
     /**
      * An entry in a classpath is a file system path that denotes an existing {@linkplain Directory directory},
@@ -400,19 +398,10 @@ public class Classpath {
         for (Entry entry : entries()) {
             ClasspathFile classpathFile = entry.readFile(path);
             if (classpathFile != null) {
-                recordPackage(className, classpathFile);
                 return classpathFile;
             }
         }
         return null;
-    }
-
-    private void recordPackage(String className, ClasspathFile classpathFile) {
-        final int ix = className.lastIndexOf('.');
-        final String packageName = ix < 0 ? "/" : className.substring(0, ix + 1).replace('.', '/');
-        if (!classpathFileMap.containsKey(packageName)) {
-            classpathFileMap.put(packageName, classpathFile);
-        }
     }
 
     /**
@@ -460,10 +449,6 @@ public class Classpath {
         }
         String s = entries.toString().replace(", ", File.pathSeparator);
         return s.substring(1, s.length() - 1);
-    }
-
-    public ClasspathFile classpathFileForPackage(String name) {
-        return classpathFileMap.get(name);
     }
 
     /**

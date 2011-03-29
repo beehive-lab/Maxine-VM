@@ -286,7 +286,7 @@ void *thread_run(void *arg) {
               etla,
               ntl->stackBase,
               stackEnd,
-              ntl->stackYellowZone);
+              ntl->yellowZone);
 
 #if log_THREADS
     log_println("thread_run: t=%p releasing global GC and thread list lock", nativeThread);
@@ -376,7 +376,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
                         etla,
                         ntl->stackBase,
                         stackEnd,
-                        ntl->stackYellowZone);
+                        ntl->yellowZone);
         mutex_exit(globalThreadLock);
 #if log_THREADS
     log_println("thread_attach: t=%p released global GC and thread list lock", nativeThread);

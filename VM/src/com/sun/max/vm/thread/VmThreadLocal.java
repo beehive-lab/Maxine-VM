@@ -172,12 +172,6 @@ public class VmThreadLocal {
         = new VmThreadLocal("VM_OPERATION", true, "Procedure to run when a safepoint is triggered", Nature.Single);
 
     /**
-     * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
-     */
-    public static final VmThreadLocal EXCEPTION_OBJECT
-        = new VmThreadLocal("EXCEPTION_OBJECT", true, "The exception being raised");
-
-    /**
      * The identifier used to identify the thread in the {@linkplain VmThreadMap thread map}.
      *
      *   0: denotes the primordial thread

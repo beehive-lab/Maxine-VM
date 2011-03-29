@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,14 +30,12 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -225,7 +223,12 @@ public abstract class Trap {
                     handleMemoryFault(pc, targetMethod, sp, fp, trapState, faultAddress);
                     break;
                 case STACK_FAULT:
-                    // stack overflow
+                    // stack overflow:
+
+                    // the native trap handler unprotected the yellow zone -
+                    // propagate this to the thread object
+                    VmThread.current().nativeTrapHandlerUnprotectedYellowZone();
+
                     raiseImplicitException(trapState, targetMethod, new StackOverflowError(), sp, fp, pc);
                     break; // unreachable, except when returning to a local exception handler
                 case ILLEGAL_INSTRUCTION:
@@ -383,8 +386,7 @@ public abstract class Trap {
      * If there is a local handler for the exception (i.e. a handler in the same frame in which the exception occurred)
      * and the method in which the exception occurred was compiled by the opto compiler, then the trap state is altered
      * so that the return address for the trap frame is set to be the exception handler entry address.
-     * The exception object is placed into the {@link VmThreadLocal#EXCEPTION_OBJECT} variable thread local. This means
-     * that the register allocator can assume that registers are not modified in the control flow
+     * This means that the register allocator can assume that registers are not modified in the control flow
      * from an implicit exception to the exception handler.
      *
      * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, Pointer) standard mechanism} for throwing an
@@ -398,26 +400,18 @@ public abstract class Trap {
      * @param ip the instruction pointer which caused the trap
      */
     private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
-        if (!(throwable instanceof StackOverflowError)) {
-            // Can't do frame preparing when methods aren't at a stop
-            StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
-        }
+        Throw.traceThrow(throwable);
         if (targetMethod.preserveRegistersForLocalExceptionHandler()) {
             final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, ip, throwable.getClass());
             if (!catchAddress.isZero()) {
+                // Store the exception so that the handler can find it.
+                VmThread.current().storeExceptionForHandler(throwable, targetMethod, targetMethod.posFor(catchAddress));
+
                 final TrapStateAccess trapStateAccess = vm().trapStateAccess;
                 trapStateAccess.setPC(trapState, catchAddress.asPointer());
-                EXCEPTION_OBJECT.store3(Reference.fromJava(throwable));
-
-                if (throwable instanceof StackOverflowError) {
-                    // This complete call-chain must be inlined down to the native call
-                    // so that no further stack banging instructions
-                    // are executed before execution jumps to the catch handler.
-                    VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
-                }
                 return;
             }
         }
-        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(ip, sp, fp, throwable);
+        Throw.raise(throwable, sp, fp, ip);
     }
 }

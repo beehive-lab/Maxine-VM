@@ -29,7 +29,6 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -194,9 +193,7 @@ public final class VMRegister {
 
     @INLINE
     @INTRINSIC(INCREG | (ABI_SP << 8))
-    public static void adjustAbiStackPointer(int delta) {
-        SpecialBuiltin.incrementIntegerRegister(Role.ABI_STACK_POINTER, delta);
-    }
+    public static native void adjustAbiStackPointer(int delta);
 
     @INLINE
     @INTRINSIC(READREG | (ABI_SP << 8))

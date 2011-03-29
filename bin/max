@@ -280,11 +280,9 @@ projects=( \
     Assembler:src,test            \
     VM:src,test                   \
     T1X:src                       \
-    CPS:src,test                  \
     MaxineELF:src                 \
     VMDI:src                      \
     Tele:src                      \
-    TeleCPS:test                  \
     JDWP:src                      \
     TeleJDWP:src                  \
     Inspector:src,test            \
@@ -1026,34 +1024,6 @@ function run_image() {
 }
 
 #=======================================
-# 'compile' command
-#=======================================
-
-compile_usage="[options] compilation_specs..."
-compile_help="compile a list of classes and/or methods using the VM's compiler
-
-    A compilation spec is a class name pattern followed by an optional method name
-    pattern separated by a ':'. For example:
-
-        Object:wait String
-
-    will compile all methods in a class whose name contains "Object" where the
-    method name contains "wait" as well as all methods in a class whose name
-    contains "String". The classes searched are those on the class path.
-
-    The compilation phases are traced and the resulting machine code is disassembled.
-
-    The output traced by this command is not guaranteed to be the same as the output
-    for a compilation done at runtime. The code produced by a compiler is very sensitive
-    to the compilation context such as what classes have been resolved etc.
-
-    Use \"max compile -help\" to see what other options this command accepts."
-
-function run_compile() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.cps.CompilerRunner $@
-}
-
-#=======================================
 # 'verify' command
 #=======================================
 
@@ -1198,6 +1168,7 @@ function run_copyvm() {
 #=======================================
 
 eclipse_usage="[options]"
+eclipse_defaults="-Xms1g -Xmx3g -XX:ReservedCodeCacheSize=512m -XX:+ShowConfiguration"
 eclipse_help="launch Eclipse with the Maxine VM
 
     Run Eclipse under Maxine VM with the given options supplied as
@@ -1206,7 +1177,11 @@ eclipse_help="launch Eclipse with the Maxine VM
     before any other VM options specified on the command line."
 
 function run_eclipse() {
-    run eclipse -vm ${maxine_vm} -vmargs $MAXVM_OPTIONS $@
+    if [ -z "$(type -t eclipse)" ]; then
+        echo "The Eclipse executable 'eclipse' must be on your PATH"
+        exit 1
+    fi
+    run eclipse -vm ${maxine_vm} -vmargs $eclipse_defaults $MAXVM_OPTIONS $@
 }
 
 #=======================================
@@ -1429,7 +1404,8 @@ function run_inspect() {
 	fi
 
     if [[ "$remote" -eq 0 && "$MAXINE_OS" = "darwin" ]]; then
-        run sudo -p \
+        # The -E option propagates the environment variables into the sudo process
+        run sudo -E -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
         ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
@@ -1626,11 +1602,7 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-image-configs=jtt-cpscps,jtt-mscpscps -fail-fast"
-if [ "$MAXINE_OS" == "linux" ]; then
-    # MSHeapScheme does not yet work on Linux
-    gate_presets="-image-configs=jtt-cpscps -fail-fast"
-fi 
+gate_presets="-image-configs=java -fail-fast"
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
     If this commands exits with a 0 exit code, then the source code is in
@@ -1653,7 +1625,7 @@ function run_gate() {
 #=======================================
 
 msgate_usage="[options]"
-msgate_presets="-image-configs=jtt-mscpscps -fail-fast -tests=output:GC+WeakReference"
+msgate_presets="-image-configs=jtt-msc1xc1x -fail-fast -tests=output:GC+WeakReference"
 
 msgate_help="run the GC tests using the MS heap scheme"
 

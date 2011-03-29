@@ -33,11 +33,8 @@
  */
 #define PRIMORDIAL_THREAD_ID 1
 
-/*
- * The constants must be in sync with the static variables of the same name in VmThread.java
- */
-#define STACK_YELLOW_ZONE_PAGES 1
-#define STACK_RED_ZONE_PAGES 1
+#define YELLOW_ZONE_PAGES image_header()->yellowZonePages
+#define RED_ZONE_PAGES    image_header()->redZonePages
 
 /**
  * The signature of the VM entry point for adding a thread to the thread list.
@@ -49,7 +46,7 @@ typedef jint (*VmThreadAddMethod)(jint id,
                 Address threadLocals,
                 Address stackBase,
                 Address stackEnd,
-                Address stackYellowZone);
+                Address yellowZone);
 
 /**
  * The signature of the VM entry point for running a new VM-created thread.

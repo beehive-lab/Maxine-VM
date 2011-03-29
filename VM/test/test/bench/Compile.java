@@ -262,7 +262,7 @@ public class Compile {
         }
 
         private static boolean isCompilable(MethodActor method) {
-            return method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic();
+            return method instanceof ClassMethodActor && !method.isAbstract() && !method.isIntrinsic();
         }
 
         @Override
@@ -305,7 +305,7 @@ public class Compile {
         if (!averageOption.getValue()) {
             timings.add(new Timing((ClassMethodActor) method, instructions, ns));
         }
-        totalBytes += ((ClassMethodActor) method).originalCodeAttribute(true).code().length;
+        totalBytes += ((ClassMethodActor) method).codeAttribute().code().length;
         totalInlinedBytes += inlinedBytes;
         totalInstrs += instructions;
         totalNs += ns;
@@ -403,7 +403,7 @@ public class Compile {
         }
 
         public int bytecodes() {
-            return classMethodActor.originalCodeAttribute(true).code().length;
+            return classMethodActor.codeAttribute().code().length;
         }
 
         public double instructionsPerSecond() {

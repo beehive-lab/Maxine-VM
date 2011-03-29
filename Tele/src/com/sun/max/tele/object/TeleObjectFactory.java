@@ -38,7 +38,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.Reference;
@@ -162,7 +161,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder implements Tel
         // Other Maxine support
         classToTeleTupleObjectConstructor.put(Kind.class, getConstructor(TeleKind.class));
         classToTeleTupleObjectConstructor.put(ObjectReferenceValue.class, getConstructor(TeleObjectReferenceValue.class));
-        classToTeleTupleObjectConstructor.put(Builtin.class, getConstructor(TeleBuiltin.class));
         // ConstantPool and PoolConstants
         classToTeleTupleObjectConstructor.put(ConstantPool.class, getConstructor(TeleConstantPool.class));
         classToTeleTupleObjectConstructor.put(CodeAttribute.class, getConstructor(TeleCodeAttribute.class));

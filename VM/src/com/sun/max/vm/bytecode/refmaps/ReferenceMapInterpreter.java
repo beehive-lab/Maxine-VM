@@ -1681,7 +1681,7 @@ public abstract class ReferenceMapInterpreter {
                     skip2();
                     popCategory1();
                     break;
-                case ALLOCSTKVAR: {
+                case STACKHANDLE: {
                     final int index = readUnsigned2();
                     final MethodRefConstant methodConstant = constantPool.methodAt(index);
                     final SignatureDescriptor methodSignature = methodConstant.signature(constantPool);

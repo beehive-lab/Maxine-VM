@@ -711,11 +711,24 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitLoadStackAddress(AllocateStackVariable x) {
+    public void visitAllocateStackHandle(StackHandle x) {
         CiValue value = load(x.value());
         CiValue src = forceToSpill(value, x.value().kind, true);
         CiValue dst = createResultVariable(x);
+
+        CiConstant constant = x.value().isConstant() ? x.value().asConstant() : null;
+        if (constant == null) {
+            CiConstant zero = CiConstant.defaultValue(x.value().kind);
+            lir.cmp(Condition.EQ, src, zero);
+        }
         lir.lea(src, dst);
+        if (constant != null) {
+            if (constant.isDefaultValue()) {
+                lir.move(value, dst);
+            }
+        } else {
+            lir.cmove(Condition.EQ, CiConstant.ZERO, dst, dst);
+        }
     }
 
     @Override

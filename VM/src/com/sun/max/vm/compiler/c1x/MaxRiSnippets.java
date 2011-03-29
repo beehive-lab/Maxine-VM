@@ -25,9 +25,10 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Maxine implementation of {@link RiSnippets}.
@@ -42,13 +43,12 @@ public class MaxRiSnippets implements RiSnippets {
     public final RiMethod enterVM;
     public final RiMethod enterVMForC;
 
-
     public MaxRiSnippets(MaxRiRuntime runtime) {
-        link = LinkNativeMethod.SNIPPET.executable;
-        enterNative = NativeCallPrologue.SNIPPET.executable;
-        enterNativeForC = NativeCallPrologueForC.SNIPPET.executable;
-        enterVM = NativeCallEpilogue.SNIPPET.executable;
-        enterVMForC = NativeCallEpilogueForC.SNIPPET.executable;
+        link = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "linkNativeMethod", ClassMethodActor.class));
+        enterNative = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallPrologue"));
+        enterNativeForC = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallPrologueForC"));
+        enterVM = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallEpilogue"));
+        enterVMForC = MethodActor.fromJava(Classes.getDeclaredMethod(Snippets.class, "nativeCallEpilogueForC"));
     }
 
     @Override
