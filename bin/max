@@ -1342,7 +1342,7 @@ inspect_help="launch a given program under the Inspector
 
 function run_inspect() {
     save_class_dir="$MAXVM_DIR/inspected_classes"
-    vm_args="-XX:SaveClassDir=$save_class_dir -XX:+TrapOnError"
+    vm_args="-XX:SaveClassDir=$save_class_dir -Djava.home=$JAVA_HOME -XX:+TrapOnError"
     inspector_args="-vmdir=$MAXVM_DIR"
     inspector_cp="$MAXVM_DIR/inspected_classes"
     mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
