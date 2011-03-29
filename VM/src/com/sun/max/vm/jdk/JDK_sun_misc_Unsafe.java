@@ -521,7 +521,12 @@ final class JDK_sun_misc_Unsafe {
         if (bytes < 0L || bytes > Word.widthValue().max) {
             throw new IllegalArgumentException();
         }
-        return Memory.allocate(Size.fromLong(bytes)).toLong();
+        Pointer address = Memory.allocate(Size.fromLong(bytes));
+        if (address.isZero()) {
+            throw new OutOfMemoryError();
+        }
+        Throw.stackDump(null);
+        return address.toLong();
     }
 
     /**
