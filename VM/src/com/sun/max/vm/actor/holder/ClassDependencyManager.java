@@ -180,7 +180,8 @@ public final class ClassDependencyManager {
 
         @Override
         public boolean processUniqueConcreteMethod(RiMethod context, RiMethod method) {
-            valid = newConcreteSubtype.resolveMethodImpl(context) == method;
+            boolean assumptionIsValid = newConcreteSubtype.resolveMethodImpl(context) == method;
+            valid = valid && assumptionIsValid;
             return valid;
         }
 
@@ -327,15 +328,16 @@ public final class ClassDependencyManager {
                     }
                     if (CLASS_HAS_UCM.isBooleanFlagSet(assumptionFlags)) {
                         final int endAssumptions = dependencyIndex + CLASS_ASSUMPTIONS_LENGTH.getFlag(assumptionFlags);
+                        boolean processorCarriesOn = true;
                         if (CLASS_LOCAL_UCM_ONLY.isBooleanFlagSet(assumptionFlags)) {
-                            while (dependencyIndex < endAssumptions) {
+                            while (dependencyIndex < endAssumptions && processorCarriesOn) {
                                 short methodIndex = assumptions[dependencyIndex++];
                                 MethodActor method = classActor.localVirtualMethodActors()[methodIndex];
-                                processor.processUniqueConcreteMethod(method, method);
+                                processorCarriesOn = processor.processUniqueConcreteMethod(method, method);
                             }
                             return;
                         }
-                        while (dependencyIndex < endAssumptions) {
+                        while (dependencyIndex < endAssumptions && processorCarriesOn) {
                             short assumption = assumptions[dependencyIndex++];
                             if (class_follows(assumption)) {
                                 final int methodIndex = methodIndex(assumption);
@@ -343,10 +345,10 @@ public final class ClassDependencyManager {
                                 final ClassActor concreteMethodHolder = ClassID.toClassActor(concreteTypeClassID);
                                 MethodActor method = concreteMethodHolder.localVirtualMethodActors()[methodIndex];
                                 MethodActor contextMethod = classActor.findLocalMethodActor(method.name, method.descriptor());
-                                processor.processUniqueConcreteMethod(contextMethod, method);
+                                processorCarriesOn = processor.processUniqueConcreteMethod(contextMethod, method);
                             } else {
                                 MethodActor method = classActor.localVirtualMethodActors()[assumption];
-                                processor.processUniqueConcreteMethod(method, method);
+                                processorCarriesOn = processor.processUniqueConcreteMethod(method, method);
                             }
                         }
                     }
@@ -448,7 +450,7 @@ public final class ClassDependencyManager {
     static class DependentListIterator implements Iterator<ValidAssumptions> {
         int [] dependentLists;
         int current;
-        int end;
+        int lastDependentIndex;
 
         DependentListIterator() {
 
@@ -457,12 +459,12 @@ public final class ClassDependencyManager {
         void reset(DependentTargetMethodList list) {
             dependentLists = list.dependentLists;
             current = list.getFirstDependentIndex();
-            end = list.getSize();
+            lastDependentIndex = list.getLastDependentIndex();
         }
 
         @Override
         public boolean hasNext() {
-            return current < end;
+            return current <= lastDependentIndex;
         }
 
         @Override
@@ -472,10 +474,11 @@ public final class ClassDependencyManager {
 
         @Override
         public void remove() {
-            if (current != end) {
-                dependentLists[current] = dependentLists[end];
+            final int lastReturned = current - 1;
+            if (lastReturned != lastDependentIndex) {
+                dependentLists[lastReturned] = dependentLists[lastDependentIndex];
             }
-            dependentLists[0] = --end;
+            dependentLists[0] = --lastDependentIndex;
         }
     }
 
@@ -506,6 +509,10 @@ public final class ClassDependencyManager {
 
         int getFirstDependentIndex() {
             return 1;
+        }
+
+        int getLastDependentIndex() {
+            return dependentLists[0] - 1;
         }
 
         int getSize() {
