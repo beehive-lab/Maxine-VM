@@ -1342,7 +1342,7 @@ inspect_help="launch a given program under the Inspector
 
 function run_inspect() {
     save_class_dir="$MAXVM_DIR/inspected_classes"
-    vm_args="-XX:SaveClassDir=$save_class_dir -Djava.home=$JAVA_HOME -XX:+TrapOnError"
+    vm_args="-XX:SaveClassDir=$save_class_dir -XX:+TrapOnError"
     inspector_args="-vmdir=$MAXVM_DIR"
     inspector_cp="$MAXVM_DIR/inspected_classes"
     mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
@@ -1404,7 +1404,8 @@ function run_inspect() {
 	fi
 
     if [[ "$remote" -eq 0 && "$MAXINE_OS" = "darwin" ]]; then
-        run sudo -p \
+        # The -E option propagates the environment variables into the sudo process
+        run sudo -E -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
         ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
