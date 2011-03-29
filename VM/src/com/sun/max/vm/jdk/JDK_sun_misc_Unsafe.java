@@ -525,7 +525,6 @@ final class JDK_sun_misc_Unsafe {
         if (address.isZero()) {
             throw new OutOfMemoryError();
         }
-        Throw.stackDump(null);
         return address.toLong();
     }
 
