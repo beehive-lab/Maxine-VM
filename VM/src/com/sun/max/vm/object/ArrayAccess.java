@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,8 @@ import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -77,7 +77,7 @@ public final class ArrayAccess {
     @INLINE
     public static void checkIndex(Object array, int index) {
         // note that we must read the array length first (implicit null check has precedence over bounds check)
-        if (SpecialBuiltin.aboveEqual(index, readArrayLength(array))) {
+        if (Intrinsics.aboveEqual(index, readArrayLength(array))) {
             Throw.arrayIndexOutOfBoundsException(array, index);
         }
     }

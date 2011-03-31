@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.t1x;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.stack.VMFrameLayout.*;
@@ -34,22 +35,27 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
-import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ri.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.asm.dis.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.verifier.*;
 
 /**
@@ -60,6 +66,10 @@ import com.sun.max.vm.verifier.*;
 public class T1X implements RuntimeCompiler {
 
     final T1XTemplate[] templates;
+
+    static {
+        ClassfileReader.bytecodeTemplateClasses.add(T1X_TEMPLATE.class);
+    }
 
     /**
      * The number of slots to be reserved in each T1X frame for template spill slots.
@@ -92,8 +102,13 @@ public class T1X implements RuntimeCompiler {
 
     public TargetMethod compile(ClassMethodActor method, boolean install, CiStatistics stats) {
         T1XCompilation c = compilation.get();
+        boolean reentrant = false;
         if (c.method != null) {
-            throw new InternalError("T1X is not re-entrant");
+            // Re-entrant call to T1X - use a new compilation object that will be discarded
+            // once the compilation is done. This should be a very rare occurrence.
+            c = new T1XCompilation(this);
+            reentrant = true;
+            Log.println("Created temporary compilation object for re-entrant T1X compilation");
         }
 
         long startTime = 0;
@@ -103,9 +118,11 @@ public class T1X implements RuntimeCompiler {
             startTime = System.nanoTime();
         }
 
+        TTY.Filter filter = PrintFilter == null ? null : new TTY.Filter(PrintFilter, method);
+
         CFGPrinter cfgPrinter = null;
         ByteArrayOutputStream cfgPrinterBuffer = null;
-        if (PrintCFGToFile && method != null) {
+        if (!reentrant && PrintCFGToFile && method != null && !TTY.isSuppressed()) {
             // Cannot write to file system at runtime until the VM is in the RUNNING phase
             if (isHosted() || isRunning()) {
                 cfgPrinterBuffer = new ByteArrayOutputStream();
@@ -114,7 +131,6 @@ public class T1X implements RuntimeCompiler {
             }
         }
 
-        TTY.Filter filter = PrintFilter == null ? null : new TTY.Filter(PrintFilter, method);
         try {
             T1XTargetMethod t1xMethod = c.compile(method, install);
             T1XMetrics.BytecodesCompiled += t1xMethod.codeAttribute.code().length;
@@ -122,7 +138,7 @@ public class T1X implements RuntimeCompiler {
             if (stats != null) {
                 stats.bytecodeCount = t1xMethod.codeAttribute.code().length;
             }
-            printMachineCodeTo(t1xMethod, cfgPrinter);
+            printMachineCodeTo(t1xMethod, c, cfgPrinter);
             return t1xMethod;
         } finally {
             if (filter != null) {
@@ -149,35 +165,116 @@ public class T1X implements RuntimeCompiler {
         }
     }
 
-    void printMachineCodeTo(T1XTargetMethod t1xMethod, CFGPrinter cfgPrinter) {
-        if (isHosted() && cfgPrinter != null) {
-            byte[] code = t1xMethod.code();
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PrintStream ps = new PrintStream(baos);
-            ps.println(";; " + t1xMethod.frame.toString().replaceAll("\\n", "\n;; "));
-            final Pointer startAddress = t1xMethod.codeStart();
-            final DisassemblyPrinter disassemblyPrinter = new T1XDisassemblyPrinter(t1xMethod);
-            Disassembler.disassemble(baos, code, platform().isa, platform().wordWidth(), startAddress.toLong(), null, disassemblyPrinter);
-            if (t1xMethod.handlers.length != 0) {
-                ps.print(";; ------ Exception Handlers ------");
-                for (CiExceptionHandler e : t1xMethod.handlers) {
-                    if (e.catchTypeCPI == T1XTargetMethod.SYNC_METHOD_CATCH_TYPE_CPI) {
-                        ps.println(";;     <any> @ [" +
-                                        e.startBCI() + " .. " +
-                                        e.endBCI() + ") -> " +
-                                        e.handlerBCI());
-                    } else {
-                        ps.println(";;     " + (e.catchType == null ? "<any>" : e.catchType) + " @ [" +
-                                        t1xMethod.posForBci(e.startBCI()) + " .. " +
-                                        t1xMethod.posForBci(e.endBCI()) + ") -> " +
-                                        t1xMethod.posForBci(e.handlerBCI()));
-                    }
-                }
+    private static final int MIN_OPCODE_LINE_LENGTH = 100;
 
+    void printMachineCodeTo(T1XTargetMethod t1xMethod, T1XCompilation c, CFGPrinter cfgPrinter) {
+        if (cfgPrinter != null) {
+            byte[] code = t1xMethod.code();
+
+            final Platform platform = Platform.platform();
+            CiHexCodeFile hcf = new CiHexCodeFile(code, t1xMethod.codeStart().toLong(), platform.isa.name(), platform.wordWidth().numberOfBits);
+
+            CiUtil.addAnnotations(hcf, c.codeAnnotations);
+            addOpcodeComments(hcf, t1xMethod);
+            addExceptionHandlersComment(t1xMethod, hcf);
+            addStopPositionComments(t1xMethod, hcf);
+
+            if (isHosted()) {
+                cfgPrinter.printMachineCode(new HexCodeFileDis(false).process(hcf, null), "After code generation");
+            } else {
+                cfgPrinter.printMachineCode(hcf.toEmbeddedString(), "After code generation");
             }
-            ps.flush();
-            String dis = baos.toString();
-            cfgPrinter.printMachineCode(dis, "After code generation");
+        }
+    }
+
+    private static void addStopPositionComments(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
+        if (t1xMethod.stopPositions() != null) {
+            StopPositions stopPositions = new StopPositions(t1xMethod.stopPositions());
+            Object[] directCallees = t1xMethod.directCallees();
+
+            int frameRefMapSize = t1xMethod.frameRefMapSize;
+            int regRefMapSize = T1XTargetMethod.regRefMapSize();
+            int refMapSize = t1xMethod.refMapSize();
+
+            for (int stopIndex = 0; stopIndex < stopPositions.length(); ++stopIndex) {
+                int pos = stopPositions.get(stopIndex);
+
+                CiBitMap frameRefMap = new CiBitMap(t1xMethod.referenceMaps(), stopIndex * refMapSize, frameRefMapSize);
+                CiBitMap regRefMap = new CiBitMap(t1xMethod.referenceMaps(), (stopIndex * refMapSize) + frameRefMapSize, regRefMapSize);
+
+                CiDebugInfo info = new CiDebugInfo(null, regRefMap, frameRefMap);
+                hcf.addComment(pos, CiUtil.append(new StringBuilder(100), info, target().arch, JVMSFrameLayout.JVMS_SLOT_SIZE).toString());
+
+                if (stopIndex < t1xMethod.numberOfDirectCalls()) {
+                    Object callee = directCallees[stopIndex];
+                    hcf.addOperandComment(pos, String.valueOf(callee));
+                } else if (stopIndex < t1xMethod.numberOfDirectCalls() + t1xMethod.numberOfIndirectCalls()) {
+                    CiCodePos codePos = t1xMethod.getBytecodeFrames(stopIndex);
+                    if (codePos != null) {
+                        byte[] bytecode = t1xMethod.codeAttribute.code();
+                        int bci = codePos.bci;
+                        byte opcode = bytecode[bci];
+                        if (opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL) {
+                            int cpi = Bytes.beU2(bytecode, bci + 1);
+                            RiMethod callee = vm().runtime.getConstantPool(codePos.method).lookupMethod(cpi, opcode);
+                            hcf.addOperandComment(pos, String.valueOf(callee));
+                        }
+                    }
+                } else {
+                    hcf.addOperandComment(pos, "safepoint");
+                }
+            }
+        }
+    }
+
+    private static void addExceptionHandlersComment(T1XTargetMethod t1xMethod, CiHexCodeFile hcf) {
+        if (t1xMethod.handlers.length != 0) {
+            String nl = CiHexCodeFile.NEW_LINE;
+            StringBuilder buf = new StringBuilder("------ Exception Handlers ------").append(nl);
+            for (CiExceptionHandler e : t1xMethod.handlers) {
+                if (e.catchTypeCPI == T1XTargetMethod.SYNC_METHOD_CATCH_TYPE_CPI) {
+                    buf.append("    <any> @ [").
+                        append(e.startBCI()).
+                        append(" .. ").
+                        append(e.endBCI()).
+                        append(") -> ").
+                        append(e.handlerBCI()).
+                        append(nl);
+                } else {
+                    buf.append("    ").
+                        append(e.catchType == null ? "<any>" : e.catchType).append(" @ [").
+                        append(t1xMethod.posForBci(e.startBCI())).append(" .. ").
+                        append(t1xMethod.posForBci(e.endBCI())).append(") -> ").
+                        append(t1xMethod.posForBci(e.handlerBCI())).append(nl);
+                }
+            }
+            hcf.addComment(0, buf.toString());
+        }
+    }
+
+    private static void addOpcodeComments(CiHexCodeFile hcf, T1XTargetMethod t1xMethod) {
+        int[] bciToPos = t1xMethod.bciToPos;
+        BytecodeStream s = new BytecodeStream(t1xMethod.codeAttribute.code());
+        for (int bci = 0; bci < bciToPos.length; ++bci) {
+            int pos = bciToPos[bci];
+            if (pos != 0) {
+                StringBuilder sb = new StringBuilder(MIN_OPCODE_LINE_LENGTH);
+                if (bci != bciToPos.length - 1) {
+                    sb.append("-------------------- ");
+                    s.setBCI(bci);
+                    sb.append(bci).append(": ").append(Bytecodes.nameOf(s.currentBC()));
+                    for (int i = bci + 1; i < s.nextBCI(); ++i) {
+                        sb.append(' ').append(s.readUByte(i));
+                    }
+                    sb.append(" --------------------");
+                } else {
+                    sb.append("-------------------- <epilogue> --------------------");
+                }
+                while (sb.length() < MIN_OPCODE_LINE_LENGTH) {
+                    sb.append('-');
+                }
+                hcf.addComment(pos, sb.toString());
+            }
         }
     }
 

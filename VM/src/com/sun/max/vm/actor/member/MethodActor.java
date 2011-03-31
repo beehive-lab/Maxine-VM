@@ -137,11 +137,6 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     @INLINE
-    public final boolean isBuiltin() {
-        return isBuiltin(flags());
-    }
-
-    @INLINE
     public final boolean isLocalSubstitute() {
         return isLocalSubstitute(flags());
     }
@@ -152,18 +147,8 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     @INLINE
-    public final boolean isExtended() {
-        return isExtended(flags());
-    }
-
-    @INLINE
     public final boolean isInline() {
         return isInline(flags());
-    }
-
-    @INLINE
-    public final boolean isInlineAfterSnippetsAreCompiled() {
-        return isInlineAfterSnippetsAreCompiled(flags());
     }
 
     @INLINE

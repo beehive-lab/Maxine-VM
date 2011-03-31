@@ -27,7 +27,6 @@ import static com.sun.c1x.C1XCompilation.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.LIROperand.LIRAddressOperand;
 import com.sun.c1x.lir.LIROperand.LIRVariableOperand;
@@ -420,22 +419,6 @@ public abstract class LIRInstruction {
         return buf.toString();
     }
 
-    /**
-     * Prints this instruction to a log stream.
-     *
-     * @param st the LogStream to print into.
-     */
-    public final void printOn(LogStream st) {
-        if (st != LogStream.SINK) {
-            if (id != -1) {
-                st.printf("%4d ", id);
-            } else {
-                st.print("     ");
-            }
-            st.print(toString());
-        }
-    }
-
     public boolean verify() {
         return true;
     }
@@ -511,6 +494,13 @@ public abstract class LIRInstruction {
     @Override
     public String toString() {
         return toString(OperandFormatter.DEFAULT);
+    }
+
+    public final String toStringWithIdPrefix() {
+        if (id != -1) {
+            return String.format("%4d %s", id, toString());
+        }
+        return "     " + toString();
     }
 
     protected static String refMapToString(CiDebugInfo debugInfo, OperandFormatter operandFmt) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,10 +40,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -521,7 +521,11 @@ final class JDK_sun_misc_Unsafe {
         if (bytes < 0L || bytes > Word.widthValue().max) {
             throw new IllegalArgumentException();
         }
-        return Memory.allocate(Size.fromLong(bytes)).toLong();
+        Pointer address = Memory.allocate(Size.fromLong(bytes));
+        if (address.isZero()) {
+            throw new OutOfMemoryError();
+        }
+        return address.toLong();
     }
 
     /**
@@ -654,7 +658,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void ensureClassInitialized(Class c) {
-        MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(c));
+        Snippets.makeClassInitialized(ClassActor.fromJava(c));
     }
 
     /**
@@ -743,7 +747,7 @@ final class JDK_sun_misc_Unsafe {
     @SUBSTITUTE
     public Object allocateInstance(Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        MakeClassInitialized.makeClassInitialized(classActor);
+        Snippets.makeClassInitialized(classActor);
         if (classActor.isArrayClass()) {
             return Heap.createArray(classActor.dynamicHub(), 0);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,9 @@ import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -434,7 +434,7 @@ final class JDK_java_lang_reflect_Array {
         for (int i = 1; i < dimensions.length; i++) {
             arrayClassActor = ArrayClassActor.forComponentClassActor(arrayClassActor);
         }
-        return CreateMultiReferenceArray.createMultiReferenceArray(arrayClassActor, dimensions);
+        return Snippets.createMultiReferenceArray(arrayClassActor, dimensions);
     }
 
 }

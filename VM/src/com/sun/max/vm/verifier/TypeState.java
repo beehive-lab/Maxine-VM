@@ -30,7 +30,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.stackmap.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.*;
+import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.Instruction;
 import com.sun.max.vm.verifier.types.*;
 
 /**
@@ -102,7 +102,7 @@ public class TypeState extends Frame {
     }
 
     /**
-     * Pops frames off the stack of subroutine frames until until the frame for a given subroutine is popped. That is,
+     * Pops frames off the stack of subroutine frames until the frame for a given subroutine is popped. That is,
      * the subroutine frame stack is unwound to the frame that calls {@code subroutine}.
      *
      * @return the number of frames popped
@@ -251,17 +251,44 @@ public class TypeState extends Frame {
         return changed;
     }
 
+    /**
+     * Merges the subroutine frames in this type state with those from another type state.
+     *
+     * The subroutine depth of this frame can be greater than that of {@code fromTypeState}
+     * if an exception handler covers a range of code that includes subroutines
+     * at different depths. The result of the merge is the intersection of the
+     * subroutines frames from the 2 type states.
+     *
+     * @param fromTypeState
+     * @return true if this subroutine frames of this type state changed
+     */
     public boolean mergeSubroutineFrames(TypeState fromTypeState) {
         final SubroutineFrame fromSubroutineFrame = fromTypeState.subroutineFrame;
         boolean changed = false;
 
-        // The subroutine depth this frame may be greater than the incoming frame
-        // if an exception handler covers a range of code that includes subroutines
-        // at different depths.
-        while (fromSubroutineFrame.depth < subroutineFrame.depth) {
-            subroutineFrame = subroutineFrame.parent();
+        if (fromSubroutineFrame.depth < subroutineFrame.depth) {
+            if (fromSubroutineFrame == SubroutineFrame.TOP) {
+                subroutineFrame = fromSubroutineFrame;
+            } else {
+                SubroutineFrame[] thisAncestors = subroutineFrame.ancestors();
+                SubroutineFrame[] fromAncestors = fromSubroutineFrame.ancestors();
+
+                int i = 1;
+                int j = 1;
+                while (i < fromAncestors.length) {
+                    if (thisAncestors[j].subroutine != fromAncestors[i].subroutine) {
+                        j++;
+                    } else {
+                        thisAncestors[j].reparent(fromAncestors[i].parent);
+                        i++;
+                        j++;
+                    }
+                }
+                subroutineFrame = thisAncestors[j - 1];
+            }
             changed = true;
         }
+
         if (fromSubroutineFrame.depth == subroutineFrame.depth) {
             final SubroutineFrame mergedSubroutineFrame = subroutineFrame.merge(fromSubroutineFrame);
             if (mergedSubroutineFrame != subroutineFrame) {

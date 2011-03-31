@@ -505,7 +505,7 @@ public abstract class CiXirAssembler {
          * Transfer control to the instruction at the {@link XirLabel label} identified by {@code extra}.
          */
         Jmp,
-        /**
+       /**
          * If {@code x == y}, transfer control to the instruction at the {@link XirLabel label} identified by {@code extra}.
          */
         Jeq,
@@ -537,6 +537,11 @@ public abstract class CiXirAssembler {
          * Decreases the input by one and jumps to the target if the input is not 0
          */
         DecAndJumpNotZero,
+        /**
+         * If bit designated by {@code z} at effective address defined by base {@code x} and offset {@code y} 
+         * is set transfer control to the instruction at the {@link XirLabel label} identified by {@code extra}.
+         */
+        Jbset,
         /**
          * Bind the {@link XirLabel label} identified by {@code extra} to the current instruction and update any references to it.
          * A label may be bound more than once to the same location.
@@ -588,7 +593,7 @@ public abstract class CiXirAssembler {
          ShouldNotReachHere
     }
 
-    private void append(XirInstruction xirInstruction) {
+    public/*private*/ void append(XirInstruction xirInstruction) {
         assert !finished : "no instructions can be added to finished template";
         instructions.add(xirInstruction);
     }
@@ -735,6 +740,10 @@ public abstract class CiXirAssembler {
 
     public void jlteq(XirLabel l, XirOperand a, XirOperand b) {
         jcc(Jlteq, l, a, b);
+    }
+    
+    public void jbset(XirLabel l, XirOperand a, XirOperand b, XirOperand c) {
+        append(new XirInstruction(CiKind.Void, l, Jbset, null, a, b, c));
     }
 
     public void bindInline(XirLabel l) {

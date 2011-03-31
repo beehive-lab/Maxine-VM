@@ -490,6 +490,7 @@ public class CompiledPrototype extends Prototype {
         add(ClassRegistry.findMethod(JDK.java_lang_ProcessEnvironment, "<clinit>"), null, entryPoint);
 
         // It's too late now to register any further methods to be compiled into the boot image
+        extraVMEntryPoints = null;
         extraVMEntryPointNames = null;
         imageConstructorStubMethodActors = null;
         imageInvocationStubMethodActors = null;
@@ -648,14 +649,23 @@ public class CompiledPrototype extends Prototype {
 
     public void checkRequiredImageMethods() {
         Trace.begin(1, "checking methods that must be compiled");
+        final TreeSet<String> missing = new TreeSet<String>();
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (classMethodActor.mustCompileInImage && classMethodActor.targetMethodCount() == 0) {
-                        FatalError.unexpected("Method must be compiled in image: " + classMethodActor);
+                        missing.add(classMethodActor.toString());
                     }
                 }
             });
+        }
+
+        if (!missing.isEmpty()) {
+            String msg =  "These methods must be compiled in the boot image: ";
+            for (String m : missing) {
+                msg += String.format("%n    %s", m);
+            }
+            FatalError.unexpected(msg);
         }
         Trace.end(1, "checking methods that must be compiled");
     }
@@ -663,8 +673,7 @@ public class CompiledPrototype extends Prototype {
     private boolean hasCode(MethodActor methodActor) {
         return methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
-            !methodActor.isIntrinsic() &&
-            (methodActor.isHiddenToReflection() || !methodActor.isBuiltin());
+            !methodActor.isIntrinsic();
     }
 
     public void addEntrypoints() {

@@ -198,6 +198,8 @@ public class BootImage {
         public final int cacheAlignment;
 
         public final int pageSize;
+        public final int yellowZonePages;
+        public final int redZonePages;
 
         public final int vmRunMethodOffset;
         public final int vmThreadAddMethodOffset;
@@ -285,6 +287,8 @@ public class BootImage {
             cacheAlignment = endian.readInt(dataInputStream);
 
             pageSize = endian.readInt(dataInputStream);
+            yellowZonePages = endian.readInt(dataInputStream);
+            redZonePages = endian.readInt(dataInputStream);
 
             vmRunMethodOffset = endian.readInt(dataInputStream);
             vmThreadAddMethodOffset = endian.readInt(dataInputStream);
@@ -342,6 +346,8 @@ public class BootImage {
             wordSize = platform().wordWidth().numberOfBytes;
             cacheAlignment = platform().dataModel.cacheAlignment;
             pageSize = platform().pageSize;
+            yellowZonePages = VmThread.YELLOW_ZONE_PAGES;
+            redZonePages = VmThread.RED_ZONE_PAGES;
             vmRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.MaxineVM_run, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadAddMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_add, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_run, CallEntryPoint.C_ENTRY_POINT).toInt();

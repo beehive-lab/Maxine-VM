@@ -286,7 +286,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.getClass().getSimpleName());
-            Log.print(": Compiling ");
+            Log.print(previousTargetState == null ? ": Compiling " : ": Recompiling ");
             Log.println(methodString);
         }
         return methodString;
@@ -297,7 +297,7 @@ public class Compilation /*implements Future<TargetMethod>*/ {
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.getClass().getSimpleName());
-            Log.print(": Compiled  ");
+            Log.print(previousTargetState == null ? ": Compiled " : ": Recompiled ");
             Log.print(methodString);
             Log.print(" @ ");
             Log.print(targetMethod.codeStart());

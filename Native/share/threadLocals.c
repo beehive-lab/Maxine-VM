@@ -175,24 +175,24 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
     int guardZonePages;
     if (!attaching || haveRedZone) {
         /* Thread library creates a red-zone guard page just below the stack */
-        ntl->stackRedZone = ntl->stackBase - (STACK_RED_ZONE_PAGES * pageSize);
-        ntl->stackRedZoneIsProtectedByVM = false;
+        ntl->redZone = ntl->stackBase - (RED_ZONE_PAGES * pageSize);
+        ntl->redZoneIsProtectedByVM = false;
 
         /* Yellow guard page is bottom page of stack */
-        ntl->stackYellowZone = ntl->stackBase;
+        ntl->yellowZone = ntl->stackBase;
 
-        startGuardZone = ntl->stackYellowZone;
-        guardZonePages = STACK_YELLOW_ZONE_PAGES;
+        startGuardZone = ntl->yellowZone;
+        guardZonePages = YELLOW_ZONE_PAGES;
     } else {
         /* Cannot determine if the thread library created a red-zone guard page */
-        ntl->stackRedZone = ntl->stackBase;
-        ntl->stackRedZoneIsProtectedByVM = true;
+        ntl->redZone = ntl->stackBase;
+        ntl->redZoneIsProtectedByVM = true;
 
         /* Yellow guard page is just above red-zone */
-        ntl->stackYellowZone = ntl->stackBase + (STACK_RED_ZONE_PAGES * pageSize);
+        ntl->yellowZone = ntl->stackBase + (RED_ZONE_PAGES * pageSize);
 
-        startGuardZone = ntl->stackRedZone;
-        guardZonePages = STACK_YELLOW_ZONE_PAGES + STACK_RED_ZONE_PAGES;
+        startGuardZone = ntl->redZone;
+        guardZonePages = YELLOW_ZONE_PAGES + RED_ZONE_PAGES;
 
         if (id == PRIMORDIAL_THREAD_ID) {
             commitStackMemoryForInitialThread(ntl->stackBase, pageSize);
@@ -223,19 +223,23 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
     Address sp = (Address) &ntl; // approximation of stack pointer
     const int safetyMargin = pageSize;
     if (sp < endGuardZone + safetyMargin) {
+        log_println("sp = %p", sp);
+        log_println("endGuardZone + safetyMargin = %p", endGuardZone + safetyMargin);
+        log_println("endGuardZone = %p", endGuardZone);
+        log_println("safetyMargin = %p", safetyMargin);
         log_exit(11, "Stack is too small to safely place stack guard zones");
     }
 
-    ntl->stackBlueZone = ntl->stackYellowZone;  // default is no blue zone
+    ntl->blueZone = ntl->yellowZone;  // default is no blue zone
 
 #if log_THREADS
     log_println("thread %3d: stackEnd     = %p", id, ntl->stackBase + ntl->stackSize);
     log_println("thread %3d: sp           ~ %p", id, &id);
     log_println("thread %3d: stackBase    = %p", id, ntl->stackBase);
     log_println("thread %3d: stackSize    = %d (%p)", id, ntl->stackSize, ntl->stackSize);
-    log_println("thread %3d: redZone      = %p", id, ntl->stackRedZone);
-    log_println("thread %3d: yellowZone   = %p", id, ntl->stackYellowZone);
-    log_println("thread %3d: blueZone     = %p", id, ntl->stackBlueZone);
+    log_println("thread %3d: redZone      = %p", id, ntl->redZone);
+    log_println("thread %3d: yellowZone   = %p", id, ntl->yellowZone);
+    log_println("thread %3d: blueZone     = %p", id, ntl->blueZone);
     log_println("thread %3d: ttla         = %p", id, ttla);
     log_println("thread %3d: etla         = %p", id, etla);
     log_println("thread %3d: dtla         = %p", id, dtla);
@@ -305,15 +309,15 @@ void threadLocalsBlock_destroy(Address tlBlock) {
     c_ASSERT(tla_load(Address, tla, FORWARD_LINK) == 0);
     c_ASSERT(tla_load(Address, tla, BACKWARD_LINK) == 0);
 
-    const jboolean attached = ntl->stackRedZone == ntl->stackBase;
+    const jboolean attached = ntl->redZone == ntl->stackBase;
     Address startGuardZone;
     int guardZonePages;
     if (!attached) {
-        startGuardZone = ntl->stackYellowZone;
-        guardZonePages = STACK_YELLOW_ZONE_PAGES;
+        startGuardZone = ntl->yellowZone;
+        guardZonePages = YELLOW_ZONE_PAGES;
     } else {
-        startGuardZone = ntl->stackRedZone;
-        guardZonePages = STACK_YELLOW_ZONE_PAGES + STACK_RED_ZONE_PAGES;
+        startGuardZone = ntl->redZone;
+        guardZonePages = YELLOW_ZONE_PAGES + RED_ZONE_PAGES;
     }
 
     /* Unprotect the first page of the TL block which contains the first word of the triggered thread locals */

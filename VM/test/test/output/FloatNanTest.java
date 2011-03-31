@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package test.output;
 
-import com.sun.max.vm.compiler.builtin.*;
 
 /**
  * @author Aziz Ghuloum
@@ -89,7 +88,8 @@ public class FloatNanTest {
 
     public static int convertDoubleToInt(double value) {
         if (MAX_DOUBLE_VALUE >= value) {
-            return IEEE754Builtin.ConvertDoubleToInt.convertDoubleToInt(value);
+            return (int) value;
+            //return IEEE754Builtin.ConvertDoubleToInt.convertDoubleToInt(value);
         }
         if (value >= MAX_DOUBLE_VALUE) {
             return -1 >>> 1;

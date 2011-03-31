@@ -380,12 +380,14 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
         log_exit(-21, "could not find DTLA in trap handler");
     }
 
-    if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize) {
-        if (faultAddress < ntl->stackYellowZone) {
+    if (faultAddress >= ntl->redZone && faultAddress < ntl->stackBase + ntl->stackSize) {
+        Address yellowZoneEnd = ntl->yellowZone + (YELLOW_ZONE_PAGES * virtualMemory_getPageSize());
+        if (faultAddress < ntl->yellowZone) {
             /* The faultAddress is in the red zone; we shouldn't be alive */
-            if (ntl->stackRedZoneIsProtectedByVM) {
+            log_println("--- RED STACK OVERFLOW ---");
+            if (ntl->redZoneIsProtectedByVM) {
                 // Only unprotect the red guard zone if the VM (and not the thread library) protected it
-                virtualMemory_unprotectPages(ntl->stackRedZone, STACK_RED_ZONE_PAGES);
+                virtualMemory_unprotectPages(ntl->redZone, RED_ZONE_PAGES);
                 trapNumber = STACK_FATAL;
             } else {
                 // If VM cannot unprotect the red guard zone page(s), it's not possible
@@ -397,9 +399,10 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
                 }
                 log_exit(1, "fatal stack fault in red zone");
             }
-        } else if (faultAddress < ntl->stackYellowZone + virtualMemory_getPageSize()) {
+        } else if (faultAddress < yellowZoneEnd) {
             /* the faultAddress is in the yellow zone; assume this is a stack fault. */
-            virtualMemory_unprotectPages(ntl->stackYellowZone, STACK_YELLOW_ZONE_PAGES);
+            /* log_println("--- YELLOW STACK OVERFLOW ---"); */
+            virtualMemory_unprotectPages(ntl->yellowZone, YELLOW_ZONE_PAGES);
             trapNumber = STACK_FAULT;
         } else {
             blueZoneTrap(ntl);

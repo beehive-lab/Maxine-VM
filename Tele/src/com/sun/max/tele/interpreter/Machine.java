@@ -408,8 +408,6 @@ public final class Machine extends AbstractTeleVMHolder{
         }
     }
 
-    //private final ClassMethodActor safepointAndLoadExceptionObject = (ClassMethodActor) MethodActor.fromJava(Classes.findDeclaredMethod(CPSAbstractCompiler.class, "safepointAndLoadExceptionObject"));
-
     public void invokeMethod(ClassMethodActor method) throws TeleInterpreterException {
         final ExecutionFrame oldFrame = currentThread.frame();
         final Stack<Value> argumentStack = new Stack<Value>();
@@ -425,10 +423,6 @@ public final class Machine extends AbstractTeleVMHolder{
         for (i = 0; i < numberOfParameters; i++) {
             argumentStack.push(oldOperands.pop());
         }
-
-//        if (method == safepointAndLoadExceptionObject) {
-//            push(widenIfNecessary(ReferenceValue.from(CPSAbstractCompiler.hostedSafepointAndLoadExceptionObject())));
-//        } else
         if (method.isNative()) {
             final Value[] arguments = new Value[numberOfParameters];
             invertOperands(argumentStack, arguments);

@@ -149,7 +149,7 @@ public final class C1XOptions {
     public static boolean AlignCallsForPatching         = true;
     public static boolean NullCheckUniquePc             = ____;
     public static boolean InvokeSnippetAfterArguments   = ____;
-    public static boolean ResolveClassBeforeStaticInvoke = ____;
+    public static boolean ResolveClassBeforeStaticInvoke = true;
 
     // Translating tableswitch instructions
     public static int     SequentialSwitchLimit         = 4;

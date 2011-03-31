@@ -115,8 +115,6 @@ public class MaxineTester {
     private static final Option<Integer> junitTestTimeOutOption = options.newIntegerOption("junit-test-timeout", 300,
                     "The number of seconds to wait for a JUnit test to complete before " +
                     "timing out and killing it.");
-    private static final Option<Boolean> slowAutoTestsOption = options.newBooleanOption("slow-junit-tests", false,
-                    "Include junit-tests known to be slow.");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false,
                     "Stop execution as soon as a single test fails.");
     private static final Option<File> specjvm98ZipOption = options.newFileOption("specjvm98", (File) null,
@@ -249,7 +247,7 @@ public class MaxineTester {
     static void listTests(String filter) {
         listTests(filter, "c1x", MaxineTesterConfiguration.zeeC1XTests.keySet());
         listTests(filter, "dacapo2006", MaxineTesterConfiguration.zeeDacapo2006Tests);
-        listTests(filter, "dacapobach", MaxineTesterConfiguration.zeeDacapo2006Tests);
+        listTests(filter, "dacapobach", MaxineTesterConfiguration.zeeDacapoBachTests);
         listTests(filter, "specjvm98", MaxineTesterConfiguration.zeeSpecjvm98Tests);
         listTests(filter, "specjvm2008", MaxineTesterConfiguration.zeeSpecjvm2008Tests);
         listTests(filter, "shootout", MaxineTesterConfiguration.zeeShootoutTests);
@@ -487,8 +485,6 @@ public class MaxineTester {
      */
     public static class JUnitTestRunner {
 
-        static final String INCLUDE_SLOW_TESTS_PROPERTY = "includeSlowTests";
-
         /**
          * Runs the JUnit tests in a given class.
          *
@@ -511,22 +507,10 @@ public class MaxineTester {
             final Class<?> testClass = Class.forName(testClassName);
             final Test test = AllTests.testFromSuiteMethod(testClass);
 
-            final boolean includeSlowTests = System.getProperty(INCLUDE_SLOW_TESTS_PROPERTY) != null;
-
             final Runner runner = new AllTests(testClass) {
                 @Override
                 public void run(RunNotifier notifier) {
-                    final TestResult result = new TestResult() {
-                        @Override
-                        protected void run(TestCase testCase) {
-                            final Description description = Description.createTestDescription(testCase.getClass(), testCase.getName());
-                            if (!includeSlowTests && MaxineTesterConfiguration.isSlowAutoTestCase(testCase)) {
-                                System.out.println("Omitted slow test: " + description);
-                                return;
-                            }
-                            super.run(testCase);
-                        }
-                    };
+                    final TestResult result = new TestResult();
                     result.addListener(createAdaptingListener(notifier));
                     test.run(result);
                 }
@@ -684,7 +668,6 @@ public class MaxineTester {
         javaCommand.addArguments(MaxineTesterConfiguration.getImageConfigArgs(imageConfig));
         javaCommand.addArgument("-vmdir=" + imageDir);
         javaCommand.addArgument("-trace=1");
-        javaCommand.addVMOption("-XX:CompileCommand=exclude,com/sun/max/vm/jit/JitReferenceMapEditor,fillInMaps");
         javaCommand.addVMOptions(defaultJVMOptions());
         javaCommand.addClasspath(System.getProperty("java.class.path"));
         final String[] javaArgs = javaCommand.getExecArgs(javaExecutableOption.getValue());
@@ -719,7 +702,7 @@ public class MaxineTester {
             return;
         }
         List<String> maxvmConfigs = maxvmConfigListOption.getValue();
-        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, outputDir, workingDir, null);
+        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, outputDir, workingDir, inputFile);
         printStartOfRefvm(testName);
         ExternalCommand.Result refResult = commands[0].exec(false, javaRunTimeOutOption.getValue());
         printRefvmResult(testName, refResult);
@@ -1106,9 +1089,6 @@ public class MaxineTester {
             javaCommand.addArgument(junitTest);
             javaCommand.addArgument(passedFile.getName());
             javaCommand.addArgument(failedFile.getName());
-            if (slowAutoTestsOption.getValue()) {
-                javaCommand.addSystemProperty(JUnitTestRunner.INCLUDE_SLOW_TESTS_PROPERTY, null);
-            }
 
             final String[] command = javaCommand.getExecArgs(javaExecutableOption.getValue());
 
@@ -1357,7 +1337,7 @@ public class MaxineTester {
         }
 
         void runOutputTests(final File outputDir, final File imageDir) {
-            List<Class> mscpscpsSkippedTests = Arrays.asList(new Class[] {GCTest5.class, GCTest6.class});
+            List<Class> msc1xc1xSkippedTests = Arrays.asList(new Class[] {GCTest5.class, GCTest6.class});
 
             out().println("Output tests key:");
             out().println("      OK: test passed");
@@ -1368,7 +1348,7 @@ public class MaxineTester {
             out().println("   lucky: non-deterministic test passed (ignore)");
             for (Class mainClass : testList) {
 
-                if (imageDir.getName().equals("jtt-mscpscps") && mscpscpsSkippedTests.contains(mainClass)) {
+                if (imageDir.getName().equals("jtt-msc1xc1x") && msc1xc1xSkippedTests.contains(mainClass)) {
                     out().println("*** Skipping too slow test: " + mainClass.getName());
                     continue;
                 }
@@ -1595,7 +1575,9 @@ public class MaxineTester {
                 Files.unzip(specjvm2008Zip, specjvm2008Dir);
                 if (testList == null) {
                     // run all tests from within the SPECjvm2008 harness
-                    runSpecJVM2008Test(outputDir, imageDir, specjvm2008Dir, null);
+                    for (String test : MaxineTesterConfiguration.zeeSpecjvm2008Tests) {
+                        runSpecJVM2008Test(outputDir, imageDir, specjvm2008Dir, test);
+                    }
                 } else {
                     for (String test : testList) {
                         runSpecJVM2008Test(outputDir, imageDir, specjvm2008Dir, test);

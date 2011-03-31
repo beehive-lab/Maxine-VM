@@ -25,8 +25,6 @@ package test.com.sun.max.vm;
 import java.io.*;
 import java.util.*;
 
-import junit.framework.*;
-
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -103,24 +101,20 @@ public class MaxineTesterConfiguration {
 
         // Refine expectation for certain output tests
         output(test.output.AWTFont.class,                  FAIL_DARWIN, RAND_SPARC);
-        output(test.output.JavacTest.class,                RAND_LINUX);
-        output(test.output.GCTest7.class,                  RAND_ALL);
-        output(test.output.GCTest8.class,                  RAND_ALL);
-        output(test.output.MegaThreads.class,              RAND_ALL);
-        output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
+//        output(test.output.GCTest7.class,                  RAND_ALL);
+//        output(test.output.GCTest8.class,                  RAND_ALL);
+//        output(test.output.MegaThreads.class,              RAND_ALL);
+//        output(test.output.SafepointWhileInJava.class,     RAND_LINUX);
 
 
-        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
-        jtt(jtt.except.BC_invokespecial01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
-        jtt(jtt.except.BC_invokevirtual02.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
-        jtt(jtt.except.Except_Locals.class, RAND_ALL); // Fails on CPS due to missing null pointer check
-        jtt(jtt.optimize.NCE_FlowSensitive02.class, RAND_ALL); // Fails on all but C1X due to missing explicit null pointer checks
+//        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
+//        jtt(jtt.except.BC_invokespecial01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
+//        jtt(jtt.except.BC_invokevirtual02.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
+//        jtt(jtt.optimize.NCE_FlowSensitive02.class, RAND_ALL); // Fails on all but C1X due to missing explicit null pointer checks
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
-        jtt(jtt.threads.Thread_isInterrupted05.class,     RAND_LINUX);
-        jtt(jtt.jdk.EnumMap01.class,                      RAND_ALL);
-        jtt(jtt.jdk.EnumMap02.class,                      RAND_ALL);
-        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitcps, @cpscps
-        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitcps, @cpscps
+//        jtt(jtt.threads.Thread_isInterrupted05.class,     RAND_LINUX);
+//        jtt(jtt.jdk.EnumMap01.class,                      RAND_ALL);
+//        jtt(jtt.jdk.EnumMap02.class,                      RAND_ALL);
 
         dacapo2006("antlr");
         dacapo2006("bloat");
@@ -245,35 +239,25 @@ public class MaxineTesterConfiguration {
         shootout("wc",              new File("wc.stdin"));
         shootout("wordfreq",        new File("wordfreq.stdin"));
 
-        auto("test_arrayCopyForKinds(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)",  FAIL_ALL);
-        auto("test_catchNull(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_throw)",               FAIL_ALL);
-        auto("test_sameNullsArrayCopy(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
-        auto("test_count_bits(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_regressions)", FAIL_ALL);
-        auto("test_count_bits(test.com.sun.max.vm.cps.sparc.SPARCTranslatorTest_regressions)", FAIL_ALL);
-
-        String opt_cps = "-opt=com.sun.max.vm.cps.b.c.d.e.amd64.target.AMD64CPSCompiler";
         String opt_c1x = "-opt=" + C1X.class.getName();
 
         String baseline_c1x = "-baseline=" + C1X.class.getName();
-        String baseline_jit = "-baseline=com.sun.max.vm.cps.jit.amd64.AMD64JitCompiler";
+        String baseline_t1x = "-baseline=T1X";
 
 
         imageConfig("java", "-run=java");
-        imageConfig("jtt-cpscps", opt_cps, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
-        imageConfig("jtt-jitcps", opt_cps, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline");
-        imageConfig("jtt-cpsjit", opt_cps, baseline_jit, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-baseline");
-        imageConfig("jtt-jitjit", opt_cps, baseline_jit, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
-        imageConfig("jtt-cpsc1x", opt_cps, baseline_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-baseline", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
-        imageConfig("jtt-c1xc1x", opt_c1x, baseline_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "--C1X:OptLevel=1");
+        imageConfig("jtt-t1xc1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline");
+        imageConfig("jtt-c1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-baseline");
+        imageConfig("jtt-t1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
+        imageConfig("jtt-c1xc1x", opt_c1x, baseline_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
 
-        imageConfig("jtt-mscpscps", opt_cps, baseline_jit, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
-        imageConfig("jtt-mscpsjit", opt_cps, baseline_jit, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-baseline");
-        imageConfig("jtt-msjitcps", opt_cps, baseline_jit, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline");
-        imageConfig("jtt-msjitjit", opt_cps, baseline_jit, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
-        imageConfig("jtt-mscpsc1x", opt_cps, baseline_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-baseline", PASS_SOLARIS_AMD64, PASS_DARWIN_AMD64);
+        imageConfig("jtt-msc1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-callee-baseline");
+        imageConfig("jtt-mst1xc1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline");
+        imageConfig("jtt-mst1xt1x", opt_c1x, baseline_t1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", "-test-caller-baseline", "-test-callee-baseline");
+        imageConfig("jtt-msc1xc1x", opt_c1x, baseline_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
 
         maxvmConfig("std");
-        maxvmConfig("jit", "-Xbaseline");
+        maxvmConfig("baseline", "-Xbaseline");
         maxvmConfig("opt", "-Xopt");
         maxvmConfig("mx256m", "-Xmx256m");
         maxvmConfig("mx512m", "-Xmx512m");
@@ -303,7 +287,7 @@ public class MaxineTesterConfiguration {
         imageConfig("msc1x",      "-run=java", "-heap=gcx.ms", opt_c1x, baseline_c1x, "--C1X:OptLevel=1");
         imageConfig("msec1x",     "-run=java", "-heap=gcx.mse", opt_c1x, baseline_c1x, "--C1X:OptLevel=1");
 
-        c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt0", "-C1X:OptLevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt1", "-C1X:OptLevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt2", "-C1X:OptLevel=2", "^jtt", "^com.sun.c1x", "^com.sun.cri");
         c1xTest("opt3", "-C1X:OptLevel=3", "^jtt", "^com.sun.c1x", "^com.sun.cri");
@@ -394,9 +378,9 @@ public class MaxineTesterConfiguration {
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.platform();
         if (platform.cpu == CPU.SPARCV9) {
-            return "jtt-cpscps,jtt-cpsjit,jtt-jitcps,jtt-jitjit";
+            return "jtt-c1xc1x,jtt-c1xt1x,jtt-t1xc1x,jtt-t1xt1x";
         }
-        return "jtt-cpsc1x,jtt-cpscps,jtt-jitcps,jtt-cpsjit,jtt-jitjit";
+        return "jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x";
     }
 
     public static boolean isSupported(String config) {
@@ -473,40 +457,6 @@ public class MaxineTesterConfiguration {
             }
         }
         return ExpectedResult.PASS;
-    }
-
-
-
-    static final Set<Class> slowAutoTestClasses = new HashSet<Class>();
-
-    private static void addIfExists(Set<Class> classes, String className) {
-        try {
-            classes.add(Class.forName(className));
-        } catch (ClassNotFoundException e) {
-        }
-    }
-
-    static {
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_max");
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_coreJava");
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_large");
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.JitCompilerTestCase");
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.bytecode.BytecodeTest_subtype");
-    }
-
-    /**
-     * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.
-     * These tests are omitted by the MaxineTester unless the
-     * @param testCase the test case
-     * @return {@code true} if the test is probably slow
-     */
-    public static boolean isSlowAutoTestCase(TestCase testCase) {
-        for (Class<?> c : slowAutoTestClasses) {
-            if (c.isAssignableFrom(testCase.getClass())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public static String[] getVMOptions(String maxvmConfig) {

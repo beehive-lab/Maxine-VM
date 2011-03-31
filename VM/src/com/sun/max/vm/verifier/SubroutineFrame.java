@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,8 +44,8 @@ public class SubroutineFrame {
     public static final SubroutineCall TOP = new SubroutineCall(null, null, null);
 
     final Subroutine subroutine;
-    final int depth;
-    final SubroutineFrame parent;
+    int depth;
+    SubroutineFrame parent;
 
     public SubroutineFrame(Subroutine subroutine, SubroutineFrame parent) {
         assert (subroutine != null && parent != null) || TOP == null;
@@ -66,6 +66,24 @@ public class SubroutineFrame {
 
     public SubroutineFrame parent() {
         return parent;
+    }
+
+    public void reparent(SubroutineFrame newParent) {
+        assert newParent != null;
+        this.parent = newParent;
+        this.depth = 1 + newParent.depth;
+    }
+
+    public SubroutineFrame[] ancestors() {
+        SubroutineFrame[] result = new SubroutineFrame[depth + 1];
+        int i = depth + 1;
+        SubroutineFrame sf = this;
+        while (sf != null) {
+            result[--i] = sf;
+            sf = sf.parent;
+        }
+        assert result[0] == TOP;
+        return result;
     }
 
     /**

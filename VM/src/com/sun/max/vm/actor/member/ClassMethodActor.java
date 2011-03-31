@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.actor.member;
 
-import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.actor.member.LivenessAdapter.*;
 
 import java.lang.reflect.*;
@@ -32,7 +31,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -40,7 +38,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
-import com.sun.org.apache.bcel.internal.generic.*;
 
 /**
  * Non-interface methods.
@@ -63,8 +60,6 @@ public abstract class ClassMethodActor extends MethodActor {
     @INSPECTED
     public volatile Object targetState;
 
-    private CodeAttribute originalCodeAttribute;
-
     /**
      * This is the method whose code is actually compiled/executed. In most cases, it will be
      * equal to this object, unless this method has a {@linkplain SUBSTITUTE substitute}.
@@ -85,7 +80,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, int intrinsic) {
         super(name, descriptor, flags, intrinsic);
-        this.originalCodeAttribute = codeAttribute;
+        this.codeAttribute = codeAttribute;
         this.nativeFunction = isNative() ? new NativeFunction(this) : null;
 
         if (MaxineVM.isHosted() && codeAttribute != null) {
@@ -110,31 +105,9 @@ public abstract class ClassMethodActor extends MethodActor {
         return isDeclaredFoldable(flags());
     }
 
-    /**
-     * Gets the {@code CodeAttribute} with which this method actor was originally constructed.
-     *
-     * This is basically a hack to ensure that C1X can obtain code that hasn't been subject to
-     * the {@linkplain Preprocessor preprocessing} required by the CPS and template JIT compilers.
-     * @param intrinsify specifies if intrinsifaction should be performed
-     */
-    public final CodeAttribute originalCodeAttribute(boolean intrinsify) {
-        if (isNative()) {
-            // C1X must compile the generated JNI stub
-            return codeAttribute();
-        }
-
-        if (intrinsify) {
-            // This call ensures that intrinsification is performed on the bytecode array in
-            // 'originalCodeAttribute' before it is returned.
-            compilee();
-        }
-
-        return originalCodeAttribute;
-    }
-
     @Override
     public final byte[] code() {
-        CodeAttribute codeAttribute = originalCodeAttribute(true);
+        CodeAttribute codeAttribute = codeAttribute();
         if (codeAttribute != null) {
             return codeAttribute.code();
         }
@@ -163,7 +136,7 @@ public abstract class ClassMethodActor extends MethodActor {
             return exceptionHandlers;
         }
 
-        CodeAttribute codeAttribute = originalCodeAttribute(true);
+        CodeAttribute codeAttribute = codeAttribute();
         exceptionHandlers = codeAttribute != null ? codeAttribute.exceptionHandlers() : CiExceptionHandler.NONE;
         return exceptionHandlers;
     }
@@ -178,7 +151,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     @Override
     public int maxLocals() {
-        CodeAttribute codeAttribute = originalCodeAttribute(true);
+        CodeAttribute codeAttribute = codeAttribute();
         if (codeAttribute != null) {
             return codeAttribute.maxLocals;
         }
@@ -187,7 +160,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     @Override
     public int maxStackSize() {
-        CodeAttribute codeAttribute = originalCodeAttribute(true);
+        CodeAttribute codeAttribute = codeAttribute();
         if (codeAttribute != null) {
             return codeAttribute.maxStack;
         }
@@ -208,10 +181,10 @@ public abstract class ClassMethodActor extends MethodActor {
 
     /**
      * Allows bytecode verification and {@linkplain #validateInlineAnnotation(ClassMethodActor) validation} of
-     * inlining annotations to be disabled by a hosted process.
+     * inlining annotations to be enabled by a hosted process.
      */
     @HOSTED_ONLY
-    public static boolean hostedVerificationDisabled;
+    public static boolean hostedVerificationEnabled;
 
     /**
      * @return the actor for the method that will be compiled and/or executed in lieu of this method
@@ -229,16 +202,15 @@ public abstract class ClassMethodActor extends MethodActor {
                     if (substitute != null) {
                         compilee = substitute.compilee();
                         codeAttribute = compilee.codeAttribute;
-                        originalCodeAttribute = compilee.originalCodeAttribute;
                         return compilee;
                     }
-                    if (MaxineVM.isHosted() && !hostedVerificationDisabled && !isConstructor) {
+                    if (MaxineVM.isHosted() && hostedVerificationEnabled && !isConstructor) {
                         validateInlineAnnotation(this);
                     }
                 }
 
                 ClassMethodActor compilee = this;
-                CodeAttribute codeAttribute = originalCodeAttribute;
+                CodeAttribute codeAttribute = this.codeAttribute;
                 ClassVerifier verifier = null;
 
                 final CodeAttribute processedCodeAttribute = Preprocessor.apply(compilee, codeAttribute);
@@ -247,19 +219,12 @@ public abstract class ClassMethodActor extends MethodActor {
 
                 final ClassActor holder = compilee.holder();
                 if (MaxineVM.isHosted()) {
-                    if (!hostedVerificationDisabled) {
+                    if (hostedVerificationEnabled) {
                         // We simply verify all methods during boot image build time as the overhead should be acceptable.
                         verifier = modified ? new TypeInferencingVerifier(holder) : Verifier.verifierFor(holder);
                     }
                 } else {
-                    if (holder().majorVersion < 50) {
-                        // The compiler/JIT/interpreter cannot handle JSR or RET instructions. However, these instructions
-                        // can legally appear in class files whose version number is less than 50.0. So, we inline them
-                        // with the type inferencing verifier if they appear in the bytecode of a pre-version-50.0 class file.
-                        if (codeAttribute != null && containsSubroutines(codeAttribute.code())) {
-                            verifier = new TypeInferencingVerifier(holder);
-                        }
-                    } else {
+                    if (holder().majorVersion >= 50) {
                         if (modified) {
                             // The methods in class files whose version is greater than or equal to 50.0 are required to
                             // have stack maps. If the bytecode of such a method has been preprocessed, then its
@@ -281,14 +246,11 @@ public abstract class ClassMethodActor extends MethodActor {
                         }
                     } else {
                         codeAttribute = verifier.verify(compilee, codeAttribute);
+                        beVerified();
                     }
                 }
 
                 intrinsify(compilee, codeAttribute);
-                if (codeAttribute != originalCodeAttribute && originalCodeAttribute != null) {
-                    // C1X must also see the intrinsified code
-                    intrinsify(compilee, originalCodeAttribute);
-                }
 
                 this.codeAttribute = codeAttribute;
                 this.compilee = compilee;
@@ -299,15 +261,13 @@ public abstract class ClassMethodActor extends MethodActor {
 
     private boolean intrinsify(ClassMethodActor compilee, CodeAttribute codeAttribute) {
         if (codeAttribute != null) {
-            Intrinsics intrinsics = new Intrinsics(compilee, codeAttribute);
-            intrinsics.run();
-            if (intrinsics.unsafe) {
+            Intrinsifier intrinsifier = new Intrinsifier(compilee, codeAttribute);
+            intrinsifier.run();
+            if (intrinsifier.unsafe) {
                 compilee.beUnsafe();
                 beUnsafe();
             }
-            if (intrinsics.extended) {
-                compilee.beExtended();
-                beExtended();
+            if (intrinsifier.extended) {
                 return true;
             }
         }
@@ -333,33 +293,9 @@ public abstract class ClassMethodActor extends MethodActor {
     public int sourceLineNumber(int bci) {
         CodeAttribute codeAttribute = this.codeAttribute;
         if (codeAttribute == null) {
-            codeAttribute = this.originalCodeAttribute;
-        }
-        if (codeAttribute == null) {
             return -1;
         }
         return codeAttribute.lineNumberTable().findLineNumber(bci);
-    }
-
-    /**
-     * Determines if a given bytecode sequence contains either of the instructions ({@link JSR} or {@link RET}) used
-     * to implement bytecode subroutines.
-     * @param code the byte array of code
-     * @return {@link true} if the code contains subroutines
-     */
-    private static boolean containsSubroutines(byte[] code) {
-        final BytecodeVisitor visitor = new BytecodeAdapter() {
-            @Override
-            protected void opcodeDecoded() {
-                final int currentOpcode = currentOpcode();
-                if (currentOpcode == JSR || currentOpcode == RET || currentOpcode == JSR_W) {
-                    bytecodeScanner().stop();
-                }
-            }
-        };
-        final BytecodeScanner scanner = new BytecodeScanner(visitor);
-        scanner.scan(new BytecodeBlock(code));
-        return scanner.wasStopped();
     }
 
     /**
@@ -389,8 +325,9 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     public synchronized void verify(ClassVerifier classVerifier) {
-        if (codeAttribute() != null) {
+        if (codeAttribute() != null && !isVerified(flags())) {
             codeAttribute = classVerifier.verify(this, codeAttribute);
+            beVerified();
         }
     }
 
@@ -420,7 +357,7 @@ public abstract class ClassMethodActor extends MethodActor {
     @Override
     public boolean hasCompiledCode() {
         if (MaxineVM.isHosted()) {
-            if (!isAbstract() && !isBuiltin() && !isIntrinsic()) {
+            if (!isAbstract() && !isIntrinsic()) {
                 mustCompileInImage = true;
                 return true;
             }

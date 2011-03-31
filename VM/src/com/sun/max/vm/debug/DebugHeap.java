@@ -32,6 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.SpecialReferenceManager.JDKRefAlias;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
@@ -106,8 +107,14 @@ public final class DebugHeap {
 
     public static Pointer skipCellPadding(Pointer cell) {
         if (MaxineVM.isDebug()) {
+            Pointer cellStart = cell;
             while (cell.getWord().equals(padWord())) {
                 cell = cell.plusWords(1);
+            }
+            if (!cell.equals(cellStart) && Heap.traceGC()) {
+                Log.print("Skipped ");
+                Log.print(cell.minus(cellStart).toInt());
+                Log.println(" cell padding bytes");
             }
         }
         return cell;
@@ -267,6 +274,19 @@ public final class DebugHeap {
 
             final Pointer origin = Layout.cellToOrigin(cell);
             final Hub hub = checkHub(origin, space);
+
+            if (hub.classActor.isSpecialReference()) {
+                JDKRefAlias refAlias = SpecialReferenceManager.asJDKRefAlias(Reference.fromOrigin(origin).toJava());
+                if (refAlias.discovered != null) {
+                    Log.print("Special reference of type ");
+                    Log.print(hub.classActor.name.string);
+                    Log.print(" at ");
+                    Log.print(cell);
+                    Log.print(" has non-null value for 'discovered' field: ");
+                    Log.println(Reference.fromJava(refAlias.discovered).toOrigin());
+                    FatalError.unexpected("invalid special ref");
+                }
+            }
 
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();

@@ -36,11 +36,14 @@ import sun.misc.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
+import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
@@ -71,10 +74,10 @@ import com.sun.max.vm.value.*;
  *                       +---------------------------------------------+
  *                       | X X X     Stack overflow detection    X X X |
  *                       | X X X          (yellow zone)          X X X |
- *      page aligned --> +---------------------------------------------+ <-- stackYellowZone
+ *      page aligned --> +---------------------------------------------+ <-- yellowZone
  *                       | X X X     Stack overflow detection    X X X |
  *                       | X X X           (red zone)            X X X |
- *      page aligned --> +---------------------------------------------+ <-- stackRedZone
+ *      page aligned --> +---------------------------------------------+ <-- redZone
  *
  * Low addresses
  * </pre>
@@ -237,7 +240,7 @@ public class VmThread {
     /**
      * The stack guard page(s) used to detect recoverable stack overflow.
      */
-    private Pointer stackYellowZone = Pointer.zero();
+    private Pointer yellowZone = Pointer.zero();
 
     /**
      * The thread locals associated with this thread.
@@ -267,7 +270,106 @@ public class VmThread {
 
     private ConditionVariable waitingCondition = ConditionVariableFactory.create();
 
-    private Throwable pendingException;
+    /**
+     * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
+     */
+    private Throwable exception;
+
+    private boolean yellowZoneUnprotected;
+
+    /**
+     * Number of shadow zone pages for overflow checking.
+     */
+    public static final int STACK_SHADOW_PAGES = 2;
+
+    /**
+     * Records the fact that native code has unprotected the yellow zone.
+     */
+    public void nativeTrapHandlerUnprotectedYellowZone() {
+        VmStackFrameWalker sfw = stackFrameWalker;
+        if (sfw.isInUse()) {
+            Log.println("stack overflow occurred while raising another exception or reference map preparing");
+            Log.println("may need to increase safetyMargin in VmThread.checkYellowZoneForRaisingException()");
+            FatalError.unexpected("stack overflow occurred while raising another exception or reference map preparing");
+        }
+        yellowZoneUnprotected = true;
+    }
+
+    /**
+     * Determines if execution on this thread is "too close" to the yellow zone
+     * for safely unwinding to an exception handler without running the risk
+     * of "banging" the yellow zone. Too close is determined to be within
+     * ({@link #STACK_SHADOW_PAGES} + 1) pages of the yellow zone.
+     * If it is, then the yellow zone is unguarded to mitigate the
+     * chance of exception raising itself causing stack overflow. The exception
+     * handler will reset the guard pages when it calls {@link #loadExceptionForHandler()}.
+     */
+    public void checkYellowZoneForRaisingException() {
+        if (platform().isa == ISA.AMD64) {
+            if (!yellowZoneUnprotected) {
+                Pointer sp = VMRegister.getCpuStackPointer();
+                int safetyMargin = (1 + STACK_SHADOW_PAGES) * platform().pageSize;
+                if (sp.minus(yellowZoneEnd()).toInt() < safetyMargin) {
+                    VirtualMemory.unprotectPages(yellowZone, YELLOW_ZONE_PAGES);
+                    yellowZoneUnprotected = true;
+                }
+            } else {
+                // Yellow zone was unprotected in the native trap handler - see nativeTrapHandlerUnprotectedYellowZone()
+            }
+        } else {
+            throw FatalError.unimplemented();
+        }
+    }
+
+    /**
+     * Stores the exception object being raised. This will subsequently be {@linkplain #loadExceptionForHandler() loaded}
+     * by the handler when the stack is unwound.
+     *
+     * @param e the exception being raised
+     * @param handler the target method that will handle the exception
+     * @param pos the position in {@code handler} of the handler entry point
+     */
+    public void storeExceptionForHandler(Throwable e, TargetMethod handler, int pos) {
+        if (exception != null) {
+            FatalError.unexpected("Previous exception never loaded", exception);
+        }
+        if (Throw.TraceExceptions > 0) {
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.printThread(VmThread.current(), false);
+            Log.print(": ");
+            Throw.logFrame("Caught in ", handler, handler.codeStart().plus(pos));
+            Log.unlock(lockDisabledSafepoints);
+        }
+        exception = e;
+    }
+
+    /**
+     * Loads the exception object being raised.
+     *
+     * This method also:
+     * <ol>
+     * <li>Re-enables safepoints (they were disabled in {@link Throw#raise(Throwable, Pointer, Pointer, Pointer)}).</li>
+     * <li>Executes a safepoint.</li>
+     * <li>Reprotects the yellow zone if the raising process unprotected it.</li>
+     * </ol>
+     */
+    public Throwable loadExceptionForHandler() {
+        Safepoint.enable();
+        Safepoint.safepoint();
+        Throwable e = exception;
+        exception = null;
+        FatalError.check(e != null, "Exception object lost during unwinding");
+        if (yellowZoneUnprotected) {
+            VirtualMemory.protectPages(yellowZone, VmThread.YELLOW_ZONE_PAGES);
+            yellowZoneUnprotected = false;
+        }
+        return e;
+    }
+
+    /**
+     * Exception thrown by a {@linkplain JniFunctions JNI function}.
+     */
+    private Throwable jniException;
 
     /**
      * The number of VM operations {@linkplain VmOperationThread#submit(VmOperation) submitted}
@@ -278,7 +380,7 @@ public class VmThread {
     /**
      * The pool of JNI local references allocated for this thread.
      */
-    private final JniHandles jniHandles = new JniHandles();
+    private JniHandles jniHandles;
 
     private boolean isGCThread;
 
@@ -412,7 +514,7 @@ public class VmThread {
      *            stackEnd)})
      * @param stackEnd the highest address (exclusive) of the stack (i.e. the stack memory range is {@code [stackBase ..
      *            stackEnd)})
-     * @param stackYellowZone the stack page(s) that have been protected to detect stack overflow
+     * @param yellowZone the stack page(s) that have been protected to detect stack overflow
      * @return {@code 1} if the thread was successfully added and it is the {@link VmOperationThread},
      *         {@code 0} if the thread was successfully added, {@code -1} if this attaching thread needs to try again
      *         and {@code -2} if this attaching thread cannot be added because the main thread has exited
@@ -424,7 +526,7 @@ public class VmThread {
                     Pointer etla,
                     Pointer stackBase,
                     Pointer stackEnd,
-                    Pointer stackYellowZone) {
+                    Pointer yellowZone) {
 
         // Disable safepoints:
         Safepoint.setLatchRegister(DTLA.load(etla));
@@ -458,13 +560,13 @@ public class VmThread {
         }
 
         HIGHEST_STACK_SLOT_ADDRESS.store3(etla, stackEnd);
-        LOWEST_STACK_SLOT_ADDRESS.store3(etla, stackYellowZone.plus(platform().pageSize));
+        LOWEST_STACK_SLOT_ADDRESS.store3(etla, yellowZone.plus(platform().pageSize));
 
         thread.nativeThread = nativeThread;
         thread.tla = etla;
         thread.stackFrameWalker.setTLA(etla);
         thread.stackDumpStackFrameWalker.setTLA(etla);
-        thread.stackYellowZone = stackYellowZone;
+        thread.yellowZone = yellowZone;
 
         VM_THREAD.store3(etla, Reference.fromJava(thread));
         VmThreadMap.addThreadLocals(thread, etla, daemon);
@@ -565,7 +667,7 @@ public class VmThread {
      * @param stackEnd the highest address (exclusive) of the stack (i.e. the stack memory range is {@code [stackBase .. stackEnd)})
      * @param tla the address of a thread locals area
      * @param refMap the native memory to be used for the stack reference map
-     * @param stackYellowZone the stack page(s) that have been protected to detect stack overflow
+     * @param yellowZone the stack page(s) that have been protected to detect stack overflow
      */
     @VM_ENTRY_POINT
     private static int attach(
@@ -642,24 +744,25 @@ public class VmThread {
 
         VmThread thread = VmThread.current();
 
-        // Report and clear any pending exception
-        Throwable pendingException = thread.pendingException();
-        if (pendingException != null) {
-            thread.setPendingException(null);
+        // Report and clear any pending JNI exception
+        Throwable jniException = thread.jniException();
+        if (jniException != null) {
+            thread.setJniException(null);
             System.err.print("Exception in thread \"" + thread.getName() + "\" ");
-            pendingException.printStackTrace();
+            jniException.printStackTrace();
         }
+
+        thread.terminationPending();
 
         synchronized (thread.javaThread) {
             // Must set TERMINATED before the notify in case a joiner is already waiting
             thread.state = Thread.State.TERMINATED;
             thread.javaThread.notifyAll();
         }
-        thread.terminationComplete();
 
         thread.traceThreadAfterTermination();
 
-        // GC may now reclaim or prepare any of its resources before the thread vanished forever.
+        // GC may now reclaim or prepare any of its resources before the thread vanishes forever.
         vmConfig().heapScheme().notifyCurrentThreadDetach();
 
         synchronized (VmThreadMap.THREAD_LOCK) {
@@ -753,25 +856,25 @@ public class VmThread {
     /**
      * Number of yellow zone pages used for detecting recoverable stack overflow.
      */
-    public static final int STACK_YELLOW_ZONE_PAGES = 1;
+    public static final int YELLOW_ZONE_PAGES = 1;
 
     /**
      * Number of red zone pages used for detecting unrecoverable stack overflow.
      */
-    public static final int STACK_RED_ZONE_PAGES = 1;
+    public static final int RED_ZONE_PAGES = 1;
 
     /**
      * Gets the size of the yellow stack guard zone.
      */
     public static int yellowZoneSize() {
-        return STACK_YELLOW_ZONE_PAGES * platform().pageSize;
+        return YELLOW_ZONE_PAGES * platform().pageSize;
     }
 
     /**
      * Gets the size of the red stack guard zone.
      */
     public static int redZoneSize() {
-        return STACK_YELLOW_ZONE_PAGES * platform().pageSize;
+        return RED_ZONE_PAGES * platform().pageSize;
     }
 
     private static Address traceRegion(String label, Address areaStart, Address regionStart, Address regionEnd, Address lastRegionStart, int areaSize) {
@@ -832,11 +935,40 @@ public class VmThread {
     /**
      * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack.
      *
-     * <b>This must only be used when {@linkplain Throw#raise(Throwable, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer)} throwing an exception}
-     * or {@linkplain StackReferenceMapPreparer preparing} a stack reference map.
-     * Allocation must not occur in these contexts.</b>
+     * <b>This must only be used when {@linkplain Throw#raise(Throwable, Pointer, Pointer, Pointer)} throwing an exception}.
+     * Allocation must not occur in this context.</b>
+     *
+     * @param throwable the exception being raised. If {@code null}, then a StackOverflowError is about to be raised.
      */
-    public VmStackFrameWalker unwindingOrReferenceMapPreparingStackFrameWalker() {
+    public VmStackFrameWalker unwindingStackFrameWalker(Throwable throwable) {
+        FatalError.check(stackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
+        VmStackFrameWalker sfw = stackFrameWalker;
+        if (sfw.isInUse()) {
+            if (throwable != null) {
+                Log.println("exception thrown while raising another exception or reference map preparing");
+            } else {
+                Log.println("stack overflow occurred while raising another exception or reference map preparing");
+                Log.println("may need to increase safetyMargin in VmThread.checkYellowZoneForRaisingException()");
+            }
+            if (!sfw.isDumpingFatalStackTrace()) {
+                sfw.reset();
+                sfw.setIsDumpingFatalStackTrace(true);
+                Throw.stackDumpWithException(throwable);
+                sfw.setIsDumpingFatalStackTrace(false);
+            }
+            FatalError.unexpected("exception thrown while raising another exception");
+        }
+
+        return stackFrameWalker;
+    }
+
+    /**
+     * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack.
+     *
+     * <b>This must only be used when {@linkplain StackReferenceMapPreparer preparing} a stack reference map.
+     * Allocation must not occur in this context.</b>
+     */
+    public VmStackFrameWalker referenceMapPreparingStackFrameWalker() {
         FatalError.check(stackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
         return stackFrameWalker;
     }
@@ -975,9 +1107,9 @@ public class VmThread {
             final int stackSize = stackEnd.minus(stackBase).toInt();
             final Pointer stackPointer = VMRegister.getCpuStackPointer();
             lastRegionStart = traceRegion("OS thread specific data and native frames", stackBase, stackPointer, stackEnd, lastRegionStart, stackSize);
-            lastRegionStart = traceRegion("Frame of Java methods, native stubs and native functions", stackBase, stackYellowZoneEnd(), stackPointer, lastRegionStart, stackSize);
-            lastRegionStart = traceRegion("Stack yellow zone", stackBase, stackYellowZone, stackYellowZoneEnd(), lastRegionStart, stackSize);
-            lastRegionStart = traceRegion("Stack red zone", stackBase, stackRedZone(), stackYellowZone, lastRegionStart, stackSize);
+            lastRegionStart = traceRegion("Frame of Java methods, native stubs and native functions", stackBase, yellowZoneEnd(), stackPointer, lastRegionStart, stackSize);
+            lastRegionStart = traceRegion("Stack yellow zone", stackBase, yellowZone, yellowZoneEnd(), lastRegionStart, stackSize);
+            lastRegionStart = traceRegion("Stack red zone", stackBase, redZone(), redZoneEnd(), lastRegionStart, stackSize);
 
             lastRegionStart = Address.zero();
             Address ntl = NATIVE_THREAD_LOCALS.load(currentTLA());
@@ -1044,45 +1176,88 @@ public class VmThread {
     }
 
     public final JniHandle createLocalHandle(Object object) {
+        if (jniHandles == null) {
+            jniHandles = new JniHandles();
+        }
         return JniHandles.createLocalHandle(jniHandles, object);
     }
 
+    /**
+     * Gets the JNI handles for this thread. This should only be called when the caller expects
+     */
     @INLINE
     public final JniHandles jniHandles() {
         return jniHandles;
     }
 
     /**
-     * Sets or clears the exception to be thrown once this thread returns from the native function most recently entered
-     * via a {@linkplain NativeStubGenerator native stub}. This mechanism is used to propagate exceptions through native
-     * frames and should be used used for any other purpose.
+     * Return the "top" (i.e. current size) of JNI handles for this thread
      *
-     * @param exception if non-null, this exception will be raised upon returning from the closest native function on
-     *            this thread's stack. Otherwise, the pending exception is cleared.
+     * NOTE: This code is called from a {@linkplain NativeStubGenerator JNI stub}
+     *
+     * @return -1 if the JNI handles have not been allocated for this thread
      */
-    public final void setPendingException(Throwable exception) {
-        this.pendingException = exception;
+    @INLINE
+    public final int jniHandlesTop() {
+        return jniHandles == null ? -1 : jniHandles.top();
     }
 
     /**
-     * Gets the exception that will be thrown once this thread returns from the native function most recently entered
-     * via a {@linkplain NativeStubGenerator native stub}.
+     * Resets the "top" (i.e. current size) of JNI handles for this thread
+     *
+     * NOTE: This code is called from a {@linkplain NativeStubGenerator JNI stub}
+     *
+     * @param newTop the value to which the top should be reset or -1 if no resetting is to occur
+     */
+    @INLINE
+    public final void resetJniHandlesTop(int newTop) {
+        if (newTop != -1) {
+            jniHandles.resetTop(newTop);
+        }
+    }
+
+    /**
+     * Gets the JNI handles for this thread, creating them first if necessary.
+     */
+    @INLINE
+    public final JniHandles makeJniHandles() {
+        if (jniHandles == null) {
+            jniHandles = new JniHandles();
+        }
+        return jniHandles;
+    }
+
+    /**
+     * Sets or clears the exception to be thrown once this thread returns from the native function most recently entered
+     * via a {@linkplain NativeStubGenerator native stub}. This mechanism is used to propagate exceptions through native
+     * frames and should not be used for any other purpose.
+     *
+     * @param exception if non-null, this exception will be raised upon returning from the closest native function on
+     *            this thread's stack. Otherwise, the pending JNI exception is cleared.
+     */
+    public final void setJniException(Throwable exception) {
+        this.jniException = exception;
+    }
+
+    /**
+     * Gets the exception thrown by the most recently called JNI function. This will be re-thrown once this
+     * thread returns from the native function most recently entered via a {@linkplain NativeStubGenerator native stub}.
      *
      * @return the exception that will be raised upon returning from the closest native function on this thread's stack
      *         or null if there is no such pending exception
      */
-    public final Throwable pendingException() {
-        return pendingException;
+    public final Throwable jniException() {
+        return jniException;
     }
 
     /**
-     * Raises the pending exception on this thread (if any) and clears it.
+     * Raises the pending JNI exception on this thread (if any) and clears it.
      * Called from a {@linkplain NativeStubGenerator JNI stub} after a native function returns.
      */
-    public final void throwPendingException() throws Throwable {
-        final Throwable pendingException = this.pendingException;
+    public final void throwJniException() throws Throwable {
+        final Throwable pendingException = this.jniException;
         if (pendingException != null) {
-            this.pendingException = null;
+            this.jniException = null;
             throw pendingException;
         }
     }
@@ -1181,36 +1356,36 @@ public class VmThread {
 
     /**
      * Gets the address of the stack zone used to detect recoverable stack overflow.
-     * This zone covers the range {@code [stackYellowZone() .. stackYellowZoneEnd())}.
+     * This zone covers the range {@code [yellowZone() .. yellowZoneEnd())}.
      */
-    public final Address stackYellowZone() {
-        return stackYellowZone;
+    public final Address yellowZone() {
+        return yellowZone;
     }
 
     /**
      * Gets the end address of the stack zone used to detect recoverable stack overflow.
-     * This zone covers the range {@code [stackYellowZone() .. stackYellowZoneEnd())}.
+     * This zone covers the range {@code [yellowZone() .. yellowZoneEnd())}.
      */
-    public final Address stackYellowZoneEnd() {
-        return stackYellowZone.plus(yellowZoneSize());
+    public final Address yellowZoneEnd() {
+        return yellowZone.plus(yellowZoneSize());
     }
 
     /**
      * Gets the address of the stack zone used to detect unrecoverable stack overflow.
-     * This zone is immediately below the {@linkplain #stackYellowZone yellow} zone and covers
-     * the range {@code [stackRedZone() .. stackRedZoneEnd())}.
+     * This zone is immediately below the {@linkplain #yellowZone yellow} zone and covers
+     * the range {@code [redZone() .. redZoneEnd())}.
      */
-    public final Address stackRedZone() {
-        return stackYellowZone.minus(redZoneSize());
+    public final Address redZone() {
+        return yellowZone.minus(redZoneSize());
     }
 
     /**
      * Gets the end address of the stack zone used to detect unrecoverable stack overflow.
-     * This zone is immediately below the {@linkplain #stackYellowZone yellow} zone and covers
-     * the range {@code [stackRedZone() .. stackRedZoneEnd())}.
+     * This zone is immediately below the {@linkplain #yellowZone yellow} zone and covers
+     * the range {@code [redZone() .. redZoneEnd())}.
      */
-    public final Address stackRedZoneEnd() {
-        return stackYellowZone;
+    public final Address redZoneEnd() {
+        return yellowZone;
     }
 
     /**
@@ -1222,11 +1397,13 @@ public class VmThread {
     }
 
     /**
-     * This method is called when the VmThread termination is complete.
+     * This method is called when the VmThread termination is pending.
      * A subclass can override this method to do whatever subclass-specific
      * termination that depends on that invariant.
+     * N.B. In order for this callback to be usable, the state is not
+     * set to TERMINATED until after this method returns.
      */
-    protected void terminationComplete() {
+    protected void terminationPending() {
     }
 
     /**

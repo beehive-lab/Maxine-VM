@@ -73,6 +73,7 @@ public final class CodeAttributePrinter {
         final PrintWriter printWriter = (writer instanceof PrintWriter) ? (PrintWriter) writer : new PrintWriter(writer);
         printWriter.println("Stack=" + (int) codeAttribute.maxStack + ", Locals=" + (int) codeAttribute.maxLocals);
         final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, codeAttribute.cp);
+        bytecodePrinter.setLineNumberTable(codeAttribute.lineNumberTable());
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
         try {
             bytecodeScanner.scan(new BytecodeBlock(codeAttribute.code()));

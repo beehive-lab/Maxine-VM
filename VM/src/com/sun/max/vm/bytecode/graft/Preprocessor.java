@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,20 +88,6 @@ public final class Preprocessor {
             return null;
         }
 
-        if (ExceptionDispatchingPreprocessor.REQUIRED) {
-            if (codeAttribute.exceptionHandlerTable().length != 0) {
-                codeAttribute = new ExceptionDispatchingPreprocessor(constantPoolEditor(), codeAttribute).codeAttribute();
-                reason = reason + " dispatching";
-            }
-        }
-
-        if (SynchronizedMethodPreprocessor.REQUIRED) {
-            if (classMethodActor.isSynchronized()) {
-                codeAttribute = new SynchronizedMethodPreprocessor(constantPoolEditor(), classMethodActor, codeAttribute).codeAttribute();
-                reason = reason + " synchronizedMethod";
-            }
-        }
-
         if (codeAttribute != originalCodeAttribute) {
 
             String javaSignature = null;
@@ -116,8 +102,6 @@ public final class Preprocessor {
                 Trace.stream().println("--- AFTER PREPROCESSING ---");
                 CodeAttributePrinter.print(Trace.stream(), codeAttribute);
             }
-
-            ExceptionHandlerEntry.ensureExceptionDispatchersAreDisjoint(codeAttribute.exceptionHandlerTable());
         }
         return codeAttribute;
     }
