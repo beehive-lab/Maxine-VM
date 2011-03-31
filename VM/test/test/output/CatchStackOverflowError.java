@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,38 @@
  */
 package test.output;
 
+import java.lang.reflect.*;
+
 
 public class CatchStackOverflowError {
 
-    private static void recurse() {
+    static Method reflectionRecurse;
+    static InvocationTargetException invocationTargetException;
+
+    private static void recurse() throws Exception {
         recurse();
     }
 
-    public static void main(String[] args) {
+    private static void reflectionRecurse() throws Exception {
+        try {
+            reflectionRecurse.invoke(null);
+        } catch (InvocationTargetException e) {
+            invocationTargetException = e;
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
         try {
             recurse();
         } catch (StackOverflowError e) {
             System.out.println("Caught " + e.toString());
+        }
+
+        reflectionRecurse = CatchStackOverflowError.class.getDeclaredMethod("reflectionRecurse");
+        reflectionRecurse();
+        if (invocationTargetException != null) {
+            System.out.println("Caught " + invocationTargetException.toString());
+            System.out.println("caused by: " + invocationTargetException.getCause());
         }
     }
 }

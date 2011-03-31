@@ -24,7 +24,6 @@ package com.sun.max.vm.stack;
 
 import static com.sun.max.vm.compiler.target.TargetMethod.Flavor.*;
 
-import com.sun.cri.ci.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -42,7 +41,7 @@ import com.sun.max.vm.thread.*;
  *
  * @author Doug Simon
  */
-public class SourceFrameVisitor extends RawStackFrameVisitor {
+public class SourceFrameVisitor extends RawStackFrameVisitor implements CodePosClosure {
 
     public SourceFrameVisitor() {
     }
@@ -59,6 +58,21 @@ public class SourceFrameVisitor extends RawStackFrameVisitor {
     }
 
     @Override
+    public boolean doCodePos(ClassMethodActor method, int bci) {
+        if (!visitSourceFrame(method, bci, trapped, frameId)) {
+            stopped = true;
+            return false;
+        }
+        trapped = false;
+        frameId++;
+        return true;
+    }
+
+    long frameId;
+    boolean trapped;
+    boolean stopped;
+
+    @Override
     public boolean visitFrame(Cursor current, Cursor callee) {
         final TargetMethod targetMethod = current.targetMethod;
         if (targetMethod == null) {
@@ -70,24 +84,14 @@ public class SourceFrameVisitor extends RawStackFrameVisitor {
             return true;
         }
 
-        long frameId = current.sp.toLong() << 16;
-        boolean trapped = callee.targetMethod != null && callee.targetMethod.is(TrapStub);
-        CiCodePos codePos = targetMethod.getCodePos(current.ip, current.ipIsReturnAddress);
-
-        if (codePos == null) {
+        frameId = current.sp.toLong() << 16;
+        trapped = callee.targetMethod != null && callee.targetMethod.is(TrapStub);
+        stopped = false;
+        int count = targetMethod.forEachCodePos(this, current.ip, current.ipIsReturnAddress);
+        if (count == 0 && !stopped) {
             return visitSourceFrame(targetMethod.classMethodActor, -1, trapped, frameId);
         }
-        return visitSourceFrames(codePos, trapped, frameId);
-    }
-
-    private boolean visitSourceFrames(CiCodePos codePos, boolean trapped, long frameId) {
-        if (!visitSourceFrame((ClassMethodActor) codePos.method, codePos.bci, trapped, frameId)) {
-            return false;
-        }
-        if (codePos.caller != null) {
-            return visitSourceFrames(codePos.caller, false, ++frameId);
-        }
-        return true;
+        return !stopped;
     }
 
     /**

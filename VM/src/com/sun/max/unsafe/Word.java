@@ -37,7 +37,6 @@ import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.value.*;
 
@@ -201,7 +200,7 @@ public abstract class Word {
      */
     @INTRINSIC(LSB)
     public final int leastSignificantBitSet() {
-        return SpecialBuiltin.leastSignificantBit(this);
+        return Intrinsics.leastSignificantBit(this);
     }
 
     /**
@@ -209,7 +208,7 @@ public abstract class Word {
      */
     @INTRINSIC(MSB)
     public final int mostSignificantBitSet() {
-        return SpecialBuiltin.mostSignificantBit(this);
+        return Intrinsics.mostSignificantBit(this);
     }
 
     @HOSTED_ONLY

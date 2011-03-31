@@ -235,7 +235,7 @@ final class RegisterVerifier {
             LIRInstruction op = ops.at(i);
 
             if (C1XOptions.TraceLinearScanLevel >= 4) {
-                op.printOn(TTY.out());
+                TTY.println(op.toStringWithIdPrefix());
             }
 
             // check if input operands are correct

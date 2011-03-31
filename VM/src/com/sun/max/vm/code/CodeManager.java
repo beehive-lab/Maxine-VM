@@ -97,19 +97,20 @@ public abstract class CodeManager {
         Object allocationTraceDescription = Code.TraceCodeAllocation ? (targetMethod.classMethodActor() == null ? targetMethod.regionName() : targetMethod.classMethodActor()) : null;
 
         Pointer start;
+        boolean mustReenableSafepoints = false;
         if (inHeap) {
             assert !isHosted();
             int byteArraySize = allocationSize.minus(Layout.byteArrayLayout().headerSize()).toInt();
             byte[] buf = new byte[byteArraySize];
 
             // 'buf' must not move until it has been reformatted
-            Safepoint.disable();
+            mustReenableSafepoints = !Safepoint.disable();
 
             start = Layout.originToCell(Reference.fromJava(buf).toOrigin());
         } else {
             if (!isHosted()) {
                 // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
-                Safepoint.disable();
+                mustReenableSafepoints = !Safepoint.disable();
                 Heap.disableAllocationForCurrentThread();
                 currentCodeRegion = runtimeCodeRegion;
             } else {
@@ -120,7 +121,9 @@ public abstract class CodeManager {
 
         traceChunkAllocation(allocationTraceDescription, allocationSize, start, inHeap);
         if (start.isZero()) {
-            Safepoint.enable();
+            if (mustReenableSafepoints) {
+                Safepoint.enable();
+            }
             Heap.enableAllocationForCurrentThread();
             Log.println("PermGen: try larger value for -XX:ReservedCodeCacheSize=<n>)");
             MaxineVM.exit(11, true);
@@ -159,7 +162,9 @@ public abstract class CodeManager {
 
         if (!MaxineVM.isHosted()) {
             // It is now safe again to perform operations that may block and/or trigger a garbage collection
-            Safepoint.enable();
+            if (mustReenableSafepoints) {
+                Safepoint.enable();
+            }
             if (!inHeap) {
                 Heap.enableAllocationForCurrentThread();
             }

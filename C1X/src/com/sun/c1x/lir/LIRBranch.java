@@ -137,8 +137,10 @@ public class LIRBranch extends LIRInstruction {
         StringBuilder buf = new StringBuilder(cond().operator).append(' ');
         if (block() != null) {
             buf.append("[B").append(block.blockID).append(']');
-        } else {
+        } else if (label().isBound()) {
             buf.append("[label:0x").append(Integer.toHexString(label().position())).append(']');
+        } else {
+            buf.append("[label:??]");
         }
         if (unorderedBlock() != null) {
             buf.append("unordered: [B").append(unorderedBlock().blockID).append(']');

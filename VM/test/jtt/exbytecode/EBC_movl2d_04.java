@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 
 // register -> memory
 
@@ -43,7 +43,7 @@ public class EBC_movl2d_04 {
     public static double test(long arg) {
         L l = new L(arg);
         D d = new D();
-        d.d = SpecialBuiltin.longToDouble(l.l);
+        d.d = Intrinsics.longToDouble(l.l);
         return d.d;
     }
 

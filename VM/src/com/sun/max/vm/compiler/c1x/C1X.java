@@ -43,6 +43,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -166,6 +167,7 @@ public class C1X implements RuntimeCompiler {
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
             C1XOptions.UseConstDirectCall = true; // Default
+            C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.globalStub);
             // search for the runtime call and register critical methods
             for (Method m : RuntimeCalls.class.getDeclaredMethods()) {

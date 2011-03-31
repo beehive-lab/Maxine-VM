@@ -1190,7 +1190,8 @@ public abstract class ReferenceMapInterpreter {
                     final int numberOfCases = highMatch - lowMatch + 1;
                     changed = merge(blockIndexFor(opcodeBCI + defaultOffset));
                     for (int i = 0; i < numberOfCases; i++) {
-                        changed = merge(blockIndexFor(opcodeBCI + readSigned4())) || changed;
+                        int targetBCI = opcodeBCI + readSigned4();
+                        changed = merge(blockIndexFor(targetBCI)) || changed;
                     }
                     if (atSearchBCI) {
                         bciIter.next();
@@ -1205,7 +1206,8 @@ public abstract class ReferenceMapInterpreter {
                     changed = merge(blockIndexFor(opcodeBCI + defaultOffset));
                     for (int i = 0; i < numberOfCases; i++) {
                         readSigned4();
-                        changed = merge(blockIndexFor(opcodeBCI + readSigned4())) || changed;
+                        int targetBCI = opcodeBCI + readSigned4();
+                        changed = merge(blockIndexFor(targetBCI)) || changed;
                     }
                     if (atSearchBCI) {
                         bciIter.next();
@@ -1679,7 +1681,7 @@ public abstract class ReferenceMapInterpreter {
                     skip2();
                     popCategory1();
                     break;
-                case ALLOCSTKVAR: {
+                case STACKHANDLE: {
                     final int index = readUnsigned2();
                     final MethodRefConstant methodConstant = constantPool.methodAt(index);
                     final SignatureDescriptor methodSignature = methodConstant.signature(constantPool);

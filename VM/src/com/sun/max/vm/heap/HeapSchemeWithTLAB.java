@@ -160,11 +160,11 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             if (tlabTop.equals(Address.zero())) {
                 // TLAB's top can be null in only two cases:
                 // (1) it has never been filled, in which case it's allocation mark is null too
-                // (2) allocation has been disabled for the thread.
                 if (tlabMark.equals(Address.zero()))  {
                     // No TLABs, so nothing to reset.
                     return;
                 }
+                // (2) allocation has been disabled for the thread.
                 FatalError.check(!ALLOCATION_DISABLED.load(currentTLA()).isZero(), "inconsistent TLAB state");
                 TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(etla);
                 if (refillPolicy != null) {
@@ -338,6 +338,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * @param tlab
      * @param size
      */
+    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
     public void refillTLAB(Pointer etla, Pointer tlab, Size size) {
         final Pointer tlabTop = tlab.plus(size); // top of the new TLAB
         final Pointer allocationMark = TLAB_MARK.load(etla);

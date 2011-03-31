@@ -107,8 +107,6 @@ public class C1XTest {
         "A list of metrics from the C1XMetrics class to print.");
     private static final Option<Boolean> t1xOption = options.newBooleanOption("t1x", false,
         "Compile with T1X.");
-    private static final Option<Boolean> jitOption = options.newBooleanOption("jit", false,
-        "Compile with CPS based template JIT.");
     private static final Option<Boolean> profOption = options.newBooleanOption("prof", true,
         "Emit method profiling in baseline compiled methods.");
 
@@ -168,7 +166,7 @@ public class C1XTest {
             return;
         }
 
-        ClassMethodActor.hostedVerificationDisabled = true;
+        ClassMethodActor.hostedVerificationEnabled = false;
 
         if (outFileOption.getValue() != null) {
             try {
@@ -197,9 +195,6 @@ public class C1XTest {
         boolean useBaseline = t1xOption.getValue();
         if (t1xOption.getValue()) {
             RuntimeCompiler.baselineCompilerOption.setValue(RuntimeCompiler.aliases.get("T1X"));
-            useBaseline = true;
-        } else if (jitOption.getValue()) {
-            RuntimeCompiler.baselineCompilerOption.setValue(RuntimeCompiler.aliases.get("JIT"));
             useBaseline = true;
         }
 
@@ -402,7 +397,7 @@ public class C1XTest {
                     return false;
                 }
             }
-            return method instanceof ClassMethodActor && !method.isAbstract() && !method.isBuiltin() && !method.isIntrinsic();
+            return method instanceof ClassMethodActor && !method.isAbstract() && !method.isIntrinsic();
         }
 
         @Override
@@ -437,7 +432,7 @@ public class C1XTest {
         if (!averageOption.getValue()) {
             timings.add(new Timing((ClassMethodActor) method, instructions, ns));
         }
-        totalBytes += ((ClassMethodActor) method).originalCodeAttribute(true).code().length;
+        totalBytes += ((ClassMethodActor) method).codeAttribute().code().length;
         totalInlinedBytes += inlinedBytes;
         totalInstrs += instructions;
         totalNs += ns;
@@ -553,7 +548,7 @@ public class C1XTest {
         }
 
         public int bytecodes() {
-            return classMethodActor.originalCodeAttribute(true).code().length;
+            return classMethodActor.codeAttribute().code().length;
         }
 
         public double instructionsPerSecond() {

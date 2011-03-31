@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,4 +42,8 @@ public abstract class RawStackFrameVisitor {
      * @return true if the walk should continue to the caller of {@code stackFrame}, false if it should terminate now
      */
     public abstract boolean visitFrame(Cursor current, Cursor callee);
+
+    public void done() {
+
+    }
 }

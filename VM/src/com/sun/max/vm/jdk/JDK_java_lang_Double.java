@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 
 /**
  * The {@code JDK_java_lang_Double} class implements substitutions
@@ -36,11 +36,11 @@ public class JDK_java_lang_Double {
 
     @SUBSTITUTE
     public static long doubleToRawLongBits(double d) {
-        return SpecialBuiltin.doubleToLong(d);
+        return Intrinsics.doubleToLong(d);
     }
 
     @SUBSTITUTE
     public static double longBitsToDouble(long l) {
-        return SpecialBuiltin.longToDouble(l);
+        return Intrinsics.longToDouble(l);
     }
 }
