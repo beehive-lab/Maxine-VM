@@ -49,7 +49,7 @@ import com.sun.max.vm.thread.*;
  * changes that occurred in the class hierarchy since the assumptions were made, the target method is dropped and a new one must be produced.
  *
  * The dependencies manager is also responsible for recording changes to the class hierarchy and related information that
- * depends on sub-type relationships, and to drive code invalidation (using deoptimization) when assumptions made by existing code
+ * depends on sub-type relationships, and to drive code invalidation (e.g., using deoptimization) when assumptions made by existing code
  * become obsolete because of these changes.
  * The dependency manager must be informed of every changes to the class hierarchy when new classes are defined.
  *
@@ -69,8 +69,8 @@ public final class ClassDependencyManager {
      * and, more importantly, to exclude all concurrent validations or installations of validated
      * assumptions.
      * Validations and installations of assumptions acquire the lock in read mode to exclude all modifications to
-     * class hierarchy information. Validation doesn't require synchronization on class hierarchy information,
-     * multiple validation can be performed concurrently. Installation of dependencies in the dependency table
+     * class hierarchy information by concurrent class definition. This allows
+     * multiple validation to be performed concurrently. Installation of dependencies in the dependency table
      * requires additional synchronization as it updates both the table and per class type dependency information.
      */
     private static final ReentrantReadWriteLock classHierarchyLock = new ReentrantReadWriteLock();
@@ -296,16 +296,15 @@ public final class ClassDependencyManager {
         void invalidate() {
             // Called only when modifying the class hierarchy.
             FatalError.check(classHierarchyLock.isWriteLocked(), "Must hold class hierarchy lock in write mode");
+            final int firstDependencyIndex = 1 + assumptions[0] * 2;
+            for (int typeIndex = 1; typeIndex < firstDependencyIndex; typeIndex += 2) {
+                dependentTargetMethodTable.removeDependentTargetMethod(id, ClassID.toClassActor(assumptions[typeIndex]));
+            }
+            // TODO: iterate over the assumptions and clean the typeToDependentTargetMethods of any reference to the target method.
+            // Revisit the following. the invalidate marker may not be needed if this is done under the write lock ...
             assumptions = INVALIDATED;
         }
 
-        /**
-         * Return the number of types this valid set of assumptions records assumption on.
-         * @return a number of types
-         */
-        int numTypes() {
-            return assumptions[0];
-        }
         /**
          * Iterate over the assumptions made on the specified class.
          * @param classID identifier of the class
@@ -485,9 +484,14 @@ public final class ClassDependencyManager {
 
     /**
      * List of dependent target methods recorded in the concurrent hash map backing a {@link DependentTargetMethodTable}.
-     * Just a wrapper around an array of valid assumptions identifier.
-     * These arrays aren't stored directly in the concurrent hash map to concurrently updating the
-     * hash map in order to replace the array with another when resizing is needed.
+     * Just a wrapper around an array of identifiers of {@link ValidAssumptions}.
+     * These arrays aren't stored directly in the concurrent hash map to simplify concurrency when multiple
+     * threads update the array and a resizing is needed, which would also requires the array to be replaced in the hash map.
+     *
+     * TargetMethod compilations add dependents to a list, but only class definers remove and iterate over them.
+     * Note that synchronizations on the {@link ClassDependencyManager#classHierarchyLock} allows multiple concurrent addition
+     * to a list, but guarantees exclusive access when removing or iterating over a list. Hence the sparse use of synchronization
+     * here (only the {@link DependentTargetMethodList#add(int)} is synchronized.
      */
     static final class DependentTargetMethodList {
         /**
@@ -497,10 +501,6 @@ public final class ClassDependencyManager {
         int [] dependentLists;
         DependentTargetMethodList(int dependent) {
             dependentLists = new int[] {2, dependent };
-        }
-
-        void setNumDependents(int numDependents) {
-            dependentLists[0] = numDependents + 1;
         }
 
         int numDependents() {
@@ -515,11 +515,15 @@ public final class ClassDependencyManager {
             return dependentLists[0] - 1;
         }
 
-        int getSize() {
-            return dependentLists[0];
-        }
-
+        /**
+         * Addition of a dependent to the list.
+         * This operation may be performed concurrently.
+         * @param dependent
+         */
         synchronized void add(int dependent) {
+            if (MaxineVM.isDebug()) {
+                FatalError.check(classHierarchyLock.getReadHoldCount() > 0, "must hold the class hierarchy lock in read mode");
+            }
             int nextSlot = dependentLists[0];
             if (nextSlot == dependentLists.length) {
                 // extend first.
@@ -533,7 +537,10 @@ public final class ClassDependencyManager {
             dependentLists[0] = nextSlot;
         }
 
-        synchronized void remove(int dependent) {
+        void remove(int dependent) {
+            if (MaxineVM.isDebug()) {
+                FatalError.check(classHierarchyLock.isWriteLockedByCurrentThread(), "must hold the class hierarchy lock in read mode");
+            }
             int end = dependentLists[0];
             int i = 1;
             while (i < end) {
@@ -548,7 +555,6 @@ public final class ClassDependencyManager {
                 }
                 i++;
             }
-
         }
     }
 
@@ -583,6 +589,21 @@ public final class ClassDependencyManager {
                 }
                 list.add(dependentID);
             }
+        }
+
+        void removeDependentTargetMethod(int dependentID, RiType type) {
+            DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
+            if (list != null) {
+                list.remove(dependentID);
+                if (list.numDependents() == 0) {
+                    boolean removed = typeToDependentTargetMethods.remove(type, list);
+                    if (MaxineVM.isDebug()) {
+                        FatalError.check(removed, "dependent target method list removal should always succeed");
+                    }
+                }
+                return;
+            }
+            FatalError.unexpected("dependent ID  should have been in the list");
         }
 
         /**
@@ -649,11 +670,6 @@ public final class ClassDependencyManager {
             int i = 0;
             for (ValidAssumptions validAssumptions : invalidationSet) {
                 invalidatedMethods[i++] = validAssumptions.targetMethod;
-                if (validAssumptions.numTypes() > 1) {
-                    // Need to clean up other assumption records this target method appears in.
-                    // TODO: iterate over the assumptions and clean the typeToDependentTargetMethods of any reference to the target method.
-                }
-                // Revisit the following. the invalidate marker may not be needed if this is done under the write lock ...
                 validAssumptions.invalidate();
                 clearValidAssumptions(validAssumptions);
             }
