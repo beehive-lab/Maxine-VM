@@ -32,8 +32,10 @@ import java.util.concurrent.locks.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.profile.ValueMetrics.IntegerDistribution;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -61,6 +63,13 @@ public final class ClassDependencyManager {
     private static final int NO_CONCRETE_SUBTYPE_MARK = NULL_CLASS_ID;
 
     private static final boolean enableDumpOption = true;
+
+    /**
+     * Set accumulating all the methods invalidated during boot image generation.
+     * The boot image generator must unlink these, and produce new target methods.
+     */
+    @HOSTED_ONLY
+    public static HashSet<TargetMethod> invalidTargetMethods = new HashSet<TargetMethod>();
 
     /**
      * Read-write lock used to synchronize modifications to the class hierarchy with validation of
@@ -300,8 +309,7 @@ public final class ClassDependencyManager {
             for (int typeIndex = 1; typeIndex < firstDependencyIndex; typeIndex += 2) {
                 dependentTargetMethodTable.removeDependentTargetMethod(id, ClassID.toClassActor(assumptions[typeIndex]));
             }
-            // TODO: iterate over the assumptions and clean the typeToDependentTargetMethods of any reference to the target method.
-            // Revisit the following. the invalidate marker may not be needed if this is done under the write lock ...
+            // TODO: Revisit the following. the invalidate marker may not be needed if this is done under the write lock ...
             assumptions = INVALIDATED;
         }
 
@@ -473,11 +481,14 @@ public final class ClassDependencyManager {
 
         @Override
         public void remove() {
-            final int lastReturned = current - 1;
-            if (lastReturned != lastDependentIndex) {
-                dependentLists[lastReturned] = dependentLists[lastDependentIndex];
+            // rollback to the last returned.
+            current--;
+            if (current < lastDependentIndex) {
+                // Move the last element at the freed position.
+                dependentLists[current] = dependentLists[lastDependentIndex];
             }
-            dependentLists[0] = --lastDependentIndex;
+            // Otherwise, current == lastDependentIndex and the following act the removal while updating the length of the list.
+            dependentLists[0] = lastDependentIndex--;
         }
     }
 
@@ -582,12 +593,14 @@ public final class ClassDependencyManager {
                 if (list == null) {
                     list = typeToDependentTargetMethods.putIfAbsent(type, new DependentTargetMethodList(dependentID));
                     if (list == null) {
+                        Trace.line(1, "*** Created DependentTargetList for " + type + " with dependent " + dependentID);
                         return;
                     }
                     // We've lost a race with another concurrent thread adding a list for the same type.
                     // Fall off to add to that list.
                 }
                 list.add(dependentID);
+                Trace.line(1, "*** Added dependent " + dependentID + " for " + type);
             }
         }
 
@@ -595,11 +608,13 @@ public final class ClassDependencyManager {
             DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
             if (list != null) {
                 list.remove(dependentID);
+                Trace.line(1, "*** removed dependent " + dependentID + " for " + type);
                 if (list.numDependents() == 0) {
                     boolean removed = typeToDependentTargetMethods.remove(type, list);
                     if (MaxineVM.isDebug()) {
                         FatalError.check(removed, "dependent target method list removal should always succeed");
                     }
+                    Trace.line(1, "*** Deleted DependentTargetList for " + type);
                 }
                 return;
             }
@@ -1029,16 +1044,24 @@ public final class ClassDependencyManager {
             recordUniqueConcreteSubtype(classActor);
             TargetMethod [] invalidatedTargetMethods = dependentTargetMethodTable.clearInvalidatedAssumptions();
             if (invalidatedTargetMethods != null) {
-                // TODO. For now just print them...
-                System.out.println("\nINVALID TARGET METHOD:  \n");
-                for (TargetMethod targetMethod : invalidatedTargetMethods) {
-                    System.out.println("  " + targetMethod);
-                }
+                invalidateTargetMethods(invalidatedTargetMethods);
             }
         } finally {
             classHierarchyLock.writeLock().unlock();
         }
     }
+
+    static void invalidateTargetMethods(TargetMethod [] invalidatedTargetMethods) {
+        if (MaxineVM.isHosted()) {
+            for (TargetMethod targetMethod : invalidatedTargetMethods) {
+                invalidTargetMethods.add(targetMethod);
+                Trace.line(1, "*** Invalid target method: " + targetMethod);
+            }
+            return;
+        }
+        FatalError.unexpected("Invalidation of target methods with invalid assumptions not implemented");
+    }
+
 
     /**
      * Flags stored at dedicated bit location within the entry in the {@link ValidAssumptions#assumptions} short array
