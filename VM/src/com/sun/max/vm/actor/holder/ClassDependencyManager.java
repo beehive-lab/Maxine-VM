@@ -62,8 +62,6 @@ public final class ClassDependencyManager {
     private static final int HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK = 0;
     private static final int NO_CONCRETE_SUBTYPE_MARK = NULL_CLASS_ID;
 
-    private static final boolean enableDumpOption = true;
-
     /**
      * Set accumulating all the methods invalidated during boot image generation.
      * The boot image generator must unlink these, and produce new target methods.
@@ -593,14 +591,14 @@ public final class ClassDependencyManager {
                 if (list == null) {
                     list = typeToDependentTargetMethods.putIfAbsent(type, new DependentTargetMethodList(dependentID));
                     if (list == null) {
-                        Trace.line(1, "*** Created DependentTargetList for " + type + " with dependent " + dependentID);
+                        trace(dependentID, type, 1);
                         return;
                     }
                     // We've lost a race with another concurrent thread adding a list for the same type.
                     // Fall off to add to that list.
                 }
                 list.add(dependentID);
-                Trace.line(1, "*** Added dependent " + dependentID + " for " + type);
+                trace(dependentID, type, 2);
             }
         }
 
@@ -608,17 +606,37 @@ public final class ClassDependencyManager {
             DependentTargetMethodList list = typeToDependentTargetMethods.get(type);
             if (list != null) {
                 list.remove(dependentID);
-                Trace.line(1, "*** removed dependent " + dependentID + " for " + type);
+                trace(dependentID, type, 3);
                 if (list.numDependents() == 0) {
                     boolean removed = typeToDependentTargetMethods.remove(type, list);
                     if (MaxineVM.isDebug()) {
                         FatalError.check(removed, "dependent target method list removal should always succeed");
                     }
-                    Trace.line(1, "*** Deleted DependentTargetList for " + type);
+                    trace(dependentID, type, 4);
                 }
                 return;
             }
             FatalError.unexpected("dependent ID  should have been in the list");
+        }
+
+        private static int traceAtLevel = 1;
+        private static void trace(int dependentID, RiType type, int action) {
+            if (MaxineVM.isHosted()) {
+                switch(action) {
+                    case 1:
+                        Trace.line(traceAtLevel, "*** Created DependentTargetList for " + type + " with dependent " + dependentID);
+                        break;
+                    case 2:
+                        Trace.line(traceAtLevel, "*** Added dependent " + dependentID + " for " + type);
+                        break;
+                    case 3:
+                        Trace.line(traceAtLevel, "*** Removed dependent " + dependentID + " for " + type);
+                        break;
+                    case 4:
+                        Trace.line(traceAtLevel, "*** Deleted DependentTargetList for " + type);
+                        break;
+                }
+            }
         }
 
         /**
@@ -1382,10 +1400,6 @@ public final class ClassDependencyManager {
      * Dump the table in the log.
      */
     public static void dump() {
-
-        if (!enableDumpOption) {
-            return;
-        }
         classHierarchyLock.readLock().lock();
         dependentTargetMethodTable.dump(System.out);
         dependentTargetMethodTable.printStatistics();

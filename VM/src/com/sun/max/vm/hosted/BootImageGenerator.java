@@ -69,6 +69,9 @@ public final class BootImageGenerator {
     private final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
             "Create a file showing the connectivity of objects in the image.");
 
+    private final Option<Boolean> chaOption = options.newBooleanOption("cha", false,
+            "Create a file showing assumptions made on the class type hierarchy by target methods of the boot image.");
+
     private final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
 
@@ -222,7 +225,9 @@ public final class BootImageGenerator {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
 
-            ClassDependencyManager.dump();
+            if (chaOption.getValue()) {
+                ClassDependencyManager.dump();
+            }
             // ClassID debugging
             ClassID.validateUsedClassIds();
 
