@@ -291,6 +291,11 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
+
+    private void invalidateTargetMethod(TargetMethod targetMethod) {
+
+    }
+
     private void processNewTargetMethod(TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
@@ -344,6 +349,14 @@ public class CompiledPrototype extends Prototype {
 
     private boolean isIndirectCall(Relationship relationship) {
         return relationship == Relationship.VIRTUAL_CALL || relationship == Relationship.INTERFACE_CALL;
+    }
+
+    void add(TargetMethod invalidatedTargetMethod) {
+        final ClassMethodActor methodActor = invalidatedTargetMethod.classMethodActor;
+        assert methodActors.containsKey(methodActor);
+        // TODO: Need to clean up anything that might reference the target method before recompiling it.
+
+        worklist.add(methodActor);
     }
 
     boolean add(MethodActor child, Object parent, Relationship relationship) {
@@ -637,14 +650,17 @@ public class CompiledPrototype extends Prototype {
     }
 
     public void recompileInvalidatedTargetMethods() {
-        Trace.begin(1, "recompiling invalidated methods");
         HashSet<TargetMethod> recompileSet = ClassDependencyManager.invalidTargetMethods;
+        if (recompileSet.isEmpty()) {
+            return;
+        }
+        // TODO: this is incomplete.
+        Trace.begin(1, "recompiling invalidated methods");
         for (TargetMethod targetMethod : recompileSet) {
-            add(targetMethod.classMethodActor, null, null);
+            add(targetMethod);
         }
         compileWorklist();
         Trace.end(1, "recompiling invalidated methods");
-
     }
 
     public void checkRequiredImageMethods() {
