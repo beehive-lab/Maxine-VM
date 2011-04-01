@@ -4993,10 +4993,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public InspectorMenuItems genericViewMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
+                menu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
                 menu.add(actions().activateSingletonView(ViewKind.BOOT_IMAGE));
                 menu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
                 menu.add(actions().memoryInspectorsMenu());
-                menu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
                 menu.add(actions().activateSingletonView(ViewKind.METHODS));
                 menu.add(actions().activateSingletonView(ViewKind.NOTEPAD));
                 menu.add(actions().objectInspectorsMenu());

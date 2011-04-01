@@ -44,15 +44,15 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryAllocationsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class AllocationsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.ALLOCATIONS;
-    private static final String SHORT_NAME = "Memory Allocations";
-    private static final String LONG_NAME = "MemoryAllocations Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "memoryAllocationsInspectorGeometry";
+    private static final String SHORT_NAME = "Allocations";
+    private static final String LONG_NAME = "Allocations Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "allocationsInspectorGeometry";
 
-    private static final class MemoryAllocationsViewManager extends AbstractSingletonViewManager<MemoryAllocationsInspector> {
+    private static final class MemoryAllocationsViewManager extends AbstractSingletonViewManager<AllocationsInspector> {
 
         protected MemoryAllocationsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -66,9 +66,9 @@ public final class MemoryAllocationsInspector extends Inspector implements Table
             return inspection().hasProcess();
         }
 
-        public MemoryAllocationsInspector activateView(Inspection inspection) {
+        public AllocationsInspector activateView(Inspection inspection) {
             if (inspector == null) {
-                inspector = new MemoryAllocationsInspector(inspection);
+                inspector = new AllocationsInspector(inspection);
             }
             return inspector;
         }
@@ -97,7 +97,7 @@ public final class MemoryAllocationsInspector extends Inspector implements Table
     private JCheckBoxMenuItem showFilterCheckboxMenuItem;
     private int[] filterMatchingRows = null;
 
-    private MemoryAllocationsInspector(Inspection inspection) {
+    private AllocationsInspector(Inspection inspection) {
         super(inspection, VIEW_KIND);
         Trace.begin(1, tracePrefix() + "initializing");
         viewPreferences = MemoryAllocationsViewPreferences.globalPreferences(inspection());
