@@ -1434,16 +1434,7 @@ public final class ClassfileReader {
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
-
-        ClassDependencyManager.addToHierarchy(classActor);
-        assert Thread.holdsLock(classActor.classLoader) : "should hold the class loader lock";
-        // Now, makes the class actor visible to all.
-        // FIXME: REVISIT concurrency issues.
-        // If we hold the class loader monitor, we may not be exempt of deadlock, and we're way sub-optimal as we may be blocking
-        // creation of arrays types from the same class loader, and a lot of other class loading related operations.
-        // If we don't, we not multi-thread safe.
-        ClassRegistry.put(classActor);
-
+        classActor.define();
         return classActor;
     }
 

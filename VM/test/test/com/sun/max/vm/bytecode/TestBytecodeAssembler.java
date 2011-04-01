@@ -181,6 +181,7 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
                 ClassActor.NO_OUTER_CLASS,
                 ClassActor.NO_ENCLOSING_METHOD_INFO);
             try {
+                classActor.define();
                 ClassfileWriter.saveGeneratedClass(new ClassInfo(classActor), constantPoolEditor());
             } catch (IOException e) {
                 throw (NoClassDefFoundError) new NoClassDefFoundError(className.toString()).initCause(e);
