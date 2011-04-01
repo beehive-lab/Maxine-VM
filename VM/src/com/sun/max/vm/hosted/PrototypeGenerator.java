@@ -61,10 +61,9 @@ public final class PrototypeGenerator {
      * both the {@code CompiledPrototype} and the {@code GraphPrototype} iteratively
      * until it reaches a fixpoint.
      *
-     * @param tree a boolean indicating whether to record an object tree, which is useful for debugging
      * @return the final graph prototype of the VM
      */
-    public GraphPrototype createGraphPrototype(final boolean tree) {
+    public GraphPrototype createGraphPrototype() {
         GraphPrototype graphPrototype;
         int numberOfClassActors = 0;
         int numberOfCompilationThreads = threadsOption.getValue();
@@ -76,15 +75,17 @@ public final class PrototypeGenerator {
             }
             numberOfClassActors = currentNumberOfClasses();
             if (compiledPrototype.compile()) {
-                graphPrototype = new GraphPrototype(compiledPrototype, tree);
+                graphPrototype = new GraphPrototype(compiledPrototype);
             }
         } while (currentNumberOfClasses() != numberOfClassActors);
 
         compiledPrototype.checkRequiredImageMethods();
         compiledPrototype.compileFoldableMethods();
+        // Recompile all invalidated methods before linking, so we will not have to unlink / relink.
+        compiledPrototype.recompileInvalidatedTargetMethods();
         compiledPrototype.link();
 
-        graphPrototype = new GraphPrototype(compiledPrototype, tree);
+        graphPrototype = new GraphPrototype(compiledPrototype);
 
         Code.bootCodeRegion().trim();
         return graphPrototype;
@@ -103,7 +104,7 @@ public final class PrototypeGenerator {
             threadsOption.setValue(1);
         }
 
-        final GraphPrototype graphPrototype = createGraphPrototype(tree);
+        final GraphPrototype graphPrototype = createGraphPrototype();
         final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null, threadsOption.getValue());
         return dataPrototype;
     }
