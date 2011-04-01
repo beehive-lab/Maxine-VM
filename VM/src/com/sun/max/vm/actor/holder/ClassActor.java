@@ -1678,13 +1678,14 @@ public abstract class ClassActor extends Actor implements RiType {
 
     /**
      * This must be call to define the class actor, i.e., makes the corresponding class types visible to all.
+     * The caller must hold the defining class loader's lock.
      */
     public void define() {
         // FIXME: REVISIT concurrency issues.
         // If we hold the class loader monitor, we may not be exempt of deadlock, and we're way sub-optimal as we may be blocking
         // creation of arrays types from the same class loader, and a lot of other class loading related operations.
         // If we don't, we not multi-thread safe.
-        assert Thread.holdsLock(classLoader) : "should hold the class loader lock";
+        FatalError.check(Thread.holdsLock(classLoader),  "must hold the defining class loader's lock");
         ClassDependencyManager.addToHierarchy(this);
         ClassRegistry.put(this);
     }
