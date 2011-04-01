@@ -58,6 +58,7 @@ public final class BootImageGenerator {
     public static final String IMAGE_JAR_FILE_NAME = "maxine.jar";
     public static final String IMAGE_FILE_NAME = "maxine.vm";
     public static final String STATS_FILE_NAME = "maxine.stats";
+    public static final String CHA_FILE_NAME = "maxine.cha";
 
     public static final String DEFAULT_VM_DIRECTORY = Prototype.TARGET_GENERATED_ROOT;
 
@@ -226,8 +227,9 @@ public final class BootImageGenerator {
             }
 
             if (chaOption.getValue()) {
-                ClassDependencyManager.dump();
+                ClassDependencyManager.dump(new PrintStream(new File(vmDirectory, CHA_FILE_NAME)));
             }
+
             // ClassID debugging
             ClassID.validateUsedClassIds();
 
