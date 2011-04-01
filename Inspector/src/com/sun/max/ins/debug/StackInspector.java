@@ -336,7 +336,7 @@ public final class StackInspector extends Inspector {
         setContentPane(contentPane);
         forceRefresh();
         // TODO (mlvdv) try to set frame selection to match global focus at creation; doesn't display.
-        stackFrameFocusChanged(null, inspection().focus().stackFrame());
+        frameFocusChanged(null, inspection().focus().stackFrame());
     }
 
     @Override
@@ -382,7 +382,7 @@ public final class StackInspector extends Inspector {
     }
 
     @Override
-    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame newStackFrame) {
+    public void frameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame newStackFrame) {
         if (newStackFrame == null || newStackFrame.stack().thread() != this.stack.thread()) {
             stackFrameList.clearSelection();
         } else {

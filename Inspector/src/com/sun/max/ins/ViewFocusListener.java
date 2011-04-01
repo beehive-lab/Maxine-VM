@@ -50,7 +50,7 @@ public interface ViewFocusListener {
     /**
      * Notifies that the global stack frame focus has been changed (view state only), non-null once running.
      */
-    void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame);
+    void frameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame);
 
     /**
      * Notifies that the global {@link Address} focus has been changed (view state only).

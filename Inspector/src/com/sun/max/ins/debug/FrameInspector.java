@@ -45,17 +45,17 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class StackFrameInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class FrameInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.FRAME;
-    private static final String SHORT_NAME = "Stack Frame";
-    private static final String LONG_NAME = "Stack Frame Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "stackFrameInspectorGeometry";
+    private static final String SHORT_NAME = "Frame";
+    private static final String LONG_NAME = "Frame Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "frameInspectorGeometry";
 
-    private static final class StackFrameViewManager extends AbstractSingletonViewManager<StackFrameInspector> {
+    private static final class FrameViewManager extends AbstractSingletonViewManager<FrameInspector> {
 
-        protected StackFrameViewManager(Inspection inspection) {
+        protected FrameViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
@@ -67,20 +67,20 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
             return inspection().hasProcess() && focus().hasThread();
         }
 
-        public StackFrameInspector activateView(Inspection inspection) {
+        public FrameInspector activateView(Inspection inspection) {
             if (inspector == null) {
-                inspector = new StackFrameInspector(inspection);
+                inspector = new FrameInspector(inspection);
             }
             return inspector;
         }
     }
 
     // Will be non-null before any instances created.
-    private static StackFrameViewManager viewManager = null;
+    private static FrameViewManager viewManager = null;
 
     public static ViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new StackFrameViewManager(inspection);
+            viewManager = new FrameViewManager(inspection);
         }
         return viewManager;
     }
@@ -114,7 +114,7 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
     private final InspectorAction copyStackFrameToClipboardAction = new CopyStackFrameToClipboardAction();
 
 
-    public StackFrameInspector(Inspection inspection) {
+    public FrameInspector(Inspection inspection) {
         super(inspection, VIEW_KIND);
         Trace.begin(1,  tracePrefix() + " initializing");
 
@@ -217,7 +217,7 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
     }
 
     @Override
-    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame newStackFrame) {
+    public void frameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame newStackFrame) {
         // The focus mechanism will suppress calls where the stack frame is identical to the previous frame.
         if (newStackFrame != null && newStackFrame.isSameFrame(stackFrame)) {
             // The frame object is different, but it represents the same frame; this typically happens

@@ -257,7 +257,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             frameSelections.put(newThread, newStackFrame);
             Trace.line(TRACE_VALUE, stackFrameFocusTracer);
             for (ViewFocusListener listener : copyListeners()) {
-                listener.stackFrameFocusChanged(oldStackFrame, newStackFrame);
+                listener.frameFocusChanged(oldStackFrame, newStackFrame);
             }
         }
         // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer
