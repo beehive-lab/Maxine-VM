@@ -27,6 +27,7 @@ import java.awt.*;
 import javax.swing.*;
 
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.view.InspectionViews.*;
 
 /**
  * MenuBar for the Inspection; shows VM state with background color.
@@ -110,9 +111,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     private InspectorMenu createMemoryMenu() {
         final InspectorMenu menu = new InspectorMenu("Memory");
         menu.add(actions.genericMemoryMenuItems());
-        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
-        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
-        menu.add(viewMemoryAllocationsMenuItem);
+        menu.add(actions.activateSingletonView(ViewKind.ALLOCATIONS));
         return menu;
     }
 
@@ -138,15 +137,11 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
         menu.addSeparator();
         menu.add(actions.genericBreakpointMenuItems());
-        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
-        viewBreakpointsMenuItem.setText("View Breakpoints");
-        menu.add(viewBreakpointsMenuItem);
+        menu.add(actions.activateSingletonView(ViewKind.BREAKPOINTS));
 
         if (vm().watchpointManager() != null) {
             menu.add(actions.genericWatchpointMenuItems());
-            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions.viewWatchpoints());
-            viewWatchpointsMenuItem.setText("View Watchpoints");
-            menu.add(viewWatchpointsMenuItem);
+            menu.add(actions.activateSingletonView(ViewKind.WATCHPOINTS));
         }
 
         return menu;
@@ -169,7 +164,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
     private InspectorMenu createTestMenu() {
         final InspectorMenu menu = new InspectorMenu("Test");
-        menu.add(actions.viewFocus());
+        menu.add(actions.activateSingletonView(ViewKind.USER_FOCUS));
         menu.add(actions.listVMStateHistory());
         menu.add(actions.listThreads());
         menu.add(actions.listStackFrames());

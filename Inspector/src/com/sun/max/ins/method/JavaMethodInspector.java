@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+package com.sun.max.ins.method;
 
 import static com.sun.max.ins.gui.Inspector.MenuKind.*;
 
@@ -34,8 +34,9 @@ import javax.swing.border.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectorNameDisplay.ReturnTypeSpecification;
-import com.sun.max.ins.method.*;
+import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -120,12 +121,12 @@ public class JavaMethodInspector extends MethodInspector {
      * for the life of the inspector.
      *
      * @param inspection the {@link Inspection} of which this Inspector is part
-     * @param parent the tabbed container for this Inspector
+     * @param container the tabbed container for this Inspector
      * @param compiledCode surrogate for the compilation in the VM
      * @param codeKind request for a particular code view to be displayed initially
      */
-    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledCode compiledCode, MethodCodeKind codeKind) {
-        this(inspection, parent, compiledCode, compiledCode.getTeleClassMethodActor(), codeKind);
+    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer container, MaxCompiledCode compiledCode, MethodCodeKind codeKind) {
+        this(inspection, container, compiledCode, compiledCode.getTeleClassMethodActor(), codeKind);
     }
 
     /**
@@ -135,17 +136,17 @@ public class JavaMethodInspector extends MethodInspector {
      * either case, the resulting Inspector replaces this one.
      *
      * @param inspection the {@link Inspection} of which this Inspector is part
-     * @param parent the tabbed container for this Inspector
+     * @param container the tabbed container for this Inspector
      * @param teleClassMethodActor surrogate for the specified Java method in the VM
      * @param codeKind requested kind of code view: either source code or bytecodes
      */
-    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
-        this(inspection, parent, null, teleClassMethodActor, codeKind);
+    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer container, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
+        this(inspection, container, null, teleClassMethodActor, codeKind);
         assert codeKind != MethodCodeKind.MACHINE_CODE;
     }
 
-    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledCode compiledCode, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
-        super(inspection, parent);
+    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer container, MaxCompiledCode compiledCode, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
+        super(inspection, container);
 
         this.methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
@@ -204,7 +205,7 @@ public class JavaMethodInspector extends MethodInspector {
             codeViewCheckBoxes[codeKind.ordinal()] = checkBox;
         }
 
-        final InspectorFrame frame = createTabFrame(parent);
+        final InspectorFrame frame = createTabFrame(container);
 
         final InspectorMenu editMenu = frame.makeMenu(EDIT_MENU);
         final InspectorMenu objectMenu = frame.makeMenu(OBJECT_MENU);
@@ -253,14 +254,10 @@ public class JavaMethodInspector extends MethodInspector {
         }
         debugMenu.addSeparator();
         debugMenu.add(actions().genericBreakpointMenuItems());
-        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
-        viewBreakpointsMenuItem.setText("View Breakpoints");
-        debugMenu.add(viewBreakpointsMenuItem);
+        debugMenu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
         if (vm().watchpointManager() != null) {
             debugMenu.add(actions().genericWatchpointMenuItems());
-            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
-            viewWatchpointsMenuItem.setText("View Watchpoints");
-            debugMenu.add(viewWatchpointsMenuItem);
+            debugMenu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import java.io.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.InspectionViews.*;
 
 /**
  * Base class for inspectors that display information from files.
@@ -35,6 +36,8 @@ import com.sun.max.ins.util.*;
  */
 public abstract class FileInspector extends Inspector {
 
+    private static final ViewKind VIEW_KIND = ViewKind.FILE;
+
     private File file;
 
     public File file() {
@@ -42,7 +45,7 @@ public abstract class FileInspector extends Inspector {
     }
 
     protected FileInspector(Inspection inspection, File file) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         this.file = file;
     }
 

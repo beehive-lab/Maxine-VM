@@ -25,6 +25,7 @@ package com.sun.max.ins;
 import javax.swing.*;
 
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -78,7 +79,7 @@ public final class MaxineInspector {
                     final Inspection inspection = new Inspection(maxVM, options);
                     if (maxVM.inspectionMode() == MaxInspectionMode.IMAGE) {
                         // Bring up the boot image info inspector as a starting point for browsing
-                        BootImageInspector.make(inspection).highlight();
+                        inspection.actions().activateSingletonView(ViewKind.BOOT_IMAGE).perform();
                     }
                 }
             });

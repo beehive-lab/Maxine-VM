@@ -31,6 +31,7 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -46,6 +47,7 @@ import com.sun.max.unsafe.*;
 public abstract class ObjectInspector extends Inspector {
 
     private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
 
     private final ObjectInspectorFactory factory;
 
@@ -87,7 +89,7 @@ public abstract class ObjectInspector extends Inspector {
     private Rectangle originalFrameGeometry = null;
 
     protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, final TeleObject teleObject) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         this.factory = factory;
         this.teleObject = teleObject;
         this.currentObjectOrigin = teleObject().origin();
@@ -129,9 +131,7 @@ public abstract class ObjectInspector extends Inspector {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
-        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
-        memoryMenu.add(viewMemoryAllocationsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.OBJECT_MENU);
 

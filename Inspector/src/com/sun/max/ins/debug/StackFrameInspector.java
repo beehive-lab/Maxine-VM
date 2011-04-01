@@ -24,8 +24,6 @@ package com.sun.max.ins.debug;
 
 import static com.sun.max.tele.MaxProcessState.*;
 
-import java.awt.*;
-
 import javax.swing.*;
 
 import com.sun.max.ins.*;
@@ -33,6 +31,8 @@ import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -48,23 +48,47 @@ import com.sun.max.unsafe.*;
 public final class StackFrameInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.FRAME;
+    private static final String SHORT_NAME = "Stack Frame";
+    private static final String LONG_NAME = "Stack Frame Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "stackFrameInspectorGeometry";
 
-    // Set to null when inspector closed.
-    private static StackFrameInspector stackFrameInspector;
+    private static final class StackFrameViewManager extends AbstractSingletonViewManager<StackFrameInspector> {
+
+        protected StackFrameViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
+        }
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return inspection().hasProcess() && focus().hasThread();
+        }
+
+        public StackFrameInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new StackFrameInspector(inspection);
+            }
+            return inspector;
+        }
+    }
+
+    // Will be non-null before any instances created.
+    private static StackFrameViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new StackFrameViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private static CompiledStackFrameViewPreferences viewPreferences;
 
-
-    /**
-     * Displays the (singleton) inspector, creating it if needed.
-     */
-    public static StackFrameInspector make(Inspection inspection) {
-        if (stackFrameInspector == null) {
-            stackFrameInspector = new StackFrameInspector(inspection);
-        }
-        return stackFrameInspector;
-    }
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
 
     private final class CopyStackFrameToClipboardAction extends InspectorAction {
 
@@ -81,8 +105,6 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
         }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "stackFrameInspectorGeometry");
-
     private MaxStackFrame stackFrame;
     private final InspectorPanel nullFramePanel;
     private final InspectorPanel truncatedFramePanel;
@@ -93,7 +115,7 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
 
 
     public StackFrameInspector(Inspection inspection) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         Trace.begin(1,  tracePrefix() + " initializing");
 
         viewPreferences = CompiledStackFrameViewPreferences.globalPreferences(inspection);
@@ -120,19 +142,12 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
         memoryMenu.add(actions().inspectSelectedStackFrameMemory("Inspect memory for frame"));
         memoryMenu.add(actions().inspectSelectedThreadStackMemory("Inspect memory for stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
-        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
-        memoryMenu.add(viewMemoryAllocationsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         forceRefresh();
         Trace.end(1,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected Rectangle defaultGeometry() {
-        return inspection().geometry().stackFrameDefaultFrameGeometry();
     }
 
     @Override
@@ -142,7 +157,7 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
 
     @Override
     public String getTextForTitle() {
-        final StringBuilder sb = new StringBuilder("Frame: ");
+        final StringBuilder sb = new StringBuilder(viewManager.shortName() + ": ");
         if (stackFrame == null) {
             sb.append(inspection().nameDisplay().unavailableDataShortText());
         } else {
@@ -202,11 +217,6 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
     }
 
     @Override
-    public void vmProcessTerminated() {
-        reconstructView();
-    }
-
-    @Override
     public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame newStackFrame) {
         // The focus mechanism will suppress calls where the stack frame is identical to the previous frame.
         if (newStackFrame != null && newStackFrame.isSameFrame(stackFrame)) {
@@ -229,20 +239,20 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
     }
 
     @Override
-    public InspectorAction getViewOptionsAction() {
-        return new InspectorAction(inspection(), "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<CompiledStackFrameColumnKind>(inspection(), "Stack Frame View Options", viewPreferences);
-            }
-        };
-    }
-
-    @Override
     public void watchpointSetChanged() {
         if (vm().state().processState() == STOPPED) {
             forceRefresh();
         }
+    }
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<CompiledStackFrameColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
+            }
+        };
     }
 
     public void viewConfigurationChanged() {
@@ -256,8 +266,13 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        stackFrameInspector = null;
         viewPreferences.removeListener(this);
         super.inspectorClosing();
+    }
+
+
+    @Override
+    public void vmProcessTerminated() {
+        reconstructView();
     }
 }

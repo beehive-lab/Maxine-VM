@@ -50,6 +50,7 @@ public class InspectionSettings {
     private static final String COMPONENT_Y_KEY = "y";
     private static final String COMPONENT_HEIGHT_KEY = "height";
     private static final String COMPONENT_WIDTH_KEY = "width";
+    private static final Point defaultInspectorLocation = new Point(100, 100);
 
     private String tracePrefix() {
         return "[InspectionSettings] ";
@@ -259,7 +260,9 @@ public class InspectionSettings {
                 get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldGeometry.width),
                 get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldGeometry.height));
         }
-        if (newGeometry != null && !newGeometry.equals(oldGeometry)) {
+        if (newGeometry == null) {
+            inspector.getJComponent().setLocation(defaultInspectorLocation);
+        } else if (!newGeometry.equals(oldGeometry)) {
             inspector.getJComponent().setBounds(newGeometry);
         }
         inspection.gui().moveToFullyVisible(inspector);

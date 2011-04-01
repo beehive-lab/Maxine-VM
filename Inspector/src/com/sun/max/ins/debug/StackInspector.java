@@ -35,6 +35,8 @@ import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -50,6 +52,11 @@ import com.sun.max.vm.actor.member.*;
  */
 public final class StackInspector extends Inspector {
     private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.STACK;
+    private static final String SHORT_NAME = "Stack";
+    private static final String LONG_NAME = "Stack Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "stackInspectorGeometry";
+
     private static final int DEFAULT_MAX_FRAMES_DISPLAY = 200;
     private static final String MAX_FRAMES_DISPLAY_PROPERTY = "inspector.max.stack.frames.display";
     private static int defaultMaxFramesDisplay;
@@ -66,18 +73,39 @@ public final class StackInspector extends Inspector {
         }
     }
 
-    // Set to null when inspector closed.
-    private static StackInspector stackInspector;
+    private static final class StackViewManager extends AbstractSingletonViewManager<StackInspector> {
 
-    /**
-     * Displays the (singleton) inspector, creating it if needed.
-     */
-    public static StackInspector make(Inspection inspection) {
-        if (stackInspector == null) {
-            stackInspector = new StackInspector(inspection);
+        protected StackViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return stackInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return inspection().hasProcess() && focus().hasThread();
+        }
+
+        public StackInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new StackInspector(inspection);
+            }
+            return inspector;
+        }
     }
+
+    // Will be non-null before any instances created.
+    private static StackViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new StackViewManager(inspection);
+        }
+        return viewManager;
+    }
+
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
 
     private final class StackFrameListCellRenderer extends MachineCodeLabel implements ListCellRenderer {
 
@@ -151,11 +179,6 @@ public final class StackInspector extends Inspector {
         }
 
     }
-
-    /**
-     * Listens for requests to save settings and saves current frame geometry.
-     */
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "stackInspectorGeometry");
 
     /**
      * Listens for mouse events over the stack frame list so that the right button
@@ -234,7 +257,7 @@ public final class StackInspector extends Inspector {
     private int maxFramesDisplay = defaultMaxFramesDisplay;
 
     public StackInspector(Inspection inspection) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         final InspectorFrame frame = createFrame(true);
 
@@ -246,19 +269,12 @@ public final class StackInspector extends Inspector {
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().inspectSelectedThreadStackMemory("Inspect memory for stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
-        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
-        memoryMenu.add(viewMemoryAllocationsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         forceRefresh();
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected Rectangle defaultGeometry() {
-        return inspection().geometry().stackDefaultFrameGeometry();
     }
 
     @Override
@@ -268,7 +284,7 @@ public final class StackInspector extends Inspector {
 
     @Override
     public String getTextForTitle() {
-        String title = "Stack: ";
+        String title = viewManager.shortName() + ": ";
         if (stack != null && stack.thread() != null) {
             title += inspection().nameDisplay().longNameWithState(stack.thread());
         }
@@ -361,11 +377,6 @@ public final class StackInspector extends Inspector {
     }
 
     @Override
-    public void vmProcessTerminated() {
-        reconstructView();
-    }
-
-    @Override
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         reconstructView();
     }
@@ -394,9 +405,13 @@ public final class StackInspector extends Inspector {
     }
 
     @Override
+    public void vmProcessTerminated() {
+        reconstructView();
+    }
+
+    @Override
     public void inspectorClosing() {
         Trace.line(TRACE_VALUE, tracePrefix() + " closing");
-        stackInspector = null;
         super.inspectorClosing();
     }
 
@@ -435,7 +450,7 @@ public final class StackInspector extends Inspector {
                 @Override
                 protected void procedure() {
                     inspection().focus().setStackFrame(stackFrame, false);
-                    actions().viewStackFrame().perform();
+                    actions().activateSingletonView(ViewKind.FRAME).perform();
                 }
             });
         }

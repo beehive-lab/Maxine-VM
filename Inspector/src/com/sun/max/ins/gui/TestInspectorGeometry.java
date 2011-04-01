@@ -24,6 +24,8 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 
+import com.sun.max.ins.view.InspectionViews.*;
+
 /**
  * A set of layout parameters for testing GUI code.
  *
@@ -50,47 +52,7 @@ public class TestInspectorGeometry implements InspectorGeometry {
     private static final Dimension testFramePrefSize = new Dimension(300, 300);
     private static final Rectangle testFrameDefaultGeometry = new Rectangle(100, 100, 300, 300);
 
-    public  Rectangle threadsDefaultFrameGeometry() {
-        return testFrameDefaultGeometry;
-    }
-
-    public Rectangle registersDefaultFrameGeometry() {
-        return  testFrameDefaultGeometry;
-    }
-
-    public Rectangle stackDefaultFrameGeometry() {
-        return testFrameDefaultGeometry;
-    }
-
-    public Rectangle stackFrameDefaultFrameGeometry() {
-        return testFrameDefaultGeometry;
-    }
-
-    public Rectangle methodsDefaultFrameGeometry() {
-        return testFrameDefaultGeometry;
-    }
-
-    public Rectangle breakpointsDefaultFrameGeometry() {
-        return testFrameDefaultGeometry;
-    }
-
-    public Rectangle watchpointsDefaultFrameGeometry() {
-        return testFrameDefaultGeometry;
-    }
-
-    public Rectangle threadLocalsDefaultFrameGeometry() {
-        return testFrameDefaultGeometry;
-    }
-
-    public Rectangle memoryAllocationsDefaultFrameGeometry() {
-        return testFrameDefaultGeometry;
-    }
-
-    public Rectangle bootImageDefaultFrameGeometry() {
-        return testFrameDefaultGeometry;
-    }
-
-    public Rectangle notepadDefaultFrameGeometry() {
+    public Rectangle preferredFrameGeometry(ViewKind viewKind) {
         return testFrameDefaultGeometry;
     }
 

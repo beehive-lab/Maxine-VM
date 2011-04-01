@@ -40,6 +40,7 @@ import com.sun.max.ins.method.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxMachineCode.InstructionMap;
@@ -799,322 +800,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  makes visible and highlights the {@link BootImageInspector}.
+     * A general purpose action for activating one of the Inspector's singleton
+     * views, creating it anew if needed.
+     *
+     * @param kind the kind of view to be made
+     * @return an action that will produce a possibly new view of the specified kind
      */
-    final class ViewBootImageAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Boot image info";
-
-        ViewBootImageAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            BootImageInspector.make(inspection()).highlight();
-        }
-    }
-
-    private InspectorAction viewBootImage = new ViewBootImageAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link BootImageInspector}.
-     */
-    public final InspectorAction viewBootImage() {
-        return viewBootImage;
-    }
-
-    /**
-     * Action:  makes visible and highlights the {@link BreakpointsInspector}.
-     */
-    final class ViewBreakpointsAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Breakpoints";
-
-        ViewBreakpointsAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-        }
-
-        @Override
-        protected void procedure() {
-            BreakpointsInspector.make(inspection()).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess());
-        }
-    }
-
-    private InspectorAction viewBreakpoints = new ViewBreakpointsAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link BreakpointsInspector}.
-     */
-    public final InspectorAction viewBreakpoints() {
-        return viewBreakpoints;
-    }
-
-    /**
-     * Action:  makes visible and highlights the {@link MemoryAllocationsInspector}.
-     */
-    final class ViewMemoryAllocationsAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Memory allocations";
-
-        ViewMemoryAllocationsAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-        }
-
-        @Override
-        protected void procedure() {
-            MemoryAllocationsInspector.make(inspection()).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess());
-        }
-    }
-
-    private InspectorAction viewMemoryAllocations = new ViewMemoryAllocationsAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link MemoryAllocationsInspector}.
-     */
-    public final InspectorAction viewMemoryAllocations() {
-        return viewMemoryAllocations;
-    }
-
-    /**
-     * Action:  makes visible the {@link MethodInspector}.
-     */
-    final class ViewMethodCodeAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Method code";
-
-        ViewMethodCodeAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            focus().setCodeLocation(focus().thread().ipLocation());
-            // This is kind of awkward.  We've already forced a MethodInspector, and
-            // this the singleton container for all such inspectors, to be visible.
-            // However we also want to be sure that we can move the container's frame
-            // back toward the center of the frame if it's been pushed off the top
-            // or left boundaries.  This is the only way to recover from that situation,
-            // since all other actions that can do this are only available on the frame's
-            // default menu (at its upper left).
-            // This gets handled very simply by the other inspectors; it's just awkward
-            // for the tabbed container.
-            gui().moveToExposeDefaultMenu(MethodInspectorContainer.make(inspection()));
-        }
-    }
-
-    private InspectorAction viewMethodCode = new ViewMethodCodeAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link MethodInspector}, with
-     * initial view set to the method containing the instruction pointer of the current thread.
-     */
-    public final InspectorAction viewMethodCode() {
-        return viewMethodCode;
-    }
-
-    /**
-     * Action:  makes visible and highlights the {@link RegistersInspector}.
-     */
-    final class ViewRegistersAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Registers";
-
-        ViewRegistersAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-        }
-
-        @Override
-        protected void procedure() {
-            RegistersInspector.make(inspection()).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && focus().hasThread());
-        }
-    }
-
-    private InspectorAction viewRegisters = new ViewRegistersAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link RegistersInspector}.
-     */
-    public final InspectorAction viewRegisters() {
-        return viewRegisters;
-    }
-
-    /**
-     * Action:  makes visible and highlights the {@link StackInspector}.
-     */
-    final class ViewStackAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Stack";
-
-        ViewStackAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-        }
-
-        @Override
-        protected void procedure() {
-            StackInspector.make(inspection()).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && focus().hasThread());
-        }
-    }
-
-    private InspectorAction viewStack = new ViewStackAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link StackInspector}.
-     */
-    public final InspectorAction viewStack() {
-        return viewStack;
-    }
-
-    /**
-     * Action:  makes visible and highlights the {@link StackFrameInspector}.
-     */
-    final class ViewStackFrameAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "StackFrame";
-
-        ViewStackFrameAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-        }
-
-        @Override
-        protected void procedure() {
-            StackFrameInspector.make(inspection()).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && focus().hasThread());
-        }
-    }
-
-    private InspectorAction viewStackFrame = new ViewStackFrameAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link StackFrameInspector}.
-     */
-    public final InspectorAction viewStackFrame() {
-        return viewStackFrame;
-    }
-
-    /**
-     * Action:  makes visible and highlights the {@link ThreadsInspector}.
-     */
-    final class ViewThreadsAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Threads";
-
-        ViewThreadsAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-        }
-
-        @Override
-        protected void procedure() {
-            ThreadsInspector.make(inspection()).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess());
-        }
-    }
-
-    private InspectorAction viewThreads = new ViewThreadsAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link ThreadsInspector}.
-     */
-    public final InspectorAction viewThreads() {
-        return viewThreads;
-    }
-
-    /**
-     * Action:  makes visible and highlights the {@link ThreadLocalsInspector}.
-     */
-    final class ViewTLAAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "VM thread locals";
-
-        ViewTLAAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-        }
-
-        @Override
-        protected void procedure() {
-            ThreadLocalsInspector.make(inspection()).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && focus().hasThread());
-        }
-    }
-
-    private InspectorAction viewTLA = new ViewTLAAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link ThreadsInspector}.
-     */
-    public final InspectorAction viewVmThreadLocals() {
-        return viewTLA;
-    }
-
-    /**
-     * Action:  makes visible and highlights the {@link WatchpointsInspector}.
-     */
-    final class ViewWatchpointsAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Watchpoints";
-
-        ViewWatchpointsAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-        }
-
-        @Override
-        protected void procedure() {
-            WatchpointsInspector.make(inspection()).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(vm().watchpointManager() != null);
-        }
-    }
-
-    private InspectorAction viewWatchpoints = new ViewWatchpointsAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link WatchpointsInspector}.
-     */
-    public final InspectorAction viewWatchpoints() {
-        return viewWatchpoints;
+    public InspectorAction activateSingletonView(ViewKind kind) {
+        return inspection().views().activateSingletonViewAction(kind);
     }
 
     /**
@@ -1234,7 +927,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class MemoryInspectorsMenu extends JMenu {
         public MemoryInspectorsMenu() {
-            super("Memory inspectors");
+            super("View Memory Inspectors");
             addMenuListener(new MenuListener() {
 
                 public void menuCanceled(MenuEvent e) {
@@ -1888,7 +1581,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ObjectInspectorsMenu extends JMenu {
         public ObjectInspectorsMenu() {
-            super("Object inspectors");
+            super("View Object Inspectors");
             addMenuListener(new MenuListener() {
 
                 public void menuCanceled(MenuEvent e) {
@@ -4927,58 +4620,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  makes visible and highlight the {@link FocusInspector}.
-     */
-    final class ViewFocusAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "View User Focus";
-
-        ViewFocusAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            FocusInspector.make(inspection()).highlight();
-        }
-    }
-
-    private InspectorAction viewFocus = new ViewFocusAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link FocusInspector}.
-     */
-    public final InspectorAction viewFocus() {
-        return viewFocus;
-    }
-
-    /**
-     * Action:  makes visible and highlight the {@link NotepadInspector}.
-     */
-    final class ViewNotepadAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Notepad";
-
-        ViewNotepadAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            NotepadInspector.make(inspection(), inspection().getNotepad()).highlight();
-        }
-    }
-
-    private InspectorAction viewNotepad = new ViewNotepadAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link NotepadInspector}.
-     */
-    public final InspectorAction viewNotepad() {
-        return viewNotepad;
-    }
-
-    /**
      * Action:  lists to the console this history of the VM state.
      */
     final class ListVMStateHistoryAction extends InspectorAction {
@@ -5352,21 +4993,19 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public InspectorMenuItems genericViewMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
-                menu.add(actions().viewBootImage());
-                menu.add(actions().viewBreakpoints());
+                menu.add(actions().activateSingletonView(ViewKind.BOOT_IMAGE));
+                menu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
                 menu.add(actions().memoryInspectorsMenu());
-                menu.add(actions().viewMemoryAllocations());
-                menu.add(actions().viewMethodCode());
-                menu.add(actions().viewNotepad());
+                menu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+                menu.add(actions().activateSingletonView(ViewKind.METHODS));
+                menu.add(actions().activateSingletonView(ViewKind.NOTEPAD));
                 menu.add(actions().objectInspectorsMenu());
-                menu.add(actions().viewRegisters());
-                menu.add(actions().viewStack());
-                menu.add(actions().viewStackFrame());
-                menu.add(actions().viewThreads());
-                menu.add(actions().viewVmThreadLocals());
-                if (vm().watchpointManager() != null) {
-                    menu.add(actions().viewWatchpoints());
-                }
+                menu.add(actions().activateSingletonView(ViewKind.REGISTERS));
+                menu.add(actions().activateSingletonView(ViewKind.STACK));
+                menu.add(actions().activateSingletonView(ViewKind.FRAME));
+                menu.add(actions().activateSingletonView(ViewKind.THREADS));
+                menu.add(actions().activateSingletonView(ViewKind.THREAD_LOCALS));
+                menu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
             }
         };
     }

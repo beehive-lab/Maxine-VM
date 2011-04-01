@@ -24,12 +24,12 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 
-import javax.swing.*;
-
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
@@ -40,29 +40,58 @@ import com.sun.max.tele.*;
  */
 public final class RegistersInspector extends Inspector implements TableColumnViewPreferenceListener {
 
-    // Set to null when inspector closed.
-    private static RegistersInspector registersInspector;
+    private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.REGISTERS;
+    private static final String SHORT_NAME = "Registers";
+    private static final String LONG_NAME = "Registers Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "registersInspectorGeometry";
 
-    /**
-     * Displays the (singleton) registers  inspector, creating it if needed.
-     */
-    public static RegistersInspector make(Inspection inspection) {
-        if (registersInspector == null) {
-            registersInspector = new RegistersInspector(inspection);
+    private static final class RegistersViewManager extends AbstractSingletonViewManager<RegistersInspector> {
+
+        protected RegistersViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return registersInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return inspection().hasProcess() && focus().hasThread();
+        }
+
+        public RegistersInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new RegistersInspector(inspection);
+            }
+            return inspector;
+        }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "registersInspectorGeometry");
+    // Will be non-null before any instances created.
+    private static RegistersViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new RegistersViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final RegistersViewPreferences viewPreferences;
 
-    private MaxThread thread;
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
+
     private RegistersTable table;
 
+    /**
+     * The thread whose register contents are currently being displayed.  Can be null.
+     */
+    private MaxThread thread;
+
     private RegistersInspector(Inspection inspection) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -70,9 +99,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
-        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
-        memoryMenu.add(viewMemoryAllocationsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         forceRefresh();
@@ -80,8 +107,22 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    protected Rectangle defaultGeometry() {
-        return inspection().geometry().registersDefaultFrameGeometry();
+    protected SaveSettingsListener saveSettingsListener() {
+        return saveSettingsListener;
+    }
+
+    @Override
+    public String getTextForTitle() {
+        String title = viewManager.shortName() + ": ";
+        if (thread != null) {
+            title += inspection().nameDisplay().longNameWithState(thread);
+        }
+        return title;
+    }
+
+    @Override
+    protected InspectorTable getTable() {
+        return table;
     }
 
     @Override
@@ -98,40 +139,6 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
-    }
-
-    @Override
-    protected InspectorTable getTable() {
-        return table;
-    }
-
-    @Override
-    public String getTextForTitle() {
-        String title = "Registers: ";
-        if (thread != null) {
-            title += inspection().nameDisplay().longNameWithState(thread);
-        }
-        return title;
-    }
-
-    @Override
-    public InspectorAction getViewOptionsAction() {
-        return new InspectorAction(inspection(), "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<RegistersColumnKind>(inspection(), "Registers View Options", viewPreferences);
-            }
-        };
-    }
-
-    @Override
-    public InspectorAction getPrintAction() {
-        return getDefaultPrintAction();
-    }
-
-    @Override
     protected void refreshState(boolean force) {
         table.refresh(force);
         // The title displays thread state, so must be updated.
@@ -143,18 +150,33 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         reconstructView();
     }
 
-    public void tableColumnViewPreferencesChanged() {
-        reconstructView();
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<RegistersColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
+            }
+        };
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
     }
 
     public void viewConfigurationChanged() {
         reconstructView();
     }
 
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
+    }
+
+
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        registersInspector = null;
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

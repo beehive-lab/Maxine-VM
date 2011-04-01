@@ -22,14 +22,12 @@
  */
 package com.sun.max.ins.debug;
 
-import java.awt.*;
-
-import javax.swing.*;
-
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
@@ -42,30 +40,52 @@ import com.sun.max.tele.*;
 public final class WatchpointsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.WATCHPOINTS;
+    private static final String SHORT_NAME = "Watchpoints";
+    private static final String LONG_NAME = "Watchpoints Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "watchpointsInspectorGeometry";
 
-    // Set to null when inspector closed.
-    private static WatchpointsInspector watchpointsInspector;
+    private static final class WatchpointsViewManager extends AbstractSingletonViewManager<WatchpointsInspector> {
 
-    /**
-     * Displays the (singleton) watchpoints inspector.
-     * @return  The watchpoints inspector, possibly newly created.
-     */
-    public static WatchpointsInspector make(Inspection inspection) {
-        if (watchpointsInspector == null) {
-            watchpointsInspector = new WatchpointsInspector(inspection);
+        protected WatchpointsViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return watchpointsInspector;
+
+        public boolean isSupported() {
+            return vm().watchpointManager() != null;
+        }
+
+        public boolean isEnabled() {
+            return vm().watchpointManager() != null;
+        }
+
+        public WatchpointsInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new WatchpointsInspector(inspection);
+            }
+            return inspector;
+        }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "watchpointsInspectorGeometry");
+    // Will be non-null before any instances created.
+    private static WatchpointsViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new WatchpointsViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final WatchpointsViewPreferences viewPreferences;
 
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
+
     private WatchpointsTable table;
 
     private WatchpointsInspector(Inspection inspection) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
@@ -83,9 +103,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().inspectSelectedMemoryWatchpointAction());
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
-        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
-        memoryMenu.add(viewMemoryAllocationsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
@@ -93,8 +111,18 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    protected Rectangle defaultGeometry() {
-        return inspection().geometry().watchpointsDefaultFrameGeometry();
+    protected SaveSettingsListener saveSettingsListener() {
+        return saveSettingsListener;
+    }
+
+    @Override
+    public String getTextForTitle() {
+        return viewManager.shortName();
+    }
+
+    @Override
+    protected InspectorTable getTable() {
+        return table;
     }
 
     @Override
@@ -104,18 +132,20 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
+    protected void refreshState(boolean force) {
+        table.refresh(force);
     }
 
     @Override
-    protected InspectorTable getTable() {
-        return table;
+    public void watchpointSetChanged() {
+        forceRefresh();
     }
 
     @Override
-    public String getTextForTitle() {
-        return "Watchpoints";
+    public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
+        if (table != null) {
+            table.updateFocusSelection();
+        }
     }
 
     @Override
@@ -133,26 +163,10 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         return getDefaultPrintAction();
     }
 
-    @Override
-    protected void refreshState(boolean force) {
-        table.refresh(force);
-    }
-
     public void viewConfigurationChanged() {
         reconstructView();
     }
 
-    @Override
-    public void watchpointSetChanged() {
-        forceRefresh();
-    }
-
-    @Override
-    public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
-        if (table != null) {
-            table.updateFocusSelection();
-        }
-    }
 
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
@@ -161,7 +175,6 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     @Override
     public void inspectorClosing() {
         Trace.line(TRACE_VALUE, tracePrefix() + " closing");
-        watchpointsInspector = null;
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

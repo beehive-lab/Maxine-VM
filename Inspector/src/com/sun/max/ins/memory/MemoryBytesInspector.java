@@ -33,6 +33,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -46,7 +47,7 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  */
 public final class MemoryBytesInspector extends Inspector {
-
+    private static final ViewKind VIEW_KIND = ViewKind.MEMORY_BYTES;
     private static final Set<MemoryBytesInspector> memoryInspectors = CiUtil.newIdentityHashSet();
 
     /**
@@ -76,7 +77,7 @@ public final class MemoryBytesInspector extends Inspector {
     private final Rectangle originalFrameGeometry;
 
     private MemoryBytesInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         this.address = address;
         this.numberOfGroups = numberOfGroups;
         this.numberOfBytesPerGroup = numberOfBytesPerGroup;
@@ -91,9 +92,7 @@ public final class MemoryBytesInspector extends Inspector {
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
-        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
-        memoryMenu.add(viewMemoryAllocationsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         inspection.gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
