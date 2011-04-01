@@ -39,7 +39,7 @@ public class InspectionFocusAdapter implements ViewFocusListener {
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
     }
 
-    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
+    public void frameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {

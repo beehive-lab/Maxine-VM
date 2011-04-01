@@ -79,6 +79,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         },
         FILE(false, false, "The contents of a source file"),
+        FRAME(true, true, "Stack frame contents in the VM for the currently frame") {
+
+            @Override
+            public ViewManager viewManager() {
+                final ViewManager viewManager = FrameInspector.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
         FRAME_DESCRIPTOR(false, false, "The details of a Java frame descriptor"), NOTEPAD(true, false, "Notepad for keeping user notes") {
 
             @Override
@@ -115,15 +124,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             public ViewManager viewManager() {
                 final ViewManager viewManager = StackInspector.makeViewManager(inspection);
-                assert viewManager.viewKind() == this;
-                return viewManager;
-            }
-        },
-        FRAME(true, true, "Stack frame contents in the VM for the currently frame") {
-
-            @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = StackFrameInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }

@@ -545,7 +545,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxeThread) {
     }
 
-    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
+    public void frameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {
