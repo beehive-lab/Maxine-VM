@@ -20,10 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+package com.sun.max.ins.method;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.method.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 
@@ -42,12 +41,12 @@ public final class NativeMethodInspector extends MethodInspector {
     private final String shortName;
     private final String longName;
 
-    public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxExternalCode externalCode) {
-        super(inspection, parent);
+    public NativeMethodInspector(Inspection inspection, MethodInspectorContainer container, MaxExternalCode externalCode) {
+        super(inspection, container);
         this.externalCode = externalCode;
         shortName = inspection().nameDisplay().shortName(externalCode);
         longName = inspection().nameDisplay().longName(externalCode);
-        createTabFrame(parent);
+        createTabFrame(container);
     }
 
     @Override

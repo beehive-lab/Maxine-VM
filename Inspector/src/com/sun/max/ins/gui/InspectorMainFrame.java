@@ -36,6 +36,7 @@ import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
 import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -270,18 +271,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 InspectorMainFrame.this.inspection.quit();
             }
         });
-        desktopPane = new JDesktopPane() {
-//
-//            /**
-//             * Any component added to the desktop pane is brought to the front.
-//             */
-//            @Override
-//            public Component add(Component component) {
-//                super.add(component);
-//                moveToFront(component);
-//                return component;
-//            }
-        };
+        desktopPane = new JDesktopPane();
         desktopPane.setOpaque(true);
         desktopPane.setBackground(inspection.style().vmStoppedBackgroundColor(true));
         scrollPane = new InspectorScrollPane(inspection, desktopPane);
@@ -289,21 +279,19 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         menuBar = new InspectorMainMenuBar(actions);
         setJMenuBar(menuBar);
 
-        desktopMenu.add(actions.viewBootImage());
-        desktopMenu.add(actions.viewBreakpoints());
+        desktopMenu.add(actions.activateSingletonView(ViewKind.BOOT_IMAGE));
+        desktopMenu.add(actions.activateSingletonView(ViewKind.BREAKPOINTS));
         desktopMenu.add(actions.memoryInspectorsMenu());
-        desktopMenu.add(actions.viewMemoryAllocations());
-        desktopMenu.add(actions.viewMethodCode());
-        desktopMenu.add(actions.viewNotepad());
+        desktopMenu.add(actions.activateSingletonView(ViewKind.ALLOCATIONS));
+        desktopMenu.add(actions.activateSingletonView(ViewKind.METHODS));
+        desktopMenu.add(actions.activateSingletonView(ViewKind.NOTEPAD));
         desktopMenu.add(actions.objectInspectorsMenu());
-        desktopMenu.add(actions.viewRegisters());
-        desktopMenu.add(actions.viewStack());
-        desktopMenu.add(actions.viewStackFrame());
-        desktopMenu.add(actions.viewThreads());
-        desktopMenu.add(actions.viewVmThreadLocals());
-        if (inspection.vm().watchpointManager() != null) {
-            desktopMenu.add(actions.viewWatchpoints());
-        }
+        desktopMenu.add(actions.activateSingletonView(ViewKind.REGISTERS));
+        desktopMenu.add(actions.activateSingletonView(ViewKind.STACK));
+        desktopMenu.add(actions.activateSingletonView(ViewKind.FRAME));
+        desktopMenu.add(actions.activateSingletonView(ViewKind.THREADS));
+        desktopMenu.add(actions.activateSingletonView(ViewKind.THREAD_LOCALS));
+        desktopMenu.add(actions.activateSingletonView(ViewKind.WATCHPOINTS));
 
         desktopPane.addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override

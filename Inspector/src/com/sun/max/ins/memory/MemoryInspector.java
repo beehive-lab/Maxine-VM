@@ -33,6 +33,7 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -48,8 +49,9 @@ import com.sun.max.unsafe.*;
  */
 public final class MemoryInspector extends Inspector {
 
-    private static final String UNKNOWN_REGION_NAME = "unknown region";
     private static final int TRACE_VALUE = 2;
+    private static final ViewKind VIEW_KIND = ViewKind.MEMORY;
+    private static final String UNKNOWN_REGION_NAME = "unknown region";
 
     public static enum ViewMode {
         WORD("Word", "Grows the visible region a word at a time and  navigates to the new location",
@@ -196,7 +198,7 @@ public final class MemoryInspector extends Inspector {
     private final Rectangle originalFrameGeometry;
 
     private MemoryInspector(Inspection inspection, final MaxMemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryViewPreferences instanceViewPreferences) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         assert viewMode != null;
 
         Trace.line(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
@@ -332,9 +334,7 @@ public final class MemoryInspector extends Inspector {
         memoryMenu.add(scrollToFocusAction);
         memoryMenu.add(inspectBytesAction);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
-        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
-        memoryMenu.add(viewMemoryAllocationsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());

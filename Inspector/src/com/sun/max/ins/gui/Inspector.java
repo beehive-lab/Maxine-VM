@@ -31,7 +31,11 @@ import javax.swing.*;
 
 import com.sun.max.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
+import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
+import com.sun.max.ins.view.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -39,10 +43,10 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A manager for the interactive visual presentation of some aspect of VM state.
+ * An interactive visual presentation of some aspect of VM state.
  * <p>
- * The manager creates some kind of view (the visual representation of some piece
- * of VM state)k and puts it into a {@link InspectorFrame} for realization in the
+ * This presentation creates some kind of view (the visual representation of some piece
+ * of VM state) and puts it into an {@link InspectorFrame} for realization in the
  * window system.
  * <p>
  * <b>Event Notification</b>:
@@ -153,14 +157,10 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                     public void addTo(InspectorMenu menu) {
                         menu.addSeparator();
                         menu.add(actions().genericBreakpointMenuItems());
-                        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
-                        viewBreakpointsMenuItem.setText("View Breakpoints");
-                        menu.add(viewBreakpointsMenuItem);
+                        menu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
                         if (vm().watchpointManager() != null) {
                             menu.add(actions().genericWatchpointMenuItems());
-                            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
-                            viewWatchpointsMenuItem.setText("View Watchpoints");
-                            menu.add(viewWatchpointsMenuItem);
+                            menu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
                         }
                     }
                 };
@@ -185,13 +185,23 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         };
     }
 
+    private final ViewKind viewKind;
+
     private InspectorFrame frame;
 
     private final TimedTrace updateTracer;
 
-    protected Inspector(Inspection inspection) {
+    protected Inspector(Inspection inspection, ViewKind viewKind) {
         super(inspection);
+        this.viewKind = viewKind;
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "refresh");
+    }
+
+    /**
+     * @return the manager for kind of view
+     */
+    public final ViewManager viewManager() {
+        return viewKind.viewManager();
     }
 
     /**
@@ -202,10 +212,14 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
+     * Gets a default location for a view.  For singletons, these tend to be statically defined by the
+     * inspector geometry preferences.  For other views, the default might be the location at which it
+     * was created originally.
+     *
      * @return default geometry for this Inspector, to be used if no prior settings; null if no default specified.
      */
     protected Rectangle defaultGeometry() {
-        return null;
+        return inspection().geometry().preferredFrameGeometry(viewKind);
     }
 
     /**
@@ -281,6 +295,13 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      */
     protected final void setTitle() {
         setTitle(null);
+    }
+
+    /**
+     * @return the visible table for inspectors with table-based views; null if none.
+     */
+    protected InspectorTable getTable() {
+        return null;
     }
 
     /**
@@ -387,13 +408,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         frame.pack();
     }
 
-    /**
-     * @return the visible table for inspectors with table-based views; null if none.
-     */
-    protected InspectorTable getTable() {
-        return null;
-    }
-
     public void setContentPane(Container contentPane) {
         frame.setContentPane(contentPane);
     }
@@ -497,9 +511,13 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         inspection().removeInspectionListener(this);
         focus().removeListener(this);
         final SaveSettingsListener saveSettingsListener = saveSettingsListener();
+        if (viewManager() != null) {
+            viewManager().notifyViewClosing(this);
+        }
         if (saveSettingsListener != null) {
             inspection().settings().removeSaveSettingsListener(saveSettingsListener);
         }
+        inspection().settings().save();
     }
 
     public void vmStateChanged(boolean force) {

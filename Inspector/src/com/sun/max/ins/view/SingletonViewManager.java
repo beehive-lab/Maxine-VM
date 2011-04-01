@@ -20,36 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+package com.sun.max.ins.view;
 
-import java.awt.*;
-
-import com.sun.max.ins.view.InspectionViews.ViewKind;
+import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
 
 /**
- * Preferences and policies for layout out inspection windows.
+ * Manager for a kind of Inspector view that is a singleton which can either be active (the instance
+ * exists and is visible) or not.
  *
  * @author Michael Van De Vanter
  */
-public interface InspectorGeometry {
-
-    // Main Inspector frame
-    Point inspectorDefaultFrameLocation();
-    Dimension inspectorMinFrameSize();
-    Dimension inspectorPrefFrameSize();
+public interface SingletonViewManager extends ViewManager {
 
     /**
-     * Gets the default geometry for a view, null if none specified.
+     * Activates the singleton view, newly created if necessary.
      *
-     * @param viewKind the kind of view
-     * @return the default geometry specified for the kind
+     * @return the instance that implements the singleton view
      */
-    Rectangle preferredFrameGeometry(ViewKind viewKind);
+    Inspector activateView(Inspection inspection);
 
-    // Java Source Inspector frame
-    Point javaSourceDefaultFrameLocation();
-    Dimension javaSourcePrefFrameSize();
-
-    // Offset from mouse location for new frames
-    int newFrameDiagonalOffset();
+    /**
+     * Disposes the existing singleton view.
+     */
+    void deactivateView();
 }

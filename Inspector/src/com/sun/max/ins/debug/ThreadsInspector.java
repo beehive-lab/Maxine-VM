@@ -22,14 +22,14 @@
  */
 package com.sun.max.ins.debug;
 
-import java.awt.*;
-
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
@@ -41,28 +41,52 @@ import com.sun.max.tele.*;
 public final class ThreadsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.THREADS;
+    private static final String SHORT_NAME = "Threads";
+    private static final String LONG_NAME = "Threads Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "threadsInspectorGeometry";
 
-    // Set to null when inspector closed.
-    private static ThreadsInspector threadsInspector;
-    /**
-     * Display the (singleton) threads inspector, creating it if needed.
-     */
-    public static ThreadsInspector make(Inspection inspection) {
-        if (threadsInspector == null) {
-            threadsInspector = new ThreadsInspector(inspection);
+    private static final class ThreadsViewManager extends AbstractSingletonViewManager<ThreadsInspector> {
+
+        protected ThreadsViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return threadsInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return inspection().hasProcess();
+        }
+
+        public ThreadsInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new ThreadsInspector(inspection);
+            }
+            return inspector;
+        }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "threadsInspectorGeometry");
+    // Will be non-null before any instances created.
+    private static ThreadsViewManager viewManager = null;
 
-    private ThreadsTable table;
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new ThreadsViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadsViewPreferences viewPreferences;
 
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
+
+    private ThreadsTable table;
+
     private ThreadsInspector(Inspection inspection) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -75,18 +99,11 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         memoryMenu.add(actions().inspectSelectedThreadLocalsBlockMemory(null));
         memoryMenu.add(actions().inspectSelectedThreadStackMemory(null));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryAllocationsMenuItem = new JMenuItem(actions().viewMemoryAllocations());
-        viewMemoryAllocationsMenuItem.setText("View Memory Allocations");
-        memoryMenu.add(viewMemoryAllocationsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected Rectangle defaultGeometry() {
-        return inspection().geometry().threadsDefaultFrameGeometry();
     }
 
     @Override
@@ -95,13 +112,13 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     }
 
     @Override
-    protected InspectorTable getTable() {
-        return table;
+    public String getTextForTitle() {
+        return viewManager.shortName();
     }
 
     @Override
-    public String getTextForTitle() {
-        return "Threads";
+    protected InspectorTable getTable() {
+        return table;
     }
 
     @Override
@@ -128,7 +145,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<ThreadsColumnKind>(inspection(), "Threads View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<ThreadsColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
             }
         };
     }
@@ -149,7 +166,6 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        threadsInspector = null;
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

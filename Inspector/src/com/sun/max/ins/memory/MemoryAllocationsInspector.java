@@ -34,6 +34,8 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
@@ -45,25 +47,48 @@ import com.sun.max.tele.*;
 public final class MemoryAllocationsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 2;
+    private static final ViewKind VIEW_KIND = ViewKind.ALLOCATIONS;
+    private static final String SHORT_NAME = "Memory Allocations";
+    private static final String LONG_NAME = "MemoryAllocations Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "memoryAllocationsInspectorGeometry";
 
-    // Set to null when inspector closed.
-    private static MemoryAllocationsInspector memoryAllocationsInspector;
+    private static final class MemoryAllocationsViewManager extends AbstractSingletonViewManager<MemoryAllocationsInspector> {
 
-    /**
-     * Displays the (singleton) MemoryAllocations inspector.
-     * @return  the inspector, possibly newly created.
-     */
-    public static MemoryAllocationsInspector make(Inspection inspection) {
-        if (memoryAllocationsInspector == null) {
-            memoryAllocationsInspector = new MemoryAllocationsInspector(inspection);
+        protected MemoryAllocationsViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return memoryAllocationsInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return inspection().hasProcess();
+        }
+
+        public MemoryAllocationsInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new MemoryAllocationsInspector(inspection);
+            }
+            return inspector;
+        }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, "memoryAllocationsInspectorGeometry");
+    // Will be non-null before any instances created.
+    private static MemoryAllocationsViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new MemoryAllocationsViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final MemoryAllocationsViewPreferences viewPreferences;
+
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
+
     private InspectorPanel contentPane;
 
     private MemoryAllocationsTable table;
@@ -73,7 +98,7 @@ public final class MemoryAllocationsInspector extends Inspector implements Table
     private int[] filterMatchingRows = null;
 
     private MemoryAllocationsInspector(Inspection inspection) {
-        super(inspection);
+        super(inspection, VIEW_KIND);
         Trace.begin(1, tracePrefix() + "initializing");
         viewPreferences = MemoryAllocationsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -106,8 +131,18 @@ public final class MemoryAllocationsInspector extends Inspector implements Table
     }
 
     @Override
-    protected Rectangle defaultGeometry() {
-        return inspection().geometry().memoryAllocationsDefaultFrameGeometry();
+    protected SaveSettingsListener saveSettingsListener() {
+        return saveSettingsListener;
+    }
+
+    @Override
+    public String getTextForTitle() {
+        return viewManager.shortName();
+    }
+
+    @Override
+    protected InspectorTable getTable() {
+        return table;
     }
 
     @Override
@@ -117,6 +152,51 @@ public final class MemoryAllocationsInspector extends Inspector implements Table
         contentPane = new InspectorPanel(inspection(), new BorderLayout());
         contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);
         setContentPane(contentPane);
+    }
+
+    @Override
+    protected void refreshState(boolean force) {
+        table.refresh(force);
+        if (filterToolBar != null) {
+            filterToolBar.refresh(force);
+        }
+    }
+
+    @Override
+    public void memoryRegionFocusChanged(MaxMemoryRegion oldMemoryRegion, MaxMemoryRegion memoryRegion) {
+        if (table != null) {
+            table.updateFocusSelection();
+        }
+    }
+
+    @Override
+    public void watchpointSetChanged() {
+        if (vm().state().processState() != TERMINATED) {
+            forceRefresh();
+        }
+    }
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryAllocationsColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
+            }
+        };
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
+    }
+
+    public void viewConfigurationChanged() {
+        reconstructView();
+    }
+
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
     }
 
     private final RowMatchListener rowMatchListener = new RowMatchListener() {
@@ -153,69 +233,8 @@ public final class MemoryAllocationsInspector extends Inspector implements Table
     }
 
     @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
-    }
-
-    @Override
-    protected InspectorTable getTable() {
-        return table;
-    }
-
-    @Override
-    public String getTextForTitle() {
-        return "MemoryAllocations";
-    }
-
-    @Override
-    public InspectorAction getViewOptionsAction() {
-        return new InspectorAction(inspection(), "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryAllocationsColumnKind>(inspection(), "Memory Regions View Options", viewPreferences);
-            }
-        };
-    }
-
-    @Override
-    public InspectorAction getPrintAction() {
-        return getDefaultPrintAction();
-    }
-
-    @Override
-    protected void refreshState(boolean force) {
-        table.refresh(force);
-        if (filterToolBar != null) {
-            filterToolBar.refresh(force);
-        }
-    }
-
-    @Override
-    public void memoryRegionFocusChanged(MaxMemoryRegion oldMemoryRegion, MaxMemoryRegion memoryRegion) {
-        if (table != null) {
-            table.updateFocusSelection();
-        }
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
-    @Override
-    public void watchpointSetChanged() {
-        if (vm().state().processState() != TERMINATED) {
-            forceRefresh();
-        }
-    }
-
-    public void tableColumnViewPreferencesChanged() {
-        reconstructView();
-    }
-
-    @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        memoryAllocationsInspector = null;
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
@@ -223,10 +242,8 @@ public final class MemoryAllocationsInspector extends Inspector implements Table
     @Override
     public void vmProcessTerminated() {
         Trace.line(1, tracePrefix() + " closing - process terminated");
-        memoryAllocationsInspector = null;
         viewPreferences.removeListener(this);
         dispose();
     }
-
 
 }

@@ -23,6 +23,9 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
+import java.util.*;
+
+import com.sun.max.ins.view.InspectionViews.*;
 
 /**
  * Standard choices and policies for inspection window layout, tiled for use with 10 pt. font.
@@ -31,10 +34,26 @@ import java.awt.*;
  */
 public class InspectorGeometry10Pt implements InspectorGeometry {
 
+    private final Map<ViewKind, Rectangle> preferredFrameGeometry = new HashMap<ViewKind, Rectangle>();
+
     // Main Inspection frame
     private static final Point inspectionFrameDefaultLocation = new Point(100, 100);
     private static final Dimension inspectionFrameMinSize = new Dimension(100, 100);
     private static final Dimension inspectionFramePrefSize = new Dimension(1365, 810);
+
+    public InspectorGeometry10Pt() {
+        preferredFrameGeometry.put(ViewKind.ALLOCATIONS, new Rectangle(100, 100, 400, 200));
+        preferredFrameGeometry.put(ViewKind.BOOT_IMAGE, new Rectangle(75, 0, 350, 725));
+        preferredFrameGeometry.put(ViewKind.BREAKPOINTS, new Rectangle(950, 0, 400, 150));
+        preferredFrameGeometry.put(ViewKind.FRAME, new Rectangle(175, 250, 175, 500));
+        preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(350, 0, 600, 750));
+        preferredFrameGeometry.put(ViewKind.NOTEPAD, new Rectangle(150, 150, 200, 200));
+        preferredFrameGeometry.put(ViewKind.REGISTERS, new Rectangle(0, 150, 175, 600));
+        preferredFrameGeometry.put(ViewKind.STACK, new Rectangle(175, 250, 175, 500));
+        preferredFrameGeometry.put(ViewKind.THREADS, new Rectangle(0, 0, 175, 150));
+        preferredFrameGeometry.put(ViewKind.THREAD_LOCALS, new Rectangle(950, 150, 400, 600));
+        preferredFrameGeometry.put(ViewKind.WATCHPOINTS, new Rectangle(100, 100, 450, 140));
+    }
 
     public Point inspectorDefaultFrameLocation() {
         return inspectionFrameDefaultLocation;
@@ -46,48 +65,8 @@ public class InspectorGeometry10Pt implements InspectorGeometry {
         return inspectionFramePrefSize;
     }
 
-    public Rectangle threadsDefaultFrameGeometry() {
-        return new Rectangle(0, 0, 175, 150);
-    }
-
-    public Rectangle registersDefaultFrameGeometry() {
-        return new Rectangle(0, 150, 175, 600);
-    }
-
-    public Rectangle stackDefaultFrameGeometry() {
-        return new Rectangle(175, 0, 175, 250);
-    }
-
-    public Rectangle stackFrameDefaultFrameGeometry() {
-        return new Rectangle(175, 250, 175, 500);
-    }
-
-    public Rectangle methodsDefaultFrameGeometry() {
-        return new Rectangle(350, 0, 600, 750);
-    }
-
-    public Rectangle breakpointsDefaultFrameGeometry() {
-        return new Rectangle(950, 0, 400, 150);
-    }
-
-    public Rectangle watchpointsDefaultFrameGeometry() {
-        return new Rectangle(100, 100, 450, 140);
-    }
-
-    public Rectangle threadLocalsDefaultFrameGeometry() {
-        return new Rectangle(950, 150, 400, 600);
-    }
-
-    public Rectangle memoryAllocationsDefaultFrameGeometry() {
-        return new Rectangle(100, 100, 400, 200);
-    }
-
-    public Rectangle bootImageDefaultFrameGeometry() {
-        return new Rectangle(75, 0, 350, 725);
-    }
-
-    public Rectangle notepadDefaultFrameGeometry() {
-        return new Rectangle(150, 150, 200, 200);
+    public Rectangle preferredFrameGeometry(ViewKind viewKind) {
+        return preferredFrameGeometry.get(viewKind);
     }
 
     // Java Source Inspector frame
