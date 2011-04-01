@@ -153,7 +153,7 @@ public final class ClassDependencyManager {
          */
         private RiType context;
         /**
-         *
+         * New concrete su-btype of the context type being added to the class hierarchy.
          */
         private RiType newConcreteSubtype;
         /**
@@ -713,7 +713,7 @@ public final class ClassDependencyManager {
         /**
          * Dump statistics.
          */
-        void printStatistics() {
+        void printStatistics(PrintStream out) {
             final AssumptionCounter uctCounter = new AssumptionCounter(0);
             IntegerDistribution numDistinctAssumptionsPerType = ValueMetrics.newIntegerDistribution("numDistinctAssumptionsPerType", 0, 20);
             IntegerDistribution numUCTAssumptionsPerType = ValueMetrics.newIntegerDistribution("numUCTAssumptionsPerType", 0, 20);
@@ -739,7 +739,6 @@ public final class ClassDependencyManager {
                 numAssumptionsPerType.record(totalTypeAssumptions);
             }
 
-            final PrintStream out = System.out;
             out.println("# types with dependent methods: " + typeToDependentTargetMethods.size());
             numDependentsPerType.report("# dependents / types", out);
             numAssumptionsPerType.report("# total assumptions / type", out);
@@ -778,6 +777,8 @@ public final class ClassDependencyManager {
         Log.print(classActor.id);
         Log.print(", ");
         Log.print(classActor.name());
+        Log.print(", ");
+        Log.print(classActor.superClassActor.id);
         Log.print(", ");
         int uct = classActor.uniqueConcreteType;
         if (uct == NO_CONCRETE_SUBTYPE_MARK) {
@@ -1397,12 +1398,25 @@ public final class ClassDependencyManager {
     }
 
     /**
-     * Dump the table in the log.
+     * Dump the content of the dependent target method table to the specified {@link PrintStream}.
+     * @param out output stream where to print the dump.
      */
-    public static void dump() {
+    public static void dump(PrintStream out) {
         classHierarchyLock.readLock().lock();
-        dependentTargetMethodTable.dump(System.out);
-        dependentTargetMethodTable.printStatistics();
+        try {
+            dependentTargetMethodTable.dump(out);
+            dependentTargetMethodTable.printStatistics(out);
+
+        } finally {
+            classHierarchyLock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Dump class hierarchy Information to Log.
+     */
+    public static void dumpClassHierarchy() {
+        classHierarchyLock.readLock().lock();
         try {
             int classId = 0;
             int totalClasses = 0;
@@ -1414,7 +1428,7 @@ public final class ClassDependencyManager {
 
             boolean printDetails = false;
             if (printDetails) {
-                Log.println("class id, class name, concrete subtype, concrete subtype class id");
+                Log.println("class id, class name, parent class id, concrete subtype, concrete subtype class id");
             }
             final int length = ClassID.largestClassId();
             while (classId < length) {
@@ -1463,5 +1477,4 @@ public final class ClassDependencyManager {
             classHierarchyLock.readLock().unlock();
         }
     }
-
 }
