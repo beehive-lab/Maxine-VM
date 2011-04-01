@@ -202,4 +202,36 @@ public final class JDK_java_lang_Throwable {
         }
         return stackTrace;
     }
+
+    /**
+     * Gets the depth of the stack trace, in the number of stack trace elements.
+     *
+     * NOTE: This method is called by the JVM_GetStackTraceDepth function.
+     *
+     * @see java.lang.Throwable#getStackTraceDepth()
+     * @return the number of stack trace elements
+     */
+    @SUBSTITUTE
+    private int getStackTraceDepth() {
+        return getOurStackTrace().length;
+    }
+
+    /**
+     * Gets a single stack trace element at the specified index.
+     *
+     * NOTE: This method is called by the JVM_GetStackTraceElement function.
+     *
+     * @see java.lang.Throwable#getStackTraceElement(int)
+     * @param index the index into the stack trace at which to get the element
+     * @return the element at the specified index
+     */
+    @SUBSTITUTE
+    private StackTraceElement getStackTraceElement(int index) {
+        final StackTraceElement[] elements = getOurStackTrace();
+        if (elements != null && index >= 0 && index < elements.length) {
+            return elements[index];
+        }
+        return null;
+    }
+
 }
