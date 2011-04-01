@@ -150,7 +150,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public ViewManager viewManager() {
-                final ViewManager viewManager = FocusInspector.makeViewManager(inspection);
+                final ViewManager viewManager = UserFocusInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }

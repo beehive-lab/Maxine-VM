@@ -38,16 +38,16 @@ import com.sun.max.program.*;
  *
  * @author Michael Van De Vanter
  */
-public final class FocusInspector extends Inspector {
+public final class UserFocusInspector extends Inspector {
 
     private static final ViewKind VIEW_KIND = ViewKind.USER_FOCUS;
     private static final String SHORT_NAME = "User Focus";
     private static final String LONG_NAME = "User Focus Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "userFocusInspectorGeometry";
 
-    private static final class FocusViewManager extends AbstractSingletonViewManager<FocusInspector> {
+    private static final class UserFocusViewManager extends AbstractSingletonViewManager<UserFocusInspector> {
 
-        protected FocusViewManager(Inspection inspection) {
+        protected UserFocusViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
@@ -59,20 +59,20 @@ public final class FocusInspector extends Inspector {
             return true;
         }
 
-        public FocusInspector activateView(Inspection inspection) {
+        public UserFocusInspector activateView(Inspection inspection) {
             if (inspector == null) {
-                inspector = new FocusInspector(inspection);
+                inspector = new UserFocusInspector(inspection);
             }
             return inspector;
         }
     }
 
     // Will be non-null before any instances created.
-    private static FocusViewManager viewManager = null;
+    private static UserFocusViewManager viewManager = null;
 
     public static ViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new FocusViewManager(inspection);
+            viewManager = new UserFocusViewManager(inspection);
         }
         return viewManager;
     }
@@ -84,7 +84,7 @@ public final class FocusInspector extends Inspector {
 
     private FocusTable table;
 
-    private FocusInspector(Inspection inspection) {
+    private UserFocusInspector(Inspection inspection) {
         super(inspection, VIEW_KIND);
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = FocusTable.FocusViewPreferences.globalPreferences(inspection);
