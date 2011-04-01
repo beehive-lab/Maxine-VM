@@ -55,7 +55,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public ViewManager viewManager() {
-                final ViewManager viewManager = MemoryAllocationsInspector.makeViewManager(inspection);
+                final ViewManager viewManager = AllocationsInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
