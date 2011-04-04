@@ -56,6 +56,8 @@ public final class T1XOptions {
 
     public static boolean PrintCFGToFile                     = ____;
 
+    public static boolean PrintCodeCacheMetrics              = ____;
+
     static {
         VMOptions.addFieldOptions("-T1X:", T1XOptions.class, getHelpMap());
     }
@@ -83,6 +85,9 @@ public final class T1XOptions {
                 "Trace calls to T1X compiled methods.");
         map.put("PrintJsrRetRewrites",
                 "Print a message when T1X rewrites a method to inline jsr/ret subroutines.");
+
+        map.put("PrintCodeCacheMetrics",
+                "For T1X-compiled methods, print bytecode and machine code sizes as well as number of invocations.");
 
         for (String name : map.keySet()) {
             try {
