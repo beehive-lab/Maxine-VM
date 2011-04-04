@@ -29,7 +29,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 
 /**
- * A code region that encapsulates a contiguous, fixed-sized memory area in the {@link TeleVM}
+ * A code region that encapsulates a contiguous, fixed-sized memory area in the VM
  * for storing code and data structures relating to code.
  *
  * @author Bernd Mathiske
