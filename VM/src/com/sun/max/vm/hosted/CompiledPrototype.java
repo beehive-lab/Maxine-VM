@@ -487,7 +487,6 @@ public class CompiledPrototype extends Prototype {
         add(ClassRegistry.findMethod("loadLibrary", System.class), null, entryPoint);
         add(ClassRegistry.findMethod("loadLibrary0", ClassLoader.class), null, entryPoint);
         add(ClassRegistry.findMethod("loadLibrary", ClassLoader.class), null, entryPoint);
-        add(ClassRegistry.findMethod(JDK.java_lang_ProcessEnvironment, "<clinit>"), null, entryPoint);
 
         // It's too late now to register any further methods to be compiled into the boot image
         extraVMEntryPoints = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A facility for building and traversing the reference map for a {@linkplain TupleClassActor tuple} object.
@@ -67,7 +68,7 @@ public class TupleReferenceMap {
         ClassActor c = classActor;
         do {
             for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
-                if (instanceFieldActor.kind.isReference && !instanceFieldActor.isSpecialReference()) {
+                if (instanceFieldActor.kind.isReference && instanceFieldActor != ClassRegistry.JLRReference_referent) {
                     final int fieldIndex = Unsigned.idiv(instanceFieldActor.offset(), Word.size());
                     indexes.add(fieldIndex);
                 }
