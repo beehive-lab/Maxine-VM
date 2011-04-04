@@ -87,6 +87,19 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
         return targetMethods;
     }
 
+    /**
+     * Accessor for a copy of the sorted list of target methods as an array.
+     * @return a copy of all existing target methods at the time of invocation
+     */
+    public TargetMethod[] currentTargetMethods() {
+        TargetMethod[] result = new TargetMethod[targetMethods.size()];
+        int index = 0;
+        for (TargetMethod tm : targetMethods) {
+            result[index++] = tm;
+        }
+        return result;
+    }
+
     public void add(TargetMethod targetMethod) {
         targetMethods.add(targetMethod);
     }
