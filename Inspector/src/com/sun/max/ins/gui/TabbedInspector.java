@@ -55,8 +55,8 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
         tabbedPane.removeChangeListener(listener);
     }
 
-    protected TabbedInspector(Inspection inspection, ViewKind viewKind) {
-        super(inspection, viewKind);
+    protected TabbedInspector(Inspection inspection, ViewKind viewKind, String geometrySettingsKey) {
+        super(inspection, viewKind, geometrySettingsKey);
         tabbedPane = new InspectorTabbedPane(inspection);
         addChangeListener(tabChangeListener);
     }

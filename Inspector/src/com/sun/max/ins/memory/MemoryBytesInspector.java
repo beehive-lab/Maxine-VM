@@ -77,7 +77,7 @@ public final class MemoryBytesInspector extends Inspector {
     private final Rectangle originalFrameGeometry;
 
     private MemoryBytesInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, null);
         this.address = address;
         this.numberOfGroups = numberOfGroups;
         this.numberOfBytesPerGroup = numberOfBytesPerGroup;

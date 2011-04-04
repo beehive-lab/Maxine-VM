@@ -198,7 +198,7 @@ public final class MemoryInspector extends Inspector {
     private final Rectangle originalFrameGeometry;
 
     private MemoryInspector(Inspection inspection, final MaxMemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryViewPreferences instanceViewPreferences) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, null);
         assert viewMode != null;
 
         Trace.line(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());

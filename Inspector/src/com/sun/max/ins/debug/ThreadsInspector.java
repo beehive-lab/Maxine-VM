@@ -25,7 +25,6 @@ package com.sun.max.ins.debug;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.view.*;
@@ -81,12 +80,10 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadsViewPreferences viewPreferences;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
-
     private ThreadsTable table;
 
     private ThreadsInspector(Inspection inspection) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -104,11 +101,6 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     @Override

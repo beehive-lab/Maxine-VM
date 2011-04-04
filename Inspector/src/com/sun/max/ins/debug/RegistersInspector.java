@@ -25,7 +25,6 @@ package com.sun.max.ins.debug;
 import java.awt.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.view.*;
@@ -81,8 +80,6 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     // This is a singleton viewer, so only use a single level of view preferences.
     private final RegistersViewPreferences viewPreferences;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
-
     private RegistersTable table;
 
     /**
@@ -91,7 +88,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     private MaxThread thread;
 
     private RegistersInspector(Inspection inspection) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -104,11 +101,6 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         forceRefresh();
         Trace.end(1,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     @Override

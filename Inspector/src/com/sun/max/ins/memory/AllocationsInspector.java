@@ -31,7 +31,6 @@ import java.util.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.view.*;
@@ -87,8 +86,6 @@ public final class AllocationsInspector extends Inspector implements TableColumn
     // This is a singleton viewer, so only use a single level of view preferences.
     private final MemoryAllocationsViewPreferences viewPreferences;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
-
     private InspectorPanel contentPane;
 
     private MemoryAllocationsTable table;
@@ -98,7 +95,7 @@ public final class AllocationsInspector extends Inspector implements TableColumn
     private int[] filterMatchingRows = null;
 
     private AllocationsInspector(Inspection inspection) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1, tracePrefix() + "initializing");
         viewPreferences = MemoryAllocationsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -128,11 +125,6 @@ public final class AllocationsInspector extends Inspector implements TableColumn
         viewMenu.add(defaultViewMenuItems);
 
         Trace.end(1, tracePrefix() + "initializing");
-    }
-
-    @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     @Override

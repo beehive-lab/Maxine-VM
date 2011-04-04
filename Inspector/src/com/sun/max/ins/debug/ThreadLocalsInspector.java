@@ -33,7 +33,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.view.*;
@@ -93,13 +92,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadLocalsViewPreferences viewPreferences;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
-
     private MaxThread thread;
     private InspectorTabbedPane tabbedPane;
 
     private ThreadLocalsInspector(Inspection inspection) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -124,11 +121,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
         forceRefresh();
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     @Override

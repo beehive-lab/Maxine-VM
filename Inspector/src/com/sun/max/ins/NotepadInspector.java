@@ -32,7 +32,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
@@ -100,9 +99,6 @@ public final class NotepadInspector extends Inspector {
         return viewManager;
     }
 
-    // TODO (mlvdv)  only geometry settings saved now, but might need view options if add features such as highlighting
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
-
     private final InspectorNotepad notepad;
     private final JTextArea textArea;
     private final JPopupMenu popupMenu;
@@ -121,8 +117,11 @@ public final class NotepadInspector extends Inspector {
     // invariant:  always non-null
     private String selectedText = "";
 
+    // Note that we're treating the view as a singleton for now, so we're using
+    // the default mechanism for saving geometry.  May need more view options
+    // when we add functionality.
     private NotepadInspector(Inspection inspection, InspectorNotepad notepad) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
         this.notepad = notepad;
 
@@ -248,11 +247,6 @@ public final class NotepadInspector extends Inspector {
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         Trace.end(1,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     @Override

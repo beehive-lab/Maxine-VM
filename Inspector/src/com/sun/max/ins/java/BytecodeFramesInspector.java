@@ -76,7 +76,7 @@ public final class BytecodeFramesInspector extends Inspector {
     private final Long key;
 
     private BytecodeFramesInspector(Inspection inspection, CiFrame bytecodeFrames, MaxCompiledCode compiledCode, Long key) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, null);
         this.frames = bytecodeFrames;
         this.compiledCode = compiledCode;
         this.key = key;
