@@ -69,7 +69,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        BREAKPOINTS(true, true, "Breakpoints that currently exist for VM code") {
+        BREAKPOINTS(true, false, "Breakpoints that currently exist for VM code") {
 
             @Override
             public ViewManager viewManager() {
@@ -137,7 +137,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        THREAD_LOCALS(true, true, "Thread locals in the VM for the currently selected thread") {
+        THREAD_LOCALS(true, false, "Thread locals in the VM for the currently selected thread") {
 
             @Override
             public ViewManager viewManager() {
