@@ -288,59 +288,59 @@ public final class T1XFrameOps {
 
     @INLINE
     public static void indirectCallVoid(Address address, CallEntryPoint callEntryPoint) {
-        Intrinsics.call(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        Intrinsics.call(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
     }
 
     @INLINE
     public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint) {
-        final float result = Intrinsics.callFloat(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        final float result = Intrinsics.callFloat(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
         pushFloat(result);
     }
 
     @INLINE
     public static void indirectCallLong(Address address, CallEntryPoint callEntryPoint) {
-        final long result = Intrinsics.callLong(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        final long result = Intrinsics.callLong(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
         pushLong(result);
     }
 
     @INLINE
     public static void indirectCallDouble(Address address, CallEntryPoint callEntryPoint) {
-        final double result = Intrinsics.callDouble(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        final double result = Intrinsics.callDouble(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
         pushDouble(result);
     }
 
     @INLINE
     public static void indirectCallWord(Address address, CallEntryPoint callEntryPoint) {
-        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
+        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()));
         pushWord(result);
     }
 
     @INLINE
     public static void indirectCallVoid(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        Intrinsics.call(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        Intrinsics.call(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
     }
 
     @INLINE
     public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final float result = Intrinsics.callFloat(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        final float result = Intrinsics.callFloat(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
         pushFloat(result);
     }
 
     @INLINE
     public static void indirectCallLong(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final long result = Intrinsics.callLong(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        final long result = Intrinsics.callLong(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
         pushLong(result);
     }
 
     @INLINE
     public static void indirectCallDouble(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final double result = Intrinsics.callDouble(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        final double result = Intrinsics.callDouble(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
         pushDouble(result);
     }
 
     @INLINE
     public static void indirectCallWord(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
+        final Word result = Intrinsics.callWord(address.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
         pushWord(result);
     }
 }

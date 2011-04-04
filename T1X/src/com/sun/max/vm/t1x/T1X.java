@@ -285,7 +285,7 @@ public class T1X implements RuntimeCompiler {
 
     @Override
     public CallEntryPoint calleeEntryPoint() {
-        return CallEntryPoint.JIT_ENTRY_POINT;
+        return CallEntryPoint.BASELINE_ENTRY_POINT;
     }
 
     @Override

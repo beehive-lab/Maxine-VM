@@ -115,7 +115,7 @@ public final class T1XTargetMethod extends TargetMethod {
     /**
      * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
      * into the runtime derived from the constituent templates. These calls are linked using {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}.
-     * All other direct calls are linked using {@link CallEntryPoint#JIT_ENTRY_POINT}.
+     * All other direct calls are linked using {@link CallEntryPoint#BASELINE_ENTRY_POINT}.
      */
     public final CiBitMap isDirectCallToRuntime;
 
@@ -131,7 +131,7 @@ public final class T1XTargetMethod extends TargetMethod {
     public final CiExceptionHandler[] handlers;
 
     public T1XTargetMethod(T1XCompilation comp, boolean install) {
-        super(comp.method, CallEntryPoint.JIT_ENTRY_POINT);
+        super(comp.method, CallEntryPoint.BASELINE_ENTRY_POINT);
 
         codeAttribute = comp.codeAttribute;
         bciToPos = comp.bciToPos;
