@@ -348,6 +348,11 @@ public class T1X implements RuntimeCompiler {
             Trace.end(1, "creating T1X templates [templates code size: " + codeSize + "]", startTime);
             comp.extensions = oldExtensions;
         }
+        if (!isHosted() && phase == Phase.RUNNING) {
+            if (T1XOptions.PrintCodeCacheMetrics) {
+                Runtime.getRuntime().addShutdownHook(new T1XCodeCacheMetrics());
+            }
+        }
         if (phase == Phase.TERMINATING) {
             if (T1XOptions.PrintMetrics) {
                 T1XMetrics.print();

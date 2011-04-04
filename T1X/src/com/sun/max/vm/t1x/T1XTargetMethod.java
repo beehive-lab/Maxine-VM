@@ -48,6 +48,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.CalleeKind;
@@ -130,6 +131,11 @@ public final class T1XTargetMethod extends TargetMethod {
 
     public final CiExceptionHandler[] handlers;
 
+    /**
+     * The profile for this method - if there is one (otherwise, null).
+     */
+    public final MethodProfile methodProfile;
+
     public T1XTargetMethod(T1XCompilation comp, boolean install) {
         super(comp.method, CallEntryPoint.JIT_ENTRY_POINT);
 
@@ -148,6 +154,12 @@ public final class T1XTargetMethod extends TargetMethod {
         refMaps = stops.refMaps;
         isDirectCallToRuntime = stops.isDirectCallToRuntime;
         handlers = initHandlers(comp);
+
+        if (comp.methodProfileBuilder != null) {
+            methodProfile = comp.methodProfileBuilder.methodProfileObject();
+        } else {
+            methodProfile = null;
+        }
 
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.referenceLiterals.size(), comp.buf.position());
