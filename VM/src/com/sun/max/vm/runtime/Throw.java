@@ -148,7 +148,7 @@ public final class Throw {
         if (TraceExceptions == 1) {
             Log.printThread(VmThread.current(), false);
             Log.println(": Throwing " + throwable);
-        } else if (TraceExceptions == 2) {
+        } else if (TraceExceptions >= 2) {
             StackTraceElement[] trace = throwable.getStackTrace();
             boolean lockDisabledSafepoints = Log.lock();
             try {
