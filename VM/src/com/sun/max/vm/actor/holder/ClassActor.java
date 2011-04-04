@@ -418,11 +418,6 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     @INLINE
-    public final boolean isSpecialReference() {
-        return isSpecialReference(flags());
-    }
-
-    @INLINE
     public final boolean hasFinalizer() {
         return hasFinalizer(flags());
     }

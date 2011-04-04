@@ -66,7 +66,6 @@ public abstract class Actor {
     public static final int INNER_CLASS =       0x00100000;
     public static final int REFLECTION_STUB =   0x00400000;
     public static final int FINALIZER =         0x00800000;
-    public static final int SPECIAL_REFERENCE = 0x01000000;
     public static final int REMOTE =            0x02000000;
 
     // Common flags referring to fields in #4.5, Table #4.4:
@@ -437,11 +436,6 @@ public abstract class Actor {
     @INLINE
     public static boolean noSafepoints(int flags) {
         return (flags & NO_SAFEPOINTS) != 0;
-    }
-
-    @INLINE
-    public static boolean isSpecialReference(int flags) {
-        return (flags & SPECIAL_REFERENCE) != 0;
     }
 
     @INLINE
