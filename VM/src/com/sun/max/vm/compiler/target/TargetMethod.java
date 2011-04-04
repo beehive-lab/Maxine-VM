@@ -81,9 +81,9 @@ public abstract class TargetMethod extends MemoryRegion {
         Standard(COMPILED),
 
         /**
-         * A compiled {@link BytecodeTemplate}.
+         * A piece of compiled machine code representing the implementation of a single bytecode instruction.
          */
-        JitTemplate(COMPILED),
+        BytecodeTemplate(COMPILED),
 
         /**
          * Trampoline for virtual method dispatch (i.e. translation of {@link Bytecodes#INVOKEVIRTUAL}).
@@ -198,7 +198,7 @@ public abstract class TargetMethod extends MemoryRegion {
         setRegionName(classMethodActor.name.toString());
 
         if (classMethodActor.isTemplate()) {
-            flavor = JitTemplate;
+            flavor = BytecodeTemplate;
         } else {
             flavor = Standard;
         }
@@ -945,8 +945,8 @@ public abstract class TargetMethod extends MemoryRegion {
             case StaticTrampoline:
             case InterfaceTrampoline:
                 return configs.trampoline;
-            case JitTemplate:
-                return configs.jitTemplate;
+            case BytecodeTemplate:
+                return configs.bytecodeTemplate;
             case Standard:
                 assert classMethodActor != null : "cannot determine register configuration for " + this;
                 return configs.getRegisterConfig(classMethodActor);

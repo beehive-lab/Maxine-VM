@@ -46,10 +46,10 @@ import com.sun.max.vm.stack.*;
  *
  * The adapter framework assumes there are exactly two calling conventions in use by the compilers in the VM. While the
  * details are platform specific, the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT "OPT"} calling convention mostly
- * conforms to the C ABI of the underlying platform. The {@linkplain CallEntryPoint#JIT_ENTRY_POINT "JIT"} convention is
+ * conforms to the C ABI of the underlying platform. The {@linkplain CallEntryPoint#BASELINE_ENTRY_POINT "baseline"} convention is
  * used by code that maintains an expression stack (much like an interpreter) and it uses two separate registers for a
  * frame pointer and a stack pointer. The frame pointer is used to access incoming arguments and local variables, and
- * the stack pointer is used to maintain the Java expression stack. All arguments to Java calls under the "JIT"
+ * the stack pointer is used to maintain the Java expression stack. All arguments to Java calls under the "baseline"
  * convention are passed via the Java expression stack.
  *
  * Return values are placed in a register under both conventions.
@@ -68,16 +68,16 @@ public abstract class Adapter extends TargetMethod {
      */
     public enum Type {
         /**
-         * Type of an adapter that interposes a call from code compiled with the "JIT" calling convention to
+         * Type of an adapter that interposes a call from code compiled with the baseline calling convention to
          * code compiled with the "OPT" calling convention.
          */
-        JIT2OPT(JIT_ENTRY_POINT, OPTIMIZED_ENTRY_POINT),
+        BASELINE2OPT(BASELINE_ENTRY_POINT, OPTIMIZED_ENTRY_POINT),
 
         /**
          * Type of an adapter that interposes a call from code compiled with the "OPT" calling convention to
-         * code compiled with the "JIT" calling convention.
+         * code compiled with the "baseline" calling convention.
          */
-        OPT2JIT(OPTIMIZED_ENTRY_POINT, JIT_ENTRY_POINT);
+        OPT2BASELINE(OPTIMIZED_ENTRY_POINT, BASELINE_ENTRY_POINT);
 
         Type(CallEntryPoint caller, CallEntryPoint callee) {
             this.caller = caller;

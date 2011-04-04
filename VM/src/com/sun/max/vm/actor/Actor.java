@@ -109,8 +109,7 @@ public abstract class Actor {
         NEVER_INLINE;
 
     /**
-     * Mask of flags used to determine if a given method is unsafe. Unsafe methods
-     * cannot be compiled with the JIT compiler.
+     * Mask of flags used to determine if a method must be compiled with the optimizing compiler.
      */
     public static final int UNSAFE_FLAGS =
         ACC_NATIVE |

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,9 +53,9 @@ public enum CallEntryPoint {
     VTABLE_ENTRY_POINT,
 
     /**
-     * Denotes the entry address used by the JIT compiler when compiling a call.
+     * Denotes the entry address used by the baseline compiler when compiling a call.
      */
-    JIT_ENTRY_POINT,
+    BASELINE_ENTRY_POINT,
 
     /**
      * Denotes the entry address used by the optimizing compiler when compiling a call.
