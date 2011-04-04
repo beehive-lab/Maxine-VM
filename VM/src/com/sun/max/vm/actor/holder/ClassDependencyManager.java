@@ -1074,7 +1074,7 @@ public final class ClassDependencyManager {
         if (MaxineVM.isHosted()) {
             for (TargetMethod targetMethod : invalidatedTargetMethods) {
                 invalidTargetMethods.add(targetMethod);
-                Trace.line(1, "*** Invalid target method: " + targetMethod);
+                Trace.line(1, "*** Invalidate target method " + targetMethod);
             }
             return;
         }

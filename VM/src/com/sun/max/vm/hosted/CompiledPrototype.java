@@ -354,8 +354,8 @@ public class CompiledPrototype extends Prototype {
     void add(TargetMethod invalidatedTargetMethod) {
         final ClassMethodActor methodActor = invalidatedTargetMethod.classMethodActor;
         assert methodActors.containsKey(methodActor);
-        // TODO: Need to clean up anything that might reference the target method before recompiling it.
-
+        assert methodActor.targetState == invalidatedTargetMethod;
+        methodActor.targetState = null;
         worklist.add(methodActor);
     }
 
@@ -649,18 +649,31 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "compiling foldable methods");
     }
 
-    public void recompileInvalidatedTargetMethods() {
+    /**
+     * Recompile methods whose assumptions were invalidated.
+     * @return true if the recompilation brought new methods in the compiled prototype.
+     */
+    public boolean recompileInvalidatedTargetMethods() {
+        // All classes referenced from the invalidated target methods must already be loaded
+        // However, recompilation may bring new class method actor since a recompilation
+        // may be triggered by the addition of a new concrete method in the prototype which may
+        // not be already compiled.
         HashSet<TargetMethod> recompileSet = ClassDependencyManager.invalidTargetMethods;
-        if (recompileSet.isEmpty()) {
-            return;
+        ClassDependencyManager.invalidTargetMethods = new HashSet<TargetMethod>();
+
+        if (!recompileSet.isEmpty()) {
+            Trace.begin(1, "recompiling invalidated methods");
+            assert worklist.size() == 0;
+            for (TargetMethod targetMethod : recompileSet) {
+                add(targetMethod);
+            }
+            assert worklist.size() == recompileSet.size();
+            compileWorklist();
+            assert ClassDependencyManager.invalidTargetMethods.size() == 0;
+            Trace.end(1, "recompiling invalidated methods");
+            return true;
         }
-        // TODO: this is incomplete.
-        Trace.begin(1, "recompiling invalidated methods");
-        for (TargetMethod targetMethod : recompileSet) {
-            add(targetMethod);
-        }
-        compileWorklist();
-        Trace.end(1, "recompiling invalidated methods");
+        return false;
     }
 
     public void checkRequiredImageMethods() {
@@ -709,8 +722,10 @@ public class CompiledPrototype extends Prototype {
             gatherNewClasses();
             // 4. compile all new methods
             compiledSome = compileWorklist();
-            compiledAny = compiledAny | compiledSome;
+            compiledSome |=  recompileInvalidatedTargetMethods();
+            compiledAny |= compiledSome;
         } while (compiledSome);
+
         return compiledAny;
     }
 
