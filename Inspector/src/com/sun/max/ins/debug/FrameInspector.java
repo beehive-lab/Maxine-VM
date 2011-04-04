@@ -27,7 +27,6 @@ import static com.sun.max.tele.MaxProcessState.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.util.*;
@@ -88,8 +87,6 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
     // This is a singleton viewer, so only use a single level of view preferences.
     private static CompiledStackFrameViewPreferences viewPreferences;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
-
     private final class CopyStackFrameToClipboardAction extends InspectorAction {
 
         private CopyStackFrameToClipboardAction() {
@@ -115,7 +112,7 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
 
 
     public FrameInspector(Inspection inspection) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
 
         viewPreferences = CompiledStackFrameViewPreferences.globalPreferences(inspection);
@@ -148,11 +145,6 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
 
         forceRefresh();
         Trace.end(1,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     @Override

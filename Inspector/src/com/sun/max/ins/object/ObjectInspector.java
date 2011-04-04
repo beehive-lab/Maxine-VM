@@ -89,7 +89,7 @@ public abstract class ObjectInspector extends Inspector {
     private Rectangle originalFrameGeometry = null;
 
     protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, final TeleObject teleObject) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, null);
         this.factory = factory;
         this.teleObject = teleObject;
         this.currentObjectOrigin = teleObject().origin();

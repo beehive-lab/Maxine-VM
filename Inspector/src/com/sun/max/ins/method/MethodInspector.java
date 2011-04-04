@@ -276,7 +276,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     private final MethodInspectorContainer container;
 
     protected MethodInspector(Inspection inspection, MethodInspectorContainer container) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, null);
         this.container = container;
     }
 

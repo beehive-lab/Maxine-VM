@@ -45,7 +45,7 @@ public abstract class FileInspector extends Inspector {
     }
 
     protected FileInspector(Inspection inspection, File file) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, null);
         this.file = file;
     }
 

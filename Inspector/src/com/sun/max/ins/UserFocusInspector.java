@@ -26,7 +26,6 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
@@ -80,12 +79,10 @@ public final class UserFocusInspector extends Inspector {
     // This is a singleton viewer, so only use a single level of view preferences.
     private final FocusTable.FocusViewPreferences viewPreferences;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
-
     private FocusTable table;
 
     private UserFocusInspector(Inspection inspection) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = FocusTable.FocusViewPreferences.globalPreferences(inspection);
         final InspectorFrame frame = createFrame(true);
@@ -97,11 +94,6 @@ public final class UserFocusInspector extends Inspector {
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         Trace.end(1,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     @Override

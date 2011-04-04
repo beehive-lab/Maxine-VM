@@ -31,7 +31,6 @@ import javax.swing.event.*;
 
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
@@ -104,8 +103,6 @@ public final class StackInspector extends Inspector {
         }
         return viewManager;
     }
-
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
 
     private final class StackFrameListCellRenderer extends MachineCodeLabel implements ListCellRenderer {
 
@@ -257,7 +254,7 @@ public final class StackInspector extends Inspector {
     private int maxFramesDisplay = defaultMaxFramesDisplay;
 
     public StackInspector(Inspection inspection) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         final InspectorFrame frame = createFrame(true);
 
@@ -275,11 +272,6 @@ public final class StackInspector extends Inspector {
 
         forceRefresh();
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     @Override

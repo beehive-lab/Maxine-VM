@@ -23,7 +23,6 @@
 package com.sun.max.ins.debug;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
 import com.sun.max.ins.view.*;
@@ -80,12 +79,10 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     // This is a singleton viewer, so only use a single level of view preferences.
     private final WatchpointsViewPreferences viewPreferences;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsListener(this, GEOMETRY_SETTINGS_KEY);
-
     private WatchpointsTable table;
 
     private WatchpointsInspector(Inspection inspection) {
-        super(inspection, VIEW_KIND);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
@@ -108,11 +105,6 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     @Override

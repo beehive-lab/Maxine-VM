@@ -187,13 +187,37 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
 
     private final ViewKind viewKind;
 
+    /**
+     * A listener that saves the current frame geometry (location, size)
+     * whenever a "save" event takes place.  Newly created frames are initialized
+     * to saved geometry settings, if present, as identified by the Inspector's key.
+     */
+    private final SaveSettingsListener saveGeometrySettingsListener;
+
     private InspectorFrame frame;
 
     private final TimedTrace updateTracer;
 
-    protected Inspector(Inspection inspection, ViewKind viewKind) {
+    /**
+     * Abstract constructor for all inspector views.
+     *
+     * @param viewKind the kind of view being created
+     * @param geometrySettingsKey if non-null, makes the size and location of this
+     * inspector persistent across sessions.
+     */
+    protected Inspector(Inspection inspection, ViewKind viewKind, String geometrySettingsKey) {
         super(inspection);
         this.viewKind = viewKind;
+        saveGeometrySettingsListener = (geometrySettingsKey == null) ? null : new AbstractSaveSettingsListener(geometrySettingsKey, this) {
+
+            @Override
+            public Rectangle defaultGeometry() {
+                return Inspector.this.defaultGeometry();
+            }
+
+            public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
+            }
+        };
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "refresh");
     }
 
@@ -236,33 +260,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      */
     public final void setGeometry(Rectangle rectangle) {
         getJComponent().setBounds(rectangle);
-    }
-
-
-    /**
-     * Gets an object that is an adapter between the inspection's persistent {@linkplain Inspection#settings()}
-     * and this inspector. If the object's {@link SaveSettingsListener#component()} , then the
-     * size and location of this inspector are adjusted according to the settings as well as being
-     * persisted any time this inspector is moved or resized.
-     */
-    protected SaveSettingsListener saveSettingsListener() {
-        return null;
-    }
-
-    /**
-     * Creates a settings listener for this inspector that causes window geometry to be saved & restored.
-     */
-    protected static SaveSettingsListener createGeometrySettingsListener(final Inspector inspector, final String name) {
-        return new AbstractSaveSettingsListener(name, inspector) {
-
-            @Override
-            public Rectangle defaultGeometry() {
-                return inspector.defaultGeometry();
-            }
-
-            public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-            }
-        };
     }
 
     protected void setWarning() {
@@ -316,11 +313,15 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      * <li>adds this inspector to the collection of update listeners; and</li>
      * <li>makes it all visible in the window system.</li>
      * </ul>
-     *
-     * If this inspector has a {@linkplain #saveSettingsListener()}, then its size and location
-     * is adjusted according to the {@linkplain Inspection#settings() inspection's settings}.
+     * <p>
+     * The geometry (size and location) of the frame will be saved across sessions
+     * if a non-null key was provided in the constructor.
+     * if no key is provided, or if no settings from previous sessions have been saved,
+     * then the initial geometry will be taken from a specification created by
+     * implementations of the {@link InspectorGeometry} interface.
      *
      * @param addMenuBar should a menu bar be added to the frame.
+     * @see InspectorGeometry#preferredFrameGeometry(ViewKind)
      */
     protected InspectorFrame createFrame(boolean addMenuBar) {
         frame = new InspectorInternalFrame(this, addMenuBar);
@@ -330,9 +331,8 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         gui().addInspector(this);
         inspection().addInspectionListener(this);
         focus().addListener(this);
-        final SaveSettingsListener saveSettingsListener = saveSettingsListener();
-        if (saveSettingsListener != null) {
-            inspection().settings().addSaveSettingsListener(saveSettingsListener);
+        if (saveGeometrySettingsListener != null) {
+            inspection().settings().addSaveSettingsListener(saveGeometrySettingsListener);
         }
         return frame;
     }
@@ -344,9 +344,9 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      * <li>adds this inspector to the collection of update listeners; and</li>
      * <li>makes it all visible in the window system.</li>
      * </ul>
-     *
-     * If this inspector has a {@linkplain #saveSettingsListener()}, then its size and location
-     * is adjusted according to the {@linkplain Inspection#settings() inspection's settings}.
+     * <p>
+     * Note that these frames only exist in side a tabbed container, and thus
+     * persistent geometry is not supported for them.
      *
      * @param addMenuBar should a menu bar be added to the frame.
      */
@@ -360,10 +360,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         gui().addInspector(this);
         inspection().addInspectionListener(this);
         focus().addListener(this);
-        final SaveSettingsListener saveSettingsListener = saveSettingsListener();
-        if (saveSettingsListener != null) {
-            inspection().settings().addSaveSettingsListener(saveSettingsListener);
-        }
         return frame;
     }
 
@@ -510,12 +506,11 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     protected void inspectorClosing() {
         inspection().removeInspectionListener(this);
         focus().removeListener(this);
-        final SaveSettingsListener saveSettingsListener = saveSettingsListener();
         if (viewManager() != null) {
             viewManager().notifyViewClosing(this);
         }
-        if (saveSettingsListener != null) {
-            inspection().settings().removeSaveSettingsListener(saveSettingsListener);
+        if (saveGeometrySettingsListener != null) {
+            inspection().settings().removeSaveSettingsListener(saveGeometrySettingsListener);
         }
         inspection().settings().save();
     }
