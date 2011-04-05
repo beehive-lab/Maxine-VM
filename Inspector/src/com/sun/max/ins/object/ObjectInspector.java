@@ -31,7 +31,7 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
-import com.sun.max.ins.view.InspectionViews.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -49,7 +49,15 @@ public abstract class ObjectInspector extends Inspector {
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
 
-    private final ObjectInspectorFactory factory;
+
+    private static ObjectViewManager viewManager;
+
+    public static ObjectViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new ObjectViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     private TeleObject teleObject;
 
@@ -88,9 +96,8 @@ public abstract class ObjectInspector extends Inspector {
 
     private Rectangle originalFrameGeometry = null;
 
-    protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, final TeleObject teleObject) {
+    protected ObjectInspector(final Inspection inspection, ObjectViewManager factory, final TeleObject teleObject) {
         super(inspection, VIEW_KIND, null);
-        this.factory = factory;
         this.teleObject = teleObject;
         this.currentObjectOrigin = teleObject().origin();
         this.title = "";
@@ -223,12 +230,11 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        // don't try to recompute the title, just get the one that's been in use
+        // don't try to recompute the title (it might not be computable),s just get the one that's been in use
         Trace.line(TRACE_VALUE, tracePrefix() + " closing for " + getTitle());
         if (teleObject == focus().heapObject()) {
             focus().setHeapObject(null);
         }
-        factory.objectInspectorClosing(this);
         super.inspectorClosing();
     }
 
@@ -250,13 +256,13 @@ public abstract class ObjectInspector extends Inspector {
         if (teleObject.isObsolete() && followingTeleObject) {
             Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
-            if (factory.isObjectInspectorObservingObject(forwardedTeleObject.reference().makeOID())) {
+            if (viewManager.isObjectInspectorObservingObject(forwardedTeleObject.reference().makeOID())) {
                 followingTeleObject = false;
                 setWarning();
                 setTitle();
                 return;
             }
-            factory.resetObjectToInspectorMapEntry(teleObject, forwardedTeleObject, this);
+            viewManager.resetObjectToInspectorMapEntry(teleObject, forwardedTeleObject, this);
             teleObject = forwardedTeleObject;
             currentObjectOrigin = teleObject.origin();
             reconstructView();

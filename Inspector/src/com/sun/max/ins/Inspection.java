@@ -39,6 +39,7 @@ import com.sun.max.ins.memory.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -86,8 +87,6 @@ public final class Inspection implements InspectionHolder {
 
     private final InspectionViews inspectionViews;
 
-    private final ObjectInspectorFactory objectInspectorFactory;
-
     private InspectorMainFrame inspectorMainFrame;
 
     public Inspection(MaxVM vm, OptionSet options) {
@@ -116,7 +115,6 @@ public final class Inspection implements InspectionHolder {
 
         inspectorMainFrame = new InspectorMainFrame(this, MaxineInspector.NAME, nameDisplay, settings, inspectionActions);
 
-        objectInspectorFactory = ObjectInspectorFactory.make(this);
 
         if (vm.state().processState() == UNKNOWN) {
             // Inspector is working with a boot image only, no process exists.
@@ -238,7 +236,8 @@ public final class Inspection implements InspectionHolder {
      * @return all existing object inspectors, even if hidden or iconic.
      */
     public Set<ObjectInspector> objectInspectors() {
-        return objectInspectorFactory.inspectors();
+        ObjectViewManager objectViewManager = (ObjectViewManager) ViewKind.OBJECT.viewManager();
+        return objectViewManager.inspectors();
     }
 
     /**

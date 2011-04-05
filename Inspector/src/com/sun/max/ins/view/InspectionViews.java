@@ -31,6 +31,7 @@ import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
+import com.sun.max.ins.object.*;
 import com.sun.max.program.option.*;
 
 /**
@@ -109,7 +110,14 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         },
         METHOD_CODE(false, false, "Disassembled code from a single method in the VM"),
-        OBJECT(false, false, "The contents of a region of VM memory interpreted as an object representation"),
+        OBJECT(false, false, "The contents of a region of VM memory interpreted as an object representation") {
+            @Override
+            public ViewManager viewManager() {
+                final ViewManager viewManager = ObjectInspector.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
         REGISTERS(true, true, "Register contents in the VM for the currently selected thread") {
 
             @Override
@@ -167,16 +175,21 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
         private static Inspection inspection;
         private static ViewKind[] singletonViewKinds;
+        private static ViewKind[] multiViewKinds;
         static {
             // Rely on the language property that statics are executed
             // after all initializations are complete.
             final List<ViewKind> singletonKinds = new ArrayList<ViewKind>();
+            final List<ViewKind> multiKinds = new ArrayList<ViewKind>();
             for (ViewKind kind : ViewKind.values()) {
                 if (kind.isSingleton) {
                     singletonKinds.add(kind);
+                } else {
+                    multiKinds.add(kind);
                 }
             }
             singletonViewKinds = singletonKinds.toArray(new ViewKind[0]);
+            multiViewKinds = multiKinds.toArray(new ViewKind[0]);
         }
 
         private final boolean isSingleton;
@@ -232,6 +245,10 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 final SingletonViewManager singletonViewManager = (SingletonViewManager) kind.viewManager();
                 singletonViewManager.activateView(inspection());
             }
+        }
+        for (ViewKind kind : ViewKind.multiViewKinds) {
+            // Initialize any view managers that might needd it.
+            kind.viewManager();
         }
     }
 
