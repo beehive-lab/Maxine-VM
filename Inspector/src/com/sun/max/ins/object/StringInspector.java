@@ -49,7 +49,9 @@ public final class StringInspector extends ObjectInspector {
         // This is the default for a newly created inspector.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        createFrame(true);
+        final InspectorFrame frame = createFrame(true);
+        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
