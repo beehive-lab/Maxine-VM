@@ -27,7 +27,7 @@ import java.io.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
-import com.sun.max.ins.view.InspectionViews.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 /**
  * Base class for inspectors that display information from files.
@@ -36,16 +36,14 @@ import com.sun.max.ins.view.InspectionViews.*;
  */
 public abstract class FileInspector extends Inspector {
 
-    private static final ViewKind VIEW_KIND = ViewKind.FILE;
-
     private File file;
 
     public File file() {
         return file;
     }
 
-    protected FileInspector(Inspection inspection, File file) {
-        super(inspection, VIEW_KIND, null);
+    protected FileInspector(Inspection inspection, File file, ViewKind viewKind) {
+        super(inspection, viewKind, null);
         this.file = file;
     }
 
