@@ -42,16 +42,16 @@ public final class InspectorGeometry12Pt implements InspectorGeometry {
     private static final Dimension inspectionFramePrefSize = new Dimension(1615, 960);
 
     public InspectorGeometry12Pt() {
-        preferredFrameGeometry.put(ViewKind.ALLOCATIONS, new Rectangle(100, 100, 450, 250));
-        preferredFrameGeometry.put(ViewKind.BOOT_IMAGE, new Rectangle(100, 0, 390, 900));
+        preferredFrameGeometry.put(ViewKind.ALLOCATIONS, new Rectangle(500, 200, 500, 300));
+        preferredFrameGeometry.put(ViewKind.BOOT_IMAGE, new Rectangle(200, 50, 375, 800));
         preferredFrameGeometry.put(ViewKind.BREAKPOINTS, new Rectangle(1150, 0, 450, 170));
-        preferredFrameGeometry.put(ViewKind.FRAME, new Rectangle(225, 300, 225, 600));
-        preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(450, 0, 700, 900));
-        preferredFrameGeometry.put(ViewKind.NOTEPAD, new Rectangle(200, 200, 200, 200));
-        preferredFrameGeometry.put(ViewKind.REGISTERS, new Rectangle(0, 170, 225, 730));
-        preferredFrameGeometry.put(ViewKind.STACK, new Rectangle(225, 0, 225, 300));
-        preferredFrameGeometry.put(ViewKind.THREADS, new Rectangle(0, 0, 225, 170));
-        preferredFrameGeometry.put(ViewKind.THREAD_LOCALS, new Rectangle(1150, 170, 450, 730));
+        preferredFrameGeometry.put(ViewKind.FRAME, new Rectangle(1225, 400, 375, 500));
+        preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(375, 0, 850, 900));
+        preferredFrameGeometry.put(ViewKind.NOTEPAD, new Rectangle(200, 200, 400, 400));
+        preferredFrameGeometry.put(ViewKind.REGISTERS, new Rectangle(1225, 0, 375, 400));
+        preferredFrameGeometry.put(ViewKind.STACK, new Rectangle(0, 225, 375, 675));
+        preferredFrameGeometry.put(ViewKind.THREADS, new Rectangle(0, 0, 375, 225));
+        preferredFrameGeometry.put(ViewKind.THREAD_LOCALS, new Rectangle(800, 200, 500, 500));
         preferredFrameGeometry.put(ViewKind.WATCHPOINTS, new Rectangle(100, 100, 575, 150));
     }
 

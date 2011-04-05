@@ -43,14 +43,14 @@ public class InspectorGeometry10Pt implements InspectorGeometry {
 
     public InspectorGeometry10Pt() {
         preferredFrameGeometry.put(ViewKind.ALLOCATIONS, new Rectangle(100, 100, 400, 200));
-        preferredFrameGeometry.put(ViewKind.BOOT_IMAGE, new Rectangle(75, 0, 350, 725));
+        preferredFrameGeometry.put(ViewKind.BOOT_IMAGE, new Rectangle(75, 0, 350, 700));
         preferredFrameGeometry.put(ViewKind.BREAKPOINTS, new Rectangle(950, 0, 400, 150));
-        preferredFrameGeometry.put(ViewKind.FRAME, new Rectangle(175, 250, 175, 500));
-        preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(350, 0, 600, 750));
-        preferredFrameGeometry.put(ViewKind.NOTEPAD, new Rectangle(150, 150, 200, 200));
-        preferredFrameGeometry.put(ViewKind.REGISTERS, new Rectangle(0, 150, 175, 600));
-        preferredFrameGeometry.put(ViewKind.STACK, new Rectangle(175, 250, 175, 500));
-        preferredFrameGeometry.put(ViewKind.THREADS, new Rectangle(0, 0, 175, 150));
+        preferredFrameGeometry.put(ViewKind.FRAME, new Rectangle(1175, 450, 275, 450));
+        preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(275, 0, 800, 800));
+        preferredFrameGeometry.put(ViewKind.NOTEPAD, new Rectangle(150, 150, 300, 300));
+        preferredFrameGeometry.put(ViewKind.REGISTERS, new Rectangle(1175, 0, 275, 350));
+        preferredFrameGeometry.put(ViewKind.STACK, new Rectangle(0, 200, 275, 600));
+        preferredFrameGeometry.put(ViewKind.THREADS, new Rectangle(0, 0, 275, 200));
         preferredFrameGeometry.put(ViewKind.THREAD_LOCALS, new Rectangle(950, 150, 400, 600));
         preferredFrameGeometry.put(ViewKind.WATCHPOINTS, new Rectangle(100, 100, 450, 140));
     }
