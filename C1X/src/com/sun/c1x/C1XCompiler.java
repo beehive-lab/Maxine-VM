@@ -73,7 +73,6 @@ public class C1XCompiler {
         this.target = target;
         this.xir = xirGen;
         this.globalStubRegisterConfig = globalStubRegisterConfig;
-
         this.backend = Backend.create(target.arch, this);
         init();
     }
