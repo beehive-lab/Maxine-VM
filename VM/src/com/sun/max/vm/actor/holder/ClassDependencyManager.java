@@ -978,7 +978,7 @@ public final class ClassDependencyManager {
         private boolean shouldSearchSubTypes(ClassActor root, RiMethod method) {
             final int uct = root.uniqueConcreteType;
             if (uct == NO_CONCRETE_SUBTYPE_MARK) {
-                // No concrete type, no need to search. No need to search sub-types.
+                // No concrete type, no need to search sub-types.
                 return false;
             }
             if (uct != HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK) {
@@ -1005,6 +1005,10 @@ public final class ClassDependencyManager {
             assert root.firstSubclassActorId != NULL_CLASS_ID : "must have at least one sub-class";
             assert firstConcreteMethod == null || !hasMoreThanOne;
 
+            setConcreteMethod(root.resolveMethodImpl(method));
+            if (hasMoreThanOne) {
+                return;
+            }
             int classId = root.firstSubclassActorId;
             do {
                 ClassActor subType = ClassID.toClassActor(classId);
@@ -1063,6 +1067,11 @@ public final class ClassDependencyManager {
             recordUniqueConcreteSubtype(classActor);
             TargetMethod [] invalidatedTargetMethods = dependentTargetMethodTable.clearInvalidatedAssumptions();
             if (invalidatedTargetMethods != null) {
+                if (VMOptions.verboseOption.verboseClass || VMOptions.verboseOption.verboseCompilation) {
+                    String message = "Adding " + classActor + " (" + classActor.id + ") to the hierarchy invalidates " +
+                        invalidatedTargetMethods.length + " target methods";
+                    Log.println(message);
+                }
                 invalidateTargetMethods(invalidatedTargetMethods);
             }
         } finally {
@@ -1077,6 +1086,14 @@ public final class ClassDependencyManager {
                 Trace.line(1, "*** Invalidate target method " + targetMethod);
             }
             return;
+        }
+        if (VMOptions.verboseOption.verboseCompilation) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            for (TargetMethod targetMethod : invalidatedTargetMethods) {
+                Log.print(targetMethod.toString());
+                Log.println(" invalidated");
+            }
+            Log.unlock(lockDisabledSafepoints);
         }
         FatalError.unexpected("Invalidation of target methods with invalid assumptions not implemented");
     }
