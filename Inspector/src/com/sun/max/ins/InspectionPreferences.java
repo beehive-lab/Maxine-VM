@@ -151,8 +151,8 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         externalViewerConfig.put(ExternalViewerType.SOCKET, String.valueOf(2341));
 
         // TODO (mlvdv) need some way to configure this default in conjunction with style defaults.
-        //_geometry = new InspectorGeometry10Pt();
-        this.geometry = new InspectorGeometry12Pt();
+        this.geometry = new InspectorGeometry10Pt();
+        //this.geometry = new InspectorGeometry12Pt();
 
         defaultToolTipDismissDelay = ToolTipManager.sharedInstance().getDismissDelay();
 
