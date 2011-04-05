@@ -47,7 +47,6 @@ public class XirSnippet {
         this.template = template;
         this.arguments = inputs;
         this.marks = (template.marks != null && template.marks.length > 0) ? new HashMap<XirMark, Mark>() : null;
-        assert template != null;
         assert assertArgumentsCorrect();
     }
 

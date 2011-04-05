@@ -127,11 +127,10 @@ public final class StringUtil {
         return accumul;
     }
 
-    @SuppressWarnings("unused")
     public static int readBinaryValue(CharacterIterator i, int maxchars) {
         int accumul = 0;
 
-        for (int cntr = 0; cntr < maxchars; cntr++) {
+        if (maxchars >= 1) {
             final char ch = i.current();
             i.next();
             if (ch == '0') {
@@ -139,7 +138,6 @@ public final class StringUtil {
             } else if (ch == '1') {
                 accumul = (accumul << 1) | 1;
             }
-            break;
         }
 
         return accumul;
