@@ -56,14 +56,6 @@ public class TestInspectorGeometry implements InspectorGeometry {
         return testFrameDefaultGeometry;
     }
 
-    // Java Source Inspector frame
-    public Point javaSourceDefaultFrameLocation() {
-        return testFrameDefaultLocation;
-    }
-    public Dimension javaSourcePrefFrameSize() {
-        return testFramePrefSize;
-    }
-
     // Offset from mouse location for new frames
     public static final int newFrameDiagonalOffset = 5;
 
