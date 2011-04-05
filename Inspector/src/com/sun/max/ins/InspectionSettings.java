@@ -35,7 +35,8 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.hosted.*;
 
 /**
- * Manages saving and restoring of settings between Inspection sessions.
+ * A manager for saving and restoring of settings between Inspection sessions, with some
+ * specialized machinery to support the saving of inspector frame geometry (location, size).
  *
  * @author Michael Van De Vanter
  * @author Doug Simon
@@ -211,6 +212,27 @@ public class InspectionSettings {
         saver = new Saver();
     }
 
+    /**
+     * Add a listener that will be notified when a "save event" is triggered, so that settings
+     * can be saved.
+     * <p>
+     * If the listener has an associated {@link Inspector}, then additional services are provided
+     * to automate the saving and restoring of window frame geometry (size, location):
+     * <ol>
+     * <li>During the execution of this method call, the inspector's frame is positioned and
+     * sized according to the following search:
+     * <ul>
+     * <li>Use saved geometry settings for this Inspector, if they exist;</li>
+     * <li>If no settings saved, then use default geometry for this kind of view, if it exists;</li>
+     * <li>Otherwise use a generic default geometry.</li>
+     * </ul>
+     * </li>
+     * <li>The listener has associated code that will automatically save the Inspector's geometry
+     * upon every "save event".</li>
+     * </ol>
+     * @param saveSettingsListener a listener for events that should cause important settings to be
+     * saved
+     */
     public void addSaveSettingsListener(final SaveSettingsListener saveSettingsListener) {
         final SaveSettingsListener oldClient = clients.put(saveSettingsListener.name(), saveSettingsListener);
         assert oldClient == null || oldClient == saveSettingsListener;
