@@ -33,9 +33,8 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  * instances. The intention is that there be a singleton manager for
  * each kind of view.
  * <p>
- * The manager
- * is both a source of meta-information about the view, and an implementation
- * of mechanisms for managing the view(s).
+ * The manager is both a source of meta-information about the kind
+ * of view, and an implementation that manages the view(s).
  *
  * @author Michael Van De Vanter
  */
@@ -47,27 +46,27 @@ public interface ViewManager  {
     ViewKind viewKind();
 
     /**
-     * @return terse name of the view, typically just what's being viewed, e.g. "Threads"
+     * @return terse name of this view, typically just what's being viewed, e.g. "Threads"
      */
     String shortName();
 
     /**
-     * @return full name of the view, e.g. "Threads Inspector
+     * @return full name of this view, e.g. "Threads Inspector"
      */
     String longName();
 
     /**
-     * @return whether the view is supported by this configuration and platform
+     * @return whether this kind view is supported by currently running configuration and platform
      */
     boolean isSupported();
 
     /**
-     * @return whether it is possible to create a view under the current circumstances
+     * @return whether it is possible to create this kind of view under the current circumstances
      */
     boolean isEnabled();
 
     /**
-     * @return whether there can only be one instance of this this view.
+     * @return whether there can only be one instance of this kind of view.
      */
     boolean isSingleton();
 
@@ -77,7 +76,8 @@ public interface ViewManager  {
     boolean isActive();
 
     /**
-     * Notifies the manager that a view under its management has been closed.
+     * Notifies the manager that a view under its management is
+     * in the process of being closed.
      */
     void notifyViewClosing(Inspector inspector);
 

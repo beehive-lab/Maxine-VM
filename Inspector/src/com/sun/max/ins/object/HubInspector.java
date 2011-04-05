@@ -56,7 +56,7 @@ public final class HubInspector extends ObjectInspector {
     private ObjectScrollPane mTablePane;
     private ObjectScrollPane refMapPane;
 
-    HubInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
+    HubInspector(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         teleHub = (TeleHub) teleObject;
 

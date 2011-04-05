@@ -501,7 +501,13 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
-     * Receives notification that the window system is closing this inspector.
+     * Receives notification that the window system is closing this inspector and cleans
+     * up.
+     * <ul>
+     * <li>Removes Inspector's inspection, focus, and save settings listeners;</li>
+     * <li>Notifies the Inspector's view manager that the view is closing; and</li>
+     * <li>Triggers a save event</li>
+     * </ul>
      */
     protected void inspectorClosing() {
         inspection().removeInspectionListener(this);

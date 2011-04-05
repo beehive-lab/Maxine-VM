@@ -36,7 +36,7 @@ public final class ArrayInspector extends ObjectInspector {
 
     private ObjectScrollPane elementsPane;
 
-    ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
+    ArrayInspector(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));

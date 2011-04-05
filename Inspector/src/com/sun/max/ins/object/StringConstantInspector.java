@@ -45,7 +45,7 @@ public class StringConstantInspector extends ObjectInspector {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    StringConstantInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
+    StringConstantInspector(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         // This is the default for a newly created inspector.
         // TODO (mlvdv) make this a global view option?
