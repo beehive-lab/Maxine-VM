@@ -76,7 +76,8 @@ public class FinalizerTest implements Comparable<FinalizerTest> {
 
     public static void main(String[] args) throws InterruptedException {
         test(10);
-        while (finalized.size() != 10) {
+        int attempts = 5;
+        while (finalized.size() != 10 && attempts-- > 0) {
             System.gc();
             Thread.sleep(1000);
         }
