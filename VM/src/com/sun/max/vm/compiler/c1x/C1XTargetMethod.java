@@ -118,6 +118,10 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+
+        // TODO: for now, just to gather statistics on assumptions
+        ClassDependencyManager.validateAssumptions(ciTargetMethod.assumptions());
+
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
         init(ciTargetMethod, install);
