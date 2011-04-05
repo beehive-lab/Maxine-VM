@@ -24,7 +24,6 @@ package com.sun.max.vm.classfile;
 
 import java.io.*;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.bytecode.graft.*;
 
 /**
@@ -86,35 +85,6 @@ public final class ExceptionHandlerEntry {
     @Override
     public String toString() {
         return "[" + startBCI + " .. " + endBCI + ") -> " + handlerBCI + " {type=" + catchTypeIndex + "}";
-    }
-
-    /**
-     * Checks the invariant that all exception handlers are disjoint.
-     */
-    public static void ensureExceptionDispatchersAreDisjoint(ExceptionHandlerEntry[] exceptionHandlerTable) {
-        // Check the invariant required by the opto compiler that all exception handlers are disjoint
-        if (exceptionHandlerTable.length != 0) {
-        outerLoop:
-            for (ExceptionHandlerEntry entry : exceptionHandlerTable) {
-                for (ExceptionHandlerEntry otherEntry : exceptionHandlerTable) {
-                    if (otherEntry == entry) {
-                        continue outerLoop;
-                    }
-                    final boolean disjoint;
-                    if (otherEntry.startBCI() == entry.startBCI()) {
-                        disjoint = false;
-                    } else if (otherEntry.startBCI() > entry.startBCI()) {
-                        disjoint = otherEntry.startBCI() >= entry.endBCI();
-                    } else {
-                        disjoint = otherEntry.endBCI() <= entry.startBCI();
-                    }
-                    if (!disjoint) {
-                        ProgramError.unexpected("two exception handlers overlap: " + otherEntry + " and " + entry);
-                    }
-                }
-            }
-        }
-
     }
 
     public static void encode(ExceptionHandlerEntry[] entries, DataOutputStream dataOutputStream) throws IOException {

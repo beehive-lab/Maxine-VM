@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -153,7 +153,7 @@ public final class JmmFunctions {
         try {
             return JniHandles.createLocalHandle(RuntimeManagement.getVmArguments());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetInputArguments");
@@ -170,7 +170,7 @@ public final class JmmFunctions {
             ThreadManagement.getThreadInfo(threadIds, maxDepth, threadInfoArray);
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetThreadInfo");
@@ -184,7 +184,7 @@ public final class JmmFunctions {
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetInputArgumentArray");
@@ -200,7 +200,7 @@ public final class JmmFunctions {
             assert p ==null; // see sun/management/MemoryImpl.c
             return JniHandles.createLocalHandle(MemoryManagement.getMemoryPools());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetMemoryPools");
@@ -216,7 +216,7 @@ public final class JmmFunctions {
             assert p ==null; // see sun/management/MemoryImpl.c
             return JniHandles.createLocalHandle(MemoryManagement.getMemoryManagers());
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetMemoryManagers");
@@ -230,7 +230,7 @@ public final class JmmFunctions {
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetMemoryPoolUsage");
@@ -244,7 +244,7 @@ public final class JmmFunctions {
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetPeakMemoryPoolUsage");
@@ -262,7 +262,7 @@ public final class JmmFunctions {
         try {
             return JniHandles.createLocalHandle(MemoryManagement.getMemoryUsage(heap));
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetMemoryUsage");
@@ -276,7 +276,7 @@ public final class JmmFunctions {
         try {
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetLongAttribute");
@@ -290,7 +290,7 @@ public final class JmmFunctions {
         try {
             return false;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "GetBoolAttribute");
@@ -316,7 +316,7 @@ public final class JmmFunctions {
             }
             return false;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "SetBoolAttribute");
@@ -330,7 +330,7 @@ public final class JmmFunctions {
         try {
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetLongAttributes");
@@ -344,7 +344,7 @@ public final class JmmFunctions {
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "FindCircularBlockedThreads");
@@ -358,7 +358,7 @@ public final class JmmFunctions {
         try {
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetThreadCpuTime");
@@ -372,7 +372,7 @@ public final class JmmFunctions {
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetVMGlobalNames");
@@ -386,7 +386,7 @@ public final class JmmFunctions {
         try {
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetVMGlobals");
@@ -400,7 +400,7 @@ public final class JmmFunctions {
         try {
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetInternalThreadTimes");
@@ -414,7 +414,7 @@ public final class JmmFunctions {
         try {
             return false;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return false;
         } finally {
             epilogue(anchor, "ResetStatistic");
@@ -427,7 +427,7 @@ public final class JmmFunctions {
         Pointer anchor = prologue(env, "SetPoolSensor");
         try {
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetPoolSensor");
         }
@@ -440,7 +440,7 @@ public final class JmmFunctions {
         try {
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "SetPoolThreshold");
@@ -454,7 +454,7 @@ public final class JmmFunctions {
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "GetPoolCollectionUsage");
@@ -468,7 +468,7 @@ public final class JmmFunctions {
         try {
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetGCExtAttributeInfo");
@@ -481,7 +481,7 @@ public final class JmmFunctions {
         Pointer anchor = prologue(env, "GetLastGCStat");
         try {
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "GetLastGCStat");
         }
@@ -494,7 +494,7 @@ public final class JmmFunctions {
         try {
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "GetThreadCpuTimeWithKind");
@@ -512,7 +512,7 @@ public final class JmmFunctions {
         try {
             return 0;
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return JNI_ERR;
         } finally {
             epilogue(anchor, "DumpHeap0");
@@ -526,7 +526,7 @@ public final class JmmFunctions {
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "FindDeadlocks");
@@ -539,7 +539,7 @@ public final class JmmFunctions {
         Pointer anchor = prologue(env, "SetVMGlobal");
         try {
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
         } finally {
             epilogue(anchor, "SetVMGlobal");
         }
@@ -556,7 +556,7 @@ public final class JmmFunctions {
         try {
             return JniHandle.zero();
         } catch (Throwable t) {
-            VmThread.fromJniEnv(env).setPendingException(t);
+            VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0);
         } finally {
             epilogue(anchor, "DumpThreads");

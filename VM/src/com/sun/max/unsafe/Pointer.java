@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,63 +30,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Bytes;
 import com.sun.max.platform.*;
-import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapInt;
-import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapIntAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapReference;
-import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapReferenceAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapWord;
-import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.CompareAndSwapWordAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetByte;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetChar;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetDouble;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetFloat;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetInt;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetLong;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetReference;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetShort;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.GetWord;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadByte;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadByteAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadChar;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadCharAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadDouble;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadDoubleAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadFloat;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadFloatAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadInt;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadIntAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadLong;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadLongAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadReference;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadReferenceAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadShort;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadShortAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadWord;
-import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.ReadWordAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetByte;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetDouble;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetFloat;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetInt;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetLong;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetReference;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetShort;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.SetWord;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteByte;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteByteAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteDouble;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteDoubleAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteFloat;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteFloatAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteInt;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteIntAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteLong;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteLongAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteReference;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteReferenceAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteShort;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteShortAtIntOffset;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWord;
-import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.WriteWordAtIntOffset;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -325,23 +268,19 @@ public abstract class Pointer extends Address implements Accessor {
         return asAddress().unsignedShiftedRight(nBits).asPointer();
     }
 
-    @UNSAFE
     @FOLD
     private static boolean risc() {
         return Platform.platform().isa.category == ISA.Category.RISC;
     }
 
-    @BUILTIN(ReadByteAtIntOffset.class)
     @INTRINSIC(PREAD_BYTE_I)
     public byte readByte(int offset) {
         return readByte(Offset.fromInt(offset));
     }
 
-    @BUILTIN(ReadByte.class)
     @INTRINSIC(PREAD_BYTE)
     public abstract byte readByte(Offset offset);
 
-    @BUILTIN(GetByte.class)
     @INTRINSIC(PGET_BYTE)
     private native byte builtinGetByte(int displacement, int index);
 
@@ -388,17 +327,14 @@ public abstract class Pointer extends Address implements Accessor {
         return getBoolean(0);
     }
 
-    @BUILTIN(ReadShortAtIntOffset.class)
     @INTRINSIC(PREAD_SHORT_I)
     public final short readShort(int offset) {
         return readShort(Offset.fromInt(offset));
     }
 
-    @BUILTIN(ReadShort.class)
     @INTRINSIC(PREAD_SHORT)
     public abstract short readShort(Offset offset);
 
-    @BUILTIN(GetShort.class)
     @INTRINSIC(PGET_SHORT)
     private native short builtinGetShort(int displacement, int index);
 
@@ -420,17 +356,14 @@ public abstract class Pointer extends Address implements Accessor {
         return getShort(0);
     }
 
-    @BUILTIN(ReadCharAtIntOffset.class)
     @INTRINSIC(PREAD_CHAR_I)
     public final char readChar(int offset) {
         return readChar(Offset.fromInt(offset));
     }
 
-    @BUILTIN(ReadChar.class)
     @INTRINSIC(PREAD_CHAR)
     public abstract char readChar(Offset offset);
 
-    @BUILTIN(GetChar.class)
     @INTRINSIC(PGET_CHAR)
     private native char builtinGetChar(int displacement, int index);
 
@@ -452,17 +385,14 @@ public abstract class Pointer extends Address implements Accessor {
         return getChar(0);
     }
 
-    @BUILTIN(ReadIntAtIntOffset.class)
     @INTRINSIC(PREAD_INT_I)
     public final int readInt(int offset) {
         return readInt(Offset.fromInt(offset));
     }
 
-    @BUILTIN(ReadInt.class)
     @INTRINSIC(PREAD_INT)
     public abstract int readInt(Offset offset);
 
-    @BUILTIN(GetInt.class)
     @INTRINSIC(PGET_INT)
     private native int builtinGetInt(int displacement, int index);
 
@@ -484,17 +414,14 @@ public abstract class Pointer extends Address implements Accessor {
         return getInt(0);
     }
 
-    @BUILTIN(ReadFloatAtIntOffset.class)
     @INTRINSIC(PREAD_FLOAT_I)
     public final float readFloat(int offset) {
         return readFloat(Offset.fromInt(offset));
     }
 
-    @BUILTIN(ReadFloat.class)
     @INTRINSIC(PREAD_FLOAT)
     public abstract float readFloat(Offset offset);
 
-    @BUILTIN(GetFloat.class)
     @INTRINSIC(PGET_FLOAT)
     private native float builtinGetFloat(int displacement, int index);
 
@@ -516,17 +443,14 @@ public abstract class Pointer extends Address implements Accessor {
         return getFloat(0);
     }
 
-    @BUILTIN(ReadLongAtIntOffset.class)
     @INTRINSIC(PREAD_LONG_I)
     public final long readLong(int offset) {
         return readLong(Offset.fromInt(offset));
     }
 
-    @BUILTIN(ReadLong.class)
     @INTRINSIC(PREAD_LONG)
     public abstract long readLong(Offset offset);
 
-    @BUILTIN(GetLong.class)
     @INTRINSIC(PGET_LONG)
     private native long builtinGetLong(int displacement, int index);
 
@@ -548,17 +472,14 @@ public abstract class Pointer extends Address implements Accessor {
         return getLong(0);
     }
 
-    @BUILTIN(ReadDoubleAtIntOffset.class)
     @INTRINSIC(PREAD_DOUBLE_I)
     public final double readDouble(int offset) {
         return readDouble(Offset.fromInt(offset));
     }
 
-    @BUILTIN(ReadDouble.class)
     @INTRINSIC(PREAD_DOUBLE)
     public abstract double readDouble(Offset offset);
 
-    @BUILTIN(GetDouble.class)
     @INTRINSIC(PGET_DOUBLE)
     private native double builtinGetDouble(int displacement, int index);
 
@@ -580,17 +501,14 @@ public abstract class Pointer extends Address implements Accessor {
         return getDouble(0);
     }
 
-    @BUILTIN(ReadWordAtIntOffset.class)
     @INTRINSIC(PREAD_WORD_I)
     public final Word readWord(int offset) {
         return readWord(Offset.fromInt(offset));
     }
 
-    @BUILTIN(ReadWord.class)
     @INTRINSIC(PREAD_WORD)
     public abstract Word readWord(Offset offset);
 
-    @BUILTIN(GetWord.class)
     @INTRINSIC(PGET_WORD)
     private native Word builtinGetWord(int displacement, int index);
 
@@ -612,17 +530,14 @@ public abstract class Pointer extends Address implements Accessor {
         return getWord(0);
     }
 
-    @BUILTIN(ReadReferenceAtIntOffset.class)
     @INTRINSIC(PREAD_REFERENCE_I)
     public final Reference readReference(int offset) {
         return readReference(Offset.fromInt(offset));
     }
 
-    @BUILTIN(ReadReference.class)
     @INTRINSIC(PREAD_REFERENCE)
     public abstract Reference readReference(Offset offset);
 
-    @BUILTIN(GetReference.class)
     @INTRINSIC(PGET_REFERENCE)
     private native Reference builtinGetReference(int displacement, int index);
 
@@ -644,17 +559,14 @@ public abstract class Pointer extends Address implements Accessor {
         return getReference(0);
     }
 
-    @BUILTIN(WriteByteAtIntOffset.class)
     @INTRINSIC(PWRITE_BYTE_I)
     public final void writeByte(int offset, byte value) {
         writeByte(Offset.fromInt(offset), value);
     }
 
-    @BUILTIN(WriteByte.class)
     @INTRINSIC(PWRITE_BYTE)
     public abstract void writeByte(Offset offset, byte value);
 
-    @BUILTIN(SetByte.class)
     @INTRINSIC(PSET_BYTE)
     private native void builtinSetByte(int displacement, int index, byte value);
 
@@ -702,17 +614,14 @@ public abstract class Pointer extends Address implements Accessor {
         setBoolean(0, value);
     }
 
-    @BUILTIN(WriteShortAtIntOffset.class)
     @INTRINSIC(PWRITE_SHORT_I)
     public final void writeShort(int offset, short value) {
         writeShort(Offset.fromInt(offset), value);
     }
 
-    @BUILTIN(WriteShort.class)
     @INTRINSIC(PWRITE_SHORT)
     public abstract void writeShort(Offset offset, short value);
 
-    @BUILTIN(SetShort.class)
     @INTRINSIC(PSET_SHORT)
     private native void builtinSetShort(int displacement, int index, short value);
 
@@ -760,17 +669,14 @@ public abstract class Pointer extends Address implements Accessor {
         setChar(0, value);
     }
 
-    @BUILTIN(WriteIntAtIntOffset.class)
     @INTRINSIC(PWRITE_INT_I)
     public final void writeInt(int offset, int value) {
         writeInt(Offset.fromInt(offset), value);
     }
 
-    @BUILTIN(WriteInt.class)
     @INTRINSIC(PWRITE_INT)
     public abstract void writeInt(Offset offset, int value);
 
-    @BUILTIN(SetInt.class)
     @INTRINSIC(PSET_INT)
     private native void builtinSetInt(int displacement, int index, int value);
 
@@ -793,17 +699,14 @@ public abstract class Pointer extends Address implements Accessor {
         setInt(0, value);
     }
 
-    @BUILTIN(WriteFloatAtIntOffset.class)
     @INTRINSIC(PWRITE_FLOAT_I)
     public final void writeFloat(int offset, float value) {
         writeFloat(Offset.fromInt(offset), value);
     }
 
-    @BUILTIN(WriteFloat.class)
     @INTRINSIC(PWRITE_FLOAT)
     public abstract void writeFloat(Offset offset, float value);
 
-    @BUILTIN(SetFloat.class)
     @INTRINSIC(PSET_FLOAT)
     private native void builtinSetFloat(int displacement, int index, float value);
 
@@ -826,17 +729,14 @@ public abstract class Pointer extends Address implements Accessor {
         setFloat(0, value);
     }
 
-    @BUILTIN(WriteLongAtIntOffset.class)
     @INTRINSIC(PWRITE_LONG_I)
     public final void writeLong(int offset, long value) {
         writeLong(Offset.fromInt(offset), value);
     }
 
-    @BUILTIN(WriteLong.class)
     @INTRINSIC(PWRITE_LONG)
     public abstract void writeLong(Offset offset, long value);
 
-    @BUILTIN(SetLong.class)
     @INTRINSIC(PSET_LONG)
     private native void builtinSetLong(int displacement, int index, long value);
 
@@ -859,17 +759,14 @@ public abstract class Pointer extends Address implements Accessor {
         setLong(0, value);
     }
 
-    @BUILTIN(WriteDoubleAtIntOffset.class)
     @INTRINSIC(PWRITE_DOUBLE_I)
     public final void writeDouble(int offset, double value) {
         writeDouble(Offset.fromInt(offset), value);
     }
 
-    @BUILTIN(WriteDouble.class)
     @INTRINSIC(PWRITE_DOUBLE)
     public abstract void writeDouble(Offset offset, double value);
 
-    @BUILTIN(SetDouble.class)
     @INTRINSIC(PSET_DOUBLE)
     private native void builtinSetDouble(int displacement, int index, double value);
 
@@ -892,17 +789,14 @@ public abstract class Pointer extends Address implements Accessor {
         setDouble(0, value);
     }
 
-    @BUILTIN(WriteWordAtIntOffset.class)
     @INTRINSIC(PWRITE_WORD_I)
     public final void writeWord(int offset, Word value) {
         writeWord(Offset.fromInt(offset), value);
     }
 
-    @BUILTIN(WriteWord.class)
     @INTRINSIC(PWRITE_WORD)
     public abstract void writeWord(Offset offset, Word value);
 
-    @BUILTIN(SetWord.class)
     @INTRINSIC(PSET_WORD)
     private native void builtinSetWord(int displacement, int index, Word value);
 
@@ -925,17 +819,14 @@ public abstract class Pointer extends Address implements Accessor {
         setWord(0, value);
     }
 
-    @BUILTIN(WriteReferenceAtIntOffset.class)
     @INTRINSIC(PWRITE_REFERENCE_I)
     public final void writeReference(int offset, Reference value) {
         writeReference(Offset.fromInt(offset), value);
     }
 
-    @BUILTIN(WriteReference.class)
     @INTRINSIC(PWRITE_REFERENCE)
     public abstract void writeReference(Offset offset, Reference value);
 
-    @BUILTIN(SetReference.class)
     @INTRINSIC(PSET_REFERENCE)
     private native void builtinSetReference(int displacement, int index, Reference value);
 
@@ -961,42 +852,36 @@ public abstract class Pointer extends Address implements Accessor {
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(CompareAndSwapIntAtIntOffset.class)
     @INTRINSIC(PCMPSWP_INT_I)
     public native int compareAndSwapInt(int offset, int expectedValue, int newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(CompareAndSwapInt.class)
     @INTRINSIC(PCMPSWP_INT)
     public native int compareAndSwapInt(Offset offset, int expectedValue, int newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(CompareAndSwapWordAtIntOffset.class)
     @INTRINSIC(PCMPSWP_WORD_I)
     public native Word compareAndSwapWord(int offset, Word expectedValue, Word newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(CompareAndSwapWord.class)
     @INTRINSIC(PCMPSWP_WORD)
     public native Word compareAndSwapWord(Offset offset, Word expectedValue, Word newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(CompareAndSwapReferenceAtIntOffset.class)
     @INTRINSIC(PCMPSWP_REFERENCE_I)
     public native Reference compareAndSwapReference(int offset, Reference expectedValue, Reference newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(CompareAndSwapReference.class)
     @INTRINSIC(PCMPSWP_REFERENCE)
     public native Reference compareAndSwapReference(Offset offset, Reference expectedValue, Reference newValue);
 

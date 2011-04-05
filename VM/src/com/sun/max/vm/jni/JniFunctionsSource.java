@@ -39,7 +39,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
@@ -120,7 +119,7 @@ public final class JniFunctionsSource {
         } catch (IllegalAccessException illegalAccessException) {
             throw ProgramError.unexpected(illegalAccessException);
         } catch (InvocationTargetException invocationTargetException) {
-            VmThread.fromJniEnv(env).setPendingException(invocationTargetException.getTargetException());
+            VmThread.fromJniEnv(env).setJniException(invocationTargetException.getTargetException());
             return JniHandle.zero();
         }
     }
@@ -146,7 +145,7 @@ public final class JniFunctionsSource {
         ClassActor caller = ClassActor.fromJava(JDK_sun_reflect_Reflection.getCallerClass(realFramesToSkip));
         ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : caller.classLoader;
         final Class javaClass = findClass(classLoader, className);
-        MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
+        Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
         return JniHandles.createLocalHandle(javaClass);
     }
 
@@ -196,7 +195,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static int Throw(Pointer env, JniHandle throwable) {
-        VmThread.fromJniEnv(env).setPendingException((Throwable) throwable.unhand());
+        VmThread.fromJniEnv(env).setJniException((Throwable) throwable.unhand());
         return JNI_OK;
     }
 
@@ -213,18 +212,18 @@ public final class JniFunctionsSource {
         }
         constructor = Utils.cast(type, throwableClass.unhand()).getConstructor(parameterTypes);
         Throwable throwable = message.isZero() ? constructor.newInstance() : constructor.newInstance(CString.utf8ToJava(message));
-        VmThread.fromJniEnv(env).setPendingException(throwable);
+        VmThread.fromJniEnv(env).setJniException(throwable);
         return JNI_OK;
     }
 
     @VM_ENTRY_POINT
     private static JniHandle ExceptionOccurred(Pointer env) {
-        return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).pendingException());
+        return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).jniException());
     }
 
     @VM_ENTRY_POINT
     private static void ExceptionDescribe(Pointer env) {
-        final Throwable exception = VmThread.fromJniEnv(env).pendingException();
+        final Throwable exception = VmThread.fromJniEnv(env).jniException();
         if (exception != null) {
             exception.printStackTrace();
         }
@@ -232,7 +231,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static void ExceptionClear(Pointer env) {
-        VmThread.fromJniEnv(env).setPendingException(null);
+        VmThread.fromJniEnv(env).setJniException(null);
     }
 
     @VM_ENTRY_POINT
@@ -351,7 +350,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static MethodID GetMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
+        Snippets.makeClassInitialized(classActor);
         try {
             final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
             final SignatureDescriptor descriptor = SignatureDescriptor.lookup(CString.utf8ToJava(descriptorCString));
@@ -712,7 +711,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static FieldID GetFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
+        Snippets.makeClassInitialized(classActor);
         try {
 
             final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
@@ -826,7 +825,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static MethodID GetStaticMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
+        Snippets.makeClassInitialized(classActor);
         try {
             final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
             final SignatureDescriptor descriptor = SignatureDescriptor.create(CString.utf8ToJava(descriptorCString));
@@ -838,7 +837,7 @@ public final class JniFunctionsSource {
             }
             final MethodActor methodActor = classActor.findStaticMethodActor(name, descriptor);
             if (methodActor == null) {
-                throw new NoSuchMethodError(name.string);
+                throw new NoSuchMethodError(classActor + "." + name.string);
             }
             return MethodID.fromMethodActor(methodActor);
         } catch (Utf8Exception utf8Exception) {
@@ -983,7 +982,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static FieldID GetStaticFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
+        Snippets.makeClassInitialized(classActor);
         try {
             final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
             final TypeDescriptor descriptor = TypeDescriptor.lookup(CString.utf8ToJava(descriptorCString));
@@ -1763,7 +1762,7 @@ public final class JniFunctionsSource {
 
     @VM_ENTRY_POINT
     private static boolean ExceptionCheck(Pointer env) {
-        return VmThread.fromJniEnv(env).pendingException() != null;
+        return VmThread.fromJniEnv(env).jniException() != null;
     }
 
     private static final ClassActor DirectByteBuffer = ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));

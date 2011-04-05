@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,13 @@ package com.sun.max.vm.jdk;
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
 
+import java.util.*;
+
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -59,6 +62,9 @@ public final class JDK_java_lang_Throwable {
     @ALIAS(declaringClass = Throwable.class)
     StackTraceElement[] stackTrace;
 
+    @ALIAS(declaringClass = Throwable.class)
+    Object backtrace;
+
     /**
      * Fills in the stack trace for this exception. This implementation eagerly creates a
      * stack trace and fills in all the {@link java.lang.StackTraceElement stack trace elements}.
@@ -72,9 +78,6 @@ public final class JDK_java_lang_Throwable {
 
     @INLINE
     private Throwable fillInStackTraceNoSync() {
-        // TODO: one possible optimization is to only record the sequence of frames for an exception
-        // and build the exception stack trace elements later. There is a field in the Throwable object
-        // called "backtrace" to allow for some natively cached stuff for this purpose.
         final Throwable throwable = thisThrowable();
         if (throwable instanceof OutOfMemoryError) {
             // Don't record stack traces in situations where memory may be exhausted
@@ -86,10 +89,90 @@ public final class JDK_java_lang_Throwable {
         final Pointer ip = Pointer.fromLong(here());
         final Pointer sp = VMRegister.getCpuStackPointer();
         final Pointer fp = VMRegister.getCpuFramePointer();
-        StackTraceElement[] stackTrace = getStackTrace(sfw, ip, sp, fp, throwableActor, Integer.MAX_VALUE);
-        JDK_java_lang_Throwable thisThrowable = asThis(throwable);
-        thisThrowable.stackTrace = stackTrace;
+        try {
+            Backtrace backtrace = getBacktrace(sfw, ip, sp, fp, throwableActor, Integer.MAX_VALUE);
+            this.backtrace = backtrace;
+        } catch (OutOfMemoryError e) {
+            // Could not build backtrace due to memory shortage
+            stackTrace = new StackTraceElement[0];
+        }
         return throwable;
+    }
+
+    /**
+     * A back trace is a lighter weight representation of a stack trace than
+     * an array of {@link StackTraceElement}s.
+     */
+    static class Backtrace extends StackTraceVisitor {
+
+        static final int INITIAL_LENGTH = 32;
+
+        int count;
+        int[] lineNos = new int[INITIAL_LENGTH];
+        ClassMethodActor[] methods = new ClassMethodActor[INITIAL_LENGTH];
+
+        public Backtrace(ClassActor exceptionClass, int maxDepth) {
+            super(exceptionClass, maxDepth);
+        }
+
+        @Override
+        public void clear() {
+            for (int i = count - 1; i >= 0; i--) {
+                methods[i] = null;
+            }
+            count = 0;
+        }
+
+        @Override
+        public boolean add(ClassMethodActor methodActor, int sourceLineNumber) {
+            if (count == lineNos.length) {
+                expand();
+            }
+            lineNos[count] = sourceLineNumber;
+            methods[count] = methodActor;
+            count++;
+            return true;
+        }
+
+        private void expand() {
+            int newLength = lineNos.length * 2;
+            lineNos = Arrays.copyOf(lineNos, newLength);
+            methods = Arrays.copyOf(methods, newLength);
+        }
+
+        StackTraceElement stackTraceElement(int index) {
+            ClassMethodActor method = methods[index];
+            ClassActor holder = method.holder();
+            int sourceLineNumber = lineNos[index];
+            return new StackTraceElement(holder.name.toString(), method.name.toString(), holder.sourceFileName, sourceLineNumber);
+        }
+
+        @Override
+        public StackTraceElement[] getTrace() {
+            StackTraceElement[] trace = new StackTraceElement[count];
+            for (int i = 0; i != count; i++) {
+                trace[i] = stackTraceElement(i);
+            }
+            return trace;
+        }
+    }
+
+    /**
+     * Gets a back trace for a given stack.
+     *
+     * @param exceptionClass the class of the exception for which the back trace is being constructed.
+     *            This is used to elide the chain of constructors calls for this class and its super classes.
+     *            If this value is {@code null}, then the back trace is not for an exception and no eliding is performed.
+     * @param maxDepth the maximum length of the returned back trace
+     * @return the back trace
+     */
+    static Backtrace getBacktrace(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp, final ClassActor exceptionClass, final int maxDepth) {
+        if (maxDepth <= 0) {
+            return null;
+        }
+        Backtrace backtrace = new Backtrace(exceptionClass, maxDepth);
+        backtrace.walk(walker, ip, sp, fp);
+        return backtrace;
     }
 
     /**
@@ -98,59 +181,25 @@ public final class JDK_java_lang_Throwable {
      * @param exceptionClass the class of the exception for which the stack trace is being constructed.
      *            This is used to elide the chain of constructors calls for this class and its super classes.
      *            If this value is {@code null}, then the stack trace is not for an exception and no eliding is performed.
-     * @param maxDepth the maximum number of elements in the returned array or {@link Integer#MAX_VALUE} if the complete
-     *            sequence of stack trace elements for {@code stackFrames} is required
-     * @return an array of stack trace elements derived from {@code stackFrames} of length
+     * @param maxDepth the maximum number of elements in the returned array
+     * @return the stack trace elements for the trace
      */
     public static StackTraceElement[] getStackTrace(StackFrameWalker walker, Pointer ip, Pointer sp, Pointer fp, final ClassActor exceptionClass, final int maxDepth) {
-        if (maxDepth <= 0) {
+        Backtrace backtrace = getBacktrace(walker, ip, sp, fp, exceptionClass, maxDepth);
+        if (backtrace == null) {
             return new StackTraceElement[0];
         }
-        StackTraceVisitor stv = new StackTraceVisitor.Default(exceptionClass, maxDepth);
-        stv.walk(walker, ip, sp, fp);
-        return stv.trace();
+        return backtrace.getTrace();
     }
 
-
-    /**
-     * Gets the depth of the stack trace, in the number of stack trace elements.
-     *
-     * @see java.lang.Throwable#getStackTraceDepth()
-     * @return the number of stack trace elements
-     */
     @SUBSTITUTE
-    private int getStackTraceDepth() {
-        final StackTraceElement[] elements = getStackTraceElements();
-        if (elements != null) {
-            return elements.length;
+    private synchronized StackTraceElement[] getOurStackTrace() {
+        // Initialize stack trace if this is the first call to this method
+        if (stackTrace == null) {
+            stackTrace = ((Backtrace) backtrace).getTrace();
+            // Let the GC clean up the back trace
+            backtrace = null;
         }
-        return 0;
+        return stackTrace;
     }
-
-    /**
-     * Gets a single stack trace element at the specified index.
-     * @see java.lang.Throwable#getStackTraceElement(int)
-     * @param index the index into the stack trace at which to get the element
-     * @return the element at the specified index
-     */
-    @SUBSTITUTE
-    private StackTraceElement getStackTraceElement(int index) {
-        final StackTraceElement[] elements = getStackTraceElements();
-        if (elements != null) {
-            return elements[index];
-        }
-        return null;
-    }
-
-    /**
-     * Gets the complete stack trace for this throwable.
-     * @see java.lang.Throwable#getStackTraceElements()
-     * @return an array of stack trace elements representing the complete stack trace
-     */
-    @INLINE
-    private StackTraceElement[] getStackTraceElements() {
-        JDK_java_lang_Throwable thisThrowable = asThis(thisThrowable());
-        return thisThrowable.stackTrace;
-    }
-
 }

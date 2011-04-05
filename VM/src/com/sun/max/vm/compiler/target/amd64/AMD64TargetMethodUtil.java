@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import com.sun.c1x.target.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 
@@ -37,8 +36,8 @@ import com.sun.max.vm.runtime.*;
  * @author Paul Caprioli
  */
 public final class AMD64TargetMethodUtil {
-    private static final int RCALL = 0xe8;
-    private static final int RJMP = 0xe9;
+    public static final int RCALL = 0xe8;
+    public static final int RJMP = 0xe9;
 
     /**
      * Lock to avoid race on concurrent icache invalidation when patching target methods.
@@ -53,9 +52,6 @@ public final class AMD64TargetMethodUtil {
         // We only update the disp of the call instruction.
         // C1X imposes that disp of the call be aligned to a word boundary.
         // This may cause up to 7 nops to be inserted before a call.
-        // CPS use the less conservative approach of requiring only that the whole
-        // call instructions fits in a single word (and thus, guaranteed to be within a single cache line).
-        // The following takes care of both
         final Address endOfCallSite = callSite.plus(DIRECT_METHOD_CALL_INSTRUCTION_LENGTH - 1);
         return callSite.plus(1).isWordAligned() ? true :
         // last byte of call site:
@@ -71,23 +67,6 @@ public final class AMD64TargetMethodUtil {
      */
     public static void fixupCall32Site(TargetMethod targetMethod, int callOffset, Address destination) {
         fixupCode(targetMethod, callOffset, destination.asAddress(), RCALL);
-    }
-
-    /**
-     * Set up a forwarding jump from an old copy of a method to a new one.
-     * @param oldTargetMethod
-     * @param newTargetMethod
-     */
-    public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
-        assert oldTargetMethod != newTargetMethod;
-        assert oldTargetMethod.callEntryPoint != CallEntryPoint.C_ENTRY_POINT;
-
-        final Address newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress();
-        final Address newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress();
-
-        // FIXME: Shouldn't these be made mt-safe using some variant of mtSafePatchCallSite ?
-        fixupCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset(), newOptEntry, RJMP);
-        fixupCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offset(), newJitEntry, RJMP);
     }
 
     private static final long DIRECT_METHOD_CALL_INSTRUCTION_LENGTH = 5L;

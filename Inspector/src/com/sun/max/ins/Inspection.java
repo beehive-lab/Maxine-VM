@@ -102,7 +102,7 @@ public final class Inspection implements InspectionHolder {
         this.preferences = new InspectionPreferences(this, settings);
         this.inspectionActions = new InspectionActions(this);
 
-        ClassMethodActor.hostedVerificationDisabled = true;
+        ClassMethodActor.hostedVerificationEnabled = false;
 
         BreakpointPersistenceManager.initialize(this);
         notepadManager = new NotepadManager(this);

@@ -37,11 +37,13 @@ import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.MaxXirGenerator.RuntimeCalls;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -165,6 +167,7 @@ public class C1X implements RuntimeCompiler {
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
             C1XOptions.UseConstDirectCall = true; // Default
+            C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.globalStub);
             // search for the runtime call and register critical methods
             for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
@@ -193,12 +196,22 @@ public class C1X implements RuntimeCompiler {
 
     public final TargetMethod compile(final ClassMethodActor classMethodActor, boolean install, CiStatistics stats) {
         RiMethod method = classMethodActor;
-        CiTargetMethod compiledMethod = compiler().compileMethod(method, -1, xirGenerator, stats).targetMethod();
-        if (compiledMethod != null) {
-            C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod, install);
-            return c1xTargetMethod;
-        }
-        throw FatalError.unexpected("bailout"); // compilation failed
+        ClassHierarchyAssumptions assumptions = ClassHierarchyAssumptions.noAssumptions;
+        CiTargetMethod compiledMethod;
+        do {
+            compiledMethod = compiler().compileMethod(method, -1, xirGenerator, stats).targetMethod();
+            if (compiledMethod == null) {
+                throw FatalError.unexpected("bailout"); // compilation failed
+            }
+            assumptions = ClassDependencyManager.validateAssumptions(compiledMethod.assumptions());
+            if (assumptions.isValid()) {
+                C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod, install);
+                if (ClassDependencyManager.registerValidatedTarget(assumptions, c1xTargetMethod)) {
+                    return c1xTargetMethod;
+                }
+            }
+            // Loop back and recompile.
+        } while(true);
     }
 
     public void resetMetrics() {

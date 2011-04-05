@@ -130,7 +130,7 @@ public abstract class ClassActor extends Actor implements RiType {
      * no concrete sub-type, or the class id of the java.lang.Object class
      * if there is multiple concrete sub-types.
      */
-    int uniqueConcreteType;
+    volatile int uniqueConcreteType;
 
     public final char majorVersion;
 
@@ -167,7 +167,7 @@ public abstract class ClassActor extends Actor implements RiType {
 
     /**
      * An object representing the initialization state of this class. This value will either be one of the sentinel
-     * objects representing a state (i.e. {@link #VERIFIED}, {@link #PREPARED}, {@link #INITIALIZED}) or be an object
+     * objects representing a state (i.e. {@link #VERIFIED_}, {@link #PREPARED}, {@link #INITIALIZED}) or be an object
      * whose type denotes the state ({@code Throwable == ERROR}, {@code Thread == INITIALIZING}) and whose value gives
      * further details about the state.
      */
@@ -208,7 +208,7 @@ public abstract class ClassActor extends Actor implements RiType {
         this.kind = kind;
         this.componentClassActor = componentClassActor;
         this.id = elementClassActor().makeID(numberOfDimensions());
-        ClassID.register(id, this);
+        ClassID.register(this);
         this.typeDescriptor = typeDescriptor;
         this.superClassActor = superClassActor;
         this.sourceFileName = sourceFileName;
@@ -1364,12 +1364,12 @@ public abstract class ClassActor extends Actor implements RiType {
     /**
      * Constant denoting that a class is prepared.
      */
-    private static final Object PREPARED = new Object();
+    private static final Object PREPARED = "PREPARED";
 
     /**
      * Constant denoting that a class is verified.
      */
-    private static final Object VERIFIED = new Object();
+    private static final Object VERIFIED_ = "VERIFIED";
 
     /**
      * Determines if this class actor has a parameterless static method named "<clinit>".
@@ -1398,7 +1398,7 @@ public abstract class ClassActor extends Actor implements RiType {
                 Object initializationState = this.initializationState;
                 if (isPrepared(initializationState)) {
                     verify();
-                    this.initializationState = VERIFIED;
+                    this.initializationState = VERIFIED_;
                 } else if (isVerified(initializationState)) {
                     this.initializationState = Thread.currentThread();
                     if (VMOptions.verboseOption.verboseClass) {
@@ -1436,7 +1436,7 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     private static boolean isVerified(Object initializationState) {
-        return initializationState == VERIFIED;
+        return initializationState == VERIFIED_;
     }
 
     private static boolean isPrepared(Object initializationState) {
@@ -1466,7 +1466,7 @@ public abstract class ClassActor extends Actor implements RiType {
      */
     public void doNotVerify() {
         if (isPrepared(initializationState)) {
-            initializationState = VERIFIED;
+            initializationState = VERIFIED_;
         }
     }
 
@@ -1550,10 +1550,6 @@ public abstract class ClassActor extends Actor implements RiType {
 
     @Override
     public String toString() {
-        final String flags = flagsString();
-        if (flags.isEmpty()) {
-            return name.toString() + " [" + flags + "]";
-        }
         return name.toString();
     }
 
@@ -1680,4 +1676,17 @@ public abstract class ClassActor extends Actor implements RiType {
         return ClassDependencyManager.getUniqueConcreteMethod(this, method);
     }
 
+    /**
+     * This must be call to define the class actor, i.e., makes the corresponding class types visible to all.
+     * The caller must hold the defining class loader's lock.
+     */
+    public void define() {
+        // FIXME: REVISIT concurrency issues.
+        // If we hold the class loader monitor, we may not be exempt of deadlock, and we're way sub-optimal as we may be blocking
+        // creation of arrays types from the same class loader, and a lot of other class loading related operations.
+        // If we don't, we not multi-thread safe.
+        FatalError.check(Thread.holdsLock(classLoader),  "must hold the defining class loader's lock");
+        ClassDependencyManager.addToHierarchy(this);
+        ClassRegistry.put(this);
+    }
 }

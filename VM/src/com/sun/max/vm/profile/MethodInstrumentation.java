@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,27 +75,27 @@ public class MethodInstrumentation {
         if (false) {
             // use checked array access
             if (--data[mpoIndex] == 0) {
-                triggerRecompilation(mpo);
+                triggerRecompilation(mpo, null);
             }
         } else {
             // use unchecked array access
             Pointer ptr = ArrayAccess.elementPointer(data, mpoIndex);
             int nval = ptr.getInt() - 1;
             if (nval == 0) {
-                triggerRecompilation(mpo);
+                triggerRecompilation(mpo, null);
             }
             ptr.setInt(nval);
         }
     }
 
     @INLINE
-    public static void recordEntrypoint(MethodProfile mpo) {
+    public static void recordEntrypoint(MethodProfile mpo, Object receiver) {
         if (--mpo.entryCount == 0) {
-            triggerRecompilation(mpo);
+            triggerRecompilation(mpo, receiver);
         }
     }
 
-    private static void triggerRecompilation(MethodProfile mpo) {
+    private static void triggerRecompilation(MethodProfile mpo, Object receiver) {
         if (Heap.isAllocationDisabledForCurrentThread()) {
             Log.print("Stopped recompilation of ");
             Log.printMethod(mpo.method, false);
@@ -106,7 +106,7 @@ public class MethodInstrumentation {
         synchronized (mpo) {
             if (!mpo.triggered) {
                 // location count overflowed; call into instrumentation system
-                CompilationScheme.Static.instrumentationCounterOverflow(mpo, 0);
+                CompilationScheme.Static.instrumentationCounterOverflow(mpo, receiver);
                 mpo.triggered = true;
             }
         }

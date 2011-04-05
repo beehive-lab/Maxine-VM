@@ -127,7 +127,7 @@ public abstract class TeleActor extends TeleTupleObject {
         }
         if ((flagsValue & Actor.ACC_ANNOTATION) != 0) {
             // 0x00002000, doubly defined
-            flags[nextFlagIndex++] = "ACC_ANNOTATION/SIGNAL_HANDLER";
+            flags[nextFlagIndex++] = "ACC_ANNOTATION";
         }
         if ((flagsValue & Actor.ACC_ENUM) != 0) {
             // 0x00004000, doubly defined
@@ -135,11 +135,11 @@ public abstract class TeleActor extends TeleTupleObject {
         }
         if ((flagsValue & Actor.DEPRECATED) != 0) {
             // 0x00008000, doubly defined
-            flags[nextFlagIndex++] = "DEPRECATED/SIGNAL_STUB";
+            flags[nextFlagIndex++] = "DEPRECATED";
         }
         if ((flagsValue & Actor.INJECTED) != 0) {
             // 0x00010000, doubly defined
-            flags[nextFlagIndex++] = "INJECTED/INLINE_AFTER_SNIPPETS_ARE_COMPILED";
+            flags[nextFlagIndex++] = "INJECTED/VERIFIED";
         }
         if ((flagsValue & Actor.CONSTANT) != 0) {
             // 0x00020000
@@ -151,7 +151,7 @@ public abstract class TeleActor extends TeleTupleObject {
         }
         if ((flagsValue & Actor.INNER_CLASS) != 0) {
             // 0x00100000, doubly defined
-            flags[nextFlagIndex++] = "INNER_CLASS/WRAPPER";
+            flags[nextFlagIndex++] = "INNER_CLASS";
         }
         if ((flagsValue & Actor.TEMPLATE) != 0) {
             // 0x00200000
@@ -159,7 +159,7 @@ public abstract class TeleActor extends TeleTupleObject {
         }
         if ((flagsValue & Actor.INITIALIZER) != 0) {
             // 0x00400000, doubly defined
-            flags[nextFlagIndex++] = "INITIALIZER/GENERATED";
+            flags[nextFlagIndex++] = "INITIALIZER";
         }
         if ((flagsValue & Actor.C_FUNCTION) != 0) {
             // 0x01000000
@@ -173,13 +173,9 @@ public abstract class TeleActor extends TeleTupleObject {
             // 0x04000000
             flags[nextFlagIndex++] = "FOLD";
         }
-        if ((flagsValue & Actor.BUILTIN) != 0) {
-            // 0x08000000
-            flags[nextFlagIndex++] = "BUILTIN";
-        }
         if ((flagsValue & Actor.LOCAL_SUBSTITUTE) != 0) {
             // 0x10000000
-            flags[nextFlagIndex++] = "SUBSTITUTE";
+            flags[nextFlagIndex++] = "LOCAL_SUBSTITUTE";
         }
         if ((flagsValue & Actor.UNSAFE) != 0) {
             // 0x20000000

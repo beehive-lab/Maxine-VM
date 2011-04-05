@@ -540,7 +540,7 @@ public class Bytecodes {
     public static final int MEMBAR               = 241;
     
     /**
-     * Allocates and initializes a slot on the native stack frame.
+     * Create a handle for a given value on the native stack frame.
      * <p>
      * Forces the compiler to allocate a native frame slot and initializes it with {@code value}
      * If the {@code value} is 0 or {@code null}, then the result is 0 otherwise the result is the
@@ -554,7 +554,7 @@ public class Bytecodes {
      * <b>The compiler is not required to enforce this type safety.</b>
      * 
      * <pre>
-     * Format: { u1 opcode;   // ALLOCSTKVAR
+     * Format: { u1 opcode;   // STACKHANDLE
      *           u2 method;   // Constant pool index to method (CONSTANT_Methodref_info) whose signature
      *                        // describes the type of the input value
      *         }
@@ -563,7 +563,7 @@ public class Bytecodes {
      *     ..., value => ..., address
      * </pre>
      */
-    public static final int ALLOCSTKVAR          = 242;
+    public static final int STACKHANDLE          = 242;
     
     public static final int PAUSE                = 243;
     public static final int BREAKPOINT_TRAP      = 244;
@@ -1283,7 +1283,7 @@ public class Bytecodes {
         def(WRETURN             , "wreturn"         , "b"    , EXTENSION | TRAP | STOP);
         def(ALLOCA              , "alloca"          , "bii"  , EXTENSION);
         def(MEMBAR              , "membar"          , "bii"  , EXTENSION);
-        def(ALLOCSTKVAR         , "allocstkvar"     , "bii"  , EXTENSION);
+        def(STACKHANDLE         , "stackhandle"     , "bii"  , EXTENSION);
         def(PAUSE               , "pause"           , "bii"  , EXTENSION);
         def(BREAKPOINT_TRAP     , "breakpoint_trap" , "bii"  , EXTENSION);
         def(ADD_SP              , "add_sp"          , "bii"  , EXTENSION);

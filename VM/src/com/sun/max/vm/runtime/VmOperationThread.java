@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -175,7 +175,7 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
                             boolean lockDisabledSafepoints = Log.lock();
                             Log.print("VM operation thread finished operation ");
                             Log.print(currentOperation.name);
-                            Log.print("submitted by ");
+                            Log.print(" submitted by ");
                             Log.printThread(currentOperation.callingThread(), false);
                             Log.println(" and is notifying REQUEST_LOCK waiters");
                             Log.unlock(lockDisabledSafepoints);

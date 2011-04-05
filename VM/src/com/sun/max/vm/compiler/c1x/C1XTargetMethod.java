@@ -113,15 +113,13 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private final CodeAnnotation[] annotations;
 
+    private  ClassHierarchyAssumptions assumptionsValidity;
+
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
     public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-
-        // TODO: for now, just to gather statistics on assumptions
-        ClassDependencyManager.validateAssumptions(ciTargetMethod.assumptions());
-
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
         init(ciTargetMethod, install);
@@ -135,6 +133,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     public C1XTargetMethod(Flavor flavor, String stubName, CiTargetMethod ciTargetMethod) {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        assumptionsValidity = ClassHierarchyAssumptions.noAssumptions;
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
         init(ciTargetMethod, true);
@@ -170,6 +169,15 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
         }
+    }
+
+    @Override
+    public boolean isMakingValidAssumptions() {
+        return assumptionsValidity.isValid();
+    }
+
+    public ClassHierarchyAssumptions assumptionValidity() {
+        return assumptionsValidity;
     }
 
     public static InlineDataDecoder inlineDataDecoder(CodeAnnotation[] annotations) {
@@ -213,7 +221,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     /**
      * @return the size of an activation frame for this target method in words.
      */
-    @UNSAFE
     private int frameWords() {
         return frameSize() / Word.size();
     }
@@ -308,7 +315,6 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         return relativeDataPos;
     }
 
-    @UNSAFE
     private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, int[] relativeDataPositions) {
         Offset codeStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
 
@@ -420,6 +426,23 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
         setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         initSourceInfo(debugInfos, hasInlinedMethods);
+
+        if (classMethodActor != null && false) {
+            Log.println("BCI closures for " + this);
+            for (int stopIndex = 0; stopIndex < debugInfos.length; stopIndex++) {
+                int pos = stopPositions[stopIndex];
+                Log.println("  at " + codeStart.to0xHexString() + "+" + pos);
+                CodePosClosure bc = new CodePosClosure() {
+                    int n;
+                    @Override
+                    public boolean doCodePos(ClassMethodActor method, int bci) {
+                        Log.println("    " + method.toStackTraceElement(bci) + " [bci: " + bci + "]");
+                        return ++n < 2;
+                    }
+                };
+                forEachCodePos(bc, codeStart.plus(pos), false);
+            }
+        }
     }
 
     private boolean initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, CiDebugInfo debugInfo, CiDebugInfo[] debugInfos) {
@@ -568,24 +591,16 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
         return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
     }
 
-    @UNSAFE
     @Override
     public void fixupCallSite(int callOffset, Address callEntryPoint) {
         AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
     }
 
-    @UNSAFE
     @Override
     public void patchCallSite(int callOffset, Address callEntryPoint) {
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeStart().plus(callOffset), callEntryPoint.asAddress());
     }
 
-    @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethodUtil.forwardTo(this, newTargetMethod);
-    }
-
-    @UNSAFE
     @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         final int exceptionPos = throwAddress.minus(codeStart).toInt();
@@ -862,16 +877,37 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
     }
 
     @Override
-    public CiCodePos getCodePos(Pointer ip, boolean ipIsReturnAddress) {
+    public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
         if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
             ip = ip.minus(1);
         }
 
-        int stopIndex = findClosestStopIndex(ip);
-        if (stopIndex < 0) {
-            return null;
+        int index = findClosestStopIndex(ip);
+        if (index < 0) {
+            return 0;
         }
-        return decodeBytecodeFrames(classMethodActor, sourceInfo, sourceMethods, stopIndex);
+
+        int count = 0;
+        Object sourceInfoObject = sourceInfo;
+        if (sourceInfoObject instanceof int[]) {
+            while (index >= 0) {
+                count++;
+                int[] sourceInfo = (int[]) sourceInfoObject;
+                int start = index * 3;
+                ClassMethodActor sourceMethod = sourceMethods[sourceInfo[start]];
+                int bci = sourceInfo[start + 1];
+                if (!cpc.doCodePos(sourceMethod, bci)) {
+                    return count;
+                }
+                index = sourceInfo[start + 2];
+            }
+        } else if (sourceInfoObject instanceof char[]) {
+            // no inlined methods; just recover the bytecode index
+            count++;
+            char[] array = (char[]) sourceInfoObject;
+            cpc.doCodePos(classMethodActor, array[index]);
+        }
+        return count;
     }
 
     @Override

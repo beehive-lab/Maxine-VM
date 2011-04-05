@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,10 +26,10 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.sun.c1x.ir.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -137,7 +137,7 @@ public enum JavaFrameAnchor {
      */
     @INLINE
     public static Pointer create(Word stackPointer, Word framePointer, Word instructionPointer, Word previousAnchor) {
-        Pointer anchor = StackAllocate.stackAllocate(size());
+        Pointer anchor = Intrinsics.stackAllocate(size());
         FP.set(anchor, framePointer);
         SP.set(anchor, stackPointer);
         PC.set(anchor, instructionPointer);

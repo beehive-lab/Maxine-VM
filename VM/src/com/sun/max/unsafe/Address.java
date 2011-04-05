@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.builtin.*;
 
 /**
  * A machine word interpreted as a linear address.
@@ -204,7 +203,6 @@ public abstract class Address extends Word {
         return fromInt(other) == this;
     }
 
-    @BUILTIN(value = AddressBuiltin.GreaterThan.class)
     @INTRINSIC(UWCMP | (ABOVE_THAN << 8))
     public final boolean greaterThan(Address other) {
         assert isHosted();
@@ -221,7 +219,6 @@ public abstract class Address extends Word {
         return greaterThan(fromInt(other));
     }
 
-    @BUILTIN(value = AddressBuiltin.GreaterEqual.class)
     @INTRINSIC(UWCMP | (ABOVE_EQUAL << 8))
     public final boolean greaterEqual(Address other) {
         assert isHosted();
@@ -233,7 +230,6 @@ public abstract class Address extends Word {
         return greaterEqual(fromInt(other));
     }
 
-    @BUILTIN(value = AddressBuiltin.LessThan.class)
     @INTRINSIC(UWCMP | (BELOW_THAN << 8))
     public final boolean lessThan(Address other) {
         assert isHosted();
@@ -245,7 +241,6 @@ public abstract class Address extends Word {
         return lessThan(fromInt(other));
     }
 
-    @BUILTIN(value = AddressBuiltin.LessEqual.class)
     @INTRINSIC(UWCMP | (BELOW_EQUAL << 8))
     public final boolean lessEqual(Address other) {
         assert isHosted();
@@ -307,7 +302,6 @@ public abstract class Address extends Word {
         return asOffset().times(factor).asAddress();
     }
 
-    @BUILTIN(value = AddressBuiltin.DividedByAddress.class)
     @INTRINSIC(WDIV)
     protected abstract Address dividedByAddress(Address divisor);
 
@@ -317,7 +311,6 @@ public abstract class Address extends Word {
         return dividedByAddress(divisor);
     }
 
-    @BUILTIN(value = AddressBuiltin.DividedByInt.class)
     @INTRINSIC(WDIVI)
     protected abstract Address dividedByInt(int divisor);
 
@@ -327,7 +320,6 @@ public abstract class Address extends Word {
         return dividedByInt(divisor);
     }
 
-    @BUILTIN(value = AddressBuiltin.RemainderByAddress.class)
     @INTRINSIC(WREM)
     protected abstract Address remainderByAddress(Address divisor);
 
@@ -337,7 +329,6 @@ public abstract class Address extends Word {
         return remainderByAddress(divisor);
     }
 
-    @BUILTIN(value = AddressBuiltin.RemainderByInt.class)
     @INTRINSIC(WREMI)
     protected abstract int remainderByInt(int divisor);
 

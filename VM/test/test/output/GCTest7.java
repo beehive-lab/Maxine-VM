@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package test.output;
 
-import com.sun.max.annotate.UNSAFE;
 
 /**
  * GC Test for large number of object parameters.
@@ -61,7 +60,6 @@ public class GCTest7 {
         }
     }
 
-    @UNSAFE
     private static Object objStackParams(int depth,
                                          String a0, String a1, String a2, String a3, String a4,
                                          String a5, String a6, String a7, String a8, String a9,

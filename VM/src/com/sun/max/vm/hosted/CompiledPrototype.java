@@ -291,6 +291,11 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
+
+    private void invalidateTargetMethod(TargetMethod targetMethod) {
+
+    }
+
     private void processNewTargetMethod(TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
@@ -344,6 +349,14 @@ public class CompiledPrototype extends Prototype {
 
     private boolean isIndirectCall(Relationship relationship) {
         return relationship == Relationship.VIRTUAL_CALL || relationship == Relationship.INTERFACE_CALL;
+    }
+
+    void add(TargetMethod invalidatedTargetMethod) {
+        final ClassMethodActor methodActor = invalidatedTargetMethod.classMethodActor;
+        assert methodActors.containsKey(methodActor);
+        assert methodActor.targetState == invalidatedTargetMethod;
+        methodActor.targetState = null;
+        worklist.add(methodActor);
     }
 
     boolean add(MethodActor child, Object parent, Relationship relationship) {
@@ -490,6 +503,7 @@ public class CompiledPrototype extends Prototype {
         add(ClassRegistry.findMethod(JDK.java_lang_ProcessEnvironment, "<clinit>"), null, entryPoint);
 
         // It's too late now to register any further methods to be compiled into the boot image
+        extraVMEntryPoints = null;
         extraVMEntryPointNames = null;
         imageConstructorStubMethodActors = null;
         imageInvocationStubMethodActors = null;
@@ -635,16 +649,52 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "compiling foldable methods");
     }
 
+    /**
+     * Recompile methods whose assumptions were invalidated.
+     * @return true if the recompilation brought new methods in the compiled prototype.
+     */
+    public boolean recompileInvalidatedTargetMethods() {
+        // All classes referenced from the invalidated target methods must already be loaded
+        // However, recompilation may bring new class method actor since a recompilation
+        // may be triggered by the addition of a new concrete method in the prototype which may
+        // not be already compiled.
+        HashSet<TargetMethod> recompileSet = ClassDependencyManager.invalidTargetMethods;
+        ClassDependencyManager.invalidTargetMethods = new HashSet<TargetMethod>();
+
+        if (!recompileSet.isEmpty()) {
+            Trace.begin(1, "recompiling invalidated methods");
+            assert worklist.size() == 0;
+            for (TargetMethod targetMethod : recompileSet) {
+                add(targetMethod);
+            }
+            assert worklist.size() == recompileSet.size();
+            compileWorklist();
+            assert ClassDependencyManager.invalidTargetMethods.size() == 0;
+            Trace.end(1, "recompiling invalidated methods");
+            return true;
+        }
+        return false;
+    }
+
     public void checkRequiredImageMethods() {
         Trace.begin(1, "checking methods that must be compiled");
+        final TreeSet<String> missing = new TreeSet<String>();
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
             forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (classMethodActor.mustCompileInImage && classMethodActor.targetMethodCount() == 0) {
-                        FatalError.unexpected("Method must be compiled in image: " + classMethodActor);
+                        missing.add(classMethodActor.toString());
                     }
                 }
             });
+        }
+
+        if (!missing.isEmpty()) {
+            String msg =  "These methods must be compiled in the boot image: ";
+            for (String m : missing) {
+                msg += String.format("%n    %s", m);
+            }
+            FatalError.unexpected(msg);
         }
         Trace.end(1, "checking methods that must be compiled");
     }
@@ -652,8 +702,7 @@ public class CompiledPrototype extends Prototype {
     private boolean hasCode(MethodActor methodActor) {
         return methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
-            !methodActor.isIntrinsic() &&
-            (methodActor.isHiddenToReflection() || !methodActor.isBuiltin());
+            !methodActor.isIntrinsic();
     }
 
     public void addEntrypoints() {
@@ -673,8 +722,10 @@ public class CompiledPrototype extends Prototype {
             gatherNewClasses();
             // 4. compile all new methods
             compiledSome = compileWorklist();
-            compiledAny = compiledAny | compiledSome;
+            compiledSome |=  recompileInvalidatedTargetMethods();
+            compiledAny |= compiledSome;
         } while (compiledSome);
+
         return compiledAny;
     }
 

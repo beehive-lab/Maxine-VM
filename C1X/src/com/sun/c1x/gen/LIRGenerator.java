@@ -711,7 +711,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitLoadStackAddress(AllocateStackVariable x) {
+    public void visitAllocateStackHandle(StackHandle x) {
         CiValue value = load(x.value());
         CiValue src = forceToSpill(value, x.value().kind, true);
         CiValue dst = createResultVariable(x);

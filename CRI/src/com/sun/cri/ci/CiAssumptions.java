@@ -35,21 +35,10 @@ import com.sun.cri.ri.*;
  */
 public final class CiAssumptions {
 
-    public static interface AssumptionProcessor {
-        /**
-         * Process a unique concrete subtype assumptions
-         * @param context
-         * @param subtype
-         * @return true if the processor should proceed to next assumptions, false if it should stop.
-         */
-        boolean processUniqueConcreteSubtype(RiType context, RiType subtype);
-        boolean processUniqueConcreteMethod(RiMethod context, RiMethod method);
-    }
-
     public abstract static class Assumption {
         /**
          * Apply an assumption processor to the assumption.
-         * @param processor
+         * @param processor the assumption processor to apply
          * @return true if a next assumption in a list should be fed to the processor.
          */
         abstract boolean visit(AssumptionProcessor processor);

@@ -22,15 +22,27 @@
  */
 package com.sun.max.vm.compiler;
 
+import static com.sun.cri.bytecode.Bytecodes.Infopoints.*;
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jni.*;
+import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.Cursor;
+import com.sun.max.vm.stack.amd64.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Encapsulates the mechanism (or mechanisms) by which methods are prepared for execution.
@@ -38,6 +50,7 @@ import com.sun.max.vm.profile.*;
  * stub.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public interface CompilationScheme extends VMScheme {
 
@@ -97,28 +110,22 @@ public interface CompilationScheme extends VMScheme {
         }
 
         /**
-         * Compile a method and return an address that represents its entrypoint for the specified call entrypoint. This
-         * method performs a synchronous compile (i.e. waits for the compilation to complete before returning the
-         * entrypoint).
+         * Compiles a method.
          *
          * @param classMethodActor the method to compile
-         * @param callEntryPoint the call entrypoint into the target code (@see CallEntryPoint)
-         * @return an address representing the entrypoint to the compiled code of the specified method
+         * @return the compiled method
          */
-        public static Address compile(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
+        public static TargetMethod compile(ClassMethodActor classMethodActor) {
             TargetMethod current;
             Object targetState = classMethodActor.targetState;
             if (targetState instanceof TargetMethod) {
                 // fast path: method is already compiled just once
                 current = (TargetMethod) targetState;
             } else {
-                if (MaxineVM.isHosted() && CPSCompiler.Static.compiler().compiledType() == null) {
-                    return MethodID.fromMethodActor(classMethodActor).asAddress();
-                }
                 // slower path: method has not been compiled, or been compiled more than once
                 current = vmConfig().compilationScheme().synchronousCompile(classMethodActor);
             }
-            return current.getEntryPoint(callEntryPoint).asAddress();
+            return current;
         }
 
         /**
@@ -155,14 +162,130 @@ public interface CompilationScheme extends VMScheme {
             classMethodActor.targetState = null;
         }
 
-        public static void instrumentationCounterOverflow(MethodProfile mpo, int mpoIndex) {
-            ClassMethodActor classMethodActor = (ClassMethodActor) mpo.method;
-            TargetMethod oldMethod = TargetState.currentTargetMethod(classMethodActor.targetState);
-            TargetMethod newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor);
-            if (newMethod != oldMethod) {
-                oldMethod.forwardTo(newMethod);
+        /**
+         * Helper class for patching any direct call sites on the stack corresponding to a target method
+         * being replaced by a recompiled version.
+         */
+        static class DirectCallPatcher extends RawStackFrameVisitor {
+
+            /**
+             * The maximum number of frames to search for a patchable direct call site.
+             */
+            static final int FRAME_SEARCH_LIMIT = 10;
+
+            final Address from;
+            final Address to;
+            int frameCount;
+
+            public DirectCallPatcher(Address oldAddr, Address newAddr) {
+                this.from = oldAddr;
+                this.to = newAddr;
+            }
+
+            @Override
+            public boolean visitFrame(Cursor current, Cursor callee) {
+                if (platform().isa == ISA.AMD64) {
+                    if (current.isTopFrame()) {
+                        return true;
+                    }
+                    Pointer ip = current.ip();
+                    Pointer callSite = ip.minus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
+                    if (callSite.readByte(0) == AMD64TargetMethodUtil.RCALL) {
+                        Pointer target = ip.plus(callSite.readInt(1));
+                        if (target.equals(from)) {
+                            logStaticCallPatch(current, callSite, to);
+                            AMD64TargetMethodUtil.mtSafePatchCallDisplacement(current.targetMethod(), callSite, to);
+                            // Stop traversing the stack after a direct call site has been patched
+                            return false;
+                        }
+                    }
+                    if (++frameCount > FRAME_SEARCH_LIMIT) {
+                        return false;
+                    }
+                    return true;
+                }
+                throw FatalError.unimplemented();
             }
         }
 
+        /**
+         * Handles an instrumentation counter overflow upon entry to a profiled method.
+         * This method must be called on the thread that overflowed the counter.
+         *
+         * @param mpo profiling object (including the method itself)
+         * @param receiver the receiver object of the profiled method. This will be {@code null} if the profiled method is static.
+         */
+        public static void instrumentationCounterOverflow(MethodProfile mpo, Object receiver) {
+            ClassMethodActor classMethodActor = (ClassMethodActor) mpo.method;
+            TargetMethod oldMethod = TargetState.currentTargetMethod(classMethodActor.targetState);
+            TargetMethod newMethod = vmConfig().compilationScheme().synchronousCompile(classMethodActor);
+
+            if (newMethod != oldMethod) {
+                final Address from = oldMethod.getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
+                final Address to = newMethod.getEntryPoint(VTABLE_ENTRY_POINT).asAddress();
+
+                if (receiver != null) {
+                    // Simply overwrite all vtable slots containing 'oldMethod' with 'newMethod'.
+                    // These updates can be made atomically without need for a lock.
+                    Hub hub = ObjectAccess.readHub(receiver);
+                    for (int i = 0; i < hub.vTableLength(); i++) {
+                        int index = Hub.vTableStartIndex() + i;
+                        if (hub.getWord(index).equals(from)) {
+                            logDispatchTablePatch(classMethodActor, from, to, hub, index, "vtable");
+                            hub.setWord(index, to);
+                        }
+                    }
+
+                    for (int i = 0; i < hub.iTableLength; i++) {
+                        int index = hub.iTableStartIndex + i;
+                        if (hub.getWord(index).equals(from)) {
+                            logDispatchTablePatch(classMethodActor, from, to, hub, index, "itable");
+                            hub.setWord(index, to);
+                        }
+                    }
+                }
+
+                // Look for a static call to 'oldMethod' and patch it.
+                // This occurs even if 'classMethodActor' is non-static
+                // as it may have been called directly.
+                DirectCallPatcher patcher = new DirectCallPatcher(from, to);
+                new VmStackFrameWalker(VmThread.current().tla()).inspect(Pointer.fromLong(here()),
+                                VMRegister.getCpuStackPointer(),
+                                VMRegister.getCpuFramePointer(),
+                                patcher);
+            }
+        }
+
+        public static void logDispatchTablePatch(ClassMethodActor classMethodActor, final Address from, final Address to, Hub hub, int index, String table) {
+            if (verboseOption.verboseCompilation) {
+                boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Patching ");
+                Log.print(hub.classActor.name());
+                Log.print('.');
+                Log.print(table);
+                Log.print('[');
+                Log.print(index);
+                Log.print("] {");
+                Log.printMethod(classMethodActor, false);
+                Log.print("} ");
+                Log.print(from);
+                Log.print(" -> ");
+                Log.println(to);
+                Log.unlock(lockDisabledSafepoints);
+            }
+        }
+
+        public static void logStaticCallPatch(Cursor current, Pointer callSite, Address to) {
+            if (verboseOption.verboseCompilation) {
+                boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Patching call at ");
+                Log.printMethod(current.targetMethod(), false);
+                Log.print('+');
+                Log.print(callSite.minus(current.targetMethod().codeStart()).toInt());
+                Log.print(" to ");
+                Log.println(to);
+                Log.unlock(lockDisabledSafepoints);
+            }
+        }
     }
 }

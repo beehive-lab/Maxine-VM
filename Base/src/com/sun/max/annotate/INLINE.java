@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,12 +70,4 @@ public @interface INLINE {
      *     See {@link ClassActor#toJava()} and {@link ArrayClassActor#toJava()} for an example.
      */
     boolean override() default false;
-
-    /**
-     * If true, this element specifies that inlining of the thus annotated method is only allowed
-     * after snippet compilation has concluded.
-     *
-     * @see CompilerScheme#areSnippetsCompiled()
-     */
-    boolean afterSnippetsAreCompiled() default false;
 }

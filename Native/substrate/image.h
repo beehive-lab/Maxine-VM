@@ -42,6 +42,8 @@
     f(wordSize) /* 4 or 8  */ \
     f(cacheAlignment) \
     f(pageSize) /* multiple of 1024  */ \
+    f(yellowZonePages) \
+    f(redZonePages) \
     f(vmRunMethodOffset) \
     f(vmThreadAddMethodOffset) \
     f(vmThreadRunMethodOffset) \

@@ -47,7 +47,7 @@ import com.sun.max.vm.thread.*;
 public final class Heap {
 
     @HOSTED_ONLY
-    public static boolean usedOutOfLineStubs;
+    public static boolean useOutOfLineStubs;
 
     // TODO: clean up. Just for indicating that boot image should be generated with inline TLAB allocation if heap scheme supports TLAB.
     @HOSTED_ONLY
@@ -317,7 +317,6 @@ public final class Heap {
     @INSPECTED
     public static final BootHeapRegion bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), HEAP_BOOT_NAME);
 
-    @UNSAFE
     @FOLD
     private static HeapScheme heapScheme() {
         return vmConfig().heapScheme();

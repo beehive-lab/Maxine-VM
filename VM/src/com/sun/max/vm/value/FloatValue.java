@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ import java.io.*;
 import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -69,7 +69,7 @@ public final class FloatValue extends PrimitiveValue<FloatValue> {
 
     @Override
     public boolean isAllOnes() {
-        return SpecialBuiltin.floatToInt(value) == -1;
+        return Intrinsics.floatToInt(value) == -1;
     }
 
     @Override
