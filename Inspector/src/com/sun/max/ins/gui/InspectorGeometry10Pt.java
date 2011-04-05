@@ -46,6 +46,7 @@ public class InspectorGeometry10Pt implements InspectorGeometry {
         preferredFrameGeometry.put(ViewKind.BOOT_IMAGE, new Rectangle(75, 0, 350, 700));
         preferredFrameGeometry.put(ViewKind.BREAKPOINTS, new Rectangle(950, 0, 400, 150));
         preferredFrameGeometry.put(ViewKind.FRAME, new Rectangle(1175, 450, 275, 450));
+        preferredFrameGeometry.put(ViewKind.JAVA_SOURCE, new Rectangle(100, 100, 500, 500));
         preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(275, 0, 800, 800));
         preferredFrameGeometry.put(ViewKind.NOTEPAD, new Rectangle(150, 150, 300, 300));
         preferredFrameGeometry.put(ViewKind.REGISTERS, new Rectangle(1175, 0, 275, 350));
@@ -67,17 +68,6 @@ public class InspectorGeometry10Pt implements InspectorGeometry {
 
     public Rectangle preferredFrameGeometry(ViewKind viewKind) {
         return preferredFrameGeometry.get(viewKind);
-    }
-
-    // Java Source Inspector frame
-    private static final Point javaSourceFrameDefaultLocation = new Point(100, 100);
-    private static final Dimension javaSourceFramePrefSize = new Dimension(500, 500);
-
-    public Point javaSourceDefaultFrameLocation() {
-        return javaSourceFrameDefaultLocation;
-    }
-    public Dimension javaSourcePrefFrameSize() {
-        return javaSourceFramePrefSize;
     }
 
     // Offset from mouse location for new frames

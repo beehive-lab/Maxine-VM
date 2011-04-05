@@ -30,6 +30,7 @@ import javax.swing.text.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 
@@ -39,6 +40,9 @@ import com.sun.max.vm.actor.holder.*;
  * @author Michael Van De Vanter
  */
 public final class JavaSourceInspector extends FileInspector {
+
+    private static final ViewKind VIEW_KIND = ViewKind.JAVA_SOURCE;
+
 
     private static final Map<File, JavaSourceInspector> inspectors =
         new Hashtable<File, JavaSourceInspector>();
@@ -59,7 +63,7 @@ public final class JavaSourceInspector extends FileInspector {
     private JTextArea textArea;
 
     private JavaSourceInspector(Inspection inspection, File file) {
-        super(inspection, file);
+        super(inspection, file, VIEW_KIND);
         final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
@@ -77,10 +81,8 @@ public final class JavaSourceInspector extends FileInspector {
         textArea.setCaretPosition(0);
 
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), textArea);
-        scrollPane.setPreferredSize(inspection().geometry().javaSourcePrefFrameSize());
-        //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
         setContentPane(scrollPane);
-        gui().moveToMiddle(this);
+        setGeometry(inspection().geometry().preferredFrameGeometry(ViewKind.JAVA_SOURCE));
     }
 
     @Override

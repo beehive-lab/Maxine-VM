@@ -46,10 +46,6 @@ public interface InspectorGeometry {
      */
     Rectangle preferredFrameGeometry(ViewKind viewKind);
 
-    // Java Source Inspector frame
-    Point javaSourceDefaultFrameLocation();
-    Dimension javaSourcePrefFrameSize();
-
     // Offset from mouse location for new frames
     int newFrameDiagonalOffset();
 }

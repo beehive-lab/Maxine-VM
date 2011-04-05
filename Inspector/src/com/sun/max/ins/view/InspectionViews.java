@@ -78,7 +78,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        FILE(false, false, "The contents of a source file"),
         FRAME(true, true, "Stack frame contents in the VM for the currently frame") {
 
             @Override
@@ -97,6 +96,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
+        JAVA_SOURCE(false, false, "The contents of a Java source file"),
         MEMORY(false, false, "The contents of a region of VM memory, expressed as words"),
         MEMORY_BYTES(false, false, "The contents of a region of VM memory, expressed as bytes"),
         METHODS(true, true, "Container for multiple disassembled methods from the VM") {
