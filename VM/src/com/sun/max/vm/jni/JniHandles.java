@@ -168,8 +168,9 @@ public final class JniHandles {
             for (int i = newTop; i != this.top; ++i) {
                 handles[i] = null;
             }
-            if (freedHandles.length() >= newTop) {
-                for (int i = freedHandles.nextSetBit(newTop, this.top); i != -1; i = freedHandles.nextSetBit(i, this.top)) {
+            int freeLength = freedHandles.length();
+            if (freeLength >= newTop) {
+                for (int i = freedHandles.nextSetBit(newTop, freeLength); i != -1; i = freedHandles.nextSetBit(i, freeLength)) {
                     freedHandles.clear(i);
                 }
             }
