@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 
 /**
- * A code region that encapsulates a contiguous, fixed-sized memory area in the {@link TeleVM}
+ * A code region that encapsulates a contiguous, fixed-sized memory area in the VM
  * for storing code and data structures relating to code.
  *
  * @author Bernd Mathiske
@@ -78,13 +78,16 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     private final SortedMemoryRegionList<TargetMethod> targetMethods = new SortedMemoryRegionList<TargetMethod>();
 
     /**
-     * Accessor for the sorted list of target methods.
-     *
-     * @return the sorted list of target methods in this code region
+     * Gets a copy of the sorted target method list.
      */
-    @HOSTED_ONLY
-    public Iterable<TargetMethod> targetMethods() {
-        return targetMethods;
+    public TargetMethod[] copyOfTargetMethods() {
+        while (true) {
+            TargetMethod[] result = new TargetMethod[targetMethods.size()];
+            int length = targetMethods.copyInto(result);
+            if (length == result.length) {
+                return result;
+            }
+        }
     }
 
     public void add(TargetMethod targetMethod) {

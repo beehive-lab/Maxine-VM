@@ -397,7 +397,7 @@ public class CompiledPrototype extends Prototype {
     }
 
     private void addMethodsReferencedByExistingTargetCode() {
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             ClassMethodActor classMethodActor = targetMethod.classMethodActor;
             if (classMethodActor != null) {
                 Link existing = methodActors.put(classMethodActor, new Link(classMethodActor, null, null));
@@ -725,7 +725,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             if (!(targetMethod instanceof Adapter)) {
                 Adapter adapter = null;
                 ClassMethodActor classMethodActor = targetMethod.classMethodActor;
