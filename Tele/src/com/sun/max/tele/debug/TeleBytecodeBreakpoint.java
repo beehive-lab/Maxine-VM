@@ -658,9 +658,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 address = teleTargetMethod.getCodeStart().plus(pos);
                 Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint at method entry in " + teleTargetMethod);
             } else {
-                int[] bciToPos = teleTargetMethod.getBytecodeToMachineCodePositionMap();
-                if (bciToPos != null && bci < bciToPos.length) {
-                    int pos = bciToPos[bci];
+                int[] bciToPosMap = teleTargetMethod.bciToPosMap();
+                if (bciToPosMap != null && bci < bciToPosMap.length) {
+                    int pos = bciToPosMap[bci];
                     address = teleTargetMethod.getCodeStart().plus(pos);
                     Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint for offset " + pos + " in " + teleTargetMethod);
                 } else {

@@ -35,7 +35,8 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.hosted.*;
 
 /**
- * Manages saving and restoring of settings between Inspection sessions.
+ * A manager for saving and restoring of settings between Inspection sessions, with some
+ * specialized machinery to support the saving of inspector frame geometry (location, size).
  *
  * @author Michael Van De Vanter
  * @author Doug Simon
@@ -50,6 +51,7 @@ public class InspectionSettings {
     private static final String COMPONENT_Y_KEY = "y";
     private static final String COMPONENT_HEIGHT_KEY = "height";
     private static final String COMPONENT_WIDTH_KEY = "width";
+    private static final Point defaultInspectorLocation = new Point(100, 100);
 
     private String tracePrefix() {
         return "[InspectionSettings] ";
@@ -129,7 +131,7 @@ public class InspectionSettings {
         /**
          * @return geometry to apply to a newly shown component when there have been no geometry settings saved.
          */
-        Rectangle defaultBounds();
+        Rectangle defaultGeometry();
     }
 
     /**
@@ -138,12 +140,12 @@ public class InspectionSettings {
     public abstract static class AbstractSaveSettingsListener implements SaveSettingsListener {
         protected final String name;
         protected final Inspector inspector;
-        protected final Rectangle defaultBounds;
+        protected final Rectangle defaultGeometry;
 
-        private AbstractSaveSettingsListener(String name, Inspector inspector, Rectangle defaultBounds) {
+        private AbstractSaveSettingsListener(String name, Inspector inspector, Rectangle defaultGeometry) {
             this.name = name;
             this.inspector = inspector;
-            this.defaultBounds = defaultBounds;
+            this.defaultGeometry = defaultGeometry;
         }
 
         public AbstractSaveSettingsListener(String name, Inspector inspector) {
@@ -162,8 +164,8 @@ public class InspectionSettings {
             return name;
         }
 
-        public Rectangle defaultBounds() {
-            return defaultBounds;
+        public Rectangle defaultGeometry() {
+            return defaultGeometry;
         }
 
         @Override
@@ -210,6 +212,27 @@ public class InspectionSettings {
         saver = new Saver();
     }
 
+    /**
+     * Add a listener that will be notified when a "save event" is triggered, so that settings
+     * can be saved.
+     * <p>
+     * If the listener has an associated {@link Inspector}, then additional services are provided
+     * to automate the saving and restoring of window frame geometry (size, location):
+     * <ol>
+     * <li>During the execution of this method call, the inspector's frame is positioned and
+     * sized according to the following search:
+     * <ul>
+     * <li>Use saved geometry settings for this Inspector, if they exist;</li>
+     * <li>If no settings saved, then use default geometry for this kind of view, if it exists;</li>
+     * <li>Otherwise use a generic default geometry.</li>
+     * </ul>
+     * </li>
+     * <li>The listener has associated code that will automatically save the Inspector's geometry
+     * upon every "save event".</li>
+     * </ol>
+     * @param saveSettingsListener a listener for events that should cause important settings to be
+     * saved
+     */
     public void addSaveSettingsListener(final SaveSettingsListener saveSettingsListener) {
         final SaveSettingsListener oldClient = clients.put(saveSettingsListener.name(), saveSettingsListener);
         assert oldClient == null || oldClient == saveSettingsListener;
@@ -245,19 +268,26 @@ public class InspectionSettings {
      */
     private void repositionInspectorFromSettings(SaveSettingsListener saveSettingsListener) {
         final Inspector inspector = saveSettingsListener.inspector();
-        final Rectangle oldBounds = inspector.getJComponent().getBounds();
-        Rectangle newBounds = saveSettingsListener.defaultBounds();
-        if (get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, -1) >= 0) {
-            newBounds = new Rectangle(
-                get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldBounds.x),
-                get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldBounds.y),
-                get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldBounds.width),
-                get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldBounds.height));
+        final Rectangle oldGeometry = inspector.getJComponent().getBounds();
+        Rectangle newGeometry = saveSettingsListener.defaultGeometry();
+        // Check to see if we have geometry settings for this component.
+        // We used to check to see if X location was set, with a default of -1 meaning
+        // "not set", but we then discovered some apparently legitimate minus
+        // values (for reasons unknown) on the Darwin platform (at least).
+
+        if (get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, -1) >= 0) {
+            newGeometry = new Rectangle(
+                Math.max(get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldGeometry.x), 0),
+                Math.max(get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldGeometry.y), 0),
+                get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldGeometry.width),
+                get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldGeometry.height));
         }
-        if (newBounds != null && !newBounds.equals(oldBounds)) {
-            inspector.getJComponent().setBounds(newBounds);
+        if (newGeometry == null) {
+            inspector.getJComponent().setLocation(defaultInspectorLocation);
+        } else if (!newGeometry.equals(oldGeometry)) {
+            inspector.getJComponent().setBounds(newGeometry);
         }
-        inspection.gui().moveToMiddleIfNotVisble(inspector);
+        inspection.gui().moveToFullyVisible(inspector);
     }
 
     /**
@@ -353,21 +383,7 @@ public class InspectionSettings {
      * Writes the persistent settings represented by this object to a {@linkplain #settingsFile() file}.
      */
     private synchronized void doSave() {
-        final Properties newProperties = new SortedProperties();
-        Trace.line(TRACE_VALUE, tracePrefix() + "saving settings to: " + settingsFile.toString());
-        for (SaveSettingsListener saveSettingsListener : clients.values()) {
-            final SaveSettingsEvent saveSettingsEvent = new SaveSettingsEvent(saveSettingsListener, newProperties);
-            saveSettingsListener.saveSettings(saveSettingsEvent);
-            final Inspector inspector = saveSettingsListener.inspector();
-            if (inspector != null) {
-                final Rectangle bounds = inspector.getJComponent().getBounds();
-                saveSettingsEvent.save(COMPONENT_X_KEY, bounds.x);
-                saveSettingsEvent.save(COMPONENT_Y_KEY, bounds.y);
-                saveSettingsEvent.save(COMPONENT_WIDTH_KEY, bounds.width);
-                saveSettingsEvent.save(COMPONENT_HEIGHT_KEY, bounds.height);
-            }
-        }
-        properties.putAll(newProperties);
+        updateSettings();
         try {
             final FileWriter fileWriter = new FileWriter(settingsFile);
             properties.store(fileWriter, null);
@@ -376,5 +392,35 @@ public class InspectionSettings {
             InspectorWarning.message(tracePrefix() + "Error while saving settings to " + settingsFile, ioException);
         }
 
+    }
+
+    private void updateSettings() {
+        final Properties newProperties = new SortedProperties();
+        Trace.line(TRACE_VALUE, tracePrefix() + "saving settings to: " + settingsFile.toString());
+        for (SaveSettingsListener saveSettingsListener : clients.values()) {
+            final SaveSettingsEvent saveSettingsEvent = new SaveSettingsEvent(saveSettingsListener, newProperties);
+            saveSettingsListener.saveSettings(saveSettingsEvent);
+            final Inspector inspector = saveSettingsListener.inspector();
+            if (inspector != null) {
+                final Rectangle geometry = inspector.getJComponent().getBounds();
+                saveSettingsEvent.save(COMPONENT_X_KEY, geometry.x);
+                saveSettingsEvent.save(COMPONENT_Y_KEY, geometry.y);
+                saveSettingsEvent.save(COMPONENT_WIDTH_KEY, geometry.width);
+                saveSettingsEvent.save(COMPONENT_HEIGHT_KEY, geometry.height);
+            }
+        }
+        properties.putAll(newProperties);
+    }
+
+    /**
+     * Writes a summary, in alphabetical order, of the current settings being saved.
+     */
+    public void writeSummary(PrintStream printStream) {
+        updateSettings();
+        try {
+            properties.store(printStream, "Inspection settings");
+        } catch (IOException e) {
+            InspectorWarning.message("Failed to write settings to console", e);
+        }
     }
 }

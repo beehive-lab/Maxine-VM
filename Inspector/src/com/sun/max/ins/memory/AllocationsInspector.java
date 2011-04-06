@@ -31,9 +31,10 @@ import java.util.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
@@ -42,40 +43,61 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryRegionsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class AllocationsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 2;
+    private static final ViewKind VIEW_KIND = ViewKind.ALLOCATIONS;
+    private static final String SHORT_NAME = "Allocations";
+    private static final String LONG_NAME = "Allocations Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "allocationsInspectorGeometry";
 
-    // Set to null when inspector closed.
-    private static MemoryRegionsInspector memoryRegionsInspector;
+    private static final class MemoryAllocationsViewManager extends AbstractSingletonViewManager<AllocationsInspector> {
 
-    /**
-     * Displays the (singleton) MemoryRegions inspector.
-     * @return  The MemoryRegions inspector, possibly newly created.
-     */
-    public static MemoryRegionsInspector make(Inspection inspection) {
-        if (memoryRegionsInspector == null) {
-            memoryRegionsInspector = new MemoryRegionsInspector(inspection);
+        protected MemoryAllocationsViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return memoryRegionsInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return inspection().hasProcess();
+        }
+
+        public AllocationsInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new AllocationsInspector(inspection);
+            }
+            return inspector;
+        }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "memoryRegionsInspectorGeometry");
+    // Will be non-null before any instances created.
+    private static MemoryAllocationsViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new MemoryAllocationsViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     // This is a singleton viewer, so only use a single level of view preferences.
-    private final MemoryRegionsViewPreferences viewPreferences;
+    private final MemoryAllocationsViewPreferences viewPreferences;
+
     private InspectorPanel contentPane;
 
-    private MemoryRegionsTable table;
+    private MemoryAllocationsTable table;
 
     private TableRowFilterToolBar filterToolBar = null;
     private JCheckBoxMenuItem showFilterCheckboxMenuItem;
     private int[] filterMatchingRows = null;
 
-    private MemoryRegionsInspector(Inspection inspection) {
-        super(inspection);
+    private AllocationsInspector(Inspection inspection) {
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1, tracePrefix() + "initializing");
-        viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
+        viewPreferences = MemoryAllocationsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
         showFilterCheckboxMenuItem = new InspectorCheckBox(inspection, "Filter view", "Show Filter Field", false);
         showFilterCheckboxMenuItem.addItemListener(new ItemListener() {
@@ -93,7 +115,7 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectSelectedMemoryRegionWords());
+        memoryMenu.add(actions().inspectSelectedMemoryRegion());
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
 
         final InspectorMenuItems defaultViewMenuItems = defaultMenuItems(MenuKind.VIEW_MENU);
@@ -106,17 +128,67 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
     }
 
     @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().memoryRegionsFrameDefaultBounds();
+    public String getTextForTitle() {
+        return viewManager.shortName();
+    }
+
+    @Override
+    protected InspectorTable getTable() {
+        return table;
     }
 
     @Override
     protected void createView() {
-        table = new MemoryRegionsTable(inspection(), viewPreferences);
-        final InspectorScrollPane memoryRegionsScrollPane = new InspectorScrollPane(inspection(), table);
+        table = new MemoryAllocationsTable(inspection(), viewPreferences);
+        final InspectorScrollPane memoryAllocationsScrollPane = new InspectorScrollPane(inspection(), table);
         contentPane = new InspectorPanel(inspection(), new BorderLayout());
-        contentPane.add(memoryRegionsScrollPane, BorderLayout.CENTER);
+        contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);
         setContentPane(contentPane);
+    }
+
+    @Override
+    protected void refreshState(boolean force) {
+        table.refresh(force);
+        if (filterToolBar != null) {
+            filterToolBar.refresh(force);
+        }
+    }
+
+    @Override
+    public void memoryRegionFocusChanged(MaxMemoryRegion oldMemoryRegion, MaxMemoryRegion memoryRegion) {
+        if (table != null) {
+            table.updateFocusSelection();
+        }
+    }
+
+    @Override
+    public void watchpointSetChanged() {
+        if (vm().state().processState() != TERMINATED) {
+            forceRefresh();
+        }
+    }
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryAllocationsColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
+            }
+        };
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
+    }
+
+    public void viewConfigurationChanged() {
+        reconstructView();
+    }
+
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
     }
 
     private final RowMatchListener rowMatchListener = new RowMatchListener() {
@@ -153,70 +225,8 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
     }
 
     @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
-    }
-
-    @Override
-    protected InspectorTable getTable() {
-        return table;
-    }
-
-    @Override
-    public String getTextForTitle() {
-        return "MemoryRegions";
-    }
-
-    @Override
-    public InspectorAction getViewOptionsAction() {
-        return new InspectorAction(inspection(), "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryRegionsColumnKind>(inspection(), "Memory Regions View Options", viewPreferences);
-            }
-        };
-    }
-
-    @Override
-    public InspectorAction getPrintAction() {
-        return getDefaultPrintAction();
-    }
-
-    @Override
-    protected void refreshView(boolean force) {
-        table.refresh(force);
-        if (filterToolBar != null) {
-            filterToolBar.refresh(force);
-        }
-        super.refreshView(force);
-    }
-
-    @Override
-    public void memoryRegionFocusChanged(MaxMemoryRegion oldMemoryRegion, MaxMemoryRegion memoryRegion) {
-        if (table != null) {
-            table.updateFocusSelection();
-        }
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
-    @Override
-    public void watchpointSetChanged() {
-        if (vm().state().processState() != TERMINATED) {
-            refreshView(true);
-        }
-    }
-
-    public void tableColumnViewPreferencesChanged() {
-        reconstructView();
-    }
-
-    @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        memoryRegionsInspector = null;
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
@@ -224,10 +234,8 @@ public final class MemoryRegionsInspector extends Inspector implements TableColu
     @Override
     public void vmProcessTerminated() {
         Trace.line(1, tracePrefix() + " closing - process terminated");
-        memoryRegionsInspector = null;
         viewPreferences.removeListener(this);
         dispose();
     }
-
 
 }

@@ -31,6 +31,7 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -46,8 +47,17 @@ import com.sun.max.unsafe.*;
 public abstract class ObjectInspector extends Inspector {
 
     private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
 
-    private final ObjectInspectorFactory factory;
+
+    private static ObjectViewManager viewManager;
+
+    public static ObjectViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new ObjectViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     private TeleObject teleObject;
 
@@ -84,9 +94,10 @@ public abstract class ObjectInspector extends Inspector {
 
     protected final ObjectViewPreferences instanceViewPreferences;
 
-    protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, final TeleObject teleObject) {
-        super(inspection);
-        this.factory = factory;
+    private Rectangle originalFrameGeometry = null;
+
+    protected ObjectInspector(final Inspection inspection, ObjectViewManager factory, final TeleObject teleObject) {
+        super(inspection, VIEW_KIND, null);
         this.teleObject = teleObject;
         this.currentObjectOrigin = teleObject().origin();
         this.title = "";
@@ -113,8 +124,8 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public InspectorFrame createFrame(boolean addMenuBar) {
         final InspectorFrame frame = super.createFrame(addMenuBar);
-        gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
-
+        gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
+        originalFrameGeometry = getGeometry();
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
@@ -122,14 +133,12 @@ public abstract class ObjectInspector extends Inspector {
         defaultMenu.add(actions().closeViews(ObjectInspector.class, null, "Close all object inspectors"));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectObjectMemoryWords(teleObject, "Inspect this object's memory"));
+        memoryMenu.add(actions().inspectObjectMemory(teleObject, "Inspect this object's memory"));
         if (vm().watchpointManager() != null) {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        memoryMenu.add(viewMemoryRegionsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.OBJECT_MENU);
 
@@ -155,6 +164,11 @@ public abstract class ObjectInspector extends Inspector {
             panel.add(objectHeaderTable, BorderLayout.NORTH);
         }
         setContentPane(panel);
+    }
+
+    @Override
+    protected Rectangle defaultGeometry() {
+        return originalFrameGeometry;
     }
 
     @Override
@@ -190,12 +204,12 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         // Object inspector displays are sensitive to the current thread selection.
-        refreshView(true);
+        forceRefresh();
     }
 
     @Override
     public void addressFocusChanged(Address oldAddress, Address newAddress) {
-        refreshView(true);
+        forceRefresh();
     }
 
     @Override
@@ -216,12 +230,11 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        // don't try to recompute the title, just get the one that's been in use
+        // don't try to recompute the title (it might not be computable),s just get the one that's been in use
         Trace.line(TRACE_VALUE, tracePrefix() + " closing for " + getTitle());
         if (teleObject == focus().heapObject()) {
             focus().setHeapObject(null);
         }
-        factory.objectInspectorClosing(this);
         super.inspectorClosing();
     }
 
@@ -229,7 +242,7 @@ public abstract class ObjectInspector extends Inspector {
     public void watchpointSetChanged() {
         // TODO (mlvdv)  patch for concurrency issue; not completely safe
         if (vm().state().processState() == STOPPED) {
-            refreshView(true);
+            forceRefresh();
         }
     }
 
@@ -239,17 +252,17 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         if (teleObject.isObsolete() && followingTeleObject) {
             Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
-            if (factory.isObjectInspectorObservingObject(forwardedTeleObject.reference().makeOID())) {
+            if (viewManager.isObjectInspectorObservingObject(forwardedTeleObject.reference().makeOID())) {
                 followingTeleObject = false;
                 setWarning();
                 setTitle();
                 return;
             }
-            factory.resetObjectToInspectorMapEntry(teleObject, forwardedTeleObject, this);
+            viewManager.resetObjectToInspectorMapEntry(teleObject, forwardedTeleObject, this);
             teleObject = forwardedTeleObject;
             currentObjectOrigin = teleObject.origin();
             reconstructView();
@@ -276,7 +289,6 @@ public abstract class ObjectInspector extends Inspector {
         } else {
             setStateColor(null);
         }
-        super.refreshView(force);
     }
 
     public void viewConfigurationChanged() {

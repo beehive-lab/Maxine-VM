@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+package com.sun.max.ins.method;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -29,8 +29,10 @@ import java.util.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.ins.method.*;
+import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
+import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
+import com.sun.max.ins.gui.*;
 import com.sun.max.program.option.*;
 
 public class MethodInspectorPreferences extends AbstractInspectionHolder {

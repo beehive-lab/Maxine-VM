@@ -210,7 +210,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         protected TeleVMFrame(TeleVM teleVM, TeleStack teleStack, int position, VMStackFrame compiledStackFrame) {
             super(teleVM, teleStack, position, compiledStackFrame);
             final String description = teleStack.thread().entityName() + " frame(" + position() + ")";
-            this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), layout().frameSize());
+            this.stackFrameMemoryRegion = new StackFrameMemoryRegion(teleVM, this, description, stackFrame.slotBase(), layout().maximumSlotOffset());
             this.entityDescription = "Stack frame " + position() + " in the " + vm().entityName() + " for " + teleStack.thread().entityName();
         }
 
@@ -259,7 +259,7 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         }
 
         public String entityName() {
-            return "<Native stack frame>  " + stackFrame.toString();
+            return "Frame: " + stackFrame.toString();
         }
 
         public String entityDescription() {

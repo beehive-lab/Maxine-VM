@@ -971,7 +971,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final MaxMemoryRegion findMemoryRegion(Address address) {
-        for (MaxMemoryRegion memoryRegion : state().memoryRegions()) {
+        for (MaxMemoryRegion memoryRegion : state().memoryAllocations()) {
             if (memoryRegion != null && memoryRegion.contains(address)) {
                 return memoryRegion;
             }
@@ -1144,27 +1144,27 @@ public abstract class TeleVM implements MaxVM {
                     TeleWatchpointEvent teleWatchpointEvent) {
 
         // Rebuild list of all allocated memory regions
-        final ArrayList<MaxMemoryRegion> memoryRegions = new ArrayList<MaxMemoryRegion>(teleVMState.memoryRegions().size());
+        final ArrayList<MaxMemoryRegion> memoryAllocations = new ArrayList<MaxMemoryRegion>(teleVMState.memoryAllocations().size());
         for (MaxHeapRegion heapRegion : heap.heapRegions()) {
-            addNonNull(memoryRegions, heapRegion.memoryRegion());
+            addNonNull(memoryAllocations, heapRegion.memoryRegion());
         }
         if (heap.rootsMemoryRegion() != null) {
-            addNonNull(memoryRegions, heap.rootsMemoryRegion());
+            addNonNull(memoryAllocations, heap.rootsMemoryRegion());
         }
         for (MaxThread thread : threads) {
-            addNonNull(memoryRegions, thread.stack().memoryRegion());
-            addNonNull(memoryRegions, thread.localsBlock().memoryRegion());
+            addNonNull(memoryAllocations, thread.stack().memoryRegion());
+            addNonNull(memoryAllocations, thread.localsBlock().memoryRegion());
         }
         for (MaxCompiledCodeRegion compiledCodeRegion : teleCodeCache.compiledCodeRegions()) {
-            addNonNull(memoryRegions, compiledCodeRegion.memoryRegion());
+            addNonNull(memoryAllocations, compiledCodeRegion.memoryRegion());
         }
         for (MaxMemoryRegion memoryRegion : platformMemoryRegions()) {
-            addNonNull(memoryRegions, memoryRegion);
+            addNonNull(memoryAllocations, memoryRegion);
         }
 
         this.teleVMState = new TeleVMState(processState,
             epoch,
-            memoryRegions,
+            memoryAllocations,
             threads,
             singleStepThread,
             threadsStarted,

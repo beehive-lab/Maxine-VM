@@ -22,6 +22,7 @@
  */
 package com.sun.max.ins.memory;
 
+import java.awt.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -32,6 +33,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -45,7 +47,7 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  */
 public final class MemoryBytesInspector extends Inspector {
-
+    private static final ViewKind VIEW_KIND = ViewKind.MEMORY_BYTES;
     private static final Set<MemoryBytesInspector> memoryInspectors = CiUtil.newIdentityHashSet();
 
     /**
@@ -72,8 +74,10 @@ public final class MemoryBytesInspector extends Inspector {
         return create(inspection, region.start(), (int) nBytes, 1, 16);
     }
 
+    private final Rectangle originalFrameGeometry;
+
     private MemoryBytesInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
-        super(inspection);
+        super(inspection, VIEW_KIND, null);
         this.address = address;
         this.numberOfGroups = numberOfGroups;
         this.numberOfBytesPerGroup = numberOfBytesPerGroup;
@@ -88,13 +92,11 @@ public final class MemoryBytesInspector extends Inspector {
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        memoryMenu.add(viewMemoryRegionsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
-        inspection.gui().setLocationRelativeToMouse(this);
+        inspection.gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
+        originalFrameGeometry = getGeometry();
         memoryInspectors.add(this);
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
     }
@@ -167,7 +169,7 @@ public final class MemoryBytesInspector extends Inspector {
     private TextLabel[] charLabels;
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         final byte[] bytes = new byte[numberOfBytesPerGroup];
         for (int i = 0; i < numberOfGroups; i++) {
             final Address address = this.address.plus(i * numberOfBytesPerGroup);
@@ -190,10 +192,14 @@ public final class MemoryBytesInspector extends Inspector {
                 }
             }
         }
-        super.refreshView(force);
     }
 
     private JPanel contentPane;
+
+    @Override
+    protected Rectangle defaultGeometry() {
+        return originalFrameGeometry;
+    }
 
     @Override
     public String getTextForTitle() {
@@ -243,7 +249,7 @@ public final class MemoryBytesInspector extends Inspector {
             }
         }
 
-        refreshView(true);
+        forceRefresh();
         SpringUtilities.makeCompactGrid(view, numberOfLines * 2, 1 + numberOfGroupsPerLine, 0, 0, 5, 5);
     }
 

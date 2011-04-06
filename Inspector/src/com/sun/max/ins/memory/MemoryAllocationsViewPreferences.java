@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,26 +27,26 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 
 /**
- * Persistent preferences for viewing memory regions in the VM.
+ * Persistent preferences for viewing memory allocations in the VM.
  *
  * @author Michael Van De Vanter
   */
-public final class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<MemoryRegionsColumnKind> {
+public final class MemoryAllocationsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<MemoryAllocationsColumnKind> {
 
-    private static MemoryRegionsViewPreferences globalPreferences;
+    private static MemoryAllocationsViewPreferences globalPreferences;
 
     /**
-     * @return the global, persistent set of user preferences for viewing a table of memory regions.
+     * @return the global, persistent set of user preferences for viewing a table of memory allocations.
      */
-    static MemoryRegionsViewPreferences globalPreferences(Inspection inspection) {
+    static MemoryAllocationsViewPreferences globalPreferences(Inspection inspection) {
         if (globalPreferences == null) {
-            globalPreferences = new MemoryRegionsViewPreferences(inspection);
+            globalPreferences = new MemoryAllocationsViewPreferences(inspection);
         }
         return globalPreferences;
     }
 
     // Prefix for all persistent column preferences in view
-    private static final String MEMORY_REGIONS_COLUMN_PREFERENCE = "memoryRegionsViewColumn";
+    private static final String MEMORY_ALLOCATIONS_COLUMN_PREFERENCE = "memoryAllocationsViewColumn";
 
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
@@ -59,8 +59,8 @@ public final class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.Tabl
     * Creates a set of preferences specified for use by singleton instances, where local and
     * persistent global choices are identical.
     */
-    private MemoryRegionsViewPreferences(Inspection inspection) {
-        super(inspection, MEMORY_REGIONS_COLUMN_PREFERENCE, MemoryRegionsColumnKind.values());
+    private MemoryAllocationsViewPreferences(Inspection inspection) {
+        super(inspection, MEMORY_ALLOCATIONS_COLUMN_PREFERENCE, MemoryAllocationsColumnKind.values());
         // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

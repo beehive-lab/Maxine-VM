@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import java.io.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 /**
  * Base class for inspectors that display information from files.
@@ -41,8 +42,8 @@ public abstract class FileInspector extends Inspector {
         return file;
     }
 
-    protected FileInspector(Inspection inspection, File file) {
-        super(inspection);
+    protected FileInspector(Inspection inspection, File file, ViewKind viewKind) {
+        super(inspection, viewKind, null);
         this.file = file;
     }
 

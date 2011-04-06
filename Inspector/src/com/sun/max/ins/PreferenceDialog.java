@@ -128,21 +128,21 @@ public class PreferenceDialog extends SimpleDialog {
         watchpointsInspectorPanel.setBorder(border);
         prefPanel.add(watchpointsInspectorPanel);
 
-        final JPanel memoryRegionsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
-        memoryRegionsLabelPanel.setBorder(border);
-        memoryRegionsLabelPanel.add(new TextLabel(inspection, "Memory regions"), BorderLayout.WEST);
-        prefPanel.add(memoryRegionsLabelPanel);
+        final JPanel memoryAllocationsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        memoryAllocationsLabelPanel.setBorder(border);
+        memoryAllocationsLabelPanel.add(new TextLabel(inspection, "Memory allocations"), BorderLayout.WEST);
+        prefPanel.add(memoryAllocationsLabelPanel);
 
-        final JPanel memoryRegionsInspectorPanel = MemoryRegionsViewPreferences.globalPreferencesPanel(inspection);
-        memoryRegionsInspectorPanel.setBorder(border);
-        prefPanel.add(memoryRegionsInspectorPanel);
+        final JPanel memoryAllocationsInspectorPanel = MemoryAllocationsViewPreferences.globalPreferencesPanel(inspection);
+        memoryAllocationsInspectorPanel.setBorder(border);
+        prefPanel.add(memoryAllocationsInspectorPanel);
 
         final JPanel memoryWordsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         memoryWordsLabelPanel.setBorder(border);
         memoryWordsLabelPanel.add(new TextLabel(inspection, "Memory"), BorderLayout.WEST);
         prefPanel.add(memoryWordsLabelPanel);
 
-        final JPanel memoryWordsInspectorPanel = MemoryWordsInspector.globalPreferencesPanel(inspection);
+        final JPanel memoryWordsInspectorPanel = MemoryInspector.globalPreferencesPanel(inspection);
         memoryWordsInspectorPanel.setBorder(border);
         prefPanel.add(memoryWordsInspectorPanel);
 
