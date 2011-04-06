@@ -24,7 +24,6 @@ package com.sun.max.vm.t1x;
 
 import static com.sun.cri.bytecode.Bytecodes.MemoryBarriers.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveArrayClass.*;
 import static com.sun.max.vm.t1x.T1XFrameOps.*;
 import static com.sun.max.vm.t1x.T1XRuntime.*;
 import static com.sun.max.vm.t1x.T1XTemplateTag.*;
@@ -36,13 +35,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateMultiReferenceArray;
-import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreatePrimitiveArray;
-import com.sun.max.vm.compiler.snippet.CreateArraySnippet.CreateReferenceArray;
-import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.SelectInterfaceMethod;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClass;
-import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
@@ -79,10 +71,17 @@ public class T1XTemplateSource {
         T1XRuntime.rethrowException();
     }
 
-    @T1X_TEMPLATE(PROFILE_METHOD_ENTRY)
-    public static void profileMethodEntry(MethodProfile mpo) {
+    @T1X_TEMPLATE(PROFILE_NONSTATIC_METHOD_ENTRY)
+    public static void profileNonstaticMethodEntry(MethodProfile mpo, int dispToRcvr) {
+        Object rcvr = getLocalObject(dispToRcvr);
         // entrypoint counters count down to zero ("overflow")
-        MethodInstrumentation.recordEntrypoint(mpo);
+        MethodInstrumentation.recordEntrypoint(mpo, rcvr);
+    }
+
+    @T1X_TEMPLATE(PROFILE_STATIC_METHOD_ENTRY)
+    public static void profileStaticMethodEntry(MethodProfile mpo) {
+        // entrypoint counters count down to zero ("overflow")
+        MethodInstrumentation.recordEntrypoint(mpo, null);
     }
 
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
@@ -155,9 +154,9 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(ANEWARRAY)
     public static void anewarray(ResolutionGuard guard) {
-        ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(resolveArrayClass(guard));
+        ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(guard));
         int length = peekInt(0);
-        pokeReference(0, CreateReferenceArray.noninlineCreateReferenceArray(arrayClassActor, length));
+        pokeReference(0, T1XRuntime.createReferenceArray(arrayClassActor, length));
     }
 
     @T1X_TEMPLATE(ARETURN)
@@ -1010,9 +1009,9 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(INSTANCEOF)
     public static void instanceof_(ResolutionGuard guard) {
-        ClassActor classActor = UnsafeCast.asClassActor(ResolveClass.resolveClass(guard));
+        ClassActor classActor = UnsafeCast.asClassActor(Snippets.resolveClass(guard));
         Object object = peekObject(0);
-        pokeInt(0, UnsafeCast.asByte(Snippet.InstanceOf.instanceOf(classActor, object)));
+        pokeInt(0, UnsafeCast.asByte(Snippets.instanceOf(classActor, object)));
     }
 
     @T1X_TEMPLATE(INVOKEVIRTUAL$void)
@@ -1086,27 +1085,32 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(INVOKESPECIAL$void)
-    public static void invokespecialVoid(ResolutionGuard.InPool guard) {
+    public static void invokespecialVoid(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         indirectCallVoid(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @T1X_TEMPLATE(INVOKESPECIAL$float)
-    public static void invokespecialFloat(ResolutionGuard.InPool guard) {
+    public static void invokespecialFloat(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         indirectCallFloat(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @T1X_TEMPLATE(INVOKESPECIAL$long)
-    public static void invokespecialLong(ResolutionGuard.InPool guard) {
+    public static void invokespecialLong(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         indirectCallLong(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @T1X_TEMPLATE(INVOKESPECIAL$double)
-    public static void invokespecialDouble(ResolutionGuard.InPool guard) {
+    public static void invokespecialDouble(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         indirectCallDouble(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @T1X_TEMPLATE(INVOKESPECIAL$word)
-    public static void invokespecialWord(ResolutionGuard.InPool guard) {
+    public static void invokespecialWord(ResolutionGuard.InPool guard, int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         indirectCallWord(resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
@@ -1242,7 +1246,7 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(LDC$reference)
     public static void unresolved_class_ldc(ResolutionGuard guard) {
-        ClassActor classActor = ResolveClass.resolveClass(guard);
+        ClassActor classActor = Snippets.resolveClass(guard);
         Object mirror = T1XRuntime.getClassMirror(classActor);
         pushObject(mirror);
     }
@@ -1446,7 +1450,7 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(MULTIANEWARRAY)
     public static void multianewarray(ResolutionGuard guard, int[] lengthsShared) {
-        ClassActor arrayClassActor = ResolveClass.resolveClass(guard);
+        ClassActor arrayClassActor = Snippets.resolveClass(guard);
 
         // Need to use an unsafe cast to remove the checkcast inserted by javac as that causes this
         // template to have a reference literal in its compiled form.
@@ -1458,7 +1462,7 @@ public class T1XTemplateSource {
             checkArrayDimension(length);
             ArrayAccess.setInt(lengths, numberOfDimensions - i, length);
         }
-        pushObject(CreateMultiReferenceArray.createMultiReferenceArray(arrayClassActor, lengths));
+        pushObject(Snippets.createMultiReferenceArray(arrayClassActor, lengths));
     }
     @T1X_TEMPLATE(NEW)
     public static void new_(ResolutionGuard guard) {
@@ -1468,7 +1472,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(NEWARRAY)
     public static void newarray(Kind kind) {
         int length = peekInt(0);
-        pokeReference(0, CreatePrimitiveArray.noninlineCreatePrimitiveArray(kind, length));
+        pokeReference(0, createPrimitiveArray(kind, length));
     }
 
     @T1X_TEMPLATE(NOP)
@@ -1546,14 +1550,14 @@ public class T1XTemplateSource {
 
     @INLINE
     private static void icmp0_prefix() {
-        SpecialBuiltin.compareInts(popInt(), 0);
+        Intrinsics.compareInts(popInt(), 0);
     }
 
     @INLINE
     private static void acmp0_prefix() {
         Object value = peekObject(0);
         removeSlots(1);
-        SpecialBuiltin.compareWords(toWord(value), Address.zero());
+        Intrinsics.compareWords(toWord(value), Address.zero());
     }
 
     @INLINE
@@ -1561,7 +1565,7 @@ public class T1XTemplateSource {
         int value2 = peekInt(0);
         int value1 = peekInt(1);
         removeSlots(2);
-        SpecialBuiltin.compareInts(value1, value2);
+        Intrinsics.compareInts(value1, value2);
     }
 
     @INTRINSIC(Bytecodes.UNSAFE_CAST)
@@ -1572,7 +1576,7 @@ public class T1XTemplateSource {
         Object value2 = peekObject(0);
         Object value1 = peekObject(1);
         removeSlots(2);
-        SpecialBuiltin.compareWords(toWord(value1), toWord(value2));
+        Intrinsics.compareWords(toWord(value1), toWord(value2));
     }
 
     @T1X_TEMPLATE(IF_ACMPEQ)
@@ -1808,19 +1812,19 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(CHECKCAST$resolved)
     public static void checkcast(ClassActor classActor) {
-        Snippet.CheckCast.checkCast(classActor, peekObject(0));
+        Snippets.checkCast(classActor, peekObject(0));
     }
 
     @T1X_TEMPLATE(INSTANCEOF$resolved)
     public static void instanceof_(ClassActor classActor) {
         Object object = peekObject(0);
-        pokeInt(0, UnsafeCast.asByte(Snippet.InstanceOf.instanceOf(classActor, object)));
+        pokeInt(0, UnsafeCast.asByte(Snippets.instanceOf(classActor, object)));
     }
 
     @T1X_TEMPLATE(ANEWARRAY$resolved)
     public static void anewarray(ArrayClassActor arrayClassActor) {
         int length = peekInt(0);
-        pokeReference(0, CreateReferenceArray.noninlineCreateReferenceArray(arrayClassActor, length));
+        pokeReference(0, T1XRuntime.createReferenceArray(arrayClassActor, length));
     }
 
     @T1X_TEMPLATE(MULTIANEWARRAY$resolved)
@@ -1834,7 +1838,7 @@ public class T1XTemplateSource {
             checkArrayDimension(length);
             ArrayAccess.setInt(lengths, numberOfDimensions - i, length);
         }
-        pushObject(CreateMultiReferenceArray.createMultiReferenceArray(arrayClassActor, lengths));
+        pushObject(Snippets.createMultiReferenceArray(arrayClassActor, lengths));
     }
 
     @T1X_TEMPLATE(T1XTemplateTag.GETFIELD$reference$resolved)
@@ -2042,69 +2046,71 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$void$resolved)
     public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
-    @INLINE
     @T1X_TEMPLATE(INVOKEINTERFACE$float$resolved)
     public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
-    @INLINE
     @T1X_TEMPLATE(INVOKEINTERFACE$long$resolved)
     public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
-    @INLINE
     @T1X_TEMPLATE(INVOKEINTERFACE$double$resolved)
     public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
-    @INLINE
     @T1X_TEMPLATE(INVOKEINTERFACE$word$resolved)
     public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
+    private static void nullCheck(Pointer receiver) {
+        receiver.readWord(0);
+    }
+
     @T1X_TEMPLATE(INVOKESPECIAL$void$resolved)
-    public static void invokespecial() {
+    public static void invokespecial(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         directCallVoid();
     }
 
     @INLINE
     @T1X_TEMPLATE(INVOKESPECIAL$float$resolved)
-    public static void invokespecialReturnSingleSlot() {
+    public static void invokespecialReturnSingleSlot(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         directCallFloat();
     }
 
-    @INLINE
     @T1X_TEMPLATE(INVOKESPECIAL$long$resolved)
-    public static void invokespecialLong() {
+    public static void invokespecialLong(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         directCallLong();
     }
 
-    @INLINE
     @T1X_TEMPLATE(INVOKESPECIAL$double$resolved)
-    public static void invokespecialDouble() {
+    public static void invokespecialDouble(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         directCallDouble();
     }
 
-    @INLINE
     @T1X_TEMPLATE(INVOKESPECIAL$word$resolved)
-    public static void invokespecialWord() {
+    public static void invokespecialWord(int receiverStackIndex) {
+        nullCheck(peekWord(receiverStackIndex).asPointer());
         directCallWord();
     }
 
@@ -2148,35 +2154,35 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$void$instrumented)
     public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         indirectCallVoid(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @T1X_TEMPLATE(INVOKEINTERFACE$float$instrumented)
     public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         indirectCallFloat(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @T1X_TEMPLATE(INVOKEINTERFACE$long$instrumented)
     public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         indirectCallLong(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @T1X_TEMPLATE(INVOKEINTERFACE$double$instrumented)
     public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         indirectCallDouble(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @T1X_TEMPLATE(INVOKEINTERFACE$word$instrumented)
     public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         Object receiver = peekObject(receiverStackIndex);
-        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Address entryPoint = Snippets.selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         indirectCallWord(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
@@ -2184,14 +2190,6 @@ public class T1XTemplateSource {
     private static Address selectVirtualMethod(Object receiver, int vTableIndex, MethodProfile mpo, int mpoIndex) {
         Hub hub = ObjectAccess.readHub(receiver);
         Address entryPoint = hub.getWord(vTableIndex).asAddress();
-        MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
-        return entryPoint;
-    }
-
-    @INLINE
-    private static Address selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex) {
-        Hub hub = ObjectAccess.readHub(receiver);
-        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }
@@ -2704,25 +2702,25 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(MOV_I2F)
     public static void mov_i2f() {
         int value = peekInt(0);
-        pokeFloat(0, SpecialBuiltin.intToFloat(value));
+        pokeFloat(0, Intrinsics.intToFloat(value));
     }
 
     @T1X_TEMPLATE(MOV_F2I)
     public static void mov_f2i() {
         float value = peekFloat(0);
-        pokeInt(0, SpecialBuiltin.floatToInt(value));
+        pokeInt(0, Intrinsics.floatToInt(value));
     }
 
     @T1X_TEMPLATE(MOV_L2D)
     public static void mov_l2d() {
         long value = peekLong(0);
-        pokeDouble(0, SpecialBuiltin.longToDouble(value));
+        pokeDouble(0, Intrinsics.longToDouble(value));
     }
 
     @T1X_TEMPLATE(MOV_D2L)
     public static void mov_d2l() {
         double value = peekDouble(0);
-        pokeLong(0, SpecialBuiltin.doubleToLong(value));
+        pokeLong(0, Intrinsics.doubleToLong(value));
     }
 
     @T1X_TEMPLATE(LSB)
@@ -2759,7 +2757,7 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(PAUSE)
     public static void pause() {
-        SpecialBuiltin.pause();
+        Intrinsics.pause();
     }
 
     @T1X_TEMPLATE(READREG$fp_cpu)

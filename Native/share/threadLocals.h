@@ -115,15 +115,15 @@ extern void threadLocalsBlock_destroy(Address tlBlock);
     macro(NATIVE_THREAD_LOCALS, 4) \
     macro(FORWARD_LINK, 5) \
     macro(BACKWARD_LINK, 6) \
-    macro(ID, 9) \
-    macro(JNI_ENV, 11) \
-    macro(LAST_JAVA_FRAME_ANCHOR, 12) \
-    macro(TRAP_NUMBER, 15) \
-    macro(TRAP_INSTRUCTION_POINTER, 16) \
-    macro(TRAP_FAULT_ADDRESS, 17) \
-    macro(TRAP_LATCH_REGISTER, 18) \
-    macro(STACK_REFERENCE_MAP, 22) \
-    macro(STACK_REFERENCE_MAP_SIZE, 23)
+    macro(ID, 8) \
+    macro(JNI_ENV, 10) \
+    macro(LAST_JAVA_FRAME_ANCHOR, 11) \
+    macro(TRAP_NUMBER, 14) \
+    macro(TRAP_INSTRUCTION_POINTER, 15) \
+    macro(TRAP_FAULT_ADDRESS, 16) \
+    macro(TRAP_LATCH_REGISTER, 17) \
+    macro(STACK_REFERENCE_MAP, 21) \
+    macro(STACK_REFERENCE_MAP_SIZE, 22)
 
 #define DECLARE_THREAD_LOCAL(name, index) name = index,
 typedef enum ThreadLocal {
@@ -206,16 +206,16 @@ typedef struct {
     Address handle;    // e.g. pthread_self()
     Address tlBlock;
     Address tlBlockSize;
-    Address stackYellowZone; // unmapped to cause a trap on access
-    Address stackRedZone;    // unmapped always - fatal exit if accessed
-    Address stackRedZoneIsProtectedByVM; // non-zero if the VM explicitly mprotected the red zone
+    Address yellowZone; // unmapped to cause a trap on access
+    Address redZone;    // unmapped always - fatal exit if accessed
+    Address redZoneIsProtectedByVM; // non-zero if the VM explicitly mprotected the red zone
 
     /*
      * The blue zone is a page that is much closer to the base of the stack and is optionally protected.
      * This can be used, e.g., to determine the actual stack size needed by a thread, or to avoid
      * reserving actual real memory until it is needed.
      */
-    Address stackBlueZone;
+    Address blueZone;
 
     /*
      * Place to hang miscellaneous OS dependent record keeping data.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import sun.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -127,15 +126,11 @@ public class JVMFunctions {
     }
 
     public static String GetSystemPackage(String name) {
-        ClasspathFile classpathFile = BootClassLoader.BOOT_CLASS_LOADER.classpath().classpathFileForPackage(name);
-        if (classpathFile == null) {
-            return null;
-        }
-        return classpathFile.classpathEntry.path();
+        return BootClassLoader.BOOT_CLASS_LOADER.packageSource(name);
     }
 
     public static String[] GetSystemPackages() {
-        return null;
+        return BootClassLoader.BOOT_CLASS_LOADER.packageNames();
     }
 
     public static void ArrayCopy(Object src, int srcPos, Object dest, int destPos, int length) {

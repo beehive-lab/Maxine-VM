@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -372,7 +372,12 @@ public abstract class X86Disassembler extends Disassembler {
                                 byte[] bytes;
                                 if (true) {
                                     final Assembler assembler = createAssembler(currentPosition);
-                                    assembly.assemble(assembler, template, arguments);
+                                    try {
+                                        assembly.assemble(assembler, template, arguments);
+                                    } catch (AssemblyException e) {
+                                        // try the next template
+                                        continue;
+                                    }
                                     bytes = assembler.toByteArray();
                                 } else { // TODO: does not work yet
                                     final X86TemplateAssembler templateAssembler = new X86TemplateAssembler(template, addressWidth());

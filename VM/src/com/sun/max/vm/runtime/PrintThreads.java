@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,14 @@
  */
 package com.sun.max.vm.runtime;
 
+import java.util.*;
+
 import sun.misc.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
@@ -47,7 +50,13 @@ public class PrintThreads extends VmOperation implements SignalHandler {
 
     @Override
     protected void doIt() {
-        Log.println("Full thread dump:");
+        Date now = new Date();
+        Log.println(now);
+        Log.println(String.format("Full thread dump %s (%s %s):",
+            System.getProperty("java.vm.name"),
+            System.getProperty("java.vm.version"),
+            System.getProperty("java.vm.info")));
+
         super.doIt();
     }
 
@@ -61,13 +70,22 @@ public class PrintThreads extends VmOperation implements SignalHandler {
             }
         } else {
             Thread thread = vmThread.javaThread();
-            Log.println(thread);
+            Log.println();
+            Log.println('"' + thread.getName() + "\" prio=" + thread.getPriority() + " tid=" + thread.getId() +
+                        " nid=" + vmThread.nativeThread().to0xHexString());
+            Log.println("   java.lang.Thread.State: " + thread.getState());
+
             if (!ip.isZero()) {
                 VmStackFrameWalker sfw = new VmStackFrameWalker(vmThread.tla());
-                StackTraceElement[] trace = JDK_java_lang_Throwable.getStackTrace(sfw, ip, sp, fp, null, Integer.MAX_VALUE);
-                for (StackTraceElement e : trace) {
-                    Log.println("\tat " + e);
-                }
+                StackTraceVisitor stv = new StackTraceVisitor(null, Integer.MAX_VALUE) {
+                    @Override
+                    public boolean add(ClassMethodActor method, int sourceLineNumber) {
+                        ClassActor holder = method.holder();
+                        Log.println("\tat " + new StackTraceElement(holder.name.toString(), method.name(), holder.sourceFileName, sourceLineNumber));
+                        return true;
+                    }
+                };
+                stv.walk(sfw, ip, sp, fp);
             }
         }
     }

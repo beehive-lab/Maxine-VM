@@ -146,7 +146,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
 
     // Display of string values
     public int maxStringInlineDisplayLength() {
-        return 40;
+        return 100;
     }
     public int maxStringFromCharArrayDisplayLength() {
         return 200;

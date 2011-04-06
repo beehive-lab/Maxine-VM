@@ -92,9 +92,7 @@ public abstract class MemberActor extends Actor {
         this.memberIndex = (char) index;
         if (MaxineVM.isHosted() && this instanceof ClassMethodActor) {
             ClassMethodActor classMethodActor = (ClassMethodActor) this;
-            if (classMethodActor.isNative() &&
-                !classMethodActor.isBuiltin() &&
-                classMethodActor.intrinsic() == 0) {
+            if (classMethodActor.isNative() && classMethodActor.intrinsic() == 0) {
                 // Make sure the C symbol for a native method is cooked into the boot image
                 classMethodActor.nativeFunction.makeSymbol();
             }

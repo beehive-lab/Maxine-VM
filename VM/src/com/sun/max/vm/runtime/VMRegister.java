@@ -29,7 +29,6 @@ import java.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -110,7 +109,7 @@ public final class VMRegister {
          * The register that the current target ABI actually uses as frame pointer,
          * i.e. for code sequences that access local variables, spill slots, stack parameters, etc.
          * This may or may not be the same as CPU_FRAME_POINTER.
-         * For the JIT it is, but the optimizing compiler uses CPU_STACK_POINTER instead.
+         * For the baseline compiler it is, but the optimizing compiler uses CPU_STACK_POINTER instead.
          */
         ABI_FRAME_POINTER(ABI_FP) {
             @Override
@@ -194,9 +193,7 @@ public final class VMRegister {
 
     @INLINE
     @INTRINSIC(INCREG | (ABI_SP << 8))
-    public static void adjustAbiStackPointer(int delta) {
-        SpecialBuiltin.incrementIntegerRegister(Role.ABI_STACK_POINTER, delta);
-    }
+    public static native void adjustAbiStackPointer(int delta);
 
     @INLINE
     @INTRINSIC(READREG | (ABI_SP << 8))

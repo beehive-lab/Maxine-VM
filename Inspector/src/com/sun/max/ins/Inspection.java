@@ -102,7 +102,7 @@ public final class Inspection implements InspectionHolder {
         this.inspectionActions = new InspectionActions(this);
         this.inspectionViews = new InspectionViews(this);
 
-        ClassMethodActor.hostedVerificationDisabled = true;
+        ClassMethodActor.hostedVerificationEnabled = false;
 
         BreakpointPersistenceManager.initialize(this);
         inspectionActions.refresh(true);

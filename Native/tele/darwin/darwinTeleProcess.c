@@ -160,7 +160,6 @@ jint waitForSignal(jlong task, int signalnum) {
     }
 }
 
-extern char **environ;
 
 JNIEXPORT jlong JNICALL
 Java_com_sun_max_tele_channel_natives_TeleChannelNatives_createChild(JNIEnv *env, jobject this, jlong commandLineArgumentArray, jint vmAgentPort) {

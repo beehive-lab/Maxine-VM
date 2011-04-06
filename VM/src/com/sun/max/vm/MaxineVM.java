@@ -473,16 +473,18 @@ public final class MaxineVM {
      * Request the given method to be statically compiled in the boot image.
      */
     @HOSTED_ONLY
-    public static void registerImageMethod(ClassMethodActor imageMethod) {
-        CompiledPrototype.registerVMEntryPoint(imageMethod);
+    public static ClassMethodActor registerImageMethod(ClassMethodActor method) {
+        CompiledPrototype.registerVMEntryPoint(method);
+        return method;
     }
 
     /**
-     * Request the given method to be statically compiled in the boot image.
+     * Request the given method to have its invocation stub be compiled in the boot image.
      */
     @HOSTED_ONLY
-    public static void registerImageInvocationStub(MethodActor imageMethodActorWithInvocationStub) {
-        CompiledPrototype.registerImageInvocationStub(imageMethodActorWithInvocationStub);
+    public static MethodActor registerImageInvocationStub(MethodActor method) {
+        CompiledPrototype.registerImageInvocationStub(method);
+        return method;
     }
 
     @HOSTED_ONLY

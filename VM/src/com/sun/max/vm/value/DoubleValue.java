@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ import java.io.*;
 import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -68,7 +68,7 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
     @Override
     public boolean isAllOnes() {
-        return SpecialBuiltin.doubleToLong(value) == -1L;
+        return Intrinsics.doubleToLong(value) == -1L;
     }
 
     @Override

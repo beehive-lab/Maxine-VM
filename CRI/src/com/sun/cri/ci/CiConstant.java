@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -309,6 +309,23 @@ public final class CiConstant extends CiValue {
         return false;
     }
 
+    /**
+     * Gets the default value for a given kind.
+     * 
+     * @return the default value for {@code kind}'s {@linkplain CiKind#stackKind() stack kind}
+     */
+    public static CiConstant defaultValue(CiKind kind) {
+        switch (kind.stackKind()) {
+            case Int: return INT_0;
+            case Long: return LONG_0;
+            case Float: return FLOAT_0;
+            case Double: return DOUBLE_0;
+            case Object: return NULL_OBJECT;
+            case Word: return ZERO;
+        }
+        throw new IllegalArgumentException("Cannot det default CiConstant for kind " + kind);
+    }
+    
     /**
      * Creates a boxed double constant.
      * @param d the double value to box

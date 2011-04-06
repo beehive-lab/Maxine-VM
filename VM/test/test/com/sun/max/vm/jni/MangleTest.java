@@ -32,7 +32,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.type.*;
 
@@ -182,8 +181,6 @@ public class MangleTest extends MaxTestCase {
         mangleAndDemangle(anonymousClass.getClass());
         mangleAndDemangle(new LocalClass().localAnonymousClass.getClass());
         mangleAndDemangle(LocalClass.InnerClass.class);
-
-        mangleAndDemangle(MakeStackVariable.class);
     }
 
     public void test_max() {

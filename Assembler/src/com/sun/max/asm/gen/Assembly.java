@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -138,7 +138,7 @@ public abstract class Assembly<Template_Type extends Template> {
                 throw (AssemblyException) target;
             }
             if (target instanceof IllegalArgumentException) {
-                throw (IllegalArgumentException) target;
+                throw (AssemblyException) new AssemblyException(target.getMessage()).initCause(target);
             }
             ProgramError.unexpected(invocationTargetException);
         }

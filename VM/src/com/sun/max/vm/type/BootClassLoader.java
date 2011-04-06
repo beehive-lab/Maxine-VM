@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.cri.bytecode.*;
@@ -35,6 +36,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
@@ -58,6 +60,11 @@ public final class BootClassLoader extends ClassLoader {
 
     private Classpath classpath;
 
+    /**
+     * Map from a package name (in "/" separated format) to the file system path from it was loaded.
+     */
+    private final HashMap<String, String> packages = new HashMap<String, String>();
+
     public Classpath classpath() {
         if (classpath == null) {
             classpath = Classpath.bootClassPath();
@@ -65,12 +72,39 @@ public final class BootClassLoader extends ClassLoader {
         return classpath;
     }
 
+    /**
+     * Gets the names of all the packages defined by this loader. The names are in "/" separated form
+     * including a trailing "/".
+     */
+    public String[] packageNames() {
+        synchronized (packages) {
+            return packages.keySet().toArray(new String[packages.size()]);
+        }
+    }
+
+    /**
+     * Gets the path of the class path entry from which a class in the named package was last loaded.
+     */
+    public String packageSource(String packageName) {
+        synchronized (packages) {
+            return packages.get(packageName);
+        }
+    }
+
     protected Class findClass(Classpath classpath, String name) throws ClassNotFoundException {
         final ClasspathFile classpathFile = classpath.readClassFile(name);
         if (classpathFile == null) {
             throw new ClassNotFoundException(name);
         }
-        return ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false).toJava();
+        ClassActor classActor = ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false);
+        int cp = name.lastIndexOf('.');
+        if (cp != -1) {
+            String packageName = name.substring(0, cp + 1).replace('.', '/');
+            synchronized (packages) {
+                packages.put(packageName, classpathFile.classpathEntry.path());
+            }
+        }
+        return classActor.toJava();
     }
 
     public synchronized Class<?> findBootstrapClass(String name) throws ClassNotFoundException {
@@ -142,6 +176,23 @@ public final class BootClassLoader extends ClassLoader {
     }
 
     @HOSTED_ONLY
+    private static Method method(Class<?> declaringClass, String name, Class... parameterTypes) throws Exception {
+        Method m = declaringClass.getDeclaredMethod(name, parameterTypes);
+        m.setAccessible(true);
+        return m;
+    }
+
+    @HOSTED_ONLY
     private BootClassLoader() {
+        try {
+            String[] names = (String[]) method(java.lang.Package.class, "getSystemPackages0").invoke(null);
+            for (int i = 0; i < names.length; i++) {
+                String name = names[i];
+                String path = (String) method(java.lang.Package.class, "getSystemPackage0", String.class).invoke(null, name);
+                packages.put(name, path);
+            }
+        } catch (Exception e) {
+            ProgramWarning.message("Failed to prepopulate package name to package source map: " + e);
+        }
     }
 }

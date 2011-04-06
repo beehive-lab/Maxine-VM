@@ -34,7 +34,6 @@ import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.io.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -46,11 +45,9 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.CalleeKind;
@@ -118,7 +115,7 @@ public final class T1XTargetMethod extends TargetMethod {
     /**
      * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
      * into the runtime derived from the constituent templates. These calls are linked using {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}.
-     * All other direct calls are linked using {@link CallEntryPoint#JIT_ENTRY_POINT}.
+     * All other direct calls are linked using {@link CallEntryPoint#BASELINE_ENTRY_POINT}.
      */
     public final CiBitMap isDirectCallToRuntime;
 
@@ -134,7 +131,7 @@ public final class T1XTargetMethod extends TargetMethod {
     public final CiExceptionHandler[] handlers;
 
     public T1XTargetMethod(T1XCompilation comp, boolean install) {
-        super(comp.method, CallEntryPoint.JIT_ENTRY_POINT);
+        super(comp.method, CallEntryPoint.BASELINE_ENTRY_POINT);
 
         codeAttribute = comp.codeAttribute;
         bciToPos = comp.bciToPos;
@@ -279,11 +276,6 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethodUtil.forwardTo(this, newTargetMethod);
-    }
-
-    @Override
     public void traceDebugInfo(IndentWriter writer) {
     }
 
@@ -312,12 +304,16 @@ public final class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public CiCodePos getCodePos(Pointer ip, boolean ipIsReturnAddress) {
+    public int forEachCodePos(CodePosClosure cpc, Pointer ip, boolean ipIsReturnAddress) {
         if (ipIsReturnAddress && platform().isa.offsetToReturnPC == 0) {
             ip = ip.minus(1);
         }
         int bci = bciFor(ip.asPointer());
-        return new CiCodePos(null, classMethodActor, bci);
+        if (bci >= 0) {
+            cpc.doCodePos(classMethodActor, bci);
+            return 1;
+        }
+        return 0;
     }
 
     /**
@@ -392,7 +388,7 @@ public final class T1XTargetMethod extends TargetMethod {
             final Object result = this.refMapEditor.compareAndSwap(referenceMapEditor, T1XReferenceMapEditor.SENTINEL);
             if (result == T1XReferenceMapEditor.SENTINEL) {
                 while (this.refMapEditor.get() != null) {
-                    SpecialBuiltin.pause();
+                    Intrinsics.pause();
                 }
             } else if (result != null) {
                 referenceMapEditor.fillInMaps();
@@ -642,10 +638,6 @@ public final class T1XTargetMethod extends TargetMethod {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            // Complete the exception handling protocol (with respect to garbage collection)
-            // initiated in Throwing.raise()
-            Safepoint.enable();
-
             if (isAMD64()) {
                 Pointer localVariablesBase = current.fp();
                 // The Java operand stack of the T1X method that handles the exception is cleared
@@ -661,7 +653,10 @@ public final class T1XTargetMethod extends TargetMethod {
                 // Done with the stack walker
                 sfw.reset();
 
-                unwindAMD64(throwable, catchAddress, catcherSP, localVariablesBase);
+                // Store the exception for the handler
+                VmThread.current().storeExceptionForHandler(throwable, this, posFor(catchAddress));
+
+                unwindAMD64(catchAddress, catcherSP, localVariablesBase);
                 FatalError.unexpected("should not reach here");
             } else {
                 unimplISA();
@@ -680,7 +675,6 @@ public final class T1XTargetMethod extends TargetMethod {
      * <li>The value at [RSP] must be address of the handler code</li>
      * </ul>
      * <p>
-     *
      * @param catchAddress the address of the handler code (actually the dispatcher code)
      * @param sp the stack pointer denoting the frame of the handler to which the stack is unwound upon
      *            returning from this method
@@ -688,18 +682,9 @@ public final class T1XTargetMethod extends TargetMethod {
      */
     @PLATFORM(cpu = "amd64")
     @NEVER_INLINE
-    public static void unwindAMD64(Throwable throwable, Address catchAddress, Pointer sp, Pointer fp) {
+    public static void unwindAMD64(Address catchAddress, Pointer sp, Pointer fp) {
         int unwindFrameSize = unwind.targetMethod().frameSize();
 
-        // Put the exception where the exception handler expects to find it
-        VmThreadLocal.EXCEPTION_OBJECT.store3(Reference.fromJava(throwable));
-
-        if (throwable instanceof StackOverflowError) {
-            // This complete call-chain must be inlined down to the native call
-            // so that no further stack banging instructions
-            // are executed before execution jumps to the catch handler.
-            VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
-        }
         // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
         // When the RET instruction is executed, the pushed 'catchAddress' will be popped from the stack
         // and the stack will be in the correct state for the handler.

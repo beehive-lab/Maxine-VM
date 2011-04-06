@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@
  */
 package jtt.max;
 
-import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
@@ -38,7 +37,6 @@ public final class ImmortalHeap_switching {
     private ImmortalHeap_switching() {
     }
 
-    @UNSAFE
     public static boolean test(int size) {
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
         Pointer oldMark = immortalMemoryRegion.mark();
