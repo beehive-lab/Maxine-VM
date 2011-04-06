@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Bernd Mathiske
  */
-public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion> implements Iterable<MemoryRegion_Type> {
+public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion> {
 
     public static final Comparator<MemoryRegion> COMPARATOR = new Comparator<MemoryRegion>() {
         @Override
@@ -126,25 +126,17 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
         return memoryRegion;
     }
 
-    public Iterator<MemoryRegion_Type> iterator() {
-        return new Iterator<MemoryRegion_Type>() {
-            int index;
-            @Override
-            public boolean hasNext() {
-                return index < size;
-            }
-            @Override
-            public MemoryRegion_Type next() {
-                try {
-                    return memoryRegions[index++];
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    throw new NoSuchElementException();
-                }
-            }
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
+    /**
+     * Copies the regions in this list into a given array. The number
+     * of elements written into {@code dst} (starting at index 0) is
+     * the minimum of {@code this.size()} and {@code dst.length}.
+     *
+     * @param dst the destination array
+     * @return the number of elements copied into {@code dst}
+     */
+    public int copyInto(MemoryRegion_Type[] dst) {
+        int length = Math.min(size, dst.length);
+        System.arraycopy(memoryRegions, 0, dst, 0, length);
+        return length;
     }
 }
