@@ -175,8 +175,6 @@ public interface RiRuntime {
      * that has no side effects. Such methods can be executed via reflection when all their inputs are constants,
      * and the resulting value is substituted for the method call.
      * 
-     * The {@link CiUtil#invoke(Method, CiMethodInvokeArguments)} utility can be used to implement this method.
-     * 
      * @param method the compiler interface method for which folding is being requested
      * @param args the arguments to the call
      * @return the result of the folding or {@code null} if no folding occurred
