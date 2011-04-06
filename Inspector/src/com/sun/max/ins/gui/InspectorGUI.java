@@ -112,7 +112,7 @@ public interface InspectorGUI {
      * Gets the mouse button that just clicked, translating mouse click events specially for Darwin.
      * <br>control click -> button 3 (right);
      * <br>alt click -> button 2 (middle).
-     * <br
+     * <p>
      * Defaults to the standard on other platforms.
      *
      * @param mouseEvent
@@ -122,14 +122,15 @@ public interface InspectorGUI {
     int getButton(MouseEvent mouseEvent);
 
     /**
-     * Sets Inspector frame location to a point displaced by a default amount from the most recently known mouse position.
+     * Sets Inspector frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
+     * @param diagonalOffset number of pixels down and to right for new location
      */
-    void setLocationRelativeToMouse(Inspector inspector);
+    void setLocationRelativeToMouse(Inspector inspector, int diagonalOffset);
 
     /**
-     * Sets Inspector frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
+     * Sets a window component location to middle of Inspection display.
      */
-    void setLocationRelativeToMouse(Inspector inspector, int offset);
+    void moveToMiddle(Component component);
 
     /**
      * Sets Inspector frame location to middle of Inspection display.
@@ -137,22 +138,40 @@ public interface InspectorGUI {
     void moveToMiddle(Inspector inspector);
 
     /**
-     * Sets Inspector frame location to middle of Inspection display if it would otherwise be completely outside the visible area.
+     * Moves Inspector frame location as little as possible to make it fully visible.
      */
-    void moveToMiddleIfNotVisble(Inspector inspector);
+    void moveToFullyVisible(Inspector inspector);
+
+    /**
+     * If the inspector is moved out of the frame, either up or to the left, so that the default
+     * menu in the upper left corner of the inspector is not visible, move it down and to the left
+     * enough to make the menu visible.
+     */
+    void moveToExposeDefaultMenu(Inspector inspector);
+
+    /**
+     * Shrink an inspector in each dimension, without changing location,
+     * to make it fit within the Inspector's frame.
+     */
+    void resizeToFit(Inspector inspector);
+
+    /**
+     * Grow an inspector in each dimension to make it fill the Inspector's frame.
+     */
+    void resizeToFill(Inspector inspector);
+
+    /**
+     * Restores the default size and location of an Inspector.
+     */
+    void restoreDefaultGeometry(Inspector inspector);
 
     /**
      * Moves a {@link JDialog} frame down and to the right of the current mouse location.
      *
      * @param dialog a dialog
-     * @param offset number of pixels down and to right for new location
+     * @param diagonalOffset number of pixels down and to right for new location
      */
-    void setLocationRelativeToMouse(JDialog dialog, int offset);
-
-    /**
-     * Sets dialog frame location to middle of Inspection display.
-     */
-    void moveToMiddle(JDialog dialog);
+    void setLocationRelativeToMouse(JDialog dialog, int diagonalOffset);
 
     /**
      * Returns an instance of the appliation's parent {@link Frame} for GUI operations that need access.

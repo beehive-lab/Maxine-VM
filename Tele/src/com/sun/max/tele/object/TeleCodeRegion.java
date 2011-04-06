@@ -25,7 +25,7 @@ package com.sun.max.tele.object;
 import java.util.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.reference.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -83,35 +83,37 @@ public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Register any new compiled methods that have appeared since the previous successful refresh.
+     */
     @Override
-    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        super.updateObjectCache(epoch, statsPrinter);
-        // Register any new compiled methods that have appeared since the previous refresh
-        // Don't try this until the code cache is ready, which it isn't early in the startup sequence.
-        // Also make sure that the region has actually been allocated before trying.
-        if (vm().codeCache().isInitialized() && isAllocated()) {
-            Reference targetMethodsReference = vm().teleFields().CodeRegion_targetMethods.readReference(reference());
-            int size = vm().teleFields().SortedMemoryRegionList_size.readInt(targetMethodsReference);
-            Reference regionsReference = vm().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethodsReference);
-            int index = teleTargetMethods.size();
-            while (index < size) {
-                try {
-                    Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, regionsReference, index).asReference();
-                    TeleTargetMethod teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
-                    if (teleTargetMethod == null) {
-                        throw new InvalidReferenceException(targetMethodReference);
-                    }
-                    teleTargetMethods.add(teleTargetMethod);
-                } catch (InvalidReferenceException e) {
-                    vm().invalidReferencesLogger().record(e.getReference(), TeleTargetMethod.class);
-                } finally {
-                    index++;
-                }
-            }
-            statsPrinter.addStat(localStatsPrinter);
-        } else {
-            statsPrinter.addStat(" skipping update");
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
         }
+        // Don't try until the code cache is ready, which it isn't early in the startup sequence.
+        // Also make sure that the region has actually been allocated before trying.
+        if (!vm().codeCache().isInitialized() || !isAllocated()) {
+            return false;
+        }
+        Reference targetMethodsReference = vm().teleFields().CodeRegion_targetMethods.readReference(reference());
+        int size = vm().teleFields().SortedMemoryRegionList_size.readInt(targetMethodsReference);
+        Reference regionsReference = vm().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethodsReference);
+        int index = teleTargetMethods.size();
+        while (index < size) {
+            Reference targetMethodReference = vm().getElementValue(Kind.REFERENCE, regionsReference, index++).asReference();
+            // Creating a {@link TeleTargetMethod} causes it to be added to the code registry
+            TeleTargetMethod teleTargetMethod = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
+            if (teleTargetMethod == null) {
+                vm().invalidReferencesLogger().record(targetMethodReference, TeleTargetMethod.class);
+                continue;
+            }
+            teleTargetMethods.add(teleTargetMethod);
+        }
+        statsPrinter.addStat(localStatsPrinter);
+        return true;
     }
 
     @Override

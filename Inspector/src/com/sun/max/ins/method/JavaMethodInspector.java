@@ -20,7 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+package com.sun.max.ins.method;
+
+import static com.sun.max.ins.gui.Inspector.MenuKind.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -32,8 +34,9 @@ import javax.swing.border.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectorNameDisplay.ReturnTypeSpecification;
-import com.sun.max.ins.method.*;
+import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -67,9 +70,9 @@ public class JavaMethodInspector extends MethodInspector {
     private final MaxCompiledCode compiledCode;
 
     /**
-     * The last process epoch at which the code was observed to have changed and the views reconstructed.
+     * The generation count for the code in the VM, the last time this classed accessed any information.
      */
-    private long lastCodeChangedEpoch = -1L;
+    private int vmCodeGeneration = -1;
 
     /**
      * The kinds of code views it is possible to create for this method.
@@ -118,12 +121,12 @@ public class JavaMethodInspector extends MethodInspector {
      * for the life of the inspector.
      *
      * @param inspection the {@link Inspection} of which this Inspector is part
-     * @param parent the tabbed container for this Inspector
+     * @param container the tabbed container for this Inspector
      * @param compiledCode surrogate for the compilation in the VM
      * @param codeKind request for a particular code view to be displayed initially
      */
-    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledCode compiledCode, MethodCodeKind codeKind) {
-        this(inspection, parent, compiledCode, compiledCode.getTeleClassMethodActor(), codeKind);
+    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer container, MaxCompiledCode compiledCode, MethodCodeKind codeKind) {
+        this(inspection, container, compiledCode, compiledCode.getTeleClassMethodActor(), codeKind);
     }
 
     /**
@@ -133,22 +136,22 @@ public class JavaMethodInspector extends MethodInspector {
      * either case, the resulting Inspector replaces this one.
      *
      * @param inspection the {@link Inspection} of which this Inspector is part
-     * @param parent the tabbed container for this Inspector
+     * @param container the tabbed container for this Inspector
      * @param teleClassMethodActor surrogate for the specified Java method in the VM
      * @param codeKind requested kind of code view: either source code or bytecodes
      */
-    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
-        this(inspection, parent, null, teleClassMethodActor, codeKind);
+    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer container, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
+        this(inspection, container, null, teleClassMethodActor, codeKind);
         assert codeKind != MethodCodeKind.MACHINE_CODE;
     }
 
-    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, MaxCompiledCode compiledCode, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
-        super(inspection, parent);
+    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer container, MaxCompiledCode compiledCode, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
+        super(inspection, container);
 
         this.methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
         this.compiledCode = compiledCode;
-        this.lastCodeChangedEpoch = compiledCode.lastChangedEpoch();
+        this.vmCodeGeneration = compiledCode.vmCodeGeneration();
 
         // Determine which code viewers it is possible to present for this method.
         // This doesn't change.
@@ -202,11 +205,12 @@ public class JavaMethodInspector extends MethodInspector {
             codeViewCheckBoxes[codeKind.ordinal()] = checkBox;
         }
 
-        final InspectorFrame frame = createTabFrame(parent);
-        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
-        final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
-        final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
+        final InspectorFrame frame = createTabFrame(container);
+
+        final InspectorMenu editMenu = frame.makeMenu(EDIT_MENU);
+        final InspectorMenu objectMenu = frame.makeMenu(OBJECT_MENU);
+        final InspectorMenu codeMenu = frame.makeMenu(CODE_MENU);
+        final InspectorMenu debugMenu = frame.makeMenu(DEBUG_MENU);
         final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at this method entry");
         final InspectorMenu breakAtLabelsMenu = new InspectorMenu("Break at this method labels");
 
@@ -223,7 +227,7 @@ public class JavaMethodInspector extends MethodInspector {
             objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForObjectType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
             objectMenu.add(actions().inspectMethodCompilationsMenu(teleClassMethodActor, "Method compilations:"));
-            objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+            objectMenu.add(defaultMenuItems(OBJECT_MENU));
         }
         for (final MethodCodeKind codeKind : MethodCodeKind.values()) {
             codeMenu.add(codeViewCheckBoxes[codeKind.ordinal()]);
@@ -231,7 +235,7 @@ public class JavaMethodInspector extends MethodInspector {
         if (teleClassMethodActor != null) {
             codeMenu.add(actions().viewMethodCompilationsMenu(teleClassMethodActor, "View method's compilations"));
         }
-        codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
+        codeMenu.add(defaultMenuItems(CODE_MENU));
 
         if (compiledCode != null) {
             breakOnEntryMenu.add(actions().setMachineCodeBreakpointAtEntry(compiledCode, "Machine code"));
@@ -250,14 +254,10 @@ public class JavaMethodInspector extends MethodInspector {
         }
         debugMenu.addSeparator();
         debugMenu.add(actions().genericBreakpointMenuItems());
-        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
-        viewBreakpointsMenuItem.setText("View Breakpoints");
-        debugMenu.add(viewBreakpointsMenuItem);
+        debugMenu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
         if (vm().watchpointManager() != null) {
             debugMenu.add(actions().genericWatchpointMenuItems());
-            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
-            viewWatchpointsMenuItem.setText("View Watchpoints");
-            debugMenu.add(viewWatchpointsMenuItem);
+            debugMenu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
         }
     }
 
@@ -285,17 +285,16 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
-        if (compiledCode.lastChangedEpoch() > lastCodeChangedEpoch) {
+    protected void refreshState(boolean force) {
+        if (compiledCode.vmCodeGeneration() > vmCodeGeneration) {
             reconstructView();
-            lastCodeChangedEpoch = compiledCode.lastChangedEpoch();
+            vmCodeGeneration = compiledCode.vmCodeGeneration();
             Trace.line(TRACE_VALUE, tracePrefix() + "Updated after code change in method " + teleClassMethodActor.getName());
 
         } else if (getJComponent().isShowing() || force) {
             for (CodeViewer codeViewer : codeViewers.values()) {
                 codeViewer.refresh(force);
             }
-            super.refreshView(force);
         }
     }
 

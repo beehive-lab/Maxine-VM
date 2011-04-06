@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,46 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins;
 
-import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
+package com.sun.max.ins.view;
+
 
 /**
- * Convenience methods for access to classes holding various parts of the interactive inspection session.
+ * Manager for a kind of Inspector view that may have an arbitrary
+ * number of instances active.
  *
- * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public interface InspectionHolder {
+public interface MultivViewManager extends ViewManager {
 
     /**
-     * @return holder of the interactive inspection state for this session
+     * Disposes all existing views of this kind.
      */
-    Inspection inspection();
+    void deactivateAllViews();
 
-    /**
-     * @return the VM associated with this inspection
-     */
-    MaxVM vm();
-
-    /**
-     * @return access to basic GUI services for the session.
-     */
-    InspectorGUI gui();
-
-    /**
-     * @return visual specifications for user interaction during the session
-     */
-    InspectorStyle style();
-
-    /**
-     * @return information about the user focus of attention in the view state.
-     */
-    InspectionFocus focus();
-
-    /**
-     * @return access to {@link InspectorAction}s of general use.
-     */
-    InspectionActions actions();
 }

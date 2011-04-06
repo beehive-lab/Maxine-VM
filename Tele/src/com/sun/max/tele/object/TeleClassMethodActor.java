@@ -28,6 +28,7 @@ import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.LineNumberTable.Entry;
 import com.sun.max.vm.classfile.*;
@@ -36,13 +37,19 @@ import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link ClassMethodActor} in the VM.
+ * <p>
+ * Note that the compilations of a method are recorded a single polymorphic object
+ * field that must be decoded.
+ *
+ * @see ClassMethodActor
+ * @see TargetState
  *
  * @author Michael Van De Vanter
  * @author Ben L. Titzer
  */
 public abstract class TeleClassMethodActor extends TeleMethodActor implements MethodProvider {
 
-    private static final TeleTargetMethod[] NO_TARGET_METHODS = new TeleTargetMethod[0];
+    private static final TeleTargetMethod[] NO_TARGET_METHODS = {};
 
     /**
      * Cached history of compilation for this method in the tele VM.
@@ -55,27 +62,27 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     }
 
     /** {@inheritDoc}
-     * <br>
+     * <p>
      * The compilation history associated with a {@link ClassMethodActor} in the VM
      * is assumed to grow monotonically, as recompilations
      * take place in the VM, and that the old compilations still persist.
      */
     @Override
-    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        super.updateObjectCache(epoch, statsPrinter);
-        if (vm().tryLock()) {
-            try {
-                final Reference targetStateReference = vm().teleFields().ClassMethodActor_targetState.readReference(reference());
-                if (!targetStateReference.isZero()) {
-                    // the method has been compiled; check the type to determine the number of times
-                    translateTargetState(heap().makeTeleObject(targetStateReference));
-                }
-            } catch (DataIOError dataIOError) {
-                // If something goes wrong, delay the cache flush until next time.
-            } finally {
-                vm().unlock();
-            }
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
         }
+        try {
+            final Reference targetStateReference = vm().teleFields().ClassMethodActor_targetState.readReference(reference());
+            if (!targetStateReference.isZero()) {
+                // the method has been compiled; check the type to determine the number of times
+                translateTargetState(heap().makeTeleObject(targetStateReference));
+            }
+        } catch (DataIOError dataIOError) {
+            // If something goes wrong, delay the cache update until next time.
+            return false;
+        }
+        return true;
     }
 
    /**
@@ -111,13 +118,37 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         return teleTargetMethodHistory;
     }
 
+    /**
+     * Decodes the content of the field in {@link ClassMethodActor} that holds the
+     * compilation history. For efficiency, it is stored differently depending on the
+     * length of the history and whether a compilation is currently underway.  This method
+     * must agree with the design of {@link TargetState}.
+     *
+     * @see ClassMethodActor
+     * @see TargetState
+     * @param targetState
+     */
     private void translateTargetState(TeleObject targetState) {
         if (targetState instanceof TeleTargetMethod) {
-            // the object actually is an instance of TargetMethod
-            teleTargetMethodHistory = new TeleTargetMethod[] {(TeleTargetMethod) targetState};
-
+            // The state object is an instance of TargetMethod, which means that
+            // it is the first and only compilation so far.
+            if (teleTargetMethodHistory.length == 0) {
+                // We haven't seen this first compilation yet: record it.
+                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) targetState;
+                teleTargetMethodHistory = new TeleTargetMethod[] {teleTargetMethod};
+            } else {
+                // We already have recorded a compilation history, so it
+                // should have only the one compilation and it shouldn't have changed.
+                assert teleTargetMethodHistory.length == 1;
+                if (teleTargetMethodHistory[0] != targetState) {
+                    TeleWarning.message("Compilation anomaly in " + getClass().getName());
+                    final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) targetState;
+                    teleTargetMethodHistory = new TeleTargetMethod[] {teleTargetMethod};
+                }
+            }
         } else if (targetState instanceof TeleArrayObject) {
-            // the object actually is an instance of TargetMethod[]
+            // The object actually is an instance of TargetMethod[], which means that
+            // there has been more than one compilation so far.
             final TeleArrayObject teleTargetMethodHistoryArray = (TeleArrayObject) targetState;
             int numberOfCompilations = teleTargetMethodHistoryArray.length();
             teleTargetMethodHistory = new TeleTargetMethod[numberOfCompilations];
@@ -126,9 +157,8 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
                 final Reference targetMethodReference = teleTargetMethodHistoryArray.readElementValue(i).asReference();
                 teleTargetMethodHistory[numberOfCompilations - i - 1] = (TeleTargetMethod) heap().makeTeleObject(targetMethodReference);
             }
-
         } else if (targetState.classActorForObjectType().javaClass() == Compilation.class) {
-            // this is a compilation, get the previous target state from it
+            // this is a compilation that is currently underway, get the previous target state from it
             Reference previousTargetStateReference = vm().teleFields().Compilation_previousTargetState.readReference(targetState.reference());
             if (!previousTargetStateReference.isZero()) {
                 translateTargetState(heap().makeTeleObject(previousTargetStateReference));

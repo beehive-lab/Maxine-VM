@@ -62,17 +62,21 @@ public class TeleRootTableMemoryRegion extends TeleRuntimeMemoryRegion{
     }
 
     @Override
-    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        super.updateObjectCache(epoch, statsPrinter);
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
+        }
         try {
             wordsUsed = vm().teleFields().RootTableMemoryRegion_wordsUsed.readLong(getReference());
         } catch (DataIOError dataIOError) {
             // No update; data read failed for some reason other than VM availability
             TeleWarning.message("TeleLinearAllocationMemoryRegion dataIOError:", dataIOError);
             dataIOError.printStackTrace();
+            return false;
             // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
         }
         statsPrinter.addStat(localStatsPrinter);
+        return true;
     }
 
     @Override

@@ -34,11 +34,12 @@ import javax.swing.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.ins.InspectionPreferences.ExternalViewerType;
-import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -84,11 +85,9 @@ public final class Inspection implements InspectionHolder {
 
     private final InspectionActions inspectionActions;
 
-    private final ObjectInspectorFactory objectInspectorFactory;
+    private final InspectionViews inspectionViews;
 
     private InspectorMainFrame inspectorMainFrame;
-
-    private NotepadManager notepadManager;
 
     public Inspection(MaxVM vm, OptionSet options) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
@@ -101,11 +100,11 @@ public final class Inspection implements InspectionHolder {
         this.settings = new InspectionSettings(this, new File(vm.programFile().getParentFile(), SETTINGS_FILE_NAME));
         this.preferences = new InspectionPreferences(this, settings);
         this.inspectionActions = new InspectionActions(this);
+        this.inspectionViews = new InspectionViews(this);
 
         ClassMethodActor.hostedVerificationEnabled = false;
 
         BreakpointPersistenceManager.initialize(this);
-        notepadManager = new NotepadManager(this);
         inspectionActions.refresh(true);
 
         vm.addVMStateListener(new VMStateListener());
@@ -116,17 +115,10 @@ public final class Inspection implements InspectionHolder {
 
         inspectorMainFrame = new InspectorMainFrame(this, MaxineInspector.NAME, nameDisplay, settings, inspectionActions);
 
-        MethodInspector.Manager.make(this);
-        objectInspectorFactory = ObjectInspectorFactory.make(this);
 
         if (vm.state().processState() == UNKNOWN) {
             // Inspector is working with a boot image only, no process exists.
-
-            // Initialize the CodeManager and ClassRegistry, which seems to keep some heap reads
-            // in the BootImageInspecor from crashing when there's no VM running (mlvdv)
-//          if (teleVM.isBootImageRelocated()) {
-//          teleVM.teleCodeRegistry();
-//          }
+            inspectionViews.activateInitialViews();
         } else {
             try {
                 // Choose an arbitrary thread as the "current" thread. If the inspector is
@@ -145,12 +137,7 @@ public final class Inspection implements InspectionHolder {
                 if (nonJavaThread != null) {
                     focus.setThread(nonJavaThread);
                 }
-                // TODO (mlvdv) decide whether to make inspectors visible based on preference and previous session
-                ThreadsInspector.make(this);
-                RegistersInspector.make(this);
-                ThreadLocalsInspector.make(this);
-                StackInspector.make(this);
-                BreakpointsInspector.make(this);
+                inspectionViews.activateInitialViews();
                 focus.setCodeLocation(focus.thread().ipLocation());
             } catch (Throwable throwable) {
                 InspectorWarning.message("Error during initialization", throwable);
@@ -187,6 +174,10 @@ public final class Inspection implements InspectionHolder {
 
     public InspectionActions actions() {
         return inspectionActions;
+    }
+
+    public InspectionViews views() {
+        return inspectionViews;
     }
 
     public OptionSet options() {
@@ -245,14 +236,15 @@ public final class Inspection implements InspectionHolder {
      * @return all existing object inspectors, even if hidden or iconic.
      */
     public Set<ObjectInspector> objectInspectors() {
-        return objectInspectorFactory.inspectors();
+        ObjectViewManager objectViewManager = (ObjectViewManager) ViewKind.OBJECT.viewManager();
+        return objectViewManager.inspectors();
     }
 
     /**
      * @return all existing memory inspectors, even if hidden or iconic.
      */
-    public Set<MemoryWordsInspector> memoryWordsInspectors() {
-        return MemoryWordsInspector.inspectors();
+    public Set<MemoryInspector> memoryInspectors() {
+        return MemoryInspector.inspectors();
     }
 
     /**
@@ -267,13 +259,6 @@ public final class Inspection implements InspectionHolder {
      */
     public void registerAction(InspectorAction inspectorAction) {
         preferences.registerAction(inspectorAction);
-    }
-
-    /**
-     * Gets access to persistent notepad(s).
-     */
-    public InspectorNotepad getNotepad() {
-        return notepadManager.getNotepad();
     }
 
     /**
@@ -510,6 +495,7 @@ public final class Inspection implements InspectionHolder {
     }
 
     /**
+     * This is the main update loop for all inspection state after a period of VM execution.
      * Determines what happened in VM execution that just concluded. Then updates all view state as needed.
      */
     public void updateAfterVMStopped() {
@@ -525,6 +511,8 @@ public final class Inspection implements InspectionHolder {
             focus().setThread(vm().state().threads().get(0));
         }
         try {
+            // Notify all listeners (Inspectors, menu items, etc.() that
+            // there has been a significant VM state change.
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint
             // or the memory location that triggered a watchpoint
