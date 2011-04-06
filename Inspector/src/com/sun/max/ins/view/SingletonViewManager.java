@@ -20,40 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.object;
+package com.sun.max.ins.view;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.object.*;
 
 /**
- * An object inspector specialized for displaying a low-level object
- * in the VM, constructed using {@link ArrayLayout}.
+ * Manager for a kind of Inspector view that is a singleton which can either be active (the instance
+ * exists and is visible) or not.
  *
  * @author Michael Van De Vanter
  */
-public final class ArrayInspector extends ObjectInspector {
+public interface SingletonViewManager extends ViewManager {
 
-    private ObjectScrollPane elementsPane;
+    /**
+     * Activates the singleton view, newly created if necessary.
+     *
+     * @return the instance that implements the singleton view
+     */
+    Inspector activateView(Inspection inspection);
 
-    ArrayInspector(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
-        final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
-    }
-
-    @Override
-    protected void createView() {
-        super.createView();
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
-        elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
-        getContentPane().add(elementsPane);
-    }
-
-    @Override
-    protected void refreshState(boolean force) {
-        elementsPane.refresh(force);
-        super.refreshState(force);
-    }
-
+    /**
+     * Disposes the existing singleton view.
+     */
+    void deactivateView();
 }

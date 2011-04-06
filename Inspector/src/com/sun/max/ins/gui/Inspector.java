@@ -31,7 +31,11 @@ import javax.swing.*;
 
 import com.sun.max.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
+import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
+import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
+import com.sun.max.ins.view.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -39,8 +43,12 @@ import com.sun.max.tele.util.*;
 import com.sun.max.unsafe.*;
 
 /**
- * An {@link Inspector} combines an aggregation of {@link Prober}s in a displayed frame.
- * <br>
+ * An interactive visual presentation of some aspect of VM state.
+ * <p>
+ * This presentation creates some kind of view (the visual representation of some piece
+ * of VM state) and puts it into an {@link InspectorFrame} for realization in the
+ * window system.
+ * <p>
  * <b>Event Notification</b>:
  * This abstract class ensures that every Inspector listens for {@linkplain InspectionListener Inspection Events}
  * as well as {@linkplain ViewFocusListener Focus Events}.  Any Inspector implementation
@@ -50,7 +58,6 @@ import com.sun.max.unsafe.*;
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
- *
  */
 public abstract class Inspector<Inspector_Type extends Inspector> extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
 
@@ -83,14 +90,38 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
 
     }
 
-    protected InspectorMenuItems defaultMenuItems(MenuKind menuKind) {
+    /**
+     * Creates a set of standard menu items for this Inspector which are
+     * appropriate to one of the standard menu kinds.
+     *
+     * @param menuKind the kind of menu for which the standard items are intended
+     * @return a new set of menu items
+     */
+    protected final InspectorMenuItems defaultMenuItems(MenuKind menuKind) {
+        return defaultMenuItems(menuKind, Inspector.this);
+    }
+
+    /**
+     * Creates a set of standard menu items for an Inspector which are
+     * appropriate to one of the standard menu kinds.
+     *
+     * @param inspector the inspector for which inspector-specific items will operate
+     * @param menuKind the kind of menu for which the standard items are intended
+     * @return a new set of menu items
+     */
+    protected final InspectorMenuItems defaultMenuItems(MenuKind menuKind, final Inspector inspector) {
 
         switch(menuKind) {
             case DEFAULT_MENU:
                 return new AbstractInspectorMenuItems(inspection()) {
                     public void addTo(InspectorMenu menu) {
-                        menu.add(getCloseAction());
-                        menu.add(actions().closeViews(Inspector.class, Inspector.this, "Close Other Inspectors"));
+                        menu.add(getCloseAction(inspector));
+                        menu.add(actions().closeViews(Inspector.class, inspector, "Close Other Inspectors"));
+                        menu.addSeparator();
+                        menu.add(actions().movedToCenter(inspector));
+                        menu.add(actions().resizeToFit(inspector));
+                        menu.add(actions().resizeToFill(inspector));
+                        menu.add(actions().restoreDefaultGeometry(inspector));
                         menu.addSeparator();
                         menu.add(getPrintAction());
                     }
@@ -126,14 +157,10 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                     public void addTo(InspectorMenu menu) {
                         menu.addSeparator();
                         menu.add(actions().genericBreakpointMenuItems());
-                        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
-                        viewBreakpointsMenuItem.setText("View Breakpoints");
-                        menu.add(viewBreakpointsMenuItem);
+                        menu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
                         if (vm().watchpointManager() != null) {
                             menu.add(actions().genericWatchpointMenuItems());
-                            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
-                            viewWatchpointsMenuItem.setText("View Watchpoints");
-                            menu.add(viewWatchpointsMenuItem);
+                            menu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
                         }
                     }
                 };
@@ -158,13 +185,47 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         };
     }
 
+    private final ViewKind viewKind;
+
+    /**
+     * A listener that saves the current frame geometry (location, size)
+     * whenever a "save" event takes place.  Newly created frames are initialized
+     * to saved geometry settings, if present, as identified by the Inspector's key.
+     */
+    private final SaveSettingsListener saveGeometrySettingsListener;
+
     private InspectorFrame frame;
 
     private final TimedTrace updateTracer;
 
-    protected Inspector(Inspection inspection) {
+    /**
+     * Abstract constructor for all inspector views.
+     *
+     * @param viewKind the kind of view being created
+     * @param geometrySettingsKey if non-null, makes the size and location of this
+     * inspector persistent across sessions.
+     */
+    protected Inspector(Inspection inspection, ViewKind viewKind, String geometrySettingsKey) {
         super(inspection);
+        this.viewKind = viewKind;
+        saveGeometrySettingsListener = (geometrySettingsKey == null) ? null : new AbstractSaveSettingsListener(geometrySettingsKey, this) {
+
+            @Override
+            public Rectangle defaultGeometry() {
+                return Inspector.this.defaultGeometry();
+            }
+
+            public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
+            }
+        };
         this.updateTracer = new TimedTrace(TRACE_VALUE, tracePrefix() + "refresh");
+    }
+
+    /**
+     * @return the manager for kind of view
+     */
+    public final ViewManager viewManager() {
+        return viewKind.viewManager();
     }
 
     /**
@@ -175,36 +236,30 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
-     * @return default geometry for this inspector, to be used if no prior settings; null if no default specified.
+     * Gets a default location for a view.  For singletons, these tend to be statically defined by the
+     * inspector geometry preferences.  For other views, the default might be the location at which it
+     * was created originally.
+     *
+     * @return default geometry for this Inspector, to be used if no prior settings; null if no default specified.
      */
-    protected Rectangle defaultFrameBounds() {
-        return null;
+    protected Rectangle defaultGeometry() {
+        return inspection().geometry().preferredFrameGeometry(viewKind);
     }
 
     /**
-     * Gets an object that is an adapter between the inspection's persistent {@linkplain Inspection#settings()}
-     * and this inspector. If the object's {@link SaveSettingsListener#component()} , then the
-     * size and location of this inspector are adjusted according to the settings as well as being
-     * persisted any time this inspector is moved or resized.
+     * @return the current geometry for this Inspector in the main frame
      */
-    protected SaveSettingsListener saveSettingsListener() {
-        return null;
+    protected final Rectangle getGeometry() {
+        return getJComponent().getBounds();
     }
 
     /**
-     * Creates a settings client for this inspector that causes window geometry to be saved & restored.
+     * Sets the geometry of the Inspector in the main frame.
+     *
+     * @param rectangle the new geometry for the Inspector
      */
-    protected static SaveSettingsListener createGeometrySettingsClient(final Inspector inspector, final String name) {
-        return new AbstractSaveSettingsListener(name, inspector) {
-
-            @Override
-            public Rectangle defaultBounds() {
-                return inspector.defaultFrameBounds();
-            }
-
-            public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-            }
-        };
+    public final void setGeometry(Rectangle rectangle) {
+        getJComponent().setBounds(rectangle);
     }
 
     protected void setWarning() {
@@ -240,22 +295,33 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
-     * Sets the display frame title for this inspector.
-     *
-     * @param title a string to display.  If null, uses the string provided by
-     * the abstract method {@link #getTextForTitle()}.
+     * @return the visible table for inspectors with table-based views; null if none.
+     */
+    protected InspectorTable getTable() {
+        return null;
+    }
+
+    /**
+     * Creates the view that will be inserted into the Inspector's frame.
      */
     protected abstract void createView();
 
     /**
-     * Creates a frame for the inspector
-     * calls {@link createView()} to populate it; adds the inspector to the update
-     * listeners; makes it all visible.
+     * Creates a simple frame for the inspector and:
+     * <ul>
+     * <li>calls {@link createView()} to populate it;</li>
+     * <li>adds this inspector to the collection of update listeners; and</li>
+     * <li>makes it all visible in the window system.</li>
+     * </ul>
+     * <p>
+     * The geometry (size and location) of the frame will be saved across sessions
+     * if a non-null key was provided in the constructor.
+     * if no key is provided, or if no settings from previous sessions have been saved,
+     * then the initial geometry will be taken from a specification created by
+     * implementations of the {@link InspectorGeometry} interface.
      *
-     * If this inspector has a {@linkplain #saveSettingsListener()}, then its size and location
-     * is adjusted according to the {@linkplain Inspection#settings() inspection's settings}.
-     * @param addMenuBar TODO
-     *
+     * @param addMenuBar should a menu bar be added to the frame.
+     * @see InspectorGeometry#preferredFrameGeometry(ViewKind)
      */
     protected InspectorFrame createFrame(boolean addMenuBar) {
         frame = new InspectorInternalFrame(this, addMenuBar);
@@ -265,13 +331,25 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         gui().addInspector(this);
         inspection().addInspectionListener(this);
         focus().addListener(this);
-        final SaveSettingsListener saveSettingsListener = saveSettingsListener();
-        if (saveSettingsListener != null) {
-            inspection().settings().addSaveSettingsListener(saveSettingsListener);
+        if (saveGeometrySettingsListener != null) {
+            inspection().settings().addSaveSettingsListener(saveGeometrySettingsListener);
         }
         return frame;
     }
 
+    /**
+     * Creates a tabbed frame for the inspector and:
+     * <ul>
+     * <li>calls {@link createView()} to populate it;</li>
+     * <li>adds this inspector to the collection of update listeners; and</li>
+     * <li>makes it all visible in the window system.</li>
+     * </ul>
+     * <p>
+     * Note that these frames only exist in side a tabbed container, and thus
+     * persistent geometry is not supported for them.
+     *
+     * @param addMenuBar should a menu bar be added to the frame.
+     */
     protected InspectorFrame createTabFrame(TabbedInspector<Inspector_Type> parent) {
         final Class<Inspector_Type> type = null;
         final Inspector_Type thisInspector = Utils.cast(type, this);
@@ -282,22 +360,36 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         gui().addInspector(this);
         inspection().addInspectionListener(this);
         focus().addListener(this);
-        final SaveSettingsListener saveSettingsListener = saveSettingsListener();
-        if (saveSettingsListener != null) {
-            inspection().settings().addSaveSettingsListener(saveSettingsListener);
-        }
         return frame;
     }
 
     /**
-     * Reads, re-reads, and updates any state caches if needed from the VM.
+     * Each inspector optionally re-reads, and updates any state caches if needed
+     * from the VM.  The expectation is that some Inspectors may cache and
+     * update selectively, but the argument can override this.
      *
      * @param force suspend caching behavior; read state unconditionally.
      */
-    protected void refreshView(boolean force) {
+    protected abstract void refreshState(boolean force);
+
+    /**
+     * Refreshes any state needed from the VM and then ensures that the visual
+     * display is completely updated.
+     *
+     * @param force  force suspend caching behavior; read state unconditionally.
+     */
+    private void refresh(boolean force) {
+        refreshState(force);
         frame.refresh(force);
         frame.invalidate();
         frame.repaint();
+    }
+
+    /**
+     * Unconditionally forces a full refresh of this Inspector.
+     */
+    protected final void forceRefresh() {
+        refresh(true);
     }
 
     /**
@@ -310,13 +402,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         createView();
         frame.setPreferredSize(size);
         frame.pack();
-    }
-
-    /**
-     * @return the visible table for inspectors with table-based views; null if none.
-     */
-    protected InspectorTable getTable() {
-        return null;
     }
 
     public void setContentPane(Container contentPane) {
@@ -375,6 +460,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      * Calls this inspector to the users attention:  move to front, select, and flash.
      */
     public void highlight() {
+        gui().moveToExposeDefaultMenu(this);
         frame.moveToFront();
         setSelected();
         flash();
@@ -415,21 +501,30 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
-     * Receives notification that the window system is closing this inspector.
+     * Receives notification that the window system is closing this inspector and cleans
+     * up.
+     * <ul>
+     * <li>Removes Inspector's inspection, focus, and save settings listeners;</li>
+     * <li>Notifies the Inspector's view manager that the view is closing; and</li>
+     * <li>Triggers a save event</li>
+     * </ul>
      */
     protected void inspectorClosing() {
         inspection().removeInspectionListener(this);
         focus().removeListener(this);
-        final SaveSettingsListener saveSettingsListener = saveSettingsListener();
-        if (saveSettingsListener != null) {
-            inspection().settings().removeSaveSettingsListener(saveSettingsListener);
+        if (viewManager() != null) {
+            viewManager().notifyViewClosing(this);
         }
+        if (saveGeometrySettingsListener != null) {
+            inspection().settings().removeSaveSettingsListener(saveGeometrySettingsListener);
+        }
+        inspection().settings().save();
     }
 
     public void vmStateChanged(boolean force) {
         final String title = getTitle();
         updateTracer.begin(title);
-        refreshView(force);
+        refresh(force);
         updateTracer.end(title);
     }
 
@@ -451,7 +546,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxeThread) {
     }
 
-    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
+    public void frameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {
@@ -491,7 +586,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             @Override
             protected void procedure() {
                 Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
-                refreshView(true);
+                forceRefresh();
             }
         };
     }
@@ -499,11 +594,11 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     /**
      * @return an action that will close this inspector
      */
-    public InspectorAction getCloseAction() {
+    public InspectorAction getCloseAction(final Inspector inspector) {
         return new InspectorAction(inspection(), "Close") {
             @Override
             protected void procedure() {
-                dispose();
+                inspector.dispose();
             }
         };
     }

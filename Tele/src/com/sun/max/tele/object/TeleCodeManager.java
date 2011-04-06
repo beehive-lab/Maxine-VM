@@ -65,14 +65,12 @@ public final class TeleCodeManager extends TeleTupleObject {
             assert vm().lockHeldByCurrentThread();
             Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
             final long startTimeMillis = System.currentTimeMillis();
+
             final Reference bootCodeRegionReference = vm().teleFields().Code_bootCodeRegion.readReference(vm());
             teleBootCodeRegion = (TeleCodeRegion) heap().makeTeleObject(bootCodeRegionReference);
 
             final Reference runtimeCodeRegionReference = vm().teleFields().CodeManager_runtimeCodeRegion.readReference(vm());
             teleRuntimeCodeRegion = (TeleCodeRegion) heap().makeTeleObject(runtimeCodeRegionReference);
-
-            teleBootCodeRegion.updateCache(vm().teleProcess().epoch());
-            teleRuntimeCodeRegion.updateCache(vm().teleProcess().epoch());
 
             Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,10 @@
  */
 package com.sun.max.ins;
 
-import java.awt.*;
-
-import javax.swing.*;
-
-import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 
@@ -39,21 +36,43 @@ import com.sun.max.vm.*;
  */
 public final class BootImageInspector extends Inspector  implements TableColumnViewPreferenceListener {
 
-    // Set to null when inspector closed.
-    private static BootImageInspector bootImageInspector;
+    private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.BOOT_IMAGE;
+    private static final String SHORT_NAME = "Boot Image";
+    private static final String LONG_NAME = "Boot Image Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "bootImageInspectorGeometry";
 
-    /**
-     * Displays the (singleton) BootImage inspector.
-     * @return  The BootImage inspector, possibly newly created.
-     */
-    public static BootImageInspector make(Inspection inspection) {
-        if (bootImageInspector == null) {
-            bootImageInspector = new BootImageInspector(inspection);
+    private static final class BootImageViewManager extends AbstractSingletonViewManager<BootImageInspector> {
+
+        protected BootImageViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return bootImageInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return true;
+        }
+
+        public BootImageInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new BootImageInspector(inspection);
+            }
+            return inspector;
+        }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "bootImageInspectorGeometry");
+    // Will be non-null before any instances created.
+    private static BootImageViewManager viewManager = null;
+
+    public static BootImageViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new BootImageViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final BootImageViewPreferences viewPreferences;
@@ -61,7 +80,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     private BootImageTable table;
 
     private BootImageInspector(Inspection inspection) {
-        super(inspection);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1, tracePrefix() + "initializing");
         viewPreferences = BootImageViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -70,17 +89,20 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        memoryMenu.add(viewMemoryRegionsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         Trace.end(1, tracePrefix() + "initializing");
     }
 
     @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().bootImageFrameDefaultBounds();
+    public String getTextForTitle() {
+        return viewManager.shortName() + ": " + vm().bootImageFile().getAbsolutePath();
+    }
+
+    @Override
+    protected InspectorTable getTable() {
+        return table;
     }
 
     @Override
@@ -90,18 +112,8 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     }
 
     @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
-    }
-
-    @Override
-    protected InspectorTable getTable() {
-        return table;
-    }
-
-    @Override
-    public String getTextForTitle() {
-        return "Boot Image: " + vm().bootImageFile().getAbsolutePath();
+    protected void refreshState(boolean force) {
+        table.refresh(force);
     }
 
     @Override
@@ -109,7 +121,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BootImageColumnKind>(inspection(), "Boot Image View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BootImageColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
             }
         };
     }
@@ -117,12 +129,6 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     @Override
     public InspectorAction getPrintAction() {
         return getDefaultPrintAction();
-    }
-
-    @Override
-    protected void refreshView(boolean force) {
-        table.refresh(force);
-        super.refreshView(force);
     }
 
     public void viewConfigurationChanged() {
@@ -136,7 +142,6 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        bootImageInspector = null;
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
@@ -144,7 +149,6 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     @Override
     public void vmProcessTerminated() {
         Trace.line(1, tracePrefix() + " closing - process terminated");
-        bootImageInspector = null;
         viewPreferences.removeListener(this);
         dispose();
     }

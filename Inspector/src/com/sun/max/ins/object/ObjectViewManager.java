@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,10 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
@@ -38,20 +41,11 @@ import com.sun.max.vm.actor.holder.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ObjectInspectorFactory extends AbstractInspectionHolder {
+public final class ObjectViewManager extends AbstractMultiViewManager {
 
-    private static ObjectInspectorFactory factory;
-
-    /**
-     * Creates the singleton factory that listens for events and will find or create instances
-     * of {@link ObjectInspector} as needed.
-     */
-    public static ObjectInspectorFactory make(final Inspection inspection) {
-        if (factory == null) {
-            factory = new ObjectInspectorFactory(inspection);
-        }
-        return factory;
-    }
+    private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
+    private static final String SHORT_NAME = "Object";
+    private static final String LONG_NAME = "Object Inspector";
 
     /**
      * Map:   {@link TeleObject} -- > the {@link ObjectInspector}, if it exists, for the corresponding
@@ -76,8 +70,8 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
     private final Constructor defaultArrayInspectorConstructor;
     private final Constructor defaultTupleInspectorConstructor;
 
-    private ObjectInspectorFactory(final Inspection inspection) {
-        super(inspection);
+    ObjectViewManager(final Inspection inspection) {
+        super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         Trace.begin(1, tracePrefix() + "initializing");
 
         // Use this if there is no subclass of array component type is matched, or if the component type is an interface.
@@ -99,11 +93,27 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
             @Override
             public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
                 if (teleObject != null) {
-                    factory.makeObjectInspector(inspection, teleObject);
+                    ObjectViewManager.this.makeObjectInspector(inspection, teleObject);
                 }
             }
         });
         Trace.end(1, tracePrefix() + "initializing");
+    }
+
+    public boolean isSupported() {
+        return true;
+    }
+
+    public boolean isEnabled() {
+        return true;
+    }
+
+    @Override
+    public void notifyViewClosing(Inspector inspector) {
+        // TODO (mlvdv)  should be using generics here
+        final ObjectInspector objectInspector = (ObjectInspector) inspector;
+        teleObjectToInspector.remove(objectInspector.teleObject());
+        super.notifyViewClosing(inspector);
     }
 
     private void makeObjectInspector(Inspection inspection, TeleObject teleObject) {
@@ -155,6 +165,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
             }
             if (objectInspector != null) {
                 teleObjectToInspector.put(teleObject, objectInspector);
+                super.notifyAddingView(objectInspector);
             }
         }
         if (objectInspector != null) {
@@ -163,7 +174,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
     }
 
     private Constructor getConstructor(Class clazz) {
-        return Classes.getDeclaredConstructor(clazz, Inspection.class, ObjectInspectorFactory.class, TeleObject.class);
+        return Classes.getDeclaredConstructor(clazz, Inspection.class, ObjectViewManager.class, TeleObject.class);
     }
 
     private Constructor lookupInspectorConstructor(Map<Class, Constructor> map, Class clazz) {
@@ -176,10 +187,6 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
             javaClass = javaClass.getSuperclass();
         }
         return null;
-    }
-
-    void objectInspectorClosing(ObjectInspector objectInspector) {
-        teleObjectToInspector.remove(objectInspector.teleObject());
     }
 
     public boolean isObjectInspectorObservingObject(long oid) {
