@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -206,22 +206,23 @@ public class InvocationStubGenerator<T> {
             final ClassActor stubClassActor;
             synchronized (declaringClassActor.classLoader) {
                 stubClassActor = ClassActorFactory.createTupleOrHybridClassActor(
-                    constantPool,
-                    declaringClassActor.classLoader,
-                    stubClassName,
-                    ClassfileReader.JAVA_1_5_VERSION,
-                    (char) 0,
-                    Modifier.PUBLIC | Actor.REFLECTION_STUB,
-                    superClassActor,
-                    interfaceActors,
-                    fieldActors,
-                    classMethodActors,
-                    Actor.NO_GENERIC_SIGNATURE,
-                    Actor.NO_RUNTIME_VISIBLE_ANNOTATION_BYTES,
-                    ClassActor.NO_SOURCE_FILE_NAME,
-                    ClassActor.NO_INNER_CLASSES,
-                    ClassActor.NO_OUTER_CLASS,
-                    ClassActor.NO_ENCLOSING_METHOD_INFO);
+                                constantPool,
+                                declaringClassActor.classLoader,
+                                stubClassName,
+                                ClassfileReader.JAVA_1_5_VERSION,
+                                (char) 0,
+                                Modifier.PUBLIC | Actor.REFLECTION_STUB,
+                                superClassActor,
+                                interfaceActors,
+                                fieldActors,
+                                classMethodActors,
+                                Actor.NO_GENERIC_SIGNATURE,
+                                Actor.NO_RUNTIME_VISIBLE_ANNOTATION_BYTES,
+                                ClassActor.NO_SOURCE_FILE_NAME,
+                                ClassActor.NO_INNER_CLASSES,
+                                ClassActor.NO_OUTER_CLASS,
+                                ClassActor.NO_ENCLOSING_METHOD_INFO);
+                stubClassActor.define();
             }
 
             try {

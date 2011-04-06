@@ -1035,7 +1035,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildTLABAllocateArray(CiKind kind) {
         XirOperand result = asm.restart(CiKind.Object);
         XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
-        return Heap.usedOutOfLineStubs ?
+        return Heap.useOutOfLineStubs ?
                         buildTLABAllocateArray(kind, result, hub) :
                             buildTLABAllocateArrayIn(kind, result, hub);
     }
@@ -1197,7 +1197,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand result = asm.restart(CiKind.Object);
         XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
         XirParameter tupleSize = asm.createConstantInputParameter("tupleSize", CiKind.Int);
-        if (Heap.usedOutOfLineStubs) {
+        if (Heap.useOutOfLineStubs) {
             buildTLABAllocate(isHybrid, result, hub, tupleSize);
         } else {
             buildTLABAllocateIn(isHybrid, result, hub, tupleSize);
@@ -1219,7 +1219,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
             XirOperand tupleSize = asm.createTemp("tupleSize", CiKind.Int);
             asm.pload(CiKind.Int, tupleSize, hub, asm.i(offsetOfTupleSize()), false);
-            if (Heap.usedOutOfLineStubs) {
+            if (Heap.useOutOfLineStubs) {
                 buildTLABAllocate(false, result, hub, tupleSize);
             } else {
                 buildTLABAllocateIn(false, result, hub, tupleSize);
