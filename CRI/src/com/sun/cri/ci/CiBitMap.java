@@ -22,6 +22,7 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -31,7 +32,7 @@ import java.util.*;
  * @author Thomas Wuerthinger
  * @author Doug Simon
  */
-public final class CiBitMap {
+public final class CiBitMap implements Serializable {
 
     private static final int ADDRESS_BITS_PER_WORD = 6;
     private static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;

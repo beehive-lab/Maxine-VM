@@ -22,6 +22,8 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
+
 import com.sun.cri.ri.*;
 
 /**
@@ -31,7 +33,7 @@ import com.sun.cri.ri.*;
  */
 public final class CiAssumptions {
 
-    public abstract static class Assumption {
+    public abstract static class Assumption implements Serializable {
     }
     
     public final static class ConcreteSubtype extends Assumption {

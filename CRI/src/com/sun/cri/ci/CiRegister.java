@@ -22,6 +22,7 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -30,7 +31,7 @@ import java.util.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public final class CiRegister implements Comparable<CiRegister> {
+public final class CiRegister implements Comparable<CiRegister>, Serializable {
 
     /**
      * Invalid register.

@@ -22,6 +22,8 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
+
 import com.sun.cri.ri.*;
 
 /**
@@ -33,7 +35,7 @@ import com.sun.cri.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class CiCodePos {
+public class CiCodePos implements Serializable {
     /**
      * The position where this position has been called, {@code null} if none.
      */
