@@ -65,7 +65,7 @@
 verbose=false
 unknown_option=""
 show_help=false
-default_jvm_args="-d64 -ea -Xss2m -Xmx1g"
+default_jvm_args="-server -ea -Xss2m -Xmx1g"
 default_jvm_dbg_port=8000
 jvm_args="$default_jvm_args"
 jvm_args_prefix=""
@@ -666,23 +666,6 @@ function run_copycheck() {
         exit $result
     fi
  }
-
-
-#=======================================
-# 'copycheck' command
-#=======================================
-
-copycheck_usage="[options]"
-copycheck_help="run copyright check on the Maxine sources (defined as being under hg control)"
- 
-function run_copycheck() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tools.CheckCopyright $@
-    result=$?
-    if [ $result -ne 0 ]; then
-        exit $result
-    fi
- }
-
 
 #=======================================
 # 'check' command
