@@ -291,11 +291,6 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-
-    private void invalidateTargetMethod(TargetMethod targetMethod) {
-
-    }
-
     private void processNewTargetMethod(TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
