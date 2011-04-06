@@ -93,10 +93,10 @@ public class T1XTemplateChecker extends C1XCompilerExtension {
         public void visitStorePointer(StorePointer i) {
             if (i.pointer() instanceof LoadRegister) {
                 CiRegister reg = ((LoadRegister) i.pointer()).register;
-                if (reg == MaxineVM.vm().registerConfigs.jitTemplate.getRegisterForRole(VMRegister.ABI_FP) ||
-                    reg == MaxineVM.vm().registerConfigs.jitTemplate.getRegisterForRole(VMRegister.ABI_SP) ||
-                    reg == MaxineVM.vm().registerConfigs.jitTemplate.getRegisterForRole(VMRegister.CPU_FP) ||
-                    reg == MaxineVM.vm().registerConfigs.jitTemplate.getRegisterForRole(VMRegister.CPU_SP)) {
+                if (reg == MaxineVM.vm().registerConfigs.bytecodeTemplate.getRegisterForRole(VMRegister.ABI_FP) ||
+                    reg == MaxineVM.vm().registerConfigs.bytecodeTemplate.getRegisterForRole(VMRegister.ABI_SP) ||
+                    reg == MaxineVM.vm().registerConfigs.bytecodeTemplate.getRegisterForRole(VMRegister.CPU_FP) ||
+                    reg == MaxineVM.vm().registerConfigs.bytecodeTemplate.getRegisterForRole(VMRegister.CPU_SP)) {
                     setSeenFrameModification(block);
                     seenFrameModification = true;
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,26 +78,16 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     private final SortedMemoryRegionList<TargetMethod> targetMethods = new SortedMemoryRegionList<TargetMethod>();
 
     /**
-     * Accessor for the sorted list of target methods.
-     *
-     * @return the sorted list of target methods in this code region
+     * Gets a copy of the sorted target method list.
      */
-    @HOSTED_ONLY
-    public Iterable<TargetMethod> targetMethods() {
-        return targetMethods;
-    }
-
-    /**
-     * Accessor for a copy of the sorted list of target methods as an array.
-     * @return a copy of all existing target methods at the time of invocation
-     */
-    public TargetMethod[] currentTargetMethods() {
-        TargetMethod[] result = new TargetMethod[targetMethods.size()];
-        int index = 0;
-        for (TargetMethod tm : targetMethods) {
-            result[index++] = tm;
+    public TargetMethod[] copyOfTargetMethods() {
+        while (true) {
+            TargetMethod[] result = new TargetMethod[targetMethods.size()];
+            int length = targetMethods.copyInto(result);
+            if (length == result.length) {
+                return result;
+            }
         }
-        return result;
     }
 
     public void add(TargetMethod targetMethod) {

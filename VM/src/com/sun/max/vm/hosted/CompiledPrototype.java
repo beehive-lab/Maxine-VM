@@ -389,7 +389,7 @@ public class CompiledPrototype extends Prototype {
     }
 
     private void addMethodsReferencedByExistingTargetCode() {
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             ClassMethodActor classMethodActor = targetMethod.classMethodActor;
             if (classMethodActor != null) {
                 Link existing = methodActors.put(classMethodActor, new Link(classMethodActor, null, null));
@@ -487,7 +487,6 @@ public class CompiledPrototype extends Prototype {
         add(ClassRegistry.findMethod("loadLibrary", System.class), null, entryPoint);
         add(ClassRegistry.findMethod("loadLibrary0", ClassLoader.class), null, entryPoint);
         add(ClassRegistry.findMethod("loadLibrary", ClassLoader.class), null, entryPoint);
-        add(ClassRegistry.findMethod(JDK.java_lang_ProcessEnvironment, "<clinit>"), null, entryPoint);
 
         // It's too late now to register any further methods to be compiled into the boot image
         extraVMEntryPoints = null;
@@ -689,7 +688,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             if (!(targetMethod instanceof Adapter)) {
                 Adapter adapter = null;
                 ClassMethodActor classMethodActor = targetMethod.classMethodActor;

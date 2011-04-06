@@ -77,7 +77,7 @@ public final class T1XCompilation {
 
     // Static info
 
-    static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.JIT_ENTRY_POINT);
+    static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
     static final CiRegister[] cpuRegParams = vm().registerConfigs.standard.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.CPU);
     static final CiRegister[] fpuRegParams = vm().registerConfigs.standard.getCallingConventionRegisters(Type.JavaCall, RegisterFlag.FPU);
     static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();

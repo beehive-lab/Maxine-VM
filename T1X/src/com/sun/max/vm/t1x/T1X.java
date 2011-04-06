@@ -285,7 +285,7 @@ public class T1X implements RuntimeCompiler {
 
     @Override
     public CallEntryPoint calleeEntryPoint() {
-        return CallEntryPoint.JIT_ENTRY_POINT;
+        return CallEntryPoint.BASELINE_ENTRY_POINT;
     }
 
     @Override
@@ -347,11 +347,6 @@ public class T1X implements RuntimeCompiler {
             }
             Trace.end(1, "creating T1X templates [templates code size: " + codeSize + "]", startTime);
             comp.extensions = oldExtensions;
-        }
-        if (!isHosted() && phase == Phase.RUNNING) {
-            if (T1XOptions.PrintCodeCacheMetrics) {
-                Runtime.getRuntime().addShutdownHook(new T1XCodeCacheMetrics());
-            }
         }
         if (phase == Phase.TERMINATING) {
             if (T1XOptions.PrintMetrics) {

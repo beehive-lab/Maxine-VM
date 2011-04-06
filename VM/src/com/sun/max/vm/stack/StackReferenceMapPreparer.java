@@ -65,7 +65,7 @@ import com.sun.max.vm.thread.*;
  * ATTENTION: the algorithm below must not allocate any objects from the GC heap,
  * since it is running at a GC safepoint when the global GC lock may already be taken.
  * Especially the {@linkplain ReferenceMapInterpreter reference map interpreter},
- * which fills in stack reference maps for JIT target methods as needed
+ * which fills in stack reference maps for target methods compiled by the baseline compiler as needed
  * was carefully crafted to comply with this requirement.
  *
  * @author Bernd Mathiske

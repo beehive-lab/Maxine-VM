@@ -32,8 +32,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 
 /**
- * This class contains several utility methods for dealing with method instrumentation
- * in JIT code.
+ * This class contains several utility methods for dealing with method instrumentation.
  *
  * @author Ben L. Titzer
  */

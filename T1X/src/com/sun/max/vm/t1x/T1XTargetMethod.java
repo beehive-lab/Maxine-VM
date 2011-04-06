@@ -116,7 +116,7 @@ public final class T1XTargetMethod extends TargetMethod {
     /**
      * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
      * into the runtime derived from the constituent templates. These calls are linked using {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}.
-     * All other direct calls are linked using {@link CallEntryPoint#JIT_ENTRY_POINT}.
+     * All other direct calls are linked using {@link CallEntryPoint#BASELINE_ENTRY_POINT}.
      */
     public final CiBitMap isDirectCallToRuntime;
 
@@ -134,10 +134,10 @@ public final class T1XTargetMethod extends TargetMethod {
     /**
      * The profile for this method - if there is one (otherwise, null).
      */
-    public final MethodProfile methodProfile;
+    public final MethodProfile profile;
 
     public T1XTargetMethod(T1XCompilation comp, boolean install) {
-        super(comp.method, CallEntryPoint.JIT_ENTRY_POINT);
+        super(comp.method, CallEntryPoint.BASELINE_ENTRY_POINT);
 
         codeAttribute = comp.codeAttribute;
         bciToPos = comp.bciToPos;
@@ -156,9 +156,9 @@ public final class T1XTargetMethod extends TargetMethod {
         handlers = initHandlers(comp);
 
         if (comp.methodProfileBuilder != null) {
-            methodProfile = comp.methodProfileBuilder.methodProfileObject();
+            profile = comp.methodProfileBuilder.methodProfileObject();
         } else {
-            methodProfile = null;
+            profile = null;
         }
 
         // Allocate and set the code and data buffer
@@ -201,6 +201,11 @@ public final class T1XTargetMethod extends TargetMethod {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
         }
+    }
+
+    @Override
+    public MethodProfile profile() {
+        return profile;
     }
 
     @Override
