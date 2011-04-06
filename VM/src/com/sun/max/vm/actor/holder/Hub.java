@@ -23,6 +23,7 @@
 package com.sun.max.vm.actor.holder;
 
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -71,7 +72,12 @@ public abstract class Hub extends Hybrid {
     public final int referenceMapLength;
     @INSPECTED
     public final int referenceMapStartIndex;
-    public final boolean isSpecialReference;
+
+    /**
+     * Specifies if this is the hub for {@link java.lang.ref.Reference} or
+     * a subclass of the former.
+     */
+    public final boolean isJLRReference;
 
     /**
      * Determines whether a given set of class ids collide in a hash table of size {@code divisor}
@@ -213,7 +219,7 @@ public abstract class Hub extends Hybrid {
         this.mTableLength = 1;
         this.referenceMapStartIndex = mTableStartIndex + mTableLength;
         this.referenceMapLength = referenceMap.numberOfEntries();
-        this.isSpecialReference = false;
+        this.isJLRReference = false;
     }
 
     /**
@@ -244,7 +250,17 @@ public abstract class Hub extends Hybrid {
         this.mTableLength = minCollisionFreeDivisor(superClassActorIds);
         this.referenceMapStartIndex = mTableStartIndex + mTableLength;
         this.referenceMapLength = referenceMap.numberOfEntries();
-        this.isSpecialReference = classActor.isSpecialReference();
+        this.isJLRReference = isSupertypeOf(JLR_REFERENCE, classActor);
+    }
+
+    private static boolean isSupertypeOf(ClassActor c, ClassActor sub) {
+        while (sub != null) {
+            if (sub == c) {
+                return true;
+            }
+            sub = sub.superClassActor;
+        }
+        return false;
     }
 
     protected final Hub expand() {

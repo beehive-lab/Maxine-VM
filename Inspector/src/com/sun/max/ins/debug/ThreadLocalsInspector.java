@@ -33,9 +33,10 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -48,20 +49,45 @@ import com.sun.max.vm.runtime.*;
  */
 public final class ThreadLocalsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
-    // Set to null when inspector closed.
-    private static ThreadLocalsInspector threadLocalsInspector;
+    private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.THREAD_LOCALS;
+    private static final String SHORT_NAME = "Thread Locals";
+    private static final String LONG_NAME = "Thread Locals Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "threadlocalsInspectorGeometry";
+    private static final Safepoint.State DEFAULT_STATE_SELECTION = Safepoint.State.ENABLED;
+    private static final Map<MaxThread, Safepoint.State> stateSelections = new HashMap<MaxThread, Safepoint.State>();
 
-    /**
-     * Displays the (singleton) thread locals inspector, creating it if needed.
-     */
-    public static ThreadLocalsInspector make(Inspection inspection) {
-        if (threadLocalsInspector == null) {
-            threadLocalsInspector = new ThreadLocalsInspector(inspection);
+    private static final class ThreadLocalsViewManager extends AbstractSingletonViewManager<ThreadLocalsInspector> {
+
+        protected ThreadLocalsViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return threadLocalsInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return inspection().hasProcess() && focus().hasThread();
+        }
+
+        public ThreadLocalsInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new ThreadLocalsInspector(inspection);
+            }
+            return inspector;
+        }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "threadlocalsInspectorGeometry");
+    // Will be non-null before any instances created.
+    private static ThreadLocalsViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new ThreadLocalsViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadLocalsViewPreferences viewPreferences;
@@ -70,8 +96,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     private InspectorTabbedPane tabbedPane;
 
     private ThreadLocalsInspector(Inspection inspection) {
-        super(inspection);
-        Trace.begin(1,  tracePrefix() + " initializing");
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
+        Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
 
@@ -80,37 +106,54 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectSelectedThreadMemoryWords("Inspect thread's memory"));
+        memoryMenu.add(actions().inspectSelectedThreadLocalsBlockMemory("Inspect memory for thread's locals block"));
+        for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+            memoryMenu.add(actions().inspectSelectedThreadLocalsAreaMemory(state, "Inspect memory for thread's " + state.name() + " area"));
+        }
+        memoryMenu.add(actions().inspectSelectedThreadStackMemory("Inspect memory for thread's stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        memoryMenu.add(viewMemoryRegionsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
         Watchpoints.buildThreadLocalWatchpointMenu(inspection, editMenu);
 
-        refreshView(true);
-        Trace.end(1,  tracePrefix() + " initializing");
+        forceRefresh();
+        Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
 
     @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().threadLocalsFrameDefaultBounds();
+    public String getTextForTitle() {
+        String title = viewManager.shortName() + ": ";
+        if (thread != null) {
+            title += inspection().nameDisplay().longNameWithState(thread);
+        }
+        return title;
     }
 
     @Override
     protected void createView() {
         thread = focus().thread();
+        Safepoint.State initialStateSelection = stateSelections.get(thread);
+        if (initialStateSelection == null) {
+            initialStateSelection = DEFAULT_STATE_SELECTION;
+        }
+        ThreadLocalsAreaPanel initialPanelSelection = null;
         tabbedPane = new InspectorTabbedPane(inspection());
         if (thread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
                 final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);
                 if (tla != null) {
                     final ThreadLocalsAreaPanel panel = new ThreadLocalsAreaPanel(inspection(), thread, tla, viewPreferences);
+                    if (state == initialStateSelection) {
+                        initialPanelSelection = panel;
+                    }
                     tabbedPane.add(state.toString(), panel);
                 }
+            }
+            if (initialPanelSelection != null) {
+                tabbedPane.setSelectedComponent(initialPanelSelection);
             }
             tabbedPane.addChangeListener(new ChangeListener() {
                 // Refresh a newly exposed pane to be sure it is current
@@ -122,6 +165,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
                     final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) tabbedPane.getSelectedComponent();
                     if (tlaPanel != null) {
                         tlaPanel.refresh(true);
+                        stateSelections.put(thread, tlaPanel.getSafepointState());
                     }
                 }
             });
@@ -131,17 +175,57 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
+    protected void refreshState(boolean force) {
+        boolean panelsAddedOrRemoved = false;
+        for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+            ThreadLocalsAreaPanel panel = null;
+            for (Component component : tabbedPane.getComponents()) {
+                final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) component;
+                if (tlaPanel.getSafepointState() == state) {
+                    panel = tlaPanel;
+                }
+            }
+            final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);
+            if (tla != null) {
+                if (panel == null) {
+                    tabbedPane.add(state.toString(), new ThreadLocalsAreaPanel(inspection(), thread, tla, viewPreferences));
+                    panelsAddedOrRemoved = true;
+                }
+            } else {
+                if (panel != null) {
+                    tabbedPane.remove(panel);
+                    panelsAddedOrRemoved = true;
+                }
+            }
+        }
+        if (panelsAddedOrRemoved) {
+            reconstructView();
+        }
+
+        // Only need to refresh the panel that's visible, as long as we refresh them when they become visible
+        final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) tabbedPane.getSelectedComponent();
+        if (tlaPanel != null) {
+            tlaPanel.refresh(force);
+        }
+        // The title displays thread state, so must be updated.
+        setTitle();
     }
 
     @Override
-    public String getTextForTitle() {
-        String title = "Thread Local Variables: ";
-        if (thread != null) {
-            title += inspection().nameDisplay().longNameWithState(thread);
+    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
+        reconstructView();
+    }
+
+    @Override
+    public void addressFocusChanged(Address oldAddress, Address newAddress) {
+        forceRefresh();
+    }
+
+    @Override
+    public void watchpointSetChanged() {
+        if (vm().state().processState() != TERMINATED) {
+            forceRefresh();
         }
-        return title;
     }
 
     @Override
@@ -149,7 +233,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<ThreadLocalVariablesColumnKind>(inspection(), "Thread Local Variables View Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<ThreadLocalVariablesColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
             }
         };
     }
@@ -173,61 +257,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         };
     }
 
-    private ThreadLocalsAreaPanel threadLocalsPanelFor(Safepoint.State state) {
-        for (Component component : tabbedPane.getComponents()) {
-            final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) component;
-            if (tlaPanel.getSafepointState() == state) {
-                return tlaPanel;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    protected void refreshView(boolean force) {
-
-        boolean panelsAddedOrRemoved = false;
-        for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);
-            final ThreadLocalsAreaPanel panel = threadLocalsPanelFor(state);
-            if (tla != null) {
-                if (panel == null) {
-                    tabbedPane.add(state.toString(), new ThreadLocalsAreaPanel(inspection(), thread, tla, viewPreferences));
-                    panelsAddedOrRemoved = true;
-                }
-            } else {
-                if (panel != null) {
-                    tabbedPane.remove(panel);
-                    panelsAddedOrRemoved = true;
-                }
-            }
-        }
-        if (panelsAddedOrRemoved) {
-            reconstructView();
-        }
-
-        // Only need to refresh the panel that's visible, as long as we refresh them when they become visible
-        final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) tabbedPane.getSelectedComponent();
-        if (tlaPanel != null) {
-            tlaPanel.refresh(force);
-        }
-        super.refreshView(force);
-        // The title displays thread state, so must be updated.
-        setTitle();
-    }
-
     public void viewConfigurationChanged() {
         reconstructView();
-    }
-
-    @Override
-    public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
-        reconstructView();
-    }
-
-    @Override
-    public void addressFocusChanged(Address oldAddress, Address newAddress) {
-        refreshView(true);
     }
 
     public void tableColumnViewPreferencesChanged() {
@@ -235,16 +266,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    public void watchpointSetChanged() {
-        if (vm().state().processState() != TERMINATED) {
-            refreshView(true);
-        }
-    }
-
-    @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
-        threadLocalsInspector = null;
+        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

@@ -69,7 +69,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
     }
 
     /** {@inheritDoc}
-     * <br>
+     * <p>
      * Preempt upward the priority for tracing on {@link LinearAllocationMemoryRegion} objects,
      * since they usually represent very significant regions.
      */
@@ -78,18 +78,26 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
         return TRACE_VALUE;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Reads the allocation marker and estimates usage in a memory region that
+     * is allocated linearly.
+     */
     @Override
-    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        super.updateObjectCache(epoch, statsPrinter);
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
+        }
         statsPrinter.addStat(localStatsPrinter);
-        updateMarkCache();
+        return updateMarkCache();
     }
 
     /**
      * Attempts to read information about the {@link LinearAllocationMemoryRegion}
      * region's mark from the object in VM memory.
      */
-    private void updateMarkCache() {
+    private boolean updateMarkCache() {
         try {
             final Reference markReference = vm().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
             markCache = markReference.readWord(AtomicWord.valueOffset()).asPointer();
@@ -98,12 +106,14 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
             // No update; data read failed for some reason other than VM availability
             TeleWarning.message("TeleLinearAllocationMemoryRegion: ", dataIOError);
             dataIOError.printStackTrace();
+            return false;
             // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
         }
+        return true;
     }
 
     /** {@inheritDoc}
-     * <br>
+     * <p>
      * This override reports "used memory" to be between region start and the allocation mark.
      */
     @Override
@@ -119,7 +129,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
     }
 
     /** {@inheritDoc}
-     * <br>
+     * <p>
      * In a {@link LinearAllocationMemoryRegion}, the allocated region is assumed to be between
      * the region's start and its "mark" location.
      */

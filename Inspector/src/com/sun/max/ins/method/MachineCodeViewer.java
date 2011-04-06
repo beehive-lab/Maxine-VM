@@ -26,9 +26,8 @@ import java.util.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.MaxMachineCode.*;
+import com.sun.max.tele.MaxMachineCode.InstructionMap;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;

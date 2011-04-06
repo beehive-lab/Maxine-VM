@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,13 +83,23 @@ extern void log_flush(void);
 #define log_THREADS (log_ALL || 0)
 #define log_TELE (log_ALL || 0)
 
+#if log_JVMNI
+#define jvmni_log_println log_println
+#define jvmni_log_print log_print
+#else
+#define jvmni_log_null(format, ...)
+#define jvmni_log_println jvmni_log_null
+#define jvmni_log_print jvmni_log_null
+
+#endif
+
 #if log_TELE
 #define tele_log_println log_println
 #define tele_log_print log_print
 #else
-#define log_null(format, ...)
-#define tele_log_println log_null
-#define tele_log_print log_null
+#define tele_log_null(format, ...)
+#define tele_log_println tele_log_null
+#define tele_log_print tele_log_null
 #endif
 
 #endif /*__log_h__*/

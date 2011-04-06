@@ -227,7 +227,7 @@ public final class VMConfiguration {
             // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
             if (needsAdapters()) {
                 OPTIMIZED_ENTRY_POINT.init(8, 8);
-                JIT_ENTRY_POINT.init(0, 0);
+                BASELINE_ENTRY_POINT.init(0, 0);
                 VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
                 // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
                 C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());

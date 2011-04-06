@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,9 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 
 /**
@@ -36,20 +37,43 @@ import com.sun.max.program.*;
  *
  * @author Michael Van De Vanter
  */
-public final class FocusInspector extends Inspector {
+public final class UserFocusInspector extends Inspector {
 
-    // Set to null when inspector closed.
-    private static FocusInspector focusInspector;
-    /**
-     * Display the (singleton) Focus inspector.
-     *
-     * @return  The Focus inspector, possibly newly created.
-     */
-    public static FocusInspector make(Inspection inspection) {
-        if (focusInspector == null) {
-            focusInspector = new FocusInspector(inspection);
+    private static final ViewKind VIEW_KIND = ViewKind.USER_FOCUS;
+    private static final String SHORT_NAME = "User Focus";
+    private static final String LONG_NAME = "User Focus Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "userFocusInspectorGeometry";
+
+    private static final class UserFocusViewManager extends AbstractSingletonViewManager<UserFocusInspector> {
+
+        protected UserFocusViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return focusInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return true;
+        }
+
+        public UserFocusInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new UserFocusInspector(inspection);
+            }
+            return inspector;
+        }
+    }
+
+    // Will be non-null before any instances created.
+    private static UserFocusViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new UserFocusViewManager(inspection);
+        }
+        return viewManager;
     }
 
     // This is a singleton viewer, so only use a single level of view preferences.
@@ -57,10 +81,8 @@ public final class FocusInspector extends Inspector {
 
     private FocusTable table;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "focusInspectorGeometry");
-
-    private FocusInspector(Inspection inspection) {
-        super(inspection);
+    private UserFocusInspector(Inspection inspection) {
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = FocusTable.FocusViewPreferences.globalPreferences(inspection);
         final InspectorFrame frame = createFrame(true);
@@ -68,17 +90,15 @@ public final class FocusInspector extends Inspector {
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        memoryMenu.add(viewMemoryRegionsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
     @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
+    public String getTextForTitle() {
+        return viewManager.shortName();
     }
 
     @Override
@@ -87,14 +107,9 @@ public final class FocusInspector extends Inspector {
     }
 
     @Override
-    public String getTextForTitle() {
-        return "User Focus";
-    }
-
-    @Override
     protected void createView() {
         table = new FocusTable(inspection(), viewPreferences);
-        refreshView(true);
+        forceRefresh();
         JTableColumnResizer.adjustColumnPreferredWidths(table);
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(table.getTableHeader(), BorderLayout.NORTH);
@@ -104,9 +119,8 @@ public final class FocusInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         table.refresh(force);
-        super.refreshView(force);
     }
 
     @Override
@@ -118,10 +132,13 @@ public final class FocusInspector extends Inspector {
         reconstructView();
     }
 
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
+    }
+
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
-        focusInspector = null;
         focus().removeListener(table);
         super.inspectorClosing();
     }

@@ -97,7 +97,7 @@ public class Intrinsifier extends IntrinsifierClient {
     }
 
     /**
-     * Determines if a given opcode is unsafe (i.e. cannot be compiled by the JIT compiler).
+     * Determines if a given opcode is unsafe (i.e. cannot be compiled by the baseline compiler).
      *
      * @param opcode an opcode to test
      */
@@ -148,7 +148,7 @@ public class Intrinsifier extends IntrinsifierClient {
                     bi.intrinsify(opcode, operand);
                 } else {
                     if (!unsafe) {
-                        // The semantics of @INLINE and @FOLD cannot be implemented by the JIT compiler.
+                        // The semantics of @INLINE and @FOLD are not implemented by the baseline compiler.
                         unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
                     }
                     if (holderIsWord && !isStatic) {

@@ -66,26 +66,28 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
     }
 
     /** {@inheritDoc}
-     * <br>
+     * <p>
      * Optimized for certain kinds of regions that describe non-relocatable memory
      * allocations in the VM; in those cases, once location and name information
      * are read, then further cache updates are skipped.
      */
     @Override
-    protected void updateObjectCache(long epoch, StatsPrinter statsPrinter) {
-        super.updateObjectCache(epoch, statsPrinter);
+    protected boolean updateObjectCache(long epoch, StatsPrinter statsPrinter) {
+        if (!super.updateObjectCache(epoch, statsPrinter)) {
+            return false;
+        }
         statsPrinter.addStat(localStatsPrinter);
         if (!isRelocatable() && isAllocated() && regionNameCache != null) {
-            statsPrinter.addStat("allocated & not relocatable, no location refresh");
-        } else {
-            updateRegionInfoCache();
+            statsPrinter.addStat("allocated & not relocatable, no location refresh needed");
+            return true;
         }
+        return updateRegionInfoCache();
     }
 
     /**
      * Attempts to read information about the region from the {@link MemoryRegion} object in VM memory.
      */
-    private void updateRegionInfoCache() {
+    private boolean updateRegionInfoCache() {
         try {
             final long nBytes = vm().teleFields().MemoryRegion_size.readWord(reference()).asSize().toLong();
 
@@ -113,9 +115,11 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject {
         } catch (DataIOError dataIOError) {
             TeleWarning.message("TeleRuntimeMemoryRegion dataIOError:", dataIOError);
             dataIOError.printStackTrace();
+            return false;
             // No update; data unreadable for some reason
             // TODO (mlvdv)  replace this with a more general mechanism for responding to VM unavailable
         }
+        return true;
     }
 
     /**

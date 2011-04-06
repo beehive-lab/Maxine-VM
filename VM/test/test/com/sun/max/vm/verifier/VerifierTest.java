@@ -204,8 +204,7 @@ public class VerifierTest extends VmTestCase {
     }
 
     /**
-     * Filter for certain methods that are known not to verify due to use of Word types or
-     * template JIT specific constructs.
+     * Filter for certain methods that are known not to verify due to use of Word types or other special constructs.
      */
     public static boolean suppressVerificationOf(ClassMethodActor method) {
         if (method.isTemplate() || method.isAbstract() || method.intrinsic() != 0) {

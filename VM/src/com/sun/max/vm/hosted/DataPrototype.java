@@ -339,7 +339,7 @@ public final class DataPrototype extends Prototype {
                 final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
                 for (ReferenceFieldInfo fieldInfo : classInfo.fieldInfos(object)) {
                     final FieldActor fieldActor = fieldInfo.fieldActor();
-                    if (fieldActor.isSpecialReference()) {
+                    if (fieldActor == ClassRegistry.JLRReference_referent) {
                         continue;
                     }
                     final Pointer address = origin.plus(fieldActor.offset());
