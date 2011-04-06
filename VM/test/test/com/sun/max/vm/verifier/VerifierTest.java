@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -204,11 +204,10 @@ public class VerifierTest extends VmTestCase {
     }
 
     /**
-     * Filter for certain methods that are known not to verify due to use of Word types or
-     * template JIT specific constructs.
+     * Filter for certain methods that are known not to verify due to use of Word types or other special constructs.
      */
     public static boolean suppressVerificationOf(ClassMethodActor method) {
-        if (method.isTemplate() || method.isBuiltin() || method.isAbstract() || method.intrinsic() != 0) {
+        if (method.isTemplate() || method.isAbstract() || method.intrinsic() != 0) {
             return true;
         }
         if (method.holder().kind.isWord) {

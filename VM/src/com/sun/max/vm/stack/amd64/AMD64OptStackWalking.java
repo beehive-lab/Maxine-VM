@@ -31,7 +31,6 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -40,7 +39,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
@@ -50,8 +48,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * This class collects together stack-walking related functionality that is (somewhat) compiler-independent.
- * Mostly, this means stack walking functionality that is shared between methods produced by the
- * CPS and C1X compilers.
  *
  * @author Ben L. Titzer
  */
@@ -63,7 +59,7 @@ public class AMD64OptStackWalking {
     private static CriticalMethod unwindOptimized = new CriticalMethod(AMD64OptStackWalking.class, "unwindOptimized", null);
 
     @NEVER_INLINE
-    public static void unwindToCalleeEpilogue(Throwable throwable, Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
+    public static void unwindToCalleeEpilogue(Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
         // Overwrite return address of callee with catch address
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);
@@ -72,7 +68,7 @@ public class AMD64OptStackWalking {
         Address epilogueAddress = lastJavaCallee.codeStart().plus(lastJavaCallee.registerRestoreEpilogueOffset());
 
         final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
-        unwindOptimized(throwable, epilogueAddress, calleeStackPointer, Pointer.zero());
+        unwindOptimized(epilogueAddress, calleeStackPointer, Pointer.zero());
     }
 
     /**
@@ -87,26 +83,14 @@ public class AMD64OptStackWalking {
      * <li>RSP must be one word less than the stack pointer of the handler frame that is the target of the unwinding</li>
      * <li>The value at [RSP] must be the address of the handler code</li>
      * </ul>
-     *
-     * @param throwable    the exception object
      * @param catchAddress the address of the exception handler code
      * @param stackPointer the stack pointer denoting the frame of the handler to which the stack is unwound upon
      *                     returning from this method
      * @param framePointer TODO
      */
     @NEVER_INLINE
-    public static void unwindOptimized(Throwable throwable, Address catchAddress, Pointer stackPointer, Pointer framePointer) {
+    public static void unwindOptimized(Address catchAddress, Pointer stackPointer, Pointer framePointer) {
         final int unwindFrameSize = unwindOptimized.targetMethod().frameSize();
-
-        // Put the exception where the exception handler expects to find it
-        VmThreadLocal.EXCEPTION_OBJECT.store3(Reference.fromJava(throwable));
-
-        if (throwable instanceof StackOverflowError) {
-            // This complete call-chain must be inlined down to the native call
-            // so that no further stack banging instructions
-            // are executed before execution jumps to the catch handler.
-            VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
-        }
 
         if (!framePointer.isZero()) {
             VMRegister.setCpuFramePointer(framePointer);
@@ -136,13 +120,14 @@ public class AMD64OptStackWalking {
             TargetMethod calleeMethod = callee.targetMethod();
             // Reset the stack walker
             current.stackFrameWalker().reset();
-            // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
-            Safepoint.enable();
+
+            // Store the exception for the handler
+            VmThread.current().storeExceptionForHandler(throwable, targetMethod, targetMethod.posFor(catchAddress));
 
             if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
-                unwindToCalleeEpilogue(throwable, catchAddress, sp, calleeMethod);
+                unwindToCalleeEpilogue(catchAddress, sp, calleeMethod);
             } else {
-                unwindOptimized(throwable, catchAddress, sp, fp);
+                unwindOptimized(catchAddress, sp, fp);
             }
             ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
         }

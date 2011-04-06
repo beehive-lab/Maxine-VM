@@ -648,9 +648,6 @@ public final class JDK_java_lang_System {
         VMOptions.addParsedSystemProperties(properties);
 
         // 2. set up basic Maxine configuration information
-        setIfAbsent(properties, "java.runtime.name", MaxineVM.name());
-        setIfAbsent(properties, "java.runtime.version", MaxineVM.VERSION_STRING);
-
         setIfAbsent(properties, "java.vm.name", MaxineVM.name());
         setIfAbsent(properties, "java.vm.version", MaxineVM.VERSION_STRING);
         setIfAbsent(properties, "java.vm.info", vmConfig().compilationScheme().description());

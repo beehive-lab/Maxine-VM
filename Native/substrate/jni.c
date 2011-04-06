@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -858,7 +858,7 @@ const struct JNIInvokeInterface_ jni_InvokeInterface = {
 
 struct JavaVM_ main_vm = {&jni_InvokeInterface};
 
-JNIEXPORT jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vm, jsize vmBufLen, jsize *nVMs) {
+JNIEXPORT jint JNICALL JNI_GetCreatedJavaVMs_Impl(JavaVM **vm, jsize vmBufLen, jsize *nVMs) {
     if (vmBufLen <= 0) {
         return JNI_EINVAL;
     }
@@ -866,3 +866,8 @@ JNIEXPORT jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vm, jsize vmBufLen, jsize 
     *nVMs = 1;
     return JNI_OK;
 }
+
+JNIEXPORT jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vm, jsize vmBufLen, jsize *nVMs) {
+    return JNI_GetCreatedJavaVMs_Impl(vm, vmBufLen, nVMs);
+}
+

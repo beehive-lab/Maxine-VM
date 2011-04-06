@@ -28,8 +28,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * Mechanism for accessing values on a stack frame for a method produced by the
- * JIT compiler.
+ * Mechanism for accessing values on a stack frame conforming to {@link JVMSFrameLayout}.
  *
  * @see AMD64JVMSFrameLayout
  *
@@ -68,8 +67,8 @@ public class AMD64JVMSFrame extends JVMSFrame {
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof AMD64JVMSFrame) {
-            final AMD64JVMSFrame jitStackFrame = (AMD64JVMSFrame) stackFrame;
-            return targetMethod().equals(stackFrame.targetMethod()) && localVariablesBase.equals(jitStackFrame.localVariablesBase);
+            final AMD64JVMSFrame jvmsStackFrame = (AMD64JVMSFrame) stackFrame;
+            return targetMethod().equals(stackFrame.targetMethod()) && localVariablesBase.equals(jvmsStackFrame.localVariablesBase);
         }
         return false;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.snippet.Snippet.MakeClassInitialized;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /*
@@ -83,7 +83,7 @@ final class JDK_java_lang_Class {
     private static Class resolveComponent(String name, boolean initialize, ClassLoader classLoader) throws ClassNotFoundException {
         final Class javaClass = classLoader.loadClass(name);
         if (initialize) {
-            MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
+            Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
         }
         return javaClass;
     }
@@ -443,7 +443,7 @@ final class JDK_java_lang_Class {
             }
             return declaredClasses;
         }
-        return null;
+        return new Class[0];
     }
 
     private static final Utf8Constant ASSERTIONS_DISABLED = SymbolTable.makeSymbol("$assertionsDisabled");

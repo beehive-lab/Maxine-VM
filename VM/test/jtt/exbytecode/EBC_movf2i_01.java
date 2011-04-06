@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package jtt.exbytecode;
 
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 
 // register -> register
 
@@ -34,6 +34,6 @@ import com.sun.max.vm.compiler.builtin.*;
 public class EBC_movf2i_01 {
 
     public static int test(float arg) {
-        return SpecialBuiltin.floatToInt(arg);
+        return Intrinsics.floatToInt(arg);
     }
 }

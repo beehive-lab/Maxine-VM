@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ import java.lang.annotation.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Informs the CPS compiler to assume the receiver type given by 'value()'
+ * Informs the compiler to assume the receiver type given by 'value()'
  * when disambiguating an interface method call with an Accessor receiver.
  * This holds for all transitively inlined calls in the annotated method.
  *

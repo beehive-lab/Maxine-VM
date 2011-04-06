@@ -34,8 +34,6 @@ import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologue;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.NativeCallPrologueForC;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
@@ -623,6 +621,7 @@ public abstract class StackFrameWalker {
     public final void inspect(Pointer ip, Pointer sp, Pointer fp, final StackFrameVisitor visitor) {
         // Wraps the visit operation to record the visited frame as the parent of the next frame to be visited.
         final StackFrameVisitor wrapper = new StackFrameVisitor() {
+            @Override
             public boolean visitFrame(StackFrame stackFrame) {
                 if (calleeStackFrame == null || !stackFrame.isSameFrame(calleeStackFrame)) {
                     calleeStackFrame = stackFrame;
@@ -634,6 +633,7 @@ public abstract class StackFrameWalker {
         };
         walk(ip, sp, fp, INSPECTING, wrapper);
         calleeStackFrame = null;
+        visitor.done();
         reset();
     }
 
@@ -644,6 +644,7 @@ public abstract class StackFrameWalker {
     public final void inspect(Pointer ip, Pointer sp, Pointer fp, final RawStackFrameVisitor visitor) {
         walk(ip, sp, fp, RAW_INSPECTING, visitor);
         calleeStackFrame = null;
+        visitor.done();
         reset();
     }
 
@@ -735,6 +736,7 @@ public abstract class StackFrameWalker {
     public List<StackFrame> frames(List<StackFrame> stackFrames, Pointer ip, Pointer sp, Pointer fp) {
         final List<StackFrame> frames = stackFrames == null ? new LinkedList<StackFrame>() : stackFrames;
         final StackFrameVisitor visitor = new StackFrameVisitor() {
+            @Override
             public boolean visitFrame(StackFrame stackFrame) {
                 frames.add(stackFrame);
                 return true;

@@ -509,12 +509,17 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         // Emit jump table entries
         for (BlockBegin target : op.targets) {
             Label label = target.label();
-            label.addPatchAt(buf.position());
             int offsetToJumpTableBase = buf.position() - jumpTablePos;
+            if (label.isBound()) {
+                int imm32 = label.position() - jumpTablePos;
+                buf.emitInt(imm32);
+            } else {
+                label.addPatchAt(buf.position());
 
-            buf.emitByte(0); // psuedo-opcode for jump table entry
-            buf.emitShort(offsetToJumpTableBase);
-            buf.emitByte(0); // padding to make jump table entry 4 bytes wide
+                buf.emitByte(0); // psuedo-opcode for jump table entry
+                buf.emitShort(offsetToJumpTableBase);
+                buf.emitByte(0); // padding to make jump table entry 4 bytes wide
+            }
         }
 
         JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);
@@ -1271,6 +1276,28 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             } else {
                 throw Util.shouldNotReachHere();
             }
+        } else if (opr1.isStackSlot()) {
+            CiAddress left = asAddress(opr1);
+            if (opr2.isConstant()) {
+                CiConstant right = (CiConstant) opr2;
+                // stack - constant
+                switch (opr1.kind) {
+                    case Boolean :
+                    case Byte    :
+                    case Char    :
+                    case Short   :
+                    case Int     : masm.cmpl(left, right.asInt()); break;
+                    case Long    :
+                    case Word    : assert Util.isInt(right.asLong());
+                                   masm.cmpq(left, right.asInt()); break;
+                    case Object  : assert right.isNull();
+                                   masm.cmpq(left, 0); break;
+                    default      : throw Util.shouldNotReachHere();
+                }
+            } else {
+                throw Util.shouldNotReachHere();
+            }
+
         } else {
             throw Util.shouldNotReachHere(opr1.toString() + " opr2 = " + opr2);
         }
@@ -1553,15 +1580,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void doPeephole(LIRList list) {
         // Do nothing for now
-    }
-
-    public static Object asRegisterOrConstant(CiValue operand) {
-        if (operand.isRegister()) {
-            return operand.asRegister();
-        } else {
-            assert operand.isConstant();
-            return operand;
-        }
     }
 
     @Override
@@ -1878,6 +1896,20 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 case Jlteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
                     emitXirCompare(inst, Condition.LE, ConditionFlag.lessEqual, operands, label);
+                    break;
+                }
+
+                case Jbset: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    CiValue pointer = operands[inst.x().index];
+                    CiValue offset = operands[inst.y().index];
+                    CiValue bit = operands[inst.z().index];
+                    assert offset.isConstant() && bit.isConstant();
+                    CiConstant constantOffset = (CiConstant) offset;
+                    CiConstant constantBit = (CiConstant) bit;
+                    CiAddress src = new CiAddress(inst.kind, pointer, constantOffset.asInt());
+                    masm.btli(src, constantBit.asInt());
+                    masm.jcc(ConditionFlag.aboveEqual, label);
                     break;
                 }
 

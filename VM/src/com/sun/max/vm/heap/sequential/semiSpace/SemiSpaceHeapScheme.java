@@ -89,7 +89,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      */
     private final RefUpdater refUpdater = new RefUpdater();
 
-    private final RefForwarder refForwarder = new RefForwarder();
+    private final GC refForwarder = new GC();
 
     /**
      * The procedure that will identify all the GC roots except those in the boot heap and code regions.
@@ -304,7 +304,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         }
     }
 
-    private final class RefForwarder implements SpecialReferenceManager.ReferenceForwarder {
+    private final class GC implements SpecialReferenceManager.GC {
 
         public boolean isReachable(Reference ref) {
             final Pointer origin = ref.toOrigin();
@@ -317,16 +317,13 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             return true;
         }
 
-        public boolean isForwarding() {
-            return true;
-        }
-
-        public Reference getForwardRefence(Reference ref) {
-            final Pointer origin = ref.toOrigin();
-            if (fromSpace.contains(origin)) {
-                return Layout.readForwardRef(origin);
+        public Reference preserve(Reference ref) {
+            Pointer oldAllocationMark = allocationMark().asPointer();
+            Reference newRef = mapRef(ref);
+            if (!oldAllocationMark.equals(allocationMark().asPointer())) {
+                moveReachableObjects(oldAllocationMark);
             }
-            return ref;
+            return newRef;
         }
     }
 
@@ -383,49 +380,57 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 stopTimer(clearTimer);
 
                 if (Heap.traceGCPhases()) {
-                    Log.println("Scanning roots...");
+                    Log.println("BEGIN: Scanning roots");
                 }
                 startTimer(rootScanTimer);
                 heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
                 stopTimer(rootScanTimer);
+                if (Heap.traceGCPhases()) {
+                    Log.println("END: Scanning roots");
+                }
 
                 if (Heap.traceGCPhases()) {
-                    Log.println("Scanning boot heap...");
+                    Log.println("BEGIN: Scanning boot heap");
                 }
                 startTimer(bootHeapScanTimer);
                 scanBootHeap();
                 stopTimer(bootHeapScanTimer);
+                if (Heap.traceGCPhases()) {
+                    Log.println("END: Scanning boot heap");
+                }
 
                 if (Heap.traceGCPhases()) {
-                    Log.println("Scanning code...");
+                    Log.println("BEGIN: Scanning code");
                 }
                 startTimer(codeScanTimer);
                 scanCode();
                 stopTimer(codeScanTimer);
+                if (Heap.traceGCPhases()) {
+                    Log.println("END: Scanning code");
+                }
 
                 if (Heap.traceGCPhases()) {
-                    Log.println("Scanning immortal heap...");
+                    Log.println("BEGIN: Scanning immortal heap");
                 }
                 startTimer(immortalSpaceScanTimer);
                 scanImmortalHeap();
                 stopTimer(immortalSpaceScanTimer);
-
                 if (Heap.traceGCPhases()) {
-                    Log.println("Moving reachable...");
+                    Log.println("END: Scanning immortal heap");
                 }
 
-                startTimer(copyTimer);
                 moveReachableObjects(toSpace.start().asPointer());
-                stopTimer(copyTimer);
 
                 if (Heap.traceGCPhases()) {
-                    Log.println("Processing weak references...");
+                    Log.println("BEGIN: Processing special references");
                 }
-
                 startTimer(weakRefTimer);
                 SpecialReferenceManager.processDiscoveredSpecialReferences(refForwarder);
                 stopTimer(weakRefTimer);
                 stopTimer(gcTimer);
+                if (Heap.traceGCPhases()) {
+                    Log.println("END: Processing special references");
+                }
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
                 toSpace.mark.set(allocationMark()); // for debugging
@@ -507,13 +512,12 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         fromSpace.setStart(toSpace.start());
         fromSpace.setSize(toSpace.size());
-        fromSpace.mark.set(toSpace.getAllocationMark()); // for debugging
+        fromSpace.mark.set(toSpace.getAllocationMark());
 
         toSpace.setStart(oldFromSpaceStart);
         toSpace.setSize(oldFromSpaceSize);
-        toSpace.mark.set(toSpace.start());  // for debugging
+        toSpace.mark.set(toSpace.start());
 
-        //allocationMark.set(toSpace.start());
         top = toSpace.end();
         // If we are currently using the safety zone, we must not install it in the swapped space
         // as that could cause gcAllocate to fail trying to copying too much live data.
@@ -637,7 +641,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, refUpdater);
-            if (hub.isSpecialReference) {
+            if (hub.isJLRReference) {
                 SpecialReferenceManager.discoverSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
@@ -650,11 +654,19 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         return cell.plus(Layout.size(origin));
     }
 
-    void moveReachableObjects(Pointer cell) {
-        Pointer first = cell;
+    void moveReachableObjects(Pointer start) {
+        if (Heap.traceGCPhases()) {
+            Log.println("BEGIN: Moving reachable");
+        }
+        startTimer(copyTimer);
+        Pointer cell = start;
         while (cell.lessThan(allocationMark())) {
-            cell = DebugHeap.checkDebugCellTag(first, cell);
+            cell = DebugHeap.checkDebugCellTag(start, cell);
             cell = visitCell(cell);
+        }
+        stopTimer(copyTimer);
+        if (Heap.traceGCPhases()) {
+            Log.println("END: Moving reachable");
         }
     }
 
@@ -801,6 +813,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
+    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
     @Override
     protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
         if (MaxineVM.isDebug()) {
@@ -814,6 +827,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * @param etla the thread whose TLAB will be refilled
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
+    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
     private void allocateAndRefillTLAB(Pointer etla, Size tlabSize) {
         Pointer tlab = retryAllocate(tlabSize, false);
         refillTLAB(etla, tlab, tlabSize);
@@ -841,6 +855,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      */
     @Override
     @NEVER_INLINE
+    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
     protected Pointer handleTLABOverflow(Size size, Pointer etla, Pointer tlabMark, Pointer tlabEnd) {
         // Should we refill the TLAB ?
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(etla);
@@ -891,6 +906,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * @return the allocated and zeroed chunk
      */
     @NEVER_INLINE
+    @NO_SAFEPOINTS("heap up to allocation mark must be verifiable if debug tagging")
     private Pointer retryAllocate(Size size, boolean adjustForDebugTag) {
         Pointer oldAllocationMark;
         Pointer cell;
@@ -996,34 +1012,40 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         }
 
         if (Heap.traceGCPhases()) {
-            Log.print("Verifying object spaces ");
+            Log.print("BEGIN: Verifying object spaces ");
             Log.println(when);
         }
 
         if (Heap.traceGCPhases()) {
-            Log.println("Verifying object references on thread stacks...");
+            Log.println("BEGIN: Verifying stack references");
         }
         gcRootsVerifier.run();
+        if (Heap.traceGCPhases()) {
+            Log.println("END: Verifying stack references");
+        }
+
         if (MaxineVM.isDebug()) {
             if (Heap.traceGCPhases()) {
-                Log.println("Verifying heap objects...");
+                Log.println("BEGIN: Verifying heap objects");
             }
             DebugHeap.verifyRegion(toSpace.regionName(), toSpace.start().asPointer(), allocationMark(), toSpace, refVerifier);
             if (Heap.traceGCPhases()) {
-                Log.println("Verifying code objects...");
+                Log.println("END: Verifying heap objects");
+                Log.println("BEGIN: Verifying code objects");
             }
 
             CodeRegion codeRegion = Code.getCodeManager().getRuntimeCodeRegion();
             if (!codeRegion.size().isZero()) {
                 DebugHeap.verifyRegion(codeRegion.regionName(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, refVerifier);
             }
-
+            if (Heap.traceGCPhases()) {
+                Log.println("END: Verifying code objects");
+            }
         }
 
         if (Heap.traceGCPhases()) {
-            Log.print("Verifying object spaces ");
-            Log.print(when);
-            Log.println(": DONE");
+            Log.print("END: Verifying object spaces ");
+            Log.println(when);
         }
     }
 

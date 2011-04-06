@@ -2010,7 +2010,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 case LSB                : performConversion(WORD, INTEGER); break;
                 case MSB                : performConversion(WORD, INTEGER); break;
                 case ALLOCA             : frame.pop(INTEGER); frame.push(WORD); break;
-                case ALLOCSTKVAR        : performAllocStkVar(); break;
+                case STACKHANDLE        : performStackHandle(); break;
 
                 case INCREG             : frame.pop(INTEGER); break;
                 case READREG            : frame.push(WORD); break;
@@ -2024,7 +2024,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             return true;
         }
 
-        private void performAllocStkVar() {
+        private void performStackHandle() {
             if (frame.top().isCategory2()) {
                 frame.pop(CATEGORY2);
             } else {

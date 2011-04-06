@@ -536,21 +536,21 @@ public final class ClassfileReader {
     }
 
     protected ExceptionHandlerEntry readExceptionHandlerEntry(int codeLength) {
-        final int startAddress = classfileStream.readUnsigned2();
-        final int endAddress = classfileStream.readUnsigned2();
-        final int handlerAddress = classfileStream.readUnsigned2();
-        final int catchClassIndex = classfileStream.readUnsigned2();
+        final int startBCI = classfileStream.readUnsigned2();
+        final int endBCI = classfileStream.readUnsigned2();
+        final int catchBCI = classfileStream.readUnsigned2();
+        final int catchTypeCPI = classfileStream.readUnsigned2();
 
-        if (startAddress >= codeLength || endAddress > codeLength || startAddress >= endAddress || handlerAddress >= codeLength) {
+        if (startBCI >= codeLength || endBCI > codeLength || startBCI >= endBCI || catchBCI >= codeLength) {
             throw classFormatError("Invalid exception handler code range");
         }
 
         // Check the index and type of the catch type
-        if (catchClassIndex != 0) {
-            constantPool.classAt(catchClassIndex, "catch type in exception table");
+        if (catchTypeCPI != 0) {
+            constantPool.classAt(catchTypeCPI, "catch type in exception table");
         }
 
-        return new ExceptionHandlerEntry(startAddress, endAddress, handlerAddress, catchClassIndex);
+        return new ExceptionHandlerEntry(startBCI, endBCI, catchBCI, catchTypeCPI);
     }
 
     protected ExceptionHandlerEntry[] readExceptionHandlerTable(int codeLength) {
@@ -717,14 +717,11 @@ public final class ClassfileReader {
     }
 
     @HOSTED_ONLY
-    private static final Class CPS_BYTECODE_TEMPLATE = Classes.forName("com.sun.max.vm.cps.template.BYTECODE_TEMPLATE");
-
-    @HOSTED_ONLY
-    private static final Class T1X_TEMPLATE = Classes.forName("com.sun.max.vm.t1x.T1X_TEMPLATE");
+    public static final HashSet<Class<? extends Annotation>> bytecodeTemplateClasses = new HashSet<Class<? extends Annotation>>();
 
     @HOSTED_ONLY
     private static boolean isBytecodeTemplate(Class<? extends Annotation> anno) {
-        return anno == T1X_TEMPLATE || anno == CPS_BYTECODE_TEMPLATE;
+        return bytecodeTemplateClasses.contains(anno);
     }
 
     protected MethodActor[] readMethods(boolean isInterface) {
@@ -897,8 +894,6 @@ public final class ClassfileReader {
                             flags |= VM_ENTRY_POINT;
                         } else if (annotation.annotationType() == NO_SAFEPOINTS.class) {
                             flags |= NO_SAFEPOINTS;
-                        } else if (annotation.annotationType() == BUILTIN.class) {
-                            flags |= BUILTIN | UNSAFE;
                         } else if (annotation.annotationType() == ACCESSOR.class) {
                             accessor = ((ACCESSOR) annotation).value();
                             flags |= UNSAFE;
@@ -910,9 +905,6 @@ public final class ClassfileReader {
                             flags |= TEMPLATE | UNSAFE;
                         } else if (annotation.annotationType() == INLINE.class) {
                             flags |= INLINE;
-                            if (((INLINE) annotation).afterSnippetsAreCompiled()) {
-                                flags |= INLINE_AFTER_SNIPPETS_ARE_COMPILED;
-                            }
                         } else if (annotation.annotationType() == NEVER_INLINE.class) {
                             flags |= NEVER_INLINE;
                         } else if (annotation.annotationType() == INTRINSIC.class) {
@@ -927,8 +919,6 @@ public final class ClassfileReader {
                             }
                         } else if (annotation.annotationType() == FOLD.class) {
                             flags |= FOLD;
-                        } else if (annotation.annotationType() == UNSAFE.class) {
-                            flags |= UNSAFE;
                         } else if (annotation.annotationType() == LOCAL_SUBSTITUTION.class) {
                             // process any class-local substitutions
                             flags |= LOCAL_SUBSTITUTE;
@@ -957,14 +947,14 @@ public final class ClassfileReader {
 
                         }
 
-                        if ((flags & BUILTIN) != 0 || intrinsic != 0) {
-                            // discard bytecode for builtin and intrinsic methods
+                        if (intrinsic != 0) {
+                            // discard bytecode for intrinsic methods
                             codeAttribute = null;
                         }
                     }
                 }
 
-                if (classHasNeverInlineAnnotation && !isInline(flags) && !isInlineAfterSnippetsAreCompiled(flags)) {
+                if (classHasNeverInlineAnnotation && !isInline(flags)) {
                     flags |= NEVER_INLINE;
                 }
 
@@ -1248,31 +1238,14 @@ public final class ClassfileReader {
             }
         }
 
-        // inherit the REFERENCE and FINALIZER bits from the superClassActor
+        // inherit the FINALIZER flag from the super class actor
         if (superClassActor != null) {
-            if (superClassActor.isSpecialReference()) {
-                classFlags |= Actor.SPECIAL_REFERENCE;
-            }
             if (superClassActor.hasFinalizer()) {
                 classFlags |= Actor.FINALIZER;
             }
         } else {
             // clear the finalizer bit for the java.lang.Object class; otherwise all classes would have it!
             classFlags &= ~Actor.FINALIZER;
-        }
-
-        // is this a Java Reference object class?
-        if (MaxineVM.isHosted() && name.equals("java.lang.ref.Reference")) {
-            classFlags |= Actor.SPECIAL_REFERENCE;
-            // find the "referent" field and mark it as a special reference too.
-            for (int i = 0; i < fieldActors.length; i++) {
-                final FieldActor fieldActor = fieldActors[i];
-                if (fieldActor.name.equals("referent")) {
-                    // replace the field actor with a new one that has the flag set
-                    fieldActors[i] = new FieldActor(Kind.REFERENCE, fieldActor.name, fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
-                    break;
-                }
-            }
         }
 
         if (isRemote) {

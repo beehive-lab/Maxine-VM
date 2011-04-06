@@ -35,6 +35,12 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#if os_DARWIN
+#include <sys/poll.h>
+#else
+#include <poll.h>
+#endif
 
 #include "jni.h"
 #include "log.h"
@@ -55,6 +61,8 @@ extern JNIEnv *currentJniEnv();
 
 #if os_DARWIN
 #define lseek64 lseek
+#include <sys/poll.h>
+
 #endif
 
 
@@ -134,6 +142,7 @@ jint JVM_GetInterfaceVersion(void) {
     JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "Unimplemented", "()V"); \
     (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod); \
 }
+
 
 /*************************************************************************
  PART 1: Functions for Native Libraries
@@ -482,14 +491,8 @@ JVM_Interrupt(JNIEnv *env, jobject thread) {
 
 jboolean
 JVM_IsInterrupted(JNIEnv *env, jobject thread, jboolean clearInterrupted) {
-    if (clearInterrupted) {
-      // TODO: this is not the correct method to call, since it only checks the current thread
-        JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/Thread", "interrupted", "()Z");
-        return (*env)->CallStaticBooleanMethod(env, result.jClass, result.jMethod);
-    } else {
-        JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "isInterrupted", "()Z");
-        return (*env)->CallBooleanMethod(env, thread, result.jMethod);
-    }
+    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Thread", "isInterrupted", "()Z");
+    return (*env)->CallBooleanMethod(env, thread, result.jMethod);
 }
 
 jboolean
@@ -1752,14 +1755,22 @@ typedef int (*canonicalize_fn_t)(JNIEnv *env, char *orig, char *out, int len);
  * that describes the most recent system-level error to occur in this thread.
  * Return the length of the string or zero if no error occurred.
  */
-jint JVM_GetLastErrorString(char *buffer, int length) {
+jint JVM_GetLastErrorString(char *buffer, size_t length) {
+    int error = errno;
+    jvmni_log_println("JVM_GetLastErrorString() errno = %d", errno);
+    errno = error;
     if (errno == 0) {
         return 0;
     }
-#if os_DARWIN || os_SOLARIS
-    return strerror_r(errno, buffer, length);
-#elif os_LINUX
-    return strlen(strerror_r(errno, buffer, length));
+#if os_DARWIN || os_SOLARIS || os_LINUX
+    const char *s = strerror(errno);
+    size_t n = strlen(s);
+    if (n >= length) {
+        n = length - 1;
+    }
+    strncpy(buffer, s, n);
+    buffer[n] = '\0';
+    return n;
 #else
     UNIMPLEMENTED();
     return 0;
@@ -1772,10 +1783,13 @@ jint JVM_GetLastErrorString(char *buffer, int length) {
  * the given pathname string in place.
  */
 char *JVM_NativePath(char *path) {
-#if log_JVMNI
-  log_println("JVM_NativePath(%s)", path);
+    jvmni_log_println("JVM_NativePath(%s)", path);
+#if os_DARWIN || os_SOLARIS || os_LINUX
+    return path;
+#else
+    UNIMPLEMENTED();
+    return NULL;
 #endif
-    return path; // TODO
 }
 
 /*
@@ -1789,9 +1803,7 @@ char *JVM_NativePath(char *path) {
  * success.
  */
 jint JVM_Open(char *fileName, jint flags, jint mode) {
-#if log_JVMNI
-    log_println("JVM_Open(%s)", fileName);
-#endif
+    jvmni_log_println("JVM_Open(%s)", fileName);
     int result = open(fileName, flags, mode);
     if (result >= 0) {
         return result;
@@ -1809,6 +1821,7 @@ jint JVM_Open(char *fileName, jint flags, jint mode) {
  * fd        the file descriptor to close.
  */
 jint JVM_Close(jint fd) {
+    jvmni_log_println("JVM_Close(%d)", fd);
     return close(fd);
 }
 
@@ -1975,8 +1988,65 @@ JVM_Send(jint fd, char *buf, jint nBytes, jint flags) {
 
 jint
 JVM_Timeout(int fd, long timeout) {
+#if os_DARWIN || os_LINUX
+    Unsigned8 prevtime,newtime;
+    struct timeval t;
+
+    gettimeofday(&t, NULL);
+    prevtime = ((Unsigned8)t.tv_sec * 1000)  +  t.tv_usec / 1000;
+
+    for(;;) {
+      struct pollfd pfd;
+
+      pfd.fd = fd;
+      pfd.events = POLLIN | POLLERR;
+
+      int res = poll(&pfd, 1, timeout);
+
+      if (res == OS_ERR && errno == EINTR) {
+
+        // On Bsd/Linux any value < 0 means "forever"
+
+        if(timeout >= 0) {
+          gettimeofday(&t, NULL);
+          newtime = ((Unsigned8)t.tv_sec * 1000)  +  t.tv_usec / 1000;
+          timeout -= newtime - prevtime;
+          if(timeout <= 0)
+            return OS_OK;
+          prevtime = newtime;
+        }
+      } else
+        return res;
+    }
+#elif os_SOLARIS
+    int res;
+    struct timeval t;
+    Unsigned8 prevtime, newtime;
+    static const char* aNull = 0;
+    struct pollfd pfd;
+    pfd.fd = fd;
+    pfd.events = POLLIN;
+
+    gettimeofday(&t, &aNull);
+    prevtime = ((Unsigned8)t.tv_sec * 1000)  +  t.tv_usec / 1000;
+
+    for(;;) {
+      int res = poll(&pfd, 1, timeout);
+      if(res == OS_ERR && errno == EINTR) {
+          if(timeout != -1) {
+            gettimeofday(&t, &aNull);
+            newtime = ((Unsigned8)t.tv_sec * 1000)  +  t.tv_usec /1000;
+            timeout -= newtime - prevtime;
+            if(timeout <= 0)
+              return OS_OK;
+            prevtime = newtime;
+          }
+      } else return res;
+    }
+#else
     UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
@@ -2050,7 +2120,7 @@ JVM_SendTo(jint fd, char *buf, int len,
 
 jint
 JVM_SocketAvailable(jint fd, jint *pbytes) {
-#if os_SOLARIS
+#if os_SOLARIS || os_DARWIN
     if (fd < 0) {
         return 0;
     }
@@ -2133,7 +2203,7 @@ JVM_GetHostByName(char* name) {
 
 int
 JVM_GetHostName(char* name, int namelen) {
-#if os_SOLARIS || os_LINUX
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return gethostname(name, namelen);
 #else
     UNIMPLEMENTED();

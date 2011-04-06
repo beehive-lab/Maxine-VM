@@ -26,6 +26,7 @@ import java.io.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
@@ -97,6 +98,8 @@ public class BytecodePrinter extends BytecodeVisitor {
 
     private final ConstantPool constantPool;
 
+    private LineNumberTable lineNumberTable;
+
     public ConstantPool constantPool() {
         return constantPool;
     }
@@ -142,6 +145,13 @@ public class BytecodePrinter extends BytecodeVisitor {
         this.printConstantIndices = (flags & PRINT_CONSTANT_POOL_INDICES) != 0;
     }
 
+    /**
+     * Sets the line number table this printer will use to prefix each instruction with its source line number.
+     */
+    public void setLineNumberTable(LineNumberTable lnt) {
+        this.lineNumberTable = lnt;
+    }
+
     protected void printOpcode() {
         int currentOpcode = currentOpcode();
         writer.print(Bytecodes.nameOf(currentOpcode));
@@ -175,7 +185,23 @@ public class BytecodePrinter extends BytecodeVisitor {
         if (instructionPrefix != null && !instructionPrefix.isEmpty()) {
             writer.print(instructionPrefix);
         }
-        writer.print(currentOpcodeBCI() + ": ");
+        int bci = currentOpcodeBCI();
+        if (lineNumberTable != null) {
+            int lineNo = lineNumberTable.findLineNumber(bci);
+            if (lineNo == -1) {
+                writer.print("       ");
+            } else {
+                String l = "[" + String.valueOf(lineNo) + "] ";
+                writer.print(l);
+                int pad = 7 - l.length();
+                while (pad > 0) {
+                    writer.print(' ');
+                    pad--;
+                }
+            }
+        }
+
+        writer.print(bci + ": ");
         if (isCurrentOpcodeWidened()) {
             writer.print("wide ");
         }

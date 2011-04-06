@@ -33,7 +33,7 @@ import com.sun.max.annotate.*;
  * check for the correct output (or exception) for a given input.
  *
  * This class is separated from the JTRunScheme so that it can be compiled
- * with a different compiler than the JTRunScheme--typically, the JIT. Additionally,
+ * with a different compiler than the JTRunScheme. Additionally,
  * the test classes themselves can be compiled with a different compiler, which allows
  * testing calls between code compiled by two different compilers.
  *
@@ -279,24 +279,24 @@ public class JTRuns {
             case 192: jtt_bytecode_BC_tableswitch4(); break;
             case 193: jtt_bytecode_BC_wide01(); break;
             case 194: jtt_bytecode_BC_wide02(); break;
-            case 195: jtt_exbytecode_EBC_lsa01(); break;
-            case 196: jtt_exbytecode_EBC_lsa02(); break;
-            case 197: jtt_exbytecode_EBC_movd2l_01(); break;
-            case 198: jtt_exbytecode_EBC_movd2l_02(); break;
-            case 199: jtt_exbytecode_EBC_movd2l_03(); break;
-            case 200: jtt_exbytecode_EBC_movd2l_04(); break;
-            case 201: jtt_exbytecode_EBC_movf2i_01(); break;
-            case 202: jtt_exbytecode_EBC_movf2i_02(); break;
-            case 203: jtt_exbytecode_EBC_movf2i_03(); break;
-            case 204: jtt_exbytecode_EBC_movf2i_04(); break;
-            case 205: jtt_exbytecode_EBC_movi2f_01(); break;
-            case 206: jtt_exbytecode_EBC_movi2f_02(); break;
-            case 207: jtt_exbytecode_EBC_movi2f_03(); break;
-            case 208: jtt_exbytecode_EBC_movi2f_04(); break;
-            case 209: jtt_exbytecode_EBC_movl2d_01(); break;
-            case 210: jtt_exbytecode_EBC_movl2d_02(); break;
-            case 211: jtt_exbytecode_EBC_movl2d_03(); break;
-            case 212: jtt_exbytecode_EBC_movl2d_04(); break;
+            case 195: jtt_exbytecode_EBC_movd2l_01(); break;
+            case 196: jtt_exbytecode_EBC_movd2l_02(); break;
+            case 197: jtt_exbytecode_EBC_movd2l_03(); break;
+            case 198: jtt_exbytecode_EBC_movd2l_04(); break;
+            case 199: jtt_exbytecode_EBC_movf2i_01(); break;
+            case 200: jtt_exbytecode_EBC_movf2i_02(); break;
+            case 201: jtt_exbytecode_EBC_movf2i_03(); break;
+            case 202: jtt_exbytecode_EBC_movf2i_04(); break;
+            case 203: jtt_exbytecode_EBC_movi2f_01(); break;
+            case 204: jtt_exbytecode_EBC_movi2f_02(); break;
+            case 205: jtt_exbytecode_EBC_movi2f_03(); break;
+            case 206: jtt_exbytecode_EBC_movi2f_04(); break;
+            case 207: jtt_exbytecode_EBC_movl2d_01(); break;
+            case 208: jtt_exbytecode_EBC_movl2d_02(); break;
+            case 209: jtt_exbytecode_EBC_movl2d_03(); break;
+            case 210: jtt_exbytecode_EBC_movl2d_04(); break;
+            case 211: jtt_exbytecode_EBC_stackhandle01(); break;
+            case 212: jtt_exbytecode_EBC_stackhandle02(); break;
             case 213: jtt_exbytecode_EBC_ucmp_ae_01(); break;
             case 214: jtt_exbytecode_EBC_ucmp_at_01(); break;
             case 215: jtt_exbytecode_EBC_ucmp_be_01(); break;
@@ -7272,50 +7272,6 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_exbytecode_EBC_lsa01() {
-            begin("jtt.exbytecode.EBC_lsa01");
-            String runString = null;
-            try {
-            // (1) == true
-                runString = "(1)";
-                if (true != jtt.exbytecode.EBC_lsa01.test(1)) {
-                    fail(runString);
-                    return;
-                }
-            // (34) == true
-                runString = "(34)";
-                if (true != jtt.exbytecode.EBC_lsa01.test(34)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_lsa02() {
-            begin("jtt.exbytecode.EBC_lsa02");
-            String runString = null;
-            try {
-            // (null) == true
-                runString = "(null)";
-                if (true != jtt.exbytecode.EBC_lsa02.test(null)) {
-                    fail(runString);
-                    return;
-                }
-            // ("AAA") == true
-                runString = "(\"AAA\")";
-                if (true != jtt.exbytecode.EBC_lsa02.test("AAA")) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
         static void jtt_exbytecode_EBC_movd2l_01() {
             begin("jtt.exbytecode.EBC_movd2l_01");
             String runString = null;
@@ -7851,6 +7807,56 @@ public class JTRuns {
             // (4691882224927966680) == 473729.5945321
                 runString = "(4691882224927966680)";
                 if (473729.5945321 != jtt.exbytecode.EBC_movl2d_04.test(4691882224927966680L)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_stackhandle01() {
+            begin("jtt.exbytecode.EBC_stackhandle01");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.exbytecode.EBC_stackhandle01.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.exbytecode.EBC_stackhandle01.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (34) == true
+                runString = "(34)";
+                if (true != jtt.exbytecode.EBC_stackhandle01.test(34)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_stackhandle02() {
+            begin("jtt.exbytecode.EBC_stackhandle02");
+            String runString = null;
+            try {
+            // (null) == true
+                runString = "(null)";
+                if (true != jtt.exbytecode.EBC_stackhandle02.test(null)) {
+                    fail(runString);
+                    return;
+                }
+            // ("AAA") == true
+                runString = "(\"AAA\")";
+                if (true != jtt.exbytecode.EBC_stackhandle02.test("AAA")) {
                     fail(runString);
                     return;
                 }

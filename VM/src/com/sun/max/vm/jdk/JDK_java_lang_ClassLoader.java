@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,9 @@ import com.sun.cri.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -163,7 +163,7 @@ public final class JDK_java_lang_ClassLoader {
      */
     @SUBSTITUTE
     private void resolveClass0(Class javaClass) {
-        MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
+        Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
     }
 
     /**

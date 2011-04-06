@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import java.lang.annotation.*;
  * It must also be purely functional (without side-effects)
  * and idempotent (not influenced by any changing state).
  *
- * If the method is static, it is to be meta-evaluated unconditionally by the CPS compiler.
+ * If the method is static, it is to be meta-evaluated unconditionally by the compiler.
  * If the method is non-static, it will be meta-evaluated whenever its receiver is known at compile time.
  *
  * @author Bernd Mathiske

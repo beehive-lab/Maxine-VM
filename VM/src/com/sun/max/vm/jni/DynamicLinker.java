@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.jni;
 
-import java.io.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -211,12 +209,6 @@ public final class DynamicLinker {
         dlclose(handle);
     }
 
-    private static Word javaHandle;
-
-    public static void loadJavaLibrary(String path) {
-        javaHandle = DynamicLinker.load(path + File.separator + System.mapLibraryName("java"));
-    }
-
     @ALIAS(declaringClass = ClassLoader.class)
     private static native long findNative(ClassLoader loader, String name);
 
@@ -237,15 +229,8 @@ public final class DynamicLinker {
             // TODO: This could be removed if ClassLoader.findNative could find symbols in the boot image
             symbolAddress = lookupSymbol(Word.zero(), symbol);
             if (symbolAddress.isZero()) {
-                final ClassLoader classLoader = classMethodActor.holder().classLoader;
-                if (classLoader == BootClassLoader.BOOT_CLASS_LOADER && !javaHandle.isZero()) {
-                    symbolAddress = lookupSymbol(javaHandle, symbol);
-                    if (!symbolAddress.isZero()) {
-                        return symbolAddress;
-                    }
-                }
-
                 // Now look in the native libraries loaded by the class loader of the class in which this native method was declared
+                final ClassLoader classLoader = classMethodActor.holder().classLoader;
                 symbolAddress = Address.fromLong(findNative(classLoader, symbol));
                 // Now look in the system library path
                 if (symbolAddress.isZero() && classLoader != null) {

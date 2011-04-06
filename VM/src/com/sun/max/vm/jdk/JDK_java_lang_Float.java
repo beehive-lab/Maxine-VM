@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.*;
 
 /**
  * The {@code JDK_java_lang_Float} class implements substitutions for the
@@ -35,11 +35,11 @@ import com.sun.max.vm.compiler.builtin.*;
 public class JDK_java_lang_Float {
     @SUBSTITUTE
     public static int floatToRawIntBits(float f) {
-        return SpecialBuiltin.floatToInt(f);
+        return Intrinsics.floatToInt(f);
     }
 
     @SUBSTITUTE
     public static float intBitsToFloat(int i) {
-        return SpecialBuiltin.intToFloat(i);
+        return Intrinsics.intToFloat(i);
     }
 }

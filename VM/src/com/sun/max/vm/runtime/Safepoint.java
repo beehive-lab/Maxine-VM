@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -147,7 +147,7 @@ public abstract class Safepoint {
      *     }
      * </pre>
      *
-     * @return true if this call caused safepoints to be disabled (i.e. they were enabled upon entry to this method)
+     * @return true if safepoints were disabled upon entry to this method
      */
     @INLINE
     public static boolean disable() {
