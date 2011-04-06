@@ -400,30 +400,6 @@ public class CiUtil {
     }
     
     private static final Object[] NO_ARGUMENTS = {};
-
-    /**
-     * Invokes a given Java method via reflection.
-     * 
-     * @param method the method to invoke
-     * @param args the arguments to the invocation
-     * @return the result of the invocation
-     */
-    public static CiConstant invoke(Method method, CiMethodInvokeArguments args) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        method.setAccessible(true);
-        // build the argument list
-        Object recvr = null;
-        if (!isStatic(method.getModifiers())) {
-            recvr = args.nextArg().asObject();
-        }
-        ArrayList<Object> argList = new ArrayList<Object>(method.getParameterTypes().length);
-        for (CiConstant arg = args.nextArg(); arg != null; arg = args.nextArg()) {
-            argList.add(arg.boxedValue());
-        }
-        // attempt to invoke the method
-        Object result = method.invoke(recvr, argList.toArray());
-        CiKind kind = CiKind.fromJavaClass(method.getReturnType());
-        return CiConstant.forBoxed(kind, result);
-    }
     
     /**
      * Creates a set that uses reference-equality instead of {@link Object#equals(Object)}

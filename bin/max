@@ -77,6 +77,7 @@ cp_suffix=
 cp_prefix=
 remote=0
 trace_level=1
+cp_sep=":"
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -240,11 +241,18 @@ if [ -z "${MAXINE_OS}" ]; then
         SunOS* )
             MAXINE_OS=solaris
             ;;
+	CYGWIN* )
+	    MAXINE_OS=windows
+	    ;;
     esac
     if [ -z "${MAXINE_OS}" ]; then
         echo "Supported operating system could not be derived from $OS. Please set MAXINE_OS explicitly."
         exit 1
     fi
+fi
+
+if [[ $MAXINE_OS = windows ]]; then
+	cp_sep=";"
 fi
 
 # gets the destination for classes for the project
@@ -265,7 +273,7 @@ function get_project_cp() {
 	fi
 	if [ -d ${maxine_dir}/$1/classes ]; then
 	    # the project has a "classes" directory
-	    zee_project_cp="$zee_project_cp:${maxine_dir}/$1/classes"
+	    zee_project_cp="$zee_project_cp${cp_sep}${maxine_dir}/$1/classes"
 	fi
 	echo $zee_project_cp
 }
@@ -294,7 +302,7 @@ fi
 
 for project in ${projects[@]}; do
     project_dir=${project/:*/}
-    maxine_cp=${maxine_cp}:$(get_project_cp ${project_dir})
+    maxine_cp=${maxine_cp}${cp_sep}$(get_project_cp ${project_dir})
 done
 
 # create the augmented classpath for the extra projects
@@ -302,7 +310,7 @@ extra_project_cp=$maxine_cp
 # add in any extra projects
 for project in ${extra_projects[@]}; do
     project_dir=${project/:*/}
-    extra_project_cp=${extra_project_cp}:${extra_projects_dir}/${project_dir}/bin
+    extra_project_cp=${extra_project_cp}${cp_sep}${extra_projects_dir}/${project_dir}/bin
 done
 
 # now combine the two project lists for build purposes
@@ -310,20 +318,20 @@ projects=( ${projects[@]} ${extra_projects[@]} )
 
 test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP environment variable to specify a class path for Junit4 classes"; exit 1; }
 junit_version="`$jvm -cp ${JUNIT4_CP} junit.runner.Version 2>&1`"
-if [[ "$junit_version" != 4.8.1  && "$junit_version" != 4.5 ]]; then
-    echo "The value of JUNIT4_CP ($JUNIT4_CP) does not denote a JUnit4.8.1 installation."
+if [[ $junit_version != 4* ]]; then
+    echo "The value of JUNIT4_CP ($JUNIT4_CP) does not denote a JUnit 4 installation."
     echo "Running \"$jvm -cp ${JUNIT4_CP} junit.runner.Version\" produced:"
     echo "$junit_version"
     exit 255
 fi
-maxine_cp=${maxine_cp}:${JUNIT4_CP}
+maxine_cp=${maxine_cp}${cp_sep}${JUNIT4_CP}
 
 if [ -n "$cp_prefix" ]; then
     maxine_cp="$cp_prefix:$maxine_cp"
 fi
 
 if [ -n "$cp_suffix" ]; then
-    maxine_cp="$maxine_cp:$cp_suffix"
+    maxine_cp="$maxine_cp${cp_sep}$cp_suffix"
 fi
 
 test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/Native/generated/${MAXINE_OS}"
@@ -660,29 +668,13 @@ copycheck_usage="[options]"
 copycheck_help="run copyright check on the Maxine sources (defined as being under hg control)"
  
 function run_copycheck() {
+echo ${maxine_cp}
     run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tools.CheckCopyright $@
     result=$?
     if [ $result -ne 0 ]; then
         exit $result
     fi
  }
-
-
-#=======================================
-# 'copycheck' command
-#=======================================
-
-copycheck_usage="[options]"
-copycheck_help="run copyright check on the Maxine sources (defined as being under hg control)"
- 
-function run_copycheck() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tools.CheckCopyright $@
-    result=$?
-    if [ $result -ne 0 ]; then
-        exit $result
-    fi
- }
-
 
 #=======================================
 # 'check' command
