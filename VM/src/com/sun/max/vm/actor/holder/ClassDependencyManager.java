@@ -61,6 +61,11 @@ public final class ClassDependencyManager {
 
     private static final int HAS_MULTIPLE_CONCRETE_SUBTYPE_MARK = 0;
     private static final int NO_CONCRETE_SUBTYPE_MARK = NULL_CLASS_ID;
+    private static boolean TraceCHA;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceCHA", ClassDependencyManager.class,
+                        "Trace class hierarchy assumptions validations", MaxineVM.Phase.PRISTINE);
+    }
 
     /**
      * Set accumulating all the methods invalidated during boot image generation.
@@ -1067,7 +1072,7 @@ public final class ClassDependencyManager {
             recordUniqueConcreteSubtype(classActor);
             TargetMethod [] invalidatedTargetMethods = dependentTargetMethodTable.clearInvalidatedAssumptions();
             if (invalidatedTargetMethods != null) {
-                if (VMOptions.verboseOption.verboseClass || VMOptions.verboseOption.verboseCompilation) {
+                if (TraceCHA) {
                     String message = "Adding " + classActor + " (" + classActor.id + ") to the hierarchy invalidates " +
                         invalidatedTargetMethods.length + " target methods";
                     Log.println(message);
@@ -1087,7 +1092,7 @@ public final class ClassDependencyManager {
             }
             return;
         }
-        if (VMOptions.verboseOption.verboseCompilation) {
+        if (TraceCHA) {
             final boolean lockDisabledSafepoints = Log.lock();
             for (TargetMethod targetMethod : invalidatedTargetMethods) {
                 Log.print(targetMethod.toString());
