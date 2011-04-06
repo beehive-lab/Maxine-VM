@@ -30,6 +30,7 @@ import javax.swing.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.actor.member.*;
@@ -38,10 +39,12 @@ import com.sun.max.vm.jni.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public final class BytecodeFramesInspector extends Inspector {
 
     private static final int TRACE_VALUE = 2;
+    private static final ViewKind VIEW_KIND = ViewKind.FRAME_DESCRIPTOR;
 
     private static final int MAX_BYTE_CODE_BITS = 20;
 
@@ -73,7 +76,7 @@ public final class BytecodeFramesInspector extends Inspector {
     private final Long key;
 
     private BytecodeFramesInspector(Inspection inspection, CiFrame bytecodeFrames, MaxCompiledCode compiledCode, Long key) {
-        super(inspection);
+        super(inspection, VIEW_KIND, null);
         this.frames = bytecodeFrames;
         this.compiledCode = compiledCode;
         this.key = key;
@@ -163,6 +166,10 @@ public final class BytecodeFramesInspector extends Inspector {
         Trace.line(1, tracePrefix() + " closing for " + getTitle());
         inspectors.remove(key);
         super.inspectorClosing();
+    }
+
+    @Override
+    protected void refreshState(boolean force) {
     }
 
 }

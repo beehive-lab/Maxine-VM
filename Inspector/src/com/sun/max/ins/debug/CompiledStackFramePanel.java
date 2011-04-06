@@ -40,9 +40,12 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Display panels for VM compiled stack frames.
- * <br>
+ * Display panel for a stack frame in the VM created by a compiled method, including
+ * a header and a table describing the frame slots.
+ * <p>
  * Creates a stack frame header at the top of the panel.
+ * <p>
+ * Concrete subclasses can be specialized for different kinds of frames, if necessary.
  *
  * @author Michael Van De Vanter
  */

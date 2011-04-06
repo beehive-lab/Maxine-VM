@@ -33,7 +33,7 @@ import com.sun.max.annotate.*;
  * check for the correct output (or exception) for a given input.
  *
  * This class is separated from the JTRunScheme so that it can be compiled
- * with a different compiler than the JTRunScheme--typically, the JIT. Additionally,
+ * with a different compiler than the JTRunScheme. Additionally,
  * the test classes themselves can be compiled with a different compiler, which allows
  * testing calls between code compiled by two different compilers.
  *

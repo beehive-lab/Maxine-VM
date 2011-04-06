@@ -177,8 +177,8 @@ public final class TeleCompiledCode extends AbstractTeleVMHolder implements MaxC
         return teleTargetMethod.getInstructionMap();
     }
 
-    public long lastChangedEpoch() {
-        return teleTargetMethod.lastCodeChangeEpoch();
+    public int vmCodeGeneration() {
+        return teleTargetMethod.vmCodeGenerationCount();
     }
 
     public Address getCodeStart() {

@@ -754,7 +754,7 @@ public abstract class ReferenceMapInterpreter {
 
             if (atSearchBCI) {
                 // Record BEFORE popping invoke parameters,
-                // because this is not the JIT-to-JIT call yet.
+                // because this is not the baseline-to-baseline call yet.
                 visitReferencesAtCurrentBCI(visitor, false);
             }
 

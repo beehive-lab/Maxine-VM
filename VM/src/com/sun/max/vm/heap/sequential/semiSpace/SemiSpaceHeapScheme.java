@@ -89,7 +89,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      */
     private final RefUpdater refUpdater = new RefUpdater();
 
-    private final RefForwarder refForwarder = new RefForwarder();
+    private final GC refForwarder = new GC();
 
     /**
      * The procedure that will identify all the GC roots except those in the boot heap and code regions.
@@ -304,7 +304,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         }
     }
 
-    private final class RefForwarder implements SpecialReferenceManager.ReferenceForwarder {
+    private final class GC implements SpecialReferenceManager.GC {
 
         public boolean isReachable(Reference ref) {
             final Pointer origin = ref.toOrigin();
@@ -317,16 +317,13 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             return true;
         }
 
-        public boolean isForwarding() {
-            return true;
-        }
-
-        public Reference getForwardRefence(Reference ref) {
-            final Pointer origin = ref.toOrigin();
-            if (fromSpace.contains(origin)) {
-                return Layout.readForwardRef(origin);
+        public Reference preserve(Reference ref) {
+            Pointer oldAllocationMark = allocationMark().asPointer();
+            Reference newRef = mapRef(ref);
+            if (!oldAllocationMark.equals(allocationMark().asPointer())) {
+                moveReachableObjects(oldAllocationMark);
             }
-            return ref;
+            return newRef;
         }
     }
 
@@ -422,15 +419,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                     Log.println("END: Scanning immortal heap");
                 }
 
-                if (Heap.traceGCPhases()) {
-                    Log.println("BEGIN: Moving reachable");
-                }
-                startTimer(copyTimer);
                 moveReachableObjects(toSpace.start().asPointer());
-                stopTimer(copyTimer);
-                if (Heap.traceGCPhases()) {
-                    Log.println("END: Moving reachable");
-                }
 
                 if (Heap.traceGCPhases()) {
                     Log.println("BEGIN: Processing special references");
@@ -523,13 +512,12 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
         fromSpace.setStart(toSpace.start());
         fromSpace.setSize(toSpace.size());
-        fromSpace.mark.set(toSpace.getAllocationMark()); // for debugging
+        fromSpace.mark.set(toSpace.getAllocationMark());
 
         toSpace.setStart(oldFromSpaceStart);
         toSpace.setSize(oldFromSpaceSize);
-        toSpace.mark.set(toSpace.start());  // for debugging
+        toSpace.mark.set(toSpace.start());
 
-        //allocationMark.set(toSpace.start());
         top = toSpace.end();
         // If we are currently using the safety zone, we must not install it in the swapped space
         // as that could cause gcAllocate to fail trying to copying too much live data.
@@ -653,7 +641,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, refUpdater);
-            if (hub.isSpecialReference) {
+            if (hub.isJLRReference) {
                 SpecialReferenceManager.discoverSpecialReference(origin);
             }
             return cell.plus(hub.tupleSize);
@@ -666,11 +654,19 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         return cell.plus(Layout.size(origin));
     }
 
-    void moveReachableObjects(Pointer cell) {
-        Pointer first = cell;
+    void moveReachableObjects(Pointer start) {
+        if (Heap.traceGCPhases()) {
+            Log.println("BEGIN: Moving reachable");
+        }
+        startTimer(copyTimer);
+        Pointer cell = start;
         while (cell.lessThan(allocationMark())) {
-            cell = DebugHeap.checkDebugCellTag(first, cell);
+            cell = DebugHeap.checkDebugCellTag(start, cell);
             cell = visitCell(cell);
+        }
+        stopTimer(copyTimer);
+        if (Heap.traceGCPhases()) {
+            Log.println("END: Moving reachable");
         }
     }
 

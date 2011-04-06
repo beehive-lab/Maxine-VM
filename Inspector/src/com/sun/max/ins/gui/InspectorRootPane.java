@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,12 +67,24 @@ final class InspectorRootPane<Inspector_Type extends Inspector> extends JRootPan
         return this;
     }
 
+    /** {@inheritDoc}
+     * <p>
+     * The frame itself has no display state that would be sensitive to VM state,
+     * but there may be menu items that might, for example to enable/disable
+     * certain commands.
+     */
     public void refresh(boolean force) {
         if (menuBar != null) {
             menuBar.refresh(force);
         }
     }
 
+    /** {@inheritDoc}
+     * <p>
+     * The window system does not need to be explicitly redisplayed when some
+     * display parameter is changed; that is handled by the window system itself
+     * once we've set it.
+     */
     public void redisplay() {
     }
 

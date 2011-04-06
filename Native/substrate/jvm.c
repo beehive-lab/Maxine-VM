@@ -143,6 +143,7 @@ jint JVM_GetInterfaceVersion(void) {
     (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod); \
 }
 
+
 /*************************************************************************
  PART 1: Functions for Native Libraries
  ************************************************************************/
@@ -1754,14 +1755,22 @@ typedef int (*canonicalize_fn_t)(JNIEnv *env, char *orig, char *out, int len);
  * that describes the most recent system-level error to occur in this thread.
  * Return the length of the string or zero if no error occurred.
  */
-jint JVM_GetLastErrorString(char *buffer, int length) {
+jint JVM_GetLastErrorString(char *buffer, size_t length) {
+    int error = errno;
+    jvmni_log_println("JVM_GetLastErrorString() errno = %d", errno);
+    errno = error;
     if (errno == 0) {
         return 0;
     }
-#if os_DARWIN || os_SOLARIS
-    return strerror_r(errno, buffer, length);
-#elif os_LINUX
-    return strlen(strerror_r(errno, buffer, length));
+#if os_DARWIN || os_SOLARIS || os_LINUX
+    const char *s = strerror(errno);
+    size_t n = strlen(s);
+    if (n >= length) {
+        n = length - 1;
+    }
+    strncpy(buffer, s, n);
+    buffer[n] = '\0';
+    return n;
 #else
     UNIMPLEMENTED();
     return 0;
@@ -1774,10 +1783,13 @@ jint JVM_GetLastErrorString(char *buffer, int length) {
  * the given pathname string in place.
  */
 char *JVM_NativePath(char *path) {
-#if log_JVMNI
-  log_println("JVM_NativePath(%s)", path);
+    jvmni_log_println("JVM_NativePath(%s)", path);
+#if os_DARWIN || os_SOLARIS || os_LINUX
+    return path;
+#else
+    UNIMPLEMENTED();
+    return NULL;
 #endif
-    return path; // TODO
 }
 
 /*
@@ -1791,9 +1803,7 @@ char *JVM_NativePath(char *path) {
  * success.
  */
 jint JVM_Open(char *fileName, jint flags, jint mode) {
-#if log_JVMNI
-    log_println("JVM_Open(%s)", fileName);
-#endif
+    jvmni_log_println("JVM_Open(%s)", fileName);
     int result = open(fileName, flags, mode);
     if (result >= 0) {
         return result;
@@ -1811,6 +1821,7 @@ jint JVM_Open(char *fileName, jint flags, jint mode) {
  * fd        the file descriptor to close.
  */
 jint JVM_Close(jint fd) {
+    jvmni_log_println("JVM_Close(%d)", fd);
     return close(fd);
 }
 

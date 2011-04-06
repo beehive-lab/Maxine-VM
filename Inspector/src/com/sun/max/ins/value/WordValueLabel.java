@@ -391,7 +391,7 @@ public class WordValueLabel extends ValueLabel {
                                 compiledCode = vm().codeCache().findCompiledCode(newValue.toWord().asAddress());
                                 if (compiledCode != null) {
                                     final Address codeStart = compiledCode.getCodeStart();
-                                    final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offset());
+                                    final Word jitEntryPoint = codeStart.plus(CallEntryPoint.BASELINE_ENTRY_POINT.offset());
                                     final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset());
                                     if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
                                         displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
@@ -905,7 +905,7 @@ public class WordValueLabel extends ValueLabel {
         return action;
     }
 
-    private InspectorAction getInspectMemoryWordsAction(Value value) {
+    private InspectorAction getInspectMemoryAction(Value value) {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
@@ -921,15 +921,15 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
-                    action = actions().inspectMemoryWords(address);
+                    action = actions().inspectMemory(address);
                     break;
                 }
                 case OBJECT_REFERENCE:
                 case OBJECT_REFERENCE_TEXT: {
                     if (teleObject != null) {
-                        action = actions().inspectObjectMemoryWords(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
+                        action = actions().inspectObjectMemory(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
                     } else {
-                        action = actions().inspectMemoryWords(address);
+                        action = actions().inspectMemory(address);
                     }
                     break;
                 }
@@ -944,7 +944,7 @@ public class WordValueLabel extends ValueLabel {
                 case UNCHECKED_WORD:
                 case INVALID: {
                     if (vm().findMemoryRegion(address) != null) {
-                        action = actions().inspectMemoryWords(address);
+                        action = actions().inspectMemory(address);
                     }
                     break;
                 }
@@ -1056,24 +1056,24 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
-        private final class MenuInspectMemoryWordsAction extends InspectorAction {
+        private final class MenuInspectMemoryAction extends InspectorAction {
 
-            private final InspectorAction inspectMemoryWordsAction;
+            private final InspectorAction inspectMemoryAction;
 
-            private MenuInspectMemoryWordsAction(Value value) {
+            private MenuInspectMemoryAction(Value value) {
                 super(inspection(), "Inspect memory");
-                inspectMemoryWordsAction = getInspectMemoryWordsAction(value);
-                if (inspectMemoryWordsAction == null) {
+                inspectMemoryAction = getInspectMemoryAction(value);
+                if (inspectMemoryAction == null) {
                     setEnabled(false);
                 } else {
-                    setName(inspectMemoryWordsAction.name());
+                    setName(inspectMemoryAction.name());
                     setEnabled(true);
                 }
             }
 
             @Override
             public void procedure() {
-                inspectMemoryWordsAction.perform();
+                inspectMemoryAction.perform();
             }
         }
 
@@ -1102,7 +1102,7 @@ public class WordValueLabel extends ValueLabel {
             add(actions().copyValue(value, "Copy value to clipboard"));
             add(new MenuInspectObjectAction(value));
             add(new MenuCycleDisplayAction());
-            add(new MenuInspectMemoryWordsAction(value));
+            add(new MenuInspectMemoryAction(value));
             add(new MenuShowMemoryRegionAction(value));
         }
     }

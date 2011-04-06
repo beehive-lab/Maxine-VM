@@ -175,9 +175,10 @@ public class CompiledStackFrameTable extends InspectorTable {
     /**
      * A table model that represents the information in a Java stack frame as a table of
      * slots, one per memory word.
-     * <br>
+     * <p>
      * For the purposes of memory in this view, the origin is assumed to be the Stack Pointer.
-     *
+     * Note also that the frame slots are at descending memory addresses, so the origin is
+     * not the first location in the memory table.
      */
     private final class CompiledStackFrameTableModel extends InspectorMemoryTableModel {
 
@@ -221,7 +222,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         @Override
         public int findRow(Address address) {
-            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().platform().nBytesInWord()).toInt();
+            final int wordOffset = regions[0].start().minus(address).dividedBy(vm().platform().nBytesInWord()).toInt();
             return (wordOffset >= 0 && wordOffset < slots.size()) ? wordOffset : -1;
         }
 
@@ -319,6 +320,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             setOpaque(true);
         }
 
+        // TODO (mlvdv) check address computations
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(tableModel.getSPOffset(row, viewPreferences.biasSlotOffsets()), tableModel.getOrigin());
             setToolTipPrefix("Stack frame slot \"" + tableModel.getSlotName(row) + "\" SP-relative location<br>Address= ");

@@ -37,7 +37,7 @@ public class TupleInspector extends ObjectInspector {
 
     private ObjectScrollPane fieldsPane;
 
-    TupleInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
+    TupleInspector(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         final InspectorFrame frame = createFrame(true);
 
@@ -81,10 +81,10 @@ public class TupleInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         if (getJComponent().isShowing() || force) {
             fieldsPane.refresh(force);
-            super.refreshView(force);
+            super.refreshState(force);
         }
     }
 

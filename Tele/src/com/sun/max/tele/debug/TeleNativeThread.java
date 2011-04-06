@@ -705,7 +705,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
                 }
                 if (index != -1) {
                     final int stopIndex = index;
-                    CiFrame frames = compiledCode.teleTargetMethod().getBytecodeFrames(stopIndex);
+                    CiFrame frames = compiledCode.teleTargetMethod().getBytecodeFramesAtStopIndex(stopIndex);
 
                     if (frames == null) {
                         LOGGER.info("WARNING: No Java frame descriptor found for Java stop " + stopIndex);
