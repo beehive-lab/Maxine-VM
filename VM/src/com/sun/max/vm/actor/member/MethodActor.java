@@ -523,7 +523,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
 
     @Override
     public RiMethod uniqueConcreteMethod() {
-        // FIXME: this method will disappear shortly. Instead, C1X will call
+        // FIXME (ld) this method will disappear shortly. Instead, C1X will call
         // directly RiType.uniqueConcreteMethod(RiMethod method).
         // In the meantime, we conservatively used the holder of the specified method as the
         // declaring context to find the unique concrete method.

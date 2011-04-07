@@ -45,7 +45,7 @@ import com.sun.max.vm.type.*;
  * when safepoint is enabled, otherwise they become visible to GC and will be considered live.
  * Similarly, direct updates to HeapFreeChunk.next may cause unwanted write-barrier executions.
  *
- * FIXME: need to revisit the visibility of this class.
+ * TODO (ld) need to revisit the visibility of this class.
  * @author Laurent Daynes
  */
 public class HeapFreeChunk {
