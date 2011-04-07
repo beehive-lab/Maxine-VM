@@ -65,7 +65,10 @@ public final class PrototypeGenerator {
      * @return the final graph prototype of the VM
      */
     public GraphPrototype createGraphPrototype() {
-        GraphPrototype graphPrototype;
+        // This initial graph prototype ensures that ClassActors are created for
+        // all objects hanging off static fields.
+        GraphPrototype graphPrototype = new GraphPrototype(null);
+
         int numberOfClassActors = 0;
         int numberOfCompilationThreads = threadsOption.getValue();
         final CompiledPrototype compiledPrototype = new CompiledPrototype(numberOfCompilationThreads);
