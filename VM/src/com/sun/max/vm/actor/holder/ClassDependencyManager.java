@@ -43,8 +43,8 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Class maintaining class hierarchy and sub-typing relationships information of currently defined classes.
- * Dynamic compilers may issue queries related to these information and may make assumptions to apply certain optimizations
+ * Class hierarchy and sub-typing relationships for currently defined classes.
+ * Dynamic compilers may issue queries related to this information and may make assumptions to apply speculative optimizations
  * (e.g., devirtualization, type check elimination).
  * A dynamic compiler keeps track of the assumptions it makes when compiling a method in a {@link CiAssumptions} object.
  * The assumptions must be validated by the dependency manager before a target method is installed for uses. If the assumptions are incorrect, because of
@@ -572,6 +572,8 @@ public final class ClassDependencyManager {
         }
     }
 
+    static final int TRACE_LEVEL = 2;
+
     /**
      * Table mappings class types to target method that made assumption on them.
      * Each class types are assigned
@@ -624,21 +626,20 @@ public final class ClassDependencyManager {
             FatalError.unexpected("dependent ID  should have been in the list");
         }
 
-        private static int traceAtLevel = 1;
         private static void trace(int dependentID, RiType type, int action) {
             if (MaxineVM.isHosted()) {
                 switch(action) {
                     case 1:
-                        Trace.line(traceAtLevel, "*** Created DependentTargetList for " + type + " with dependent " + dependentID);
+                        Trace.line(TRACE_LEVEL, "*** Created DependentTargetList for " + type + " with dependent " + dependentID);
                         break;
                     case 2:
-                        Trace.line(traceAtLevel, "*** Added dependent " + dependentID + " for " + type);
+                        Trace.line(TRACE_LEVEL, "*** Added dependent " + dependentID + " for " + type);
                         break;
                     case 3:
-                        Trace.line(traceAtLevel, "*** Removed dependent " + dependentID + " for " + type);
+                        Trace.line(TRACE_LEVEL, "*** Removed dependent " + dependentID + " for " + type);
                         break;
                     case 4:
-                        Trace.line(traceAtLevel, "*** Deleted DependentTargetList for " + type);
+                        Trace.line(TRACE_LEVEL, "*** Deleted DependentTargetList for " + type);
                         break;
                 }
             }
@@ -1088,7 +1089,7 @@ public final class ClassDependencyManager {
         if (MaxineVM.isHosted()) {
             for (TargetMethod targetMethod : invalidatedTargetMethods) {
                 invalidTargetMethods.add(targetMethod);
-                Trace.line(1, "*** Invalidate target method " + targetMethod);
+                Trace.line(TRACE_LEVEL, "*** Invalidate target method " + targetMethod);
             }
             return;
         }
