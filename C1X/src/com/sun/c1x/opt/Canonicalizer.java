@@ -1387,10 +1387,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
     private RiType asRiType(Value x) {
         if (x.isConstant()) {
-            Object o = x.asConstant().asObject();
-            if (o instanceof Class<?>) {
-                return runtime.getRiType((Class<?>) o);
-            }
+            return runtime.getRiType(x.asConstant());
         }
         return null;
     }

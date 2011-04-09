@@ -1105,10 +1105,7 @@ public final class GraphBuilder {
                 if (receiver.isConstant()) {
                     CiConstant constant = receiver.asConstant();
                     assert constant.kind.isObject();
-                    Object object = constant.asObject();
-                    if (object != null) {
-                        exact = compilation.runtime.getRiType(object.getClass());
-                    }
+                    exact = compilation.runtime.getRiType(constant);
                 }
                 if (exact == null) {
                     RiType declared = receiver.declaredType();

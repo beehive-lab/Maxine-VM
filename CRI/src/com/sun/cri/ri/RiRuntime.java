@@ -145,6 +145,11 @@ public interface RiRuntime {
      * Returns the RiType object representing the base type for the given kind.
      */
     RiType getRiType(CiKind kind);
+
+    /**
+     * Returns the RiType object representing the type of the given constant object. Returns {@code null} when the constant is {@code null}.
+     */
+    RiType getRiType(CiConstant constant);
     
     /**
      * Returns true if the given type is a subtype of java/lang/Throwable.
