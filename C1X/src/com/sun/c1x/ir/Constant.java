@@ -147,10 +147,7 @@ public final class Constant extends Instruction {
             runtime.getRiType(kind);
         }
         if (kind.isObject()) {
-            Object object = asConstant().asObject();
-            if (object != null) {
-                return runtime.getRiType(object.getClass());
-            }
+            return runtime.getRiType(asConstant());
         }
         return null;
     }
