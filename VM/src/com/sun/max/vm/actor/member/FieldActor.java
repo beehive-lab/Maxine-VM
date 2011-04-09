@@ -735,7 +735,7 @@ public class FieldActor extends MemberActor implements RiField {
         return flags() & JAVA_FIELD_FLAGS;
     }
 
-    public final CiConstant constantValue(Object object) {
+    public final CiConstant constantValue(CiConstant receiver) {
         if (isConstant() || isConstantWhenNotZero()) {
             Value v;
             if (isStatic()) {
@@ -745,7 +745,7 @@ public class FieldActor extends MemberActor implements RiField {
                 }
             }
             if (C1XOptions.CanonicalizeConstantFields) {
-                v = getValue(object);
+                v = getValue(receiver.asObject());
                 if (!isConstantWhenNotZero() || !v.isZero()) {
                     return v.asCiConstant();
                 }

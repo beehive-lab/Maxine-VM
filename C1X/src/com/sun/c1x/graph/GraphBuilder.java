@@ -803,7 +803,7 @@ public final class GraphBuilder {
     void genNewTypeArray(int typeCode) {
         FrameState stateBefore = curState.immutableCopy(bci());
         CiKind kind = CiKind.fromArrayTypeCode(typeCode);
-        RiType elementType = compilation.runtime.getRiType(kind.toJavaClass());
+        RiType elementType = compilation.runtime.getRiType(kind);
         apush(append(new NewTypeArray(ipop(), elementType, stateBefore)));
     }
 
@@ -1853,11 +1853,10 @@ public final class GraphBuilder {
             return cannotInline(target, "has unbalanced monitors");
         }
         if (target.isConstructor()) {
-            RiType throwableType = compilation.runtime.getRiType(Throwable.class);
-            if (target.holder().isSubtypeOf(throwableType)) {
+            if (compilation.runtime.isExceptionType(target.holder())) {
                 // don't inline constructors of throwable classes unless the inlining tree is
                 // rooted in a throwable class
-                if (!rootScope().method.holder().isSubtypeOf(throwableType)) {
+                if (!compilation.runtime.isExceptionType(rootScope().method.holder())) {
                     return cannotInline(target, "don't inline Throwable constructors");
                 }
             }
