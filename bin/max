@@ -65,7 +65,7 @@
 verbose=false
 unknown_option=""
 show_help=false
-default_jvm_args="-ea -Xss2m -Xmx1g"
+default_jvm_args="-d64 -ea -Xss2m -Xmx1g"
 default_jvm_dbg_port=8000
 jvm_args="$default_jvm_args"
 jvm_args_prefix=""
