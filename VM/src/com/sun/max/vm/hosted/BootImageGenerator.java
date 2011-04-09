@@ -58,6 +58,7 @@ public final class BootImageGenerator {
     public static final String IMAGE_JAR_FILE_NAME = "maxine.jar";
     public static final String IMAGE_FILE_NAME = "maxine.vm";
     public static final String STATS_FILE_NAME = "maxine.stats";
+    public static final String CHA_FILE_NAME = "maxine.cha";
 
     public static final String DEFAULT_VM_DIRECTORY = Prototype.TARGET_GENERATED_ROOT;
 
@@ -68,6 +69,9 @@ public final class BootImageGenerator {
 
     private final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
             "Create a file showing the connectivity of objects in the image.");
+
+    private final Option<Boolean> chaOption = options.newBooleanOption("cha", false,
+            "Create a file showing assumptions made on the class type hierarchy by target methods of the boot image.");
 
     private final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
@@ -209,7 +213,7 @@ public final class BootImageGenerator {
             JavaPrototype.initialize(true);
 
             Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
-            Heap.usedOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.
+            Heap.useOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
 
@@ -222,7 +226,10 @@ public final class BootImageGenerator {
                 writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
 
-            ClassDependencyManager.dump();
+            if (chaOption.getValue()) {
+                ClassDependencyManager.dump(new PrintStream(new File(vmDirectory, CHA_FILE_NAME)));
+            }
+
             // ClassID debugging
             ClassID.validateUsedClassIds();
 

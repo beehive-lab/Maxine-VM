@@ -30,8 +30,10 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.profile.*;
@@ -87,6 +89,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     private static int RCT = DEFAULT_RECOMPILATION_THRESHOLD;
     private static boolean GCOnRecompilation;
     private static boolean FailOverCompilation = true;
+    static int PrintCodeCacheMetrics;
 
     static {
         addFieldOption("-X", "baseline", "Select baseline compiler whenever possible (disables recompilation).");
@@ -94,6 +97,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         addFieldOption("-XX:", "RCT", "Set the recompilation threshold for methods.");
         addFieldOption("-XX:", "GCOnRecompilation", "Force GC before every re-compilation.");
         addFieldOption("-XX:", "FailOverCompilation", "Retry failed compilations with another compiler (if available).");
+        addFieldOption("-XX:", "PrintCodeCacheMetrics", "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
     }
 
     /**
@@ -227,6 +231,15 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 final CompilationThread compilationThread = new CompilationThread();
                 compilationThread.setDaemon(true);
                 compilationThread.start();
+            }
+        } else if (phase == Phase.RUNNING) {
+            if (PrintCodeCacheMetrics != 0) {
+                Runtime.getRuntime().addShutdownHook(new Thread("CodeCacheMetricsPrinter") {
+                    @Override
+                    public void run() {
+                        new CodeCacheMetricsPrinter(AdaptiveCompilationScheme.PrintCodeCacheMetrics > 1).printTo(Log.out);
+                    }
+                });
             }
         }
     }

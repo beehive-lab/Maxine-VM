@@ -370,6 +370,10 @@ public class CiTargetMethod implements Serializable {
         this.assumptions = assumptions;
     }
 
+    public CiAssumptions assumptions() {
+        return assumptions;
+    }
+    
     /**
      * Sets the frame size in bytes. Does not include the return address pushed onto the
      * stack, if any.
