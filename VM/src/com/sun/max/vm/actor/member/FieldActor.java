@@ -745,7 +745,7 @@ public class FieldActor extends MemberActor implements RiField {
                 }
             }
             if (C1XOptions.CanonicalizeConstantFields) {
-                v = getValue(receiver.asObject());
+                v = getValue((receiver == null) ? null : receiver.asObject());
                 if (!isConstantWhenNotZero() || !v.isZero()) {
                     return v.asCiConstant();
                 }
