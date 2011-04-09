@@ -24,7 +24,6 @@ package com.sun.cri.ci;
 
 import static java.lang.reflect.Modifier.*;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;

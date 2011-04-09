@@ -81,5 +81,5 @@ public interface RiField {
      * @param object object from which this field's value is to be read. This value is ignored if this field is static.
      * @return the constant value of this field or {@code null} if the constant value is not available
      */
-    CiConstant constantValue(Object object);
+    CiConstant constantValue(CiConstant receiver);
 }
