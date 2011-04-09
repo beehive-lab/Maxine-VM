@@ -845,8 +845,11 @@ public final class GraphBuilder {
     void genGetStatic(int cpi, RiField field) {
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
-        CiConstant constantValue = field.constantValue(null);
-        if (isInitialized && constantValue != null && C1XOptions.CanonicalizeConstantFields) {
+        CiConstant constantValue = null;
+        if (isInitialized && C1XOptions.CanonicalizeConstantFields) {
+            constantValue = field.constantValue(null);
+        }
+        if (constantValue != null) {
             push(constantValue.kind.stackKind(), appendConstant(constantValue));
         } else {
             Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi);
