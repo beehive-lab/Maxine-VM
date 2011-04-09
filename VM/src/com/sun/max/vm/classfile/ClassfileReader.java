@@ -1417,9 +1417,7 @@ public final class ClassfileReader {
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
-
-        ClassDependencyManager.addToHierarchy(classActor);
-
+        classActor.define();
         return classActor;
     }
 

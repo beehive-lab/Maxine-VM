@@ -43,9 +43,6 @@ public final class Code {
     }
 
     static boolean TraceCodeAllocation;
-    static {
-        VMOptions.addFieldOption("-XX:", "TraceCodeAllocation", "Trace allocation from the code cache.");
-    }
 
     /**
      * Used by the Inspector to uniquely identify the special boot code region.
