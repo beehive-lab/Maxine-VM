@@ -79,7 +79,9 @@ public final class LoadField extends AccessField {
      * @return {@code null} if this load cannot be reduced to a constant
      */
     public CiConstant constantValue() {
-        if (!C1XOptions.CanonicalizeConstantFields) return null;
+        if (!C1XOptions.CanonicalizeConstantFields) {
+            return null;
+        }
         if (isStatic()) {
             return field.constantValue(null);
         } else if (object().isConstant()) {

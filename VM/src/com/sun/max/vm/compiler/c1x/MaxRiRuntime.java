@@ -340,7 +340,9 @@ public class MaxRiRuntime implements RiRuntime {
 
     public RiType getRiType(CiConstant constant) {
         Object o = constant.asObject();
-        if (o == null) return null;
+        if (o == null) {
+            return null;
+        }
         return getRiType(o.getClass());
     }
 

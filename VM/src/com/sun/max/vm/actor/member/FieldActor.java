@@ -32,7 +32,6 @@ import java.lang.reflect.*;
 
 import sun.reflect.*;
 
-import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;
