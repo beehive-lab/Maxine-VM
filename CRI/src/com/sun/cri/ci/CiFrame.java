@@ -22,6 +22,7 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.cri.ri.*;
@@ -31,7 +32,7 @@ import com.sun.cri.ri.*;
  * including {@link CiValue locations} where to find the values of each local variable
  * and stack slot of the bytecode frame(s).
  */
-public class CiFrame extends CiCodePos {
+public class CiFrame extends CiCodePos implements Serializable {
     /**
      * An array of values representing how to reconstruct the state of the Java frame.
      * Entries

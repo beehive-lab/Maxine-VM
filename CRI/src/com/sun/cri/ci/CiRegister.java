@@ -265,4 +265,5 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
         }
         return 0;
     }
+
 }
