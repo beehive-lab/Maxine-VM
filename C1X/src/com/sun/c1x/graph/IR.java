@@ -203,7 +203,7 @@ public class IR {
         printToTTY(phase);
 
         if (compilation.compiler.isObserved()) {
-            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, compilation.method, phase, startBlock, true, false));
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, phase, startBlock, true, false));
         }
     }
 

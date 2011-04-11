@@ -27,4 +27,3 @@
  * @author Peter Hofer
  */
 package com.sun.c1x.observer;
-

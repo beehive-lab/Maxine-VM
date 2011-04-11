@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class ObservableCompiler {
 
-    private List<CompilationObserver> observers = null;
+    private List<CompilationObserver> observers;
 
     /**
      * @return <code>true</code> if one or more observers are subscribed to receive notifications from this compiler,
@@ -48,8 +48,7 @@ public class ObservableCompiler {
      * @param observer The observer to add.
      */
     public void addCompilationObserver(CompilationObserver observer) {
-        if (observer == null)
-            throw new NullPointerException("observer");
+        assert observer != null;
 
         if (observers == null) {
             observers = new LinkedList<CompilationObserver>();

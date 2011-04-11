@@ -2351,7 +2351,7 @@ public final class LinearScan {
         }
 
         if (compilation.compiler.isObserved()) {
-            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, compilation.method, label, this, intervals, intervalsSize));
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, label, this, intervals, intervalsSize));
         }
     }
 
@@ -2364,7 +2364,7 @@ public final class LinearScan {
         }
 
         if (compilation.compiler.isObserved()) {
-            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, compilation.method, label, compilation.hir().startBlock, hirValid, true));
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, label, compilation.hir().startBlock, hirValid, true));
         }
     }
 

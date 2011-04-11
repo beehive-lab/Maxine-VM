@@ -41,9 +41,8 @@ import com.sun.cri.ri.*;
  */
 public class CompilationEvent {
 
-    private C1XCompilation compilation;
-    private RiMethod method;
-    private String label;
+    private final C1XCompilation compilation;
+    private final String label;
     private BlockBegin startBlock;
 
     private BlockMap blockMap;
@@ -58,41 +57,36 @@ public class CompilationEvent {
     private int intervalsSize;
     private Interval[] intervalsCopy = null;
 
-    public CompilationEvent(C1XCompilation compilation, RiMethod method) {
-        if (compilation == null)
-            throw new NullPointerException("compilation");
-        if (method == null)
-            throw new NullPointerException("method");
-
-        this.compilation = compilation;
-        this.method = method;
+    public CompilationEvent(C1XCompilation compilation) {
+        this(compilation, null);
     }
 
-    private CompilationEvent(C1XCompilation compilation, RiMethod method, String label) {
-        this(compilation, method);
+    private CompilationEvent(C1XCompilation compilation, String label) {
+        assert compilation != null;
         this.label = label;
+        this.compilation = compilation;
     }
 
-    public CompilationEvent(C1XCompilation compilation, RiMethod method, String label, BlockBegin startBlock, boolean hirValid, boolean lirValid) {
-        this(compilation, method, label);
+    public CompilationEvent(C1XCompilation compilation, String label, BlockBegin startBlock, boolean hirValid, boolean lirValid) {
+        this(compilation, label);
         this.startBlock = startBlock;
         this.hirValid = hirValid;
         this.lirValid = lirValid;
     }
 
-    public CompilationEvent(C1XCompilation compilation, RiMethod method, String label, BlockBegin startBlock, boolean hirValid, boolean lirValid, CiTargetMethod targetMethod) {
-        this(compilation, method, label, startBlock, hirValid, lirValid);
+    public CompilationEvent(C1XCompilation compilation, String label, BlockBegin startBlock, boolean hirValid, boolean lirValid, CiTargetMethod targetMethod) {
+        this(compilation, label, startBlock, hirValid, lirValid);
         this.targetMethod = targetMethod;
     }
 
-    public CompilationEvent(C1XCompilation compilation, RiMethod method, String label, BlockMap blockMap, int codeSize) {
-        this(compilation, method, label);
+    public CompilationEvent(C1XCompilation compilation, String label, BlockMap blockMap, int codeSize) {
+        this(compilation, label);
         this.blockMap = blockMap;
         this.codeSize = codeSize;
     }
 
-    public CompilationEvent(C1XCompilation compilation, RiMethod method, String label, LinearScan allocator, Interval[] intervals, int intervalsSize) {
-        this(compilation, method, label);
+    public CompilationEvent(C1XCompilation compilation, String label, LinearScan allocator, Interval[] intervals, int intervalsSize) {
+        this(compilation, label);
         this.allocator = allocator;
         this.intervals = intervals;
         this.intervalsSize = intervalsSize;
@@ -107,7 +101,7 @@ public class CompilationEvent {
     }
 
     public RiMethod getMethod() {
-        return method;
+        return compilation.method;
     }
 
     public BlockMap getBlockMap() {
