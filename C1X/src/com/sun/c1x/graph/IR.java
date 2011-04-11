@@ -200,7 +200,6 @@ public class IR {
      * @param phase the name of the phase for printing
      */
     public void verifyAndPrint(String phase) {
-        printToCFGFile(phase);
         printToTTY(phase);
 
         if (compilation.compiler.isObserved()) {
@@ -212,13 +211,6 @@ public class IR {
         if (C1XOptions.PrintHIR && !TTY.isSuppressed()) {
             TTY.println(phase);
             print(false);
-        }
-    }
-
-    private void printToCFGFile(String phase) {
-        CFGPrinter cfgPrinter = compilation.cfgPrinter();
-        if (cfgPrinter != null) {
-            cfgPrinter.printCFG(startBlock, phase, true, false);
         }
     }
 
