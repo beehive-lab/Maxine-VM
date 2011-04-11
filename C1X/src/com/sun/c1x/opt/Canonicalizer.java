@@ -892,14 +892,14 @@ public class Canonicalizer extends DefaultValueVisitor {
         switch (i.intrinsic()) {
             // do not use reflection here due to efficiency and potential bootstrap problems
             case java_lang_Object$hashCode: {
-                Object object = argAsObject(args, 0);
+                Object object = argAsConstant(args, 0);
                 if (object != null) {
                     setIntConstant(System.identityHashCode(object));
                 }
                 return true;
             }
             case java_lang_Object$getClass: {
-                Object object = argAsObject(args, 0);
+                Object object = argAsConstant(args, 0);
                 if (object != null) {
                     setObjectConstant(object.getClass());
                 }
@@ -917,7 +917,7 @@ public class Canonicalizer extends DefaultValueVisitor {
             }
             case java_lang_Class$isInstance: {
                 Class<?> javaClass = argAsClass(args, 0);
-                CiConstant object = argAsObject(args, 1);
+                CiConstant object = argAsConstant(args, 1);
                 if (javaClass != null && object.isNonNull()) {
                     setBooleanConstant(javaClass.isInstance(object));
                 }
@@ -966,32 +966,6 @@ public class Canonicalizer extends DefaultValueVisitor {
                 return true;
             }
 
-            // java.lang.String
-            case java_lang_String$compareTo: {
-                String s1 = argAsString(args, 0);
-                String s2 = argAsString(args, 1);
-                if (s1 != null && s2 != null) {
-                    setIntConstant(s1.compareTo(s2));
-                }
-                return true;
-            }
-            case java_lang_String$indexOf: {
-                String s1 = argAsString(args, 0);
-                String s2 = argAsString(args, 1);
-                if (s1 != null && s2 != null) {
-                    setIntConstant(s1.indexOf(s2));
-                }
-                return true;
-            }
-            case java_lang_String$equals: {
-                String s1 = argAsString(args, 0);
-                String s2 = argAsString(args, 1);
-                if (s1 != null && s2 != null) {
-                    setBooleanConstant(s1.equals(s2));
-                }
-                return true;
-            }
-
             // java.lang.Math
             case java_lang_Math$abs:   setDoubleConstant(Math.abs(argAsDouble(args, 0))); return true;
             case java_lang_Math$sin:   setDoubleConstant(Math.sin(argAsDouble(args, 0))); return true;
@@ -1026,7 +1000,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
             // java.lang.System
             case java_lang_System$identityHashCode: {
-                Object object = argAsObject(args, 0);
+                Object object = argAsConstant(args, 0);
                 if (object != null) {
                     setIntConstant(System.identityHashCode(object));
                 }
@@ -1035,7 +1009,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
             // java.lang.reflect.Array
             case java_lang_reflect_Array$getLength: {
-                Object object = argAsObject(args, 0);
+                Object object = argAsConstant(args, 0);
                 if (object != null && object.getClass().isArray()) {
                     setIntConstant(Array.getLength(object));
                 }
@@ -1310,16 +1284,16 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
     }
 
-    private CiConstant argAsObject(Value[] args, int index) {
+    private CiConstant argAsConstant(Value[] args, int index) {
         return args[index].asConstant();
     }
 
     private Class<?> argAsClass(Value[] args, int index) {
-        return (Class<?>) args[index].asConstant().asObject();
-    }
-
-    private String argAsString(Value[] args, int index) {
-        return (String) args[index].asConstant().asObject();
+        CiConstant c = argAsConstant(args, index);
+        if (c != null) {
+            return runtime.getJavaClass(c);
+        }
+        return null;
     }
 
     private double argAsDouble(Value[] args, int index) {
