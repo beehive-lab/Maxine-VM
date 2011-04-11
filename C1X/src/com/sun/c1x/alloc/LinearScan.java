@@ -2350,10 +2350,6 @@ public final class LinearScan {
             TTY.println();
         }
 
-        if (compilation.cfgPrinter() != null) {
-            compilation.cfgPrinter().printIntervals(this, Arrays.copyOf(intervals, intervalsSize), label);
-        }
-
         if (compilation.compiler.isObserved()) {
             compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, compilation.method, label, this, intervals, intervalsSize));
         }
@@ -2365,10 +2361,6 @@ public final class LinearScan {
             TTY.println(label);
             LIRList.printLIR(ir.linearScanOrder());
             TTY.println();
-        }
-
-        if (compilation.cfgPrinter() != null) {
-            compilation.cfgPrinter().printCFG(compilation.hir().startBlock, label, hirValid, true);
         }
 
         if (compilation.compiler.isObserved()) {

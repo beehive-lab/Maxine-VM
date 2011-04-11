@@ -126,6 +126,10 @@ public class C1XCompiler extends ObservableCompiler {
                 suppressor.remove();
             }
         }
+
+        if (C1XOptions.PrintCFGToFile && !TTY.isSuppressed()) {
+            addCompilationObserver(new CFGPrinterObserver());
+        }
     }
 
     public GlobalStub lookupGlobalStub(GlobalStub.Id id) {
