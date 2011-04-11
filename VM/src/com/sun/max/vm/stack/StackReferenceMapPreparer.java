@@ -205,7 +205,7 @@ public final class StackReferenceMapPreparer {
         int lowestBitIndex = referenceMapBitIndex(lowestStackSlot, lowestSlot);
         int highestBitIndex = referenceMapBitIndex(lowestStackSlot, highestSlot);
         if (highestRefMapByteIndex == lowestRefMapByteIndex) {
-            scanReferenceMapByte(lowestRefMapByteIndex, lowestStackSlot, referenceMap, lowestBitIndex % Bytes.WIDTH, highestBitIndex % Bytes.WIDTH, tla, wordPointerIndexVisitor);
+            scanReferenceMapByte(lowestRefMapByteIndex, lowestStackSlot, referenceMap, lowestBitIndex % Bytes.WIDTH, (highestBitIndex % Bytes.WIDTH) + 1, tla, wordPointerIndexVisitor);
         } else {
             scanReferenceMapByte(lowestRefMapByteIndex, lowestStackSlot, referenceMap, lowestBitIndex % Bytes.WIDTH, Bytes.WIDTH, tla, wordPointerIndexVisitor);
             scanReferenceMapByte(highestRefMapByteIndex, lowestStackSlot, referenceMap, 0, (highestBitIndex % Bytes.WIDTH) + 1, tla, wordPointerIndexVisitor);
