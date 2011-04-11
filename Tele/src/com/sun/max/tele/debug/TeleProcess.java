@@ -245,6 +245,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     if (resumeExecution) {
                         Trace.line(TRACE_VALUE, tracePrefix() + "Resuming execution after handling event triggers: " + request);
                         restoreBreakpointsAndResume(request.withClientBreakpoints);
+                        processState = RUNNING;
                     }
                 } while (resumeExecution);
                 // Finished with these now

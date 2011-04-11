@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import java.lang.reflect.*;
 
 import sun.reflect.*;
 
-import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;
@@ -714,16 +713,6 @@ public class FieldActor extends MemberActor implements RiField {
         return descriptor().toJavaString(qualified) + ' ' + qualified;
     }
 
-    /**
-     * Determines if this field is a reference type field that is treated specially by
-     * the garbage collector. Typically, the {@code referent} field in {@link java.lang.ref.Reference}
-     * used to hold a weak reference will return true for this method.
-     */
-    @INLINE
-    public final boolean isSpecialReference() {
-        return isSpecialReference(flags());
-    }
-
     public String jniSignature() {
         return descriptor().toString();
     }
@@ -745,7 +734,7 @@ public class FieldActor extends MemberActor implements RiField {
         return flags() & JAVA_FIELD_FLAGS;
     }
 
-    public final CiConstant constantValue(Object object) {
+    public final CiConstant constantValue(CiConstant receiver) {
         if (isConstant() || isConstantWhenNotZero()) {
             Value v;
             if (isStatic()) {
@@ -754,11 +743,9 @@ public class FieldActor extends MemberActor implements RiField {
                     return v.asCiConstant();
                 }
             }
-            if (C1XOptions.CanonicalizeConstantFields) {
-                v = getValue(object);
-                if (!isConstantWhenNotZero() || !v.isZero()) {
-                    return v.asCiConstant();
-                }
+            v = getValue((receiver == null) ? null : receiver.asObject());
+            if (!isConstantWhenNotZero() || !v.isZero()) {
+                return v.asCiConstant();
             }
         }
         return null;

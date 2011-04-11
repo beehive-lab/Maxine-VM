@@ -44,7 +44,6 @@ public class InspectorKeyBindings {
      */
     @SuppressWarnings("unchecked")
     public static final Set<Class<? extends InspectorAction>> KEY_BINDABLE_ACTIONS = new HashSet<Class<? extends InspectorAction>>(Arrays.asList(
-        ViewBootImageAction.class,
         QuitAction.class,
         InspectClassActorByNameAction.class,
         InspectMethodActorByNameAction.class,
@@ -141,7 +140,6 @@ public class InspectorKeyBindings {
      * A set of key bindings that matches the default bindings in NetBeans for similar actions.
      */
     public static final KeyBindingMap NETBEANS_KEY_BINDINGS = new KeyBindingMap("NetBeans").
-        add(ViewBootImageAction.class, 'I', CTRL_DOWN_MASK).
         add(QuitAction.class, 'Q', CTRL_DOWN_MASK).
         add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(InspectMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
@@ -168,7 +166,6 @@ public class InspectorKeyBindings {
      * A default set of key bindings.
      */
     public static final KeyBindingMap DEFAULT_KEY_BINDINGS = new KeyBindingMap("Default").
-        add(ViewBootImageAction.class, 'I', CTRL_DOWN_MASK).
         add(QuitAction.class, 'Q', CTRL_DOWN_MASK).
         add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(InspectMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).

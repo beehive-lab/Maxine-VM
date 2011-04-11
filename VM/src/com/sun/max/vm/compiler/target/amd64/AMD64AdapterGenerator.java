@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,8 +59,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
     static {
         if (vmConfig().needsAdapters()) {
             // Create and register the adapter generators
-            new Jit2Opt();
-            new Opt2Jit();
+            new Baseline2Opt();
+            new Opt2Baseline();
         }
     }
 
@@ -82,16 +82,16 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
     }
 
     /**
-     * AMD64 specific generator for {@link Type#JIT2OPT} adapters.
+     * AMD64 specific generator for {@link Type#BASELINE2OPT} adapters.
      */
-    public static class Jit2Opt extends AMD64AdapterGenerator {
+    public static class Baseline2Opt extends AMD64AdapterGenerator {
 
         /**
-         * AMD64 specific {@link Type#JIT2OPT} adapters.
+         * AMD64 specific {@link Type#BASELINE2OPT} adapters.
          */
-        public static class Jit2OptAdapter extends Adapter {
+        public static class Baseline2OptAdapter extends Adapter {
 
-            Jit2OptAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
+            Baseline2OptAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
                 super(generator, description, frameSize, code, callPosition);
             }
 
@@ -159,18 +159,18 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 int ripAdjustment = MaxineVM.isHosted() ? computeFrameState(current) & ~1 : frameSize();
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
-                return visitor.visitFrame(new AdapterStackFrame(current.stackFrameWalker().calleeStackFrame(), new Jit2OptAdapterFrameLayout(frameSize()), current.targetMethod(), current.ip(), fp, current.sp()));
+                return visitor.visitFrame(new AdapterStackFrame(current.stackFrameWalker().calleeStackFrame(), new Baseline2OptAdapterFrameLayout(frameSize()), current.targetMethod(), current.ip(), fp, current.sp()));
             }
         }
 
         /**
-         * A specialization of an AMD64 specific {@link Type#JIT2OPT} adapter that contains a reference map occupying 64 or less bits.
+         * A specialization of an AMD64 specific {@link Type#BASELINE2OPT} adapter that contains a reference map occupying 64 or less bits.
          */
-        public static class Jit2OptAdapterWithRefMap extends Jit2OptAdapter {
+        public static class Baseline2OptAdapterWithRefMap extends Baseline2OptAdapter {
 
             final long refMap;
 
-            public Jit2OptAdapterWithRefMap(AdapterGenerator generator, String description, long refMap, int frameSize, byte[] code, int callPosition) {
+            public Baseline2OptAdapterWithRefMap(AdapterGenerator generator, String description, long refMap, int frameSize, byte[] code, int callPosition) {
                 super(generator, description, frameSize, code, callPosition);
                 this.refMap = refMap;
             }
@@ -194,13 +194,13 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         }
 
         /**
-         * A specialization of an AMD64 specific {@link Type#JIT2OPT} adapter that contains a reference map occupying more than 64 bits.
+         * A specialization of an AMD64 specific {@link Type#BASELINE2OPT} adapter that contains a reference map occupying more than 64 bits.
          */
-        public static class Jit2OptAdapterWithBigRefMap extends Jit2OptAdapter {
+        public static class Baseline2OptAdapterWithBigRefMap extends Baseline2OptAdapter {
 
             final byte[] refMap;
 
-            public Jit2OptAdapterWithBigRefMap(AdapterGenerator generator, String description, byte[] refMap, int frameSize, byte[] code, int callPosition) {
+            public Baseline2OptAdapterWithBigRefMap(AdapterGenerator generator, String description, byte[] refMap, int frameSize, byte[] code, int callPosition) {
                 super(generator, description, frameSize, code, callPosition);
                 this.refMap = refMap;
             }
@@ -222,11 +222,11 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         }
 
         /**
-         * Frame layout for an AMD64 specific {@link Type#JIT2OPT} adapter frame.
+         * Frame layout for an AMD64 specific {@link Type#BASELINE2OPT} adapter frame.
          * <pre>
          *
          *          +------------------------+
-         *          |     JIT caller RIP     |
+         *          |  Baseline caller RIP   |
          *          +------------------------+     ---
          *          |     OPT main body      |      ^
          *          +------------------------+      |
@@ -243,9 +243,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          *   R == number of register args
          * </pre>
          */
-        public static class Jit2OptAdapterFrameLayout extends AdapterStackFrameLayout {
+        public static class Baseline2OptAdapterFrameLayout extends AdapterStackFrameLayout {
 
-            public Jit2OptAdapterFrameLayout(int frameSize) {
+            public Baseline2OptAdapterFrameLayout(int frameSize) {
                 super(frameSize, true);
             }
 
@@ -284,8 +284,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
         private static final int PROLOGUE_SIZE = 8;
 
-        public Jit2Opt() {
-            super(Adapter.Type.JIT2OPT);
+        public Baseline2Opt() {
+            super(Adapter.Type.BASELINE2OPT);
         }
 
         @Override
@@ -294,11 +294,11 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         }
 
         /**
-         * The prologue for a method with a JIT2OPT adapter has a call to the adapter
-         * at the {@link CallEntryPoint#JIT_ENTRY_POINT}. The body of the method starts at the
+         * The prologue for a method with a BASELINE2OPT adapter has a call to the adapter
+         * at the {@link CallEntryPoint#BASELINE_ENTRY_POINT}. The body of the method starts at the
          * {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}. The assembler code is as follows:
          * <pre>
-         *     +0:  call <JIT2OPT adapter>
+         *     +0:  call <BASELINE2OPT adapter>
          *     +5:  nop
          *     +6:  nop
          *     +7:  nop
@@ -340,9 +340,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         }
 
         /**
-         * Creates a JIT2OPT adapter.
+         * Creates a BASELINE2OPT adapter.
          *
-         * @see Jit2OptAdapterFrameLayout
+         * @see Baseline2OptAdapterFrameLayout
          */
         @Override
         protected Adapter create(Sig sig) {
@@ -353,7 +353,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             // On entry to the frame, there are 2 return addresses on the stack at [RSP] and [RSP + 8].
             // The one at [RSP] is the return address of the call in the OPT callee's prologue (which is
             // also the entry to the main body of the OPT callee) and one at [RSP + 8] is the return
-            // address in the JIT caller.
+            // address in the baseline caller.
 
             // Save the address of the OPT callee's main body in RAX
             asm.movq(rax, new CiAddress(CiKind.Word, rsp.asValue()));
@@ -369,67 +369,67 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             final int rbpSlotSize = OPT_SLOT_SIZE;
             final int optCallerRIPSlotSize = OPT_SLOT_SIZE;
-            final int jitCallerRIPSlotSize = OPT_SLOT_SIZE;
+            final int baselineCallerRIPSlotSize = OPT_SLOT_SIZE;
 
             // The amount by which RSP is adjusted by CALL and ENTER instructions
-            final int implicitlyAllocatedFrameSize = optCallerRIPSlotSize + jitCallerRIPSlotSize + rbpSlotSize;
+            final int implicitlyAllocatedFrameSize = optCallerRIPSlotSize + baselineCallerRIPSlotSize + rbpSlotSize;
 
-            // The adapter frame size does not include the slot holding the JIT caller's RIP.
+            // The adapter frame size does not include the slot holding the baseline caller's RIP.
             // It must also be aligned according platform's stack frame alignment requirements.
             int adapterFrameSize = target().alignFrameSize(stackArgumentsSize + implicitlyAllocatedFrameSize - optCallerRIPSlotSize);
 
             // The amount by which RSP must be explicitly adjusted to create the adapter frame
-            final int explicitlyAllocatedFrameSize = adapterFrameSize - rbpSlotSize - jitCallerRIPSlotSize;
+            final int explicitlyAllocatedFrameSize = adapterFrameSize - rbpSlotSize - baselineCallerRIPSlotSize;
 
             // Allocate the frame and save RBP to the stack with an ENTER instruction
             assert explicitlyAllocatedFrameSize >= 0 && explicitlyAllocatedFrameSize <= Short.MAX_VALUE;
             asm.enter(explicitlyAllocatedFrameSize, 0);
 
-            // At this point, the top of the JIT caller's stack (i.e the last arg to the call) is immediately
+            // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
             // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize + OPT_SLOT_SIZE.
-            int jitStackOffset = adapterFrameSize + OPT_SLOT_SIZE;
-            int jitArgsSize = 0;
+            int baselineStackOffset = adapterFrameSize + OPT_SLOT_SIZE;
+            int baselineArgsSize = 0;
             CiBitMap refMap = null;
             for (int i = optArgs.length - 1; i >= 0;  i--) {
                 CiKind kind = sig.kinds[i];
-                int refMapIndex = adaptArgument(asm, kind, optArgs[i], jitStackOffset, 0);
+                int refMapIndex = adaptArgument(asm, kind, optArgs[i], baselineStackOffset, 0);
                 if (refMapIndex != -1) {
                     if (refMap == null) {
                         refMap = new CiBitMap(adapterFrameSize / Word.size());
                     }
                     refMap.set(refMapIndex);
                 }
-                int jitArgSize = frameSizeFor(kind, JIT_SLOT_SIZE);
-                jitArgsSize += jitArgSize;
-                jitStackOffset += jitArgSize;
+                int baselineArgSize = frameSizeFor(kind, BASELINE_SLOT_SIZE);
+                baselineArgsSize += baselineArgSize;
+                baselineStackOffset += baselineArgSize;
             }
 
             // Args are now copied to the OPT locations; call the OPT main body
             int callPosition = asm.codeBuffer.position();
             asm.indirectCall(rax, null, null);
 
-            // Restore RSP and RBP. Given that RBP is never modified by OPT methods and JIT methods always
+            // Restore RSP and RBP. Given that RBP is never modified by OPT methods and baseline methods always
             // restore it, RBP is guaranteed to be pointing to the slot holding the caller's RBP
             asm.leave();
 
-            String description = Type.JIT2OPT + "-Adapter" + sig;
+            String description = Type.BASELINE2OPT + "-Adapter" + sig;
             // RSP has been restored to the location holding the address of the OPT main body.
-            // The adapter must return to the JIT caller whose RIP is one slot higher up.
+            // The adapter must return to the baseline caller whose RIP is one slot higher up.
             asm.addq(rsp, 8);
 
-            assert WordWidth.signedEffective(jitArgsSize).lessEqual(WordWidth.BITS_16);
+            assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
-            asm.ret((short) jitArgsSize);
+            asm.ret((short) baselineArgsSize);
 
             final byte[] code = asm.codeBuffer.close(true);
             if (refMap != null) {
                 if (refMap.size() <= 64) {
                     long longRefMap = refMap.toLong();
-                    return new Jit2OptAdapterWithRefMap(this, description, longRefMap, adapterFrameSize, code, callPosition);
+                    return new Baseline2OptAdapterWithRefMap(this, description, longRefMap, adapterFrameSize, code, callPosition);
                 }
-                return new Jit2OptAdapterWithBigRefMap(this, description, refMap.toByteArray(), adapterFrameSize, code, callPosition);
+                return new Baseline2OptAdapterWithBigRefMap(this, description, refMap.toByteArray(), adapterFrameSize, code, callPosition);
             }
-            return new Jit2OptAdapter(this, description, adapterFrameSize, code, callPosition);
+            return new Baseline2OptAdapter(this, description, adapterFrameSize, code, callPosition);
         }
 
         // Checkstyle: stop
@@ -452,24 +452,24 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         // Checkstyle: resume
 
         @Override
-        public void adapt(AMD64Assembler asm, CiKind kind, int optStackOffset32, int jitStackOffset32, int adapterFrameSize) {
-            int src = jitStackOffset32;
+        public void adapt(AMD64Assembler asm, CiKind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
+            int src = baselineStackOffset32;
             int dst = optStackOffset32;
             stackCopy(asm, kind, src, dst);
         }
     }
 
     /**
-     * AMD64 specific generator for {@link Type#OPT2JIT} adapters.
+     * AMD64 specific generator for {@link Type#OPT2BASELINE} adapters.
      */
-    static class Opt2Jit extends AMD64AdapterGenerator {
+    static class Opt2Baseline extends AMD64AdapterGenerator {
 
         /**
-         * AMD64 specific {@link Type#OPT2JIT} adapter.
+         * AMD64 specific {@link Type#OPT2BASELINE} adapter.
          */
-        static final class Opt2JitAdapter extends Adapter {
+        static final class Opt2BaselineAdapter extends Adapter {
 
-            Opt2JitAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
+            Opt2BaselineAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPosition) {
                 super(generator, description, frameSize, code, callPosition);
             }
 
@@ -490,8 +490,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 StackFrameWalker stackFrameWalker = cursor.stackFrameWalker();
                 int position = cursor.ip().minus(codeStart).toInt();
                 if (!cursor.isTopFrame()) {
-                    // Inside call to JIT body. The value of RSP in cursor is now the value
-                    // that the JIT caller will leave it in after popping the arguments from the stack
+                    // Inside call to baseline body. The value of RSP in cursor is now the value
+                    // that the baseline caller will leave it in after popping the arguments from the stack
                     ripAdjustment = Word.size();
                 } else if (position == 0) {
                     ripAdjustment = Word.size();
@@ -530,32 +530,32 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
-                return visitor.visitFrame(new AdapterStackFrame(cursor.stackFrameWalker().calleeStackFrame(), new Opt2JitAdapterFrameLayout(frameSize()), cursor.targetMethod(), cursor.ip(), fp, cursor.sp()));
+                return visitor.visitFrame(new AdapterStackFrame(cursor.stackFrameWalker().calleeStackFrame(), new Opt2BaselineAdapterFrameLayout(frameSize()), cursor.targetMethod(), cursor.ip(), fp, cursor.sp()));
             }
         }
 
         /**
-         * Frame layout for an AMD64 specific {@link Type#OPT2JIT} adapter frame.
+         * Frame layout for an AMD64 specific {@link Type#OPT2BASELINE} adapter frame.
          * <pre>
          *
          *          +------------------------+
          *          |     OPT caller RIP     |
          *          +------------------------+     ---
-         *          |     JIT main body      |      ^
+         *          | baseline main body     |      ^
          *          +------------------------+      |
-         *          |       JIT arg 0        |      |
+         *          |    baseline arg 0      |      |
          *          +------------------------+  frame size
          *          :                        :      |
          *          +------------------------+      |
-         *   RSP--> |       JIT arg N        |      v
+         *   RSP--> |    baseline arg N      |      v
          *          +------------------------+     ---
          *
          *   N == number of args - 1
          * </pre>
          */
-        public static class Opt2JitAdapterFrameLayout extends AdapterStackFrameLayout {
+        public static class Opt2BaselineAdapterFrameLayout extends AdapterStackFrameLayout {
 
-            public Opt2JitAdapterFrameLayout(int frameSize) {
+            public Opt2BaselineAdapterFrameLayout(int frameSize) {
                 super(frameSize, true);
             }
 
@@ -564,8 +564,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 return new Slots() {
                     @Override
                     protected String nameOfSlot(int offset) {
-                        final int jitPrologueCallReturnAddress = frameSize() - Word.size();
-                        if (offset == jitPrologueCallReturnAddress) {
+                        final int baselinePrologueCallReturnAddress = frameSize() - Word.size();
+                        if (offset == baselinePrologueCallReturnAddress) {
                             return "prologue return";
                         }
                         return super.nameOfSlot(offset);
@@ -578,9 +578,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         private static final int PROLOGUE_SIZE = 13;
         private static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 8;
 
-        Opt2Jit() {
-            super(Adapter.Type.OPT2JIT);
-            assert JIT_ENTRY_POINT.offset() == 0;
+        Opt2Baseline() {
+            super(Adapter.Type.OPT2BASELINE);
+            assert BASELINE_ENTRY_POINT.offset() == 0;
             assert OPTIMIZED_ENTRY_POINT.offset() == 8;
         }
 
@@ -593,9 +593,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         }
 
         /**
-         * The prologue for a method with an OPT2JIT adapter has a call to the adapter
+         * The prologue for a method with an OPT2BASELINE adapter has a call to the adapter
          * at the {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}. The code at the
-         * {@link CallEntryPoint#JIT_ENTRY_POINT} has a jump over this call to the
+         * {@link CallEntryPoint#BASELINE_ENTRY_POINT} has a jump over this call to the
          * body of the method. The assembler code is as follows:
          * <pre>
          *     +0:  jmp L1
@@ -604,7 +604,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          * </pre>
          * In the case where there is no adaptation required (i.e. a parameterless call to a static method),
          * the assembler code in the prologue is a series of {@code nop}s up to the {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}
-         * which is where the method body starts. This means that a JIT caller will fall through the {@code nop}s
+         * which is where the method body starts. This means that a baseline caller will fall through the {@code nop}s
          * to the method body.
          */
         @Override
@@ -618,7 +618,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
 
-            // A JIT caller jumps over the call to the OPT2JIT adapter
+            // A baseline caller jumps over the call to the OPT2BASELINE adapter
             asm.jmp(new Label(8 + DIRECT_CALL_SIZE));
 
             // Pad with nops up to the OPT entry point
@@ -638,46 +638,46 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         }
 
         /**
-         * Creates an OPT2JIT adapter.
+         * Creates an OPT2BASELINE adapter.
          *
-         * @see Opt2JitAdapterFrameLayout
+         * @see Opt2BaselineAdapterFrameLayout
          */
         @Override
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, sig.kinds, target()).locations;
             AMD64Assembler asm = new AMD64Assembler(target(), null);
 
-            // On entry to the frame, there are 2 return addresses on the JIT at [RSP] and [RSP + 8].
-            // The one at [RSP] is the return address of the call in the JIT callee's prologue (which is
-            // also the entry to the main body of the JIT callee) and one at [RSP + 8] is the return
+            // On entry to the frame, there are 2 return addresses at [RSP] and [RSP + 8].
+            // The one at [RSP] is the return address of the call in the baseline callee's prologue (which is
+            // also the entry to the main body of the baseline callee) and one at [RSP + 8] is the return
             // address in the OPT caller.
 
-            // Save the address of the JIT callee's main body in RAX
+            // Save the address of the baseline callee's main body in RAX
             asm.movq(rax, new CiAddress(CiKind.Word, rsp.asValue()));
 
             // Initial args are in registers, remaining args are on the stack.
-            int jitArgsSize = frameSizeFor(sig.kinds, JIT_SLOT_SIZE);
-            assert jitArgsSize % target().stackAlignment == 0 : "JIT_SLOT_SIZE should guarantee parametersSize satifies ABI alignment requirements";
+            int baselineArgsSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
+            assert baselineArgsSize % target().stackAlignment == 0 : "BASELINE_SLOT_SIZE should guarantee parametersSize satifies ABI alignment requirements";
 
             final int optCallerRIPSlotSize = OPT_SLOT_SIZE;
-            int adapterFrameSize = jitArgsSize + optCallerRIPSlotSize;
+            int adapterFrameSize = baselineArgsSize + optCallerRIPSlotSize;
 
-            // Adjust RSP to create space for the JIT args
-            asm.subq(rsp, jitArgsSize);
+            // Adjust RSP to create space for the baseline args
+            asm.subq(rsp, baselineArgsSize);
 
-            // Copy OPT args into JIT args
-            int jitStackOffset = 0;
+            // Copy OPT args into baseline args
+            int baselineStackOffset = 0;
             for (int i = optArgs.length - 1; i >= 0; i--) {
-                adaptArgument(asm, sig.kinds[i], optArgs[i], jitStackOffset, adapterFrameSize);
-                jitStackOffset += frameSizeFor(sig.kinds[i], JIT_SLOT_SIZE);
+                adaptArgument(asm, sig.kinds[i], optArgs[i], baselineStackOffset, adapterFrameSize);
+                baselineStackOffset += frameSizeFor(sig.kinds[i], BASELINE_SLOT_SIZE);
             }
 
-            // Args are now copied to the JIT locations; call the JIT main body
+            // Args are now copied to the baseline locations; call the baseline main body
             int callPosition = asm.codeBuffer.position();
             asm.indirectCall(rax, null, null);
 
-            // The JIT method will have popped the args off the stack so now
-            // RSP is pointing to the slot holding the address of the JIT main body.
+            // The baseline method will have popped the args off the stack so now
+            // RSP is pointing to the slot holding the address of the baseline main body.
             // The adapter must return to the OPT caller whose RIP is one slot higher up.
             asm.addq(rsp, OPT_SLOT_SIZE);
 
@@ -686,8 +686,8 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             final byte[] code = asm.codeBuffer.close(true);
 
-            String description = Type.OPT2JIT + "-Adapter" + sig;
-            return new Opt2JitAdapter(this, description, adapterFrameSize, code, callPosition);
+            String description = Type.OPT2BASELINE + "-Adapter" + sig;
+            return new Opt2BaselineAdapter(this, description, adapterFrameSize, code, callPosition);
         }
 
         // Checkstyle: stop
@@ -710,10 +710,10 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         // Checkstyle: resume
 
         @Override
-        public void adapt(AMD64Assembler asm, CiKind kind, int optStackOffset32, int jitStackOffset32, int adapterFrameSize) {
+        public void adapt(AMD64Assembler asm, CiKind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
             // Add word size to take into account the slot used by the RIP of the caller
             int src = adapterFrameSize + optStackOffset32 + Word.size();
-            int dst = jitStackOffset32;
+            int dst = baselineStackOffset32;
             stackCopy(asm, kind, src, dst);
         }
     }
@@ -725,16 +725,16 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
      * @param asm assembler used to emit code
      * @param kind the kind of the argument
      * @param optArg the location of the argument according to the OPT convention
-     * @param jitStackOffset32 the 32-bit offset of the argument on the stack according to the JIT convention
+     * @param baselineStackOffset32 the 32-bit offset of the argument on the stack according to the baseline convention
      * @param adapterFrameSize the size of the adapter frame
      * @return the reference map index of the reference slot on the adapter frame corresponding to the argument or -1
      */
-    protected int adaptArgument(AMD64Assembler asm, CiKind kind, CiValue optArg, int jitStackOffset32, int adapterFrameSize) {
+    protected int adaptArgument(AMD64Assembler asm, CiKind kind, CiValue optArg, int baselineStackOffset32, int adapterFrameSize) {
         if (optArg.isRegister()) {
-            adapt(asm, kind, optArg.asRegister(), jitStackOffset32);
+            adapt(asm, kind, optArg.asRegister(), baselineStackOffset32);
         } else if (optArg.isStackSlot()) {
             int optStackOffset32 = ((CiStackSlot) optArg).index() * OPT_SLOT_SIZE;
-            adapt(asm, kind, optStackOffset32, jitStackOffset32, adapterFrameSize);
+            adapt(asm, kind, optStackOffset32, baselineStackOffset32, adapterFrameSize);
             if (kind.isObject()) {
                 return optStackOffset32 / Word.size();
             }
@@ -755,7 +755,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         }
     }
 
-    protected abstract void adapt(AMD64Assembler asm, CiKind kind, int optStackOffset32, int jitStackOffset32, int adapterFrameSize);
+    protected abstract void adapt(AMD64Assembler asm, CiKind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize);
     protected abstract void adapt(AMD64Assembler asm, CiKind kind, CiRegister reg, int offset32);
 
     public static final byte REXW = (byte) 0x48;

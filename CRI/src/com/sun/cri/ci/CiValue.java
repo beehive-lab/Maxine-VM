@@ -22,6 +22,8 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
+
 
 
 /**
@@ -30,7 +32,7 @@ package com.sun.cri.ci;
  * @author Thomas Wuerthinger
  * @author Doug Simon
  */
-public abstract class CiValue {
+public abstract class CiValue implements Serializable {
 
     public static CiValue IllegalValue = new CiValue(CiKind.Illegal) {
         @Override

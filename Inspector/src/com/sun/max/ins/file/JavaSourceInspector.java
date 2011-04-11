@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import javax.swing.text.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.view.InspectionViews.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 
@@ -39,6 +40,9 @@ import com.sun.max.vm.actor.holder.*;
  * @author Michael Van De Vanter
  */
 public final class JavaSourceInspector extends FileInspector {
+
+    private static final ViewKind VIEW_KIND = ViewKind.JAVA_SOURCE;
+
 
     private static final Map<File, JavaSourceInspector> inspectors =
         new Hashtable<File, JavaSourceInspector>();
@@ -59,7 +63,7 @@ public final class JavaSourceInspector extends FileInspector {
     private JTextArea textArea;
 
     private JavaSourceInspector(Inspection inspection, File file) {
-        super(inspection, file);
+        super(inspection, file, VIEW_KIND);
         final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
@@ -77,11 +81,8 @@ public final class JavaSourceInspector extends FileInspector {
         textArea.setCaretPosition(0);
 
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), textArea);
-        scrollPane.setPreferredSize(inspection().geometry().javaSourceFramePrefSize());
-        //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
         setContentPane(scrollPane);
-        refreshView(true);
-        gui().moveToMiddle(this);
+        setGeometry(inspection().geometry().preferredFrameGeometry(ViewKind.JAVA_SOURCE));
     }
 
     @Override
@@ -102,6 +103,10 @@ public final class JavaSourceInspector extends FileInspector {
         Trace.line(1, tracePrefix() + " closing for " + getTitle());
         inspectors.remove(file());
         super.inspectorClosing();
+    }
+
+    @Override
+    protected void refreshState(boolean force) {
     }
 
 }

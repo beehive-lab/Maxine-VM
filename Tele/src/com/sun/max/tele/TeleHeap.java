@@ -253,8 +253,11 @@ public final class TeleHeap extends AbstractTeleVMHolder implements TeleVMCache,
         this.teleBootHeapRegion = (TeleRuntimeMemoryRegion) makeTeleObject(bootHeapRegionReference);
         this.bootHeapRegion = new TeleHeapRegion(vm(), teleBootHeapRegion, true);
 
-        // The address of the tele roots field must be accessible before any {@link TeleObject}s can be created,
-        // which means that it must be accessible before calling {@link #refresh()} here.
+        // The address of the tele roots field must be known before we can create any instances of {@link TeleObject}
+        // that use relocatable references, since those references must be registered in the VM's root table using this address.
+        // A number of {@link TeleObject} instances have already been created at this point in the startup process (in fact
+        // in this method so far), but those are all objects in the boot heap, which are presumed not to relocate and
+        // which therefore do not require relocation-aware implementations of {@link Reference}.
         final int teleRootsOffset = vm().teleFields().InspectableHeapInfo_rootsPointer.fieldActor().offset();
         this.teleRootsPointer = vm().teleFields().InspectableHeapInfo_rootsPointer.staticTupleReference(vm()).toOrigin().plus(teleRootsOffset);
 

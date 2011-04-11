@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,14 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.Inspector.MenuKind;
 import com.sun.max.ins.util.*;
 
+/**
+ * An abstraction over the kinds of window system containers that can
+ * hold an {@link Inspector}, either a simple internal frame suitable
+ * for a {@link JDesktopPane} or the contents of a single tab in a
+ * "tabbed pane".
+ *
+ * @author Michael Van De Vanter
+ */
 public interface InspectorFrame extends RootPaneContainer, Prober {
 
     /**

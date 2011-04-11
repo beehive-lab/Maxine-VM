@@ -20,16 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+package com.sun.max.ins.method;
 
+import static com.sun.max.ins.gui.Inspector.MenuKind.*;
 import static com.sun.max.tele.MaxProcessState.*;
 
 import java.util.*;
 
-import javax.swing.*;
-
 import com.sun.max.ins.*;
-import com.sun.max.ins.method.*;
+import com.sun.max.ins.gui.*;
+import com.sun.max.ins.method.MethodInspectorContainer.MethodViewManager;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -39,6 +40,11 @@ import com.sun.max.unsafe.*;
 /**
  * An inspector that can present one or more code representations of a method. MethodInspectors are unique, keyed from
  * an instance of {@link TeleClassMethodActor}.
+ * <p>
+ * Views are managed via the container class {@link MethodInspectorContainer}, in which method inspectors are displayed.
+ * <p>
+ * Instance view creation follows the user focus, and a static listener here drives the factory for method views.
+ *
  *
  * @author Michael Van De Vanter
  * @author Doug Simon
@@ -46,44 +52,38 @@ import com.sun.max.unsafe.*;
 public abstract class MethodInspector extends Inspector<MethodInspector> {
 
     private static final int TRACE_VALUE = 2;
+    private static final ViewKind VIEW_KIND = ViewKind.METHOD_CODE;
 
-    private static Manager manager;
+    private static ViewFocusListener methodFocusListener;
 
     /**
-     * Manages inspection of methods in the VM, even when the tabbed view does not exist.
-     * Has no visible presence or direct user interaction at this time.
+     * Gets (singleton) listener that can be added to focus listeners, which causes the MethodInspector factory
+     * to create/highlight a view on the method in focus.
      *
-     * @author Michael Van De Vanter
+     * @param inspection
+     * @return
      */
-    public static final class Manager extends AbstractInspectionHolder {
+    static ViewFocusListener methodFocusListener(final Inspection inspection) {
+        if (methodFocusListener == null) {
+            methodFocusListener = new InspectionFocusAdapter() {
 
-        private Manager(Inspection inspection) {
-            super(inspection);
-        }
-
-        public static void make(final Inspection inspection) {
-            if (manager == null) {
-                manager = new Manager(inspection);
-                inspection.focus().addListener(new InspectionFocusAdapter() {
-
-                    @Override
-                    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
-                        if (codeLocation  != null) {
-                            try {
-                                final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), codeLocation, interactiveForNative);
-                                if (methodInspector != null) {
-                                    methodInspector.setCodeLocationFocus();
-                                    methodInspector.highlightIfNotVisible();
-                                }
-                            } catch (MaxVMBusyException maxVMBusyException) {
-                                inspection.announceVMBusyFailure("Can't view method");
+                @Override
+                public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
+                    if (codeLocation != null && ViewKind.METHODS.viewManager().isActive()) {
+                        try {
+                            final MethodInspector methodInspector = MethodInspector.make(inspection, codeLocation, interactiveForNative);
+                            if (methodInspector != null) {
+                                methodInspector.setCodeLocationFocus();
+                                methodInspector.highlightIfNotVisible();
                             }
+                        } catch (MaxVMBusyException maxVMBusyException) {
+                            inspection.announceVMBusyFailure("Can't view method");
                         }
                     }
-                });
-            }
+                }
+            };
         }
-
+        return methodFocusListener;
     }
 
     /**
@@ -187,11 +187,12 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         }
         final MethodInspector methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
         if (methodInspector == null) {
-            final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
+            final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
+            final MethodInspectorContainer container = methodViewManager.activateView(inspection);
             inspection.vm().acquireLegacyVMAccess();
             try {
-                javaMethodInspector = new JavaMethodInspector(inspection, parent, teleClassMethodActor, codeKind);
-                parent.add(javaMethodInspector);
+                javaMethodInspector = new JavaMethodInspector(inspection, container, teleClassMethodActor, codeKind);
+                container.add(javaMethodInspector);
                 teleClassMethodActorToMethodInspector.put(teleClassMethodActor, javaMethodInspector);
             } finally {
                 inspection.vm().releaseLegacyVMAccess();
@@ -224,17 +225,18 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                 if (teleClassMethodActor != null) {
                     methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
                 }
-                final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
+                final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
+                final MethodInspectorContainer container = methodViewManager.activateView(inspection);
                 if (methodInspector == null) {
                     // No existing inspector exists for this method; create new one bound to this compilation
-                    javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
+                    javaMethodInspector = new JavaMethodInspector(inspection, container, compiledCode, codeKind);
                 } else {
                     // An inspector exists for the method, but not bound to any compilation; bind it to this compilation
                     // TODO (mlvdv) Temp patch; just create a new one in this case too.
-                    javaMethodInspector = new JavaMethodInspector(inspection, parent, compiledCode, codeKind);
+                    javaMethodInspector = new JavaMethodInspector(inspection, container, compiledCode, codeKind);
                 }
                 if (javaMethodInspector != null) {
-                    parent.add(javaMethodInspector);
+                    container.add(javaMethodInspector);
                     machineCodeToMethodInspector.put(compiledCode, javaMethodInspector);
                 }
             } finally {
@@ -258,9 +260,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         if (methodInspector == null) {
             inspection.vm().acquireLegacyVMAccess();
             try {
-                final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
-                nativeMethodInspector = new NativeMethodInspector(inspection, parent, maxExternalCode);
-                parent.add(nativeMethodInspector);
+                final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
+                final MethodInspectorContainer container = methodViewManager.activateView(inspection);
+                container.add(nativeMethodInspector);
                 machineCodeToMethodInspector.put(maxExternalCode, nativeMethodInspector);
             } finally {
                 inspection.vm().releaseLegacyVMAccess();
@@ -271,11 +273,11 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         return nativeMethodInspector;
     }
 
-    private final MethodInspectorContainer parent;
+    private final MethodInspectorContainer container;
 
-    protected MethodInspector(Inspection inspection, MethodInspectorContainer parent) {
-        super(inspection);
-        this.parent = parent;
+    protected MethodInspector(Inspection inspection, MethodInspectorContainer container) {
+        super(inspection, VIEW_KIND, null);
+        this.container = container;
     }
 
     @Override
@@ -283,22 +285,23 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
 
         final InspectorFrame frame = super.createTabFrame(parent);
 
-        frame.makeMenu(MenuKind.EDIT_MENU);
+        // The default menu operates from the perspective of the parent container.
+        frame.makeMenu(DEFAULT_MENU).add(defaultMenuItems(DEFAULT_MENU, parent));
 
-        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectMachineCodeRegionMemoryWords(machineCode()));
-        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        memoryMenu.add(viewMemoryRegionsMenuItem);
+        frame.makeMenu(EDIT_MENU);
 
-        frame.makeMenu(MenuKind.OBJECT_MENU);
+        final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
+        memoryMenu.add(actions().inspectMachineCodeRegionMemory(machineCode()));
+        memoryMenu.add(defaultMenuItems(MEMORY_MENU));
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
-        frame.makeMenu(MenuKind.CODE_MENU);
+        frame.makeMenu(OBJECT_MENU);
 
-        frame.makeMenu(MenuKind.DEBUG_MENU);
+        frame.makeMenu(CODE_MENU);
 
-        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        frame.makeMenu(DEBUG_MENU);
+
+        frame.makeMenu(VIEW_MENU).add(defaultMenuItems(VIEW_MENU));
         return frame;
     }
 
@@ -313,16 +316,16 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     public void breakpointStateChanged() {
         // TODO (mlvdv)  Data reading PATCH, there should be a more systematic way of handling this.
         if (vm().state().processState() != TERMINATED) {
-            refreshView(true);
+            forceRefresh();
         }
     }
 
     public void close() {
-        parent.close(this);
+        container.close(this);
     }
 
     public void closeOthers() {
-        parent.closeOthers(this);
+        container.closeOthers(this);
     }
 
     /**

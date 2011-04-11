@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 
 /**
- * Convenience methods for classes holding various parts of the interactive inspection session.
+ * Convenience methods for access to classes holding various parts of the interactive inspection session.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -34,7 +34,7 @@ import com.sun.max.tele.*;
 public interface InspectionHolder {
 
     /**
-     * @return holder of the interactive inspection state for the session
+     * @return holder of the interactive inspection state for this session
      */
     Inspection inspection();
 
@@ -44,7 +44,7 @@ public interface InspectionHolder {
     MaxVM vm();
 
     /**
-     * @return access to basic GUI services.
+     * @return access to basic GUI services for the session.
      */
     InspectorGUI gui();
 

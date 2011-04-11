@@ -32,7 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.SpecialReferenceManager.JDKRefAlias;
+import com.sun.max.vm.heap.SpecialReferenceManager.JLRRAlias;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
 import com.sun.max.vm.object.*;
@@ -275,8 +275,8 @@ public final class DebugHeap {
             final Pointer origin = Layout.cellToOrigin(cell);
             final Hub hub = checkHub(origin, space);
 
-            if (hub.classActor.isSpecialReference()) {
-                JDKRefAlias refAlias = SpecialReferenceManager.asJDKRefAlias(Reference.fromOrigin(origin).toJava());
+            if (hub.isJLRReference) {
+                JLRRAlias refAlias = SpecialReferenceManager.asJLRRAlias(Reference.fromOrigin(origin).toJava());
                 if (refAlias.discovered != null) {
                     Log.print("Special reference of type ");
                     Log.print(hub.classActor.name.string);

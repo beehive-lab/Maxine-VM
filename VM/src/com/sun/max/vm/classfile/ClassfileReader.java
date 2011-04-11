@@ -1238,31 +1238,14 @@ public final class ClassfileReader {
             }
         }
 
-        // inherit the REFERENCE and FINALIZER bits from the superClassActor
+        // inherit the FINALIZER flag from the super class actor
         if (superClassActor != null) {
-            if (superClassActor.isSpecialReference()) {
-                classFlags |= Actor.SPECIAL_REFERENCE;
-            }
             if (superClassActor.hasFinalizer()) {
                 classFlags |= Actor.FINALIZER;
             }
         } else {
             // clear the finalizer bit for the java.lang.Object class; otherwise all classes would have it!
             classFlags &= ~Actor.FINALIZER;
-        }
-
-        // is this a Java Reference object class?
-        if (MaxineVM.isHosted() && name.equals("java.lang.ref.Reference")) {
-            classFlags |= Actor.SPECIAL_REFERENCE;
-            // find the "referent" field and mark it as a special reference too.
-            for (int i = 0; i < fieldActors.length; i++) {
-                final FieldActor fieldActor = fieldActors[i];
-                if (fieldActor.name.equals("referent")) {
-                    // replace the field actor with a new one that has the flag set
-                    fieldActors[i] = new FieldActor(Kind.REFERENCE, fieldActor.name, fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
-                    break;
-                }
-            }
         }
 
         if (isRemote) {
@@ -1434,9 +1417,7 @@ public final class ClassfileReader {
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
-
-        ClassDependencyManager.addToHierarchy(classActor);
-
+        classActor.define();
         return classActor;
     }
 

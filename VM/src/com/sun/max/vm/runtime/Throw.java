@@ -49,12 +49,15 @@ public final class Throw {
 
     public static int TraceExceptions;
     private static boolean TraceExceptionsRaw;
+    private static int TraceExceptionsMaxFrames = 200;
     private static int TraceExceptionsRawMaxFrames = 200;
     private static String TraceExceptionsFilter;
     public static boolean ScanStackOnFatalError;
     static {
         VMOptions.addFieldOption("-XX:", "TraceExceptions", Throw.class,
             "Trace exception throwing: 0 = none, 1 = toString(), 2 = printStackTrace().", Phase.STARTING);
+        VMOptions.addFieldOption("-XX:", "TraceExceptionsMaxFrames", Throw.class,
+            "The max frames to dump for -XX:TraceExceptions=2.", Phase.STARTING);
         VMOptions.addFieldOption("-XX:", "TraceExceptionsRaw", Throw.class,
             "Report a stack frame dump for every exception thrown.", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "TraceExceptionsRawMaxFrames", Throw.class,
@@ -145,10 +148,25 @@ public final class Throw {
         if (TraceExceptions == 1) {
             Log.printThread(VmThread.current(), false);
             Log.println(": Throwing " + throwable);
-        } else if (TraceExceptions == 2) {
-            Log.printThread(VmThread.current(), false);
-            Log.print(": Throwing ");
-            throwable.printStackTrace(Log.out);
+        } else if (TraceExceptions >= 2) {
+            StackTraceElement[] trace = throwable.getStackTrace();
+            boolean lockDisabledSafepoints = Log.lock();
+            try {
+                Log.printThread(VmThread.current(), false);
+                Log.print(": Throwing ");
+                Log.println(throwable);
+                for (int i = 0; i < trace.length && i < TraceExceptionsMaxFrames; i++) {
+                    Log.println("\tat " + trace[i]);
+                }
+                int elided = trace.length - TraceExceptionsMaxFrames;
+                if (elided > 0) {
+                    Log.print("\t[");
+                    Log.print(elided);
+                    Log.println(" frames elided]");
+                }
+            } finally {
+                Log.unlock(lockDisabledSafepoints);
+            }
         }
         if (TraceExceptionsRaw) {
             stackDumpWithException(throwable);

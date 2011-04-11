@@ -56,7 +56,7 @@ public final class HubInspector extends ObjectInspector {
     private ObjectScrollPane mTablePane;
     private ObjectScrollPane refMapPane;
 
-    HubInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
+    HubInspector(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         teleHub = (TeleHub) teleObject;
 
@@ -186,7 +186,7 @@ public final class HubInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         fieldsPane.refresh(force);
         if (iTablePane != null) {
             iTablePane.refresh(force);
@@ -200,7 +200,7 @@ public final class HubInspector extends ObjectInspector {
         if (refMapPane != null) {
             refMapPane.refresh(force);
         }
-        super.refreshView(force);
+        super.refreshState(force);
     }
 
 }

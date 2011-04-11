@@ -697,7 +697,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
-                if (hub.isSpecialReference) {
+                if (hub.isJLRReference) {
                     SpecialReferenceManager.discoverSpecialReference(cell);
                 }
                 return cell.plus(hub.tupleSize);
@@ -832,7 +832,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
-                if (hub.isSpecialReference) {
+                if (hub.isJLRReference) {
                     SpecialReferenceManager.discoverSpecialReference(cell);
                 }
             } else if (specificLayout.isHybridLayout()) {
@@ -976,7 +976,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             final SpecificLayout specificLayout = hub.specificLayout;
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitReferences(hub, origin, this);
-                if (hub.isSpecialReference) {
+                if (hub.isJLRReference) {
                     // The marking stack might have overflow before reaching this point, and doing so, it
                     // might have already register this reference to the SpecialReferenceManager
                     // (e.g., if using deep mark stack flush).
@@ -1655,7 +1655,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitReferences(hub, origin, markBlackPointerIndexVisitor);
-            if (hub.isSpecialReference) {
+            if (hub.isJLRReference) {
                 SpecialReferenceManager.discoverSpecialReference(cell);
             }
             return cell.plus(hub.tupleSize);
@@ -1986,10 +1986,10 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     }
 
 
-    private static final class RefForwarder implements SpecialReferenceManager.ReferenceForwarder {
+    private static final class GC implements SpecialReferenceManager.GC {
         final TricolorHeapMarker heapMarker;
 
-        RefForwarder(TricolorHeapMarker heapMarker) {
+        GC(TricolorHeapMarker heapMarker) {
             this.heapMarker = heapMarker;
         }
 
@@ -2003,20 +2003,17 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
             // in there reference field (nasty piece of work...).
             return true;
         }
-        public boolean isForwarding() {
-            return false;
-        }
 
-        public Reference getForwardRefence(Reference ref) {
-            // We aren't relocating object (for now).
-            return ref;
+        public Reference preserve(Reference ref) {
+            // TODO: evacuate/preserve the graph rooted by 'ref'
+            return null;
         }
     }
 
-    private final RefForwarder specialReferenceRefForwarder = new RefForwarder(this);
+    private final GC specialReferenceGC = new GC(this);
 
-    public SpecialReferenceManager.ReferenceForwarder getSpecialReferenceRefForwarder() {
-        return specialReferenceRefForwarder;
+    public SpecialReferenceManager.GC getSpecialReferenceGC() {
+        return specialReferenceGC;
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
+
 import com.sun.cri.ri.*;
 
 /**
@@ -33,7 +35,7 @@ import com.sun.cri.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class CiCodePos {
+public class CiCodePos implements Serializable {
     /**
      * The position where this position has been called, {@code null} if none.
      */

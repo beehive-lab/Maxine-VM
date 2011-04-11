@@ -155,7 +155,7 @@ public final class DataPrototype extends Prototype {
         Trace.begin(1, "assignCodeCells");
         Size size = Size.zero();
         int n = 0;
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(targetMethod);
             assignCodeCell(targetMethod.scalarLiterals(), targetMethod.start(), targetBundleLayout, ArrayField.scalarLiterals);
             assignCodeCell(targetMethod.referenceLiterals(), targetMethod.start(), targetBundleLayout, ArrayField.referenceLiterals);
@@ -339,7 +339,7 @@ public final class DataPrototype extends Prototype {
                 final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
                 for (ReferenceFieldInfo fieldInfo : classInfo.fieldInfos(object)) {
                     final FieldActor fieldActor = fieldInfo.fieldActor();
-                    if (fieldActor.isSpecialReference()) {
+                    if (fieldActor == ClassRegistry.JLRReference_referent) {
                         continue;
                     }
                     final Pointer address = origin.plus(fieldActor.offset());
@@ -900,7 +900,7 @@ public final class DataPrototype extends Prototype {
             }
         }
 
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             targetMethod.setStart(targetMethod.start().plus(delta));
             targetMethod.setCodeStart(targetMethod.codeStart().plus(delta));
         }
@@ -1103,7 +1103,7 @@ public final class DataPrototype extends Prototype {
 
         final int codeStartFieldOffset = getInstanceFieldOffsetInTupleCell(TargetMethod.class, codeStart, JavaTypeDescriptor.forJavaClass(Pointer.class));
 
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             setRelocationFlag(objectToCell.get(targetMethod).plus(startFieldOffset));
             setRelocationFlag(objectToCell.get(targetMethod).plus(codeStartFieldOffset));
         }

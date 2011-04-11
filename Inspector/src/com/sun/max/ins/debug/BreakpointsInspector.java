@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,11 @@
  */
 package com.sun.max.ins.debug;
 
-import java.awt.*;
-
-import javax.swing.*;
-
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.TableColumnViewPreferenceListener;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
@@ -43,22 +40,42 @@ import com.sun.max.tele.*;
 public final class BreakpointsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.BREAKPOINTS;
+    private static final String SHORT_NAME = "Breakpoints";
+    private static final String LONG_NAME = "Breakpoints Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "breakpointsInspectorGeometry";
 
-    // Set to null when inspector closed.
-    private static BreakpointsInspector breakpointsInspector;
+    private static final class BreakpointsViewManager extends AbstractSingletonViewManager<BreakpointsInspector> {
 
-    /**
-     * Displays the (singleton) breakpoints inspector.
-     * @return  The breakpoints inspector, possibly newly created.
-     */
-    public static BreakpointsInspector make(Inspection inspection) {
-        if (breakpointsInspector == null) {
-            breakpointsInspector = new BreakpointsInspector(inspection);
+        protected BreakpointsViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-        return breakpointsInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return inspection().hasProcess();
+        }
+
+        public BreakpointsInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new BreakpointsInspector(inspection);
+            }
+            return inspector;
+        }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "breakpointsInspectorGeometry");
+    // Will be non-null before any instances created.
+    private static BreakpointsViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new BreakpointsViewManager(inspection);
+        }
+        return viewManager;
+    }
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final BreakpointsViewPreferences viewPreferences;
@@ -66,7 +83,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     private BreakpointsTable table;
 
     private BreakpointsInspector(Inspection inspection) {
-        super(inspection);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = BreakpointsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
@@ -80,18 +97,14 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        memoryMenu.add(viewMemoryRegionsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
 
         final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
         debugMenu.addSeparator();
         debugMenu.add(actions().genericBreakpointMenuItems());
         if (vm().watchpointManager() != null) {
             debugMenu.add(actions().genericWatchpointMenuItems());
-            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
-            viewWatchpointsMenuItem.setText("View Watchpoints");
-            debugMenu.add(viewWatchpointsMenuItem);
+            debugMenu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
         }
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
@@ -99,8 +112,13 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().breakpointsFrameDefaultBounds();
+    public String getTextForTitle() {
+        return viewManager.shortName();
+    }
+
+    @Override
+    protected InspectorTable getTable() {
+        return table;
     }
 
     @Override
@@ -110,48 +128,13 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
-    }
-
-    @Override
-    protected InspectorTable getTable() {
-        return table;
-    }
-
-    @Override
-    public String getTextForTitle() {
-        return "Breakpoints";
-    }
-
-    @Override
-    public InspectorAction getViewOptionsAction() {
-        return new InspectorAction(inspection(), "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", viewPreferences);
-            }
-        };
-    }
-
-    @Override
-    public InspectorAction getPrintAction() {
-        return getDefaultPrintAction();
-    }
-
-    @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         table.refresh(force);
-        super.refreshView(force);
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     @Override
     public void breakpointStateChanged() {
-        refreshView(true);
+        forceRefresh();
     }
 
     @Override
@@ -161,6 +144,25 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         }
     }
 
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BreakpointsColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
+            }
+        };
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
+    }
+
+    public void viewConfigurationChanged() {
+        reconstructView();
+    }
+
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
@@ -168,7 +170,6 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     @Override
     public void inspectorClosing() {
         Trace.line(TRACE_VALUE, tracePrefix() + " closing");
-        breakpointsInspector = null;
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

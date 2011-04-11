@@ -373,7 +373,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             theHeap.makeParsable();
             theHeap.mark(heapMarker);
             startTimer(weakRefTimer);
-            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceRefForwarder());
+            SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGC());
             stopTimer(weakRefTimer);
             startTimer(reclaimTimer);
             /*Size freeSpaceAfterGC = */theHeap.sweep(heapMarker, DoImpreciseSweep);

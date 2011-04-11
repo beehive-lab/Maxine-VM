@@ -130,7 +130,7 @@ public abstract class ClassActor extends Actor implements RiType {
      * no concrete sub-type, or the class id of the java.lang.Object class
      * if there is multiple concrete sub-types.
      */
-    int uniqueConcreteType;
+    volatile int uniqueConcreteType;
 
     public final char majorVersion;
 
@@ -208,7 +208,7 @@ public abstract class ClassActor extends Actor implements RiType {
         this.kind = kind;
         this.componentClassActor = componentClassActor;
         this.id = elementClassActor().makeID(numberOfDimensions());
-        ClassID.register(id, this);
+        ClassID.register(this);
         this.typeDescriptor = typeDescriptor;
         this.superClassActor = superClassActor;
         this.sourceFileName = sourceFileName;
@@ -415,11 +415,6 @@ public abstract class ClassActor extends Actor implements RiType {
     @INLINE
     public final boolean isHybridClass() {
         return this instanceof HybridClassActor;
-    }
-
-    @INLINE
-    public final boolean isSpecialReference() {
-        return isSpecialReference(flags());
     }
 
     @INLINE
@@ -1532,6 +1527,11 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     @INLINE
+    public final boolean isInstance(CiConstant object) {
+        return isInstance(object.asObject());
+    }
+
+    @INLINE
     public final boolean isNullOrInstance(Object object) {
         if (object == null) {
             return true;
@@ -1676,4 +1676,17 @@ public abstract class ClassActor extends Actor implements RiType {
         return ClassDependencyManager.getUniqueConcreteMethod(this, method);
     }
 
+    /**
+     * This must be call to define the class actor, i.e., makes the corresponding class types visible to all.
+     * The caller must hold the defining class loader's lock.
+     */
+    public void define() {
+        // FIXME: REVISIT concurrency issues.
+        // If we hold the class loader monitor, we may not be exempt of deadlock, and we're way sub-optimal as we may be blocking
+        // creation of arrays types from the same class loader, and a lot of other class loading related operations.
+        // If we don't, we not multi-thread safe.
+        FatalError.check(Thread.holdsLock(classLoader),  "must hold the defining class loader's lock");
+        ClassDependencyManager.addToHierarchy(this);
+        ClassRegistry.put(this);
+    }
 }

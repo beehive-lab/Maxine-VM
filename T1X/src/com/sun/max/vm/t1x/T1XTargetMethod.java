@@ -48,6 +48,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.CalleeKind;
@@ -115,7 +116,7 @@ public final class T1XTargetMethod extends TargetMethod {
     /**
      * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
      * into the runtime derived from the constituent templates. These calls are linked using {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}.
-     * All other direct calls are linked using {@link CallEntryPoint#JIT_ENTRY_POINT}.
+     * All other direct calls are linked using {@link CallEntryPoint#BASELINE_ENTRY_POINT}.
      */
     public final CiBitMap isDirectCallToRuntime;
 
@@ -130,8 +131,13 @@ public final class T1XTargetMethod extends TargetMethod {
 
     public final CiExceptionHandler[] handlers;
 
+    /**
+     * The profile for this method - if there is one (otherwise, null).
+     */
+    public final MethodProfile profile;
+
     public T1XTargetMethod(T1XCompilation comp, boolean install) {
-        super(comp.method, CallEntryPoint.JIT_ENTRY_POINT);
+        super(comp.method, CallEntryPoint.BASELINE_ENTRY_POINT);
 
         codeAttribute = comp.codeAttribute;
         bciToPos = comp.bciToPos;
@@ -148,6 +154,12 @@ public final class T1XTargetMethod extends TargetMethod {
         refMaps = stops.refMaps;
         isDirectCallToRuntime = stops.isDirectCallToRuntime;
         handlers = initHandlers(comp);
+
+        if (comp.methodProfileBuilder != null) {
+            profile = comp.methodProfileBuilder.methodProfileObject();
+        } else {
+            profile = null;
+        }
 
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.referenceLiterals.size(), comp.buf.position());
@@ -189,6 +201,11 @@ public final class T1XTargetMethod extends TargetMethod {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
         }
+    }
+
+    @Override
+    public MethodProfile profile() {
+        return profile;
     }
 
     @Override
