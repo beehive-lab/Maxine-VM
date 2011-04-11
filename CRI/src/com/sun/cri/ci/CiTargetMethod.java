@@ -157,7 +157,7 @@ public class CiTargetMethod implements Serializable {
      * Provides extra information about instructions or data at specific positions in {@link CiTargetMethod#targetCode()}.
      * This is optional information that can be used to enhance a disassembly of the code.
      */
-    public static abstract class CodeAnnotation {
+    public static abstract class CodeAnnotation implements Serializable {
         public final int position;
         
         public CodeAnnotation(int position) {
