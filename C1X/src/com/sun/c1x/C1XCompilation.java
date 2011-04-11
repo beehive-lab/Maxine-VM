@@ -97,7 +97,7 @@ public final class C1XCompilation {
         this.placeholderState = method != null && method.minimalDebugInfo() ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
 
         if (compiler.isObserved()) {
-            compiler.fireCompilationStarted(new CompilationEvent(this, method));
+            compiler.fireCompilationStarted(new CompilationEvent(this));
         }
     }
 
@@ -206,7 +206,7 @@ public final class C1XCompilation {
         } else {
             if (compiler.isObserved()) {
                 String label = CiUtil.format("BlockListBuilder %f %r %H.%n(%p)", method, true);
-                compiler.fireCompilationEvent(new CompilationEvent(this, method, label, map, method.code().length));
+                compiler.fireCompilationEvent(new CompilationEvent(this, label, map, method.code().length));
             }
         }
         map.cleanup();
@@ -260,7 +260,7 @@ public final class C1XCompilation {
             return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
         } finally {
             if (compiler.isObserved()) {
-                compiler.fireCompilationFinished(new CompilationEvent(this, method));
+                compiler.fireCompilationFinished(new CompilationEvent(this));
             }
         }
 
@@ -326,7 +326,7 @@ public final class C1XCompilation {
             }
 
             if (compiler.isObserved()) {
-                compiler.fireCompilationEvent(new CompilationEvent(this, method, "After code generation", hir.startBlock, false, true, targetMethod));
+                compiler.fireCompilationEvent(new CompilationEvent(this, "After code generation", hir.startBlock, false, true, targetMethod));
             }
 
             if (C1XOptions.PrintTimers) {
