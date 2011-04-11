@@ -34,6 +34,7 @@ import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.observer.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -117,6 +118,10 @@ public final class C1XCompilation {
             cfgPrinter.printCompilation(method);
         }
         this.cfgPrinter = cfgPrinter;
+
+        if (compiler.isObserved()) {
+            compiler.fireCompilationStarted(new CompilationEvent(this, method));
+        }
     }
 
     public void close() {
@@ -221,9 +226,15 @@ public final class C1XCompilation {
         }
         if (!map.build(!isOsrCompilation && C1XOptions.PhiLoopStores)) {
             throw new CiBailout("build of BlockMap failed for " + method);
-        } else {
+        } else if (cfgPrinter() != null || compiler.isObserved()) {
+            String label = CiUtil.format("BlockListBuilder %f %r %H.%n(%p)", method, true);
+
             if (cfgPrinter() != null) {
-                cfgPrinter().printCFG(method, map, method.code().length, "BlockListBuilder " + CiUtil.format("%f %r %H.%n(%p)", method, true), false, false);
+                cfgPrinter().printCFG(method, map, method.code().length, label, false, false);
+            }
+
+            if (compiler.isObserved()) {
+                compiler.fireCompilationEvent(new CompilationEvent(this, method, label, map, method.code().length));
             }
         }
         map.cleanup();
@@ -277,6 +288,10 @@ public final class C1XCompilation {
             return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
         } finally {
             flushCfgPrinterToFile();
+
+            if (compiler.isObserved()) {
+                compiler.fireCompilationFinished(new CompilationEvent(this, method));
+            }
         }
 
         return new CiResult(targetMethod, null, stats);
@@ -359,6 +374,10 @@ public final class C1XCompilation {
             if (cfgPrinter() != null) {
                 cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);
                 cfgPrinter().printMachineCode(runtime.disassemble(targetMethod), null);
+            }
+
+            if (compiler.isObserved()) {
+                compiler.fireCompilationEvent(new CompilationEvent(this, method, "After code generation", hir.startBlock, false, true, targetMethod));
             }
 
             if (C1XOptions.PrintTimers) {

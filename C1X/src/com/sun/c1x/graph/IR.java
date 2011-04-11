@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.observer.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.value.*;
 
@@ -201,6 +202,10 @@ public class IR {
     public void verifyAndPrint(String phase) {
         printToCFGFile(phase);
         printToTTY(phase);
+
+        if (compilation.compiler.isObserved()) {
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, compilation.method, phase, startBlock, true, false));
+        }
     }
 
     private void printToTTY(String phase) {
