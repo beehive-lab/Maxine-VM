@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import javax.swing.event.*;
 
 import com.sun.max.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 /**
  * An {@link Inspector} that contains within it a collection of inspectors in a tabbed frame.
@@ -46,7 +46,6 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
 
     private final Set<Inspector_Type> inspectors = new HashSet<Inspector_Type>();
     private final InspectorTabbedPane tabbedPane;
-    private final SaveSettingsListener saveSettingsListener;
 
     protected void addChangeListener(ChangeListener listener) {
         tabbedPane.addChangeListener(listener);
@@ -56,21 +55,10 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
         tabbedPane.removeChangeListener(listener);
     }
 
-    protected TabbedInspector(Inspection inspection, final String settingsClientName) {
-        super(inspection);
+    protected TabbedInspector(Inspection inspection, ViewKind viewKind, String geometrySettingsKey) {
+        super(inspection, viewKind, geometrySettingsKey);
         tabbedPane = new InspectorTabbedPane(inspection);
-        if (settingsClientName != null) {
-            saveSettingsListener = createGeometrySettingsClient(this, settingsClientName + "Geometry");
-        } else {
-            saveSettingsListener = null;
-        }
-        createFrame(false);
         addChangeListener(tabChangeListener);
-    }
-
-    @Override
-    protected final SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
     }
 
     private final ChangeListener tabChangeListener = new ChangeListener() {
@@ -80,7 +68,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
             final Inspector selectedInspector = getSelected();
             if (selectedInspector != null) {
                 // Inspector may not have been getting refreshed while not visible.
-                selectedInspector.refreshView(true);
+                selectedInspector.forceRefresh();
                 setTitle();
             }
         }

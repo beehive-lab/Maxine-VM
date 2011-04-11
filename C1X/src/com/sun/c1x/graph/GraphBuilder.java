@@ -533,7 +533,7 @@ public final class GraphBuilder {
     }
 
     void genLoadIndexed(CiKind kind) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         Value index = ipop();
         Value array = apop();
         Value length = null;
@@ -545,7 +545,7 @@ public final class GraphBuilder {
     }
 
     void genStoreIndexed(CiKind kind) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         Value value = pop(kind.stackKind());
         Value index = ipop();
         Value array = apop();
@@ -791,7 +791,7 @@ public final class GraphBuilder {
     }
 
     void genNewInstance(int cpi) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         RiType type = constantPool().lookupType(cpi, NEW);
         NewInstance n = new NewInstance(type, cpi, constantPool(), stateBefore);
         if (memoryMap != null) {
@@ -801,22 +801,22 @@ public final class GraphBuilder {
     }
 
     void genNewTypeArray(int typeCode) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         CiKind kind = CiKind.fromArrayTypeCode(typeCode);
-        RiType elementType = compilation.runtime.getRiType(kind.toJavaClass());
+        RiType elementType = compilation.runtime.getRiType(kind);
         apush(append(new NewTypeArray(ipop(), elementType, stateBefore)));
     }
 
     void genNewObjectArray(int cpi) {
         RiType type = constantPool().lookupType(cpi, ANEWARRAY);
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         NewArray n = new NewObjectArray(type, ipop(), stateBefore);
         apush(append(n));
     }
 
     void genNewMultiArray(int cpi) {
         RiType type = constantPool().lookupType(cpi, MULTIANEWARRAY);
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         int rank = stream().readUByte(bci() + 3);
         Value[] dims = new Value[rank];
         for (int i = rank - 1; i >= 0; i--) {
@@ -845,8 +845,11 @@ public final class GraphBuilder {
     void genGetStatic(int cpi, RiField field) {
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
-        CiConstant constantValue = field.constantValue(null);
-        if (isInitialized && constantValue != null && C1XOptions.CanonicalizeConstantFields) {
+        CiConstant constantValue = null;
+        if (isInitialized && C1XOptions.CanonicalizeConstantFields) {
+            constantValue = field.constantValue(null);
+        }
+        if (constantValue != null) {
             push(constantValue.kind.stackKind(), appendConstant(constantValue));
         } else {
             Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi);
@@ -1105,10 +1108,7 @@ public final class GraphBuilder {
                 if (receiver.isConstant()) {
                     CiConstant constant = receiver.asConstant();
                     assert constant.kind.isObject();
-                    Object object = constant.asObject();
-                    if (object != null) {
-                        exact = compilation.runtime.getRiType(object.getClass());
-                    }
+                    exact = compilation.runtime.getRiType(constant);
                 }
                 if (exact == null) {
                     RiType declared = receiver.declaredType();
@@ -1258,7 +1258,7 @@ public final class GraphBuilder {
 
         curState.truncateStack(0);
         if (Modifier.isSynchronized(method().accessFlags())) {
-            FrameState stateBefore = null; //curState.immutableCopy(bci());
+            FrameState stateBefore = curState.immutableCopy(bci());
             // unlock before exiting the method
             int lockNumber = curState.totalLocksSize() - 1;
             MonitorAddress lockAddress = null;
@@ -1853,11 +1853,10 @@ public final class GraphBuilder {
             return cannotInline(target, "has unbalanced monitors");
         }
         if (target.isConstructor()) {
-            RiType throwableType = compilation.runtime.getRiType(Throwable.class);
-            if (target.holder().isSubtypeOf(throwableType)) {
+            if (compilation.runtime.isExceptionType(target.holder())) {
                 // don't inline constructors of throwable classes unless the inlining tree is
                 // rooted in a throwable class
-                if (!rootScope().method.holder().isSubtypeOf(throwableType)) {
+                if (!compilation.runtime.isExceptionType(rootScope().method.holder())) {
                     return cannotInline(target, "don't inline Throwable constructors");
                 }
             }
@@ -2785,7 +2784,7 @@ public final class GraphBuilder {
     }
 
     private void genLoadPointer(int opcode) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         CiKind dataKind = dataKindForPointerOp(opcode);
         Value offsetOrIndex;
         Value displacement;
@@ -2801,7 +2800,7 @@ public final class GraphBuilder {
     }
 
     private void genStorePointer(int opcode) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         CiKind dataKind = dataKindForPointerOp(opcode);
         Value value = pop(dataKind.stackKind());
         Value offsetOrIndex;
@@ -2831,7 +2830,7 @@ public final class GraphBuilder {
     }
 
     private void genCompareAndSwap(int opcode) {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         CiKind kind = kindForCompareAndSwap(opcode);
         Value newValue = pop(kind);
         Value expectedValue = pop(kind);
@@ -2850,7 +2849,7 @@ public final class GraphBuilder {
     }
 
     private void genArrayLength() {
-        FrameState stateBefore = null; //curState.immutableCopy(bci());
+        FrameState stateBefore = curState.immutableCopy(bci());
         ipush(append(new ArrayLength(apop(), stateBefore)));
     }
 

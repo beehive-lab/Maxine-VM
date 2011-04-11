@@ -393,7 +393,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         refresh(true);
     }
 
-    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
+    public void frameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
         refresh(true);
     }
 

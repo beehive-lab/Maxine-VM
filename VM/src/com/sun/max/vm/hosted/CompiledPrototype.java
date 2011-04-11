@@ -346,6 +346,14 @@ public class CompiledPrototype extends Prototype {
         return relationship == Relationship.VIRTUAL_CALL || relationship == Relationship.INTERFACE_CALL;
     }
 
+    void add(TargetMethod invalidatedTargetMethod) {
+        final ClassMethodActor methodActor = invalidatedTargetMethod.classMethodActor;
+        assert methodActors.containsKey(methodActor);
+        assert methodActor.targetState == invalidatedTargetMethod;
+        methodActor.targetState = null;
+        worklist.add(methodActor);
+    }
+
     boolean add(MethodActor child, Object parent, Relationship relationship) {
         if (child == null) {
             return false;
@@ -389,7 +397,7 @@ public class CompiledPrototype extends Prototype {
     }
 
     private void addMethodsReferencedByExistingTargetCode() {
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             ClassMethodActor classMethodActor = targetMethod.classMethodActor;
             if (classMethodActor != null) {
                 Link existing = methodActors.put(classMethodActor, new Link(classMethodActor, null, null));
@@ -487,7 +495,6 @@ public class CompiledPrototype extends Prototype {
         add(ClassRegistry.findMethod("loadLibrary", System.class), null, entryPoint);
         add(ClassRegistry.findMethod("loadLibrary0", ClassLoader.class), null, entryPoint);
         add(ClassRegistry.findMethod("loadLibrary", ClassLoader.class), null, entryPoint);
-        add(ClassRegistry.findMethod(JDK.java_lang_ProcessEnvironment, "<clinit>"), null, entryPoint);
 
         // It's too late now to register any further methods to be compiled into the boot image
         extraVMEntryPoints = null;
@@ -636,6 +643,33 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "compiling foldable methods");
     }
 
+    /**
+     * Recompile methods whose assumptions were invalidated.
+     * @return true if the recompilation brought new methods in the compiled prototype.
+     */
+    public boolean recompileInvalidatedTargetMethods() {
+        // All classes referenced from the invalidated target methods must already be loaded
+        // However, recompilation may bring new class method actor since a recompilation
+        // may be triggered by the addition of a new concrete method in the prototype which may
+        // not be already compiled.
+        HashSet<TargetMethod> recompileSet = ClassDependencyManager.invalidTargetMethods;
+        ClassDependencyManager.invalidTargetMethods = new HashSet<TargetMethod>();
+
+        if (!recompileSet.isEmpty()) {
+            Trace.begin(1, "recompiling invalidated methods");
+            assert worklist.size() == 0;
+            for (TargetMethod targetMethod : recompileSet) {
+                add(targetMethod);
+            }
+            assert worklist.size() == recompileSet.size();
+            compileWorklist();
+            assert ClassDependencyManager.invalidTargetMethods.size() == 0;
+            Trace.end(1, "recompiling invalidated methods");
+            return true;
+        }
+        return false;
+    }
+
     public void checkRequiredImageMethods() {
         Trace.begin(1, "checking methods that must be compiled");
         final TreeSet<String> missing = new TreeSet<String>();
@@ -682,14 +716,16 @@ public class CompiledPrototype extends Prototype {
             gatherNewClasses();
             // 4. compile all new methods
             compiledSome = compileWorklist();
-            compiledAny = compiledAny | compiledSome;
+            compiledSome |=  recompileInvalidatedTargetMethods();
+            compiledAny |= compiledSome;
         } while (compiledSome);
+
         return compiledAny;
     }
 
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
-        for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
+        for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             if (!(targetMethod instanceof Adapter)) {
                 Adapter adapter = null;
                 ClassMethodActor classMethodActor = targetMethod.classMethodActor;

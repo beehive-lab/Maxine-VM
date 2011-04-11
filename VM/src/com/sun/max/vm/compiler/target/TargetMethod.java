@@ -49,6 +49,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
@@ -81,9 +82,9 @@ public abstract class TargetMethod extends MemoryRegion {
         Standard(COMPILED),
 
         /**
-         * A compiled {@link BytecodeTemplate}.
+         * A piece of compiled machine code representing the implementation of a single bytecode instruction.
          */
-        JitTemplate(COMPILED),
+        BytecodeTemplate(COMPILED),
 
         /**
          * Trampoline for virtual method dispatch (i.e. translation of {@link Bytecodes#INVOKEVIRTUAL}).
@@ -198,7 +199,7 @@ public abstract class TargetMethod extends MemoryRegion {
         setRegionName(classMethodActor.name.toString());
 
         if (classMethodActor.isTemplate()) {
-            flavor = JitTemplate;
+            flavor = BytecodeTemplate;
         } else {
             flavor = Standard;
         }
@@ -523,6 +524,10 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public final boolean isCalleeSaved() {
         return registerRestoreEpilogueOffset >= 0;
+    }
+
+    public boolean isMakingValidAssumptions() {
+        return true;
     }
 
     /**
@@ -945,8 +950,8 @@ public abstract class TargetMethod extends MemoryRegion {
             case StaticTrampoline:
             case InterfaceTrampoline:
                 return configs.trampoline;
-            case JitTemplate:
-                return configs.jitTemplate;
+            case BytecodeTemplate:
+                return configs.bytecodeTemplate;
             case Standard:
                 assert classMethodActor != null : "cannot determine register configuration for " + this;
                 return configs.getRegisterConfig(classMethodActor);
@@ -955,5 +960,14 @@ public abstract class TargetMethod extends MemoryRegion {
             default:
                 throw FatalError.unexpected(flavor.toString());
         }
+    }
+
+    /**
+     * Gets the profile data gathered during execution of this method.
+     *
+     * @return {@code null} if this method has no profiling info
+     */
+    public MethodProfile profile() {
+        return null;
     }
 }

@@ -40,6 +40,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * The configuration of a VM is defined by:
@@ -54,6 +55,7 @@ import com.sun.max.vm.run.*;
  * @author Ben L. Titzer
  * @author Doug Simon
  * @author Mick Jordan
+ * @author Michael Haupt
  */
 public final class VMConfiguration {
 
@@ -227,7 +229,7 @@ public final class VMConfiguration {
             // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
             if (needsAdapters()) {
                 OPTIMIZED_ENTRY_POINT.init(8, 8);
-                JIT_ENTRY_POINT.init(0, 0);
+                BASELINE_ENTRY_POINT.init(0, 0);
                 VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
                 // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
                 C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
@@ -251,7 +253,11 @@ public final class VMConfiguration {
 
     public void initializeSchemes(MaxineVM.Phase phase) {
         for (int i = 0; i < vmSchemes.size(); i++) {
-            vmSchemes.get(i).initialize(phase);
+            try {
+                vmSchemes.get(i).initialize(phase);
+            } catch (Throwable t) {
+                FatalError.unexpected("Error initializing scheme " + vmSchemes.get(i).name() + " in phase " + phase.name(), t);
+            }
         }
     }
 

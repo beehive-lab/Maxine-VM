@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,8 @@ public interface InspectionListener {
 
     /**
      * Notifies that an important aspect of view style/parameters/configuration have changed,
-     * and that views should be reconstructed if needed (view state change only).
+     * and that views should be reconstructed if needed.  This notification does
+     * <strong>not</strong> imply any change of VM state.
      */
     void viewConfigurationChanged();
 
@@ -63,6 +64,7 @@ public interface InspectionListener {
     /**
      * Notifies that the inspection session is shutting down.  This notification
      * will arrive before the final saving of inspection settings.
+     *
      * @see InspectionSettings
      */
     void inspectionEnding();

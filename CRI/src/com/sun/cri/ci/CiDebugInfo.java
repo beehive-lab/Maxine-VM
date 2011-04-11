@@ -22,13 +22,15 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
+
 /**
  * Represents the debugging information for a particular place in the code,
  * which includes the code position, a reference map, and deoptimization information.
  *
  * @author Ben L. Titzer
  */
-public class CiDebugInfo {
+public class CiDebugInfo implements Serializable {
     
     /**
      * The code position (including all inlined methods) of this debug info.

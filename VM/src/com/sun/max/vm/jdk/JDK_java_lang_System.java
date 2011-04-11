@@ -631,6 +631,9 @@ public final class JDK_java_lang_System {
     @ALIAS(declaringClassName = "java.lang.ApplicationShutdownHooks", name = "<clinit>")
     private static native void ApplicationShutdownHooks_clinit();
 
+    @ALIAS(declaringClassName = "java.lang.ApplicationShutdownHooks", name = "hooks")
+    private static IdentityHashMap<Thread, Thread> ApplicationShutdownHooks_hooks;
+
     @ALIAS(declaringClass = File.class, name = "<clinit>")
     private static native void File_clinit();
 
@@ -680,6 +683,7 @@ public final class JDK_java_lang_System {
         ProcessEnvironment_clinit();
 
         // 3.1. reinitialize java.lang.ApplicationShutdownHooks
+        assert ApplicationShutdownHooks_hooks.isEmpty() : "One or more shutdown hooks were registered too early";
         ApplicationShutdownHooks_clinit();
 
         // 4. perform OS-specific initialization

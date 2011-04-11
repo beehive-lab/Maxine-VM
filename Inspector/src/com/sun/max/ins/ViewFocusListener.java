@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ public interface ViewFocusListener {
     /**
      * Notifies that the global stack frame focus has been changed (view state only), non-null once running.
      */
-    void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame);
+    void frameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame);
 
     /**
      * Notifies that the global {@link Address} focus has been changed (view state only).

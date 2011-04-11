@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,6 +75,7 @@ public final class ClassRegistry {
     public static final TupleClassActor CLASS = createClass(Class.class);
     public static final TupleClassActor THROWABLE = createClass(Throwable.class);
     public static final TupleClassActor THREAD = createClass(Thread.class);
+    public static final TupleClassActor JLR_REFERENCE = createClass(java.lang.ref.Reference.class);
     public static final InterfaceActor CLONEABLE = createClass(Cloneable.class);
     public static final InterfaceActor SERIALIZABLE = createClass(Serializable.class);
     public static final HybridClassActor STATIC_HUB = createClass(StaticHub.class);
@@ -100,7 +101,9 @@ public final class ClassRegistry {
 
     public static final FieldActor ClassActor_javaClass = findField(ClassActor.class, "javaClass");
     public static final FieldActor Buffer_address = findField(Buffer.class, "address");
+    public static final FieldActor JLRReference_referent = findField(java.lang.ref.Reference.class, "referent");
 
+    public static final MethodActor Object_finalize = findMethod("finalize", Object.class);
     public static final MethodActor ReferenceHandler_init = findMethod(java_lang_ref_Reference$ReferenceHandler, "<init>", ThreadGroup.class, String.class);
     public static final MethodActor FinalizerThread_init = findMethod(java_lang_ref_Finalizer$FinalizerThread, "<init>", ThreadGroup.class);
     public static final MethodActor Method_invoke = findMethod(Method.class, "invoke", Object.class, Object[].class);
@@ -249,8 +252,6 @@ public final class ClassRegistry {
     /**
      * Finds the method actor denoted by a given name and declaring class.
      * A side effect of this is that the method is compiled into the image.
-     * If the method is not a VM entry point (and hence not subject to reflective
-     * invocation) its invocation stub is also compiled into the image.
      *
      * @param declaringClass the class to search for a method named {@code name}
      * @param name the name of the method to find
@@ -278,11 +279,6 @@ public final class ClassRegistry {
                 callEntryPoint = CallEntryPoint.C_ENTRY_POINT;
             }
             new CriticalMethod((ClassMethodActor) methodActor, callEntryPoint);
-        }
-        if (!methodActor.isCFunction() && !methodActor.isVmEntryPoint()) {
-            // Some of these methods are called via reflection during VM startup
-            // so their reflection stubs are prebuilt into the image.
-            MaxineVM.registerImageInvocationStub(methodActor);
         }
         return methodActor;
     }

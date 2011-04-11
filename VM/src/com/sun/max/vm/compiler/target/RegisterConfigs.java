@@ -63,9 +63,9 @@ public class RegisterConfigs {
     public final CiRegisterConfig trampoline;
 
     /**
-     * The register configuration for compiling the templates for the template-based JIT compiler.
+     * The register configuration for compiling the templates used by a template-based baseline compiler (e.g. T1X).
      */
-    public final CiRegisterConfig jitTemplate;
+    public final CiRegisterConfig bytecodeTemplate;
 
     /**
      * The register configuration for compiling a {@linkplain GlobalStub global stub}.
@@ -82,7 +82,7 @@ public class RegisterConfigs {
             return n2j;
         }
         if (method.isTemplate()) {
-            return jitTemplate;
+            return bytecodeTemplate;
         }
         return standard;
     }
@@ -98,7 +98,7 @@ public class RegisterConfigs {
         this.standard = standard;
         this.n2j = n2j;
         this.trampoline = trampoline;
-        this.jitTemplate = template;
+        this.bytecodeTemplate = template;
         this.globalStub = globalStub;
         this.trapStub = trapStub;
 
@@ -164,7 +164,7 @@ public class RegisterConfigs {
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapStateAccess.CSA);
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveArea(-1, 8,
                     rdi, rsi, rdx, rcx, r8, r9,                       // parameters
-                    rbp,                                              // must be preserved for template JIT
+                    rbp,                                              // must be preserved for baseline compiler
                     standard.getScratchRegister(),                    // dynamic dispatch index is saved here for stack frame walker
                     xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7    // parameters
                 ));

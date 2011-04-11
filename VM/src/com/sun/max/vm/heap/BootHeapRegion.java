@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,13 @@
  */
 package com.sun.max.vm.heap;
 
-import java.lang.ref.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * The special region describing the heap in the boot image.
@@ -42,14 +41,14 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion {
 
     private Pointer referenceMap;
 
-    private Reference[] specialReferences = {};
+    private java.lang.ref.Reference[] specialReferences = {};
 
     public BootHeapRegion(Address start, Size size, String description) {
         super(start, size, description);
     }
 
     @HOSTED_ONLY
-    public void init(byte[] refMap, Reference[] specialRefs) {
+    public void init(byte[] refMap, java.lang.ref.Reference[] specialRefs) {
         ProgramError.check(Address.fromInt(refMap.length).isWordAligned(), "Boot heap reference map must have word-aligned size");
         this.referenceMapBytes = refMap;
         this.specialReferences = specialRefs;
@@ -74,8 +73,8 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion {
             scanReferenceMap(pointerIndexVisitor, refMap, referenceMapWords, false);
         }
 
-        for (Reference specialReference : specialReferences) {
-            SpecialReferenceManager.discoverSpecialReference(com.sun.max.vm.reference.Reference.fromJava(specialReference).toOrigin());
+        for (java.lang.ref.Reference specialReference : specialReferences) {
+            SpecialReferenceManager.discoverSpecialReference(Reference.fromJava(specialReference).toOrigin());
         }
     }
 }

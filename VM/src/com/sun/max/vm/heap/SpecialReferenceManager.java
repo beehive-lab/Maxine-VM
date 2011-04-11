@@ -41,6 +41,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class implements support for collecting and processing special references
@@ -50,6 +51,7 @@ import com.sun.max.vm.thread.*;
  * references, and after live objects have been processed.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public class SpecialReferenceManager {
 
@@ -61,16 +63,25 @@ public class SpecialReferenceManager {
     private static final boolean FINALIZERS_SUPPORTED = true;
 
     /**
-     * This interface forms a contract between the GC algorithm and the implementation of special
-     * references. The special reference implementation must be able to query the GC about
-     * a particular reference as well as get its updated value, if it has one.
-     *
-     * @author Ben L. Titzer
+     * This interface forms a contract between the GC algorithm and the implementation of special references.
      */
-    public interface ReferenceForwarder {
+    public interface GC {
+        /**
+         * Determines if an object is currently in the set of objects that
+         * will survive the current collection.
+         *
+         * @param ref a reference to an object
+         */
         boolean isReachable(Reference ref);
-        boolean isForwarding();
-        Reference getForwardRefence(Reference ref);
+
+        /**
+         * Ensures that the object graph rooted at a given reference survives the current GC.
+         *
+         * @param ref the root of the object graph to be preserved
+         * @return a reference to the root of the preserved object graph. Whether or not this is equal to {@code ref}
+         *         depends on the specific GC algorithm (e.g. mark-sweep vs copying)
+         */
+        Reference preserve(Reference ref);
     }
 
     /**
@@ -92,10 +103,21 @@ public class SpecialReferenceManager {
     private static java.lang.ref.Reference discoveredList;
 
     /**
+     * The head of the list of discovered references.
+     * This field must only be used by the GC. Accessing it should not trigger any read/write barriers.
+     */
+    private static java.lang.ref.Reference processedList;
+
+    /**
+     * The origin-relative, word-scaled index of the 'referent' field in java.lang.re.Reference.
+     */
+    private static final int referentIndex = ClassRegistry.findField(java.lang.ref.Reference.class, "referent").offset() / Word.size();
+
+    /**
      * An alias type for accessing the fields in java.lang.ref.Reference without
      * having to use reflection.
      */
-    public static class JDKRefAlias {
+    public static class JLRRAlias {
         @ALIAS(declaringClass = java.lang.ref.Reference.class)
         static java.lang.ref.Reference pending;
 
@@ -105,7 +127,7 @@ public class SpecialReferenceManager {
         /**
          * Next ref in a linked list used by the GC to communicate discovered references
          * from the {@linkplain SpecialReferenceManager#discoverSpecialReference(Pointer) discovery} phase
-         * to the {@linkplain SpecialReferenceManager#processDiscoveredSpecialReferences(ReferenceForwarder) processing} phase.
+         * to the {@linkplain SpecialReferenceManager#processDiscoveredSpecialReferences(GC) processing} phase.
          */
         @ALIAS(declaringClass = java.lang.ref.Reference.class)
         public java.lang.ref.Reference discovered;
@@ -118,120 +140,10 @@ public class SpecialReferenceManager {
     }
 
     @INTRINSIC(UNSAFE_CAST)
-    public static native JDKRefAlias asJDKRefAlias(Object o);
+    public static native JLRRAlias asJLRRAlias(Object o);
 
     @INTRINSIC(UNSAFE_CAST)
-    static native java.lang.ref.Reference asJDKRef(Object o);
-
-    /**
-     * Processes the special reference objects that were
-     * {@linkplain #discoverSpecialReference(Reference) discovered} during the
-     * GC's exploration of the heap. These live reference objects must be checked to see whether
-     * their "referent" objects have been collected. If so, they must be enqueued as "pending"
-     * so that the {@link Reference.ReferenceHandler} thread can pick them up
-     * and add them to their respective queues later.
-     * The reference handler lock is notified by the thread that {@linkplain VmOperationThread#submit(VmOperation) submitted}
-     * the GC operation as it holds the lock. See {@link GCOperation#doItEpilogue(boolean)}.
-     *
-     * @param refForwarder an object from the GC algorithm that can detect whether a ref
-     * is live and can also return a forwarded version of the ref
-     */
-    public static void processDiscoveredSpecialReferences(ReferenceForwarder refForwarder) {
-        // the first pass over the list finds the references that have referents that are no longer reachable
-
-        java.lang.ref.Reference ref = discoveredList;
-        java.lang.ref.Reference last = JDKRefAlias.pending;
-        final boolean isForwardingGC = refForwarder.isForwarding();
-
-        while (ref != sentinel) {
-            JDKRefAlias refAlias = asJDKRefAlias(ref);
-            final Reference referent = Reference.fromJava(refAlias.referent);
-            if (referent.isZero()) {
-                // Do not add 'ref' to the pending list as weak references
-                // with already null referents are not added to ReferenceQueues
-            } else if (!refForwarder.isReachable(referent)) {
-                if (refAlias.queue == null) {
-                    // This can only occur if there is a GC in the constructor for java.lang.ref.Reference
-                    // between the initialization of 'referent' and 'queue'.
-                    Log.println("WARNING: cannot add weak reference with null 'queue' field to pending list");
-                } else {
-                    refAlias.referent = null;
-                    refAlias.next = last;
-                    last = ref;
-                }
-            } else if (isForwardingGC) {
-                // this object is reachable, however the "referent" field was not scanned.
-                // we need to update this field manually
-                refAlias.referent = refForwarder.getForwardRefence(referent).toJava();
-            }
-
-            JDKRefAlias r = refAlias;
-            ref = refAlias.discovered;
-            r.discovered = null;
-
-            if (TraceReferenceGC || Heap.traceGC()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Processed ");
-                Log.print(ObjectAccess.readClassActor(r).name.string);
-                Log.print(" at ");
-                Log.print(ObjectAccess.toOrigin(r));
-                if (MaxineVM.isDebug()) {
-                    Log.print(" [next discovered = ");
-                    Log.print(ObjectAccess.toOrigin(ref));
-                    Log.print("]");
-                }
-                Log.print(" whose referent ");
-                Log.print(referent.toOrigin());
-                final Object newReferent = r.referent;
-                if (newReferent == null) {
-                    Log.println(" was unreachable");
-                } else {
-                    Log.print(" moved to ");
-                    Log.println(ObjectAccess.toOrigin(newReferent));
-                }
-                Log.unlock(lockDisabledSafepoints);
-            }
-        }
-        JDKRefAlias.pending = last;
-        FatalError.check(ref == sentinel, "end of discovered list should be sentinel");
-        discoveredList = sentinel;
-
-        // Special reference map of Inspector
-        if (Inspectable.isVmInspected()) {
-            processInspectableWeakReferencesMemory(refForwarder);
-        }
-    }
-
-    private static void processInspectableWeakReferencesMemory(ReferenceForwarder refForwarder) {
-        final RootTableMemoryRegion rootsMemoryRegion = InspectableHeapInfo.rootsMemoryRegion();
-        assert rootsMemoryRegion != null;
-        final Pointer rootsPointer = rootsMemoryRegion.start().asPointer();
-        long wordsUsedCounter = 0;
-        assert !rootsPointer.isZero();
-        for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
-            final Pointer rootPointer = rootsPointer.getWord(i).asPointer();
-            if (!rootPointer.isZero()) {
-                final Reference referent = Reference.fromOrigin(rootPointer);
-                if (refForwarder.isReachable(referent)) {
-                    rootsPointer.setWord(i, refForwarder.getForwardRefence(referent).toOrigin());
-                    wordsUsedCounter++;
-                } else {
-                    rootsPointer.setWord(i, Pointer.zero());
-                }
-                if (TraceReferenceGC || Heap.traceGC()) {
-                    final boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("Processed root table entry ");
-                    Log.print(i);
-                    Log.print(": set ");
-                    Log.print(rootPointer);
-                    Log.print(" to ");
-                    Log.println(rootsPointer.getWord(i));
-                    Log.unlock(lockDisabledSafepoints);
-                }
-            }
-        }
-        rootsMemoryRegion.setWordsUsed(wordsUsedCounter);
-    }
+    static native java.lang.ref.Reference asJLRR(Object o);
 
     /**
      * This method is called by the GC during heap exploration, when it finds a special
@@ -242,8 +154,8 @@ public class SpecialReferenceManager {
      */
     public static void discoverSpecialReference(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell);
-        java.lang.ref.Reference ref = asJDKRef(Reference.fromOrigin(origin));
-        JDKRefAlias refAlias = asJDKRefAlias(ref);
+        java.lang.ref.Reference ref = asJLRR(Reference.fromOrigin(origin));
+        JLRRAlias refAlias = asJLRRAlias(ref);
 
         if (refAlias.discovered == null) {
             // the discovered field of this object is null, queue it for later processing
@@ -272,6 +184,138 @@ public class SpecialReferenceManager {
         }
     }
 
+    /**
+     * Processes the special reference objects that were {@linkplain #discoverSpecialReference(Pointer) discovered}
+     * during heap scanning.
+     * These live reference objects are checked to see whether
+     * the reachability of their "referent" objects has changed according to the type of reference.
+     * If so, they are enqueued as "pending" so that the {@link Reference.ReferenceHandler} thread can pick them up
+     * and add them to their respective queues later.
+     * The reference handler lock is notified by the thread that {@linkplain VmOperationThread#submit(VmOperation) submitted}
+     * the GC operation as it holds the lock. See {@link GCOperation#doItEpilogue(boolean)}.
+     *
+     * @param gc interface to the GC implementation
+     */
+    public static void processDiscoveredSpecialReferences(GC gc) {
+        java.lang.ref.Reference head = discoveredList;
+        java.lang.ref.Reference end = sentinel;
+
+        // Process the discovered list until it is empty (new elements may be
+        // prepended while processing).
+        do {
+            java.lang.ref.Reference ref = head;
+            java.lang.ref.Reference last = JLRRAlias.pending;
+
+            while (ref != end) {
+                boolean preserved = false;
+                JLRRAlias refAlias = asJLRRAlias(ref);
+                final Reference referent = Reference.fromJava(refAlias.referent);
+                if (referent.isZero()) {
+                    // Do not add 'ref' to the pending list as weak references
+                    // with already null referents are not added to ReferenceQueues
+                } else if (!gc.isReachable(referent)) {
+                    if (refAlias.queue == null) {
+                        // This can only occur if there is a GC in the constructor for java.lang.ref.Reference
+                        // between the initialization of 'referent' and 'queue'.
+                        Log.println("WARNING: cannot add weak reference with null 'queue' field to pending list");
+                    } else {
+                        // Only soft and weak references have their referent cleared
+                        if (ref instanceof java.lang.ref.SoftReference || ref instanceof java.lang.ref.WeakReference) {
+                            refAlias.referent = null;
+                        } else {
+                            refAlias.referent = gc.preserve(referent).toJava();
+                            preserved = true;
+                        }
+
+                        refAlias.next = last;
+                        last = ref;
+                    }
+                } else {
+                    // this object is reachable, however the "referent" field was not scanned.
+                    // we need to update this field manually
+                    refAlias.referent = gc.preserve(referent).toJava();
+                }
+
+                JLRRAlias r = refAlias;
+                ref = refAlias.discovered;
+                r.discovered = null;
+
+                if (TraceReferenceGC || Heap.traceGC()) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Processed ");
+                    Log.print(ObjectAccess.readClassActor(r).name.string);
+                    Log.print(" at ");
+                    Log.print(ObjectAccess.toOrigin(r));
+                    if (MaxineVM.isDebug()) {
+                        Log.print(" [next discovered = ");
+                        Log.print(ObjectAccess.toOrigin(ref));
+                        Log.print("]");
+                    }
+                    Log.print(" whose referent ");
+                    Log.print(referent.toOrigin());
+                    final Object newReferent = r.referent;
+                    if (newReferent == null) {
+                        Log.print(" was unreachable");
+                    } else if (preserved) {
+                        Log.print(" was unreachable but preserved to ");
+                        Log.print(ObjectAccess.toOrigin(newReferent));
+                    } else {
+                        Log.print(" moved to ");
+                        Log.print(ObjectAccess.toOrigin(newReferent));
+                    }
+                    Log.println();
+                    Log.unlock(lockDisabledSafepoints);
+                }
+            }
+            JLRRAlias.pending = last;
+
+            if (head == discoveredList) {
+                // No further special references were discovered
+                discoveredList = sentinel;
+                break;
+            }
+
+            end = head;
+            head = discoveredList;
+        } while (true);
+
+        // Special reference map of Inspector
+        if (Inspectable.isVmInspected()) {
+            processInspectableWeakReferencesMemory(gc);
+        }
+    }
+
+    private static void processInspectableWeakReferencesMemory(GC gc) {
+        final RootTableMemoryRegion rootsMemoryRegion = InspectableHeapInfo.rootsMemoryRegion();
+        assert rootsMemoryRegion != null;
+        final Pointer rootsPointer = rootsMemoryRegion.start().asPointer();
+        long wordsUsedCounter = 0;
+        assert !rootsPointer.isZero();
+        for (int i = 0; i < InspectableHeapInfo.MAX_NUMBER_OF_ROOTS; i++) {
+            final Pointer rootPointer = rootsPointer.getWord(i).asPointer();
+            if (!rootPointer.isZero()) {
+                final Reference referent = Reference.fromOrigin(rootPointer);
+                if (gc.isReachable(referent)) {
+                    rootsPointer.setWord(i, gc.preserve(referent).toOrigin());
+                    wordsUsedCounter++;
+                } else {
+                    rootsPointer.setWord(i, Pointer.zero());
+                }
+                if (TraceReferenceGC || Heap.traceGC()) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Processed root table entry ");
+                    Log.print(i);
+                    Log.print(": set ");
+                    Log.print(rootPointer);
+                    Log.print(" to ");
+                    Log.println(rootsPointer.getWord(i));
+                    Log.unlock(lockDisabledSafepoints);
+                }
+            }
+        }
+        rootsMemoryRegion.setWordsUsed(wordsUsedCounter);
+    }
+
     @ALIAS(declaringClassName = "java.lang.ref.Finalizer")
     private static native void register(Object finalizee);
 
@@ -283,6 +327,14 @@ public class SpecialReferenceManager {
     public static void registerFinalizee(Object object) {
         if (FINALIZERS_SUPPORTED) {
             register(object);
+            if (TraceReferenceGC || Heap.traceGC()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Registered finalizer for ");
+                Log.print(Reference.fromJava(object).toOrigin());
+                Log.print(" of type ");
+                Log.println(object.getClass().getName());
+                Log.unlock(lockDisabledSafepoints);
+            }
         }
     }
 
@@ -307,7 +359,7 @@ public class SpecialReferenceManager {
         if (phase == Phase.PRISTINE) {
             clock = System.currentTimeMillis();
             discoveredList = sentinel;
-            JDKRefAlias sentinelAlias = asJDKRefAlias(sentinel);
+            JLRRAlias sentinelAlias = asJLRRAlias(sentinel);
             sentinelAlias.discovered = null;
             sentinelAlias.next = null;
             sentinelAlias.queue = null;

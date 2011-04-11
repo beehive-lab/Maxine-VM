@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -521,7 +521,11 @@ final class JDK_sun_misc_Unsafe {
         if (bytes < 0L || bytes > Word.widthValue().max) {
             throw new IllegalArgumentException();
         }
-        return Memory.allocate(Size.fromLong(bytes)).toLong();
+        Pointer address = Memory.allocate(Size.fromLong(bytes));
+        if (address.isZero()) {
+            throw new OutOfMemoryError();
+        }
+        return address.toLong();
     }
 
     /**

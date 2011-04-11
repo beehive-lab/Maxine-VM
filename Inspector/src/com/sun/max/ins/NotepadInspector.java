@@ -22,7 +22,6 @@
  */
 package com.sun.max.ins;
 
-import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
 import java.io.*;
@@ -33,8 +32,9 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
-import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -42,9 +42,10 @@ import com.sun.max.unsafe.*;
 
 /**
  * An inspector that gives viewing and editing access to a notepad.
- * <br>
+ * <p>
  * The inspector is currently a singleton, but this might be generalized
- * if multiple notepads are supported in the future.
+ * if multiple notepads are supported in the future.  Some of the code
+ * is written to anticipate this.
  *
  * @author Michael Van De Vanter
  * @see InspectorNotepad
@@ -52,26 +53,52 @@ import com.sun.max.unsafe.*;
  */
 public final class NotepadInspector extends Inspector {
 
+    private static final int TRACE_VALUE = 1;
+    private static final ViewKind VIEW_KIND = ViewKind.NOTEPAD;
+    private static final String SHORT_NAME = "Notepad";
+    private static final String LONG_NAME = "Notepad Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "notepadInspectorGeometry";
+
     // A compiled regular expression pattern that matches hex numbers (with or without prefix) and ordinary
     // integers as well.
     // TODO (mlvdv) fix pattern failure at end of contents (if no newline)
     private static final Pattern hexNumberPattern = Pattern.compile("[0-9a-fA-F]+[^a-zA-Z0-9]");
 
-    // Set to null when inspector closed.
-    private static NotepadInspector notepadInspector;
-    /**
-     * Display the (singleton) Notepad inspector.
-     * @param notepad the notepad, assumed to be a singleton for the time being
-     */
-    public static NotepadInspector make(Inspection inspection, InspectorNotepad notepad) {
-        if (notepadInspector == null) {
-            notepadInspector = new NotepadInspector(inspection, notepad);
+    private static final class NotepadViewManager extends AbstractSingletonViewManager<NotepadInspector> {
+
+        private final NotepadManager notepadManager;
+
+        protected NotepadViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
+            notepadManager = new NotepadManager(inspection);
         }
-        return notepadInspector;
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return true;
+        }
+
+        public NotepadInspector activateView(Inspection inspection) {
+            if (inspector == null) {
+                inspector = new NotepadInspector(inspection, notepadManager.getNotepad());
+            }
+            return inspector;
+        }
     }
 
-    // TODO (mlvdv)  only geometry settings saved now, but might need view options if add features such as highlighting
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "notepadInspectorGeometry");
+    // Will be non-null before any instances created.
+    private static NotepadViewManager viewManager = null;
+
+    public static ViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new NotepadViewManager(inspection);
+        }
+        return viewManager;
+    }
+
     private final InspectorNotepad notepad;
     private final JTextArea textArea;
     private final JPopupMenu popupMenu;
@@ -90,8 +117,11 @@ public final class NotepadInspector extends Inspector {
     // invariant:  always non-null
     private String selectedText = "";
 
+    // Note that we're treating the view as a singleton for now, so we're using
+    // the default mechanism for saving geometry.  May need more view options
+    // when we add functionality.
     private NotepadInspector(Inspection inspection, InspectorNotepad notepad) {
-        super(inspection);
+        super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
         this.notepad = notepad;
 
@@ -213,28 +243,15 @@ public final class NotepadInspector extends Inspector {
         final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
         objectMenu.add(inspectSelectedAddressObjectAction);
         objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
-        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
-        viewMemoryRegionsMenuItem.setText("View Memory Regions");
-        memoryMenu.add(viewMemoryRegionsMenuItem);
+        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
-
 
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
     @Override
-    protected SaveSettingsListener saveSettingsListener() {
-        return saveSettingsListener;
-    }
-
-    @Override
     public String getTextForTitle() {
-        return "Notepad: " + notepad.getName();
-    }
-
-    @Override
-    protected Rectangle defaultFrameBounds() {
-        return inspection().geometry().notepadFrameDefaultBounds();
+        return viewManager.shortName() +  ": " + notepad.getName();
     }
 
     @Override
@@ -245,9 +262,8 @@ public final class NotepadInspector extends Inspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         save();
-        super.refreshView(force);
     }
 
     @Override
@@ -265,7 +281,6 @@ public final class NotepadInspector extends Inspector {
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         save();
-        notepadInspector = null;
         super.inspectorClosing();
     }
 
@@ -358,7 +373,7 @@ public final class NotepadInspector extends Inspector {
 
         @Override
         protected void procedure() {
-            actions().inspectMemoryWords(address).perform();
+            actions().inspectMemory(address).perform();
             focus().setAddress(address);
         }
 
@@ -385,7 +400,7 @@ public final class NotepadInspector extends Inspector {
 
         @Override
         protected void procedure() {
-            actions().inspectMemoryWords(memoryRegion).perform();
+            actions().inspectMemoryRegion(memoryRegion).perform();
             focus().setAddress(address);
         }
 

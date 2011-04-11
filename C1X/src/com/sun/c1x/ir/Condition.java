@@ -193,11 +193,9 @@ public enum Condition {
                 break;
             }
             case Object: {
-                Object x = lt.asObject();
-                Object y = rt.asObject();
                 switch (this) {
-                    case EQ: return runtime.compareConstantObjects(x, y);
-                    case NE: return !runtime.compareConstantObjects(x, y);
+                    case EQ: return runtime.compareConstantObjects(lt, rt);
+                    case NE: return !runtime.compareConstantObjects(lt, rt);
                 }
                 break;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,17 +54,6 @@ public enum StackBias {
 
         @Override
         public boolean isFramePointerBiased() {
-            return true;
-        }
-    },
-
-    /**
-     * Variant of the standard SPARC V9 used by the JIT. The JIT doesn't use the native frame pointer register to address its frame,
-     * so only its stack pointer needs biasing.
-     */
-    JIT_SPARC_V9 {
-        @Override
-        public boolean isStackPointerBiased() {
             return true;
         }
     };

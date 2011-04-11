@@ -218,8 +218,6 @@ public class InspectionFocus extends AbstractInspectionHolder {
     private final Map<MaxThread, MaxStackFrame> frameSelections = new HashMap<MaxThread, MaxStackFrame>();
 
     private MaxStackFrame stackFrame;
-    // Since frames don't record what stack they're in, we must keep a reference to the thread of the frame.
-    private MaxThread threadForStackFrame;
 
     private final Object stackFrameFocusTracer = new Object() {
         @Override
@@ -236,6 +234,13 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
+     * Is there a currently selected stack frame.
+     */
+    public boolean hasStackFrame() {
+        return stackFrame != null;
+    }
+
+    /**
      * Shifts the focus of the Inspection to a particular stack frame in a particular thread; notify interested inspectors.
      * Sets the current thread to be the thread of the frame.
      * This is a view state change that can happen when there is no change to VM state.
@@ -243,17 +248,16 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * @param interactiveForNative whether (should a side effect be to land in a native method) the user should be consulted if unknown.
      */
     public void setStackFrame(MaxStackFrame newStackFrame, boolean interactiveForNative) {
-        final MaxThread newThread = newStackFrame.stack().thread();
-        if (!newThread.equals(this.threadForStackFrame) || !newStackFrame.isSameFrame(this.stackFrame)) {
+        if (this.stackFrame != newStackFrame) {
             final MaxStackFrame oldStackFrame = this.stackFrame;
-            this.threadForStackFrame = newThread;
+            final MaxThread newThread = newStackFrame.stack().thread();
+            // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
+            setThread(newThread);
             this.stackFrame = newStackFrame;
             frameSelections.put(newThread, newStackFrame);
             Trace.line(TRACE_VALUE, stackFrameFocusTracer);
-            // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
-            setThread(newThread);
             for (ViewFocusListener listener : copyListeners()) {
-                listener.stackFrameFocusChanged(oldStackFrame, newStackFrame);
+                listener.frameFocusChanged(oldStackFrame, newStackFrame);
             }
         }
         // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer

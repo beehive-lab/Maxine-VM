@@ -55,7 +55,7 @@ public final class MemoryWordsTable extends InspectorTable {
     MemoryWordsTable(Inspection inspection,
         MemoryWordRegion memoryWordRegion,
         Address origin,
-        TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences,
+        TableColumnVisibilityPreferences<MemoryColumnKind> instanceViewPreferences,
         InspectorAction setOriginToSelectionAction) {
         super(inspection);
         this.nBytesInWord = inspection.vm().platform().nBytesInWord();
@@ -67,7 +67,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
     @Override
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() == 1 && col == MemoryWordsColumnKind.OFFSET.ordinal()) {
+        if (mouseEvent.getClickCount() == 1 && col == MemoryColumnKind.OFFSET.ordinal()) {
             setOriginToSelectionAction.perform();
         } else if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
@@ -191,21 +191,21 @@ public final class MemoryWordsTable extends InspectorTable {
         scrollToRows(tableModel.findRow(first), tableModel.findRow(last));
     }
 
-    private final class MemoryWordsColumnModel extends InspectorTableColumnModel<MemoryWordsColumnKind> {
+    private final class MemoryWordsColumnModel extends InspectorTableColumnModel<MemoryColumnKind> {
 
-        private MemoryWordsColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences) {
-            super(MemoryWordsColumnKind.values().length, instanceViewPreferences);
-            addColumn(MemoryWordsColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(MemoryWordsColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
-            addColumn(MemoryWordsColumnKind.WORD, new WordOffsetRenderer(inspection()), null);
-            addColumn(MemoryWordsColumnKind.OFFSET, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(MemoryWordsColumnKind.VALUE, new ValueRenderer(inspection()), null);
-            addColumn(MemoryWordsColumnKind.BYTES, new MemoryBytesTableCellRenderer(inspection(), table, tableModel), null);
-            addColumn(MemoryWordsColumnKind.CHAR, new CharRenderer(inspection()), null);
-            addColumn(MemoryWordsColumnKind.UNICODE, new UnicodeRenderer(inspection()), null);
-            addColumn(MemoryWordsColumnKind.FLOAT, new FloatRenderer(inspection()), null);
-            addColumn(MemoryWordsColumnKind.DOUBLE, new DoubleRenderer(inspection()), null);
-            addColumn(MemoryWordsColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
+        private MemoryWordsColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, TableColumnVisibilityPreferences<MemoryColumnKind> instanceViewPreferences) {
+            super(MemoryColumnKind.values().length, instanceViewPreferences);
+            addColumn(MemoryColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(MemoryColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.WORD, new WordOffsetRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.OFFSET, new MemoryOffsetLocationTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(MemoryColumnKind.VALUE, new ValueRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.BYTES, new MemoryBytesTableCellRenderer(inspection(), table, tableModel), null);
+            addColumn(MemoryColumnKind.CHAR, new CharRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.UNICODE, new UnicodeRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.FLOAT, new FloatRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.DOUBLE, new DoubleRenderer(inspection()), null);
+            addColumn(MemoryColumnKind.REGION, new MemoryRegionPointerTableCellRenderer(inspection(), table, tableModel), null);
         }
     }
 
@@ -248,7 +248,7 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         public int getColumnCount() {
-            return MemoryWordsColumnKind.values().length;
+            return MemoryColumnKind.values().length;
         }
 
         public int getRowCount() {

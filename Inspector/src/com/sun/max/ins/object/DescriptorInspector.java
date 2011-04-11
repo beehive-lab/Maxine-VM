@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,12 +46,14 @@ public class DescriptorInspector extends ObjectInspector {
     // Follows user's tab selection, but should persist when view reconstructed.
     private boolean alternateDisplay;
 
-    DescriptorInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
+    DescriptorInspector(Inspection inspection, ObjectViewManager factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         // This is the default for a newly created inspector.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        createFrame(true);
+        final InspectorFrame frame = createFrame(true);
+        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
@@ -86,10 +88,10 @@ public class DescriptorInspector extends ObjectInspector {
     }
 
     @Override
-    protected void refreshView(boolean force) {
+    protected void refreshState(boolean force) {
         // Only refresh the visible pane.
         final Prober pane = (Prober) tabbedPane.getSelectedComponent();
         pane.refresh(force);
-        super.refreshView(force);
+        super.refreshState(force);
     }
 }

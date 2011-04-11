@@ -172,7 +172,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         if (hasAddress()) {
             sb.append(" 0x").append(address().toHexString()).append(", ");
         }
-        if  (hasTeleClassMethodActor()) {
+        if (hasTeleClassMethodActor()) {
             sb.append(teleClassMethodActor().getName()).append(" pos=").append(bytecodePosition());
         }
         sb.append("}");
@@ -189,14 +189,14 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      */
     protected MethodKey teleClassMethodActorToMethodKey(TeleClassMethodActor teleClassMethodActor) {
         assert teleClassMethodActor != null;
-        if (!vm().tryLock()) {
-            return null;
+        if (vm().tryLock()) {
+            try {
+                return new MethodKey.DefaultMethodKey(teleClassMethodActor().methodActor());
+            } finally {
+                vm().unlock();
+            }
         }
-        try {
-            return new MethodKey.DefaultMethodKey(teleClassMethodActor().methodActor());
-        } finally {
-            vm().unlock();
-        }
+        return null;
     }
 
     /**
@@ -208,32 +208,31 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @return a description of the method loaded in the VM
      */
     protected TeleClassMethodActor methodKeyToTeleClassMethodActor(MethodKey methodKey) {
-        if (!vm().tryLock()) {
-            return null;
-        }
-        try {
-            final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(methodKey.holder());
-            if (teleClassActor != null) {
-                // find a matching method
-                final String methodKeyString = methodKey.signature().toJavaString(true, true);
-                for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
-                    if (teleMethodActor instanceof TeleClassMethodActor) {
-                        if (teleMethodActor.methodActor().descriptor().toJavaString(true, true).equals(methodKeyString)) {
-                            return  (TeleClassMethodActor) teleMethodActor;
+        if (vm().tryLock()) {
+            try {
+                final TeleClassActor teleClassActor = vm().classRegistry().findTeleClassActor(methodKey.holder());
+                if (teleClassActor != null) {
+                    // find a matching method
+                    final String methodKeyString = methodKey.signature().toJavaString(true, true);
+                    for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
+                        if (teleMethodActor instanceof TeleClassMethodActor) {
+                            if (teleMethodActor.methodActor().descriptor().toJavaString(true, true).equals(methodKeyString)) {
+                                return (TeleClassMethodActor) teleMethodActor;
+                            }
                         }
                     }
                 }
+                // TODO (mlvdv) when the class registry is complete, this should not be necessary
+                // Try to locate TeleClassMethodActor via compiled methods in the tele VM.
+                final List<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(vm(), methodKey);
+                if (teleTargetMethods.size() > 0) {
+                    return Utils.first(teleTargetMethods).getTeleClassMethodActor();
+                }
+            } finally {
+                vm().unlock();
             }
-            // TODO (mlvdv) when the class registry is complete, this should not be necessary
-            // Try to locate TeleClassMethodActor via compiled methods in the tele VM.
-            final List<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(vm(), methodKey);
-            if (teleTargetMethods.size() > 0) {
-                return Utils.first(teleTargetMethods).getTeleClassMethodActor();
-            }
-            return null;
-        } finally {
-            vm().unlock();
         }
+        return null;
     }
 
     // TODO (mlvdv)  attempt to map machine code to bytecode location, at least for JIT methods.
@@ -253,19 +252,17 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @return  a description of the location expressed in terms of the method loaded in the VM
      */
     protected TeleClassMethodActor addressToTeleClassMethodActor(Address address) {
-        if (!vm().tryLock()) {
-            return null;
-        }
-        TeleClassMethodActor teleClassMethodActor = null;
-        try {
-            final TeleCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
-            if (compiledCode != null) {
-                teleClassMethodActor = compiledCode.getTeleClassMethodActor();
+        if (vm().tryLock()) {
+            try {
+                final TeleCompiledCode compiledCode = vm().codeCache().findCompiledCode(address);
+                if (compiledCode != null) {
+                    return compiledCode.getTeleClassMethodActor();
+                }
+            } finally {
+                vm().unlock();
             }
-        } finally {
-            vm().unlock();
         }
-        return teleClassMethodActor;
+        return null;
     }
 
     /**
@@ -277,14 +274,14 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @return a new location
      */
     protected TeleClassMethodActor methodAccessToTeleClassMethodActor(TeleMethodAccess teleMethodAccess) {
-        if (!vm().tryLock()) {
-            return null;
+        if (vm().tryLock()) {
+            try {
+                return teleMethodAccess.teleClassMethodActor();
+            } finally {
+                vm().unlock();
+            }
         }
-        try {
-            return teleMethodAccess.teleClassMethodActor();
-        } finally {
-            vm().unlock();
-        }
+        return null;
     }
 
     /**
@@ -296,16 +293,15 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @return a non-zero address, null if not available
      */
     protected Address teleClassMethodActorToFirstCompilationCallEntry(TeleClassMethodActor teleClassMethodActor) {
-        if (!vm().tryLock()) {
-            return null;
-        }
-        try {
-            final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getCompilation(0);
-            if (javaTargetMethod != null) {
-                return javaTargetMethod.callEntryPoint();
+        if (vm().tryLock()) {
+            try {
+                final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getCompilation(0);
+                if (javaTargetMethod != null) {
+                    return javaTargetMethod.callEntryPoint();
+                }
+            } finally {
+                vm().unlock();
             }
-        } finally {
-            vm().unlock();
         }
         return null;
     }
@@ -322,10 +318,8 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         }
 
         public boolean isSameAs(MaxCodeLocation codeLocation) {
-            if (codeLocation instanceof BytecodeLocation) {
-                if (hasMethodKey()) {
-                    return methodKey().equals(codeLocation.methodKey());
-                }
+            if (this.hasMethodKey() && codeLocation instanceof BytecodeLocation) {
+                return methodKey().equals(codeLocation.methodKey());
             }
             return false;
         }
@@ -347,10 +341,8 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         }
 
         public boolean isSameAs(MaxCodeLocation codeLocation) {
-            if (codeLocation instanceof MachineCodeLocation) {
-                if (hasAddress()) {
-                    return address().equals(codeLocation.address());
-                }
+            if (this.hasAddress() && codeLocation instanceof MachineCodeLocation) {
+                return address().equals(codeLocation.address());
             }
             return false;
         }

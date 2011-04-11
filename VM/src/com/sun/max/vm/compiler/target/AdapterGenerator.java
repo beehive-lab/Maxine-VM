@@ -69,7 +69,7 @@ public abstract class AdapterGenerator {
     /**
      * Local alias to {@link JVMSFrameLayout#JVMS_SLOT_SIZE}.
      */
-    public static final int JIT_SLOT_SIZE = JVMSFrameLayout.JVMS_SLOT_SIZE;
+    public static final int BASELINE_SLOT_SIZE = JVMSFrameLayout.JVMS_SLOT_SIZE;
 
     /**
      * A signature denotes the parameter kinds of a call including the receiver kind if applicable.
@@ -222,7 +222,7 @@ public abstract class AdapterGenerator {
      *
      * @param callee the method that must be adapted to
      * @return an adapter for a call to {@code callee} from a method compiled with a different calling convention. This
-     *         will be {@code null} if there is no need to adapt a call to {@code callee} (e.g. OPT -> JIT call with 0
+     *         will be {@code null} if there is no need to adapt a call to {@code callee} (e.g. OPT -> baseline call with 0
      *         arguments)
      */
     public final Adapter make(ClassMethodActor callee) {
@@ -230,10 +230,10 @@ public abstract class AdapterGenerator {
         int flags = callee.flags();
         boolean isStatic = Actor.isStatic(flags);
         if (signature.numberOfParameters() == 0 && isStatic) {
-            if (adapterType == Adapter.Type.OPT2JIT) {
+            if (adapterType == Adapter.Type.OPT2BASELINE) {
                 return null;
             }
-            // JIT2OPT parameterless calls still require an adapter to save and restore the frame pointer
+            // BASELINE2OPT parameterless calls still require an adapter to save and restore the frame pointer
         }
 
         // Access to table of adapters must be synchronized
@@ -265,7 +265,7 @@ public abstract class AdapterGenerator {
      * @param callee the method that must be adapted to
      * @param out where to emit the prologue. This must be either an {@link AbstractAssembler} or {@link OutputStream} instance
      * @return the adapter that will adapt a call to {@code callee}. This will be {@code null} if there is no need to
-     *         adapt a call to {@code callee} (e.g. OPT -> JIT call with 0 arguments)
+     *         adapt a call to {@code callee} (e.g. OPT -> baseline call with 0 arguments)
      */
     public final Adapter adapt(ClassMethodActor callee, Object out) {
         Adapter adapter = make(callee);

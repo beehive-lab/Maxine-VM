@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,10 +62,8 @@ public class GraphPrototype extends Prototype {
      * of all references.
      *
      * @param compiledPrototype the compiled prototype from which to begin creating the graph prototype
-     * @param tree a boolean indicating whether to generate a tree file that contains connectivity information
-     * about the graph that is useful for debugging
      */
-    public GraphPrototype(CompiledPrototype compiledPrototype, boolean tree) {
+    public GraphPrototype(CompiledPrototype compiledPrototype) {
         this.compiledPrototype = compiledPrototype;
         debuggingPaths = true;
         add(null, ClassRegistry.BOOT_CLASS_REGISTRY, "[root]");
