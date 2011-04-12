@@ -34,7 +34,7 @@ import com.sun.cri.ri.*;
 /**
  * An event that occurred during compilation. Instances of this class provide information about the event and the state
  * of the compilation when the event was raised. {@link #getCompilation()} and {@link #getMethod()} are guaranteed to
- * always return a non-<code>null</code> value. Other objects provided by getter methods may be <code>null</code>,
+ * always return a non-{@code null} value. Other objects provided by getter methods may be {@code null},
  * depending on the available information when and where the event was triggered.
  *
  * @author Peter Hofer
