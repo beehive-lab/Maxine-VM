@@ -2131,10 +2131,10 @@ public final class LinearScan {
             } else {
                 Value lock = state.lockAt(i);
                 if (lock.isConstant() && lock.asConstant().asObject() instanceof Class<?>) {
-                    // lock on class for synchronized static method
+                   // lock on class for synchronized static method
                    values[valueIndex++] = lock.asConstant();
                 } else {
-                    values[valueIndex++] = toCiValue(opId, lock);
+                   values[valueIndex++] = toCiValue(opId, lock);
                 }
             }
         }

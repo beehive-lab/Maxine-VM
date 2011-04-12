@@ -803,7 +803,7 @@ public final class GraphBuilder {
     void genNewTypeArray(int typeCode) {
         FrameState stateBefore = curState.immutableCopy(bci());
         CiKind kind = CiKind.fromArrayTypeCode(typeCode);
-        RiType elementType = compilation.runtime.getRiType(kind.toJavaClass());
+        RiType elementType = compilation.runtime.getRiType(kind);
         apush(append(new NewTypeArray(ipop(), elementType, stateBefore)));
     }
 
@@ -845,8 +845,11 @@ public final class GraphBuilder {
     void genGetStatic(int cpi, RiField field) {
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isResolved() && holder.isResolved() && holder.isInitialized();
-        CiConstant constantValue = field.constantValue(null);
-        if (isInitialized && constantValue != null && C1XOptions.CanonicalizeConstantFields) {
+        CiConstant constantValue = null;
+        if (isInitialized && C1XOptions.CanonicalizeConstantFields) {
+            constantValue = field.constantValue(null);
+        }
+        if (constantValue != null) {
             push(constantValue.kind.stackKind(), appendConstant(constantValue));
         } else {
             Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi);
@@ -1105,10 +1108,7 @@ public final class GraphBuilder {
                 if (receiver.isConstant()) {
                     CiConstant constant = receiver.asConstant();
                     assert constant.kind.isObject();
-                    Object object = constant.asObject();
-                    if (object != null) {
-                        exact = compilation.runtime.getRiType(object.getClass());
-                    }
+                    exact = compilation.runtime.getRiType(constant);
                 }
                 if (exact == null) {
                     RiType declared = receiver.declaredType();
@@ -1853,11 +1853,10 @@ public final class GraphBuilder {
             return cannotInline(target, "has unbalanced monitors");
         }
         if (target.isConstructor()) {
-            RiType throwableType = compilation.runtime.getRiType(Throwable.class);
-            if (target.holder().isSubtypeOf(throwableType)) {
+            if (compilation.runtime.isExceptionType(target.holder())) {
                 // don't inline constructors of throwable classes unless the inlining tree is
                 // rooted in a throwable class
-                if (!rootScope().method.holder().isSubtypeOf(throwableType)) {
+                if (!compilation.runtime.isExceptionType(rootScope().method.holder())) {
                     return cannotInline(target, "don't inline Throwable constructors");
                 }
             }

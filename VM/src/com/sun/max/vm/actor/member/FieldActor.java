@@ -32,7 +32,6 @@ import java.lang.reflect.*;
 
 import sun.reflect.*;
 
-import com.sun.c1x.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.*;
@@ -735,7 +734,7 @@ public class FieldActor extends MemberActor implements RiField {
         return flags() & JAVA_FIELD_FLAGS;
     }
 
-    public final CiConstant constantValue(Object object) {
+    public final CiConstant constantValue(CiConstant receiver) {
         if (isConstant() || isConstantWhenNotZero()) {
             Value v;
             if (isStatic()) {
@@ -744,11 +743,9 @@ public class FieldActor extends MemberActor implements RiField {
                     return v.asCiConstant();
                 }
             }
-            if (C1XOptions.CanonicalizeConstantFields) {
-                v = getValue(object);
-                if (!isConstantWhenNotZero() || !v.isZero()) {
-                    return v.asCiConstant();
-                }
+            v = getValue((receiver == null) ? null : receiver.asObject());
+            if (!isConstantWhenNotZero() || !v.isZero()) {
+                return v.asCiConstant();
             }
         }
         return null;

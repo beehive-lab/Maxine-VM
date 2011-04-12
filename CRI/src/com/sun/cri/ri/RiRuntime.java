@@ -142,6 +142,21 @@ public interface RiRuntime {
     RiType getRiType(Class<?> javaClass);
 
     /**
+     * Returns the RiType object representing the base type for the given kind.
+     */
+    RiType getRiType(CiKind kind);
+
+    /**
+     * Returns the RiType object representing the type of the given constant object. Returns {@code null} when the constant is {@code null}.
+     */
+    RiType getRiType(CiConstant constant);
+    
+    /**
+     * Returns true if the given type is a subtype of java/lang/Throwable.
+     */
+    boolean isExceptionType(RiType type);
+
+    /**
      * Returns the runtime interface representation of the given Java method object.
      *
      * @param javaMethod the Java method object
@@ -195,7 +210,7 @@ public interface RiRuntime {
      * 
      * @return true if the two parameters represent the same runtime object, false otherwise
      */
-    boolean compareConstantObjects(Object x, Object y);
+    boolean compareConstantObjects(CiConstant x, CiConstant y);
 
     /**
      * Gets the register configuration to use when compiling a given method.
@@ -214,4 +229,9 @@ public interface RiRuntime {
      * Determines if this runtime wants {@link System#arraycopy} and {@link Arrays#copyOf} intrinsified.
      */
     boolean supportsArrayIntrinsics();
+
+    /**
+     * Gets the length of the array that is wrapped in a CiConstant object.
+     */
+    int getArrayLength(CiConstant array);
 }

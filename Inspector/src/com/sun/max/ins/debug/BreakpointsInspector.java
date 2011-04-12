@@ -56,7 +56,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         }
 
         public boolean isEnabled() {
-            return inspection().hasProcess();
+            return true;
         }
 
         public BreakpointsInspector activateView(Inspection inspection) {

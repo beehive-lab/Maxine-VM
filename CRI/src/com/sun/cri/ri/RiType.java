@@ -200,7 +200,7 @@ public interface RiType {
      * @param obj the object to test
      * @return {@code true} if the object is an instance of this type
      */
-    boolean isInstance(Object obj);
+    boolean isInstance(CiConstant obj);
 
     /**
      * Attempts to get an exact type for this type. Final classes,

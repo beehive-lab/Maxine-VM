@@ -62,7 +62,7 @@ public final class AllocationsInspector extends Inspector implements TableColumn
         }
 
         public boolean isEnabled() {
-            return inspection().hasProcess();
+            return true;
         }
 
         public AllocationsInspector activateView(Inspection inspection) {
@@ -129,7 +129,11 @@ public final class AllocationsInspector extends Inspector implements TableColumn
 
     @Override
     public String getTextForTitle() {
-        return viewManager.shortName();
+        String title = viewManager.shortName();
+        if (!inspection().hasProcess()) {
+            title += ": " + inspection().nameDisplay().noProcessShortText();
+        }
+        return title;
     }
 
     @Override
@@ -229,13 +233,6 @@ public final class AllocationsInspector extends Inspector implements TableColumn
         Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
-    }
-
-    @Override
-    public void vmProcessTerminated() {
-        Trace.line(1, tracePrefix() + " closing - process terminated");
-        viewPreferences.removeListener(this);
-        dispose();
     }
 
 }
