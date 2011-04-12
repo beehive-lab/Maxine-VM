@@ -177,7 +177,7 @@ public abstract class UnresolvedType implements RiType {
         throw unresolved("isSubtypeOf()");
     }
 
-    public boolean isInstance(Object obj) {
+    public boolean isInstance(CiConstant obj) {
         throw unresolved("isInstance()");
     }
 

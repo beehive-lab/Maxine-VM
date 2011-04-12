@@ -334,6 +334,22 @@ public class MaxRiRuntime implements RiRuntime {
         return ClassActor.fromJava(javaClass);
     }
 
+    public RiType getRiType(CiKind kind) {
+        return getRiType(kind.toJavaClass());
+    }
+
+    public RiType getRiType(CiConstant constant) {
+        Object o = constant.asObject();
+        if (o == null) {
+            return null;
+        }
+        return getRiType(o.getClass());
+    }
+
+    public boolean isExceptionType(RiType type) {
+        return type.isSubtypeOf(getRiType(Throwable.class));
+    }
+
     public RiMethod getRiMethod(Method method) {
         return MethodActor.fromJava(method);
     }
@@ -353,8 +369,8 @@ public class MaxRiRuntime implements RiRuntime {
         return snippets;
     }
 
-    public boolean compareConstantObjects(Object x, Object y) {
-        return x == y;
+    public boolean compareConstantObjects(CiConstant x, CiConstant y) {
+        return x.asObject() == y.asObject();
     }
 
     public RiRegisterConfig getRegisterConfig(RiMethod method) {
@@ -369,5 +385,10 @@ public class MaxRiRuntime implements RiRuntime {
     @Override
     public boolean supportsArrayIntrinsics() {
         return false;
+    }
+
+    @Override
+    public int getArrayLength(CiConstant array) {
+        return Array.getLength(array.asObject());
     }
 }

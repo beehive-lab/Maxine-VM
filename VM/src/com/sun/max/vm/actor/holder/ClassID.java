@@ -24,10 +24,10 @@ package com.sun.max.vm.actor.holder;
 
 import java.util.*;
 
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Management of unique integer identifiers for {@link ClassActor}s.
@@ -48,68 +48,6 @@ public final class ClassID {
     public static int NULL_CLASS_ID = -1;
 
     private ClassID() {
-    }
-
-    static class VariableLengthArray<E> {
-        /*
-         * Simple first implementation. Backing Storage for the array is made of a
-         * fixed size initial prefix and a variable tail that is resized automatically
-         * when trying to add an out of bound element.
-         */
-
-        private final E[] prefix;
-        private E[] variable;
-
-        public VariableLengthArray(int initialCapacity) {
-            final Class<E []> type = null;
-            prefix =  Utils.newArray(type, initialCapacity);
-            variable = Utils.newArray(type, 0);
-        }
-
-        private void ensureCapacity(int minOverflowCapacity) {
-            // FIXME: need to make sure that capacity doesn't go beyond max int.
-            int newCapacity = (variable.length * 3) / 2 + 1;
-            if (newCapacity < minOverflowCapacity) {
-                newCapacity = minOverflowCapacity;
-            }
-            E [] newOverflow = Arrays.copyOf(variable, newCapacity);
-            variable = newOverflow;
-        }
-
-        public E set(int index, E element) {
-            final int pl = prefix.length;
-            if (index < pl) {
-                E oldValue = prefix[index];
-                prefix[index] = element;
-                return oldValue;
-            }
-            final int oindex = index - pl;
-
-            if (oindex >= variable.length) {
-                ensureCapacity(oindex + 1);
-            }
-            E oldValue = variable[oindex];
-            variable[oindex] = element;
-            return oldValue;
-        }
-
-        public E get(int index) {
-            final int pl = prefix.length;
-            if (index < pl) {
-                return prefix[index];
-            }
-            final int oindex = index - pl;
-            if (oindex < variable.length) {
-                return variable[oindex];
-            }
-            return null;
-        }
-
-        public int length() {
-            return prefix.length + variable.length;
-        }
-        // TODO:
-        // When class unloading is supported, add trimming methods and support sparse array.
     }
 
     static final int MINIMAL_CLASSES_POPULATIONS = 4000;
@@ -162,7 +100,9 @@ public final class ClassID {
         return id;
     }
 
-    static synchronized void register(int id, ClassActor classActor) {
+    static synchronized void register(ClassActor classActor) {
+        int id = classActor.id;
+        FatalError.check(usedIDs.get(id), "Class ID must be allocated");
         idToClassActor.set(id, classActor);
     }
 

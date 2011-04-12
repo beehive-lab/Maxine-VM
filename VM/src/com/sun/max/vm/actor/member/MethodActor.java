@@ -518,7 +518,7 @@ public abstract class MethodActor extends MemberActor implements RiMethod {
     }
 
     public final boolean isLeafMethod() {
-        return isStatic() || isPrivate() || holder().isFinal();
+        return isStatic() || isPrivate() || holder().isFinal() || isFinal();
     }
 
     @Override
