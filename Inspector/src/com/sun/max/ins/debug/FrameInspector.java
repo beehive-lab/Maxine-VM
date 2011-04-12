@@ -63,7 +63,7 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
         }
 
         public boolean isEnabled() {
-            return inspection().hasProcess() && focus().hasThread();
+            return true;
         }
 
         public FrameInspector activateView(Inspection inspection) {
@@ -119,9 +119,6 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
         viewPreferences.addListener(this);
 
         nullFramePanel = new InspectorPanel(inspection);
-        final JTextArea nullFrameTextArea = new JTextArea(inspection.nameDisplay().unavailableDataLongText());
-        nullFrameTextArea.setEditable(false);
-        nullFramePanel.add(nullFrameTextArea);
 
         truncatedFramePanel = new InspectorPanel(inspection);
         final JTextArea truncatedFrameTextArea = new JTextArea("<truncated frame>");
@@ -150,7 +147,9 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
     @Override
     public String getTextForTitle() {
         final StringBuilder sb = new StringBuilder(viewManager.shortName() + ": ");
-        if (stackFrame == null) {
+        if (!inspection().hasProcess()) {
+            sb.append(inspection().nameDisplay().noProcessShortText());
+        } else if (stackFrame == null) {
             sb.append(inspection().nameDisplay().unavailableDataShortText());
         } else {
             if (stackFrame instanceof MaxStackFrame.Compiled) {

@@ -1058,7 +1058,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class InspectMemoryAllocationsMenu extends JMenu {
         public InspectMemoryAllocationsMenu() {
-            super("Inspect memory allocataion");
+            super("Inspect memory allocation");
             addMenuListener(new MenuListener() {
 
                 public void menuCanceled(MenuEvent e) {
