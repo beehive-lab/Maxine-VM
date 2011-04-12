@@ -137,6 +137,15 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         return "<?> Data unavailable";
     }
 
+
+    /**
+     * @return a short string, suitable for label text, to use in place of data that should be read from the VM,
+     * but which cannot be for some reason (no process, process terminated, other i/o error).
+     */
+    public String noProcessShortText() {
+        return "<no process>";
+    }
+
     /**
      * @return human readable string identifying a thread in a terse standard format.
      */
