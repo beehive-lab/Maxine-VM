@@ -27,17 +27,12 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import com.sun.max.Utils;
 import com.sun.max.jdwp.constants.Error;
 import com.sun.max.jdwp.constants.SuspendStatus;
 import com.sun.max.jdwp.constants.Tag;
 import com.sun.max.jdwp.constants.ThreadStatus;
 import com.sun.max.jdwp.constants.TypeTag;
 import com.sun.max.jdwp.data.ID;
-import com.sun.max.jdwp.data.JDWPException;
-import com.sun.max.jdwp.data.JDWPLocation;
-import com.sun.max.jdwp.data.JDWPNotImplementedException;
-import com.sun.max.jdwp.data.JDWPValue;
 import com.sun.max.jdwp.data.ID.ArrayID;
 import com.sun.max.jdwp.data.ID.ArrayTypeID;
 import com.sun.max.jdwp.data.ID.ClassID;
@@ -52,6 +47,10 @@ import com.sun.max.jdwp.data.ID.ReferenceTypeID;
 import com.sun.max.jdwp.data.ID.StringID;
 import com.sun.max.jdwp.data.ID.ThreadGroupID;
 import com.sun.max.jdwp.data.ID.ThreadID;
+import com.sun.max.jdwp.data.JDWPException;
+import com.sun.max.jdwp.data.JDWPLocation;
+import com.sun.max.jdwp.data.JDWPNotImplementedException;
+import com.sun.max.jdwp.data.JDWPValue;
 import com.sun.max.jdwp.vm.core.Provider;
 import com.sun.max.jdwp.vm.proxy.ArrayProvider;
 import com.sun.max.jdwp.vm.proxy.ArrayTypeProvider;
@@ -194,6 +193,7 @@ public class JDWPSession {
      * @return the object that has the given identifier
      * @throws JDWPException this exception is thrown, when no provider object was found
      */
+    @SuppressWarnings("unchecked")
     private <Provider_Type extends Provider, ID_Type extends ID> Provider_Type lookup(int errorCode, Class<Provider_Type> klass, ID_Type id) throws JDWPException {
 
         if (id.value() == 0) {
@@ -209,7 +209,7 @@ public class JDWPSession {
         // throw new JDWPException(errorCode, "The object found at id " + id + " is not a valid instance of " +
         // klass.getName() + " but: " + result);
         // }
-        return Utils.cast(klass, result);
+        return (Provider_Type) result;
     }
 
     public ClassObjectProvider getClassObject(ClassObjectID id) throws JDWPException {

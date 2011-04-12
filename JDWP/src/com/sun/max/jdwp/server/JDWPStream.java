@@ -22,11 +22,27 @@
  */
 package com.sun.max.jdwp.server;
 
-import java.io.*;
-import java.util.logging.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import com.sun.max.Utils;
-import com.sun.max.jdwp.data.*;
+import com.sun.max.jdwp.data.CommandHandler;
+import com.sun.max.jdwp.data.CommandHandlerRegistry;
+import com.sun.max.jdwp.data.IncomingData;
+import com.sun.max.jdwp.data.IncomingPacket;
+import com.sun.max.jdwp.data.JDWPException;
+import com.sun.max.jdwp.data.JDWPIncomingPacketException;
+import com.sun.max.jdwp.data.JDWPInputStream;
+import com.sun.max.jdwp.data.JDWPOutputStream;
+import com.sun.max.jdwp.data.JDWPSender;
+import com.sun.max.jdwp.data.OutgoingData;
+import com.sun.max.jdwp.data.ReplyPacket;
 
 /**
  *
@@ -164,7 +180,8 @@ class JDWPStream implements JDWPSender {
 
         try {
             final IncomingData incomingData = handler.createIncomingDataObject();
-            final CommandHandler<IncomingData, OutgoingData> handlerDownCast = Utils.cast(handler);
+            @SuppressWarnings("unchecked")
+            final CommandHandler<IncomingData, OutgoingData> handlerDownCast = (CommandHandler<IncomingData, OutgoingData>) handler;
 
             incomingData.read(new JDWPInputStream(new ByteArrayInputStream(data), handlerDownCast, incomingData));
             final IncomingPacket<? extends IncomingData, ? extends OutgoingData> p = createIncomingPacket(length, id, flags, commandSetId, commandId, incomingData, handler);
@@ -178,11 +195,11 @@ class JDWPStream implements JDWPSender {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private IncomingPacket<? extends IncomingData, ? extends OutgoingData> createIncomingPacket(int length, int id, byte flags, byte commandSetId, byte commandId, IncomingData data,
                     CommandHandler handler) {
-        final Class<CommandHandler<IncomingData, OutgoingData>> klass = null;
-        final IncomingPacket incomingPacket = new IncomingPacket<IncomingData, OutgoingData>(length, id, flags, commandSetId, commandId, data, Utils.cast(klass, handler));
-        final IncomingPacket<? extends IncomingData, ? extends OutgoingData> p = Utils.cast(incomingPacket);
+        final IncomingPacket incomingPacket = new IncomingPacket<IncomingData, OutgoingData>(length, id, flags, commandSetId, commandId, data, (CommandHandler<IncomingData, OutgoingData>) handler);
+        final IncomingPacket<? extends IncomingData, ? extends OutgoingData> p = (IncomingPacket<? extends IncomingData, ? extends OutgoingData>) incomingPacket;
         return p;
     }
 }
