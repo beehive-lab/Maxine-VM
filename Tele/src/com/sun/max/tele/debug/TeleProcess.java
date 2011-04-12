@@ -76,6 +76,19 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
     public static final String[] EMPTY_COMMAND_LINE_ARGUMENTS = {};
 
     /**
+     * Exception thrown in the event handling loop when
+     * the VM process is discovered to have died during
+     * an execution.
+     */
+    private final class ProcessDied extends Exception {
+
+        public ProcessDied(String message) {
+            super(message);
+        }
+    }
+
+
+    /**
      * Allocates and initializes a buffer in native memory to hold a given set of command line arguments. De-allocating
      * the memory for the buffer is the responsibility of the caller.
      *
@@ -151,9 +164,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                     // Case 1. The process has died; throw an exception.
                     if (newState != ProcessState.STOPPED) {
                         if (newState != ProcessState.TERMINATED) {
-                            throw new ProcessTerminatedException("unexpected state [" + newState + "]");
+                            throw new ProcessDied("unexpected state [" + newState + "]");
                         }
-                        throw new ProcessTerminatedException("normal exit");
+                        throw new ProcessDied("normal exit");
                     }
                     processState = newState;
 
@@ -256,8 +269,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
                 Trace.end(TRACE_VALUE + 1, tracePrefix() + "firing execution post-request action: " + request);
                 updateState(STOPPED, teleBreakpointEvents, teleWatchpointEvent);
 
-            } catch (ProcessTerminatedException processTerminatedException) {
-                Trace.line(TRACE_VALUE + 1, tracePrefix() + "VM process terminated: " + processTerminatedException.getMessage());
+            } catch (ProcessDied processDied) {
+                Trace.line(TRACE_VALUE + 1, tracePrefix() + "VM process terminated: " + processDied.getMessage());
                 updateState(TERMINATED);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
