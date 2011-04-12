@@ -155,17 +155,18 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         masm.movq(dst, constant);
     }
 
-    private void const2reg(CiRegister dst, Object constant) {
+    private void const2reg(CiRegister dst, CiConstant constant) {
+        assert constant.kind == CiKind.Object;
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        if (constant == null) {
+        if (constant.isNull()) {
             masm.movq(dst, 0x0L);
         } else if (target.inlineObjects) {
-            masm.recordDataReferenceInCode(CiConstant.forObject(constant));
+            masm.recordDataReferenceInCode(constant);
             masm.movq(dst, 0xDEADDEADDEADDEADL);
         } else {
-            masm.movq(dst, masm.recordDataReferenceInCode(CiConstant.forObject(constant)));
+            masm.movq(dst, masm.recordDataReferenceInCode(constant));
         }
     }
 
@@ -207,7 +208,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Int     : const2reg(dest.asRegister(), c.asInt()); break;
             case Word    :
             case Long    : const2reg(dest.asRegister(), c.asLong()); break;
-            case Object  : const2reg(dest.asRegister(), c.asObject()); break;
+            case Object  : const2reg(dest.asRegister(), c); break;
             case Float   : const2reg(asXmmFloatReg(dest), c.asFloat()); break;
             case Double  : const2reg(asXmmDoubleReg(dest), c.asDouble()); break;
             default      : throw Util.shouldNotReachHere();
@@ -229,7 +230,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Int     : masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
             case Float   : masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
-            case Object  : masm.movoop(frameMap.toStackAddress(slot), CiConstant.forObject(c.asObject())); break;
+            case Object  : masm.movoop(frameMap.toStackAddress(slot), c); break;
             case Long    : masm.mov64(frameMap.toStackAddress(slot), c.asLong()); break;
             case Double  : masm.mov64(frameMap.toStackAddress(slot), doubleToRawLongBits(c.asDouble())); break;
             default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
@@ -252,7 +253,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Int     : masm.movl(addr, constant.asInt()); break;
             case Float   : masm.movl(addr, floatToRawIntBits(constant.asFloat())); break;
-            case Object  : masm.movoop(addr, CiConstant.forObject(constant.asObject())); break;
+            case Object  : masm.movoop(addr, constant); break;
             case Word:
             case Long    : masm.movq(rscratch1, constant.asLong());
                            nullCheckHere = codePos();
@@ -1267,7 +1268,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         break;
                     }
                     case Object  :  {
-                        masm.movoop(rscratch1, CiConstant.forObject(c.asObject()));
+                        masm.movoop(rscratch1, c);
                         masm.cmpq(reg1, rscratch1);
                         break;
                     }
