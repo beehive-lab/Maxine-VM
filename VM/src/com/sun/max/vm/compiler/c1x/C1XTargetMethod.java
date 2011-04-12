@@ -113,6 +113,8 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private final CodeAnnotation[] annotations;
 
+    private  ClassHierarchyAssumptions assumptionsValidity;
+
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
@@ -131,6 +133,7 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     public C1XTargetMethod(Flavor flavor, String stubName, CiTargetMethod ciTargetMethod) {
         super(flavor, stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        assumptionsValidity = ClassHierarchyAssumptions.noAssumptions;
         List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
         init(ciTargetMethod, true);
@@ -166,6 +169,15 @@ public final class C1XTargetMethod extends TargetMethod implements Cloneable {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
         }
+    }
+
+    @Override
+    public boolean isMakingValidAssumptions() {
+        return assumptionsValidity.isValid();
+    }
+
+    public ClassHierarchyAssumptions assumptionValidity() {
+        return assumptionsValidity;
     }
 
     public static InlineDataDecoder inlineDataDecoder(CodeAnnotation[] annotations) {

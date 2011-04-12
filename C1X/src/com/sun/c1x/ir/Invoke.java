@@ -59,7 +59,7 @@ public final class Invoke extends StateSplit {
         if (isStatic) {
             setFlag(Flag.IsStatic);
             eliminateNullCheck();
-        } else if (args[0].isNonNull()) {
+        } else if (args[0].isNonNull() || args[0].kind.isWord()) {
             eliminateNullCheck();
         }
     }

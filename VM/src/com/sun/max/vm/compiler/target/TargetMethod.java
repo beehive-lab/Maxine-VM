@@ -49,6 +49,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
@@ -525,6 +526,10 @@ public abstract class TargetMethod extends MemoryRegion {
         return registerRestoreEpilogueOffset >= 0;
     }
 
+    public boolean isMakingValidAssumptions() {
+        return true;
+    }
+
     /**
      * Gets an object to help decode inline data in this target method's code.
      */
@@ -955,5 +960,14 @@ public abstract class TargetMethod extends MemoryRegion {
             default:
                 throw FatalError.unexpected(flavor.toString());
         }
+    }
+
+    /**
+     * Gets the profile data gathered during execution of this method.
+     *
+     * @return {@code null} if this method has no profiling info
+     */
+    public MethodProfile profile() {
+        return null;
     }
 }

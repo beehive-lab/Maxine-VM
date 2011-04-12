@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,5 +81,5 @@ public interface RiField {
      * @param object object from which this field's value is to be read. This value is ignored if this field is static.
      * @return the constant value of this field or {@code null} if the constant value is not available
      */
-    CiConstant constantValue(Object object);
+    CiConstant constantValue(CiConstant receiver);
 }

@@ -26,6 +26,7 @@ import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.type.*;
@@ -61,11 +62,13 @@ public final class PrototypeGenerator {
      * both the {@code CompiledPrototype} and the {@code GraphPrototype} iteratively
      * until it reaches a fixpoint.
      *
-     * @param tree a boolean indicating whether to record an object tree, which is useful for debugging
      * @return the final graph prototype of the VM
      */
-    public GraphPrototype createGraphPrototype(final boolean tree) {
-        GraphPrototype graphPrototype;
+    public GraphPrototype createGraphPrototype() {
+        // This initial graph prototype ensures that ClassActors are created for
+        // all objects hanging off static fields.
+        GraphPrototype graphPrototype = new GraphPrototype(null);
+
         int numberOfClassActors = 0;
         int numberOfCompilationThreads = threadsOption.getValue();
         final CompiledPrototype compiledPrototype = new CompiledPrototype(numberOfCompilationThreads);
@@ -76,15 +79,16 @@ public final class PrototypeGenerator {
             }
             numberOfClassActors = currentNumberOfClasses();
             if (compiledPrototype.compile()) {
-                graphPrototype = new GraphPrototype(compiledPrototype, tree);
+                graphPrototype = new GraphPrototype(compiledPrototype);
             }
         } while (currentNumberOfClasses() != numberOfClassActors);
 
         compiledPrototype.checkRequiredImageMethods();
         compiledPrototype.compileFoldableMethods();
+        assert ClassDependencyManager.invalidTargetMethods.isEmpty();
         compiledPrototype.link();
 
-        graphPrototype = new GraphPrototype(compiledPrototype, tree);
+        graphPrototype = new GraphPrototype(compiledPrototype);
 
         Code.bootCodeRegion().trim();
         return graphPrototype;
@@ -103,7 +107,7 @@ public final class PrototypeGenerator {
             threadsOption.setValue(1);
         }
 
-        final GraphPrototype graphPrototype = createGraphPrototype(tree);
+        final GraphPrototype graphPrototype = createGraphPrototype();
         final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null, threadsOption.getValue());
         return dataPrototype;
     }

@@ -766,7 +766,8 @@ public class MaxineTester {
             // the test failed.
             String errorStr = getMaxvmErrorString(expectedResult);
             if (timingOption.getValue()) {
-                out().print(right16(" ----    ") + right16(errorStr));
+                float ratio = maxResult.timeMs / (float) baseResult.timeMs;
+                out().print(right16(maxResult.timeMs + " ms ") + right16(Strings.fixedDouble(ratio, 3) + "x " + errorStr));
             } else {
                 out().print(left16(config + ": " + errorStr));
             }
