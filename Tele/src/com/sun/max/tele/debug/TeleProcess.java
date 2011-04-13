@@ -754,9 +754,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
         return platform.pageSize;
     }
 
-    public final int read(Address address, ByteBuffer buffer, int offset, int length) throws DataIOError {
+    public final int read(Address address, ByteBuffer buffer, int offset, int length) throws DataIOError, TerminatedProcessIOException {
         if (processState == TERMINATED) {
-            throw new DataIOError(address, "Attempt to read the memory when the process is in state " + TERMINATED);
+            throw new TerminatedProcessIOException("Attempt to read the memory when the process is in state " + TERMINATED);
         }
         if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
             throw new DataIOError(address, "Reading from process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
@@ -770,9 +770,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleVM
         return bytesRead;
     }
 
-    public final int write(ByteBuffer buffer, int offset, int length, Address address) throws DataIOError, IndexOutOfBoundsException {
+    public final int write(ByteBuffer buffer, int offset, int length, Address address) throws DataIOError, IndexOutOfBoundsException, TerminatedProcessIOException {
         if (processState == TERMINATED) {
-            throw new DataIOError(address, "Attempt to write to memory when the process is in state " + TERMINATED);
+            throw new TerminatedProcessIOException("Attempt to write to memory when the process is in state " + TERMINATED);
         }
         if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
             //TeleWarning.message("Writing to process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
