@@ -268,6 +268,9 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Color vmStoppedWithInvalidReferenceBackgroundColor() {
         return InspectorStyle.SunBlue1;
     }
+    public Color vmNoProcessBackgroundColor() {
+        return paleGray;
+    }
 
     private static final Color debugSelectionBorderColor = InspectorStyle.Blue;
     private static final Color debugBreakpointBorderColor = InspectorStyle.Orange;
