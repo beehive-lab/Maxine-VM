@@ -140,17 +140,15 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     }
 
     @Override
+    public void vmProcessTerminated() {
+        forceRefresh();
+    }
+
+    @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
-    }
-
-    @Override
-    public void vmProcessTerminated() {
-        Trace.line(1, tracePrefix() + " closing - process terminated");
-        viewPreferences.removeListener(this);
-        dispose();
     }
 
 }
