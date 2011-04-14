@@ -352,7 +352,7 @@ public class jmax {
 				InputStream in = url.openStream();
 				FileOutputStream out = new FileOutputStream(dst);
 				int read = 0;
-				byte[] buf = new byte[2048];
+				byte[] buf = new byte[2011];
 				while ((read = in.read(buf)) != -1) {
 					out.write(buf, 0, read);
 				}
