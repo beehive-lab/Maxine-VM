@@ -22,6 +22,8 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
+
 import com.sun.cri.ri.*;
 
 /**
@@ -33,9 +35,9 @@ import com.sun.cri.ri.*;
  * @author Laurent Daynes
  *
  */
-public final class CiAssumptions {
+public final class CiAssumptions implements Serializable {
 
-    public abstract static class Assumption {
+    public abstract static class Assumption implements Serializable {
         /**
          * Apply an assumption processor to the assumption.
          * @param processor the assumption processor to apply

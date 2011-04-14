@@ -1577,6 +1577,10 @@ public abstract class ClassActor extends Actor implements RiType {
         return ArrayClassActor.forComponentClassActor(this);
     }
 
+    public final RiType superType() {
+        return superClassActor;
+    }
+
     public final RiType componentType() {
         return componentClassActor;
     }
