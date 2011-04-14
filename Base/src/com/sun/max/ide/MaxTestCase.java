@@ -42,7 +42,7 @@ import junit.framework.*;
  * </pre><p>
  * If using the latter (colon-separated) form, then colons in an argument must be escaped with a backslash.
  */
-public class MaxTestCase extends TestCase {
+public abstract class MaxTestCase extends TestCase {
 
     public MaxTestCase() {
         this(null);

@@ -31,12 +31,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.*;
 
-import junit.framework.*;
-
-import org.junit.internal.requests.*;
 import org.junit.runner.*;
 import org.junit.runner.notification.*;
-import org.junit.runners.AllTests;
 
 import test.com.sun.max.vm.ExternalCommand.OutputComparison;
 import test.com.sun.max.vm.ExternalCommand.Result;
@@ -505,16 +501,6 @@ public class MaxineTester {
             final File failedFile = new File(args[2]);
 
             final Class<?> testClass = Class.forName(testClassName);
-            final Test test = AllTests.testFromSuiteMethod(testClass);
-
-            final Runner runner = new AllTests(testClass) {
-                @Override
-                public void run(RunNotifier notifier) {
-                    final TestResult result = new TestResult();
-                    result.addListener(createAdaptingListener(notifier));
-                    test.run(result);
-                }
-            };
 
             final PrintStream passed = new PrintStream(new FileOutputStream(passedFile));
             final PrintStream failed = new PrintStream(new FileOutputStream(failedFile));
@@ -549,14 +535,7 @@ public class MaxineTester {
                 }
             });
 
-            final Request request = new ClassRequest(testClass) {
-                @Override
-                public Runner getRunner() {
-                    return runner == null ? super.getRunner() : runner;
-                }
-            };
-
-            junit.run(request);
+            junit.run(testClass);
             passed.close();
             failed.close();
         }
