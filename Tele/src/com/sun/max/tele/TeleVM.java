@@ -1291,6 +1291,8 @@ public abstract class TeleVM implements MaxVM {
                 }
                 hubWord = nextHubWord;
             }
+        } catch (TerminatedProcessIOException terminatedProcessIOException) {
+            return false;
         } catch (DataIOError dataAccessError) {
             return false;
         } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
@@ -1441,6 +1443,8 @@ public abstract class TeleVM implements MaxVM {
                 offset++;
             }
             return new String(chars);
+        } catch (TerminatedProcessIOException terminatedProcessIOException) {
+            return null;
         } catch (DataIOError dataIOError) {
             return null;
         }
