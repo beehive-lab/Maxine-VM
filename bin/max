@@ -303,7 +303,10 @@ function jmax() {
     if [ ! -e $maxine_dir/bin/jmax.class -o $maxine_dir/bin/jmax.class -ot $maxine_dir/bin/jmax.java ]; then
         $JAVA_HOME/bin/javac -d $maxine_dir/bin $maxine_dir/bin/jmax.java
     fi
-    $jvm -ea -cp $maxine_dir/bin jmax $@ || { echo "Error running jmax"; exit 1; } 
+    $jvm -ea -cp $maxine_dir/bin jmax $@
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
 }
 
 # Call jmax now to fail-fast on errors in the projects.properties files.
@@ -753,14 +756,10 @@ configs_usage=""
 configs_help="prints the predefined image configurations"
 
 function run_configs() {
-    #image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath) test.com.sun.max.vm.MaxineTesterConfiguration`
-    
-    #echo $image_configs
-    
     printf "The available preconfigured option sets are:\n\n"
     printf "    %-15s %s\n" "Configuration" "Expansion"
 
-    ${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath) test.com.sun.max.vm.MaxineTesterConfiguration | \
+    ${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath_noresolve) test.com.sun.max.vm.MaxineTesterConfiguration | \
     while read image_config; do
         image_config_args="${image_config/*\#/}"
         printf "    @%-15s %s\n" "${image_config/\#*/}" "${image_config_args//,/ }"
