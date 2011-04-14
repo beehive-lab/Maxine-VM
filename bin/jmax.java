@@ -21,6 +21,7 @@
  * questions.
  */
 import java.io.*;
+import java.net.*;
 import java.util.*;
 
 /**
@@ -57,13 +58,23 @@ public class jmax {
 	
 	static HashMap<String, Project> projects = new HashMap<String, Project>();
 	static HashMap<String, Library> libs = new HashMap<String, Library>();
+
+	static String[] JUNIT_URLS = {
+		"http://repo1.maven.org/maven2/junit/junit/4.8/junit-4.8.jar"
+	};
 	
-	static Library JUNIT4     = new Library("JUNIT4", "${JUNIT4_CP}");
-	static Library JDK_TOOLS  = new Library("JDK_TOOLS", "${JAVA_HOME}/lib/tools.jar", false);
+	static String[] CHECKSTYLE_URLS = {
+		"http://dirigent.googlecode.com/svn-history/r121/trunk/dirigent-metafacade/lib/ext/checkstyle/checkstyle-5.3-all.jar",
+		"jar:http://heanet.dl.sourceforge.net/project/checkstyle/checkstyle/5.3/checkstyle-5.3-bin.zip!/checkstyle-5.3/checkstyle-5.3-all.jar"
+    };
+	
+	static Library JUNIT      = new Library("JUNIT",     "${HOME}/.maxine/junit-4.8.jar", true, JUNIT_URLS);
+	static Library CHECKSTYLE = new Library("CHECKSTYLE", "${HOME}/.maxine/checkstyle-5.3-all.jar", true, CHECKSTYLE_URLS);
+	static Library JDK_TOOLS  = new Library("JDK_TOOLS",  "${JAVA_HOME}/lib/tools.jar", false);
 	
 	static Project CRI        = new Project("CRI",       "src",      null);
 	static Project C1X        = new Project("C1X",       "src",      "CRI");
-	static Project Base       = new Project("Base",      "src,test", "JUNIT4");
+	static Project Base       = new Project("Base",      "src,test", "JUNIT");
 	static Project Assembler  = new Project("Assembler", "src,test", "Base");
 	static Project VM         = new Project("VM",        "src,test", "C1X,Assembler,JDK_TOOLS");
 	static Project T1X        = new Project("T1X",       "src",      "VM");
@@ -107,6 +118,8 @@ public class jmax {
 			Project p = project(request.get(1));
 			String pfx = p.baseDir.getPath() + File.separatorChar + p.name + File.separatorChar;
 			response.println(toString(p.sourceDirs, " ", pfx));
+		} else if (cmd.equals("library")) {
+			response.println(library(request.get(1)).appendToClasspath(new StringBuilder()).toString());
 		} else if (cmd.equals("output_dir")) {
 			// Return the absolute output directory of a project
 			response.println(project(request.get(1)).outputDir());
@@ -142,6 +155,15 @@ public class jmax {
 		return p;
 	}
 	
+	/**
+	 * Gets the library for a given name, asserting that the library exists.
+	 */
+	static Library library(String name) {
+		Library l = libs.get(name);
+		assert l != null : "library named '" + name + "' not found";
+		return l;
+	}
+
 	/**
 	 * Gets the value of a named property from a given property set, asserting it exists.
 	 * 
@@ -247,7 +269,7 @@ public class jmax {
 			this.name = name;
 		}
 		
-		abstract void appendToClasspath(StringBuilder cp);
+		abstract StringBuilder appendToClasspath(StringBuilder cp);
 		
 		@Override
 		public boolean equals(Object obj) {
@@ -278,28 +300,73 @@ public class jmax {
 	
 	static final class Library extends Dependency {
 		final File lib;
+		final boolean mustExist;
+		final String[] urls;
 
 		public Library(String name, String path) {
 			this(name, path, true);
 		}
 		
-		public Library(String name, String path, boolean mustExist) {
+		public Library(String name, String path, boolean mustExist, String... urls) {
 			super(name);
 			lib = new File(expandVars(path));
-			assert !mustExist || lib.exists() : "required library " + name + " not found";
+			this.mustExist = mustExist;
+			this.urls = urls;
 			assert !projects.containsKey(name) : name + " cannot be both a library and a project";
 			libs.put(name, this);
 		}
 		
 		@Override
-		void appendToClasspath(StringBuilder cp) {
+		StringBuilder appendToClasspath(StringBuilder cp) {
+			if (mustExist && !lib.exists()) {
+				download(lib, urls);
+			}
+			
 			if (lib.exists()) {
 				if (cp.length() != 0) {
 					cp.append(File.pathSeparatorChar);
 				}
 				cp.append(lib.getPath());
+			} else {
+				throw new Error("required library does not exist and could not be downloaded: " + name);
+			}
+			return cp;
+		}
+	}
+	
+	/**
+	 * Downloads content from a given URL to a given file.
+	 * 
+	 * @param dst where to write the content
+	 * @param urls the URLs to try, stopping after the first successful one
+	 */
+	static void download(File dst, String[] urls) {
+		File parent = dst.getParentFile();
+		if (!parent.isDirectory() && !parent.mkdirs()) {
+			throw new Error("Could not make directory: " + parent);
+		}
+		for (String s : urls) {
+			try {
+				System.err.println("Downloading " + s + " to " + dst);
+				URL url = new URL(s);
+				InputStream in = url.openStream();
+				FileOutputStream out = new FileOutputStream(dst);
+				int read = 0;
+				byte[] buf = new byte[2048];
+				while ((read = in.read(buf)) != -1) {
+					out.write(buf, 0, read);
+				}
+				out.close();
+				in.close();
+				return;
+			} catch (MalformedURLException e) {
+				throw new Error("Error in URL" + s, e);
+			} catch (IOException e) {
+				System.err.println("Error reading from " + s + ": " + e);
+				dst.delete();
 			}
 		}
+		throw new Error("Could not download content to " + dst + " from " + Arrays.toString(urls));
 	}
 	
 	static final class Project extends Dependency {
@@ -377,7 +444,7 @@ public class jmax {
 		}
 		
 		@Override
-		void appendToClasspath(StringBuilder cp) {
+		StringBuilder appendToClasspath(StringBuilder cp) {
 			char sep = File.separatorChar;
 			if (cp.length() != 0) {
 				cp.append(File.pathSeparatorChar);
@@ -392,6 +459,7 @@ public class jmax {
 			if (classes.isDirectory()) {
 				cp.append(File.pathSeparatorChar).append(classes.getPath());
 			}
+			return cp;
 		}
 	}
 }
