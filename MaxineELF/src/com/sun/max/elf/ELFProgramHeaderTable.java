@@ -55,8 +55,6 @@
  */
 package com.sun.max.elf;
 
-import com.sun.max.program.ProgramError;
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -217,7 +215,7 @@ public class ELFProgramHeaderTable {
         } else if (header.is64Bit()) {
             return readEntry64(fis, is);
         }
-        throw ProgramError.unexpected("unknown bit size for ELF header");
+        throw new Error("unknown bit size for ELF header");
     }
 
     public Entry32 readEntry32(RandomAccessFile fis, ELFDataInputStream is) throws IOException {

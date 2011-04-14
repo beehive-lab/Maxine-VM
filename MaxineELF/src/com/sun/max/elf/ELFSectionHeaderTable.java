@@ -55,8 +55,6 @@
  */
 package com.sun.max.elf;
 
-import com.sun.max.program.ProgramError;
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -332,7 +330,7 @@ public class ELFSectionHeaderTable {
         } else if (header.is64Bit()) {
             return readEntry64(fis, is);
         }
-        throw ProgramError.unexpected("unknown bit size");
+        throw new Error("unknown bit size");
     }
 
     private Entry32 readEntry32(RandomAccessFile fis, ELFDataInputStream is) throws IOException {
@@ -404,12 +402,12 @@ public class ELFSectionHeaderTable {
             default:
                 break;
         }
-        throw ProgramError.unexpected("unknown section number");
+        throw new Error("unknown section number");
     }
     Entry64  setSectionHeaderForNull(Entry64 e) throws IOException {
         e.sh_name = strtab.getIndex("\0");
         if (e.sh_name == -1) {
-            throw ProgramError.unexpected("Unknown Section Name");
+            throw new Error("Unknown Section Name");
         }
         e.sh_type = SHT_NULL;
         e.sh_addr = 0;   // If the section will appear in the memory image of a process then it should contain the address else it should be 0.
@@ -426,7 +424,7 @@ public class ELFSectionHeaderTable {
     Entry64 setSectionHeaderForMaxvm(Entry64 e, long size) throws IOException {
         e.sh_name = strtab.getIndex("maxvm_image");
         if (e.sh_name == -1) {
-            throw ProgramError.unexpected("Unknown Section Name");
+            throw new Error("Unknown Section Name");
         }
         e.sh_type = SHT_PROGBITS;
         e.sh_addr = 0;   // If the section will appear in the memory image of a process then it should contain the address else it should be 0.
@@ -447,7 +445,7 @@ public class ELFSectionHeaderTable {
     Entry64 setSectionHeaderForShStrTab(Entry64 e, long size) throws IOException {
         e.sh_name = strtab.getIndex(".shstrtab");
         if (e.sh_name == -1) {
-            throw ProgramError.unexpected("Unknown Section Name");
+            throw new Error("Unknown Section Name");
         }
         e.sh_type = SHT_STRTAB;
         e.sh_addr = 0;   // If the section will appear in the memory image of a process then it should contain the address else it should be 0.
@@ -467,7 +465,7 @@ public class ELFSectionHeaderTable {
     Entry64  setSectionHeaderForSymTab(Entry64 e) throws IOException {
         e.sh_name = strtab.getIndex(".symtab");
         if (e.sh_name == -1) {
-            throw ProgramError.unexpected("Unknown Section Name");
+            throw new Error("Unknown Section Name");
         }
 
         e.sh_type = SHT_SYMTAB;
@@ -544,7 +542,7 @@ public class ELFSectionHeaderTable {
         } else if (header.is64Bit()) {
             return writeEntry64(sectionName, size);
         }
-        throw ProgramError.unexpected("unknown bit size");
+        throw new Error("unknown bit size");
     }
 
     private Entry writeEntry32() {

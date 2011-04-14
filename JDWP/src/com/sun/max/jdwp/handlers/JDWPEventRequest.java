@@ -26,15 +26,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
-import com.sun.max.Utils;
 import com.sun.max.jdwp.constants.StepDepth;
 import com.sun.max.jdwp.constants.SuspendPolicy;
 import com.sun.max.jdwp.data.JDWPException;
 import com.sun.max.jdwp.data.JDWPLocation;
 import com.sun.max.jdwp.data.JDWPNotImplementedException;
 import com.sun.max.jdwp.data.JDWPSender;
-import com.sun.max.jdwp.protocol.EventRequestCommands;
 import com.sun.max.jdwp.protocol.EventCommands.Composite;
+import com.sun.max.jdwp.protocol.EventRequestCommands;
 import com.sun.max.jdwp.vm.data.LineTableEntry;
 import com.sun.max.jdwp.vm.proxy.JdwpCodeLocation;
 import com.sun.max.jdwp.vm.proxy.ThreadProvider;
@@ -92,11 +91,12 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
         modifiers.remove(modifier);
     }
 
+    @SuppressWarnings("unchecked")
     private <JDWPEventModifier_Type extends JDWPEventModifier> JDWPEventModifier_Type lookupMandatoryModifier(Class<JDWPEventModifier_Type> klass) throws JDWPException {
 
         for (JDWPEventModifier m : modifiers) {
             if (m.getClass().equals(klass)) {
-                return Utils.cast(klass, m);
+                return (JDWPEventModifier_Type) m;
             }
         }
 
@@ -122,10 +122,6 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
         } catch (IOException e) {
             LOGGER.severe("Could not send event, because of exception: " + e);
         }
-    }
-
-    public Class<? extends JDWPEventModifier>[] validModifiers() {
-        return Utils.cast(new Class[0]);
     }
 
     public static class ClassPrepare extends JDWPEventRequest<Composite.Events.ClassUnload> {

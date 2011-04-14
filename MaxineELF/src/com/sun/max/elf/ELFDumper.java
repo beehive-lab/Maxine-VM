@@ -55,8 +55,6 @@
  */
 package com.sun.max.elf;
 
-import com.sun.max.program.ProgramError;
-
 import static com.sun.max.elf.StringUtil.leftJustify;
 import static com.sun.max.elf.StringUtil.rightJustify;
 
@@ -104,7 +102,7 @@ public final class ELFDumper {
             }
 
         } catch (ELFHeader.FormatError e) {
-            throw ProgramError.unexpected("Invalid ELF file", e);
+            throw new Error("Invalid ELF file", e);
         }
     }
 
