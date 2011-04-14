@@ -94,6 +94,11 @@ public interface RiType {
      * @return a new compiler interface type representing an array of this type
      */
     RiType arrayOf();
+    
+    /**
+     * Gets the super type of this type or {@code null} if no such type exists.
+     */
+    RiType superType();
 
     /**
      * Gets the kind of this compiler interface type.

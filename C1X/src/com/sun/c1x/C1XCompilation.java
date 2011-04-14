@@ -23,17 +23,16 @@
 
 package com.sun.c1x;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.observer.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -75,19 +74,6 @@ public final class C1XCompilation {
 
     private IR hir;
 
-    /**
-     * Object used to generate the trace output that can be fed to the
-     * <a href="https://c1visualizer.dev.java.net/">C1 Visualizer</a>.
-     */
-    private final CFGPrinter cfgPrinter;
-
-    /**
-     * Buffer that {@link #cfgPrinter} writes to. Using a buffer allows writing to the
-     * relevant {@linkplain CFGPrinter#cfgFileStream() file} to be serialized so that
-     * traces for independent compilations are not interleaved.
-     */
-    private ByteArrayOutputStream cfgPrinterBuffer;
-
     private LIRGenerator lirGenerator;
 
     /**
@@ -110,13 +96,9 @@ public final class C1XCompilation {
         this.registerConfig = method == null ? compiler.globalStubRegisterConfig : runtime.getRegisterConfig(method);
         this.placeholderState = method != null && method.minimalDebugInfo() ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
 
-        CFGPrinter cfgPrinter = null;
-        if (C1XOptions.PrintCFGToFile && method != null && !TTY.isSuppressed()) {
-            cfgPrinterBuffer = new ByteArrayOutputStream();
-            cfgPrinter = new CFGPrinter(cfgPrinterBuffer, target);
-            cfgPrinter.printCompilation(method);
+        if (compiler.isObserved()) {
+            compiler.fireCompilationStarted(new CompilationEvent(this));
         }
-        this.cfgPrinter = cfgPrinter;
     }
 
     public void close() {
@@ -222,8 +204,9 @@ public final class C1XCompilation {
         if (!map.build(!isOsrCompilation && C1XOptions.PhiLoopStores)) {
             throw new CiBailout("build of BlockMap failed for " + method);
         } else {
-            if (cfgPrinter() != null) {
-                cfgPrinter().printCFG(method, map, method.code().length, "BlockListBuilder " + CiUtil.format("%f %r %H.%n(%p)", method, true), false, false);
+            if (compiler.isObserved()) {
+                String label = CiUtil.format("BlockListBuilder %f %r %H.%n(%p)", method, true);
+                compiler.fireCompilationEvent(new CompilationEvent(this, label, map, method.code().length));
             }
         }
         map.cleanup();
@@ -276,26 +259,12 @@ public final class C1XCompilation {
         } catch (Throwable t) {
             return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
         } finally {
-            flushCfgPrinterToFile();
+            if (compiler.isObserved()) {
+                compiler.fireCompilationFinished(new CompilationEvent(this));
+            }
         }
 
         return new CiResult(targetMethod, null, stats);
-    }
-
-    private void flushCfgPrinterToFile() {
-        if (cfgPrinter != null) {
-            cfgPrinter.flush();
-            OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
-            if (cfgFileStream != null) {
-                synchronized (cfgFileStream) {
-                    try {
-                        cfgFileStream.write(cfgPrinterBuffer.toByteArray());
-                    } catch (IOException e) {
-                        TTY.println("WARNING: Error writing CFGPrinter output for %s to disk: %s", method, e);
-                    }
-                }
-            }
-        }
     }
 
     public IR emitHIR() {
@@ -356,9 +325,8 @@ public final class C1XCompilation {
                 targetMethod.setAssumptions(assumptions);
             }
 
-            if (cfgPrinter() != null) {
-                cfgPrinter().printCFG(hir.startBlock, "After code generation", false, true);
-                cfgPrinter().printMachineCode(runtime.disassemble(targetMethod), null);
+            if (compiler.isObserved()) {
+                compiler.fireCompilationEvent(new CompilationEvent(this, "After code generation", hir.startBlock, false, true, targetMethod));
             }
 
             if (C1XOptions.PrintTimers) {
@@ -368,10 +336,6 @@ public final class C1XCompilation {
         }
 
         return null;
-    }
-
-    public CFGPrinter cfgPrinter() {
-        return cfgPrinter;
     }
 
     public int nextID() {

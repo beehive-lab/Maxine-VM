@@ -36,6 +36,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.BlockBegin.BlockFlag;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.LIRInstruction.OperandMode;
+import com.sun.c1x.observer.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.value.FrameState.PhiProcedure;
@@ -2130,7 +2131,7 @@ public final class LinearScan {
                 LIRDebugInfo.setBit(frameRefMap, objectAddress.index());
             } else {
                 Value lock = state.lockAt(i);
-                if (lock.isConstant() && lock.asConstant().asObject() instanceof Class<?>) {
+                if (lock.isConstant() && compilation.runtime.getJavaClass(lock.asConstant()) != null) {
                    // lock on class for synchronized static method
                    values[valueIndex++] = lock.asConstant();
                 } else {
@@ -2349,8 +2350,8 @@ public final class LinearScan {
             TTY.println();
         }
 
-        if (compilation.cfgPrinter() != null) {
-            compilation.cfgPrinter().printIntervals(this, Arrays.copyOf(intervals, intervalsSize), label);
+        if (compilation.compiler.isObserved()) {
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, label, this, intervals, intervalsSize));
         }
     }
 
@@ -2362,8 +2363,8 @@ public final class LinearScan {
             TTY.println();
         }
 
-        if (compilation.cfgPrinter() != null) {
-            compilation.cfgPrinter().printCFG(compilation.hir().startBlock, label, hirValid, true);
+        if (compilation.compiler.isObserved()) {
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, label, compilation.hir().startBlock, hirValid, true));
         }
     }
 

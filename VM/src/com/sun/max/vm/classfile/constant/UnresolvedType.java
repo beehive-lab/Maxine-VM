@@ -189,6 +189,10 @@ public abstract class UnresolvedType implements RiType {
         throw unresolved("exactType()");
     }
 
+    public RiType superType() {
+        throw unresolved("superType()");
+    }
+
     /**
      * Gets the compiler interface type representing an array of this compiler interface type.
      * @return the compiler interface type representing an array with elements of this compiler interface type
