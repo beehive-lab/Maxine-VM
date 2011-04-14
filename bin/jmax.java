@@ -25,62 +25,15 @@ import java.net.*;
 import java.util.*;
 
 /**
- * Database of Java project configurations used by the bin/max script. This class includes definitions of the core
- * Maxine projects. Extra projects can be specified via the "extra_projects_dirs" environment variable. The value of
- * this variable is a comma separated list of directories, each of which must contain a "projects.properties" file. This
- * file is loaded to augment the set of projects. For example, projects.properties in the Maxine Virtual Edition
- * project, would be:
- *
- * <pre>
- * YANFS.sourceDirs=src,test
- * YANFS.dependencies=
- *
- * VEBase.sourceDirs=src
- * VEBase.dependencies=VM
- *
- * VEJDK.sourceDirs=src
- * VEJDK.dependencies=
- *
- * ...
- *
- * VEMain.sourceDirs=src,test
- * VEMain.dependencies=JNodeFS,NFSServer,VEBase,...
- *
- * </pre>
- *
- * Note that only direct dependencies must be declared. Declaring transitive dependencies is harmless but not necessary.
+ * Database of Java project configurations used by the bin/max script.
+ * The projects are loaded from the "projects.properties" file in the
+ * core Maxine directory as well as from the directories specified by
+ * the "extra_projects_dirs" environment variable.
  */
 public class jmax {
 
-    static File maxine_dir = new File(getenv("maxine_dir", true)).getAbsoluteFile();
-
-    static HashMap<String, Project> projects = new HashMap<String, Project>();
-    static HashMap<String, Library> libs = new HashMap<String, Library>();
-
-    static String[] JUNIT_URLS = { "http://repo1.maven.org/maven2/junit/junit/4.8/junit-4.8.jar"};
-
-    static String[] CHECKSTYLE_URLS = { "http://dirigent.googlecode.com/svn-history/r121/trunk/dirigent-metafacade/lib/ext/checkstyle/checkstyle-5.3-all.jar",
-                    "jar:http://heanet.dl.sourceforge.net/project/checkstyle/checkstyle/5.3/checkstyle-5.3-bin.zip!/checkstyle-5.3/checkstyle-5.3-all.jar"};
-
-    static Library JUNIT = new Library("JUNIT", "${HOME}/.maxine/junit-4.8.jar", true, JUNIT_URLS);
-    static Library CHECKSTYLE = new Library("CHECKSTYLE", "${HOME}/.maxine/checkstyle-5.3-all.jar", true, CHECKSTYLE_URLS);
-    static Library JDK_TOOLS = new Library("JDK_TOOLS", "${JAVA_HOME}/lib/tools.jar", false);
-
-    static Project CRI = new Project("CRI", "src", null);
-    static Project C1X = new Project("C1X", "src", "CRI");
-    static Project Base = new Project("Base", "src,test", "JUNIT");
-    static Project Assembler = new Project("Assembler", "src,test", "Base");
-    static Project VM = new Project("VM", "src,test", "C1X,Assembler,JDK_TOOLS");
-    static Project T1X = new Project("T1X", "src", "VM");
-    static Project MaxineELF = new Project("MaxineELF", "src", null);
-    static Project VMDI = new Project("VMDI", "src", null);
-    static Project Tele = new Project("Tele", "src", "VM,MaxineELF,VMDI");
-    static Project JDWP = new Project("JDWP", "src", "VMDI");
-    static Project TeleJDWP = new Project("TeleJDWP", "src", "Tele,JDWP");
-    static Project Inspector = new Project("Inspector", "src,test", "Tele");
-
     /**
-     * Processes the commands sent by the max script.
+     * Handles commands sent by the max script.
      *
      * @param request the command and its arguments
      * @param response where the response it to be written
@@ -117,14 +70,19 @@ public class jmax {
         } else if (cmd.equals("output_dir")) {
             // Return the absolute output directory of a project
             response.println(project(request.get(1)).outputDir());
-        } else if (cmd.equals("projects_info")) {
-            // Return a listing of each project and its configuration properties
-            for (Dependency dep : sortedDependencies(false)) {
-                Project p = (Project) dep;
-                response.println(p);
-                response.println("  baseDir: " + p.baseDir);
-                response.println("  sourceDirs: " + p.sourceDirs);
-                response.println("  dependencies: " + p.directDeps);
+        } else if (cmd.equals("properties")) {
+            for (File dir : projectDirs) {
+                response.println("# file: " + new File(dir, "projects.properties"));
+                for (Library l : libs.values()) {
+                    if (l.baseDir.equals(dir)) {
+                        l.printProperties(response);
+                    }
+                }
+                for (Project p : projects.values()) {
+                    if (p.baseDir.equals(dir)) {
+                        p.printProperties(response);
+                    }
+                }
             }
         } else {
             throw new Error("Command '" + cmd + "' not known");
@@ -159,13 +117,19 @@ public class jmax {
     }
 
     /**
-     * Gets the value of a named property from a given property set, asserting it exists.
+     * Gets and removes the value of a named property from a given property set.
      *
-     * @param file the file from which {@code props} was loaded
+     * @param file the file from which {@code props} was loaded. If this is non-null, then the property must exist
      */
     static String get(Properties props, String key, File file) {
         String value = props.getProperty(key);
-        assert value != null : "missing property " + key + " in " + file.getAbsolutePath();
+        if (value == null) {
+            if (file != null) {
+                throw new Error("missing property " + key + " in " + file);
+            }
+        } else {
+            props.remove(key);
+        }
         return value;
     }
 
@@ -183,34 +147,28 @@ public class jmax {
             throw new Error("Error loading projects from " + f.getAbsolutePath(), e);
         }
 
-        HashMap<String, Project> loaded = new HashMap<String, Project>();
-        for (Object key : props.keySet()) {
-            String name = (String) key;
-            int period = name.indexOf('.');
-            assert period != -1 : "project property key must contain a period: " + name;
-            name = name.substring(0, period);
-            if (!loaded.containsKey(name)) {
-                String sourceDirs = get(props, name + ".sourceDirs", f);
-                String deps = get(props, name + ".dependencies", f);
-                new Project(dir, loaded, name, sourceDirs, deps);
-            }
+        String[] names = split(get(props, "projects", dir));
+        for (String name : names) {
+            assert !projects.containsKey(name) : "cannot override project " + name + " in " + project(name).baseDir + " with project of the same name in " + dir;
+            String pfx = "project." + name;
+            String sourceDirs = get(props, pfx + ".sourceDirs", f);
+            String deps = get(props, pfx + ".dependencies", f);
+            new Project(dir, name, sourceDirs, deps);
         }
 
-        for (Project p : loaded.values()) {
-            Project o = projects.put(p.name, p);
-            assert o == null : "cannot override project " + o + " in " + o.baseDir + " with project of the same name in " + dir;
-        }
-    }
-
-    static {
-        String value = getenv("extra_projects_dirs", false);
+        String value = get(props, "libraries", null);
         if (value != null) {
-            for (String path : value.split("\\s*,\\s*")) {
-                File dir = new File(path);
-                assert dir.isDirectory() : "extra projects path does not denote a directory: " + path;
-                loadProjects(dir);
+            names = split(value);
+            for (String name : names) {
+                assert !libs.containsKey(name) : "cannot redefine library " + name;
+                String pfx = "library." + name;
+                String path = get(props, pfx + ".path", f);
+                boolean optional = Boolean.valueOf(get(props, pfx + ".optional", f));
+                String urls = get(props, pfx + ".urls", f);
+                new Library(dir, name, path, !optional, urls);
             }
         }
+        assert props.isEmpty() : "unhandled properties in " + f + ":\n" + toString(props.keySet(), "\n", null) + "\n";
     }
 
     static String toString(Iterable< ? extends Object> iterable, String sep, String pfx) {
@@ -252,7 +210,23 @@ public class jmax {
         return sorted;
     }
 
+    static Set<File> projectDirs = new HashSet<File>();
+    static HashMap<String, Project> projects = new HashMap<String, Project>();
+    static HashMap<String, Library> libs = new HashMap<String, Library>();
+
     public static void main(String[] args) throws Exception {
+        File maxineDir = new File(getenv("maxine_dir", true));
+        projectDirs.add(maxineDir);
+        loadProjects(maxineDir);
+        String value = getenv("extra_projects_dirs", false);
+        if (value != null) {
+            for (String path : split(value)) {
+                File dir = new File(path);
+                assert dir.isDirectory() : "extra projects path does not denote a directory: " + path;
+                projectDirs.add(dir);
+                loadProjects(dir);
+            }
+        }
         process(Arrays.asList(args), System.out);
     }
 
@@ -278,6 +252,8 @@ public class jmax {
         public String toString() {
             return name;
         }
+
+        abstract void printProperties(PrintStream out);
     }
 
     static String expandVars(String s) {
@@ -296,27 +272,27 @@ public class jmax {
 
     static final class Library extends Dependency {
 
-        final File lib;
+        final File baseDir;
+        final String path;
         final boolean mustExist;
-        final String[] urls;
+        final String urls;
 
-        public Library(String name, String path) {
-            this(name, path, true);
-        }
-
-        public Library(String name, String path, boolean mustExist, String... urls) {
+        public Library(File baseDir, String name, String path, boolean mustExist, String urls) {
             super(name);
-            lib = new File(expandVars(path));
+            this.baseDir = baseDir;
+            this.path = path;
             this.mustExist = mustExist;
-            this.urls = urls;
+            this.urls = urls.trim();
             assert !projects.containsKey(name) : name + " cannot be both a library and a project";
             libs.put(name, this);
         }
 
         @Override
         StringBuilder appendToClasspath(StringBuilder cp) {
+            File lib = new File(expandVars(path));
             if (mustExist && !lib.exists()) {
-                download(lib, urls);
+                assert !urls.isEmpty() : "cannot find required library " + name;
+                download(lib, split(urls));
             }
 
             if (lib.exists()) {
@@ -324,10 +300,15 @@ public class jmax {
                     cp.append(File.pathSeparatorChar);
                 }
                 cp.append(lib.getPath());
-            } else {
-                throw new Error("required library does not exist and could not be downloaded: " + name);
             }
             return cp;
+        }
+
+        @Override
+        void printProperties(PrintStream out) {
+            out.println("library." + name + ".path=" + path);
+            out.println("library." + name + ".optional=" + !mustExist);
+            out.println("library." + name + ".urls=" + jmax.toString(Arrays.asList(urls), ", ", null));
         }
     }
 
@@ -366,6 +347,13 @@ public class jmax {
         throw new Error("Could not download content to " + dst + " from " + Arrays.toString(urls));
     }
 
+    static String[] split(String listValue) {
+        if (listValue.isEmpty()) {
+            return new String[0];
+        }
+        return listValue.split("\\s*[ ,]\\s*");
+    }
+
     static final class Project extends Dependency {
 
         final File baseDir;
@@ -374,26 +362,21 @@ public class jmax {
         /**
          * The direct dependencies of this project.
          */
-        final List<String> directDeps;
+        final List<String> dependencies;
 
-        public Project(File baseDir, HashMap<String, Project> projects, String name, String sourceDirs, String deps) {
+        public Project(File baseDir, String name, String sourceDirs, String deps) {
             super(name);
             this.baseDir = baseDir;
             assert sourceDirs != null && !sourceDirs.isEmpty();
-            assert deps == null || !deps.isEmpty();
-            this.sourceDirs = Arrays.asList(sourceDirs.split("\\s*,\\s*"));
-            if (deps == null) {
-                this.directDeps = Collections.emptyList();
+            this.sourceDirs = Arrays.asList(split(sourceDirs));
+            if (deps == null || deps.isEmpty()) {
+                this.dependencies = Collections.emptyList();
             } else {
-                this.directDeps = Arrays.asList(deps.split("\\s*,\\s*"));
+                this.dependencies = Arrays.asList(split(deps));
             }
 
             assert !libs.containsKey(name) : name + " cannot be both a library and a project";
             projects.put(name, this);
-        }
-
-        public Project(String name, String srcPaths, String deps) {
-            this(maxine_dir, projects, name, srcPaths, deps);
         }
 
         @Override
@@ -411,7 +394,7 @@ public class jmax {
                 return deps;
             }
 
-            for (String name : directDeps) {
+            for (String name : dependencies) {
                 assert !name.equals(this.name);
                 Library l = jmax.libs.get(name);
                 if (l != null) {
@@ -459,5 +442,12 @@ public class jmax {
             }
             return cp;
         }
+
+        @Override
+        void printProperties(PrintStream out) {
+            out.println("project." + name + ".sourceDirs=" + jmax.toString(sourceDirs, ", ", null));
+            out.println("project." + name + ".dependencies=" + jmax.toString(dependencies, ", ", null));
+        }
+
     }
 }

@@ -306,6 +306,9 @@ function jmax() {
     $jvm -ea -cp $maxine_dir/bin jmax $@ || { echo "Error running jmax"; exit 1; } 
 }
 
+# Call jmax now to fail-fast on errors in the projects.properties files.
+jmax projects >/dev/null
+
 #=======================================
 # Utility for verbose execution
 #=======================================
@@ -860,7 +863,7 @@ function run_image() {
 #=======================================
 
 verify_usage="[options] patterns..."
-verify_help="verifies a set methods using the Maxine bytecode verifier
+verify_help="verifies a set of methods using the Maxine bytecode verifier
 
     Run the Maxine verifier over a set of specified methods available
     on the class path. To extend the class path, use one of the global
@@ -1479,9 +1482,9 @@ function run_jrockitbm() {
 #=======================================
 
 projects_usage=""
-projects_help="show projects"
+projects_help="show contents of all projects.properties files"
 function run_projects() {
-    run jmax projects_info 
+    run jmax properties 
 }
 
 #=======================================
