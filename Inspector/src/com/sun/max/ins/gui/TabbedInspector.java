@@ -177,9 +177,6 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
         assert inspectors.size() == length();
         inspectors.remove(inspector);
         inspector.dispose();
-        if (length() == 0) {
-            dispose();
-        }
     }
 
     /**

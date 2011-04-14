@@ -146,4 +146,11 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
         gui().moveToExposeDefaultMenu(this);
     }
 
+    @Override
+    public void vmProcessTerminated() {
+        for (MethodInspector inspector : this) {
+            inspector.dispose();
+        }
+    }
+
 }
