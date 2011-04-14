@@ -68,7 +68,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         }
 
         public boolean isEnabled() {
-            return inspection().hasProcess() && focus().hasThread();
+            return true;
         }
 
         public ThreadLocalsInspector activateView(Inspection inspection) {
@@ -126,8 +126,12 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     @Override
     public String getTextForTitle() {
         String title = viewManager.shortName() + ": ";
-        if (thread != null) {
+        if (!inspection().hasProcess()) {
+            title += inspection().nameDisplay().noProcessShortText();
+        } else if (thread != null) {
             title += inspection().nameDisplay().longNameWithState(thread);
+        } else {
+            title += inspection().nameDisplay().unavailableDataShortText();
         }
         return title;
     }
@@ -176,36 +180,37 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     protected void refreshState(boolean force) {
-        boolean panelsAddedOrRemoved = false;
-        for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            ThreadLocalsAreaPanel panel = null;
-            for (Component component : tabbedPane.getComponents()) {
-                final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) component;
-                if (tlaPanel.getSafepointState() == state) {
-                    panel = tlaPanel;
+        if (inspection().hasProcess()) {
+            boolean panelsAddedOrRemoved = false;
+            for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+                ThreadLocalsAreaPanel panel = null;
+                for (Component component : tabbedPane.getComponents()) {
+                    final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) component;
+                    if (tlaPanel.getSafepointState() == state) {
+                        panel = tlaPanel;
+                    }
+                }
+                final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);
+                if (tla != null) {
+                    if (panel == null) {
+                        tabbedPane.add(state.toString(), new ThreadLocalsAreaPanel(inspection(), thread, tla, viewPreferences));
+                        panelsAddedOrRemoved = true;
+                    }
+                } else {
+                    if (panel != null) {
+                        tabbedPane.remove(panel);
+                        panelsAddedOrRemoved = true;
+                    }
                 }
             }
-            final MaxThreadLocalsArea tla = thread.localsBlock().tlaFor(state);
-            if (tla != null) {
-                if (panel == null) {
-                    tabbedPane.add(state.toString(), new ThreadLocalsAreaPanel(inspection(), thread, tla, viewPreferences));
-                    panelsAddedOrRemoved = true;
-                }
-            } else {
-                if (panel != null) {
-                    tabbedPane.remove(panel);
-                    panelsAddedOrRemoved = true;
-                }
+            if (panelsAddedOrRemoved) {
+                reconstructView();
             }
-        }
-        if (panelsAddedOrRemoved) {
-            reconstructView();
-        }
-
-        // Only need to refresh the panel that's visible, as long as we refresh them when they become visible
-        final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) tabbedPane.getSelectedComponent();
-        if (tlaPanel != null) {
-            tlaPanel.refresh(force);
+            // Only need to refresh the panel that's visible, as long as we refresh them when they become visible
+            final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) tabbedPane.getSelectedComponent();
+            if (tlaPanel != null) {
+                tlaPanel.refresh(force);
+            }
         }
         // The title displays thread state, so must be updated.
         setTitle();

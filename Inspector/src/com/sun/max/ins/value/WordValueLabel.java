@@ -31,7 +31,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.data.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
@@ -354,40 +354,30 @@ public class WordValueLabel extends ValueLabel {
         } else {
             displayMode = DisplayMode.WORD;
             if (vm().isBootImageRelocated()) {
-                if (newValue == null || newValue.isZero()) {
-                    if (valueMode == ValueMode.REFERENCE) {
-                        displayMode = DisplayMode.NULL_WORD;
-                    }
-                } else if (vm().isValidOrigin(newValue.toWord().asPointer())) {
-                    displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
-                    final TeleReference ref = (TeleReference) vm().wordToReference(newValue.toWord());
-
-                    try {
+                try {
+                    // From here on, we need to try reading from the VM, if it is available
+                    if (newValue == null || newValue.isZero()) {
+                        if (valueMode == ValueMode.REFERENCE) {
+                            displayMode = DisplayMode.NULL_WORD;
+                        }
+                    } else if (vm().isValidOrigin(newValue.toWord().asPointer())) {
+                        displayMode = (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) ? DisplayMode.OBJECT_REFERENCE_TEXT : DisplayMode.OBJECT_REFERENCE;
+                        final TeleReference ref = (TeleReference) vm().wordToReference(newValue.toWord());
                         teleObject = vm().heap().findTeleObject(ref);
                         if (teleObject == null) {
                             displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         }
-                    } catch (MaxVMBusyException maxVMBusyException) {
-                        displayMode = DisplayMode.UNAVAILABLE;
-                    } catch (Throwable throwable) {
-                        // If we don't catch this the views will not be updated at all.
-                        teleObject = null;
-                        displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
-                        setWrappedToolTipText("<b>" + throwable + "</b><br>See log for complete stack trace.");
-                        throwable.printStackTrace(Trace.stream());
-                    }
-                } else {
-                    final Address address = newValue.toWord().asAddress();
-                    thread = vm().threadManager().findThread(address);
-                    if (thread != null && thread.stack().memoryRegion().contains(address)) {
-                        displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
-                    } else if (thread != null && thread.localsBlock().memoryRegion() != null && thread.localsBlock().memoryRegion().contains(address)) {
-                        displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                     } else {
-                        if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
-                            displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                        final Address address = newValue.toWord().asAddress();
+                        thread = vm().threadManager().findThread(address);
+                        if (thread != null && thread.stack().memoryRegion().contains(address)) {
+                            displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
+                        } else if (thread != null && thread.localsBlock().memoryRegion() != null && thread.localsBlock().memoryRegion().contains(address)) {
+                            displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                         } else {
-                            try {
+                            if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
+                                displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                            } else {
                                 compiledCode = vm().codeCache().findCompiledCode(newValue.toWord().asAddress());
                                 if (compiledCode != null) {
                                     final Address codeStart = compiledCode.getCodeStart();
@@ -407,18 +397,23 @@ public class WordValueLabel extends ValueLabel {
                                         displayMode = DisplayMode.CLASS_ACTOR_ID;
                                     }
                                 }
-                            } catch (DataIOError dataIOError) {
-                                // Can't read anything, so just display as a plain word.
-                                displayMode = DisplayMode.WORD;
-                            } catch (Throwable throwable) {
-
-                                // If we don't catch this the views will not be updated at all.
-                                displayMode = DisplayMode.INVALID;
-                                setWrappedToolTipText("<b>" + throwable + "</b><br>See log for complete stack trace.");
-                                throwable.printStackTrace(Trace.stream());
                             }
                         }
                     }
+                } catch (MaxVMBusyException maxVMBusyException) {
+                    teleObject = null;
+                    teleClassActor = null;
+                    displayMode = DisplayMode.UNAVAILABLE;
+                } catch (TerminatedProcessIOException terminatedProcessIOException) {
+                    teleObject = null;
+                    teleClassActor = null;
+                    displayMode = DisplayMode.WORD;
+                } catch (Throwable throwable) {
+                    teleObject = null;
+                    teleClassActor = null;
+                    displayMode = DisplayMode.INVALID;
+                    setWrappedToolTipText("<b>" + throwable + "</b><br>See log for complete stack trace.");
+                    throwable.printStackTrace(Trace.stream());
                 }
             }
         }

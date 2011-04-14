@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,8 +54,6 @@
  * Created Sep 5, 2005
  */
 package com.sun.max.elf;
-
-import com.sun.max.program.ProgramError;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -217,7 +215,7 @@ public class ELFProgramHeaderTable {
         } else if (header.is64Bit()) {
             return readEntry64(fis, is);
         }
-        throw ProgramError.unexpected("unknown bit size for ELF header");
+        throw new Error("unknown bit size for ELF header");
     }
 
     public Entry32 readEntry32(RandomAccessFile fis, ELFDataInputStream is) throws IOException {

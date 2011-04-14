@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.debug;
 
 /**
- * Thrown when the VM process has terminated.
+ * Classes and interfaces for observing compilations.
  *
- * @author Michael Van De Vanter
+ * @author Peter Hofer
  */
-public class ProcessTerminatedException extends Exception {
-
-    public ProcessTerminatedException(String message) {
-        super(message);
-    }
-
-}
+package com.sun.c1x.observer;
