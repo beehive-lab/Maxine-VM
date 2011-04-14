@@ -184,26 +184,6 @@ if [ -z "${maxine_dir}" ]; then
     popd >/dev/null
 fi
 
-
-# This is the easiest way to ensure exactly the right version of JUnit is used
-if [ -e $HOME/.maxine/junit-4.8.jar ]; then
-    JUNIT4_CP=$HOME/.maxine/junit-4.8.jar
-    export JUNIT4_CP
-else
-    echo "Cannot find JUnit 4.8. Please install junit-4.8.jar in $HOME/.maxine"
-    echo "If curl in available:"
-    echo
-    echo "mkdir -p $HOME/.maxine"
-    echo "curl -o $HOME/.maxine/junit-4.8.jar http://repo1.maven.org/maven2/junit/junit/4.8/junit-4.8.jar"
-    echo
-    echo "If wget is available:"
-    echo
-    echo "mkdir -p $HOME/.maxine"
-    echo "wget -O $HOME/.maxine/junit-4.8.jar http://repo1.maven.org/maven2/junit/junit/4.8/junit-4.8.jar"
-    echo
-    exit 1
-fi
-
 # Sanity check: is ${maxine_dir}/bin/max an executable
 if [ ! -x "${maxine_dir}/bin/max" ]; then
     echo "Can't find Maxine code base at '${maxine_dir}': '${maxine_dir}/bin/max' does not exist or is not an executable"
@@ -597,19 +577,12 @@ check_help="run Checkstyle on the Maxine Java sources
    Run Checkstyle over the Java sources. Any errors or warnings
    produced by Checkstyle result in a non-zero exit code.
 
-options:
- -cs <path>   path to a Checkstyle jar file. (default: value of CHECKSTYLE_JAR environment variable)
-
 If no projects are given, then all Java projects are checked."
 
 function run_check() {
     projects_to_check=""
     while [ "$1" != "" ]; do
         case $1 in
-            -cs )
-                shift
-                CHECKSTYLE_JAR=$1
-                ;;
             -* )
                 run_help check
                 echo "unknown build option '$1'"
@@ -621,20 +594,6 @@ function run_check() {
         esac
         shift
     done
-
-    if [ -z "$CHECKSTYLE_JAR" ]; then
-        if [ -f /import/maxwell/bin/checkstyle.jar ]; then
-            CHECKSTYLE_JAR=/import/maxwell/bin/checkstyle.jar
-        else
-            echo "Need to use '-cs' option or CHECKSTYLE_JAR environment variable to specify location of Checkstyle jar file"
-            exit 1
-        fi
-    fi
-
-    if [ ! -f "$CHECKSTYLE_JAR" ]; then
-        echo "No such file: $CHECKSTYLE_JAR"
-        exit 1
-    fi
 
     if [ -z "$projects_to_check" ]; then
         projects_to_check=$(jmax projects)
@@ -675,7 +634,7 @@ function run_check() {
                     grep -v 'test/reflect/' |\
                     grep -v 'test/threads/' >$checkstyle_input
 
-                run $jvm -Xmx1g -jar $CHECKSTYLE_JAR -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
+                run $jvm -Xmx1g -jar $(jmax library CHECKSTYLE) -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
                 result=$?
                 rm $checkstyle_input
                 if [ $result -eq 0 ]; then
@@ -955,40 +914,6 @@ c1x_help="process a list of methods with the C1X compiler
 function run_c1x() {
     c1x_cp=$(jmax classpath):`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
     run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
-}
-
-#=======================================
-# 't1x' command
-#=======================================
-
-t1x_usage="[options] patterns..."
-t1x_help="process a list of methods with the T1X compiler
-
-    See Patterns below for a description of the format expected for \"patterns...\"
-    
-    The output traced by this command is not guaranteed to be the same as the output
-    for a compilation performed at runtime. The code produced by a compiler is sensitive
-    to the compilation context such as what classes have been resolved etc.
-
-    Use \"max t1x -help\" to see what other options this command accepts.
-    
-    --- Patterns ---
-    
-    $method_finder_pattern_help"
-
-function run_t1x() {
-    c1x_cp=$(jmax classpath):`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
-    run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest -t1x $@
-}
-
-#=======================================
-# 'cp' command
-#=======================================
-
-cp_help="print the Maxine classpath"
-
-function run_cp() {
-    echo $(jmax classpath)
 }
 
 #=======================================
