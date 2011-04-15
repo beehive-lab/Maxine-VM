@@ -566,7 +566,7 @@ copycheck_usage="[options]"
 copycheck_help="run copyright check on the Maxine sources (defined as being under hg control)"
  
 function run_copycheck() {
-    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.tools.CheckCopyright $@
+    run ${jvm_exe} -cp $(jmax classpath_noresolve Base) com.sun.max.tools.CheckCopyright $@
     result=$?
     if [ $result -ne 0 ]; then
         exit $result
