@@ -59,12 +59,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
             return true;
         }
 
-        public RegistersInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new RegistersInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected RegistersInspector createView(Inspection inspection) {
+            return new RegistersInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.

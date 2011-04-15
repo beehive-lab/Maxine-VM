@@ -86,12 +86,11 @@ public final class StackInspector extends Inspector {
             return true;
         }
 
-        public StackInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new StackInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected StackInspector createView(Inspection inspection) {
+            return new StackInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.

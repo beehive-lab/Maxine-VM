@@ -62,10 +62,9 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
             return true;
         }
 
-        public MethodInspectorContainer activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new MethodInspectorContainer(inspection);
-            }
+        @Override
+        protected MethodInspectorContainer createView(Inspection inspection) {
+            final MethodInspectorContainer methodInspectorContainer = new MethodInspectorContainer(inspection);
             // Creating the container also starts the code focus listener for creating method viewers.
             // If we set the focus now, the newly created container will appear with the currently
             // actively method showing; otherwise the container would initially appear empty.
@@ -77,8 +76,9 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
                     focus().setCodeLocation(thread.ipLocation());
                 }
             }
-            return inspector;
+            return methodInspectorContainer;
         }
+
     }
 
     // Will be non-null before any instances created.

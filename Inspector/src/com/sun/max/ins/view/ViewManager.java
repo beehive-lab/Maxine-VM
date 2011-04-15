@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.view;
 
+import java.util.*;
+
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 
@@ -38,7 +40,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  *
  * @author Michael Van De Vanter
  */
-public interface ViewManager  {
+public interface ViewManager<Inspector_Kind extends Inspector>  {
 
     /**
      * @return the kind of view being managed by this manager
@@ -74,6 +76,11 @@ public interface ViewManager  {
      * @return whether one or more views of this kind are currently active
      */
     boolean isActive();
+
+    /**
+     * @return all active views being managed by this manager.
+     */
+    List<Inspector_Kind> activeViews();
 
     /**
      * Notifies the manager that a view under its management is

@@ -59,12 +59,11 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
             return true;
         }
 
-        public ThreadsInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new ThreadsInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected ThreadsInspector createView(Inspection inspection) {
+            return new ThreadsInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.

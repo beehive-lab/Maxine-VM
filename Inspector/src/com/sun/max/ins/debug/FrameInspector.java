@@ -66,12 +66,11 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
             return true;
         }
 
-        public FrameInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new FrameInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected FrameInspector createView(Inspection inspection) {
+            return new FrameInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.

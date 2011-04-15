@@ -71,12 +71,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
             return true;
         }
 
-        public ThreadLocalsInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new ThreadLocalsInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected ThreadLocalsInspector createView(Inspection inspection) {
+            return new ThreadLocalsInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.

@@ -59,12 +59,11 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
             return true;
         }
 
-        public BreakpointsInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new BreakpointsInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected BreakpointsInspector createView(Inspection inspection) {
+            return new BreakpointsInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.

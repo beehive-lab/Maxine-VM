@@ -23,7 +23,7 @@
 
 package com.sun.max.ins.view;
 
-import java.util.concurrent.*;
+import java.util.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -42,7 +42,7 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     private final String shortName;
     private final String longName;
 
-    protected CopyOnWriteArraySet<Inspector> inspectors = new CopyOnWriteArraySet<Inspector>();
+    private ArrayList<Inspector_Kind> inspectors = new ArrayList<Inspector_Kind>();
 
     protected AbstractMultiViewManager(Inspection inspection, ViewKind viewKind, String shortName, String longName) {
         super(inspection);
@@ -72,8 +72,12 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         return inspectors.size() > 0;
     }
 
+    public List<Inspector_Kind> activeViews() {
+        return inspectors;
+    }
+
     public void deactivateAllViews() {
-        for (Inspector inspector : inspectors) {
+        for (Inspector_Kind inspector : inspectors) {
             inspector.dispose();
         }
         inspectors.clear();
@@ -83,9 +87,8 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         assert inspectors.remove(inspector);
     }
 
-    protected void notifyAddingView(Inspector inspector) {
+    protected void notifyAddingView(Inspector_Kind inspector) {
         assert inspectors.add(inspector);
-
     }
 
     public void vmStateChanged(boolean force) {

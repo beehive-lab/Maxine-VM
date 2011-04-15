@@ -58,12 +58,11 @@ public final class UserFocusInspector extends Inspector {
             return true;
         }
 
-        public UserFocusInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new UserFocusInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected UserFocusInspector createView(Inspection inspection) {
+            return new UserFocusInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.

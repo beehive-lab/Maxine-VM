@@ -56,12 +56,11 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
             return true;
         }
 
-        public BootImageInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new BootImageInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected BootImageInspector createView(Inspection inspection) {
+            return new BootImageInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.

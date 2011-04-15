@@ -41,7 +41,7 @@ import com.sun.max.vm.actor.holder.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ObjectViewManager extends AbstractMultiViewManager {
+public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInspector> {
 
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
     private static final String SHORT_NAME = "Object";

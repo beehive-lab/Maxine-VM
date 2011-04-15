@@ -58,12 +58,11 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
             return vm().watchpointManager() != null;
         }
 
-        public WatchpointsInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new WatchpointsInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected WatchpointsInspector createView(Inspection inspection) {
+            return new WatchpointsInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.

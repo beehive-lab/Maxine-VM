@@ -51,9 +51,9 @@ public final class AllocationsInspector extends Inspector implements TableColumn
     private static final String LONG_NAME = "Allocations Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "allocationsInspectorGeometry";
 
-    private static final class MemoryAllocationsViewManager extends AbstractSingletonViewManager<AllocationsInspector> {
+    private static final class AllocationsViewManager extends AbstractSingletonViewManager<AllocationsInspector> {
 
-        protected MemoryAllocationsViewManager(Inspection inspection) {
+        protected AllocationsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
@@ -65,20 +65,19 @@ public final class AllocationsInspector extends Inspector implements TableColumn
             return true;
         }
 
-        public AllocationsInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new AllocationsInspector(inspection);
-            }
-            return inspector;
+        @Override
+        protected AllocationsInspector createView(Inspection inspection) {
+            return new AllocationsInspector(inspection);
         }
+
     }
 
     // Will be non-null before any instances created.
-    private static MemoryAllocationsViewManager viewManager = null;
+    private static AllocationsViewManager viewManager = null;
 
     public static ViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new MemoryAllocationsViewManager(inspection);
+            viewManager = new AllocationsViewManager(inspection);
         }
         return viewManager;
     }

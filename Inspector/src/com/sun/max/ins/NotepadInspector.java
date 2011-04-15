@@ -81,12 +81,11 @@ public final class NotepadInspector extends Inspector {
             return true;
         }
 
-        public NotepadInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new NotepadInspector(inspection, notepadManager.getNotepad());
-            }
-            return inspector;
+        @Override
+        protected NotepadInspector createView(Inspection inspection) {
+            return new NotepadInspector(inspection, notepadManager.getNotepad());
         }
+
     }
 
     // Will be non-null before any instances created.

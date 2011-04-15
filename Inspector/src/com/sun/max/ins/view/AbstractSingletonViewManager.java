@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.view;
 
+import java.util.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
@@ -45,7 +47,7 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
     /**
      * The active inspector instance; null when inactive.
      */
-    protected Inspector_Kind inspector = null;
+    private ArrayList<Inspector_Kind> inspectors = new ArrayList<Inspector_Kind>(1);
 
     protected AbstractSingletonViewManager(Inspection inspection, ViewKind viewKind, String shortName, String longName) {
         super(inspection);
@@ -71,17 +73,29 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
     }
 
     public final boolean isActive() {
-        return inspector != null;
+        return inspectors.size() > 0;
+    }
+
+    public final List<Inspector_Kind> activeViews() {
+        return inspectors;
+    }
+
+    public Inspector_Kind activateView(Inspection inspection) {
+        if (inspectors.size() == 0) {
+            inspectors.add(createView(inspection));
+        }
+        return inspectors.get(0);
     }
 
     public final void deactivateView() {
-        assert inspector != null;
-        inspector.dispose();
+        assert inspectors.size() == 1;
+        inspectors.get(0).dispose();
     }
 
     public final void notifyViewClosing(Inspector inspector) {
-        assert this.inspector == inspector;
-        this.inspector = null;
+        assert inspectors.remove(inspector);
     }
+
+    protected abstract Inspector_Kind createView(Inspection inspection);
 
 }

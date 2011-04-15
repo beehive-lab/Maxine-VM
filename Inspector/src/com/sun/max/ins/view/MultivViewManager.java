@@ -23,6 +23,8 @@
 
 package com.sun.max.ins.view;
 
+import com.sun.max.ins.gui.*;
+
 
 /**
  * Manager for a kind of Inspector view that may have an arbitrary
@@ -30,7 +32,7 @@ package com.sun.max.ins.view;
  *
  * @author Michael Van De Vanter
  */
-public interface MultivViewManager extends ViewManager {
+public interface MultivViewManager<Inspector_Kind extends Inspector> extends ViewManager<Inspector_Kind> {
 
     /**
      * Disposes all existing views of this kind.
