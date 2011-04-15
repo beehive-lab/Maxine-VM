@@ -33,6 +33,7 @@ import com.sun.cri.ri.*;
 public interface AssumptionProcessor {
     /**
      * Process a unique concrete sub-type assumption
+     * 
      * @param context
      * @param subtype
      * @return true if the processor should proceed to next assumption, false if it should stop.
@@ -40,8 +41,9 @@ public interface AssumptionProcessor {
     boolean processUniqueConcreteSubtype(RiType context, RiType subtype);
     /**
      * Process a unique concrete method assumption
+     * 
      * @param context
-     * @param subtype
+     * @param method
      * @return true if the processor should proceed to next assumption, false if it should stop.
      */
     boolean processUniqueConcreteMethod(RiMethod context, RiMethod method);
