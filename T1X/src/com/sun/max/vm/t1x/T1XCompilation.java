@@ -537,6 +537,18 @@ public final class T1XCompilation {
 
             }
         }
+
+        if (T1XOptions.PrintBytecodeHistogram) {
+            if (compiler.staticBytecodeCount != null) {
+                compiler.staticBytecodeCount[representativeOpcode & 0xff]++;
+            }
+            if (compiler.dynamicBytecodeCount != null) {
+                assignIntTemplateArgument(0, representativeOpcode & 0xff);
+                assignReferenceLiteralTemplateArgument(1, compiler.dynamicBytecodeCount);
+                emitAndRecordStops(getTemplate(COUNT_BYTECODE));
+            }
+        }
+
         prevOpcode = representativeOpcode;
     }
 

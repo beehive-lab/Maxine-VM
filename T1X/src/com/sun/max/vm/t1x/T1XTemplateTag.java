@@ -433,6 +433,7 @@ public enum T1XTemplateTag {
     LSB,
     MSB,
 
+    COUNT_BYTECODE(-1),
     LOCK_RECEIVER(-1),
     UNLOCK_RECEIVER(-1),
     LOCK_CLASS(-1),
