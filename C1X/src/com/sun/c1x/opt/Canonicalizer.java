@@ -555,7 +555,7 @@ public class Canonicalizer extends DefaultValueVisitor {
                 i.eliminateStoreCheck();
             } else {
                 RiType exactType = array.exactType();
-                if (exactType != null) {
+                if (exactType != null && exactType.isResolved()) {
                     if (exactType.componentType().superType() == null) {
                         // the exact type of the array is Object[] => no check is necessary
                         i.eliminateStoreCheck();
