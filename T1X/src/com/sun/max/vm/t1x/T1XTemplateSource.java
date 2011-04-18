@@ -61,6 +61,12 @@ public class T1XTemplateSource {
     @INTRINSIC(Bytecodes.DCMPL)
     private static native int dcmpl(double l, double r);
 
+    @T1X_TEMPLATE(COUNT_BYTECODE)
+    public static void countBytecode(int opcode, long[] array) {
+        // Disable bounds-checking by use of ArrayAccess
+        ArrayAccess.setLong(array, opcode, ArrayAccess.getLong(array, opcode) + 1);
+    }
+
     @T1X_TEMPLATE(LOAD_EXCEPTION)
     public static void loadException() {
         pushObject(T1XRuntime.loadException());
