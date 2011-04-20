@@ -23,6 +23,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.regex.*;
 
 /**
  * Database of Java project configurations used by the bin/max script.
@@ -45,17 +46,10 @@ public class jmax {
             response.println(toString(sortedDependencies(false), " ", null));
         } else if (cmd.equals("classpath")) {
             // Return a class path for one or more projects
-            if (request.size() == 1) {
-                // No args -> return the class path for all projects
-                response.println(asClasspath(sortedDependencies(true)));
-            } else {
-                // One or more args -> return the class path for the given projects
-                List<Dependency> deps = new ArrayList<Dependency>();
-                for (String p : request.subList(1, request.size())) {
-                    project(p).allDeps(deps, true);
-                }
-                response.println(asClasspath(deps));
-            }
+            classpathCommand(request, response, true);
+        } else if (cmd.equals("classpath_noresolve")) {
+            // Return a class path for one or more projects
+            classpathCommand(request, response, false);
         } else if (cmd.equals("project_dir")) {
             // Return the absolute directory of a project
             Project p = project(request.get(1));
@@ -66,7 +60,7 @@ public class jmax {
             String pfx = p.baseDir.getPath() + File.separatorChar + p.name + File.separatorChar;
             response.println(toString(p.sourceDirs, " ", pfx));
         } else if (cmd.equals("library")) {
-            response.println(library(request.get(1)).appendToClasspath(new StringBuilder()).toString());
+            response.println(library(request.get(1)).appendToClasspath(new StringBuilder(), true).toString());
         } else if (cmd.equals("output_dir")) {
             // Return the absolute output directory of a project
             response.println(project(request.get(1)).outputDir());
@@ -86,6 +80,22 @@ public class jmax {
             }
         } else {
             throw new Error("Command '" + cmd + "' not known");
+        }
+    }
+
+    static PrintStream log = System.err;
+
+    private static void classpathCommand(List<String> request, PrintStream response, boolean resolve) {
+        if (request.size() == 1) {
+            // No args -> return the class path for all projects
+            response.println(asClasspath(sortedDependencies(true), resolve));
+        } else {
+            // One or more args -> return the class path for the given projects
+            List<Dependency> deps = new ArrayList<Dependency>();
+            for (String p : request.subList(1, request.size())) {
+                project(p).allDeps(deps, true);
+            }
+            response.println(asClasspath(deps, resolve));
         }
     }
 
@@ -185,7 +195,7 @@ public class jmax {
         return sb.toString();
     }
 
-    static String asClasspath(List<Dependency> deps) {
+    static String asClasspath(List<Dependency> deps, boolean resolve) {
         StringBuilder cp = new StringBuilder(100);
         String prefix = getenv("cp_prefix", false);
         if (prefix != null) {
@@ -193,7 +203,7 @@ public class jmax {
         }
 
         for (Dependency p : deps) {
-            p.appendToClasspath(cp);
+            p.appendToClasspath(cp, resolve);
         }
         String suffix = getenv("cp_suffix", false);
         if (suffix != null) {
@@ -238,7 +248,7 @@ public class jmax {
             this.name = name;
         }
 
-        abstract StringBuilder appendToClasspath(StringBuilder cp);
+        abstract StringBuilder appendToClasspath(StringBuilder cp, boolean resolve);
 
         @Override
         public boolean equals(Object obj) {
@@ -288,14 +298,14 @@ public class jmax {
         }
 
         @Override
-        StringBuilder appendToClasspath(StringBuilder cp) {
+        StringBuilder appendToClasspath(StringBuilder cp, boolean resolve) {
             File lib = new File(expandVars(path));
-            if (mustExist && !lib.exists()) {
+            if (resolve && mustExist && !lib.exists()) {
                 assert !urls.isEmpty() : "cannot find required library " + name;
                 download(lib, split(urls));
             }
 
-            if (lib.exists()) {
+            if (lib.exists() || !resolve) {
                 if (cp.length() != 0) {
                     cp.append(File.pathSeparatorChar);
                 }
@@ -323,35 +333,68 @@ public class jmax {
         if (!parent.isDirectory() && !parent.mkdirs()) {
             throw new Error("Could not make directory: " + parent);
         }
+
+        // Enable use of system proxies
+        System.setProperty("java.net.useSystemProxies", "true");
+
+        String proxy = getenv("HTTP_PROXY", false);
+        String proxyMsg = "";
+        if (proxy != null) {
+            Pattern p = Pattern.compile("(?:http://)?([^:]+)(:\\d+)?");
+            Matcher m = p.matcher(proxy);
+            if (m.matches()) {
+                String host = m.group(1);
+                String port = m.group(2);
+                System.setProperty("http.proxyHost", host);
+                if (port != null) {
+                    port = port.substring(1); // strip ':'
+                    System.setProperty("http.proxyPort", port);
+                }
+                proxyMsg = " via proxy " + proxy;
+            } else {
+                log.println("Value of HTTP_PROXY is not valid: " + proxy);
+            }
+        } else {
+            log.println("** If behind a firewall without direct internet access, use the HTTP_PROXY environment variable (e.g. 'env HTTP_PROXY=proxy.company.com:80 max ...') or download manually with a web browser.");
+        }
+
         for (String s : urls) {
             try {
-                System.err.println("Downloading " + s + " to " + dst);
+                log.println("Downloading " + s + " to " + dst + proxyMsg);
                 URL url = new URL(s);
-                InputStream in = url.openStream();
+                URLConnection conn = url.openConnection();
+                // 10 second timeout to establish connection
+                conn.setConnectTimeout(10000);
+                InputStream in = conn.getInputStream();
+                int size = conn.getContentLength();
                 FileOutputStream out = new FileOutputStream(dst);
                 int read = 0;
-                byte[] buf = new byte[2011];
+                byte[] buf = new byte[8192];
+                int n = 0;
                 while ((read = in.read(buf)) != -1) {
+                    n += read;
+                    log.print("\r" + n + " bytes" + (size == -1 ? "" : " (" + (n * 100 / size) + "%)"));
                     out.write(buf, 0, read);
                 }
+                log.println();
                 out.close();
                 in.close();
                 return;
             } catch (MalformedURLException e) {
                 throw new Error("Error in URL" + s, e);
             } catch (IOException e) {
-                System.err.println("Error reading from " + s + ": " + e);
+                log.println("Error reading from " + s + ": " + e);
                 dst.delete();
             }
         }
         throw new Error("Could not download content to " + dst + " from " + Arrays.toString(urls));
     }
 
-    static String[] split(String listValue) {
-        if (listValue.isEmpty()) {
+    static String[] split(String list) {
+        if (list.isEmpty()) {
             return new String[0];
         }
-        return listValue.split("\\s*[ ,]\\s*");
+        return list.split("\\s*[ ,]\\s*");
     }
 
     static final class Project extends Dependency {
@@ -425,7 +468,7 @@ public class jmax {
         }
 
         @Override
-        StringBuilder appendToClasspath(StringBuilder cp) {
+        StringBuilder appendToClasspath(StringBuilder cp, boolean resolve) {
             char sep = File.separatorChar;
             if (cp.length() != 0) {
                 cp.append(File.pathSeparatorChar);
