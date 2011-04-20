@@ -126,7 +126,7 @@ public interface RiMethod {
     RiMethod uniqueConcreteMethod();
 
     /**
-     * Checks whether this method is a class initializer (that is, <code> &lt;clinit&gt;</code>).
+     * Checks whether this method is a class initializer.
      * NOTE: ONLY AVAILABLE ON RESOLVED METHODS.
      * @return {@code true} if the method is a class initializer
      */

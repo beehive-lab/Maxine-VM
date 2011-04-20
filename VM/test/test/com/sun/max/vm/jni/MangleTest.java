@@ -46,7 +46,7 @@ public class MangleTest extends MaxTestCase {
     }
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(MangleTest.class);
+        junit.textui.TestRunner.run(MangleTest.suite());
     }
 
     public static Test suite() {
@@ -102,7 +102,7 @@ public class MangleTest extends MaxTestCase {
         }
         try {
             final File tempFile = File.createTempFile("MangleTest_", ".h");
-            final String[] args = {"-o", tempFile.getAbsolutePath(), "-classpath", Classpath.fromSystem()/* JavaProject.getClassPath(true)*/.toString(), declaringClass.getName()};
+            final String[] args = {"-o", tempFile.getAbsolutePath(), "-classpath", Classpath.fromSystem().toString(), declaringClass.getName()};
             ToolChain.javah(args);
             final String headerFile = new String(Files.toChars(tempFile));
             tempFile.delete();

@@ -531,11 +531,8 @@ public final class BootImageObjectTree {
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 ObjectTreeView otv = new ObjectTreeView(tree);
                 frame.add(otv);
-                frame.setBounds(GraphicsEnvironment.
-                                getLocalGraphicsEnvironment().
-                                getDefaultScreenDevice().
-                                getDefaultConfiguration().
-                                getBounds());
+                Dimension ss = Toolkit.getDefaultToolkit().getScreenSize();
+                frame.setSize((int) ss.getWidth(), (int) ss.getHeight());
                 frame.setVisible(true);
                 otv.split.setDividerLocation(0.75);
             }
