@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
+import com.sun.c1x.observer.*;
 import com.sun.c1x.target.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -37,7 +38,7 @@ import com.sun.cri.xir.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public class C1XCompiler {
+public class C1XCompiler extends ObservableCompiler {
 
     public final Map<Object, GlobalStub> stubs = new HashMap<Object, GlobalStub>();
 
@@ -124,6 +125,10 @@ public class C1XCompiler {
             } finally {
                 suppressor.remove();
             }
+        }
+
+        if (C1XOptions.PrintCFGToFile && !TTY.isSuppressed()) {
+            addCompilationObserver(new CFGPrinterObserver());
         }
     }
 

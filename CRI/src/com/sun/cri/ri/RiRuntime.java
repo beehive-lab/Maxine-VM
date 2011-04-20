@@ -234,4 +234,9 @@ public interface RiRuntime {
      * Gets the length of the array that is wrapped in a CiConstant object.
      */
     int getArrayLength(CiConstant array);
+
+    /**
+     * Converts the given CiConstant object to a Java class object. Returns {@code null} if the conversion is not possible.
+     */
+    Class<?> getJavaClass(CiConstant c);
 }

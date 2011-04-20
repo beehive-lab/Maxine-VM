@@ -158,7 +158,7 @@ public enum Condition {
      * @param rt the constant on the right side of the comparison
      * @param runtime the RiRuntime (might be needed to compare runtime-specific types)
      * @return {@link Boolean#TRUE} if the comparison is known to be true,
-     * {@link Boolean#FALSE} if the comparison is known to be false, <code>null</code> otherwise.
+     * {@link Boolean#FALSE} if the comparison is known to be false, {@code null} otherwise.
      */
     public Boolean foldCondition(CiConstant lt, CiConstant rt, RiRuntime runtime) {
         switch (lt.kind) {

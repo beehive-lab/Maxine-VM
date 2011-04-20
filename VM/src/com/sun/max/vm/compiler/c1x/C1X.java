@@ -81,7 +81,7 @@ public class C1X implements RuntimeCompiler {
     @HOSTED_ONLY
     private static boolean optionsRegistered;
 
-    public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 1,
+    public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 3,
         "Set the optimization level of C1X.") {
             @Override
             public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {

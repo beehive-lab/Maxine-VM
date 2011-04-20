@@ -141,8 +141,23 @@ public final class CiConstant extends CiValue {
      * @return this constant's value as a string
      */
     public String valueString() {
-        Object boxed = boxedValue();
-        return (boxed == null) ? "null" : boxed.toString();
+        if (kind.isPrimitive()) {
+            return boxedValue().toString();
+        } else if (kind.isObject()) {
+            if (object == null) {
+                return "null";
+            } else if (object instanceof String) {
+                return "\"" + object + "\"";
+            } else {
+                return "<object: " + kind.format(object) + ">";
+            }
+        } else if (kind.isWord()) {
+            return "0x" + Long.toHexString(asLong());
+        } else if (kind.isJsr()) {
+            return "bci:" + boxedValue().toString();
+        } else {
+            return "???";
+        }
     }
 
     /**

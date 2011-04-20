@@ -57,8 +57,6 @@ package com.sun.max.elf;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 
-import com.sun.max.program.ProgramError;
-
 /**
  * The <code>StringUtil</code> class implements several useful functions for dealing with strings such as
  * parsing pieces of syntax, formatting, etc.
@@ -245,7 +243,7 @@ public final class StringUtil {
         final char r = i.current();
         i.next();
         if (r != c) {
-            ProgramError.unexpected("parse error at " + i.getIndex() + ", expected character '" + c + "'");
+            throw new Error("parse error at " + i.getIndex() + ", expected character '" + c + "'");
         }
     }
 
