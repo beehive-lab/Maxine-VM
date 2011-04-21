@@ -1181,13 +1181,13 @@ public final class GraphBuilder {
             needsCheck = exactType.hasFinalizer();
         } else {
             // if either the declared type of receiver or the holder can be assumed to have no finalizers
-            if (declaredType != null && declaredType.hasFinalizableSubclass()) {
+            if (declaredType != null && !declaredType.hasFinalizableSubclass()) {
                 if (compilation.recordNoFinalizableSubclassAssumption(declaredType)) {
                     needsCheck = false;
                 }
             }
 
-            if (receiverType != null && receiverType.hasFinalizableSubclass()) {
+            if (receiverType != null && !receiverType.hasFinalizableSubclass()) {
                 if (compilation.recordNoFinalizableSubclassAssumption(receiverType)) {
                     needsCheck = false;
                 }
