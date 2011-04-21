@@ -49,11 +49,16 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
      */
     private ArrayList<Inspector_Kind> inspectors = new ArrayList<Inspector_Kind>(1);
 
+    private final InspectorAction activateViewAction;
+    private final InspectorAction deactivateAllAction;
+
     protected AbstractSingletonViewManager(Inspection inspection, ViewKind viewKind, String shortName, String longName) {
         super(inspection);
         this.viewKind = viewKind;
         this.shortName = shortName;
         this.longName = longName;
+        this.activateViewAction = new ActivateViewAction(shortName);
+        this.deactivateAllAction = new DeactivateAllAction(shortName);
     }
 
     public final ViewKind viewKind() {
@@ -80,9 +85,10 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
         return inspectors;
     }
 
-    public Inspector_Kind activateView(Inspection inspection) {
+    public Inspector_Kind activateView() {
         if (inspectors.size() == 0) {
-            inspectors.add(createView(inspection));
+            inspectors.add(createView(inspection()));
+            refresh();
         }
         return inspectors.get(0);
     }
@@ -92,10 +98,102 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
         inspectors.get(0).dispose();
     }
 
+    public InspectorAction activateSingletonViewAction() {
+        return activateViewAction;
+    }
+
+    public InspectorAction deactivateAllAction(Inspector exception) {
+        if (exception == null) {
+            return deactivateAllAction;
+        }
+        return new DeactivateAllExceptAction(shortName, exception);
+    }
+
     public final void notifyViewClosing(Inspector inspector) {
         assert inspectors.remove(inspector);
+        refresh();
     }
 
     protected abstract Inspector_Kind createView(Inspection inspection);
 
+    /**
+     * Update any internal state on occasion of view activation/deactivation.
+     */
+    private void refresh() {
+        inspection().settings().save();
+        deactivateAllAction.refresh(true);
+    }
+
+    /**
+     * Action: makes visible and highlights a singleton view.
+     * <p>
+     * Note that this action is enabled, even when the view is already
+     * activated (visible); in that case it serves to bring the view
+     * forward and highlight it.
+     */
+    private final class ActivateViewAction extends InspectorAction {
+
+        public ActivateViewAction(String title) {
+            super(inspection(), "View " + title);
+        }
+
+        @Override
+        protected void procedure() {
+            activateView().highlight();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(isEnabled());
+        }
+    }
+
+    /**
+     * Action: deactivate all views, which in the case of a singleton
+     * means only the one view, if already activated.
+     */
+    private final class DeactivateAllAction extends InspectorAction {
+
+        public DeactivateAllAction(String title) {
+            super(inspection(), "Close " + title + " view");
+        }
+
+        @Override
+        protected void procedure() {
+            if (isActive()) {
+                deactivateView();
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(isActive());
+        }
+    }
+
+    /**
+     * Action: deactivate the singleton view, with one exception, which might
+     * be the singleton view itself.
+     */
+    private final class DeactivateAllExceptAction extends InspectorAction {
+
+        private final Inspector exceptInspector;
+
+        public DeactivateAllExceptAction(String title, Inspector exceptInspector) {
+            super(inspection(), "Close " + title + " view");
+            this.exceptInspector = exceptInspector;
+        }
+
+        @Override
+        protected void procedure() {
+            if (isActive() && !inspectors.get(0).equals(exceptInspector)) {
+                deactivateView();
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(isActive());
+        }
+    }
 }

@@ -36,10 +36,8 @@ import com.sun.cri.ci.*;
 import com.sun.max.ins.InspectionPreferences.ExternalViewerType;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
-import com.sun.max.ins.object.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.*;
-import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -230,14 +228,6 @@ public final class Inspection implements InspectionHolder {
      */
     public InspectorNameDisplay nameDisplay() {
         return nameDisplay;
-    }
-
-    /**
-     * @return all existing object inspectors, even if hidden or iconic.
-     */
-    public Set<ObjectInspector> objectInspectors() {
-        ObjectViewManager objectViewManager = (ObjectViewManager) ViewKind.OBJECT.viewManager();
-        return objectViewManager.inspectors();
     }
 
     /**

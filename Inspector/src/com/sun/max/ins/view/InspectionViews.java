@@ -211,12 +211,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
         private final String description;
         private final String key;
 
-        /**
-         * There's no need for more than one {@link InspectorAction} for activating singleton views. It gets created
-         * lazily and stored as a property of the enum.
-         */
-        private InspectorAction activateViewAction = null;
-
         private ViewKind(boolean isSingleton, boolean activeByDefault, String description) {
             this.isSingleton = isSingleton;
             this.activeByDefault = activeByDefault;
@@ -227,6 +221,11 @@ public final class InspectionViews extends AbstractInspectionHolder {
         public ViewManager<? extends Inspector> viewManager() {
             return null;
         }
+
+        private InspectorAction deactivateAllAction(Inspector exceptInspector) {
+            final ViewManager< ? extends Inspector> viewManager = viewManager();
+            return viewManager == null ? null : viewManager.deactivateAllAction(exceptInspector);
+        }
     }
 
     final SaveSettingsListener saveSettingsListener;
@@ -234,9 +233,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
     public InspectionViews(Inspection inspection) {
         super(inspection);
         ViewKind.inspection = inspection;
-        for (ViewKind kind : ViewKind.singletonViewKinds) {
-            kind.activateViewAction = new ActivateSingletonViewAction(kind);
-        }
         saveSettingsListener = new AbstractSaveSettingsListener("inspectionViewActive") {
 
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
@@ -250,6 +246,31 @@ public final class InspectionViews extends AbstractInspectionHolder {
     }
 
     /**
+     * @return all active views
+     */
+    public List<Inspector> activeViews() {
+        final List<Inspector> inspectors = Collections.emptyList();
+        for (ViewKind kind : ViewKind.values()) {
+            final ViewManager<? extends Inspector> viewManager = kind.viewManager();
+            if (viewManager != null) {
+                inspectors.addAll(viewManager.activeViews());
+            }
+        }
+        return inspectors;
+    }
+
+    /**
+     * @return all active views of a particular kind
+     */
+    public List<? extends Inspector> activeViews(ViewKind kind) {
+        final ViewManager<? extends Inspector> viewManager = kind.viewManager();
+        if (viewManager != null) {
+            return viewManager.activeViews();
+        }
+        return Collections.emptyList();
+    }
+
+    /**
      * Create all the views that should be present at the beginning of a session.
      */
     public void activateInitialViews() {
@@ -257,7 +278,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
         for (ViewKind kind : ViewKind.singletonViewKinds) {
             if (kind.viewManager().isSupported() && settings.get(saveSettingsListener, kind.key, OptionTypes.BOOLEAN_TYPE, kind.activeByDefault)) {
                 final SingletonViewManager singletonViewManager = (SingletonViewManager) kind.viewManager();
-                singletonViewManager.activateView(inspection());
+                singletonViewManager.activateView();
             }
         }
         for (ViewKind kind : ViewKind.multiViewKinds) {
@@ -270,36 +291,41 @@ public final class InspectionViews extends AbstractInspectionHolder {
      * Gets the action that will activate a singleton view.
      *
      * @param kind the kind of view to be activated, must be a singleton.
-     * @return the action for activating
+     * @return the action for activating the view, null if not a singleton
      */
     public InspectorAction activateSingletonViewAction(ViewKind kind) {
-        return kind.activateViewAction;
+        if (kind.isSingleton) {
+            final ViewManager< ? extends Inspector> viewManager = kind.viewManager();
+            if (viewManager != null) {
+                SingletonViewManager singletonViewManager = (SingletonViewManager) viewManager;
+                return singletonViewManager.activateSingletonViewAction();
+            }
+        }
+        return null;
     }
 
     /**
-     * Action: makes visible and highlights a singleton view.
+     * Gets the action that will deactivate all views of a particular kind.
+     *
+     * @param kind the kind of views to be deactivated
+     * @return the action for deactivating
      */
-    private final class ActivateSingletonViewAction extends InspectorAction {
-
-        private final ViewKind kind;
-
-        public ActivateSingletonViewAction(ViewKind kind) {
-            super(inspection(), "View " + kind.viewManager().shortName());
-            assert kind.isSingleton;
-            this.kind = kind;
-        }
-
-        @Override
-        protected void procedure() {
-            final SingletonViewManager singletonViewManager = (SingletonViewManager) kind.viewManager();
-            singletonViewManager.activateView(inspection()).highlight();
-            inspection().settings().save();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(kind.viewManager().isEnabled());
-        }
+    public InspectorAction deactivateAllViewsAction(ViewKind kind) {
+        return kind.deactivateAllAction(null);
     }
+
+
+    /**
+     * Gets the action that will deactivate all views of a particular kind
+     * with one exception.
+     *
+     * @param kind the kind of views to be deactivated
+     * @param exceptInspector the one view that should not be deactivated
+     * @return the action for deactivating
+     */
+    public InspectorAction deactivateOtherViewsAction(ViewKind kind, Inspector exceptInspector) {
+        return kind.deactivateAllAction(exceptInspector);
+    }
+
 
 }
