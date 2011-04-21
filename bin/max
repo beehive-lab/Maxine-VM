@@ -822,7 +822,7 @@ function run_image() {
             @*)
                 if [ -z "$image_configs" ]; then
                     # Lazily construct this variable as it requires running a Java program
-                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jvm classpath VM) test.com.sun.max.vm.MaxineTesterConfiguration)
+                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath VM) test.com.sun.max.vm.MaxineTesterConfiguration)
                 fi
                 image_config_arg=${1/@/}
                 for image_config in ${image_configs[@]}; do
