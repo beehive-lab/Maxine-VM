@@ -1584,7 +1584,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
-    public XirTemplate addCallRuntimeThroughStub(List<XirTemplate> stubs, Class<? extends RuntimeCalls> runtimeCalls,
+    public XirTemplate addCallRuntimeThroughStub(List<XirTemplate> stubs, Class<?> runtimeCalls,
                     HashMap<String, XirTemplate> runtimeCallStubs,
                     CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
         XirTemplate stub = null;
