@@ -198,6 +198,7 @@ public enum T1XTemplateTag {
     RETURN$unlockClass,
     RETURN$unlockReceiver,
 
+    RETURN$registerFinalizer,
 
     GETSTATIC$byte,
     GETSTATIC$boolean,
@@ -433,6 +434,7 @@ public enum T1XTemplateTag {
     LSB,
     MSB,
 
+    COUNT_BYTECODE(-1),
     LOCK_RECEIVER(-1),
     UNLOCK_RECEIVER(-1),
     LOCK_CLASS(-1),

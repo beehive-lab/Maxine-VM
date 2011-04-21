@@ -145,7 +145,6 @@ public final class C1XOptions {
 
     public static boolean GenSpecialDivChecks           = ____;
     public static boolean GenAssertionCode              = ____;
-    public static boolean GenFinalizerRegistration      = true;
     public static boolean AlignCallsForPatching         = true;
     public static boolean NullCheckUniquePc             = ____;
     public static boolean InvokeSnippetAfterArguments   = ____;
@@ -161,7 +160,7 @@ public final class C1XOptions {
     // Runtime settings
     public static int     ReadPrefetchInstr             = 0;
     public static boolean UseStackMapTableLiveness      = ____;
-    public static int     StackShadowPages              = 3;
+    public static int     StackShadowPages              = 2;
 
     // Assembler settings
     public static boolean CommentedAssembly             = ____;

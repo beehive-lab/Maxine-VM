@@ -25,7 +25,6 @@ package com.sun.max.vm.actor.member;
 import static com.sun.max.vm.actor.member.LivenessAdapter.*;
 
 import java.lang.reflect.*;
-import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
