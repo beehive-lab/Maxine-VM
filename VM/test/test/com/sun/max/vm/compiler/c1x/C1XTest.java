@@ -122,6 +122,9 @@ public class C1XTest {
         } catch (Throwable e) {
             //e.printStackTrace();
         }
+
+        // allows one to specify the compiler class exactly
+        options.addOptions(RuntimeCompiler.compilers);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -192,8 +195,10 @@ public class C1XTest {
             MethodInstrumentation.enable(500);
         }
 
-        boolean useBaseline = t1xOption.getValue();
-        if (t1xOption.getValue()) {
+        boolean useBaseline = false;
+        if (RuntimeCompiler.baselineCompilerOption.isAssigned()) {
+            useBaseline = true;
+        } else if (t1xOption.getValue()) {
             RuntimeCompiler.baselineCompilerOption.setValue(RuntimeCompiler.aliases.get("T1X"));
             useBaseline = true;
         }
