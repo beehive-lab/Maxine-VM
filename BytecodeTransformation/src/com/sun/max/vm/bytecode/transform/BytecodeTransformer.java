@@ -20,11 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.bytecode.graft;
+package com.sun.max.vm.bytecode.transform;
 
 import java.util.*;
 
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.bytecode.graft.BytecodeAssembler.*;
 
 /**

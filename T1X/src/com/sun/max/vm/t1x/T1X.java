@@ -76,6 +76,16 @@ public class T1X implements RuntimeCompiler {
      */
     int templateSlots;
 
+    /**
+     * Support for {@link T1XOptions#PrintBytecodeHistogram}.
+     */
+    long[] dynamicBytecodeCount;
+
+    /**
+     * Support for {@link T1XOptions#PrintBytecodeHistogram}.
+     */
+    long[] staticBytecodeCount;
+
     @HOSTED_ONLY
     public T1X() {
         templates = new T1XTemplate[T1XTemplateTag.values().length];
@@ -348,13 +358,29 @@ public class T1X implements RuntimeCompiler {
             Trace.end(1, "creating T1X templates [templates code size: " + codeSize + "]", startTime);
             comp.extensions = oldExtensions;
         }
-        if (phase == Phase.TERMINATING) {
+        if (phase == Phase.STARTING) {
+            if (T1XOptions.PrintBytecodeHistogram) {
+                dynamicBytecodeCount = new long[256];
+                staticBytecodeCount = new long[256];
+            }
+        } else if (phase == Phase.TERMINATING) {
+            if (T1XOptions.PrintBytecodeHistogram) {
+                Log.println("Bytecode Histogram: Mnemonic <tab> Dynamic Count <tab> Static Count");
+                for (int i = 0; i < 256; i++) {
+                    String name = Bytecodes.nameOf(i);
+                    if (!name.startsWith("<illegal")) {
+                        Log.println(name + "\t" + dynamicBytecodeCount[i] + "\t" + staticBytecodeCount[i]);
+                    }
+                }
+            }
+
             if (T1XOptions.PrintMetrics) {
                 T1XMetrics.print();
             }
             if (T1XOptions.PrintTimers) {
                 T1XTimer.print();
             }
+
         }
     }
 

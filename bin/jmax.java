@@ -83,6 +83,8 @@ public class jmax {
         }
     }
 
+    static PrintStream log = System.err;
+
     private static void classpathCommand(List<String> request, PrintStream response, boolean resolve) {
         if (request.size() == 1) {
             // No args -> return the class path for all projects
@@ -350,42 +352,49 @@ public class jmax {
                 }
                 proxyMsg = " via proxy " + proxy;
             } else {
-                System.err.println("Value of HTTP_PROXY is not valid: " + proxy);
+                log.println("Value of HTTP_PROXY is not valid: " + proxy);
             }
+        } else {
+            log.println("** If behind a firewall without direct internet access, use the HTTP_PROXY environment variable (e.g. 'env HTTP_PROXY=proxy.company.com:80 max ...') or download manually with a web browser.");
         }
 
         for (String s : urls) {
             try {
-                System.err.println("Downloading " + s + " to " + dst + proxyMsg);
+                log.println("Downloading " + s + " to " + dst + proxyMsg);
                 URL url = new URL(s);
                 URLConnection conn = url.openConnection();
-                conn.setConnectTimeout(5000);
+                // 10 second timeout to establish connection
+                conn.setConnectTimeout(10000);
                 InputStream in = conn.getInputStream();
+                int size = conn.getContentLength();
                 FileOutputStream out = new FileOutputStream(dst);
                 int read = 0;
-                byte[] buf = new byte[2011];
+                byte[] buf = new byte[8192];
+                int n = 0;
                 while ((read = in.read(buf)) != -1) {
+                    n += read;
+                    log.print("\r" + n + " bytes" + (size == -1 ? "" : " (" + (n * 100 / size) + "%)"));
                     out.write(buf, 0, read);
                 }
+                log.println();
                 out.close();
                 in.close();
                 return;
             } catch (MalformedURLException e) {
                 throw new Error("Error in URL" + s, e);
             } catch (IOException e) {
-                System.err.println("Error reading from " + s + ": " + e);
-                System.err.println("Use HTTP_PROXY environment variable (e.g. 'env HTTP_PROXY=proxy.company.com:80 max ...') or download manually with browser.");
+                log.println("Error reading from " + s + ": " + e);
                 dst.delete();
             }
         }
         throw new Error("Could not download content to " + dst + " from " + Arrays.toString(urls));
     }
 
-    static String[] split(String listValue) {
-        if (listValue.isEmpty()) {
+    static String[] split(String list) {
+        if (list.isEmpty()) {
             return new String[0];
         }
-        return listValue.split("\\s*[ ,]\\s*");
+        return list.split("\\s*[ ,]\\s*");
     }
 
     static final class Project extends Dependency {

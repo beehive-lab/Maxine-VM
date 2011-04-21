@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Mechanism for referring to fields, methods and constructors otherwise inaccessible due to Java language access
@@ -73,17 +74,32 @@ import com.sun.max.vm.runtime.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD})
 public @interface ALIAS {
+    /**
+     * The name of the aliased field or method.
+     * If the default value is specified for this element, then the
+     * name of the annotated field or method is used.
+     */
     String name() default "";
 
     /**
-     * Specifies the class in which the aliased method is declared.
+     * The type descriptor of the aliased field or signature descriptor of the aliased method. If the default value is
+     * specified for this element, then the descriptor of the annotated field or method is used.
+     * Note that the
+     *
+     * @return a string in the format expected by {@link JavaTypeDescriptor#parseTypeDescriptor(String)} or
+     *         {@link SignatureDescriptor#create(String)}.
+     */
+    String descriptor() default "";
+
+    /**
+     * Specifies the class in which the aliased field or method is declared.
      * If the default value is specified for this element, then a non-default
      * value must be given for the {@link #declaringClassName()} element.
      */
     Class declaringClass() default ALIAS.class;
 
     /**
-     * Specifies the class in which the aliased method is declared.
+     * Specifies the class in which the aliased field or method is declared.
      * This method is provided for cases where the declaring class
      * is not accessible (according to Java language access control rules)
      * in the scope of the alias method.
@@ -133,12 +149,19 @@ public @interface ALIAS {
                     if (name.isEmpty()) {
                         name = field.name();
                     }
-                    aliasedField = ClassActor.fromJava(holder).findLocalFieldActor(SymbolTable.makeSymbol(name), field.descriptor());
+
+                    TypeDescriptor type = alias.descriptor().isEmpty() ? field.descriptor() : JavaTypeDescriptor.parseTypeDescriptor(alias.descriptor());
+                    aliasedField = ClassActor.fromJava(holder).findLocalFieldActor(SymbolTable.makeSymbol(name), type);
                     if (aliasedField == null) {
                         if (alias.optional()) {
                             return field;
                         }
                         throw FatalError.unexpected("Could not find target for alias " + field + " in " + holder.getName());
+                    }
+                    if (!alias.descriptor().isEmpty()) {
+                        if (!field.type().isAssignableFrom(aliasedField.type())) {
+                            throw FatalError.unexpected("Type of alias " + field + " [" + field.type() + "] must be a subclass of aliased field's type [" + aliasedField.type() + "]");
+                        }
                     }
                     assert aliasedField.isStatic() == field.isStatic() : "Alias " + field + " must be static if " + aliasedField + " is";
                     aliasedFields.put(field, aliasedField);
@@ -165,12 +188,28 @@ public @interface ALIAS {
                         name = method.name();
                     }
 
-                    aliasedMethod = ClassActor.fromJava(holder).findLocalMethodActor(SymbolTable.makeSymbol(name), method.descriptor());
+                    SignatureDescriptor sig = alias.descriptor().isEmpty() ? method.descriptor() : SignatureDescriptor.create(alias.descriptor());
+                    aliasedMethod = ClassActor.fromJava(holder).findLocalMethodActor(SymbolTable.makeSymbol(name), sig);
                     if (aliasedMethod == null) {
                         if (alias.optional()) {
                             return method;
                         }
                         throw FatalError.unexpected("Could not find target for alias " + method + " in " + holder.getName());
+                    }
+                    if (!alias.descriptor().isEmpty()) {
+                        if (!returnType(method).isAssignableFrom(returnType(aliasedMethod))) {
+                            throw FatalError.unexpected("Return type of alias " + method + " [" + returnType(method) + "] must be a superclass of aliased method's return type [" + returnType(aliasedMethod) + "]");
+                        }
+                        ClassActor[] params = parameterTypes(aliasedMethod);
+                        ClassActor[] aliasParams = parameterTypes(method);
+                        if (params.length != aliasParams.length) {
+                            throw FatalError.unexpected("Alias " + method + " must have same number of parameters as the aliased method");
+                        }
+                        for (int i = 0; i < params.length; ++i) {
+                            if (!params[i].isAssignableFrom(aliasParams[i])) {
+                                throw FatalError.unexpected("Parameter type " + i + " of alias " + method + " [" + aliasParams[i] + "] must be a subclass of aliased method's corresponding parameter type [" + params[i] + "]");
+                            }
+                        }
                     }
                     assert aliasedMethod.isStatic() == method.isStatic() : "Alias " + method + " must be static if " + aliasedMethod + " is";
                     aliasedMethods.put(method, aliasedMethod);
@@ -178,6 +217,19 @@ public @interface ALIAS {
                 return aliasedMethod;
             }
             return null;
+        }
+
+        private static ClassActor returnType(MethodActor method) {
+            return ClassActor.fromJava(method.descriptor().resolveReturnType(method.holder().classLoader));
+        }
+
+        private static ClassActor[] parameterTypes(MethodActor method) {
+            Class[] parameterTypes = method.descriptor().resolveParameterTypes(method.holder().classLoader);
+            ClassActor[] result = new ClassActor[parameterTypes.length];
+            for (int i = 0; i < parameterTypes.length; ++i) {
+                result[i] = ClassActor.fromJava(parameterTypes[i]);
+            }
+            return result;
         }
 
         public static synchronized boolean isAliased(FieldActor field) {
