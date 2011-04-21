@@ -48,7 +48,13 @@ public class Catch_StackOverflowError_03 {
         } catch (StackOverflowError stackOverflowError) {
             // Check that a method does not appear to be calling itself in the stack trace
             // and check that recurse* is only called by either recurse* or test
-            StackTraceElement[] elements = stackOverflowError.getStackTrace();
+            StackTraceElement[] elements = null;
+            try {
+                elements = stackOverflowError.getStackTrace();
+            } catch (OutOfMemoryError e) {
+                // Not much we can do about this perfectly legal situation
+                return PASS;
+            }
             String lastMethodName = elements[0].getMethodName();
             for (int i = 1; i < elements.length; ++i) {
                 String methodName = elements[i].getMethodName();
