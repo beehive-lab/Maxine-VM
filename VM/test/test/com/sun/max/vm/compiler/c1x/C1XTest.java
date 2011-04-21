@@ -113,6 +113,7 @@ public class C1XTest {
     static {
         // add all the fields from C1XOptions as options
         options.addFieldOptions(C1XOptions.class, "C1X", C1X.getHelpMap());
+        C1X.optionsRegistered = true;
 
         // add all the fields from T1XOptions as options
         Class t1xOptionsClass = Classes.forName("com.sun.max.vm.t1x.T1XOptions");

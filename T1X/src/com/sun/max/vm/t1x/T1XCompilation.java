@@ -758,7 +758,11 @@ public final class T1XCompilation {
 
     private void emitReturn(T1XTemplateTag tag, T1XTemplateTag tagUnlockClass, T1XTemplateTag tagUnlockReceiver) {
         beginBytecode(tag.opcode);
-        if (method.isSynchronized()) {
+        if (method.holder() == ClassRegistry.OBJECT) {
+            T1XTemplate template = getTemplate(RETURN$registerFinalizer);
+            assignLocalDisplacementTemplateArgument(0, 0, Kind.REFERENCE);
+            emitAndRecordStops(template);
+        } else if (method.isSynchronized()) {
             if (method.isStatic()) {
                 T1XTemplate template = getTemplate(tagUnlockClass);
                 assignReferenceLiteralTemplateArgument(0, method.holder().javaClass());
