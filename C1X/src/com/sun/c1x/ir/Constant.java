@@ -144,12 +144,9 @@ public final class Constant extends Instruction {
     public RiType declaredType() {
         RiRuntime runtime = compilation().runtime;
         if (kind.isPrimitive()) {
-            runtime.getRiType(kind);
+            runtime.asRiType(kind);
         }
-        if (kind.isObject()) {
-            return runtime.getRiType(asConstant());
-        }
-        return null;
+        return runtime.getTypeOf(asConstant());
     }
 
     @Override

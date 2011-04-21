@@ -859,7 +859,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         C1XIntrinsic intrinsic = i.intrinsic();
         if (intrinsic == C1XIntrinsic.java_lang_Class$isInstance) {
             // try to convert a call to Class.isInstance() into an InstanceOf
-            RiType type = asRiType(args[0]);
+            RiType type = getTypeOf(args[0]);
             if (type != null) {
                 setCanonical(new InstanceOf(type, Constant.forObject(type.getEncoding(RiType.Representation.TypeInfo)), args[1], i.stateBefore()));
                 return;
@@ -867,12 +867,12 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
         if (intrinsic == C1XIntrinsic.java_lang_reflect_Array$newArray) {
             // try to convert a call to Array.newInstance() into a NewObjectArray or NewTypeArray
-            RiType type = asRiType(args[0]);
+            RiType type = getTypeOf(args[0]);
             if (type != null) {
                 if (type.kind() == CiKind.Object) {
                     setCanonical(new NewObjectArray(type, args[1], i.stateBefore()));
                 } else {
-                    RiType elementType = runtime.getRiType(type.kind());
+                    RiType elementType = runtime.asRiType(type.kind());
                     setCanonical(new NewTypeArray(args[1], elementType, i.stateBefore()));
                 }
                 return;
@@ -892,14 +892,14 @@ public class Canonicalizer extends DefaultValueVisitor {
         switch (i.intrinsic()) {
             // do not use reflection here due to efficiency and potential bootstrap problems
             case java_lang_Object$hashCode: {
-                Object object = argAsConstant(args, 0);
+                Object object = argAsObject(args, 0);
                 if (object != null) {
                     setIntConstant(System.identityHashCode(object));
                 }
                 return true;
             }
             case java_lang_Object$getClass: {
-                Object object = argAsConstant(args, 0);
+                Object object = argAsObject(args, 0);
                 if (object != null) {
                     setObjectConstant(object.getClass());
                 }
@@ -917,8 +917,8 @@ public class Canonicalizer extends DefaultValueVisitor {
             }
             case java_lang_Class$isInstance: {
                 Class<?> javaClass = argAsClass(args, 0);
-                CiConstant object = argAsConstant(args, 1);
-                if (javaClass != null && object.isNonNull()) {
+                Object object = argAsObject(args, 1);
+                if (javaClass != null && object != null) {
                     setBooleanConstant(javaClass.isInstance(object));
                 }
                 return true;
@@ -1000,7 +1000,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
             // java.lang.System
             case java_lang_System$identityHashCode: {
-                Object object = argAsConstant(args, 0);
+                Object object = argAsObject(args, 0);
                 if (object != null) {
                     setIntConstant(System.identityHashCode(object));
                 }
@@ -1009,7 +1009,7 @@ public class Canonicalizer extends DefaultValueVisitor {
 
             // java.lang.reflect.Array
             case java_lang_reflect_Array$getLength: {
-                Object object = argAsConstant(args, 0);
+                Object object = argAsObject(args, 0);
                 if (object != null && object.getClass().isArray()) {
                     setIntConstant(Array.getLength(object));
                 }
@@ -1284,14 +1284,18 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
     }
 
-    private CiConstant argAsConstant(Value[] args, int index) {
-        return args[index].asConstant();
+    private Object argAsObject(Value[] args, int index) {
+        CiConstant c = args[index].asConstant();
+        if (c != null) {
+            return runtime.asJavaObject(c);
+        }
+        return null;
     }
 
     private Class<?> argAsClass(Value[] args, int index) {
-        CiConstant c = argAsConstant(args, index);
+        CiConstant c = args[index].asConstant();
         if (c != null) {
-            return runtime.getJavaClass(c);
+            return runtime.asJavaClass(c);
         }
         return null;
     }
@@ -1359,9 +1363,9 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
     }
 
-    private RiType asRiType(Value x) {
+    private RiType getTypeOf(Value x) {
         if (x.isConstant()) {
-            return runtime.getRiType(x.asConstant());
+            return runtime.getTypeOf(x.asConstant());
         }
         return null;
     }

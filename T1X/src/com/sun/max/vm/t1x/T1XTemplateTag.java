@@ -198,6 +198,7 @@ public enum T1XTemplateTag {
     RETURN$unlockClass,
     RETURN$unlockReceiver,
 
+    RETURN$registerFinalizer,
 
     GETSTATIC$byte,
     GETSTATIC$boolean,
