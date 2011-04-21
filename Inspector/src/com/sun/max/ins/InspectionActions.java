@@ -37,7 +37,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.java.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
@@ -248,34 +247,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return refreshAll;
     }
 
-    /**
-     * Action: causes a specific Inspector to become visible,
-     * even if hidden or iconic.
-     */
-    final class ShowViewAction extends InspectorAction {
-
-        private final Inspector inspector;
-
-        ShowViewAction(Inspector inspector) {
-            super(inspection(), inspector.getTextForTitle());
-            this.inspector = inspector;
-        }
-
-        @Override
-        protected void procedure() {
-            inspector.highlight();
-        }
-
-    }
-
-    /**
-     * @return an action that will make a specified inspector become
-     * visible, even if hidden or iconic.
-     */
-    public final InspectorAction showView(Inspector inspector) {
-        return new ShowViewAction(inspector);
-    }
-
+    // TODO (mlvdv) obsolete this when all views become managed
     /**
      * Action:  close all open inspectors that match a predicate.
      */
@@ -296,17 +268,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    /**
-     * Closes views matching a specified criterion.
-     *
-     * @param predicate a predicate that returns true for all Inspectors to be closed.
-     * @param actionTitle a string name for the Action, uses default name if null.
-     * @return an Action that will close views.
-     */
-    public final InspectorAction closeViews(Predicate<Inspector> predicate, String actionTitle) {
-        return new CloseViewsAction(predicate, actionTitle);
-    }
-
+    // TODO (mlvdv) Obsolete this when view framework complete
     /**
      * Closes all views of a specified type, optionally with an exception.
      *
@@ -324,6 +286,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new CloseViewsAction(predicate, actionTitle);
     }
 
+    // TODO (mlvdv) obsolete this when all views become managed
     /**
      * Action:  closes all open inspectors.
      */
@@ -951,7 +914,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                             sortedSet.add(inspector);
                         }
                         for (MemoryInspector inspector : sortedSet) {
-                            add(actions().showView(inspector));
+                            add(inspector.getShowViewAction());
                         }
                         addSeparator();
                         add(actions().closeViews(MemoryInspector.class, null, "Close all memory inspectors"));
@@ -1592,13 +1555,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 public void menuSelected(MenuEvent e) {
                     removeAll();
-                    final Set<ObjectInspector> inspectors = inspection().objectInspectors();
-                    if (inspectors.size() > 0) {
-                        for (ObjectInspector objectInspector : inspection().objectInspectors()) {
-                            add(actions().showView(objectInspector));
+                    final List< ? extends Inspector> objectViews = inspection().views().activeViews(ViewKind.OBJECT);
+                    if (objectViews.size() > 0) {
+                        for (Inspector objectInspector : objectViews) {
+                            add(objectInspector.getShowViewAction());
                         }
                         addSeparator();
-                        add(actions().closeViews(ObjectInspector.class, null, "Close all object inspectors"));
+                        add(inspection().views().deactivateAllViewsAction(ViewKind.OBJECT));
                     }
                 }
             });

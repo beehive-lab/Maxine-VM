@@ -115,7 +115,12 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             case DEFAULT_MENU:
                 return new AbstractInspectorMenuItems(inspection()) {
                     public void addTo(InspectorMenu menu) {
-                        menu.add(getCloseAction(inspector));
+                        menu.add(new InspectorAction(inspection(), "Close") {
+                            @Override
+                            protected void procedure() {
+                                inspector.dispose();
+                            }
+                        });
                         menu.add(actions().closeViews(Inspector.class, inspector, "Close Other Inspectors"));
                         menu.addSeparator();
                         menu.add(actions().movedToCenter(inspector));
@@ -197,6 +202,8 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     private InspectorFrame frame;
 
     private final TimedTrace updateTracer;
+
+    private InspectorAction showViewAction = null;
 
     /**
      * Abstract constructor for all inspector views.
@@ -564,6 +571,19 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
     }
 
+    public final InspectorAction getShowViewAction() {
+        if (showViewAction == null) {
+            showViewAction = new InspectorAction(inspection(), getTextForTitle()) {
+
+                @Override
+                protected void procedure() {
+                    highlight();
+                }
+            };
+        }
+        return showViewAction;
+    }
+
     /**
      * @return an action that will present a dialog that enables selection of view options;
      * returns a disabled dummy action if not overridden.
@@ -587,18 +607,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             protected void procedure() {
                 Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
                 forceRefresh();
-            }
-        };
-    }
-
-    /**
-     * @return an action that will close this inspector
-     */
-    public InspectorAction getCloseAction(final Inspector inspector) {
-        return new InspectorAction(inspection(), "Close") {
-            @Override
-            protected void procedure() {
-                inspector.dispose();
             }
         };
     }

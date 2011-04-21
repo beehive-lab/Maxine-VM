@@ -38,10 +38,18 @@ public interface SingletonViewManager<Inspector_Kind extends Inspector> extends 
      *
      * @return the instance that implements the singleton view
      */
-    Inspector_Kind activateView(Inspection inspection);
+    Inspector_Kind activateView();
 
     /**
-     * Disposes the existing singleton view.
+     * Gets an action that highlights the, newly created if needed, view
+     * managed by this manager.
+     *
+     * @return the action for activating this manager's singleton view.
+     */
+    InspectorAction activateSingletonViewAction();
+
+    /**
+     * Disposes this manager's singleton view.
      */
     void deactivateView();
 }

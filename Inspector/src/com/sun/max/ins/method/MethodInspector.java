@@ -188,7 +188,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         final MethodInspector methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
         if (methodInspector == null) {
             final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
-            final MethodInspectorContainer container = methodViewManager.activateView(inspection);
+            final MethodInspectorContainer container = methodViewManager.activateView();
             inspection.vm().acquireLegacyVMAccess();
             try {
                 javaMethodInspector = new JavaMethodInspector(inspection, container, teleClassMethodActor, codeKind);
@@ -226,7 +226,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                     methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
                 }
                 final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
-                final MethodInspectorContainer container = methodViewManager.activateView(inspection);
+                final MethodInspectorContainer container = methodViewManager.activateView();
                 if (methodInspector == null) {
                     // No existing inspector exists for this method; create new one bound to this compilation
                     javaMethodInspector = new JavaMethodInspector(inspection, container, compiledCode, codeKind);
@@ -261,7 +261,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
             inspection.vm().acquireLegacyVMAccess();
             try {
                 final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
-                final MethodInspectorContainer container = methodViewManager.activateView(inspection);
+                final MethodInspectorContainer container = methodViewManager.activateView();
                 container.add(nativeMethodInspector);
                 machineCodeToMethodInspector.put(maxExternalCode, nativeMethodInspector);
             } finally {

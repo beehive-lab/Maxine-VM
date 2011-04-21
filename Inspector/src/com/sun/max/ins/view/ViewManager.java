@@ -24,13 +24,14 @@ package com.sun.max.ins.view;
 
 import java.util.*;
 
+import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 
 /**
  * A manager for a specific kind of Inspector View, each instance
- * of which is implemented as a subclass of {@Inspector}.  Some kinds
+ * of which is implemented as a subclass of {@link Inspector}.  Some kinds
  * of views are singletons, others may have an unbounded number of
  * instances. The intention is that there be a singleton manager for
  * each kind of view.
@@ -81,6 +82,15 @@ public interface ViewManager<Inspector_Kind extends Inspector>  {
      * @return all active views being managed by this manager.
      */
     List<Inspector_Kind> activeViews();
+
+    /**
+     * Gets an action for deactivating all views being managed by this manager,
+     * possibly excepting a single view.
+     *
+     * @param exceptInspector a view that should not be deactivated
+     * @return the action for deactivating views being managed by this manager
+     */
+    InspectorAction deactivateAllAction(Inspector exceptInspector);
 
     /**
      * Notifies the manager that a view under its management is

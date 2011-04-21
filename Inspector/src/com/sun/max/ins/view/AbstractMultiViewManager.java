@@ -42,14 +42,17 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     private final String shortName;
     private final String longName;
 
-    private ArrayList<Inspector_Kind> inspectors = new ArrayList<Inspector_Kind>();
+    private final ArrayList<Inspector_Kind> inspectors = new ArrayList<Inspector_Kind>();
+
+    private final InspectorAction deactivateAllAction;
 
     protected AbstractMultiViewManager(Inspection inspection, ViewKind viewKind, String shortName, String longName) {
         super(inspection);
         this.viewKind = viewKind;
         this.shortName = shortName;
         this.longName = longName;
-        inspection.addInspectionListener(this);
+        this.deactivateAllAction = new DeactivateAllAction(shortName);
+        refresh();
     }
 
     public final ViewKind viewKind() {
@@ -77,18 +80,28 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     }
 
     public void deactivateAllViews() {
-        for (Inspector_Kind inspector : inspectors) {
+        for (Inspector inspector : new ArrayList<Inspector_Kind>(inspectors)) {
             inspector.dispose();
         }
-        inspectors.clear();
+        refresh();
+        assert !isActive();
+    }
+
+    public InspectorAction deactivateAllAction(Inspector exception) {
+        if (exception == null) {
+            return deactivateAllAction;
+        }
+        return new DeactivateAllExceptAction(shortName, exception);
     }
 
     public void notifyViewClosing(Inspector inspector) {
         assert inspectors.remove(inspector);
+        refresh();
     }
 
     protected void notifyAddingView(Inspector_Kind inspector) {
         assert inspectors.add(inspector);
+        refresh();
     }
 
     public void vmStateChanged(boolean force) {
@@ -107,5 +120,59 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     }
 
     public void inspectionEnding() {
+    }
+
+    public void deactivateAllViewsExcept(Inspector exceptInspector) {
+        for (Inspector inspector : new ArrayList<Inspector_Kind>(inspectors)) {
+            if (!inspector.equals(exceptInspector)) {
+                inspector.dispose();
+            }
+        }
+        refresh();
+    }
+
+    /**
+     * Update any internal state on occasion of view activation/deactivation.
+     */
+    private void refresh() {
+        inspection().settings().save();
+        deactivateAllAction.refresh(true);
+    }
+
+    private final class DeactivateAllAction extends InspectorAction {
+
+        public DeactivateAllAction(String title) {
+            super(inspection(), "Close all " + title + " views");
+        }
+
+        @Override
+        protected void procedure() {
+            deactivateAllViews();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(isActive());
+        }
+    }
+
+    private final class DeactivateAllExceptAction extends InspectorAction {
+
+        private final Inspector exceptInspector;
+
+        public DeactivateAllExceptAction(String title, Inspector exceptInspector) {
+            super(inspection(), "Close other " + title + " views");
+            this.exceptInspector = exceptInspector;
+        }
+
+        @Override
+        protected void procedure() {
+            deactivateAllViewsExcept(exceptInspector);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(isActive());
+        }
     }
 }

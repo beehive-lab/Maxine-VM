@@ -129,8 +129,9 @@ public abstract class ObjectInspector extends Inspector {
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
-        defaultMenu.add(actions().closeViews(ObjectInspector.class, this, "Close other object inspectors"));
-        defaultMenu.add(actions().closeViews(ObjectInspector.class, null, "Close all object inspectors"));
+        //defaultMenu.add(actions().closeViews(ObjectInspector.class, this, "Close other object inspectors"));
+        defaultMenu.add(inspection().views().deactivateOtherViewsAction(ViewKind.OBJECT, this));
+        defaultMenu.add(inspection().views().deactivateAllViewsAction(ViewKind.OBJECT));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().inspectObjectMemory(teleObject, "Inspect this object's memory"));
