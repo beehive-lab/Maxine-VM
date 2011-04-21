@@ -36,7 +36,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  *
  * @author Michael Van De Vanter
  */
-public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector> extends AbstractInspectionHolder implements MultivViewManager, InspectionListener {
+public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector> extends AbstractInspectionHolder implements MultiViewManager, InspectionListener {
 
     private final ViewKind viewKind;
     private final String shortName;
