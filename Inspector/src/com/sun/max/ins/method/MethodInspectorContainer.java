@@ -45,7 +45,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     private static final String LONG_NAME = "Methods Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "methodsInspectorGeometry";
 
-    static final class MethodViewManager extends AbstractSingletonViewManager<MethodInspectorContainer> {
+    public static final class MethodViewManager extends AbstractSingletonViewManager<MethodInspectorContainer> {
 
         protected MethodViewManager(final Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -84,7 +84,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     // Will be non-null before any instances created.
     private static MethodViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static MethodViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new MethodViewManager(inspection);
         }

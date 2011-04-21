@@ -57,7 +57,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     private static final Safepoint.State DEFAULT_STATE_SELECTION = Safepoint.State.ENABLED;
     private static final Map<MaxThread, Safepoint.State> stateSelections = new HashMap<MaxThread, Safepoint.State>();
 
-    private static final class ThreadLocalsViewManager extends AbstractSingletonViewManager<ThreadLocalsInspector> {
+    public static final class ThreadLocalsViewManager extends AbstractSingletonViewManager<ThreadLocalsInspector> {
 
         protected ThreadLocalsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -81,7 +81,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     // Will be non-null before any instances created.
     private static ThreadLocalsViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static ThreadLocalsViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new ThreadLocalsViewManager(inspection);
         }

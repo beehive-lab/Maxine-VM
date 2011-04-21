@@ -44,7 +44,7 @@ public final class UserFocusInspector extends Inspector {
     private static final String LONG_NAME = "User Focus Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "userFocusInspectorGeometry";
 
-    private static final class UserFocusViewManager extends AbstractSingletonViewManager<UserFocusInspector> {
+    public static final class UserFocusViewManager extends AbstractSingletonViewManager<UserFocusInspector> {
 
         protected UserFocusViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -68,7 +68,7 @@ public final class UserFocusInspector extends Inspector {
     // Will be non-null before any instances created.
     private static UserFocusViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static UserFocusViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new UserFocusViewManager(inspection);
         }

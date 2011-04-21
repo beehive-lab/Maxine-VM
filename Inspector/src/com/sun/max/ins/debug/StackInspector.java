@@ -72,7 +72,7 @@ public final class StackInspector extends Inspector {
         }
     }
 
-    private static final class StackViewManager extends AbstractSingletonViewManager<StackInspector> {
+    public static final class StackViewManager extends AbstractSingletonViewManager<StackInspector> {
 
         protected StackViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -96,7 +96,7 @@ public final class StackInspector extends Inspector {
     // Will be non-null before any instances created.
     private static StackViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static StackViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new StackViewManager(inspection);
         }
