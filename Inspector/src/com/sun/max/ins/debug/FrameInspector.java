@@ -52,7 +52,7 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
     private static final String LONG_NAME = "Frame Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "frameInspectorGeometry";
 
-    private static final class FrameViewManager extends AbstractSingletonViewManager<FrameInspector> {
+    public static final class FrameViewManager extends AbstractSingletonViewManager<FrameInspector> {
 
         protected FrameViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -76,7 +76,7 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
     // Will be non-null before any instances created.
     private static FrameViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static FrameViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new FrameViewManager(inspection);
         }

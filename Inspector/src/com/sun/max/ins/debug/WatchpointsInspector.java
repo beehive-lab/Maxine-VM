@@ -44,7 +44,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     private static final String LONG_NAME = "Watchpoints Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "watchpointsInspectorGeometry";
 
-    private static final class WatchpointsViewManager extends AbstractSingletonViewManager<WatchpointsInspector> {
+    public static final class WatchpointsViewManager extends AbstractSingletonViewManager<WatchpointsInspector> {
 
         protected WatchpointsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -68,7 +68,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     // Will be non-null before any instances created.
     private static WatchpointsViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static WatchpointsViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new WatchpointsViewManager(inspection);
         }

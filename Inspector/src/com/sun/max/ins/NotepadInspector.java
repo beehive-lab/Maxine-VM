@@ -64,7 +64,7 @@ public final class NotepadInspector extends Inspector {
     // TODO (mlvdv) fix pattern failure at end of contents (if no newline)
     private static final Pattern hexNumberPattern = Pattern.compile("[0-9a-fA-F]+[^a-zA-Z0-9]");
 
-    private static final class NotepadViewManager extends AbstractSingletonViewManager<NotepadInspector> {
+    public static final class NotepadViewManager extends AbstractSingletonViewManager<NotepadInspector> {
 
         private final NotepadManager notepadManager;
 
@@ -91,7 +91,7 @@ public final class NotepadInspector extends Inspector {
     // Will be non-null before any instances created.
     private static NotepadViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static NotepadViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new NotepadViewManager(inspection);
         }

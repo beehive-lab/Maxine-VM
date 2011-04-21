@@ -42,7 +42,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     private static final String LONG_NAME = "Boot Image Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "bootImageInspectorGeometry";
 
-    private static final class BootImageViewManager extends AbstractSingletonViewManager<BootImageInspector> {
+    public static final class BootImageViewManager extends AbstractSingletonViewManager<BootImageInspector> {
 
         protected BootImageViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);

@@ -25,12 +25,25 @@ package com.sun.max.ins.view;
 import java.util.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.BootImageInspector.BootImageViewManager;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
 import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
+import com.sun.max.ins.NotepadInspector.NotepadViewManager;
+import com.sun.max.ins.UserFocusInspector.UserFocusViewManager;
 import com.sun.max.ins.debug.*;
+import com.sun.max.ins.debug.BreakpointsInspector.BreakpointsViewManager;
+import com.sun.max.ins.debug.FrameInspector.FrameViewManager;
+import com.sun.max.ins.debug.RegistersInspector.RegistersViewManager;
+import com.sun.max.ins.debug.StackInspector.StackViewManager;
+import com.sun.max.ins.debug.ThreadLocalsInspector.ThreadLocalsViewManager;
+import com.sun.max.ins.debug.ThreadsInspector.ThreadsViewManager;
+import com.sun.max.ins.debug.WatchpointsInspector.WatchpointsViewManager;
+import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
+import com.sun.max.ins.memory.AllocationsInspector.AllocationsViewManager;
 import com.sun.max.ins.method.*;
+import com.sun.max.ins.method.MethodInspectorContainer.MethodViewManager;
 import com.sun.max.ins.object.*;
 import com.sun.max.program.option.*;
 
@@ -55,8 +68,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         ALLOCATIONS(true, false, "Regions of memory allocated by the VM") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = AllocationsInspector.makeViewManager(inspection);
+            public AllocationsViewManager viewManager() {
+                final AllocationsViewManager viewManager = AllocationsInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -64,8 +77,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         BOOT_IMAGE(true, false, "Selected parameters in the VM's boot image") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = BootImageInspector.makeViewManager(inspection);
+            public BootImageViewManager viewManager() {
+                final BootImageViewManager viewManager = BootImageInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -73,8 +86,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         BREAKPOINTS(true, false, "Breakpoints that currently exist for VM code") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = BreakpointsInspector.makeViewManager(inspection);
+            public BreakpointsViewManager viewManager() {
+                final BreakpointsViewManager viewManager = BreakpointsInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -82,17 +95,18 @@ public final class InspectionViews extends AbstractInspectionHolder {
         FRAME(true, true, "Stack frame contents in the VM for the currently frame") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = FrameInspector.makeViewManager(inspection);
+            public FrameViewManager viewManager() {
+                final FrameViewManager viewManager = FrameInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
         },
-        FRAME_DESCRIPTOR(false, false, "The details of a Java frame descriptor"), NOTEPAD(true, false, "Notepad for keeping user notes") {
+        FRAME_DESCRIPTOR(false, false, "The details of a bytecodeframe descriptor"),
+        NOTEPAD(true, false, "Notepad for keeping user notes") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = NotepadInspector.makeViewManager(inspection);
+            public NotepadViewManager viewManager() {
+                final NotepadViewManager viewManager = NotepadInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -103,8 +117,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         METHODS(true, true, "Container for multiple disassembled methods from the VM") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = MethodInspectorContainer.makeViewManager(inspection);
+            public MethodViewManager viewManager() {
+                final MethodViewManager viewManager = MethodInspectorContainer.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -112,8 +126,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         METHOD_CODE(false, false, "Disassembled code from a single method in the VM"),
         OBJECT(false, false, "The contents of a region of VM memory interpreted as an object representation") {
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = ObjectInspector.makeViewManager(inspection);
+            public ObjectViewManager viewManager() {
+                final ObjectViewManager viewManager = ObjectInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -121,8 +135,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         REGISTERS(true, true, "Register contents in the VM for the currently selected thread") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = RegistersInspector.makeViewManager(inspection);
+            public RegistersViewManager viewManager() {
+                final RegistersViewManager viewManager = RegistersInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -130,8 +144,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         STACK(true, true, "Stack contents in the VM for the currently selected thread") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = StackInspector.makeViewManager(inspection);
+            public StackViewManager viewManager() {
+                final StackViewManager viewManager = StackInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -139,8 +153,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         THREADS(true, true, "Threads that currently exist in the VM") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = ThreadsInspector.makeViewManager(inspection);
+            public ThreadsViewManager viewManager() {
+                final ThreadsViewManager viewManager = ThreadsInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -148,8 +162,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         THREAD_LOCALS(true, false, "Thread locals in the VM for the currently selected thread") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = ThreadLocalsInspector.makeViewManager(inspection);
+            public ThreadLocalsViewManager viewManager() {
+                final ThreadLocalsViewManager viewManager = ThreadLocalsInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -157,8 +171,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         USER_FOCUS(true, false, "The current state of Inspector's user focus") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = UserFocusInspector.makeViewManager(inspection);
+            public UserFocusViewManager viewManager() {
+                final UserFocusViewManager viewManager = UserFocusInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -166,8 +180,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         WATCHPOINTS(true, true, "Watchpoints that currently exist for VM memory") {
 
             @Override
-            public ViewManager viewManager() {
-                final ViewManager viewManager = WatchpointsInspector.makeViewManager(inspection);
+            public WatchpointsViewManager viewManager() {
+                final WatchpointsViewManager viewManager = WatchpointsInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
@@ -210,7 +224,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
             this.key = this.name().toLowerCase();
         }
 
-        public ViewManager viewManager() {
+        public ViewManager<? extends Inspector> viewManager() {
             return null;
         }
     }

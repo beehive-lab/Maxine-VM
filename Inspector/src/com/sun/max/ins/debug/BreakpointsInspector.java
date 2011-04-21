@@ -45,7 +45,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     private static final String LONG_NAME = "Breakpoints Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "breakpointsInspectorGeometry";
 
-    private static final class BreakpointsViewManager extends AbstractSingletonViewManager<BreakpointsInspector> {
+    public static final class BreakpointsViewManager extends AbstractSingletonViewManager<BreakpointsInspector> {
 
         protected BreakpointsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -69,7 +69,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     // Will be non-null before any instances created.
     private static BreakpointsViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static BreakpointsViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new BreakpointsViewManager(inspection);
         }

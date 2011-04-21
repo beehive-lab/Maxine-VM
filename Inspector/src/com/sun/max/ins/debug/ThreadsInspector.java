@@ -45,7 +45,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     private static final String LONG_NAME = "Threads Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "threadsInspectorGeometry";
 
-    private static final class ThreadsViewManager extends AbstractSingletonViewManager<ThreadsInspector> {
+    public static final class ThreadsViewManager extends AbstractSingletonViewManager<ThreadsInspector> {
 
         protected ThreadsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -69,7 +69,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     // Will be non-null before any instances created.
     private static ThreadsViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static ThreadsViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new ThreadsViewManager(inspection);
         }

@@ -45,7 +45,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     private static final String LONG_NAME = "Registers Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "registersInspectorGeometry";
 
-    private static final class RegistersViewManager extends AbstractSingletonViewManager<RegistersInspector> {
+    public static final class RegistersViewManager extends AbstractSingletonViewManager<RegistersInspector> {
 
         protected RegistersViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -69,7 +69,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     // Will be non-null before any instances created.
     private static RegistersViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static RegistersViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new RegistersViewManager(inspection);
         }
