@@ -59,9 +59,8 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.verifier.*;
 
 /**
+ * The template JIT compiler based on C1X.
  *
- *
- * @author Doug Simon
  */
 public class T1X implements RuntimeCompiler {
 
@@ -86,8 +85,34 @@ public class T1X implements RuntimeCompiler {
      */
     long[] staticBytecodeCount;
 
+    /**
+     * Class defining the template definitions, default is {@link T1XTemplateSource}.
+     */
+    private final Class<?> templateSource;
+    /**
+     * When using non-default template definitions, this compiler provides the
+     * default implementation for any non-overridden templates.
+     */
+    protected final T1X altT1X;
+
+    // TODO(mjj) These are not implemented by vanilla T1X but should they be?
+    private static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.of(T1XTemplateTag.GOTO, T1XTemplateTag.GOTO_W,
+                    T1XTemplateTag.NULL_CHECK, T1XTemplateTag.WRITEREG$link);
+
     @HOSTED_ONLY
     public T1X() {
+        this(T1XTemplateSource.class, null);
+    }
+
+    /**
+     * Creates a compiler in which some template definitiions may be "overridden".
+     * @param templateSource class defining override template definitions
+     * @param altT1X compiler providing implementation of non-overridden definitions
+     */
+    @HOSTED_ONLY
+    protected T1X(Class<?> templateSource, T1X altT1X) {
+        this.altT1X = altT1X;
+        this.templateSource = templateSource;
         templates = new T1XTemplate[T1XTemplateTag.values().length];
     }
 
@@ -319,7 +344,7 @@ public class T1X implements RuntimeCompiler {
             ClassActor.fromJava(T1XRuntime.class);
             ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(T1XTemplateSource.class));
 
-            final Method[] templateMethods = T1XTemplateSource.class.getDeclaredMethods();
+            final Method[] templateMethods = templateSource.getDeclaredMethods();
             int codeSize = 0;
             for (Method method : templateMethods) {
                 if (Platform.platform().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
@@ -352,6 +377,16 @@ public class T1X implements RuntimeCompiler {
                             FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
                         }
                         templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
+                    }
+                }
+            }
+            // ensure everything is implemented
+            for (int i = 0; i < T1XTemplateTag.values().length; i++) {
+                if (templates[i] == null && !UNIMPLEMENTED_TEMPLATES.contains(T1XTemplateTag.values()[i])) {
+                    if (altT1X == null || altT1X.templates[i] == null) {
+                        FatalError.unexpected("Template tag " + T1XTemplateTag.values()[i] + " is not implemented");
+                    } else {
+                        templates[i] = altT1X.templates[i];
                     }
                 }
             }
