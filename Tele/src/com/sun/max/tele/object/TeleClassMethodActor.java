@@ -28,6 +28,7 @@ import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.LineNumberTable.Entry;
@@ -106,7 +107,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
                 if (codeAttributeReference != null) {
                     return (TeleCodeAttribute) heap().makeTeleObject(codeAttributeReference);
                 }
-            } catch (DataIOError dataIOError) {
+            } catch (TerminatedProcessIOException terminatedProcessIOException) {
             } finally {
                 vm().unlock();
             }

@@ -36,7 +36,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  *
  * @author Michael Van De Vanter
  */
-public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector> extends AbstractInspectionHolder implements MultivViewManager {
+public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector> extends AbstractInspectionHolder implements MultivViewManager, InspectionListener {
 
     private final ViewKind viewKind;
     private final String shortName;
@@ -49,6 +49,7 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         this.viewKind = viewKind;
         this.shortName = shortName;
         this.longName = longName;
+        inspection.addInspectionListener(this);
     }
 
     public final ViewKind viewKind() {
@@ -85,5 +86,23 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     protected void notifyAddingView(Inspector inspector) {
         assert inspectors.add(inspector);
 
+    }
+
+    public void vmStateChanged(boolean force) {
+    }
+
+    public void breakpointStateChanged() {
+    }
+
+    public void watchpointSetChanged() {
+    }
+
+    public void viewConfigurationChanged() {
+    }
+
+    public void vmProcessTerminated() {
+    }
+
+    public void inspectionEnding() {
     }
 }

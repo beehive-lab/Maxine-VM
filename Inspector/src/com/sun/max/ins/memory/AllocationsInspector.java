@@ -143,16 +143,23 @@ public final class AllocationsInspector extends Inspector implements TableColumn
 
     @Override
     protected void createView() {
-        table = new MemoryAllocationsTable(inspection(), viewPreferences);
-        final InspectorScrollPane memoryAllocationsScrollPane = new InspectorScrollPane(inspection(), table);
-        contentPane = new InspectorPanel(inspection(), new BorderLayout());
-        contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);
+        if (vm().state().processState() == TERMINATED) {
+            table = null;
+            contentPane = new InspectorPanel(inspection());
+        } else {
+            table = new MemoryAllocationsTable(inspection(), viewPreferences);
+            final InspectorScrollPane memoryAllocationsScrollPane = new InspectorScrollPane(inspection(), table);
+            contentPane = new InspectorPanel(inspection(), new BorderLayout());
+            contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);
+        }
         setContentPane(contentPane);
     }
 
     @Override
     protected void refreshState(boolean force) {
-        table.refresh(force);
+        if (inspection().hasProcess()) {
+            table.refresh(force);
+        }
         if (filterToolBar != null) {
             filterToolBar.refresh(force);
         }
@@ -226,6 +233,11 @@ public final class AllocationsInspector extends Inspector implements TableColumn
             filterToolBar = null;
             filterMatchingRows = null;
         }
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        reconstructView();
     }
 
     @Override

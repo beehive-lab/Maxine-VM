@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,16 @@
 package com.sun.max.tele.debug;
 
 /**
- * Thrown when the VM process has terminated.
+ * Thrown when an IO attempt is made on a process that has terminated.
+ * This is a runtime (unchecked) exception because it gets thrown in
+ * situations where data IO code (shared with the Maxine VM code)
+ * is on the stack.
  *
  * @author Michael Van De Vanter
  */
-public class ProcessTerminatedException extends Exception {
+public class TerminatedProcessIOException extends RuntimeException {
 
-    public ProcessTerminatedException(String message) {
+    public TerminatedProcessIOException(String message) {
         super(message);
     }
 

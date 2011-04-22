@@ -38,6 +38,8 @@ import com.sun.max.vm.runtime.*;
 public final class AMD64TargetMethodUtil {
     public static final int RCALL = 0xe8;
     public static final int RJMP = 0xe9;
+    public static final int RET = 0xc3;
+    public static final int RIP_CALL_INSTRUCTION_SIZE = 5;
 
     /**
      * Lock to avoid race on concurrent icache invalidation when patching target methods.

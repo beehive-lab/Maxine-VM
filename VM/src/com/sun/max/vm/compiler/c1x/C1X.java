@@ -79,9 +79,11 @@ public class C1X implements RuntimeCompiler {
      * Set to true once the C1X options are set (to allow subclasses of this scheme to coexist in the same image).
      */
     @HOSTED_ONLY
-    private static boolean optionsRegistered;
+    public static boolean optionsRegistered;
 
-    public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 1,
+    private static final int DEFAULT_OPT_LEVEL = 3;
+
+    public static final VMIntOption optLevelOption = VMOptions.register(new VMIntOption("-C1X:OptLevel=", DEFAULT_OPT_LEVEL,
         "Set the optimization level of C1X.") {
             @Override
             public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
@@ -146,10 +148,6 @@ public class C1X implements RuntimeCompiler {
 
     @HOSTED_ONLY
     protected C1X(RiXirGenerator xirGenerator, CiTarget target) {
-        if (!optionsRegistered) {
-            VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
-            optionsRegistered = true;
-        }
         this.xirGenerator = xirGenerator;
         this.target = target;
         if (instance == null) {
@@ -166,8 +164,15 @@ public class C1X implements RuntimeCompiler {
     @Override
     public void initialize(Phase phase) {
         if (isHosted() && phase == Phase.COMPILING) {
-            C1XOptions.UseConstDirectCall = true; // Default
-            C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
+            if (!optionsRegistered) {
+                C1XOptions.setOptimizationLevel(optLevelOption.getValue());
+                C1XOptions.UseConstDirectCall = true; // Default
+                C1XOptions.UseAssumptions = false; // TODO (ds): remove once deopt works
+                C1XOptions.OptIntrinsify = false; // TODO (ds): remove once intrinisification works for Maxine
+                C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
+                VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
+                optionsRegistered = true;
+            }
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.globalStub);
             // search for the runtime call and register critical methods
             for (Method m : RuntimeCalls.class.getDeclaredMethods()) {

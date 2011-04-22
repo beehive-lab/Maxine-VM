@@ -639,7 +639,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + ":  " + getTextForTitle();
+        return this.getClass().getSimpleName() + ":  " + getTitle();
     }
 
 }

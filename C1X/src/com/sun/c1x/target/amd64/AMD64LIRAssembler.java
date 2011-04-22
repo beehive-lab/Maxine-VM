@@ -1937,12 +1937,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                 }
                 case StackOverflowCheck: {
                     int frameSize = initialFrameSizeInBytes();
-                    int framePages = frameSize / target.pageSize;
+                    int lastFramePage = frameSize / target.pageSize;
                     // emit multiple stack bangs for methods with frames larger than a page
-                    for (int i = 0; i <= framePages; i++) {
+                    for (int i = 0; i <= lastFramePage; i++) {
                         int offset = (i + C1XOptions.StackShadowPages) * target.pageSize;
-                        // Deduct 'frameSize' to handle frames larger than (C1XOptions.StackShadowPages * target.pageSize)
-                        offset = offset - frameSize;
+                        // Deduct 'frameSize' to handle frames larger than the shadow
                         bangStackWithOffset(offset - frameSize);
                     }
                     break;
@@ -2030,9 +2029,13 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         }
     }
 
+    /**
+     * @param offset the offset RSP at which to bang. Note that this offset is relative to RSP after RSP has been
+     *            adjusted to allocated the frame for the method. It denotes an offset "down" the stack.
+     *            For very large frames, this means that the offset may actually be negative (i.e. denoting
+     *            a slot "up" the stack above RSP).
+     */
     private void bangStackWithOffset(int offset) {
-        // stack grows down, caller passes positive offset
-        assert offset > 0 :  "must bang with negative offset";
         masm.movq(new CiAddress(CiKind.Word, AMD64.RSP, (-offset)), AMD64.rax);
     }
 
