@@ -38,6 +38,10 @@ import com.sun.max.vm.actor.holder.*;
 /**
  * Creates and manages canonical instances of {@link ObjectInspector} for
  * objects in the heap of the VM.
+ * <p>
+ * This view manager does not have a public face for creating object views.  Rather,
+ * the manager listens for the user to set focus on a particular object, and which point
+ * an {@link ObjectInspector} is created (or merely highlighted if it already exists).
  *
  * @author Michael Van De Vanter
  */

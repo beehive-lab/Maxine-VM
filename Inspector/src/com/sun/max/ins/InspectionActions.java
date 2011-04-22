@@ -770,7 +770,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @return an action that will produce a possibly new view of the specified kind
      */
     public InspectorAction activateSingletonView(ViewKind kind) {
-        return inspection().views().activateSingletonViewAction(kind);
+        return views().activateSingletonViewAction(kind);
     }
 
     /**
@@ -901,23 +901,35 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 public void menuSelected(MenuEvent e) {
                     removeAll();
-                    final Set<MemoryInspector> inspectors = inspection().memoryInspectors();
+                    final List< ? extends Inspector> inspectors = views().activeViews(ViewKind.MEMORY);
                     if (inspectors.size() > 0) {
-                        final Set<MemoryInspector> sortedSet  =  new TreeSet<MemoryInspector>(new Comparator<MemoryInspector>() {
+                        final TreeSet<MemoryInspector> sortedSet  =  new TreeSet<MemoryInspector>(new Comparator<MemoryInspector>() {
                             public int compare(MemoryInspector inspector1, MemoryInspector inspector2) {
                                 final Long startLocation1 = inspector1.getCurrentMemoryRegion().start().toLong();
                                 final Long startLocation2 = inspector2.getCurrentMemoryRegion().start().toLong();
+                                if (startLocation1 == startLocation2) {
+                                    final Long size1 = inspector1.getCurrentMemoryRegion().nBytes();
+                                    final Long size2 = inspector2.getCurrentMemoryRegion().nBytes();
+                                    if (size1 == size2) {
+                                        // Viewing same region; pick one, so it doesn't look like a duplicate
+                                        return 1;
+                                    }
+                                    // Regions start at same location, so pick one vased on size
+                                    return size1.compareTo(size2);
+                                }
+                                // In the typical case, sort by starting location
                                 return startLocation1.compareTo(startLocation2);
                             }
                         });
-                        for (MemoryInspector inspector : inspectors) {
-                            sortedSet.add(inspector);
+                        for (Inspector inspector : inspectors) {
+                            final MemoryInspector memoryInspector = (MemoryInspector) inspector;
+                            sortedSet.add(memoryInspector);
                         }
                         for (MemoryInspector inspector : sortedSet) {
                             add(inspector.getShowViewAction());
                         }
                         addSeparator();
-                        add(actions().closeViews(MemoryInspector.class, null, "Close all memory inspectors"));
+                        add(views().deactivateAllViewsAction(ViewKind.MEMORY));
                     }
                 }
             });
@@ -967,18 +979,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             if (memoryRegion != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), memoryRegion, memoryRegion.regionName());
-                inspector.highlight();
+                views().memory().makeView(memoryRegion, memoryRegion.regionName()).highlight();
             } else  if (address != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10));
-                inspector.highlight();
+                final InspectorMemoryRegion newRegion = new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10);
+                views().memory().makeView(newRegion, null).highlight();
             } else {
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory at address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
-                        final Inspector inspector = new MemoryInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10));
-                        inspector.highlight();
+                        final InspectorMemoryRegion newRegion = new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10);
+                        views().memory().makeView(newRegion, null).highlight();
                     }
                 };
             }
@@ -1057,44 +1068,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action: inspects memory occupied by an object.
-     */
-
-    final class InspectObjectMemoryAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect memory";
-        private final TeleObject teleObject;
-
-        InspectObjectMemoryAction(TeleObject teleObject, String actionTitle) {
-            super(inspection(), (actionTitle == null) ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
-        }
-
-        @Override
-        protected void procedure() {
-            final Inspector inspector = new MemoryInspector(inspection(), teleObject);
-            inspector.highlight();
-        }
-    }
-
-    /**
-     * @param teleObject a surrogate for a valid object in the VM
-     * @param actionTitle a name for the action
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectObjectMemory(TeleObject teleObject, String actionTitle) {
-        return new InspectObjectMemoryAction(teleObject, actionTitle);
-    }
-
-    /**
-     * @param teleObject a surrogate for a valid object in the VM
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectObjectMemory(TeleObject teleObject) {
-        return new InspectObjectMemoryAction(teleObject, null);
-    }
-
-    /**
      * Action:  inspect the memory holding a block of machine code.
      */
     final class InspectMachineCodeRegionMemoryAction extends InspectorAction {
@@ -1148,8 +1121,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), thread.stack().memoryRegion(), "Thread " + thread.toShortString());
-                inspector.highlight();
+                views().memory().makeView(thread.stack().memoryRegion(), "Thread " + thread.toShortString()).highlight();
             } else {
                 gui().errorMessage("no thread selected");
             }
@@ -1183,8 +1155,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), thread.localsBlock().memoryRegion(), "Thread locals block " + thread.toShortString());
-                inspector.highlight();
+                views().memory().makeView(thread.localsBlock().memoryRegion(), "Thread locals block " + thread.toShortString()).highlight();
             } else {
                 gui().errorMessage("no thread selected");
             }
@@ -1221,9 +1192,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxMemoryRegion memoryRegion = getMemoryRegion();
             if (memoryRegion != null) {
-                final String title = "Thread locals area " + state.name() + " for " + focus().thread().toShortString();
-                final Inspector inspector = new MemoryInspector(inspection(), memoryRegion, title);
-                inspector.highlight();
+                final String regionName = "Thread locals area " + state.name() + " for " + focus().thread().toShortString();
+                views().memory().makeView(memoryRegion, regionName).highlight();
             } else {
                 gui().errorMessage("no region found");
             }
@@ -1273,8 +1243,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxStackFrame stackFrame = focus().stackFrame();
             if (stackFrame != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName());
-                inspector.highlight();
+                views().memory().makeView(stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName()).highlight();
             } else {
                 gui().errorMessage("no stack frame selected");
             }
@@ -1311,8 +1280,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             if (stackFrame.memoryRegion() != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName());
-                inspector.highlight();
+                views().memory().makeView(stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName()).highlight();
             } else {
                 gui().errorMessage("stack frame " + stackFrame.entityName() + " null memory region");
             }
@@ -1341,9 +1309,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxWatchpoint watchpoint = focus().watchpoint();
             if (watchpoint != null) {
-                final Inspector inspector =
-                    new MemoryInspector(inspection(), watchpoint.memoryRegion(), "Watchpoint " + watchpoint.description());
-                inspector.highlight();
+                views().memory().makeView(watchpoint.memoryRegion(), "Watchpoint " + watchpoint.description()).highlight();
             } else {
                 gui().errorMessage("no watchpoint selected");
             }
@@ -1383,35 +1349,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final Inspector inspector = new MemoryInspector(inspection(), memoryRegion, regionName);
-            inspector.highlight();
+            views().memory().makeView(memoryRegion, regionName).highlight();
         }
 
         @Override
         public void refresh(boolean force) {
             setEnabled(!memoryRegion.start().isZero());
         }
-    }
-
-    /**
-     * @return an Action that will create a Memory Inspector for the boot heap region.
-     */
-    public final InspectorAction inspectBootHeapMemory() {
-        return new InspectRegionMemoryAction(vm().heap().bootHeapRegion().memoryRegion(), "Heap-Boot", null);
-    }
-
-    /**
-     * @return an Action that will create a Memory Inspector for the immortal heap region.
-     */
-    public final InspectorAction inspectImmortalHeapMemory() {
-        return new InspectRegionMemoryAction(vm().heap().immortalHeapRegion().memoryRegion(), "Heap-Immortal", null);
-    }
-
-    /**
-     * @return an Action that will create a Memory Inspector for the boot code region.
-     */
-    public final InspectorAction inspectBootCodeMemory() {
-        return new InspectRegionMemoryAction(vm().codeCache().bootCodeRegion().memoryRegion(), "Heap-Code", null);
     }
 
     /**
@@ -1456,8 +1400,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxMemoryRegion memoryRegion = focus().memoryRegion();
             if (memoryRegion != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), memoryRegion, memoryRegion.regionName());
-                inspector.highlight();
+                views().memory().makeView(memoryRegion, memoryRegion.regionName()).highlight();
             }
         }
 
@@ -1555,13 +1498,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 public void menuSelected(MenuEvent e) {
                     removeAll();
-                    final List< ? extends Inspector> objectViews = inspection().views().activeViews(ViewKind.OBJECT);
+                    final List< ? extends Inspector> objectViews = views().activeViews(ViewKind.OBJECT);
                     if (objectViews.size() > 0) {
                         for (Inspector objectInspector : objectViews) {
                             add(objectInspector.getShowViewAction());
                         }
                         addSeparator();
-                        add(inspection().views().deactivateAllViewsAction(ViewKind.OBJECT));
+                        add(views().deactivateAllViewsAction(ViewKind.OBJECT));
                     }
                 }
             });

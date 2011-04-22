@@ -35,7 +35,6 @@ import javax.swing.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ins.InspectionPreferences.ExternalViewerType;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.program.*;
@@ -170,12 +169,12 @@ public final class Inspection implements InspectionHolder {
         return focus;
     }
 
-    public InspectionActions actions() {
-        return inspectionActions;
-    }
-
     public InspectionViews views() {
         return inspectionViews;
+    }
+
+    public InspectionActions actions() {
+        return inspectionActions;
     }
 
     public OptionSet options() {
@@ -228,13 +227,6 @@ public final class Inspection implements InspectionHolder {
      */
     public InspectorNameDisplay nameDisplay() {
         return nameDisplay;
-    }
-
-    /**
-     * @return all existing memory inspectors, even if hidden or iconic.
-     */
-    public Set<MemoryInspector> memoryInspectors() {
-        return MemoryInspector.inspectors();
     }
 
     /**

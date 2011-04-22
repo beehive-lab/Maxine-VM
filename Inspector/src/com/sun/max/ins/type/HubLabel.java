@@ -52,7 +52,7 @@ public final class HubLabel extends InspectorLabel {
             public void procedure(MouseEvent mouseEvent) {
                 if (inspection().gui().getButton(mouseEvent) == MouseEvent.BUTTON1) {
                     if (mouseEvent.isControlDown()) {
-                        actions().inspectObjectMemory(teleHub).perform();
+                        views().memory().makeView(teleHub);
                     } else {
                         focus().setHeapObject(teleHub);
                     }

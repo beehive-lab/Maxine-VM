@@ -23,6 +23,7 @@
 package com.sun.max.ins;
 
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 
 /**
@@ -57,6 +58,11 @@ public interface InspectionHolder {
      * @return information about the user focus of attention in the view state.
      */
     InspectionFocus focus();
+
+    /**
+     * @return access to view management
+     */
+    InspectionViews views();
 
     /**
      * @return access to {@link InspectorAction}s of general use.

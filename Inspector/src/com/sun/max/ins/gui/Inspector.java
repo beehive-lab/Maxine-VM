@@ -115,12 +115,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             case DEFAULT_MENU:
                 return new AbstractInspectorMenuItems(inspection()) {
                     public void addTo(InspectorMenu menu) {
-                        menu.add(new InspectorAction(inspection(), "Close") {
-                            @Override
-                            protected void procedure() {
-                                inspector.dispose();
-                            }
-                        });
+                        menu.add(getCloseViewAction());
                         menu.add(actions().closeViews(Inspector.class, inspector, "Close Other Inspectors"));
                         menu.addSeparator();
                         menu.add(actions().movedToCenter(inspector));
@@ -204,6 +199,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     private final TimedTrace updateTracer;
 
     private InspectorAction showViewAction = null;
+    private InspectorAction closeViewAction = null;
 
     /**
      * Abstract constructor for all inspector views.
@@ -571,7 +567,11 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
     }
 
+    /**
+     * @return an action that makes visible the inspector and highlights it.
+     */
     public final InspectorAction getShowViewAction() {
+        // Only need one, but maybe not even that one; create lazily.
         if (showViewAction == null) {
             showViewAction = new InspectorAction(inspection(), getTextForTitle()) {
 
@@ -582,6 +582,23 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             };
         }
         return showViewAction;
+    }
+
+    /**
+     * @return an action that closes the view.
+     */
+    public final InspectorAction getCloseViewAction() {
+        // Only need one, but maybe not even that one; create lazily.
+        if (closeViewAction == null) {
+            closeViewAction = new InspectorAction(inspection(), "Close") {
+
+                @Override
+                protected void procedure() {
+                    dispose();
+                }
+            };
+        }
+        return closeViewAction;
     }
 
     /**

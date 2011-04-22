@@ -26,14 +26,14 @@ import static com.sun.max.tele.MaxProcessState.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 
 import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.util.*;
-import com.sun.max.ins.view.InspectionViews.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -51,8 +51,84 @@ public final class MemoryInspector extends Inspector {
 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.MEMORY;
+    private static final String SHORT_NAME = "Memory";
+    private static final String LONG_NAME = "Memory Inspector";
     private static final String UNKNOWN_REGION_NAME = "unknown region";
 
+    private static MemoryViewManager viewManager;
+
+    public static MemoryViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new MemoryViewManager(inspection);
+        }
+        return viewManager;
+    }
+
+
+    public static final class MemoryViewManager extends AbstractMultiViewManager<MemoryInspector> implements MemoryViewFactory {
+
+        protected MemoryViewManager(Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
+            Trace.begin(1, tracePrefix() + "initializing");
+
+            Trace.end(1, tracePrefix() + "initializing");
+        }
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return true;
+        }
+
+        @Override
+        public void notifyViewClosing(Inspector inspector) {
+            // TODO (mlvdv)  should be using generics here
+            final MemoryInspector memoryInspector = (MemoryInspector) inspector;
+            super.notifyViewClosing(memoryInspector);
+        }
+
+        public MemoryInspector makeView(MaxMemoryRegion memoryRegion, String regionName) {
+            final String name = regionName == null ? memoryRegion.regionName() : regionName;
+            final MemoryInspector memoryInspector = new MemoryInspector(inspection(), memoryRegion, name, memoryRegion.start(), ViewMode.WORD, null);
+            notifyAddingView(memoryInspector);
+            return memoryInspector;
+        }
+
+        public MemoryInspector makeView(TeleObject teleObject) {
+            final MemoryInspector memoryInspector = new MemoryInspector(inspection(), teleObject.objectMemoryRegion(), null, teleObject.origin(), teleObject.isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
+            notifyAddingView(memoryInspector);
+            return memoryInspector;
+        }
+
+        public MemoryInspector makeView(Address address) {
+            final MemoryInspector memoryInspector = new MemoryInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInPage()), null, address, ViewMode.PAGE, null);
+            notifyAddingView(memoryInspector);
+            return memoryInspector;
+        }
+
+        public InspectorAction makeViewAction(final MaxMemoryRegion memoryRegion, final String regionName, String actionTitle) {
+            return new InspectorAction(inspection(), actionTitle == null ? "Inspect memory" : actionTitle) {
+
+                @Override
+                protected void procedure() {
+                    makeView(memoryRegion, regionName);
+                }
+            };
+        }
+
+        public InspectorAction makeViewAction(final TeleObject teleObject, String actionTitle) {
+            return new InspectorAction(inspection(), actionTitle == null ? "Inspect memory" : actionTitle) {
+
+                @Override
+                protected void procedure() {
+                    makeView(teleObject);
+                }
+            };
+        }
+
+    }
     public static enum ViewMode {
         WORD("Word", "Grows the visible region a word at a time and  navigates to the new location",
             "Grow the visible region upward (lower address) by one word", "Grow the visible region downward (higher address) by one word"),
@@ -152,15 +228,6 @@ public final class MemoryInspector extends Inspector {
         }
     }
 
-    private static Set<MemoryInspector> inspectors = new HashSet<MemoryInspector>();
-
-    /**
-     * @return all existing memory words inspectors, even if hidden or iconic.
-     */
-    public static Set<MemoryInspector> inspectors() {
-        return inspectors;
-    }
-
     private final int nBytesInWord;
     private final int nBytesInPage;
     private final int nWordsInPage;
@@ -197,13 +264,19 @@ public final class MemoryInspector extends Inspector {
 
     private final Rectangle originalFrameGeometry;
 
+    /**
+     * @param memoryRegion the region to view
+     * @param regionName name to use for the region
+     * @param origin where to set the origin of the view, not necessarily at the start
+     * @param viewMode initial mode for the view
+     * @param instanceViewPreferences preferences to use for this view
+     */
     private MemoryInspector(Inspection inspection, final MaxMemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryViewPreferences instanceViewPreferences) {
         super(inspection, VIEW_KIND, null);
         assert viewMode != null;
 
         Trace.line(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
 
-        inspectors.add(this);
         nBytesInWord = inspection.vm().platform().nBytesInWord();
         nBytesInPage = inspection.vm().platform().nBytesInPage();
         nWordsInPage = nBytesInPage / nBytesInWord;
@@ -344,33 +417,10 @@ public final class MemoryInspector extends Inspector {
     }
 
     /**
-     * Create a memory inspector for a designated region of memory, with the view
-     * mode set to {@link ViewMode#WORD}.
-     */
-    public MemoryInspector(Inspection inspection, MaxMemoryRegion memoryRegion) {
-        this(inspection, memoryRegion, null, memoryRegion.start(), ViewMode.WORD, null);
-    }
-
-    /**
-     * Create a memory inspector for a designated, named region of memory, with the view
-     * mode set to {@link ViewMode#WORD}.
-     */
-    public MemoryInspector(Inspection inspection, MaxMemoryRegion memoryRegion, String regionName) {
-        this(inspection, memoryRegion, regionName, memoryRegion.start(), ViewMode.WORD, null);
-    }
-
-    /**
-     * Create a memory inspector for the memory holding an object, with the view
-     * mode set to {@link ViewMode#OBJECT}.
-     */
-    public MemoryInspector(Inspection inspection, TeleObject teleObject) {
-        this(inspection, teleObject.objectMemoryRegion(), null, teleObject.origin(), teleObject.isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
-    }
-
-    /**
      * Create a memory inspector for a page of memory, with the view
      * mode set to {@link ViewMode#PAGE}.
      */
+    @Deprecated
     public MemoryInspector(Inspection inspection, Address address) {
         this(inspection, new InspectorMemoryRegion(inspection.vm(), "", address, inspection.vm().platform().nBytesInPage()), null, address, ViewMode.PAGE, null);
     }
@@ -785,7 +835,6 @@ public final class MemoryInspector extends Inspector {
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
         Trace.line(1, tracePrefix() + " closing for " + getTitle());
-        inspectors.remove(this);
         super.inspectorClosing();
     }
 
