@@ -37,8 +37,8 @@ public class ObservableCompiler {
     private List<CompilationObserver> observers;
 
     /**
-     * @return <code>true</code> if one or more observers are subscribed to receive notifications from this compiler,
-     *         <code>false</code> otherwise.
+     * @return {@code true} if one or more observers are subscribed to receive notifications from this compiler,
+     *         {@code false} otherwise.
      */
     public boolean isObserved() {
         return observers != null && !TTY.isSuppressed();

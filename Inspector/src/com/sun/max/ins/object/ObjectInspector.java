@@ -247,11 +247,6 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    public void vmProcessTerminated() {
-        dispose();
-    }
-
-    @Override
     protected void refreshState(boolean force) {
         if (teleObject.isObsolete() && followingTeleObject) {
             Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().getForwardedTeleRef().toOrigin().toHexString());

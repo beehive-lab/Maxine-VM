@@ -76,6 +76,7 @@ public final class ClassRegistry {
     public static final TupleClassActor THROWABLE = createClass(Throwable.class);
     public static final TupleClassActor THREAD = createClass(Thread.class);
     public static final TupleClassActor JLR_REFERENCE = createClass(java.lang.ref.Reference.class);
+    public static final TupleClassActor JLR_FINAL_REFERENCE = createClass(Classes.forName("java.lang.ref.FinalReference"));
     public static final InterfaceActor CLONEABLE = createClass(Cloneable.class);
     public static final InterfaceActor SERIALIZABLE = createClass(Serializable.class);
     public static final HybridClassActor STATIC_HUB = createClass(StaticHub.class);

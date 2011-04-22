@@ -527,9 +527,9 @@ public final class Heap {
             Log.println(" done--");
             Log.print("--After GC   used: ");
             Log.print(afterUsed / k);
-            Log.print("Kb, free: ");
+            Log.print(" Kb, free: ");
             Log.print(afterFree / k);
-            Log.print("Kb, reclaimed: ");
+            Log.print(" Kb, reclaimed: ");
             Log.print(reclaimed / k);
             Log.println(" Kb --");
             if (freedEnough) {

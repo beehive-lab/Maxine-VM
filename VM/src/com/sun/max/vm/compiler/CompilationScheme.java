@@ -41,7 +41,6 @@ import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.Cursor;
-import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -189,7 +188,7 @@ public interface CompilationScheme extends VMScheme {
                         return true;
                     }
                     Pointer ip = current.ip();
-                    Pointer callSite = ip.minus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
+                    Pointer callSite = ip.minus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
                     if (callSite.readByte(0) == AMD64TargetMethodUtil.RCALL) {
                         Pointer target = ip.plus(callSite.readInt(1));
                         if (target.equals(from)) {

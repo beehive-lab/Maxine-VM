@@ -116,6 +116,14 @@ public final class ObjectViewManager extends AbstractMultiViewManager {
         super.notifyViewClosing(inspector);
     }
 
+
+    @Override
+    public void vmProcessTerminated() {
+        for (ObjectInspector inspector : inspectors()) {
+            inspector.dispose();
+        }
+    }
+
     private void makeObjectInspector(Inspection inspection, TeleObject teleObject) {
         ObjectInspector objectInspector =  teleObjectToInspector.get(teleObject);
         if (objectInspector == null) {

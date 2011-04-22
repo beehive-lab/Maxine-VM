@@ -191,7 +191,7 @@ public final class GraphBuilder {
                 iterateAllBlocks();
             }
         } else {
-            Class<?> accessor = openAccessorScope(rootMethod);
+            RiType accessor = openAccessorScope(rootMethod);
 
             // 6B.1 do the normal parsing
             scopeData.addToWorkList(stdEntry);
@@ -214,17 +214,17 @@ public final class GraphBuilder {
         }
     }
 
-    private void closeAccessorScope(Class< ? > accessor) {
+    private void closeAccessorScope(RiType accessor) {
         if (accessor != null) {
             boundAccessor.set(null);
         }
     }
 
-    private Class< ? > openAccessorScope(RiMethod rootMethod) {
-        Class<?> accessor = rootMethod.accessor();
+    private RiType openAccessorScope(RiMethod rootMethod) {
+        RiType accessor = rootMethod.accessor();
         if (accessor != null) {
             assert boundAccessor.get() == null;
-            boundAccessor.set(compilation.runtime.getRiType(accessor));
+            boundAccessor.set(accessor);
 
             // What looks like an object receiver in the bytecode may not be a word value
             compilation.setNotTypesafe();
@@ -803,7 +803,7 @@ public final class GraphBuilder {
     void genNewTypeArray(int typeCode) {
         FrameState stateBefore = curState.immutableCopy(bci());
         CiKind kind = CiKind.fromArrayTypeCode(typeCode);
-        RiType elementType = compilation.runtime.getRiType(kind);
+        RiType elementType = compilation.runtime.asRiType(kind);
         apush(append(new NewTypeArray(ipop(), elementType, stateBefore)));
     }
 
@@ -1019,10 +1019,10 @@ public final class GraphBuilder {
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      */
     private boolean inlineWithBoundAccessor(RiMethod target, Value[] args, boolean forcedInline) {
-        Class<?> accessor = target.accessor();
+        RiType accessor = target.accessor();
         if (accessor != null) {
             assert boundAccessor.get() == null;
-            boundAccessor.set(compilation.runtime.getRiType(accessor));
+            boundAccessor.set(accessor);
             try {
                 // What looks like an object receiver in the bytecode may not be a word value
                 compilation.setNotTypesafe();
@@ -1106,9 +1106,7 @@ public final class GraphBuilder {
             exact = receiver.exactType();
             if (exact == null) {
                 if (receiver.isConstant()) {
-                    CiConstant constant = receiver.asConstant();
-                    assert constant.kind.isObject();
-                    exact = compilation.runtime.getRiType(constant);
+                    exact = compilation.runtime.getTypeOf(receiver.asConstant());
                 }
                 if (exact == null) {
                     RiType declared = receiver.declaredType();
@@ -1183,13 +1181,13 @@ public final class GraphBuilder {
             needsCheck = exactType.hasFinalizer();
         } else {
             // if either the declared type of receiver or the holder can be assumed to have no finalizers
-            if (declaredType != null && declaredType.hasFinalizableSubclass()) {
+            if (declaredType != null && !declaredType.hasFinalizableSubclass()) {
                 if (compilation.recordNoFinalizableSubclassAssumption(declaredType)) {
                     needsCheck = false;
                 }
             }
 
-            if (receiverType != null && receiverType.hasFinalizableSubclass()) {
+            if (receiverType != null && !receiverType.hasFinalizableSubclass()) {
                 if (compilation.recordNoFinalizableSubclassAssumption(receiverType)) {
                     needsCheck = false;
                 }
@@ -1204,17 +1202,11 @@ public final class GraphBuilder {
                                  null, curState.popArguments(1), false, stateBefore, true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
-
     }
 
     void genReturn(Value x) {
-        if (C1XOptions.GenFinalizerRegistration) {
-            if (C1XOptions.OptIntrinsify) {
-                C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(method());
-                if (intrinsic == C1XIntrinsic.java_lang_Object$init) {
-                    callRegisterFinalizer();
-                }
-            }
+        if (C1XIntrinsic.getIntrinsic(method()) == C1XIntrinsic.java_lang_Object$init) {
+            callRegisterFinalizer();
         }
 
         // If inlining, then returns become gotos to the continuation point.

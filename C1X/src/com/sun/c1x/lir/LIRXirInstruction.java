@@ -118,8 +118,14 @@ public class LIRXirInstruction extends LIRInstruction {
             if (a.constant != null) {
                 sb.append(operandFmt.format(a.constant));
             } else {
-                LIRItem item = (LIRItem) a.object;
-                sb.append(operandFmt.format(item.result()));
+                Object o = a.object;
+                if (o instanceof LIRItem) {
+                    sb.append(operandFmt.format(((LIRItem) o).result()));
+                } else if (o instanceof CiValue) {
+                    sb.append(operandFmt.format((CiValue) o));
+                } else {
+                    sb.append(o);
+                }
             }
         }
         sb.append(')');
