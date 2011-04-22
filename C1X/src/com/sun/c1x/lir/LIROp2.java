@@ -151,8 +151,8 @@ public class LIROp2 extends LIRInstruction {
     }
 
     /**
-     * Gets the condition of this instruction, if it is a Cmp or Cmove LIR instruction
-     * .
+     * Gets the condition of this instruction, if it is a Cmp or Cmove LIR instruction.
+     *
      * @return condition the condition of this instruction
      */
     public Condition condition() {

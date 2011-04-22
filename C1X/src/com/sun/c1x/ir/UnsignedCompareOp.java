@@ -47,7 +47,6 @@ public final class UnsignedCompareOp extends Op2 {
      * @param op the comparison type
      * @param x the first input
      * @param y the second input
-     * @param stateBefore the state before the comparison is performed
      */
     public UnsignedCompareOp(int opcode, int op, Value x, Value y) {
         super(CiKind.Int, opcode, x, y);
