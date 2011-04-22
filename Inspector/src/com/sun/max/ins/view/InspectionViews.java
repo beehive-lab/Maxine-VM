@@ -42,6 +42,7 @@ import com.sun.max.ins.debug.WatchpointsInspector.WatchpointsViewManager;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.memory.AllocationsInspector.AllocationsViewManager;
+import com.sun.max.ins.memory.MemoryInspector.MemoryViewManager;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.method.MethodInspectorContainer.MethodViewManager;
 import com.sun.max.ins.object.*;
@@ -50,12 +51,13 @@ import com.sun.max.program.option.*;
 /**
  * A generalized manager for views in the inspector, some of which are singletons and some of which are not.
  * <p>
- * So far, only the machinery for singletons has been developed.
- *
+ * Not all view kinds have been brought into this framework.
  * @author Michael Van De Vanter
  *
  */
 public final class InspectionViews extends AbstractInspectionHolder {
+
+    // TODO (mlvdv) Bring all view kinds into this framework
 
     private static final int TRACE_VALUE = 1;
 
@@ -112,7 +114,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         },
         JAVA_SOURCE(false, false, "The contents of a Java source file"),
-        MEMORY(false, false, "The contents of a region of VM memory, expressed as words"),
+        MEMORY(false, false, "The contents of a region of VM memory, expressed as words") {
+
+            @Override
+            public MemoryViewManager viewManager() {
+                final MemoryViewManager viewManager = MemoryInspector.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
         MEMORY_BYTES(false, false, "The contents of a region of VM memory, expressed as bytes"),
         METHODS(true, true, "Container for multiple disassembled methods from the VM") {
 
@@ -285,6 +295,10 @@ public final class InspectionViews extends AbstractInspectionHolder {
             // Initialize any view managers that might need it.
             kind.viewManager();
         }
+    }
+
+    public MemoryViewFactory memory() {
+        return (MemoryViewFactory) ViewKind.MEMORY.viewManager();
     }
 
     /**

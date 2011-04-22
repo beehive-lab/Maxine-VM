@@ -29,6 +29,7 @@ import java.awt.dnd.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.view.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.value.*;
@@ -292,6 +293,10 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
 
     public final InspectionFocus focus() {
         return inspection.focus();
+    }
+
+    public final InspectionViews views() {
+        return inspection.views();
     }
 
     public final InspectionActions actions() {

@@ -49,7 +49,6 @@ public abstract class ObjectInspector extends Inspector {
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
 
-
     private static ObjectViewManager viewManager;
 
     public static ObjectViewManager makeViewManager(Inspection inspection) {
@@ -129,12 +128,11 @@ public abstract class ObjectInspector extends Inspector {
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
-        //defaultMenu.add(actions().closeViews(ObjectInspector.class, this, "Close other object inspectors"));
-        defaultMenu.add(inspection().views().deactivateOtherViewsAction(ViewKind.OBJECT, this));
-        defaultMenu.add(inspection().views().deactivateAllViewsAction(ViewKind.OBJECT));
+        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.OBJECT, this));
+        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.OBJECT));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectObjectMemory(teleObject, "Inspect this object's memory"));
+        memoryMenu.add(views().memory().makeViewAction(teleObject, "Inspect this object's memory"));
         if (vm().watchpointManager() != null) {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }

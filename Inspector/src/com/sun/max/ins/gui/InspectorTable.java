@@ -33,6 +33,7 @@ import javax.swing.table.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
+import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 
 /**
@@ -209,6 +210,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
 
     public final InspectionFocus focus() {
         return inspection.focus();
+    }
+
+    public final InspectionViews views() {
+        return inspection.views();
     }
 
     public final InspectionActions actions() {

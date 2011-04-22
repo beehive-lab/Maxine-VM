@@ -922,7 +922,7 @@ public class WordValueLabel extends ValueLabel {
                 case OBJECT_REFERENCE:
                 case OBJECT_REFERENCE_TEXT: {
                     if (teleObject != null) {
-                        action = actions().inspectObjectMemory(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
+                        action = views().memory().makeViewAction(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
                     } else {
                         action = actions().inspectMemory(address);
                     }
