@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
 import com.sun.c1x.graph.*;
