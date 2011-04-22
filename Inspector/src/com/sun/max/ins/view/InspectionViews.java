@@ -247,7 +247,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         }
         for (ViewKind kind : ViewKind.multiViewKinds) {
-            // Initialize any view managers that might needd it.
+            // Initialize any view managers that might need it.
             kind.viewManager();
         }
     }

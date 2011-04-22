@@ -134,22 +134,16 @@ public interface RiRuntime {
     Object registerGlobalStub(CiTargetMethod targetMethod, String name);
 
     /**
-     * Returns the runtime interface representation of the given Java class object.
-     *
-     * @param javaClass the Java class object
-     * @return the runtime interface representation
-     */
-    RiType getRiType(Class<?> javaClass);
-
-    /**
      * Returns the RiType object representing the base type for the given kind.
      */
-    RiType getRiType(CiKind kind);
+    RiType asRiType(CiKind kind);
 
     /**
-     * Returns the RiType object representing the type of the given constant object. Returns {@code null} when the constant is {@code null}.
+     * Returns the type of the given constant object.
+     * 
+     * @return {@code null} if {@code constant.isNull() || !constant.kind.isObject()}
      */
-    RiType getRiType(CiConstant constant);
+    RiType getTypeOf(CiConstant constant);
     
     /**
      * Returns true if the given type is a subtype of java/lang/Throwable.
@@ -210,7 +204,7 @@ public interface RiRuntime {
      * 
      * @return true if the two parameters represent the same runtime object, false otherwise
      */
-    boolean compareConstantObjects(CiConstant x, CiConstant y);
+    boolean areConstantObjectsEqual(CiConstant x, CiConstant y);
 
     /**
      * Gets the register configuration to use when compiling a given method.
@@ -236,7 +230,16 @@ public interface RiRuntime {
     int getArrayLength(CiConstant array);
 
     /**
-     * Converts the given CiConstant object to a Java class object. Returns {@code null} if the conversion is not possible.
+     * Converts the given CiConstant object to a object.
+     * 
+     * @return {@code null} if the conversion is not possible <b>OR</b> {@code c.isNull() == true}
      */
-    Class<?> getJavaClass(CiConstant c);
+    Object asJavaObject(CiConstant c);
+
+    /**
+     * Converts the given CiConstant object to a {@link Class} object.
+     * 
+     * @return {@code null} if the conversion is not possible.
+     */
+    Class<?> asJavaClass(CiConstant c);
 }

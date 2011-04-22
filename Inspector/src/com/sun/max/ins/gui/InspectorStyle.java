@@ -142,6 +142,7 @@ public interface InspectorStyle {
 
     // Debugger interaction
 
+    Color vmNoProcessBackgroundColor();
     Color vmStoppedBackgroundColor(boolean withInvalidReferences);
     Color vmStoppedinGCBackgroundColor(boolean withInvalidReferences);
     Color vmRunningBackgroundColor();

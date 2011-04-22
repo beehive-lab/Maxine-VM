@@ -62,7 +62,7 @@ public final class AllocationsInspector extends Inspector implements TableColumn
         }
 
         public boolean isEnabled() {
-            return inspection().hasProcess();
+            return true;
         }
 
         public AllocationsInspector activateView(Inspection inspection) {
@@ -129,7 +129,11 @@ public final class AllocationsInspector extends Inspector implements TableColumn
 
     @Override
     public String getTextForTitle() {
-        return viewManager.shortName();
+        String title = viewManager.shortName();
+        if (!inspection().hasProcess()) {
+            title += ": " + inspection().nameDisplay().noProcessShortText();
+        }
+        return title;
     }
 
     @Override
@@ -139,16 +143,23 @@ public final class AllocationsInspector extends Inspector implements TableColumn
 
     @Override
     protected void createView() {
-        table = new MemoryAllocationsTable(inspection(), viewPreferences);
-        final InspectorScrollPane memoryAllocationsScrollPane = new InspectorScrollPane(inspection(), table);
-        contentPane = new InspectorPanel(inspection(), new BorderLayout());
-        contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);
+        if (vm().state().processState() == TERMINATED) {
+            table = null;
+            contentPane = new InspectorPanel(inspection());
+        } else {
+            table = new MemoryAllocationsTable(inspection(), viewPreferences);
+            final InspectorScrollPane memoryAllocationsScrollPane = new InspectorScrollPane(inspection(), table);
+            contentPane = new InspectorPanel(inspection(), new BorderLayout());
+            contentPane.add(memoryAllocationsScrollPane, BorderLayout.CENTER);
+        }
         setContentPane(contentPane);
     }
 
     @Override
     protected void refreshState(boolean force) {
-        table.refresh(force);
+        if (inspection().hasProcess()) {
+            table.refresh(force);
+        }
         if (filterToolBar != null) {
             filterToolBar.refresh(force);
         }
@@ -225,17 +236,15 @@ public final class AllocationsInspector extends Inspector implements TableColumn
     }
 
     @Override
+    public void vmProcessTerminated() {
+        reconstructView();
+    }
+
+    @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
-    }
-
-    @Override
-    public void vmProcessTerminated() {
-        Trace.line(1, tracePrefix() + " closing - process terminated");
-        viewPreferences.removeListener(this);
-        dispose();
     }
 
 }

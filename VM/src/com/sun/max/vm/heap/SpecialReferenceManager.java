@@ -55,7 +55,7 @@ import com.sun.max.vm.type.*;
  */
 public class SpecialReferenceManager {
 
-    private static boolean TraceReferenceGC;
+    public static boolean TraceReferenceGC;
     static {
         VMOptions.addFieldOption("-XX:", "TraceReferenceGC", "Trace Handling of soft/weak/final/phantom references.");
     }
@@ -122,7 +122,7 @@ public class SpecialReferenceManager {
         static java.lang.ref.Reference pending;
 
         @ALIAS(declaringClass = java.lang.ref.Reference.class)
-        java.lang.ref.Reference next;
+        public java.lang.ref.Reference next;
 
         /**
          * Next ref in a linked list used by the GC to communicate discovered references
@@ -143,7 +143,7 @@ public class SpecialReferenceManager {
     public static native JLRRAlias asJLRRAlias(Object o);
 
     @INTRINSIC(UNSAFE_CAST)
-    static native java.lang.ref.Reference asJLRR(Object o);
+    public static native java.lang.ref.Reference asJLRR(Object o);
 
     /**
      * This method is called by the GC during heap exploration, when it finds a special
@@ -256,9 +256,15 @@ public class SpecialReferenceManager {
                     final Object newReferent = r.referent;
                     if (newReferent == null) {
                         Log.print(" was unreachable");
+                        Log.print(" [queue: ");
+                        Log.print(Reference.fromJava(r.queue).toOrigin());
+                        Log.print("]");
                     } else if (preserved) {
                         Log.print(" was unreachable but preserved to ");
                         Log.print(ObjectAccess.toOrigin(newReferent));
+                        Log.print(" [queue: ");
+                        Log.print(Reference.fromJava(r.queue).toOrigin());
+                        Log.print("]");
                     } else {
                         Log.print(" moved to ");
                         Log.print(ObjectAccess.toOrigin(newReferent));
@@ -326,6 +332,7 @@ public class SpecialReferenceManager {
      */
     public static void registerFinalizee(Object object) {
         if (FINALIZERS_SUPPORTED) {
+            FatalError.check(ObjectAccess.readClassActor(object).hasFinalizer(), "cannot register object that has no finalizer");
             register(object);
             if (TraceReferenceGC || Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();

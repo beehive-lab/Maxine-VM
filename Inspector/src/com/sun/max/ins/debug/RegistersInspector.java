@@ -56,7 +56,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         }
 
         public boolean isEnabled() {
-            return inspection().hasProcess() && focus().hasThread();
+            return true;
         }
 
         public RegistersInspector activateView(Inspection inspection) {
@@ -106,7 +106,9 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     @Override
     public String getTextForTitle() {
         String title = viewManager.shortName() + ": ";
-        if (thread != null) {
+        if (!inspection().hasProcess()) {
+            title += inspection().nameDisplay().noProcessShortText();
+        } else if (thread != null) {
             title += inspection().nameDisplay().longNameWithState(thread);
         }
         return title;
@@ -132,7 +134,9 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
     @Override
     protected void refreshState(boolean force) {
-        table.refresh(force);
+        if (table != null) {
+            table.refresh(force);
+        }
         // The title displays thread state, so must be updated.
         setTitle();
     }

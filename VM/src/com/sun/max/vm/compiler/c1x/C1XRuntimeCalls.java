@@ -34,6 +34,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
@@ -100,7 +101,9 @@ public class C1XRuntimeCalls {
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RegisterFinalizer)
     public static void runtimeRegisterFinalizer(Object object) {
         verifyRefMaps();
-        SpecialReferenceManager.registerFinalizee(object);
+        if (ObjectAccess.readClassActor(object).hasFinalizer()) {
+            SpecialReferenceManager.registerFinalizee(object);
+        }
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.HandleException)

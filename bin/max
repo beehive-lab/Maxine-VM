@@ -48,10 +48,9 @@
 #
 # One reason to extend this script is to build additional
 # projects that depend on Maxine, e.g. for the Guest VM Xen port of Maxine.
-# To do this set the following variables before invoking max:
+# To do this set the following variable before invoking max:
 #
-#  extra_projects      an array of extra projects to build (see projects below for syntax)
-#  extra_project_dir   the path to where the projects reside
+#  extra_projects_dirs   comma separated list of extra project directories
 #
 # It is also possible to override any of the commands in this script. For example, to
 # override the 'image' command, define a function named 'run_image_override' in the
@@ -131,10 +130,6 @@ while [ "${1:0:1}" = "-" ]; do
             shift
             jvm_dbg_port=$1
             ;;
-        -junit4 )
-            shift
-            JUNIT4_CP=$1
-            ;;
         -cp/p:* )
             cp_prefix="${1/-cp\/p:/}"
             ;;
@@ -161,7 +156,7 @@ fi
 jvm_args="$jvm_args_prefix $jvm_args $jvm_args_suffix"
 command_args=$@
 
-# Ensure that the JAVA_HOME is set or guess at its location:
+# Ensure that the JAVA_HOME is set or guess its location:
 if [ -z "${JAVA_HOME}" ]; then
     if [ -d /usr/lib/jvm/java-6-sun ]; then
        export JAVA_HOME=/usr/lib/jvm/java-6-sun
@@ -255,85 +250,6 @@ if [[ $MAXINE_OS = windows ]]; then
 	cp_sep=";"
 fi
 
-# gets the destination for classes for the project
-function get_project_dest() {
-	if [ "x$MAXINE_IDE" = "xINTELLIJ" ]; then
-		echo ${project_dir_parent}/out/production/$1
-	else
-		echo ${project_dir_parent}/$1/bin
-	fi
-}
-
-# gets the classpath entry for a project
-function get_project_cp() {
-	if [ "x$MAXINE_IDE" = "xINTELLIJ" ]; then
-		zee_project_cp="${maxine_dir}/out/production/$1"
-	else
-		zee_project_cp="${maxine_dir}/$1/bin"
-	fi
-	if [ -d ${maxine_dir}/$1/classes ]; then
-	    # the project has a "classes" directory
-	    zee_project_cp="$zee_project_cp${cp_sep}${maxine_dir}/$1/classes"
-	fi
-	echo $zee_project_cp
-}
-
-# The set of projects whose sources are to be compiled. The order of this list must
-# reflect any dependencies between the projects (i.e. if x depends on y, then y must
-# precede x in the list).
-projects=( \
-    CRI:src                       \
-    C1X:src                       \
-    Base:src,test                 \
-    Assembler:src,test            \
-    VM:src,test                   \
-    T1X:src                       \
-    MaxineELF:src                 \
-    VMDI:src                      \
-    Tele:src                      \
-    JDWP:src                      \
-    TeleJDWP:src                  \
-    Inspector:src,test            \
-)
-
-if [ "$OS" != "Darwin" ]; then
-    maxine_cp=${JAVA_HOME}/lib/tools.jar
-fi
-
-for project in ${projects[@]}; do
-    project_dir=${project/:*/}
-    maxine_cp=${maxine_cp}${cp_sep}$(get_project_cp ${project_dir})
-done
-
-# create the augmented classpath for the extra projects
-extra_project_cp=$maxine_cp
-# add in any extra projects
-for project in ${extra_projects[@]}; do
-    project_dir=${project/:*/}
-    extra_project_cp=${extra_project_cp}${cp_sep}${extra_projects_dir}/${project_dir}/bin
-done
-
-# now combine the two project lists for build purposes
-projects=( ${projects[@]} ${extra_projects[@]} )
-
-test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP environment variable to specify a class path for Junit4 classes"; exit 1; }
-junit_version="`$jvm -cp ${JUNIT4_CP} junit.runner.Version 2>&1`"
-if [[ $junit_version != 4* ]]; then
-    echo "The value of JUNIT4_CP ($JUNIT4_CP) does not denote a JUnit 4 installation."
-    echo "Running \"$jvm -cp ${JUNIT4_CP} junit.runner.Version\" produced:"
-    echo "$junit_version"
-    exit 255
-fi
-maxine_cp=${maxine_cp}${cp_sep}${JUNIT4_CP}
-
-if [ -n "$cp_prefix" ]; then
-    maxine_cp="$cp_prefix:$maxine_cp"
-fi
-
-if [ -n "$cp_suffix" ]; then
-    maxine_cp="$maxine_cp${cp_sep}$cp_suffix"
-fi
-
 test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/Native/generated/${MAXINE_OS}"
 maxine_vm=$MAXVM_DIR/maxvm
 
@@ -375,6 +291,28 @@ method_finder_pattern_help='A pattern is a class name pattern followed by an opt
     leading "!") is excluded.'
 
 #=======================================
+# Interface to the jmax utility
+#=======================================
+
+# These variables are used by jmax
+export maxine_dir
+export cp_prefix
+export cp_suffix
+
+function jmax() {
+    if [ ! -e $maxine_dir/bin/jmax.class -o $maxine_dir/bin/jmax.class -ot $maxine_dir/bin/jmax.java ]; then
+        $JAVA_HOME/bin/javac -d $maxine_dir/bin $maxine_dir/bin/jmax.java
+    fi
+    $jvm -ea -cp $maxine_dir/bin jmax $@
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+}
+
+# Call jmax now to fail-fast on errors in the projects.properties files.
+jmax projects >/dev/null
+
+#=======================================
 # Utility for verbose execution
 #=======================================
 
@@ -413,30 +351,6 @@ function check_gnu_make() {
 }
 
 #=======================================
-# Utility to get image configurations
-#=======================================
-
-
-
-#============================================================
-# When building extra projects, this function sets the
-# project_dir_parent variable and project_cp variable
-# appropriately for the run_build function
-#============================================================
-
-function set_project_dir_parent() {
-    for xproject in ${extra_projects[@]}; do
-        if [[ "$xproject" == "$1" ]]; then
-            project_dir_parent=$extra_projects_dir
-            project_cp=$extra_project_cp
-            return
-        fi
-    done
-    project_dir_parent=$maxine_dir;
-    project_cp=$maxine_cp
-}
-
-#=======================================
 # 'build' command
 #=======================================
 
@@ -453,11 +367,11 @@ options:
 If no projects are given, then all projects are built."
 
 function run_build() {
-    javac=${JAVA_HOME}/bin/javac
-    native_only=false
-    exit_after_help=false
-    clean=false
-    projects_to_build=""
+    local javac=${JAVA_HOME}/bin/javac
+    local native_only=false
+    local exit_after_help=false
+    local clean=false
+    local projects_to_build=""
     while [ "$1" != "" ]; do
         case $1 in
             -javac )
@@ -479,16 +393,17 @@ function run_build() {
         shift
     done
 
+    local build_native=false
     if [ -z "$projects_to_build" ]; then
-        for project in ${projects[@]}; do
-            project_dir=${project/:*/}
-            projects_to_build="$projects_to_build $project_dir"
-        done
-        projects_to_build="Native $projects_to_build"
+        projects_to_build="$(jmax projects)"
+        build_native=true
+    elif [[ "$projects_to_build" == *Native* ]]; then
+        $projects_to_build=${projects_to_build/Native/}
+        build_native=true
     fi
 
     # Compile C sources
-    if [[ "$projects_to_build" == *Native* ]]; then
+    if $build_native; then
         echo "Compiling C sources in ${maxine_dir}/Native..."
 
         check_gnu_make
@@ -506,32 +421,23 @@ function run_build() {
     fi
 
     # Compile Java sources
-    for project in ${projects[@]}; do
-        project_dir=${project/:*/}
-        project_build_match=0
-        for project_to_build in ${projects_to_build[@]}; do
-            if [[ "$project_to_build" == ${project_dir} ]]; then
-                project_build_match=1
-            fi
-        done
-        if [ $project_build_match -eq 0 ] ; then
-            continue
-        fi
-        set_project_dir_parent ${project}
-	project_dest=$(get_project_dest ${project_dir})
+    local project
+    for project in $projects_to_build; do
+    
+        local project_dest=$(jmax output_dir $project)
+        
         if $clean ; then
             run rm -rf ${project_dest}
         fi
         run mkdir -p ${project_dest}
 
-        source_dirs_spec=${project/*:/}
-        source_dirs=${source_dirs_spec//,/ }
+        local source_dirs=$(jmax source_dirs ${project})
         for source_dir in ${source_dirs} ; do
-            pushd ${project_dir_parent}/${project_dir}/${source_dir} >/dev/null
+            pushd ${source_dir} >/dev/null
             javac_input=/tmp/javacfiles.txt.$$
             find . -name *.java | grep -v 'package-info.java' >$javac_input
-	        echo "Compiling Java sources in ${project_dir_parent}/${project_dir}/${source_dir}..."
-                run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${project_cp} -d ${project_dest} @$javac_input 2>&1 | \
+	        echo "Compiling Java sources in ${source_dir}..."
+                run ${javac} -source 1.6 -g -J-Xmx1g -classpath $(jmax classpath $project) -d ${project_dest} @$javac_input 2>&1 | \
                    awk ' BEGIN                    { s=0; c=-1}
                          /is Sun proprietary API/ { s++; c=2; }
                                                   { if (c-- >= 0) next; print; }
@@ -577,13 +483,11 @@ function run_clean() {
     rm -rf generated	
     popd >/dev/null
     
-    for project in ${projects[@]}; do
-        project_dir=${project/:*/}
-        set_project_dir_parent ${project}
-        project_cp=$(get_project_dest ${project_dir})
-        if [ "x$project_cp" != "x" ]; then
-            echo Removing $project_cp...
-            rm -rf $project_cp
+    for project in $(jmax projects); do
+        local project_dest=$(jmax output_dir $project)
+        if [ "x$project_dest" != "x" ]; then
+            echo Removing $project_dest...
+            rm -rf $project_dest
         fi
     done
 
@@ -605,13 +509,7 @@ jtt_help="run the JTMaxine program in the Maxine VM
     Use \"max jtt -help\" to see what arguments the JTMaxine program accepts."
 
 function run_jtt() {
-    jtt_cp=$(get_project_cp VM)
-    jtt_cp=$jtt_cp:$(get_project_cp Base)
-    jtt_cp=$jtt_cp:$(get_project_cp CRI)
-    jtt_cp=$jtt_cp:$(get_project_cp C0X)
-    jtt_cp=$jtt_cp:$(get_project_cp C1X)
-    jtt_cp=$jtt_cp:$(get_project_cp Assembler)
-    jtt_cp=$jtt_cp:$JUNIT4_CP
+    jtt_cp=$(jmax classpath VM)
     run ${maxine_vm} -cp $jtt_cp $MAXVM_OPTIONS test.com.sun.max.vm.jtrun.JTMaxine -native-tests $@
 }
 
@@ -631,7 +529,7 @@ function run_jttgen() {
     fi
 
     pushd $maxine_dir/VM/test >/dev/null
-    run ${jvm_exe} -cp $(get_project_cp Base):$(get_project_cp VM) test.com.sun.max.vm.compiler.JavaTester \
+    run ${jvm_exe} -cp $(jmax classpath VM) test.com.sun.max.vm.compiler.JavaTester \
         -scenario=target -run-scheme-package=all -native-tests $(echo jtt/* | sed 's:jtt/fail::g')
     result=$?
     popd >/dev/null
@@ -655,7 +553,7 @@ function run_jnigen() {
         exit 1
     fi
 
-    run ${jvm_exe} -cp $(get_project_cp Base):$(get_project_cp VM) com.sun.max.vm.jni.JniFunctionsGenerator
+    run ${jvm_exe} -cp $(jmax classpath VM) com.sun.max.vm.jni.JniFunctionsGenerator
     result=$?
     exit $result
 }
@@ -668,7 +566,7 @@ copycheck_usage="[options]"
 copycheck_help="run copyright check on the Maxine sources (defined as being under hg control)"
  
 function run_copycheck() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tools.CheckCopyright $@
+    run ${jvm_exe} -cp $(jmax classpath_noresolve Base) com.sun.max.tools.CheckCopyright $@
     result=$?
     if [ $result -ne 0 ]; then
         exit $result
@@ -685,19 +583,12 @@ check_help="run Checkstyle on the Maxine Java sources
    Run Checkstyle over the Java sources. Any errors or warnings
    produced by Checkstyle result in a non-zero exit code.
 
-options:
- -cs <path>   path to a Checkstyle jar file. (default: value of CHECKSTYLE_JAR environment variable)
-
 If no projects are given, then all Java projects are checked."
 
 function run_check() {
     projects_to_check=""
     while [ "$1" != "" ]; do
         case $1 in
-            -cs )
-                shift
-                CHECKSTYLE_JAR=$1
-                ;;
             -* )
                 run_help check
                 echo "unknown build option '$1'"
@@ -710,59 +601,31 @@ function run_check() {
         shift
     done
 
-    if [ -z "$CHECKSTYLE_JAR" ]; then
-        if [ -f /import/maxwell/bin/checkstyle.jar ]; then
-            CHECKSTYLE_JAR=/import/maxwell/bin/checkstyle.jar
-        else
-            echo "Need to use '-cs' option or CHECKSTYLE_JAR environment variable to specify location of Checkstyle jar file"
-            exit 1
-        fi
-    fi
-
-    if [ ! -f "$CHECKSTYLE_JAR" ]; then
-        echo "No such file: $CHECKSTYLE_JAR"
-        exit 1
-    fi
-
     if [ -z "$projects_to_check" ]; then
-        for project in ${projects[@]}; do
-            project_dir=${project/:*/}
-            projects_to_check="$projects_to_check $project_dir"
-        done
+        projects_to_check=$(jmax projects)
     fi
 
-    for project in ${projects[@]}; do
-        project_dir=${project/:*/}
-        project_found=0
-        for project_to_build in ${projects_to_check[@]}; do
-            if [[ "$project_to_build" == ${project_dir} ]]; then
-                project_found=1
-            fi
-        done
-        if [ $project_found -eq 0 ] ; then
-            continue
-        fi
-        set_project_dir_parent ${project}
-
-        source_dirs_spec=${project/*:/}
-        source_dirs=${source_dirs_spec//,/ }
+    for project in $projects_to_check; do
+        local source_dirs=$(jmax source_dirs ${project})
         for source_dir in ${source_dirs} ; do
-            pushd ${project_dir_parent}/${project_dir}/${source_dir} >/dev/null
+            pushd ${source_dir} >/dev/null
             javac_input=/tmp/javacfiles.txt.$$
             find . -name *.java | grep -v 'package-info.java' >$javac_input
 
-	    result=0
-            if [ -f $maxine_dir/$project_dir/.checkstyle ]; then
-                checks_file=$(grep 'location=' < $maxine_dir/$project_dir/.checkstyle | sed 's:.*location="\([^"]*\)".*:\1:g')
+            result=0
+            local project_dir=$(jmax project_dir $project)
+            if [ -f $project_dir/.checkstyle ]; then
+                checks_file=$(grep 'location=' < $project_dir/.checkstyle | sed 's:.*location="\([^"]*\)".*:\1:g')
+                local parent_dir=$(dirname $project_dir)
                 if [[ "$checks_file" = /* ]]; then
-                    checks_file=${checks_file/#\//$maxine_dir/}
+                    checks_file=${checks_file/#\//$parent_dir/}
                 else
-                    checks_file="$maxine_dir/$project_dir/$checks_file"
+                    checks_file="$project_dir/$checks_file"
                 fi
 
-                echo "Running Checkstyle on $project_dir/$source_dir using $checks_file..."
-                checkstyle_out=/tmp/audit.$$
-                checkstyle_input=/tmp/checkfiles.txt.$$
+                echo "Running Checkstyle on $source_dir using $checks_file..."
+                local checkstyle_out=/tmp/audit.$$
+                local checkstyle_input=/tmp/checkfiles.txt.$$
 
                 cat $javac_input | \
                     grep -v 'com/sun/max/asm/amd64/complete/' |\
@@ -777,7 +640,7 @@ function run_check() {
                     grep -v 'test/reflect/' |\
                     grep -v 'test/threads/' >$checkstyle_input
 
-                run $jvm -Xmx1g -jar $CHECKSTYLE_JAR -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
+                run $jvm -Xmx1g -jar $(jmax library CHECKSTYLE) -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
                 result=$?
                 rm $checkstyle_input
                 if [ $result -eq 0 ]; then
@@ -845,10 +708,7 @@ function run_javadoc() {
     fi
 
     if [ -z "$projects_to_build" ]; then
-        for project in ${projects[@]}; do
-            project_dir=${project/:*/}
-            projects_to_build="$projects_to_build $project_dir"
-        done
+        projects_to_build=$(jmax projects)
     fi
 
     javadoc_output_dir=${maxine_dir}/javadoc
@@ -861,38 +721,25 @@ function run_javadoc() {
     package_list=/tmp/packages.txt.$$
     cat /dev/null > $package_list
 
-    for project in ${projects[@]}; do
-        project_dir=${project/:*/}
-        project_build_match=0
-        for project_to_build in ${projects_to_build[@]}; do
-            if [[ "$project_to_build" == ${project_dir} ]]; then
-                project_build_match=1
-            fi
-        done
-        if [ $project_build_match -eq 0 ] ; then
-            continue
-        fi
-
-        source_dirs_spec=${project/*:/}
-        source_dirs=${source_dirs_spec//,/ }
+    for project in $projects_to_build; do
+        local source_dirs=$(jmax source_dirs ${project})
         for source_dir in ${source_dirs} ; do
-            abs_source_dir=${maxine_dir}/${project_dir}/${source_dir}
             if [ -z "$source_path" ]; then
-                source_path=$abs_source_dir
+                source_path=$source_dir
             else
-                source_path="$source_path:$abs_source_dir"
+                source_path="$source_path:$source_dir"
             fi
-            find $abs_source_dir -name package-info.java | sed 's:'$abs_source_dir'/\(.*\)/package-info.java:\1:g' | tr '/' '.' >>$package_list
+            find $source_dir -name package-info.java | sed 's:'$source_dir'/\(.*\)/package-info.java:\1:g' | tr '/' '.' >>$package_list
         done
     done
 
     echo "Running javadoc over Java sources..."
     run ${javadoc} -quiet -source 1.6 -J-Xmx1g \
-        -classpath ${maxine_cp} \
+        -classpath $(jmax classpath) \
         -sourcepath $source_path \
         -d $javadoc_output_dir \
         -link http://java.sun.com/javase/6/docs/api \
-     $extra_javadoc_options $(<$package_list)
+    $extra_javadoc_options $(<$package_list)
     result=$?
     rm $package_list
     if [ $result -ne 0 ]; then
@@ -909,14 +756,10 @@ configs_usage=""
 configs_help="prints the predefined image configurations"
 
 function run_configs() {
-    #image_configs=`${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration`
-    
-    #echo $image_configs
-    
     printf "The available preconfigured option sets are:\n\n"
     printf "    %-15s %s\n" "Configuration" "Expansion"
 
-    ${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration | \
+    ${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath_noresolve) test.com.sun.max.vm.MaxineTesterConfiguration | \
     while read image_config; do
         image_config_args="${image_config/*\#/}"
         printf "    @%-15s %s\n" "${image_config/\#*/}" "${image_config_args//,/ }"
@@ -979,7 +822,7 @@ function run_image() {
             @*)
                 if [ -z "$image_configs" ]; then
                     # Lazily construct this variable as it requires running a Java program
-                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp ${maxine_cp} test.com.sun.max.vm.MaxineTesterConfiguration)
+                    image_configs=$(${jvm} -client -Xmx40m -Xms40m -XX:NewSize=30m -cp $(jmax classpath VM) test.com.sun.max.vm.MaxineTesterConfiguration)
                 fi
                 image_config_arg=${1/@/}
                 for image_config in ${image_configs[@]}; do
@@ -1011,7 +854,7 @@ function run_image() {
         shift
     done
 
-	run ${jvm_exe} $system_props -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageGenerator -trace=$trace_level -run=java $image_args
+	run ${jvm_exe} $system_props -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageGenerator -trace=$trace_level -run=java $image_args
 }
 
 #=======================================
@@ -1019,7 +862,7 @@ function run_image() {
 #=======================================
 
 verify_usage="[options] patterns..."
-verify_help="verifies a set methods using the Maxine bytecode verifier
+verify_help="verifies a set of methods using the Maxine bytecode verifier
 
     Run the Maxine verifier over a set of specified methods available
     on the class path. To extend the class path, use one of the global
@@ -1034,7 +877,7 @@ verify_help="verifies a set methods using the Maxine bytecode verifier
     $method_finder_pattern_help"
 
 function run_verify() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.verifier.CommandLineVerifier $@
+    run ${jvm_exe} -cp $(jmax classpath) test.com.sun.max.vm.verifier.CommandLineVerifier $@
 }
 
 #=======================================
@@ -1048,7 +891,7 @@ hcfdis_help="disassembles HexCodeFiles embedded in text files
     to a disassembled format."
 
 function run_hcfdis() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.HexCodeFileDis $@
+    run ${jvm_exe} -cp $(jmax classpath VM) com.sun.max.vm.hosted.HexCodeFileDis $@
 }
 
 #=======================================
@@ -1071,42 +914,8 @@ c1x_help="process a list of methods with the C1X compiler
     $method_finder_pattern_help"
 
 function run_c1x() {
-    c1x_cp=${maxine_cp}:`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
+    c1x_cp=$(jmax classpath):`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
     run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
-}
-
-#=======================================
-# 't1x' command
-#=======================================
-
-t1x_usage="[options] patterns..."
-t1x_help="process a list of methods with the T1X compiler
-
-    See Patterns below for a description of the format expected for \"patterns...\"
-    
-    The output traced by this command is not guaranteed to be the same as the output
-    for a compilation performed at runtime. The code produced by a compiler is sensitive
-    to the compilation context such as what classes have been resolved etc.
-
-    Use \"max t1x -help\" to see what other options this command accepts.
-    
-    --- Patterns ---
-    
-    $method_finder_pattern_help"
-
-function run_t1x() {
-    c1x_cp=${maxine_cp}:`echo $@ | grep '\-search\-cp' | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
-    run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest -t1x $@
-}
-
-#=======================================
-# 'cp' command
-#=======================================
-
-cp_help="print the Maxine classpath"
-
-function run_cp() {
-    echo ${maxine_cp}
 }
 
 #=======================================
@@ -1189,7 +998,6 @@ makejdk_help="create a JDK directory based on the Maxine VM
     and executable names in a JDK installation."
 
 function run_makejdk() {
-#    set -x
 
     if [ $# -eq 0 ]; then
         maxjdk_dir="$maxine_dir/maxjdk"
@@ -1282,7 +1090,7 @@ javap_help="launch javap with a -classpath option denoting all the Maxine classe
     Use \"max javap -help\" to see what other options this command accepts."
 
 function run_javap() {
-    run ${JAVA_HOME}/bin/javap -private -verbose -classpath ${maxine_cp}:${JCK_CLASSPATH} "$@"
+    run ${JAVA_HOME}/bin/javap -private -verbose -classpath $(jmax classpath):${JCK_CLASSPATH} "$@"
 }
 
 #=======================================
@@ -1305,7 +1113,7 @@ dis_help="preprocess class files with the Maxine VM and disassemble the result w
 function run_dis() {
     TMP_DIR=/tmp/${USER}/generated.$$
     run mkdir -p ${TMP_DIR}
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
     run rm -rf ${TMP_DIR}
 }
 
@@ -1399,9 +1207,9 @@ function run_inspect() {
         run sudo -E -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+        ${jvm_exe} $system_props -cp $(jmax classpath):$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
     else
-        run ${jvm_exe} $system_props -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+        run ${jvm_exe} $system_props -cp $(jmax classpath):$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
     fi
 }
 
@@ -1436,9 +1244,9 @@ function run_inspectoragent() {
         run sudo -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent $@
+        ${jvm_exe} -cp $(jmax classpath) com.sun.max.tele.channel.agent.InspectorAgent $@
     else
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.tele.channel.agent.InspectorAgent  $@
+        run ${jvm_exe} -cp $(jmax classpath) com.sun.max.tele.channel.agent.InspectorAgent  $@
     fi
 }
 
@@ -1454,7 +1262,7 @@ view_help="browse the boot image under the Inspector
     Use \"max view -help\" to see what the Inspector options are."
 
 function run_view() {
-    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level -vmdir=$MAXVM_DIR -mode=image $@
+    run ${jvm_exe} -cp $(jmax classpath):$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level -vmdir=$MAXVM_DIR -mode=image $@
 }
 
 #=======================================
@@ -1482,7 +1290,7 @@ function run_jtest() {
             -h )
                 echo "Usage: jtest <VM options> -- <Java Tester options>"
                 echo "where Java Tester options include:"
-                run ${maxine_vm} -classpath $(get_project_cp Base):$(get_project_cp VM) test.com.sun.max.vm.compiler.JavaTester -help
+                run ${maxine_vm} -classpath $(jmax classpath VM) test.com.sun.max.vm.compiler.JavaTester -help
                 return
                 ;;
             * )
@@ -1492,7 +1300,7 @@ function run_jtest() {
         shift
     done
     
-    run ${jvm_exe} -classpath $maxine_cp $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
+    run ${jvm_exe} -classpath $(jmax classpath) $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
 }
 
 #=======================================
@@ -1502,7 +1310,7 @@ function run_jtest() {
 helloworld_help="run a basic 'hello world' program on the Maxine VM"
 
 function run_helloworld() {
-    run ${maxine_vm} -classpath $(get_project_cp VM) "$@" test.output.HelloWorld
+    run ${maxine_vm} -classpath $(jmax classpath VM) "$@" test.output.HelloWorld
 }
 
 #=======================================
@@ -1520,7 +1328,7 @@ nm_help="print the contents of a boot image
     Use \"max nm -help\" to see what other options this command accepts."
 
 function run_nm() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
 }
 
 #=======================================
@@ -1540,7 +1348,7 @@ objecttree_help="print the causality spanning-tree of the object graph in the bo
     Use \"max objecttree -help\" to see what other options this command accepts."
 
 function run_objecttree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
 #=======================================
@@ -1560,7 +1368,7 @@ methodtree_help="print the causality spanning-tree of the method graph in the bo
     Use \"max methodtree -help\" to see what other options this command accepts."
 
 function run_methodtree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.hosted.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+    run ${jvm_exe} -cp $(jmax classpath) com.sun.max.vm.hosted.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
 #=======================================
@@ -1582,7 +1390,7 @@ function run_test() {
 	else
 	    mkdir maxine-tester
     fi
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester\
+    run ${jvm_exe} -cp $(jmax classpath) test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester\
         -refvm="${jvm}" "-refvm-args=${jvm_args}" "$@" 2>&1 | tee maxine-tester/console
     result=${PIPESTATUS[0]}
     exit $result
@@ -1607,7 +1415,7 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
     Use \"max gate -help\" to see what other options this command accepts."
 
 function run_gate() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
+    run ${jvm_exe} -cp $(jmax classpath) test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
 }
 
 
@@ -1666,6 +1474,16 @@ function run_jrockitbm() {
     else
         run ${maxine_vm} $MAXVM_OPTIONS -jar $JROCKITBM_HOME/benchmarks.jar "$@"
     fi
+}
+
+#=======================================
+# 'projects' command
+#=======================================
+
+projects_usage=""
+projects_help="show contents of all projects.properties files"
+function run_projects() {
+    run jmax properties 
 }
 
 #=======================================
@@ -1756,7 +1574,6 @@ function usage() {
     echo " -J/a<args>       suffix Java VM arguments"
     echo " -maxine <path>   base directory of the Maxine code base"
     echo "                    (default: ${maxine_dir})"
-    echo " -junit4 <cp>     class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
     echo " -make <path>     path to GNU make executable (default: $make)"
     echo " -os osname       operating system hosting the VM (all lower case) for remote inspecting"
 }

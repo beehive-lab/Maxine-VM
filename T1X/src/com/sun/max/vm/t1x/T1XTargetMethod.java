@@ -673,43 +673,12 @@ public final class T1XTargetMethod extends TargetMethod {
                 // Store the exception for the handler
                 VmThread.current().storeExceptionForHandler(throwable, this, posFor(catchAddress));
 
-                unwindAMD64(catchAddress, catcherSP, localVariablesBase);
+                Stubs.unwind(catchAddress, catcherSP, localVariablesBase);
                 FatalError.unexpected("should not reach here");
             } else {
                 unimplISA();
             }
         }
-    }
-
-    private static CriticalMethod unwind = new CriticalMethod(T1XTargetMethod.class, "unwind" + platform().isa, null);
-
-    /**
-     * This method must be compiled such that it uses neither the stack or frame pointer implicitly. Doing so might
-     * conflict with any code restoring these registers before returning to the dispatcher of the exception. The
-     * critical state of the registers before the RET instruction is:
-     * <ul>
-     * <li>RSP must be one word less than the stack pointer of the handler frame that is the target of the unwinding</li>
-     * <li>The value at [RSP] must be address of the handler code</li>
-     * </ul>
-     * <p>
-     * @param catchAddress the address of the handler code (actually the dispatcher code)
-     * @param sp the stack pointer denoting the frame of the handler to which the stack is unwound upon
-     *            returning from this method
-     * @param fp
-     */
-    @PLATFORM(cpu = "amd64")
-    @NEVER_INLINE
-    public static void unwindAMD64(Address catchAddress, Pointer sp, Pointer fp) {
-        int unwindFrameSize = unwind.targetMethod().frameSize();
-
-        // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
-        // When the RET instruction is executed, the pushed 'catchAddress' will be popped from the stack
-        // and the stack will be in the correct state for the handler.
-        Pointer returnAddressPointer = sp.minus(Word.size());
-        returnAddressPointer.setWord(catchAddress);
-
-        VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
-        VMRegister.setCpuFramePointer(fp);
     }
 
     @PLATFORM(cpu = "amd64")
