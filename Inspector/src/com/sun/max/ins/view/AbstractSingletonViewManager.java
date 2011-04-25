@@ -120,7 +120,6 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
      * Update any internal state on occasion of view activation/deactivation.
      */
     private void refresh() {
-        inspection().settings().save();
         deactivateAllAction.refresh(true);
     }
 
