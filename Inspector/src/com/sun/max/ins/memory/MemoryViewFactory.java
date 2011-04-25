@@ -31,7 +31,9 @@ import com.sun.max.unsafe.*;
 
 
 /**
- * Methods for creating views on memory in different variations.
+ * Methods for creating views on memory in different variations.  Some are direct
+ * actions; others are for possibly interactive {@link InspectorAction}s
+ * that can be put on menus.
  *
  * @author Michael Van De Vanter
  */
@@ -57,9 +59,20 @@ public interface MemoryViewFactory {
     MemoryInspector makeView(TeleObject teleObject);
 
     /**
-     * Create a view on a page of memory, with the view mode set to {@link ViewMode#PAGE}.
+     * Creates a view on a page of memory, with the view mode set to {@link ViewMode#PAGE}.
+     *
+     * @param address starting location of VM memory to be displayed
+     * @return a memory view
      */
     MemoryInspector makeView(Address address);
+
+    /**
+     * Gets an interactive action that makes a view on a page of memory, starting
+     * at a dialog-specified location, with the view mode set to {@link ViewMode#PAGE}.
+     *
+     * @return an action that creates a memory view
+     */
+    InspectorAction makeViewAction();
 
     /**
      * Gets an action that makes a view on a region of memory, with the view
@@ -81,4 +94,15 @@ public interface MemoryViewFactory {
      * @return an action that creates a memory view
      */
     InspectorAction makeViewAction(TeleObject teleObject, String actionTitle);
+
+    /**
+     * Gets an action that makes a view on a page of memory, with the view mode
+     * set to {@link ViewMode#PAGE}.
+     *
+     * @param address starting location of VM memory to be displayed
+     * @param actionTitle an optional title for the action that would appear in a menu
+     * @return an action that creates a memory view
+     */
+    InspectorAction makeViewAction(Address address, String actionTitle);
+
 }

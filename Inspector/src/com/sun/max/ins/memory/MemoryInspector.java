@@ -64,13 +64,27 @@ public final class MemoryInspector extends Inspector {
         return viewManager;
     }
 
-
     public static final class MemoryViewManager extends AbstractMultiViewManager<MemoryInspector> implements MemoryViewFactory {
 
-        protected MemoryViewManager(Inspection inspection) {
+        private final InspectorAction interactiveMakeViewAction;
+
+        protected MemoryViewManager(final Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
             Trace.begin(1, tracePrefix() + "initializing");
+            interactiveMakeViewAction = new InspectorAction(inspection(), "Inspect memory at address...") {
 
+                @Override
+                protected void procedure() {
+                    new AddressInputDialog(inspection, inspection.vm().bootImageStart(), "Inspect memory at address...", "Inspect") {
+
+                        @Override
+                        public void entered(Address address) {
+                            final InspectorMemoryRegion newRegion = new InspectorMemoryRegion(inspection.vm(), "", address, inspection.vm().platform().nBytesInWord() * 10);
+                            makeView(newRegion, null).highlight();
+                        }
+                    };
+                }
+            };
             Trace.end(1, tracePrefix() + "initializing");
         }
 
@@ -108,6 +122,10 @@ public final class MemoryInspector extends Inspector {
             return memoryInspector;
         }
 
+        public InspectorAction makeViewAction() {
+            return interactiveMakeViewAction;
+        }
+
         public InspectorAction makeViewAction(final MaxMemoryRegion memoryRegion, final String regionName, String actionTitle) {
             return new InspectorAction(inspection(), actionTitle == null ? "Inspect memory" : actionTitle) {
 
@@ -128,7 +146,19 @@ public final class MemoryInspector extends Inspector {
             };
         }
 
+        public InspectorAction makeViewAction(final Address address, String actionTitle) {
+            return new InspectorAction(inspection(), actionTitle == null ? "Inspect memory" : actionTitle) {
+
+                @Override
+                protected void procedure() {
+                    makeView(address);
+                }
+            };
+        }
+
     }
+
+
     public static enum ViewMode {
         WORD("Word", "Grows the visible region a word at a time and  navigates to the new location",
             "Grow the visible region upward (lower address) by one word", "Grow the visible region downward (higher address) by one word"),
@@ -275,7 +305,7 @@ public final class MemoryInspector extends Inspector {
         super(inspection, VIEW_KIND, null);
         assert viewMode != null;
 
-        Trace.line(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
+        Trace.begin(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
 
         nBytesInWord = inspection.vm().platform().nBytesInWord();
         nBytesInPage = inspection.vm().platform().nBytesInPage();
@@ -398,9 +428,8 @@ public final class MemoryInspector extends Inspector {
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
-        defaultMenu.add(actions().closeViews(MemoryInspector.class, this, "Close other memory inspectors"));
-        defaultMenu.add(actions().closeViews(MemoryInspector.class, null, "Close all memory inspectors"));
-
+        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.MEMORY, this));
+        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.MEMORY));
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         setOriginToSelectionAction.refresh(true);
         memoryMenu.add(setOriginToSelectionAction);
@@ -414,6 +443,8 @@ public final class MemoryInspector extends Inspector {
         originalFrameGeometry = getGeometry();
         table.scrollToOrigin();
        // table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
+
+        Trace.end(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
     }
 
     /**
@@ -898,7 +929,7 @@ public final class MemoryInspector extends Inspector {
     private InspectorAction inspectBytesAction = new InspectorAction(inspection(), "Inspect memory at Origin as bytes") {
         @Override
         protected void procedure() {
-            MemoryBytesInspector.create(inspection(), origin);
+            views().memoryBytes().makeView(origin);
         }
     };
 

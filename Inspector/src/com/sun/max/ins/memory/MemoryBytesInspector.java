@@ -23,17 +23,16 @@
 package com.sun.max.ins.memory;
 
 import java.awt.*;
-import java.util.*;
 
 import javax.swing.*;
 
-import com.sun.cri.ci.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.ins.value.WordValueLabel.*;
-import com.sun.max.ins.view.InspectionViews.*;
+import com.sun.max.ins.value.WordValueLabel.ValueMode;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -47,48 +46,118 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  */
 public final class MemoryBytesInspector extends Inspector {
+
+    private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.MEMORY_BYTES;
-    private static final Set<MemoryBytesInspector> memoryInspectors = CiUtil.newIdentityHashSet();
+    private static final String SHORT_NAME = "Memory as bytes";
+    private static final String LONG_NAME = "Memory Bytes Inspector";
 
-    /**
-     * Displays a new inspector for a region of memory.
-     */
-    public static MemoryBytesInspector create(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
-        return new MemoryBytesInspector(inspection, address, numberOfGroups, numberOfBytesPerGroup, numberOfGroupsPerLine);
+    private static MemoryBytesViewManager viewManager;
+
+    public static MemoryBytesViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new MemoryBytesViewManager(inspection);
+        }
+        return viewManager;
     }
 
-    /**
-     * Displays a new inspector for a region of memory.
-     */
-    public static MemoryBytesInspector create(Inspection inspection, Address address) {
-        return create(inspection, address, 64, 1, 8);
+
+    public static final class MemoryBytesViewManager extends AbstractMultiViewManager<MemoryBytesInspector> implements MemoryBytesViewFactory {
+
+        private final InspectorAction interactiveMakeViewAction;
+
+        protected MemoryBytesViewManager(final Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
+            Trace.begin(TRACE_VALUE, tracePrefix() + "creating");
+            interactiveMakeViewAction = new InspectorAction(inspection(), "Inspect memory bytes at address...") {
+
+                @Override
+                protected void procedure() {
+                    new AddressInputDialog(inspection, inspection.vm().bootImageStart(), "Inspect memory bytes at address...", "Inspect") {
+
+                        @Override
+                        public void entered(Address address) {
+                            makeView(address).highlight();
+                        }
+                    };
+                }
+            };
+            Trace.end(TRACE_VALUE, tracePrefix() + "creating");
+        }
+
+        public boolean isSupported() {
+            return true;
+        }
+
+        public boolean isEnabled() {
+            return true;
+        }
+
+        @Override
+        public void notifyViewClosing(Inspector inspector) {
+            // TODO (mlvdv)  should be using generics here
+            final MemoryBytesInspector memoryBytesInspector = (MemoryBytesInspector) inspector;
+            super.notifyViewClosing(memoryBytesInspector);
+        }
+
+        public MemoryBytesInspector makeView(Address address) {
+            final MemoryBytesInspector memoryBytesInspector = new MemoryBytesInspector(inspection(), address, 64, 1, 8);
+            notifyAddingView(memoryBytesInspector);
+            return memoryBytesInspector;
+        }
+
+        public MemoryBytesInspector makeView(TeleObject teleObject) {
+            final MaxMemoryRegion region = teleObject.objectMemoryRegion();
+            final long nBytes = region.nBytes();
+            assert nBytes < Integer.MAX_VALUE;
+            final MemoryBytesInspector memoryBytesInspector = new MemoryBytesInspector(inspection(), region.start(), (int) nBytes, 1, 16);
+            notifyAddingView(memoryBytesInspector);
+            return memoryBytesInspector;
+        }
+
+        public InspectorAction makeViewAction() {
+            return interactiveMakeViewAction;
+        }
+
+        public InspectorAction makeViewAction(final Address address, String actionTitle) {
+            return new InspectorAction(inspection(), actionTitle == null ? "Inspect memory as bytes" : actionTitle) {
+
+                @Override
+                protected void procedure() {
+                    makeView(address);
+                }
+            };
+        }
     }
 
-    /**
-     * Displays a new inspector for the currently allocated memory of a heap object in the VM.
-     */
-    public static MemoryBytesInspector create(Inspection inspection, TeleObject teleObject) {
-        final MaxMemoryRegion region = teleObject.objectMemoryRegion();
-        final long nBytes = region.nBytes();
-        assert nBytes < Integer.MAX_VALUE;
-        return create(inspection, region.start(), (int) nBytes, 1, 16);
-    }
-
+    // TODO (mlvdv) actions should be enabled by memory being available to read
     private final Rectangle originalFrameGeometry;
+    private Address address;
+    private int numberOfGroups;
+    private int numberOfBytesPerGroup;
+    private int numberOfGroupsPerLine;
 
+    /**
+     * @param inspection
+     * @param address
+     * @param numberOfGroups
+     * @param numberOfBytesPerGroup
+     * @param numberOfGroupsPerLine
+     */
     private MemoryBytesInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
         super(inspection, VIEW_KIND, null);
         this.address = address;
         this.numberOfGroups = numberOfGroups;
         this.numberOfBytesPerGroup = numberOfBytesPerGroup;
         this.numberOfGroupsPerLine = numberOfGroupsPerLine;
+        Trace.begin(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
 
         final InspectorFrame frame = createFrame(true);
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
-        defaultMenu.add(actions().closeViews(MemoryBytesInspector.class, this, "Close other memory byte inspectors"));
-        defaultMenu.add(actions().closeViews(MemoryBytesInspector.class, null, "Close all memory byte inspectors"));
+        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.MEMORY_BYTES, this));
+        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.MEMORY_BYTES));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
@@ -97,14 +166,8 @@ public final class MemoryBytesInspector extends Inspector {
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         inspection.gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
         originalFrameGeometry = getGeometry();
-        memoryInspectors.add(this);
-        Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
+        Trace.end(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
     }
-
-    private Address address;
-    private int numberOfGroups;
-    private int numberOfBytesPerGroup;
-    private int numberOfGroupsPerLine;
 
     private JComponent createController() {
         final JPanel controller = new InspectorPanel(inspection(), new SpringLayout());

@@ -42,6 +42,7 @@ import com.sun.max.ins.debug.WatchpointsInspector.WatchpointsViewManager;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.memory.AllocationsInspector.AllocationsViewManager;
+import com.sun.max.ins.memory.MemoryBytesInspector.MemoryBytesViewManager;
 import com.sun.max.ins.memory.MemoryInspector.MemoryViewManager;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.method.MethodInspectorContainer.MethodViewManager;
@@ -123,7 +124,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        MEMORY_BYTES(false, false, "The contents of a region of VM memory, expressed as bytes"),
+        MEMORY_BYTES(false, false, "The contents of a region of VM memory, expressed as bytes") {
+
+            @Override
+            public MemoryBytesViewManager viewManager() {
+                final MemoryBytesViewManager viewManager = MemoryBytesInspector.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
         METHODS(true, true, "Container for multiple disassembled methods from the VM") {
 
             @Override
@@ -297,8 +306,18 @@ public final class InspectionViews extends AbstractInspectionHolder {
         }
     }
 
+    /**
+     * @return access to view creation for memory views.
+     */
     public MemoryViewFactory memory() {
         return (MemoryViewFactory) ViewKind.MEMORY.viewManager();
+    }
+
+    /**
+     * @return access to view creation for memory bytes views.
+     */
+    public MemoryBytesViewFactory memoryBytes() {
+        return (MemoryBytesViewFactory) ViewKind.MEMORY_BYTES.viewManager();
     }
 
     /**
