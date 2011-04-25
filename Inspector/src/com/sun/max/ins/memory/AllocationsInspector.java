@@ -26,7 +26,6 @@ import static com.sun.max.tele.MaxProcessState.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 
 import javax.swing.*;
 
@@ -206,7 +205,7 @@ public final class AllocationsInspector extends Inspector implements TableColumn
         public void setSearchResult(int[] result) {
             filterMatchingRows = result;
             table.setDisplayedRows(filterMatchingRows);
-            System.out.println("Match=" + Arrays.toString(filterMatchingRows));
+            //System.out.println("Match=" + Arrays.toString(filterMatchingRows));
         }
 
         public void closeRequested() {
