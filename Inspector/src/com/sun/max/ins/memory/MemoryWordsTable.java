@@ -107,7 +107,7 @@ public final class MemoryWordsTable extends InspectorTable {
             menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
             menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
         }
-        menu.add(actions().inspectMemoryBytes(tableModel.getAddress(row), "Inspect this memory as bytes"));
+        menu.add(views().memoryBytes().makeViewAction(tableModel.getAddress(row), "Inspect this memory as bytes"));
         return menu;
     }
 

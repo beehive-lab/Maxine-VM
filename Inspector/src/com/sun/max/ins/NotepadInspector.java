@@ -372,7 +372,7 @@ public final class NotepadInspector extends Inspector {
 
         @Override
         protected void procedure() {
-            actions().inspectMemory(address).perform();
+            views().memory().makeView(address).highlight();
             focus().setAddress(address);
         }
 
@@ -399,7 +399,7 @@ public final class NotepadInspector extends Inspector {
 
         @Override
         protected void procedure() {
-            actions().inspectMemoryRegion(memoryRegion).perform();
+            views().memory().makeView(memoryRegion, null).highlight();
             focus().setAddress(address);
         }
 

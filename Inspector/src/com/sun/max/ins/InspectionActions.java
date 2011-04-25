@@ -821,69 +821,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  inspect a memory region, interactive if no location is specified.
-     */
-    final class InspectMemoryBytesAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect memory as bytes";
-        private final Address address;
-        private final TeleObject teleObject;
-
-        InspectMemoryBytesAction() {
-            super(inspection(), "Inspect memory bytes at address...");
-            this.address = null;
-            this.teleObject = null;
-            refreshableActions.add(this);
-        }
-
-        InspectMemoryBytesAction(Address address, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.address = address;
-            this.teleObject = null;
-        }
-
-        InspectMemoryBytesAction(TeleObject teleObject, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.address = null;
-            this.teleObject = teleObject;
-        }
-
-        @Override
-        protected void procedure() {
-            if (teleObject != null) {
-                MemoryBytesInspector.create(inspection(), teleObject).highlight();
-            } else if (address != null) {
-                MemoryBytesInspector.create(inspection(), address).highlight();
-            } else {
-                new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory bytes at address...", "Inspect") {
-                    @Override
-                    public void entered(Address address) {
-                        MemoryBytesInspector.create(inspection(), address).highlight();
-                    }
-                };
-            }
-        }
-    }
-
-    private final InspectorAction inspectMemoryBytesAction = new InspectMemoryBytesAction();
-
-    /**
-     * @return Singleton interactive Action that will create a Memory Inspector
-     */
-    public final InspectorAction inspectMemoryBytes() {
-        return inspectMemoryBytesAction;
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the VM
-     * @param actionTitle a string name for the action, uses default name if null
-     * @return an interactive Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectMemoryBytes(Address address, String actionTitle) {
-        return new InspectMemoryBytesAction(address, actionTitle);
-    }
-
-    /**
      * Menu: display a sub-menu of commands to make visible
      * existing memory inspectors.  It includes a command
      * that closes all of them.
@@ -914,7 +851,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                                         // Viewing same region; pick one, so it doesn't look like a duplicate
                                         return 1;
                                     }
-                                    // Regions start at same location, so pick one vased on size
+                                    // Regions start at same location, so pick one based on size
                                     return size1.compareTo(size2);
                                 }
                                 // In the typical case, sort by starting location
@@ -949,82 +886,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new MemoryInspectorsMenu();
     }
 
-    /**
-     * Action:   inspect a memory region, interactive if no location specified.
-     */
-    final class InspectMemoryAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect memory";
-        private final Address address;
-        private final MaxMemoryRegion memoryRegion;
-
-        InspectMemoryAction() {
-            super(inspection(), "Inspect memory at address...");
-            this.address = null;
-            this.memoryRegion = null;
-        }
-
-        InspectMemoryAction(MaxMemoryRegion memoryRegion, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.address = null;
-            this.memoryRegion = memoryRegion;
-        }
-
-        InspectMemoryAction(Address address, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.address = address;
-            this.memoryRegion = null;
-        }
-
-        @Override
-        protected void procedure() {
-            if (memoryRegion != null) {
-                views().memory().makeView(memoryRegion, memoryRegion.regionName()).highlight();
-            } else  if (address != null) {
-                final InspectorMemoryRegion newRegion = new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10);
-                views().memory().makeView(newRegion, null).highlight();
-            } else {
-                new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory at address...", "Inspect") {
-
-                    @Override
-                    public void entered(Address address) {
-                        final InspectorMemoryRegion newRegion = new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10);
-                        views().memory().makeView(newRegion, null).highlight();
-                    }
-                };
-            }
-        }
-    }
-
-    private final InspectorAction inspectMemoryAction = new InspectMemoryAction();
-
-    /**
-     * @return Singleton interactive Action that will create a Memory Inspector
-     */
-    public final InspectorAction inspectMemory() {
-        return inspectMemoryAction;
-    }
-
-    public final InspectorAction inspectMemoryRegion(MaxMemoryRegion memoryRegion) {
-        return new InspectMemoryAction(memoryRegion, null);
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the VM
-     * @param actionTitle a name for the action
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectMemory(Address address, String actionTitle) {
-        return new InspectMemoryAction(address, actionTitle);
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the VM
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectMemory(Address address) {
-        return new InspectMemoryAction(address, null);
-    }
 
     /**
      * Menu: display a sub-menu of commands to inspect the basic allocation
@@ -4791,8 +4652,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
                 menu.add(inspectMemoryAllocationsMenu());
-                menu.add(inspectMemory());
-                menu.add(inspectMemoryBytes());
+                menu.add(views().memory().makeViewAction());
+                menu.add(views().memoryBytes().makeViewAction());
                 menu.add(memoryInspectorsMenu());
             }
         };
