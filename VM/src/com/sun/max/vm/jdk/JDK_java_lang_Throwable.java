@@ -196,7 +196,12 @@ public final class JDK_java_lang_Throwable {
     private synchronized StackTraceElement[] getOurStackTrace() {
         // Initialize stack trace if this is the first call to this method
         if (stackTrace == null) {
-            stackTrace = ((Backtrace) backtrace).getTrace();
+            try {
+                stackTrace = ((Backtrace) backtrace).getTrace();
+            } catch (OutOfMemoryError e) {
+                // Could not build backtrace due to memory shortage
+                stackTrace = new StackTraceElement[0];
+            }
             // Let the GC clean up the back trace
             backtrace = null;
         }

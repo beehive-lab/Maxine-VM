@@ -49,9 +49,8 @@ public class Catch_StackOverflowError_03 {
             // Check that a method does not appear to be calling itself in the stack trace
             // and check that recurse* is only called by either recurse* or test
             StackTraceElement[] elements = null;
-            try {
-                elements = stackOverflowError.getStackTrace();
-            } catch (OutOfMemoryError e) {
+            elements = stackOverflowError.getStackTrace();
+            if (elements.length == 0) {
                 // Not much we can do about this perfectly legal situation
                 return PASS;
             }
