@@ -26,6 +26,8 @@ import static com.sun.max.tele.MaxProcessState.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -67,6 +69,7 @@ public final class MemoryInspector extends Inspector {
     public static final class MemoryViewManager extends AbstractMultiViewManager<MemoryInspector> implements MemoryViewFactory {
 
         private final InspectorAction interactiveMakeViewAction;
+        private final List<InspectorAction> makeViewActions;
 
         protected MemoryViewManager(final Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -85,6 +88,8 @@ public final class MemoryInspector extends Inspector {
                     };
                 }
             };
+            makeViewActions = new ArrayList<InspectorAction>(1);
+            makeViewActions.add(interactiveMakeViewAction);
             Trace.end(1, tracePrefix() + "initializing");
         }
 
@@ -154,6 +159,11 @@ public final class MemoryInspector extends Inspector {
                     makeView(address);
                 }
             };
+        }
+
+        @Override
+        protected List<InspectorAction> makeViewActions() {
+            return makeViewActions;
         }
 
     }

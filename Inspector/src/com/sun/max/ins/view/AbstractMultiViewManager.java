@@ -25,6 +25,9 @@ package com.sun.max.ins.view;
 
 import java.util.*;
 
+import javax.swing.*;
+import javax.swing.event.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
@@ -75,11 +78,44 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         return inspectors.size() > 0;
     }
 
-    public List<Inspector_Kind> activeViews() {
+    public final List<Inspector_Kind> activeViews() {
         return inspectors;
     }
 
-    public void deactivateAllViews() {
+    public final JMenu multiViewMenu() {
+        final JMenu menu = new JMenu("View " + shortName);
+        menu.addMenuListener(new MenuListener() {
+
+            public void menuCanceled(MenuEvent e) {
+            }
+
+            public void menuDeselected(MenuEvent e) {
+            }
+
+            public void menuSelected(MenuEvent e) {
+                menu.removeAll();
+                final List<Inspector_Kind> views = activeViews();
+                if (views.size() > 0) {
+                    for (Inspector inspector : views) {
+                        menu.add(inspector.getShowViewAction());
+                    }
+                    menu.addSeparator();
+                    for (InspectorAction makeViewAction : makeViewActions()) {
+                        menu.add(makeViewAction);
+                    }
+                    menu.addSeparator();
+                    menu.add(deactivateAllAction);
+                } else {
+                    for (InspectorAction makeViewAction : makeViewActions()) {
+                        menu.add(makeViewAction);
+                    }
+                }
+            }
+        });
+        return menu;
+    }
+
+    public final void deactivateAllViews() {
         for (Inspector inspector : new ArrayList<Inspector_Kind>(inspectors)) {
             inspector.dispose();
         }
@@ -87,7 +123,7 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         assert !isActive();
     }
 
-    public InspectorAction deactivateAllAction(Inspector exception) {
+    public final InspectorAction deactivateAllAction(Inspector exception) {
         if (exception == null) {
             return deactivateAllAction;
         }
@@ -99,9 +135,23 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         refresh();
     }
 
-    protected void notifyAddingView(Inspector_Kind inspector) {
+    /**
+     * Allows concrete subclasses to register the creation of a new view.
+     */
+    protected final void notifyAddingView(Inspector_Kind inspector) {
         assert inspectors.add(inspector);
         refresh();
+    }
+
+    /**
+     * Gets a list of interactive (context-independent) actions that
+     * can make a new view.  These will be added to the view menu
+     * for this kind.
+     *
+     * @return actions that can create a new view
+     */
+    protected List<InspectorAction> makeViewActions() {
+        return Collections.emptyList();
     }
 
     public void vmStateChanged(boolean force) {
@@ -120,15 +170,6 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     }
 
     public void inspectionEnding() {
-    }
-
-    public void deactivateAllViewsExcept(Inspector exceptInspector) {
-        for (Inspector inspector : new ArrayList<Inspector_Kind>(inspectors)) {
-            if (!inspector.equals(exceptInspector)) {
-                inspector.dispose();
-            }
-        }
-        refresh();
     }
 
     /**
@@ -166,7 +207,12 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
 
         @Override
         protected void procedure() {
-            deactivateAllViewsExcept(exceptInspector);
+            for (Inspector inspector : new ArrayList<Inspector_Kind>(inspectors)) {
+                if (!inspector.equals(exceptInspector)) {
+                    inspector.dispose();
+                }
+            }
+            AbstractMultiViewManager.this.refresh();
         }
 
         @Override

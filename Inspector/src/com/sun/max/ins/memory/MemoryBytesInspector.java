@@ -23,6 +23,8 @@
 package com.sun.max.ins.memory;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -65,6 +67,7 @@ public final class MemoryBytesInspector extends Inspector {
     public static final class MemoryBytesViewManager extends AbstractMultiViewManager<MemoryBytesInspector> implements MemoryBytesViewFactory {
 
         private final InspectorAction interactiveMakeViewAction;
+        private final List<InspectorAction> makeViewActions;
 
         protected MemoryBytesViewManager(final Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -82,6 +85,8 @@ public final class MemoryBytesInspector extends Inspector {
                     };
                 }
             };
+            makeViewActions = new ArrayList<InspectorAction>(1);
+            makeViewActions.add(interactiveMakeViewAction);
             Trace.end(TRACE_VALUE, tracePrefix() + "creating");
         }
 
@@ -127,6 +132,11 @@ public final class MemoryBytesInspector extends Inspector {
                     makeView(address);
                 }
             };
+        }
+
+        @Override
+        protected List<InspectorAction> makeViewActions() {
+            return makeViewActions;
         }
     }
 
