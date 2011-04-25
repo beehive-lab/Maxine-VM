@@ -53,7 +53,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -1230,49 +1229,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action: create an Object Inspector, interactively specified by address..
-     */
-    final class InspectObjectAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect object at address...";
-
-        InspectObjectAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            new AddressInputDialog(inspection(), vm().heap().bootHeapRegion().memoryRegion().start(), "Inspect object at address...", "Inspect") {
-
-                @Override
-                public void entered(Address address) {
-                    try {
-                        final Pointer pointer = address.asPointer();
-                        if (vm().isValidOrigin(pointer)) {
-                            final Reference objectReference = vm().originToReference(pointer);
-                            final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
-                            focus().setHeapObject(teleObject);
-                        } else {
-                            gui().errorMessage("heap object not found at "  + address.to0xHexString());
-                        }
-                    } catch (MaxVMBusyException maxVMBusyException) {
-                        inspection().announceVMBusyFailure(name());
-                    }
-                }
-            };
-        }
-    }
-
-    private final InspectorAction inspectObjectAction = new InspectObjectAction(null);
-
-    /**
-     * @return Singleton Action that will create an Object Inspector interactively, prompting the user for a numeric object ID
-     */
-    public final InspectorAction inspectObject() {
-        return inspectObjectAction;
-    }
-
-    /**
      * Action:  creates an inspector for a specific heap object in the VM.
      */
     final class InspectSpecifiedObjectAction extends InspectorAction {
@@ -1300,46 +1256,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new InspectSpecifiedObjectAction(teleObject, actionTitle);
     }
 
-    /**
-     * Action: create an Object Inspector, interactively specified by the inspector's OID.
-     */
-    final class InspectObjectByIDAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect object by ID...";
-
-        InspectObjectByIDAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            final String input = gui().inputDialog("Inspect object by ID..", "");
-            if (input == null) {
-                // User clicked cancel.
-                return;
-            }
-            try {
-                final long oid = Long.parseLong(input);
-                final TeleObject teleObject = vm().heap().findObjectByOID(oid);
-                if (teleObject != null) {
-                    focus().setHeapObject(teleObject);
-                } else {
-                    gui().errorMessage("failed to find heap object for ID: " + input);
-                }
-            } catch (NumberFormatException numberFormatException) {
-                gui().errorMessage("Not a ID: " + input);
-            }
-        }
-    }
-
-    private final InspectorAction inspectObjectByIDAction = new InspectObjectByIDAction(null);
-
-    /**
-     * @return Singleton Action that will create an Object Inspector interactively, prompting the user for a numeric object ID
-     */
-    public final InspectorAction inspectObjectByID() {
-        return inspectObjectByIDAction;
-    }
 
     /**
      * Action: create an Object Inspector for the boot {@link ClassRegistry} in the VM.
@@ -4620,11 +4536,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 classActorMenu.add(inspectClassActorByDecimalId());
                 classActorMenu.add(inspectBootClassRegistry());
                 menu.add(classActorMenu);
-
-                final JMenu objectMenu = new JMenu("Inspect object");
-                objectMenu.add(inspectObject());
-                objectMenu.add(inspectObjectByID());
-                menu.add(objectMenu);
 
                 menu.add(views().multiViewMenu(ViewKind.OBJECT));
             }

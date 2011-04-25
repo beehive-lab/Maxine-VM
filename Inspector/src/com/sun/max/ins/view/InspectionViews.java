@@ -321,6 +321,10 @@ public final class InspectionViews extends AbstractInspectionHolder {
     public MemoryBytesViewFactory memoryBytes() {
         return (MemoryBytesViewFactory) ViewKind.MEMORY_BYTES.viewManager();
     }
+    
+    public ObjectViewFactory objects() {
+        return (ObjectViewFactory) ViewKind.OBJECT.viewManager();
+    }
 
     /**
      * Activates a singleton view. It is an error to call this on a

@@ -32,8 +32,11 @@ import com.sun.max.ins.view.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Creates and manages canonical instances of {@link ObjectInspector} for
@@ -45,7 +48,7 @@ import com.sun.max.vm.actor.holder.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInspector> {
+public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInspector> implements ObjectViewFactory {
 
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
     private static final String SHORT_NAME = "Object";
@@ -74,6 +77,10 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
     private final Constructor defaultArrayInspectorConstructor;
     private final Constructor defaultTupleInspectorConstructor;
 
+    private final InspectorAction interactiveMakeViewAction;
+    private final InspectorAction interactiveMakeViewByIDAction;
+    private final List<InspectorAction> makeViewActions;
+
     ObjectViewManager(final Inspection inspection) {
         super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         Trace.begin(1, tracePrefix() + "initializing");
@@ -101,6 +108,58 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
                 }
             }
         });
+
+        interactiveMakeViewAction = new InspectorAction(inspection(), "View object at address...") {
+
+            @Override
+            protected void procedure() {
+                new AddressInputDialog(inspection(), vm().heap().bootHeapRegion().memoryRegion().start(), "Inspect object at address...", "Inspect") {
+
+                    @Override
+                    public void entered(Address address) {
+                        try {
+                            final Pointer pointer = address.asPointer();
+                            if (vm().isValidOrigin(pointer)) {
+                                final Reference objectReference = vm().originToReference(pointer);
+                                final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
+                                focus().setHeapObject(teleObject);
+                            } else {
+                                gui().errorMessage("heap object not found at "  + address.to0xHexString());
+                            }
+                        } catch (MaxVMBusyException maxVMBusyException) {
+                            inspection().announceVMBusyFailure(name());
+                        }
+                    }
+                };
+            }
+        };
+        interactiveMakeViewByIDAction = new InspectorAction(inspection(), "View object by ID...") {
+
+            @Override
+            protected void procedure() {
+                final String input = gui().inputDialog("Inspect object by ID..", "");
+                if (input == null) {
+                    // User clicked cancel.
+                    return;
+                }
+                try {
+                    final long oid = Long.parseLong(input);
+                    final TeleObject teleObject = vm().heap().findObjectByOID(oid);
+                    if (teleObject != null) {
+                        focus().setHeapObject(teleObject);
+                    } else {
+                        gui().errorMessage("failed to find heap object for ID: " + input);
+                    }
+                } catch (NumberFormatException numberFormatException) {
+                    gui().errorMessage("Not a ID: " + input);
+                }
+            }
+
+        };
+
+        makeViewActions = new ArrayList<InspectorAction>(1);
+        makeViewActions.add(interactiveMakeViewAction);
+        makeViewActions.add(interactiveMakeViewByIDAction);
         Trace.end(1, tracePrefix() + "initializing");
     }
 
@@ -110,6 +169,14 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
 
     public boolean isEnabled() {
         return true;
+    }
+
+    public InspectorAction makeViewAction() {
+        return interactiveMakeViewAction;
+    }
+
+    public InspectorAction makeViewByIDAction() {
+        return interactiveMakeViewByIDAction;
     }
 
     @Override
@@ -126,6 +193,11 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
         for (ObjectInspector inspector : inspectors()) {
             inspector.dispose();
         }
+    }
+
+    @Override
+    protected List<InspectorAction> makeViewActions() {
+        return makeViewActions;
     }
 
     private void makeObjectInspector(Inspection inspection, TeleObject teleObject) {
