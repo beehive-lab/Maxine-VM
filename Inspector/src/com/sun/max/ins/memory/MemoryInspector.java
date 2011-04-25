@@ -436,7 +436,7 @@ public final class MemoryInspector extends Inspector {
         memoryMenu.add(scrollToFocusAction);
         memoryMenu.add(inspectBytesAction);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());

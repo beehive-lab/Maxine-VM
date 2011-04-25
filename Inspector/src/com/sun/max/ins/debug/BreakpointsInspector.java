@@ -96,14 +96,14 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
         debugMenu.addSeparator();
         debugMenu.add(actions().genericBreakpointMenuItems());
         if (vm().watchpointManager() != null) {
             debugMenu.add(actions().genericWatchpointMenuItems());
-            debugMenu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
+            debugMenu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
         }
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));

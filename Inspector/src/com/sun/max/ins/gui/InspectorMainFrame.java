@@ -283,19 +283,19 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         menuBar = new InspectorMainMenuBar(actions);
         setJMenuBar(menuBar);
 
-        desktopMenu.add(actions.activateSingletonView(ViewKind.ALLOCATIONS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.BOOT_IMAGE));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.BREAKPOINTS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.FRAME));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.BOOT_IMAGE));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.FRAME));
         desktopMenu.add(actions.memoryInspectorsMenu());
-        desktopMenu.add(actions.activateSingletonView(ViewKind.METHODS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.NOTEPAD));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.METHODS));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.NOTEPAD));
         desktopMenu.add(actions.objectInspectorsMenu());
-        desktopMenu.add(actions.activateSingletonView(ViewKind.REGISTERS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.STACK));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.THREADS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.THREAD_LOCALS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.WATCHPOINTS));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.REGISTERS));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.STACK));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.THREADS));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.THREAD_LOCALS));
+        desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
 
         desktopPane.addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override

@@ -265,7 +265,7 @@ public final class StackInspector extends Inspector {
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().inspectSelectedThreadStackMemory("Inspect memory for stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
@@ -444,7 +444,7 @@ public final class StackInspector extends Inspector {
                 @Override
                 protected void procedure() {
                     inspection().focus().setStackFrame(stackFrame, false);
-                    actions().activateSingletonView(ViewKind.FRAME).perform();
+                    views().activateSingletonView(ViewKind.FRAME).highlight();
                 }
             });
         }

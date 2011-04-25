@@ -254,10 +254,10 @@ public class JavaMethodInspector extends MethodInspector {
         }
         debugMenu.addSeparator();
         debugMenu.add(actions().genericBreakpointMenuItems());
-        debugMenu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
+        debugMenu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
         if (vm().watchpointManager() != null) {
             debugMenu.add(actions().genericWatchpointMenuItems());
-            debugMenu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
+            debugMenu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
         }
     }
 

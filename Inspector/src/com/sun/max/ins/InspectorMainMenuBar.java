@@ -111,7 +111,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     private InspectorMenu createMemoryMenu() {
         final InspectorMenu menu = new InspectorMenu("Memory");
         menu.add(actions.genericMemoryMenuItems());
-        menu.add(actions.activateSingletonView(ViewKind.ALLOCATIONS));
+        menu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
         return menu;
     }
 
@@ -137,11 +137,11 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
         menu.addSeparator();
         menu.add(actions.genericBreakpointMenuItems());
-        menu.add(actions.activateSingletonView(ViewKind.BREAKPOINTS));
+        menu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
 
         if (vm().watchpointManager() != null) {
             menu.add(actions.genericWatchpointMenuItems());
-            menu.add(actions.activateSingletonView(ViewKind.WATCHPOINTS));
+            menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
         }
 
         return menu;
@@ -164,7 +164,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
     private InspectorMenu createTestMenu() {
         final InspectorMenu menu = new InspectorMenu("Test");
-        menu.add(actions.activateSingletonView(ViewKind.USER_FOCUS));
+        menu.add(views().activateSingletonViewAction(ViewKind.USER_FOCUS));
         menu.add(actions.listVMStateHistory());
         menu.add(actions.listThreads());
         menu.add(actions.listStackFrames());

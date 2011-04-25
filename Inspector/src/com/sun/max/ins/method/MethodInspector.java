@@ -293,7 +293,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
         memoryMenu.add(actions().inspectMachineCodeRegionMemory(machineCode()));
         memoryMenu.add(defaultMenuItems(MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(OBJECT_MENU);
 

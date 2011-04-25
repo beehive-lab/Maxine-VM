@@ -157,10 +157,10 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                     public void addTo(InspectorMenu menu) {
                         menu.addSeparator();
                         menu.add(actions().genericBreakpointMenuItems());
-                        menu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
+                        menu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
                         if (vm().watchpointManager() != null) {
                             menu.add(actions().genericWatchpointMenuItems());
-                            menu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
+                            menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
                         }
                     }
                 };
