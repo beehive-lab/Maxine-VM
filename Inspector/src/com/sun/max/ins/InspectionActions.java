@@ -763,17 +763,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * A general purpose action for activating one of the Inspector's singleton
-     * views, creating it anew if needed.
-     *
-     * @param kind the kind of view to be made
-     * @return an action that will produce a possibly new view of the specified kind
-     */
-    public InspectorAction activateSingletonView(ViewKind kind) {
-        return views().activateSingletonViewAction(kind);
-    }
-
-    /**
      * Action:  copies a hex string version of a {@link Word} to the system clipboard.
      */
     final class CopyWordAction extends InspectorAction {
@@ -4760,19 +4749,19 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public InspectorMenuItems genericViewMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
-                menu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
-                menu.add(actions().activateSingletonView(ViewKind.BOOT_IMAGE));
-                menu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
-                menu.add(actions().activateSingletonView(ViewKind.FRAME));
+                menu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+                menu.add(views().activateSingletonViewAction(ViewKind.BOOT_IMAGE));
+                menu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
+                menu.add(views().activateSingletonViewAction(ViewKind.FRAME));
                 menu.add(actions().memoryInspectorsMenu());
-                menu.add(actions().activateSingletonView(ViewKind.METHODS));
-                menu.add(actions().activateSingletonView(ViewKind.NOTEPAD));
+                menu.add(views().activateSingletonViewAction(ViewKind.METHODS));
+                menu.add(views().activateSingletonViewAction(ViewKind.NOTEPAD));
                 menu.add(actions().objectInspectorsMenu());
-                menu.add(actions().activateSingletonView(ViewKind.REGISTERS));
-                menu.add(actions().activateSingletonView(ViewKind.STACK));
-                menu.add(actions().activateSingletonView(ViewKind.THREADS));
-                menu.add(actions().activateSingletonView(ViewKind.THREAD_LOCALS));
-                menu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
+                menu.add(views().activateSingletonViewAction(ViewKind.REGISTERS));
+                menu.add(views().activateSingletonViewAction(ViewKind.STACK));
+                menu.add(views().activateSingletonViewAction(ViewKind.THREADS));
+                menu.add(views().activateSingletonViewAction(ViewKind.THREAD_LOCALS));
+                menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
             }
         };
     }

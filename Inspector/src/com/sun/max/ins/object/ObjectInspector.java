@@ -137,7 +137,7 @@ public abstract class ObjectInspector extends Inspector {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.OBJECT_MENU);
 

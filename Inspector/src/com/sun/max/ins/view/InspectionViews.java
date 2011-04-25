@@ -321,6 +321,22 @@ public final class InspectionViews extends AbstractInspectionHolder {
     }
 
     /**
+     * Activates a singleton view. It is an error to call this on a
+     * view kind that is not a singleton.
+     *
+     * @param kind the kind of view, must be a singleton.
+     * @return a new view
+     */
+    public Inspector activateSingletonView(ViewKind kind) {
+        assert kind.isSingleton;
+        final ViewManager< ? extends Inspector> viewManager = kind.viewManager();
+        if (viewManager != null) {
+            SingletonViewManager singletonViewManager = (SingletonViewManager) viewManager;
+            return singletonViewManager.activateView();
+        }
+        return null;
+    }
+    /**
      * Gets the action that will activate a singleton view.
      *
      * @param kind the kind of view to be activated, must be a singleton.

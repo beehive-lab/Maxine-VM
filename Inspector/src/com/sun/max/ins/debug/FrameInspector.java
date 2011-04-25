@@ -135,7 +135,7 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
         memoryMenu.add(actions().inspectSelectedStackFrameMemory("Inspect memory for frame"));
         memoryMenu.add(actions().inspectSelectedThreadStackMemory("Inspect memory for stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 

@@ -83,7 +83,7 @@ public final class MaxineInspector {
                     final Inspection inspection = new Inspection(maxVM, options);
                     if (maxVM.inspectionMode() == MaxInspectionMode.IMAGE) {
                         // Bring up the boot image info inspector as a starting point for browsing
-                        inspection.actions().activateSingletonView(ViewKind.BOOT_IMAGE).perform();
+                        inspection.views().activateSingletonViewAction(ViewKind.BOOT_IMAGE).perform();
                     }
                 }
             });

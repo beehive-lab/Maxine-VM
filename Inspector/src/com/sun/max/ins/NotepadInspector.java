@@ -242,7 +242,7 @@ public final class NotepadInspector extends Inspector {
         final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
         objectMenu.add(inspectSelectedAddressObjectAction);
         objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         Trace.end(1,  tracePrefix() + " initializing");
