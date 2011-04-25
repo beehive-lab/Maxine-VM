@@ -135,7 +135,6 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
      * Update any internal state on occasion of view activation/deactivation.
      */
     private void refresh() {
-        inspection().settings().save();
         deactivateAllAction.refresh(true);
     }
 
