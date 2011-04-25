@@ -287,10 +287,11 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.BOOT_IMAGE));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.FRAME));
-        desktopMenu.add(actions.memoryInspectorsMenu());
+        desktopMenu.add(inspection.views().multiViewMenu(ViewKind.MEMORY));
+        desktopMenu.add(inspection.views().multiViewMenu(ViewKind.MEMORY_BYTES));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.METHODS));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.NOTEPAD));
-        desktopMenu.add(actions.objectInspectorsMenu());
+        desktopMenu.add(inspection.views().multiViewMenu(ViewKind.OBJECT));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.REGISTERS));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.STACK));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.THREADS));

@@ -70,4 +70,5 @@ public interface MemoryBytesViewFactory {
      * @return an action that creates a memory bytes view
      */
     InspectorAction makeViewAction(Address address, String actionTitle);
+
 }

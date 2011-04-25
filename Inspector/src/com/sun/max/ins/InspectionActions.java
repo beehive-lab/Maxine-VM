@@ -810,79 +810,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Menu: display a sub-menu of commands to make visible
-     * existing memory inspectors.  It includes a command
-     * that closes all of them.
-     */
-    final class MemoryInspectorsMenu extends JMenu {
-        public MemoryInspectorsMenu() {
-            super("View Memory Inspectors");
-            addMenuListener(new MenuListener() {
-
-                public void menuCanceled(MenuEvent e) {
-                }
-
-                public void menuDeselected(MenuEvent e) {
-                }
-
-                public void menuSelected(MenuEvent e) {
-                    removeAll();
-                    final List< ? extends Inspector> inspectors = views().activeViews(ViewKind.MEMORY);
-                    if (inspectors.size() > 0) {
-                        final TreeSet<MemoryInspector> sortedSet  =  new TreeSet<MemoryInspector>(new Comparator<MemoryInspector>() {
-                            public int compare(MemoryInspector inspector1, MemoryInspector inspector2) {
-                                final Long startLocation1 = inspector1.getCurrentMemoryRegion().start().toLong();
-                                final Long startLocation2 = inspector2.getCurrentMemoryRegion().start().toLong();
-                                if (startLocation1 == startLocation2) {
-                                    final Long size1 = inspector1.getCurrentMemoryRegion().nBytes();
-                                    final Long size2 = inspector2.getCurrentMemoryRegion().nBytes();
-                                    if (size1 == size2) {
-                                        // Viewing same region; pick one, so it doesn't look like a duplicate
-                                        return 1;
-                                    }
-                                    // Regions start at same location, so pick one based on size
-                                    return size1.compareTo(size2);
-                                }
-                                // In the typical case, sort by starting location
-                                return startLocation1.compareTo(startLocation2);
-                            }
-                        });
-                        for (Inspector inspector : inspectors) {
-                            final MemoryInspector memoryInspector = (MemoryInspector) inspector;
-                            sortedSet.add(memoryInspector);
-                        }
-                        for (MemoryInspector inspector : sortedSet) {
-                            add(inspector.getShowViewAction());
-                        }
-                        addSeparator();
-                        add(views().deactivateAllViewsAction(ViewKind.MEMORY));
-                    }
-                }
-            });
-        }
-    }
-
-    /**
-     * Creates a menu of actions to make visible existing memory inspectors.
-     * <br>
-     * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
-     * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
-     *
-     * @return a dynamically populated menu that contains an action to make visible each
-     * existing memory inspector, even if hidden or iconic.
-     */
-    public final JMenu memoryInspectorsMenu() {
-        return new MemoryInspectorsMenu();
-    }
-
-
-    /**
      * Menu: display a sub-menu of commands to inspect the basic allocation
      * regions of the VM.
      */
     final class InspectMemoryAllocationsMenu extends JMenu {
         public InspectMemoryAllocationsMenu() {
-            super("Inspect memory allocation");
+            super("View memory allocations");
             addMenuListener(new MenuListener() {
 
                 public void menuCanceled(MenuEvent e) {
@@ -1328,50 +1261,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 }
             };
         }
-    }
-
-    /**
-     * Menu: display a sub-menu of commands to make visible
-     * existing object inspectors.  It includes a command
-     * that closes all of them.
-     */
-    final class ObjectInspectorsMenu extends JMenu {
-        public ObjectInspectorsMenu() {
-            super("View Object Inspectors");
-            addMenuListener(new MenuListener() {
-
-                public void menuCanceled(MenuEvent e) {
-                }
-
-                public void menuDeselected(MenuEvent e) {
-                }
-
-                public void menuSelected(MenuEvent e) {
-                    removeAll();
-                    final List< ? extends Inspector> objectViews = views().activeViews(ViewKind.OBJECT);
-                    if (objectViews.size() > 0) {
-                        for (Inspector objectInspector : objectViews) {
-                            add(objectInspector.getShowViewAction());
-                        }
-                        addSeparator();
-                        add(views().deactivateAllViewsAction(ViewKind.OBJECT));
-                    }
-                }
-            });
-        }
-    }
-
-    /**
-     * Creates a menu of actions to make visible existing object inspectors.
-     * <br>
-     * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
-     * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
-     *
-     * @return a dynamically populated menu that contains an action to make visible each
-     * existing object inspector, even if hidden or iconic.
-     */
-    public final JMenu objectInspectorsMenu() {
-        return new ObjectInspectorsMenu();
     }
 
     private final InspectorAction inspectObjectAction = new InspectObjectAction(null);
@@ -4641,9 +4530,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
                 menu.add(inspectMemoryAllocationsMenu());
-                menu.add(views().memory().makeViewAction());
-                menu.add(views().memoryBytes().makeViewAction());
-                menu.add(memoryInspectorsMenu());
+                menu.add(views().multiViewMenu(ViewKind.MEMORY));
+                menu.add(views().multiViewMenu(ViewKind.MEMORY_BYTES));
             }
         };
     }
@@ -4738,7 +4626,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 objectMenu.add(inspectObjectByID());
                 menu.add(objectMenu);
 
-                menu.add(objectInspectorsMenu());
+                menu.add(views().multiViewMenu(ViewKind.OBJECT));
             }
         };
     }
@@ -4753,10 +4641,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(views().activateSingletonViewAction(ViewKind.BOOT_IMAGE));
                 menu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
                 menu.add(views().activateSingletonViewAction(ViewKind.FRAME));
-                menu.add(actions().memoryInspectorsMenu());
+                menu.add(views().multiViewMenu(ViewKind.MEMORY));
+                menu.add(views().multiViewMenu(ViewKind.MEMORY_BYTES));
                 menu.add(views().activateSingletonViewAction(ViewKind.METHODS));
                 menu.add(views().activateSingletonViewAction(ViewKind.NOTEPAD));
-                menu.add(actions().objectInspectorsMenu());
+                menu.add(views().multiViewMenu(ViewKind.OBJECT));
                 menu.add(views().activateSingletonViewAction(ViewKind.REGISTERS));
                 menu.add(views().activateSingletonViewAction(ViewKind.STACK));
                 menu.add(views().activateSingletonViewAction(ViewKind.THREADS));

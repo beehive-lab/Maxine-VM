@@ -24,6 +24,8 @@ package com.sun.max.ins.view;
 
 import java.util.*;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.BootImageInspector.BootImageViewManager;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
@@ -105,15 +107,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         },
         FRAME_DESCRIPTOR(false, false, "The details of a bytecodeframe descriptor"),
-        NOTEPAD(true, false, "Notepad for keeping user notes") {
-
-            @Override
-            public NotepadViewManager viewManager() {
-                final NotepadViewManager viewManager = NotepadInspector.makeViewManager(inspection);
-                assert viewManager.viewKind() == this;
-                return viewManager;
-            }
-        },
         JAVA_SOURCE(false, false, "The contents of a Java source file"),
         MEMORY(false, false, "The contents of a region of VM memory, expressed as words") {
 
@@ -143,6 +136,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         },
         METHOD_CODE(false, false, "Disassembled code from a single method in the VM"),
+        NOTEPAD(true, false, "Notepad for keeping user notes") {
+
+            @Override
+            public NotepadViewManager viewManager() {
+                final NotepadViewManager viewManager = NotepadInspector.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
         OBJECT(false, false, "The contents of a region of VM memory interpreted as an object representation") {
             @Override
             public ObjectViewManager viewManager() {
@@ -336,6 +338,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
         }
         return null;
     }
+
     /**
      * Gets the action that will activate a singleton view.
      *
@@ -348,6 +351,28 @@ public final class InspectionViews extends AbstractInspectionHolder {
             if (viewManager != null) {
                 SingletonViewManager singletonViewManager = (SingletonViewManager) viewManager;
                 return singletonViewManager.activateSingletonViewAction();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets a menu for showing existing views of a specified kind, bringing
+     * forward and highlighting the one selected.  The menu is populated
+     * dynamically, creating the list of activated views when the menu
+     * is displayed.  If there are no activated views, then the menu is
+     * empty.  If there are any activated views, the menu includes an
+     * entry (at the end, after a separator) that deactivates all the views.
+     *
+     * @param kind the kind of view to be activated, must *not* be a singleton.
+     * @return the menu that displays all activated views that can be highlighted
+     */
+    public JMenu multiViewMenu(ViewKind kind) {
+        if (!kind.isSingleton) {
+            final ViewManager< ? extends Inspector> viewManager = kind.viewManager();
+            if (viewManager != null) {
+                MultiViewManager multiViewManager = (MultiViewManager) viewManager;
+                return multiViewManager.multiViewMenu();
             }
         }
         return null;
