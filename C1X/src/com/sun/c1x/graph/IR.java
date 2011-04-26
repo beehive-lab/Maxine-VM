@@ -116,12 +116,6 @@ public class IR {
             verifyAndPrint("After unsafe cast elimination");
         }
 
-        if (compilation.compiler.extensions != null) {
-            for (C1XCompilerExtension ext : compilation.compiler.extensions) {
-                ext.run(this);
-            }
-        }
-
         // do basic optimizations
         if (C1XOptions.PhiSimplify) {
             new PhiSimplifier(this);
@@ -142,6 +136,12 @@ public class IR {
         if (C1XOptions.OptBlockMerging) {
             new BlockMerger(this);
             verifyAndPrint("After block merging");
+        }
+
+        if (compilation.compiler.extensions != null) {
+            for (C1XCompilerExtension ext : compilation.compiler.extensions) {
+                ext.run(this);
+            }
         }
     }
 
