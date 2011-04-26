@@ -359,9 +359,14 @@ public class VmThread {
         Throwable e = exception;
         exception = null;
         FatalError.check(e != null, "Exception object lost during unwinding");
+        // Re-protect yellow page if is unprotected AND we're no longer too close to it
         if (yellowZoneUnprotected) {
-            VirtualMemory.protectPages(yellowZone, VmThread.YELLOW_ZONE_PAGES);
-            yellowZoneUnprotected = false;
+            Pointer sp = VMRegister.getCpuStackPointer();
+            int safetyMargin = (1 + STACK_SHADOW_PAGES) * platform().pageSize;
+            if (sp.minus(yellowZoneEnd()).toInt() >= safetyMargin) {
+                VirtualMemory.protectPages(yellowZone, VmThread.YELLOW_ZONE_PAGES);
+                yellowZoneUnprotected = false;
+            }
         }
         return e;
     }
