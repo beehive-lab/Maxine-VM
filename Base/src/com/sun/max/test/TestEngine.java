@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -197,7 +197,7 @@ public class TestEngine {
         final BufferedReader reader = new BufferedReader(new FileReader(file));
         final Properties vars = new Properties();
         boolean lineFound = false;
-System.out.println("Test properties file: " + file.getPath());
+
         while (true) {
             // read any of the beginning lines that contain '@'
             final String line = reader.readLine();
