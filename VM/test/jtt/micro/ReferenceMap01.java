@@ -31,7 +31,7 @@ public class ReferenceMap01 {
     public static Integer val1 = new Integer(3);
     public static Integer val2 = new Integer(4);
 
-    private static String test(String[] args) {
+    private static String foo(String[] args) {
         args = new String[] {"78"};
         Integer i1 = new Integer(1);
         Integer i2 = new Integer(2);
@@ -52,7 +52,7 @@ public class ReferenceMap01 {
     }
 
     public static int test(int num) {
-        return Integer.valueOf(test(new String[] {"asdf"}));
+        return Integer.valueOf(foo(new String[] {"asdf"}));
     }
 
 }

@@ -76,6 +76,9 @@ public enum OS {
         if (name.equals("MaxVE")) {
             return MAXVE;
         }
+        if (name.contains("Windows")) {
+            return WINDOWS;
+        }
         throw ProgramError.unexpected("unknown OS: " + name);
     }
 

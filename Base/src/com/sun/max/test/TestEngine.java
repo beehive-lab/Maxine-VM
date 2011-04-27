@@ -197,7 +197,7 @@ public class TestEngine {
         final BufferedReader reader = new BufferedReader(new FileReader(file));
         final Properties vars = new Properties();
         boolean lineFound = false;
-
+System.out.println("Test properties file: " + file.getPath());
         while (true) {
             // read any of the beginning lines that contain '@'
             final String line = reader.readLine();
