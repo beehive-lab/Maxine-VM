@@ -4,8 +4,5 @@
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JDWP"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Tele"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Base"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/VM"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/VMDI"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
