@@ -3,13 +3,8 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Assembler"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Base"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/VM"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/VMDI"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Tele"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JDWP"/>
 	<classpathentry kind="lib" path="jlfgr-1_0.jar"/>
 	<classpathentry kind="lib" path="NB3B.jar"/>
 	<classpathentry kind="output" path="bin"/>

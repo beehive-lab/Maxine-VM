@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -151,8 +151,8 @@ public class LIROp2 extends LIRInstruction {
     }
 
     /**
-     * Gets the condition of this instruction, if it is a Cmp or Cmove LIR instruction
-     * .
+     * Gets the condition of this instruction, if it is a Cmp or Cmove LIR instruction.
+     *
      * @return condition the condition of this instruction
      */
     public Condition condition() {
