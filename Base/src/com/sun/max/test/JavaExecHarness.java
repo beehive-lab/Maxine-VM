@@ -137,7 +137,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         }
         for (Run run : testCase.runs) {
             if (run.thrown != null) {
-                return new ExecFailure(run, "unexpected " + run.thrown.getClass().getName());
+                return new ExecFailure(run, "unexpected " + run.thrown.getClass().getName() + " (\"" + run.thrown.getMessage() + "\")");
             }
             final String result = valueToString(run.returnVal, run.returnExc);
             if (run.expectedException != null) {

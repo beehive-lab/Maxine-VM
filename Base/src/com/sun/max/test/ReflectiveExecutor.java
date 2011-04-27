@@ -44,11 +44,32 @@ public class ReflectiveExecutor implements Executor {
 
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
         try {
+
+            for (int i = 0; i < vals.length; ++i) {
+                Object o = vals[i];
+                if (o instanceof JavaExecHarness.CodeLiteral) {
+                    JavaExecHarness.CodeLiteral literal = (JavaExecHarness.CodeLiteral) o;
+                    String s = literal.codeLiteral;
+                    String className = s.substring(0, s.lastIndexOf('.'));
+                    String fieldName = s.substring(s.lastIndexOf('.') + 1);
+                    Class klass = Class.forName(className);
+                    vals[i] = klass.getField(fieldName).get(null);
+                }
+            }
             final Method m = (Method) c.slot1;
             return m.invoke(c.clazz, vals);
         } catch (IllegalArgumentException e) {
+            for (Object o : vals) {
+                System.out.println("type=" + o.getClass() + ", " + o);
+            }
             throw ProgramError.unexpected(e);
         } catch (IllegalAccessException e) {
+            throw ProgramError.unexpected(e);
+        } catch (ClassNotFoundException e) {
+            throw ProgramError.unexpected(e);
+        } catch (SecurityException e) {
+            throw ProgramError.unexpected(e);
+        } catch (NoSuchFieldException e) {
             throw ProgramError.unexpected(e);
         }
     }
