@@ -116,8 +116,6 @@ public class T1XRuntime {
 
     /**
      * Manual macros, Java style, for field access routines.
-     *             Object value = TupleAccess.readObject(object, f.offset());
-
      */
     @HOSTED_ONLY
     public static void main(String[] args) {
