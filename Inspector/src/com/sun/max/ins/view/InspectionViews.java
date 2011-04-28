@@ -33,7 +33,7 @@ import com.sun.max.ins.NotepadInspector.NotepadViewManager;
 import com.sun.max.ins.UserFocusInspector.UserFocusViewManager;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.debug.BreakpointsInspector.BreakpointsViewManager;
-import com.sun.max.ins.debug.StackFrameInspector.FrameViewManager;
+import com.sun.max.ins.debug.StackFrameInspector.StackFrameViewManager;
 import com.sun.max.ins.debug.RegistersInspector.RegistersViewManager;
 import com.sun.max.ins.debug.StackInspector.StackViewManager;
 import com.sun.max.ins.debug.ThreadLocalsInspector.ThreadLocalsViewManager;
@@ -106,15 +106,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        FRAME(true, true, "Stack frame contents in the VM for the currently frame") {
-
-            @Override
-            public FrameViewManager viewManager() {
-                final FrameViewManager viewManager = StackFrameInspector.makeViewManager(inspection);
-                assert viewManager.viewKind() == this;
-                return viewManager;
-            }
-        },
         JAVA_SOURCE(false, false, "The contents of a Java source file"),
         MEMORY(false, false, "The contents of a region of VM memory, expressed as words") {
 
@@ -175,6 +166,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
             @Override
             public StackViewManager viewManager() {
                 final StackViewManager viewManager = StackInspector.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
+        STACK_FRAME(true, true, "Stack frame contents in the VM for the currently frame") {
+
+            @Override
+            public StackFrameViewManager viewManager() {
+                final StackFrameViewManager viewManager = StackFrameInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
