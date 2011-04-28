@@ -444,7 +444,7 @@ public final class StackInspector extends Inspector {
                 @Override
                 protected void procedure() {
                     inspection().focus().setStackFrame(stackFrame, false);
-                    views().activateSingletonView(ViewKind.FRAME).highlight();
+                    views().activateSingletonView(ViewKind.STACK_FRAME).highlight();
                 }
             });
         }

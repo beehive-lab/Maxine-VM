@@ -47,14 +47,14 @@ import com.sun.max.unsafe.*;
 public final class StackFrameInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
-    private static final ViewKind VIEW_KIND = ViewKind.FRAME;
+    private static final ViewKind VIEW_KIND = ViewKind.STACK_FRAME;
     private static final String SHORT_NAME = "Stack Frame";
     private static final String LONG_NAME = "Stack Frame Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "stackFrameInspectorGeometry";
 
-    public static final class FrameViewManager extends AbstractSingletonViewManager<StackFrameInspector> {
+    public static final class StackFrameViewManager extends AbstractSingletonViewManager<StackFrameInspector> {
 
-        protected FrameViewManager(Inspection inspection) {
+        protected StackFrameViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
@@ -74,11 +74,11 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
     }
 
     // Will be non-null before any instances created.
-    private static FrameViewManager viewManager = null;
+    private static StackFrameViewManager viewManager = null;
 
-    public static FrameViewManager makeViewManager(Inspection inspection) {
+    public static StackFrameViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new FrameViewManager(inspection);
+            viewManager = new StackFrameViewManager(inspection);
         }
         return viewManager;
     }

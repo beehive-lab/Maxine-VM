@@ -4477,7 +4477,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(views().activateSingletonViewAction(ViewKind.BOOT_IMAGE));
                 menu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
                 menu.add(views().bytecodeFrames().viewMenu());
-                menu.add(views().activateSingletonViewAction(ViewKind.FRAME));
                 menu.add(views().memory().viewMenu());
                 menu.add(views().memoryBytes().viewMenu());
                 menu.add(views().activateSingletonViewAction(ViewKind.METHODS));
@@ -4485,6 +4484,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(views().objects().viewMenu());
                 menu.add(views().activateSingletonViewAction(ViewKind.REGISTERS));
                 menu.add(views().activateSingletonViewAction(ViewKind.STACK));
+                menu.add(views().activateSingletonViewAction(ViewKind.STACK_FRAME));
                 menu.add(views().activateSingletonViewAction(ViewKind.THREADS));
                 menu.add(views().activateSingletonViewAction(ViewKind.THREAD_LOCALS));
                 menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
