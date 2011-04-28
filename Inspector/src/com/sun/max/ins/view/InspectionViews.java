@@ -33,7 +33,7 @@ import com.sun.max.ins.NotepadInspector.NotepadViewManager;
 import com.sun.max.ins.UserFocusInspector.UserFocusViewManager;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.debug.BreakpointsInspector.BreakpointsViewManager;
-import com.sun.max.ins.debug.FrameInspector.FrameViewManager;
+import com.sun.max.ins.debug.StackFrameInspector.FrameViewManager;
 import com.sun.max.ins.debug.RegistersInspector.RegistersViewManager;
 import com.sun.max.ins.debug.StackInspector.StackViewManager;
 import com.sun.max.ins.debug.ThreadLocalsInspector.ThreadLocalsViewManager;
@@ -110,7 +110,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
 
             @Override
             public FrameViewManager viewManager() {
-                final FrameViewManager viewManager = FrameInspector.makeViewManager(inspection);
+                final FrameViewManager viewManager = StackFrameInspector.makeViewManager(inspection);
                 assert viewManager.viewKind() == this;
                 return viewManager;
             }
