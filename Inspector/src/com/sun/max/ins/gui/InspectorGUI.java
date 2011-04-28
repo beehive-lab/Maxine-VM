@@ -43,11 +43,6 @@ public interface InspectorGUI {
     void addInspector(Inspector inspector);
 
     /**
-     * Returns an {@link Inspector} currently in the GUI display that matches a predicate.
-     */
-    Inspector findInspector(Predicate<Inspector> predicate);
-
-    /**
      * Removes and disposes all instances of {@link Inspector} currently in the GUI display that match a predicate.
      */
     void removeInspectors(Predicate<Inspector> predicate);

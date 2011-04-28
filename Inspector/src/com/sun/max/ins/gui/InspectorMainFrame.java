@@ -30,13 +30,12 @@ import java.io.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
 import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.util.*;
-import com.sun.max.ins.view.InspectionViews.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -287,11 +286,12 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.BOOT_IMAGE));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.FRAME));
-        desktopMenu.add(inspection.views().multiViewMenu(ViewKind.MEMORY));
-        desktopMenu.add(inspection.views().multiViewMenu(ViewKind.MEMORY_BYTES));
+        desktopMenu.add(inspection.views().memory().viewMenu());
+        desktopMenu.add(inspection.views().memoryBytes().viewMenu());
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.METHODS));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.NOTEPAD));
-        desktopMenu.add(inspection.views().multiViewMenu(ViewKind.OBJECT));
+        desktopMenu.add(inspection.views().objects().viewMenu());
+        desktopMenu.add(inspection.views().objects().viewMenu());
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.REGISTERS));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.STACK));
         desktopMenu.add(inspection.views().activateSingletonViewAction(ViewKind.THREADS));
@@ -358,30 +358,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 }
             }
         }
-    }
-
-    public Inspector findInspector(Predicate<Inspector> predicate) {
-        final int componentCount = desktopPane.getComponentCount();
-        for (int i = 0; i < componentCount; i++) {
-            final Component component = desktopPane.getComponent(i);
-            if (component instanceof InspectorInternalFrame) {
-                final InspectorFrame inspectorFrame = (InspectorFrame) component;
-                final Inspector inspector = inspectorFrame.inspector();
-                if (predicate.evaluate(inspector)) {
-                    return inspector;
-                }
-                // This component may contain other InspectorFrames, e.g. if it is related to a tabbed frame.
-                if (inspector instanceof InspectorContainer) {
-                    final InspectorContainer<? extends Inspector> inspectorContainer = Utils.cast(inspector);
-                    for (Inspector containedInspector : inspectorContainer) {
-                        if (predicate.evaluate(containedInspector)) {
-                            return containedInspector;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
     }
 
     public void showInspectorBusy(boolean busy) {

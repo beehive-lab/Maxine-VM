@@ -158,7 +158,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(actions.setVMTraceLevel());
         menu.add(actions.setVMTraceThreshold());
         menu.addSeparator();
-        menu.add(actions.inspectJavaFrameDescriptor());
+        menu.add(views().bytecodeFrames().makeViewAction());
         return menu;
     }
 

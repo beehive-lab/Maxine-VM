@@ -25,6 +25,7 @@ package com.sun.max.ins.memory;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.memory.MemoryInspector.ViewMode;
+import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -37,7 +38,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MemoryViewFactory {
+public interface MemoryViewFactory extends InspectionViewFactory<MemoryInspector>{
 
     /**
      * Creates a view on a designated, named region of memory, with the view

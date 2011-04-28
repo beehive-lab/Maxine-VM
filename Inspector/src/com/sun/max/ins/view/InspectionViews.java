@@ -24,8 +24,6 @@ package com.sun.max.ins.view;
 
 import java.util.*;
 
-import javax.swing.*;
-
 import com.sun.max.ins.*;
 import com.sun.max.ins.BootImageInspector.BootImageViewManager;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
@@ -42,6 +40,8 @@ import com.sun.max.ins.debug.ThreadLocalsInspector.ThreadLocalsViewManager;
 import com.sun.max.ins.debug.ThreadsInspector.ThreadsViewManager;
 import com.sun.max.ins.debug.WatchpointsInspector.WatchpointsViewManager;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.java.*;
+import com.sun.max.ins.java.BytecodeFramesInspector.BytecodeFrameViewManager;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.memory.AllocationsInspector.AllocationsViewManager;
 import com.sun.max.ins.memory.MemoryBytesInspector.MemoryBytesViewManager;
@@ -97,6 +97,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
+        BYTECODE_FRAMES(false, false, "The details of a bytecode frame descriptor") {
+
+            @Override
+            public BytecodeFrameViewManager viewManager() {
+                final BytecodeFrameViewManager viewManager = BytecodeFramesInspector.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
         FRAME(true, true, "Stack frame contents in the VM for the currently frame") {
 
             @Override
@@ -106,7 +115,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        FRAME_DESCRIPTOR(false, false, "The details of a bytecodeframe descriptor"),
         JAVA_SOURCE(false, false, "The contents of a Java source file"),
         MEMORY(false, false, "The contents of a region of VM memory, expressed as words") {
 
@@ -309,6 +317,13 @@ public final class InspectionViews extends AbstractInspectionHolder {
     }
 
     /**
+     * @return access to view creation for bytecode frames
+     */
+    public BytecodeFramesViewFactory bytecodeFrames() {
+        return (BytecodeFramesViewFactory) ViewKind.BYTECODE_FRAMES.viewManager();
+    }
+
+    /**
      * @return access to view creation for memory views.
      */
     public MemoryViewFactory memory() {
@@ -321,7 +336,10 @@ public final class InspectionViews extends AbstractInspectionHolder {
     public MemoryBytesViewFactory memoryBytes() {
         return (MemoryBytesViewFactory) ViewKind.MEMORY_BYTES.viewManager();
     }
-    
+
+    /**
+     * @return access to view creation for objects in the VM.
+     */
     public ObjectViewFactory objects() {
         return (ObjectViewFactory) ViewKind.OBJECT.viewManager();
     }
@@ -355,28 +373,6 @@ public final class InspectionViews extends AbstractInspectionHolder {
             if (viewManager != null) {
                 SingletonViewManager singletonViewManager = (SingletonViewManager) viewManager;
                 return singletonViewManager.activateSingletonViewAction();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Gets a menu for showing existing views of a specified kind, bringing
-     * forward and highlighting the one selected.  The menu is populated
-     * dynamically, creating the list of activated views when the menu
-     * is displayed.  If there are no activated views, then the menu is
-     * empty.  If there are any activated views, the menu includes an
-     * entry (at the end, after a separator) that deactivates all the views.
-     *
-     * @param kind the kind of view to be activated, must *not* be a singleton.
-     * @return the menu that displays all activated views that can be highlighted
-     */
-    public JMenu multiViewMenu(ViewKind kind) {
-        if (!kind.isSingleton) {
-            final ViewManager< ? extends Inspector> viewManager = kind.viewManager();
-            if (viewManager != null) {
-                MultiViewManager multiViewManager = (MultiViewManager) viewManager;
-                return multiViewManager.multiViewMenu();
             }
         }
         return null;

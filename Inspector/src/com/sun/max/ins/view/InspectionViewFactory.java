@@ -21,35 +21,34 @@
  * questions.
  */
 
-package com.sun.max.ins.object;
+package com.sun.max.ins.view;
 
-import com.sun.max.ins.*;
-import com.sun.max.ins.view.*;
+import javax.swing.*;
+
+import com.sun.max.ins.gui.*;
 
 
 /**
- * Methods for creating views on objects in different variations.  Some are direct
- * actions; others are for possibly interactive {@link InspectorAction}s
- * that can be put on menus.
+ * Methods for creating views of a particular kind.
  *
  * @author Michael Van De Vanter
  */
-public interface ObjectViewFactory extends InspectionViewFactory<ObjectInspector>{
+public interface InspectionViewFactory<Inspector_Kind extends Inspector> {
 
     /**
-     * Gets an interactive action that makes a view on an object in
-     * VM memory, starting at a dialog-specified location.
+     * Gets a menu that includes actions for creating new views.
+     * If there are existing activated views of the same kind, then
+     * these are listed and selecting one of them causes the view
+     * to be highlighted.
+     * If there are any activated views of the same kind, the menu includes an
+     * entry (at the end, after a separator) that deactivates all
+     * the views.
+     * <p>
+     * Returns null if no such menu is appropriate or supported.  For example,
+     * there is typically only one way to activate a singleton view and so
+     * a menu of commands may not be useful.
      *
-     * @return an action that creates an object view
+     * @return the menu that displays all activated views that can be highlighted
      */
-    InspectorAction makeViewAction();
-
-    /**
-     * Gets an interactive action that makes a view on an object in
-     * VM memory, identified by a dialog-specified numeric ID.
-     *
-     * @return an action that creates an object view
-     */
-    InspectorAction makeViewByIDAction();
-
+    JMenu viewMenu();
 }
