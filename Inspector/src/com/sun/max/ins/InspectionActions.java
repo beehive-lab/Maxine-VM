@@ -34,7 +34,6 @@ import com.sun.cri.ci.*;
 import com.sun.max.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.java.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.type.*;
@@ -4107,80 +4106,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays and highlights an inspection of the current Java frame descriptor.
-     */
-    final class InspectBytecodeFramesAction extends InspectorAction {
-        private static final String DEFAULT_TITLE = "Inspect Java frames";
-        private CiFrame bytecodeFrames;
-
-        InspectBytecodeFramesAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-            focus().addListener(new InspectionFocusAdapter() {
-                @Override
-                public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(false);
-                }
-            });
-        }
-
-        @Override
-        protected void procedure() {
-            assert bytecodeFrames != null;
-            if (focus().hasCodeLocation()) {
-                final Address instructionAddress = focus().codeLocation().address();
-                if (instructionAddress != null && !instructionAddress.isZero()) {
-                    final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
-                    if (compiledCode != null) {
-                        BytecodeFramesInspector.make(inspection(), bytecodeFrames, compiledCode).highlight();
-                    }
-                }
-            } else {
-                gui().errorMessage("Could not locate Java frame descriptor");
-            }
-        }
-
-        /**
-         * @return whether there is bytecode frame info at the focus machine code location
-         */
-        private boolean inspectable() {
-            if (focus().hasCodeLocation()) {
-                final Address instructionAddress = focus().codeLocation().address();
-                if (instructionAddress != null && !instructionAddress.isZero()) {
-                    final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
-                    if (compiledCode != null) {
-                        final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                        final int instructionIndex = instructionMap.findInstructionIndex(instructionAddress);
-                        if (instructionIndex >= 0) {
-                            bytecodeFrames = instructionMap.bytecodeFrames(instructionIndex);
-                            if (bytecodeFrames == null) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-                }
-            }
-            bytecodeFrames = null;
-            return false;
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspectable());
-        }
-    }
-
-    private InspectorAction inspectJavaFrameDescriptor = new InspectBytecodeFramesAction(null);
-
-    /**
-     * @return an Action that will display an inspection of the current Java frame descriptor.
-     */
-    public final InspectorAction inspectJavaFrameDescriptor() {
-        return inspectJavaFrameDescriptor;
-    }
-
-    /**
      * Action:  lists to the console this history of the VM state.
      */
     final class ListVMStateHistoryAction extends InspectorAction {
@@ -4446,8 +4371,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
                 menu.add(inspectMemoryAllocationsMenu());
-                menu.add(views().multiViewMenu(ViewKind.MEMORY));
-                menu.add(views().multiViewMenu(ViewKind.MEMORY_BYTES));
+                menu.add(views().memory().viewMenu());
+                menu.add(views().memoryBytes().viewMenu());
             }
         };
     }
@@ -4537,7 +4462,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 classActorMenu.add(inspectBootClassRegistry());
                 menu.add(classActorMenu);
 
-                menu.add(views().multiViewMenu(ViewKind.OBJECT));
+                menu.add(views().objects().viewMenu());
             }
         };
     }
@@ -4551,12 +4476,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
                 menu.add(views().activateSingletonViewAction(ViewKind.BOOT_IMAGE));
                 menu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
+                menu.add(views().bytecodeFrames().viewMenu());
                 menu.add(views().activateSingletonViewAction(ViewKind.FRAME));
-                menu.add(views().multiViewMenu(ViewKind.MEMORY));
-                menu.add(views().multiViewMenu(ViewKind.MEMORY_BYTES));
+                menu.add(views().memory().viewMenu());
+                menu.add(views().memoryBytes().viewMenu());
                 menu.add(views().activateSingletonViewAction(ViewKind.METHODS));
                 menu.add(views().activateSingletonViewAction(ViewKind.NOTEPAD));
-                menu.add(views().multiViewMenu(ViewKind.OBJECT));
+                menu.add(views().objects().viewMenu());
                 menu.add(views().activateSingletonViewAction(ViewKind.REGISTERS));
                 menu.add(views().activateSingletonViewAction(ViewKind.STACK));
                 menu.add(views().activateSingletonViewAction(ViewKind.THREADS));

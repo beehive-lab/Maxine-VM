@@ -265,6 +265,16 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         getJComponent().setBounds(rectangle);
     }
 
+    /**
+     * Sets the size of the Inspector in the main frame.
+     *
+     * @param rectangle the new geometry for the Inspector
+     */
+    public final void setSize(int width, int height) {
+        getJComponent().setSize(width, height);
+    }
+
+
     protected void setWarning() {
         //highlight();
     }

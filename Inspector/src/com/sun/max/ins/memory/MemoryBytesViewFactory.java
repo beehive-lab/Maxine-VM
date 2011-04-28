@@ -24,6 +24,7 @@
 package com.sun.max.ins.memory;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.view.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -35,7 +36,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MemoryBytesViewFactory {
+public interface MemoryBytesViewFactory extends InspectionViewFactory<MemoryBytesInspector>{
 
     /**
      * Creates a bytes view on the memory starting at an address, using

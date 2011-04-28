@@ -21,35 +21,36 @@
  * questions.
  */
 
-package com.sun.max.ins.object;
+package com.sun.max.ins.java;
 
+import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.view.*;
+import com.sun.max.tele.*;
 
 
 /**
- * Methods for creating views on objects in different variations.  Some are direct
- * actions; others are for possibly interactive {@link InspectorAction}s
- * that can be put on menus.
+ * Methods for creating views on bytecode frames.
  *
  * @author Michael Van De Vanter
  */
-public interface ObjectViewFactory extends InspectionViewFactory<ObjectInspector>{
+public interface BytecodeFramesViewFactory extends InspectionViewFactory<BytecodeFramesInspector> {
 
     /**
-     * Gets an interactive action that makes a view on an object in
-     * VM memory, starting at a dialog-specified location.
+     * Creates a view on a target Java frame descriptor.
      *
-     * @return an action that creates an object view
+     * @param bytecodeFrames the java bytecode frames at a given location
+     * @param compiledCode
+     * @return
+     */
+    BytecodeFramesInspector makeView(CiFrame bytecodeFrames, MaxCompiledCode compiledCode);
+
+    /**
+     * Gets an action that makes view of the bytecode frames available at
+     * the currently selected code location; disabled if there are no
+     * frames available at the currently selected code location.
+     *
+     * @return an action that creates a bytecode frame view
      */
     InspectorAction makeViewAction();
-
-    /**
-     * Gets an interactive action that makes a view on an object in
-     * VM memory, identified by a dialog-specified numeric ID.
-     *
-     * @return an action that creates an object view
-     */
-    InspectorAction makeViewByIDAction();
-
 }

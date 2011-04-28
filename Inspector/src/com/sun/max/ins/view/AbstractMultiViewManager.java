@@ -39,7 +39,9 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  *
  * @author Michael Van De Vanter
  */
-public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector> extends AbstractInspectionHolder implements MultiViewManager, InspectionListener {
+public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
+    extends AbstractInspectionHolder
+    implements MultiViewManager, InspectionViewFactory<Inspector_Kind>, InspectionListener {
 
     private final ViewKind viewKind;
     private final String shortName;
@@ -82,7 +84,7 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         return inspectors;
     }
 
-    public final JMenu multiViewMenu() {
+    public final JMenu viewMenu() {
         final JMenu menu = new JMenu("View " + shortName);
         menu.addMenuListener(new MenuListener() {
 
