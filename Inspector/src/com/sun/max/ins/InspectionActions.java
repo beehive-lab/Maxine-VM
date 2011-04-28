@@ -813,7 +813,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class InspectMemoryAllocationsMenu extends JMenu {
         public InspectMemoryAllocationsMenu() {
-            super("View memory allocations");
+            super("View Memory allocated for:");
             addMenuListener(new MenuListener() {
 
                 public void menuCanceled(MenuEvent e) {
@@ -828,7 +828,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     regionSet.addAll(vm().state().memoryAllocations());
                     for (MaxMemoryRegion memoryRegion : regionSet) {
                         //System.out.println(memoryRegion.toString());
-                        add(actions().inspectRegionMemory(memoryRegion, memoryRegion.regionName(), memoryRegion.regionName()));
+                        add(views().memory().makeViewAction(memoryRegion, memoryRegion.regionName(), memoryRegion.regionName()));
                     }
                 }
             });
@@ -846,47 +846,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final JMenu inspectMemoryAllocationsMenu() {
         return new InspectMemoryAllocationsMenu();
-    }
-
-    /**
-     * Action:  inspect the memory holding a block of machine code.
-     */
-    final class InspectMachineCodeRegionMemoryAction extends InspectorAction {
-
-        private static final String  DEFAULT_TITLE = "Inspect Machine Code memory region";
-        private final MaxMachineCode machineCode;
-
-        private InspectMachineCodeRegionMemoryAction(MaxMachineCode machineCode, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.machineCode = machineCode;
-        }
-
-        @Override
-        protected void procedure() {
-            final String description = machineCode.entityName();
-            actions().inspectRegionMemory(machineCode.memoryRegion(), description).perform();
-        }
-    }
-
-    /**
-     * Creates an action that will inspect memory containing a block of machine code.
-     *
-     * @param machineCode a block of machine code in the VM, either a Java method or external native
-     * @param actionTitle a name for the action
-     * @return an Action that will create a Memory Inspector for the code
-     */
-    public final InspectorAction inspectMachineCodeRegionMemory(MaxMachineCode machineCode, String actionTitle) {
-        return new InspectMachineCodeRegionMemoryAction(machineCode, actionTitle);
-    }
-
-    /**
-     * Creates an action that will inspect memory containing a block of machine code.
-     *
-     * @param machineCode a block of machine code in the VM, either a Java method or native
-     * @return an Action that will create a Memory Inspector for the code
-     */
-    public final InspectorAction inspectMachineCodeRegionMemory(MaxMachineCode machineCode) {
-        return new InspectMachineCodeRegionMemoryAction(machineCode, null);
     }
 
     /**
@@ -1110,57 +1069,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction inspectSelectedMemoryWatchpointAction() {
         return inspectSelectedMemoryWatchpointAction;
-    }
-
-    /**
-     * Action: inspect memory for a named region.
-     */
-    final class InspectRegionMemoryAction extends InspectorAction {
-
-        private final MaxMemoryRegion memoryRegion;
-        private final String regionName;
-
-        InspectRegionMemoryAction(MaxMemoryRegion memoryRegion, String regionName, String actionTitle) {
-            super(inspection(), actionTitle == null ? ("Inspect memory region \"" + regionName + "\"") : actionTitle);
-            this.memoryRegion = memoryRegion;
-            this.regionName = regionName;
-            refreshableActions.add(this);
-            refresh(true);
-        }
-
-        @Override
-        protected void procedure() {
-            views().memory().makeView(memoryRegion, regionName).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(!memoryRegion.start().isZero());
-        }
-    }
-
-    /**
-     * Creates a Memory Inspector for a named region of memory.
-     *
-     * @param memoryRegion a region of memory in the VM
-     * @param regionName the name of the region to display
-     * @param actionTitle the name of the action that will create the display, default title if null
-     * @return an action that will create a Memory Inspector for the region
-     */
-    public final InspectorAction inspectRegionMemory(MaxMemoryRegion memoryRegion, String regionName, String actionTitle) {
-        final String title = (actionTitle == null) ? ("Inspect memory region \"" + regionName + "\"") : actionTitle;
-        return new InspectRegionMemoryAction(memoryRegion, regionName, title);
-    }
-
-    /**
-     * Creates a Memory Inspector for a named region of memory.
-     *
-     * @param memoryRegion a region of memory in the VM
-     * @param regionName the name of the region to display
-     * @return an action that will create a Memory Inspector for the region
-     */
-    public final InspectorAction inspectRegionMemory(MaxMemoryRegion memoryRegion, String regionName) {
-        return new InspectRegionMemoryAction(memoryRegion, regionName, null);
     }
 
     /**

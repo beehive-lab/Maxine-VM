@@ -132,13 +132,15 @@ public final class MemoryInspector extends Inspector {
         }
 
         public InspectorAction makeViewAction(final MaxMemoryRegion memoryRegion, final String regionName, String actionTitle) {
-            return new InspectorAction(inspection(), actionTitle == null ? "Inspect memory" : actionTitle) {
+            final InspectorAction inspectorAction = new InspectorAction(inspection(), actionTitle == null ? "Inspect memory for \"" + regionName + "\"" : actionTitle) {
 
                 @Override
                 protected void procedure() {
                     makeView(memoryRegion, regionName);
                 }
             };
+            inspectorAction.setEnabled(!memoryRegion.start().isZero() && memoryRegion.nBytes() > 0);
+            return inspectorAction;
         }
 
         public InspectorAction makeViewAction(final TeleObject teleObject, String actionTitle) {
