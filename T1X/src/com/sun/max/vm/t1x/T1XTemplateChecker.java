@@ -29,6 +29,7 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 
@@ -71,7 +72,8 @@ public class T1XTemplateChecker extends C1XCompilerExtension {
             while ((i = i.next()) != null) {
                 if (i.stateBefore() != null) {
                     if (seenFrameModification) {
-                        FatalError.unexpected("Java bytecode frame updated before a safepoint or call:\n" + i.stateBefore().toCodePos());
+//                      FatalError.unexpected("Java bytecode frame updated before a safepoint or call:\n" + i.stateBefore().toCodePos());
+                      ProgramWarning.message("Java bytecode frame updated before a safepoint or call:\n" + i.stateBefore().toCodePos());
                     }
                 }
 
@@ -107,6 +109,7 @@ public class T1XTemplateChecker extends C1XCompilerExtension {
     @Override
     protected void process(IR ir) {
         this.ir = ir;
+//        this.map.clear();
         FatalError.check(ir.compilation.method.exceptionHandlers().length == 0, "T1X template cannot have exception handlers: " + ir.compilation.method);
         Helper helper = new Helper();
         int iterations = 0;

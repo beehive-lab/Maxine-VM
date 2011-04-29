@@ -39,7 +39,7 @@ import com.sun.max.vm.compiler.c1x.*;
  *
  * @author Doug Simon
  */
-class T1XTemplate {
+public class T1XTemplate {
 
     public static class T1XStop {
         public enum Flag {
