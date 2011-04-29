@@ -144,7 +144,7 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(isEnabled());
+            setEnabled(AbstractSingletonViewManager.this.isEnabled());
         }
     }
 
