@@ -134,6 +134,7 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
 
         public ActivateViewAction(String title) {
             super(inspection(), "View " + title);
+            refresh(true);
         }
 
         @Override

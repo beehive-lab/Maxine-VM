@@ -37,7 +37,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ThreadsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class ThreadsInspector extends Inspector<ThreadsInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.THREADS;
@@ -164,7 +164,6 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

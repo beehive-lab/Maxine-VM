@@ -37,7 +37,7 @@ import com.sun.max.program.*;
  *
  * @author Michael Van De Vanter
  */
-public final class UserFocusInspector extends Inspector {
+public final class UserFocusInspector extends Inspector<UserFocusInspector> {
 
     private static final ViewKind VIEW_KIND = ViewKind.USER_FOCUS;
     private static final String SHORT_NAME = "User Focus";
@@ -137,7 +137,6 @@ public final class UserFocusInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         focus().removeListener(table);
         super.inspectorClosing();
     }

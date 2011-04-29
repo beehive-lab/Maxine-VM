@@ -44,7 +44,7 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class ObjectInspector extends Inspector {
+public abstract class ObjectInspector<Inspector_Type extends ObjectInspector> extends Inspector<Inspector_Type> {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
@@ -229,8 +229,6 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        // don't try to recompute the title (it might not be computable),s just get the one that's been in use
-        Trace.line(TRACE_VALUE, tracePrefix() + " closing for " + getTitle());
         if (teleObject == focus().heapObject()) {
             focus().setHeapObject(null);
         }

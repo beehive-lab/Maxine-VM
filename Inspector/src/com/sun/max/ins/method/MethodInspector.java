@@ -32,7 +32,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.MethodInspectorContainer.MethodViewManager;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -356,7 +355,6 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing for " + getTitle());
         machineCodeToMethodInspector.remove(machineCode());
         teleClassMethodActorToMethodInspector.remove(teleClassMethodActor());
         super.inspectorClosing();

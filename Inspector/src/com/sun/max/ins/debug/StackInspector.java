@@ -49,7 +49,7 @@ import com.sun.max.vm.actor.member.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class StackInspector extends Inspector {
+public final class StackInspector extends Inspector<StackInspector> {
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.STACK;
     private static final String SHORT_NAME = "Stack";
@@ -405,7 +405,7 @@ public final class StackInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
+        // Unsubscribe to view preferences, when we get them.
         super.inspectorClosing();
     }
 

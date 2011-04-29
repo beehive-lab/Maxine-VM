@@ -44,7 +44,7 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class StackFrameInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class StackFrameInspector extends Inspector<StackFrameInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.STACK_FRAME;
@@ -255,7 +255,6 @@ public final class StackFrameInspector extends Inspector implements TableColumnV
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

@@ -39,6 +39,8 @@ import com.sun.max.ins.debug.StackInspector.StackViewManager;
 import com.sun.max.ins.debug.ThreadLocalsInspector.ThreadLocalsViewManager;
 import com.sun.max.ins.debug.ThreadsInspector.ThreadsViewManager;
 import com.sun.max.ins.debug.WatchpointsInspector.WatchpointsViewManager;
+import com.sun.max.ins.file.*;
+import com.sun.max.ins.file.JavaSourceInspector.JavaSourceViewManager;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.java.*;
 import com.sun.max.ins.java.BytecodeFramesInspector.BytecodeFrameViewManager;
@@ -59,8 +61,6 @@ import com.sun.max.program.option.*;
  *
  */
 public final class InspectionViews extends AbstractInspectionHolder {
-
-    // TODO (mlvdv) Bring all view kinds into this framework
 
     private static final int TRACE_VALUE = 1;
 
@@ -106,7 +106,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
-        JAVA_SOURCE(false, false, "The contents of a Java source file"),
+        JAVA_SOURCE(false, false, "The contents of a Java source file") {
+
+            @Override
+            public JavaSourceViewManager viewManager() {
+                final JavaSourceViewManager viewManager = JavaSourceInspector.makeViewManager(inspection);
+                assert viewManager.viewKind() == this;
+                return viewManager;
+            }
+        },
         MEMORY(false, false, "The contents of a region of VM memory, expressed as words") {
 
             @Override
@@ -134,6 +142,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
                 return viewManager;
             }
         },
+        // View management for methods is handled by the container
         METHOD_CODE(false, false, "Disassembled code from a single method in the VM"),
         NOTEPAD(true, false, "Notepad for keeping user notes") {
 
@@ -258,6 +267,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
     }
 
     final SaveSettingsListener saveSettingsListener;
+    final InspectorAction deactivateAllAction;
 
     public InspectionViews(Inspection inspection) {
         super(inspection);
@@ -272,13 +282,22 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         };
         inspection.settings().addSaveSettingsListener(saveSettingsListener);
+        deactivateAllAction = new InspectorAction(inspection, "Close all views") {
+
+            @Override
+            protected void procedure() {
+                for (Inspector inspector : activeViews()) {
+                    inspector.dispose();
+                }
+            }
+        };
     }
 
     /**
      * @return all active views
      */
     public List<Inspector> activeViews() {
-        final List<Inspector> inspectors = Collections.emptyList();
+        final List<Inspector> inspectors = new ArrayList<Inspector>();
         for (ViewKind kind : ViewKind.values()) {
             final ViewManager<? extends Inspector> viewManager = kind.viewManager();
             if (viewManager != null) {
@@ -379,6 +398,15 @@ public final class InspectionViews extends AbstractInspectionHolder {
     }
 
     /**
+     * Gets the action that will deactivate all active views.
+     *
+     * @return the action for deactivating views
+     */
+    public InspectorAction deactivateAllViewsAction() {
+        return deactivateAllAction;
+    }
+
+    /**
      * Gets the action that will deactivate all views of a particular kind.
      *
      * @param kind the kind of views to be deactivated
@@ -388,6 +416,27 @@ public final class InspectionViews extends AbstractInspectionHolder {
         return kind.deactivateAllAction(null);
     }
 
+
+    /**
+     * Gets the action that will deactivate all active views with one exception.
+     *
+     * @param exceptInspector the one view that should not be deactivated
+     * @return the action for deactivating
+     */
+    public InspectorAction deactivateOtherViewsAction(final Inspector exceptInspector) {
+        return new InspectorAction(inspection(), "Close other views") {
+
+            @Override
+            protected void procedure() {
+                for (Inspector inspector : activeViews()) {
+                    if (inspector != exceptInspector) {
+                        inspector.dispose();
+                    }
+                }
+            }
+
+        };
+    }
 
     /**
      * Gets the action that will deactivate all views of a particular kind

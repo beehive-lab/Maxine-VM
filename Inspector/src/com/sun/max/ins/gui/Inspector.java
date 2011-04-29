@@ -116,12 +116,12 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                 return new AbstractInspectorMenuItems(inspection()) {
                     public void addTo(InspectorMenu menu) {
                         menu.add(getCloseViewAction());
-                        menu.add(actions().closeViews(Inspector.class, inspector, "Close Other Inspectors"));
+                        menu.add(views().deactivateOtherViewsAction(inspector));
                         menu.addSeparator();
-                        menu.add(actions().movedToCenter(inspector));
-                        menu.add(actions().resizeToFit(inspector));
-                        menu.add(actions().resizeToFill(inspector));
-                        menu.add(actions().restoreDefaultGeometry(inspector));
+                        menu.add(gui().moveToMiddleAction(inspector));
+                        menu.add(gui().resizeToFitAction(inspector));
+                        menu.add(gui().resizeToFillAction(inspector));
+                        menu.add(gui().restoreDefaultGeometryAction(inspector));
                         menu.addSeparator();
                         menu.add(getPrintAction());
                     }
@@ -532,6 +532,8 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             inspection().settings().removeSaveSettingsListener(saveGeometrySettingsListener);
         }
         inspection().settings().save();
+        // don't try to recompute the title, just get the one that's been in use
+        Trace.line(1, tracePrefix() + " closing for " + getTitle());
     }
 
     public void vmStateChanged(boolean force) {

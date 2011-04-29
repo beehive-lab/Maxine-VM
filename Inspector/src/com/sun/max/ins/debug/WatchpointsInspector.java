@@ -36,7 +36,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class WatchpointsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class WatchpointsInspector extends Inspector<WatchpointsInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.WATCHPOINTS;
@@ -165,7 +165,6 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
 
     @Override
     public void inspectorClosing() {
-        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

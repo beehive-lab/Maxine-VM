@@ -42,7 +42,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class AllocationsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class AllocationsInspector extends Inspector<AllocationsInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.ALLOCATIONS;
@@ -240,7 +240,6 @@ public final class AllocationsInspector extends Inspector implements TableColumn
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

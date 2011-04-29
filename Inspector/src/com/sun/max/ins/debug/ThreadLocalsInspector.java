@@ -47,7 +47,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ThreadLocalsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class ThreadLocalsInspector extends Inspector<ThreadLocalsInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.THREAD_LOCALS;
@@ -271,7 +271,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     public void inspectorClosing() {
-        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

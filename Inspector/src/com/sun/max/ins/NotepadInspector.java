@@ -51,7 +51,7 @@ import com.sun.max.unsafe.*;
  * @see InspectorNotepad
  * @see NotepadManager
  */
-public final class NotepadInspector extends Inspector {
+public final class NotepadInspector extends Inspector<NotepadInspector> {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.NOTEPAD;
@@ -278,7 +278,6 @@ public final class NotepadInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         save();
         super.inspectorClosing();
     }
