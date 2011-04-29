@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,6 +88,9 @@ public final class JDK_java_lang_Thread {
     int priority;
 
     @ALIAS(declaringClass = Thread.class)
+    boolean daemon;
+
+    @ALIAS(declaringClass = Thread.class)
     char[] name;
 
     @ALIAS(declaringClass = Thread.class)
@@ -120,7 +123,7 @@ public final class JDK_java_lang_Thread {
         }
 
         if (daemon) {
-            javaThread.setDaemon(true);
+            thisThread.daemon = true;
         }
 
         asThis(group).add(javaThread);

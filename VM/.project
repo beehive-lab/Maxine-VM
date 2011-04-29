@@ -3,12 +3,6 @@
 	<name>VM</name>
 	<comment></comment>
 	<projects>
-		<project>C0X</project>
-		<project>C1X</project>
-		<project>jung</project>
-		<project>MaxwellAssembler</project>
-		<project>MaxwellBase</project>
-		<project>MaxwellNative</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

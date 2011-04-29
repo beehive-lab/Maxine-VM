@@ -54,6 +54,17 @@ public class jmax {
             // Return the absolute directory of a project
             Project p = project(request.get(1));
             response.println(p.baseDir.getPath() + File.separatorChar + p.name);
+        } else if (cmd.equals("eclipse")) {
+            if (request.size() == 1) {
+                for (Project p : projects.values()) {
+                    p.generateEclipseProject(response);
+                }
+            } else {
+                for (String p : request.subList(1, request.size())) {
+                    project(p).generateEclipseProject(response);
+                }
+            }
+
         } else if (cmd.equals("source_dirs")) {
             // Return the absolute source directories of a project
             Project p = project(request.get(1));
@@ -66,7 +77,7 @@ public class jmax {
             response.println(project(request.get(1)).outputDir());
         } else if (cmd.equals("properties")) {
             for (File dir : projectDirs) {
-                response.println("# file: " + new File(dir, "projects.properties"));
+                response.println("# file:  " + new File(dir, "projects.properties"));
                 for (Library l : libs.values()) {
                     if (l.baseDir.equals(dir)) {
                         l.printProperties(response);
@@ -79,7 +90,7 @@ public class jmax {
                 }
             }
         } else {
-            throw new Error("Command '" + cmd + "' not known");
+            throw new Error("Command ' " + cmd + "' not known");
         }
     }
 
@@ -104,7 +115,7 @@ public class jmax {
      */
     static String getenv(String name, boolean required) {
         String value = System.getenv(name);
-        assert !required || value != null : "the required environment variable '" + name + "' is not set";
+        assert !required || value != null : "the required environment variable ' " + name + "' is not set";
         return value;
     }
 
@@ -113,7 +124,7 @@ public class jmax {
      */
     static Project project(String name) {
         Project p = projects.get(name);
-        assert p != null : "project named '" + name + "' not found";
+        assert p != null : "project named ' " + name + "' not found";
         return p;
     }
 
@@ -122,7 +133,7 @@ public class jmax {
      */
     static Library library(String name) {
         Library l = libs.get(name);
-        assert l != null : "library named '" + name + "' not found";
+        assert l != null : "library named ' " + name + "' not found";
         return l;
     }
 
@@ -135,7 +146,7 @@ public class jmax {
         String value = props.getProperty(key);
         if (value == null) {
             if (file != null) {
-                throw new Error("missing property " + key + " in " + file);
+                throw new Error("missing property  " + key + " in  " + file);
             }
         } else {
             props.remove(key);
@@ -154,31 +165,61 @@ public class jmax {
             props.load(in);
             in.close();
         } catch (Exception e) {
-            throw new Error("Error loading projects from " + f.getAbsolutePath(), e);
+            throw new Error("Error loading projects from  " + f.getAbsolutePath(), e);
         }
 
-        String[] names = split(get(props, "projects", dir));
-        for (String name : names) {
-            assert !projects.containsKey(name) : "cannot override project " + name + " in " + project(name).baseDir + " with project of the same name in " + dir;
-            String pfx = "project." + name;
-            String sourceDirs = get(props, pfx + ".sourceDirs", f);
-            String deps = get(props, pfx + ".dependencies", f);
-            new Project(dir, name, sourceDirs, deps);
-        }
-
-        String value = get(props, "libraries", null);
-        if (value != null) {
-            names = split(value);
-            for (String name : names) {
-                assert !libs.containsKey(name) : "cannot redefine library " + name;
-                String pfx = "library." + name;
-                String path = get(props, pfx + ".path", f);
-                boolean optional = Boolean.valueOf(get(props, pfx + ".optional", f));
-                String urls = get(props, pfx + ".urls", f);
-                new Library(dir, name, path, !optional, urls);
+        HashMap<String, String> projectNames = new HashMap<String, String>();
+        HashMap<String, String> libNames = new HashMap<String, String>();
+        for (Enumeration<?> e = props.propertyNames(); e.hasMoreElements(); ) {
+            String propName = (String) e.nextElement();
+            HashMap<String, String> names;
+            int nameStart;
+            if (propName.startsWith("library@")) {
+                names = libNames;
+                nameStart = "library@".length();
+            } else if (propName.startsWith("project@")) {
+                names = projectNames;
+                nameStart = "project@".length();
+            } else {
+                throw new Error("Property name does not start with \"project@\" or \"library@\":  " + propName);
+            }
+            int nameEnd = propName.indexOf('@', nameStart);
+            assert nameEnd != -1 : "Property does not have name component:  " + propName;
+            String name = propName.substring(nameStart, nameEnd);
+            if (!names.containsKey(name)) {
+                String pfx = propName.substring(0, nameEnd + 1);
+                names.put(name, pfx);
             }
         }
-        assert props.isEmpty() : "unhandled properties in " + f + ":\n" + toString(props.keySet(), "\n", null) + "\n";
+
+        for (Map.Entry<String, String> e : projectNames.entrySet()) {
+            String name = e.getKey();
+            String pfx = e.getValue();
+            assert !projects.containsKey(name) : "cannot override project  " + name + " in  " + project(name).baseDir + " with project of the same name in  " + dir;
+            String sourceDirs = get(props, pfx + "sourceDirs", f);
+            String deps = get(props, pfx + "dependencies", null);
+            if (deps == null) {
+                deps = "";
+            }
+            Project proj = new Project(dir, name, sourceDirs, deps);
+            String eclipseOutput = get(props, pfx + "eclipse.output", null);
+            proj.eclipseOutput = eclipseOutput == null ? "bin" : eclipseOutput;
+        }
+
+        for (Map.Entry<String, String> e : libNames.entrySet()) {
+            String name = e.getKey();
+            String pfx = e.getValue();
+            assert !libs.containsKey(name) : "cannot redefine library  " + name;
+            String path = get(props, pfx + "path", f);
+            boolean optional = Boolean.valueOf(get(props, pfx + "optional", null));
+            String urls = get(props, pfx + "urls", null);
+            if (urls == null) {
+                urls = "";
+            }
+            Library lib = new Library(dir, name, path, !optional, urls);
+            lib.eclipseContainer = get(props, pfx + "eclipse.container", null);
+        }
+        assert props.isEmpty() : "unhandled properties in  " + f + ":\n " + toString(props.keySet(), "\n", null) + "\n";
     }
 
     static String toString(Iterable< ? extends Object> iterable, String sep, String pfx) {
@@ -232,7 +273,7 @@ public class jmax {
         if (value != null) {
             for (String path : split(value)) {
                 File dir = new File(path);
-                assert dir.isDirectory() : "extra projects path does not denote a directory: " + path;
+                assert dir.isDirectory() : "extra projects path does not denote a directory:  " + path;
                 projectDirs.add(dir);
                 loadProjects(dir);
             }
@@ -287,6 +328,8 @@ public class jmax {
         final boolean mustExist;
         final String urls;
 
+        String eclipseContainer;
+
         public Library(File baseDir, String name, String path, boolean mustExist, String urls) {
             super(name);
             this.baseDir = baseDir;
@@ -297,11 +340,18 @@ public class jmax {
             libs.put(name, this);
         }
 
+        public File path() {
+            return new File(expandVars(path));
+        }
+
         @Override
         StringBuilder appendToClasspath(StringBuilder cp, boolean resolve) {
-            File lib = new File(expandVars(path));
+            File lib = path();
+            if (!lib.isAbsolute()) {
+                lib = new File(baseDir, lib.getPath());
+            }
             if (resolve && mustExist && !lib.exists()) {
-                assert !urls.isEmpty() : "cannot find required library " + name;
+                assert !urls.isEmpty() : "cannot find required library  " + name;
                 download(lib, split(urls));
             }
 
@@ -316,11 +366,16 @@ public class jmax {
 
         @Override
         void printProperties(PrintStream out) {
-            out.println("library." + name + ".path=" + path);
-            out.println("library." + name + ".optional=" + !mustExist);
-            out.println("library." + name + ".urls=" + jmax.toString(Arrays.asList(urls), ", ", null));
+            out.println("library@" + name + "@path=" + path);
+            out.println("library@" + name + "@optional=" + !mustExist);
+            out.println("library@" + name + "@urls=" + jmax.toString(Arrays.asList(urls), ", ", null));
+            if (eclipseContainer != null) {
+                out.println("library@ " + name + "@eclipse.container= " + eclipseContainer);
+            }
         }
     }
+
+
 
     /**
      * Downloads content from a given URL to a given file.
@@ -330,9 +385,7 @@ public class jmax {
      */
     static void download(File dst, String[] urls) {
         File parent = dst.getParentFile();
-        if (!parent.isDirectory() && !parent.mkdirs()) {
-            throw new Error("Could not make directory: " + parent);
-        }
+        makeDirectory(parent);
 
         // Enable use of system proxies
         System.setProperty("java.net.useSystemProxies", "true");
@@ -350,9 +403,9 @@ public class jmax {
                     port = port.substring(1); // strip ':'
                     System.setProperty("http.proxyPort", port);
                 }
-                proxyMsg = " via proxy " + proxy;
+                proxyMsg = " via proxy  " + proxy;
             } else {
-                log.println("Value of HTTP_PROXY is not valid: " + proxy);
+                log.println("Value of HTTP_PROXY is not valid:  " + proxy);
             }
         } else {
             log.println("** If behind a firewall without direct internet access, use the HTTP_PROXY environment variable (e.g. 'env HTTP_PROXY=proxy.company.com:80 max ...') or download manually with a web browser.");
@@ -360,7 +413,7 @@ public class jmax {
 
         for (String s : urls) {
             try {
-                log.println("Downloading " + s + " to " + dst + proxyMsg);
+                log.println("Downloading  " + s + " to  " + dst + proxyMsg);
                 URL url = new URL(s);
                 URLConnection conn = url.openConnection();
                 // 10 second timeout to establish connection
@@ -373,7 +426,7 @@ public class jmax {
                 int n = 0;
                 while ((read = in.read(buf)) != -1) {
                     n += read;
-                    log.print("\r" + n + " bytes" + (size == -1 ? "" : " (" + (n * 100 / size) + "%)"));
+                    log.print("\r " + n + " bytes " + (size == -1 ? "" : " ( " + (n * 100 / size) + "%)"));
                     out.write(buf, 0, read);
                 }
                 log.println();
@@ -381,13 +434,19 @@ public class jmax {
                 in.close();
                 return;
             } catch (MalformedURLException e) {
-                throw new Error("Error in URL" + s, e);
+                throw new Error("Error in URL " + s, e);
             } catch (IOException e) {
-                log.println("Error reading from " + s + ": " + e);
+                log.println("Error reading from  " + s + ":  " + e);
                 dst.delete();
             }
         }
-        throw new Error("Could not download content to " + dst + " from " + Arrays.toString(urls));
+        throw new Error("Could not download content to  " + dst + " from  " + Arrays.toString(urls));
+    }
+
+    private static void makeDirectory(File directory) {
+        if (!directory.exists() && !directory.mkdirs()) {
+            throw new Error("Could not make directory " + directory);
+        }
     }
 
     static String[] split(String list) {
@@ -401,6 +460,11 @@ public class jmax {
 
         final File baseDir;
         final List<String> sourceDirs;
+
+        /**
+         * Default is "bin".
+         */
+        String eclipseOutput;
 
         /**
          * The direct dependencies of this project.
@@ -462,7 +526,7 @@ public class jmax {
             char sep = File.separatorChar;
             String ide = getenv("MAXINE_IDE", false);
             if (ide != null && ide.equals("INTELLIJ")) {
-                return baseDir.getPath() + sep + "out" + sep + "production" + sep + name;
+                return baseDir.getPath() + sep + "out " + sep + "production " + sep + name;
             }
             return baseDir.getPath() + sep + name + sep + "bin";
         }
@@ -488,9 +552,644 @@ public class jmax {
 
         @Override
         void printProperties(PrintStream out) {
-            out.println("project." + name + ".sourceDirs=" + jmax.toString(sourceDirs, ", ", null));
-            out.println("project." + name + ".dependencies=" + jmax.toString(dependencies, ", ", null));
+            out.println("project@" + name + "@sourceDirs=" + jmax.toString(sourceDirs, ", ", null));
+            out.println("project@" + name + "@dependencies=" + jmax.toString(dependencies, ", ", null));
+            out.println("project@" + name + "@eclipse.output=" + eclipseOutput);
         }
 
+        /**
+         * Generates the Eclipse projects files for this project. Relative to the project directory, these files are:
+         * <pre>
+         *     .classpath
+         *     .project
+         * </pre>
+         * In addition, these files are generated if they don't already exist:
+         * <pre>
+         *     .settings/org.eclipse.jdt.core.prefs
+         *     .settings/org.eclipse.jdt.ui.prefs
+         * </pre>
+         *
+         * @param response
+         */
+        void generateEclipseProject(PrintStream response) {
+            File projectDir = new File(baseDir, name);
+            makeDirectory(projectDir);
+
+            File file = new File(projectDir, ".classpath");
+            boolean overwrote = file.exists();
+            try {
+                PrintStream out = new PrintStream(new FileOutputStream(file));
+                out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                out.println("<classpath>");
+                for (String src : sourceDirs) {
+                    File srcDir = new File(projectDir, src);
+                    makeDirectory(srcDir);
+                    out.println("\t<classpathentry kind=\"src\" path=\"" + src + "\"/>");
+                }
+
+                // Every Java program depends on the JRE
+                out.println("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>");
+
+                for (String name : dependencies) {
+                    assert !name.equals(this.name);
+                    Library l = jmax.libs.get(name);
+                    if (l != null) {
+                        if (l.eclipseContainer != null) {
+                            out.println("\t<classpathentry exported=\"true\" kind=\"con\" path=\"" + l.eclipseContainer + "\"/>");
+                        } else {
+                            File path = l.path();
+                            if (path.exists()) {
+                                if (path.isAbsolute()) {
+                                    out.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"" + path + "\"/>");
+                                } else {
+                                    out.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/" + path + "\"/>");
+                                }
+                            }
+                        }
+                    } else {
+                        Project p = project(name);
+                        out.println("\t<classpathentry combineaccessrules=\"false\" exported=\"true\" kind=\"src\" path=\"/" + p.name + "\"/>");
+                    }
+                }
+                out.println("\t<classpathentry kind=\"output\" path=\"" + eclipseOutput + "\"/>");
+                out.println("</classpath>");
+                out.close();
+                response.println((overwrote ? "overwrote " : "created ") + file);
+            } catch (FileNotFoundException e) {
+                throw new Error("Error while generating  " + file, e);
+            }
+
+            file = new File(projectDir, ".project");
+            overwrote = file.exists();
+            boolean checkstyle = new File(projectDir, ".checkstyle").exists();
+            try {
+                PrintStream out = new PrintStream(new FileOutputStream(file));
+                out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                out.println("<projectDescription>");
+                out.println("\t<name>" + name + "</name>");
+                out.println("\t<comment></comment>");
+                out.println("\t<projects>");
+                out.println("\t</projects>");
+                out.println("\t<buildSpec>");
+                out.println("\t\t<buildCommand>");
+                out.println("\t\t\t<name>org.eclipse.jdt.core.javabuilder</name>");
+                out.println("\t\t\t<arguments>");
+                out.println("\t\t\t</arguments>");
+                out.println("\t\t</buildCommand>");
+                if (checkstyle) {
+                    out.println("\t\t<buildCommand>");
+                    out.println("\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>");
+                    out.println("\t\t\t<arguments>");
+                    out.println("\t\t\t</arguments>");
+                    out.println("\t\t</buildCommand>");
+                }
+                out.println("\t</buildSpec>");
+                out.println("\t<natures>");
+                out.println("\t\t<nature>org.eclipse.jdt.core.javanature</nature>");
+                if (checkstyle) {
+                    out.println("\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>");
+                }
+                out.println("\t</natures>");
+                out.println("</projectDescription>");
+                out.close();
+                response.println((overwrote ? "overwrote " : "created ") + file);
+            } catch (FileNotFoundException e) {
+                throw new Error("Error while generating  " + file, e);
+            }
+
+            File settingsDir = new File(projectDir, ".settings");
+            makeDirectory(settingsDir);
+            file = new File(settingsDir, "org.eclipse.jdt.core.prefs");
+            if (!file.exists()) {
+                try {
+                    PrintStream out = new PrintStream(new FileOutputStream(file));
+                    for (String line : org_eclipse_jdt_core_prefs.lines) {
+                        out.println(line);
+                    }
+                    out.close();
+                    response.println("created " + file);
+                } catch (FileNotFoundException e) {
+                    throw new Error("Error while generating  " + file, e);
+                }
+            }
+
+            file = new File(settingsDir, "org.eclipse.jdt.ui.prefs");
+            if (!file.exists()) {
+                try {
+                    PrintStream out = new PrintStream(new FileOutputStream(file));
+                    for (String line : org_eclipse_jdt_ui_prefs.lines) {
+                        out.println(line);
+                    }
+                    out.close();
+                    response.println("created " + file);
+                } catch (FileNotFoundException e) {
+                    throw new Error("Error while generating  " + file, e);
+                }
+            }
+        }
+    }
+
+    static class org_eclipse_jdt_ui_prefs {
+        static final String[] lines = {
+            "cleanup.add_default_serial_version_id=true",
+            "cleanup.add_generated_serial_version_id=false",
+            "cleanup.add_missing_annotations=true",
+            "cleanup.add_missing_deprecated_annotations=false",
+            "cleanup.add_missing_nls_tags=false",
+            "cleanup.add_missing_override_annotations=true",
+            "cleanup.add_serial_version_id=false",
+            "cleanup.always_use_blocks=true",
+            "cleanup.always_use_parentheses_in_expressions=false",
+            "cleanup.always_use_this_for_non_static_field_access=false",
+            "cleanup.always_use_this_for_non_static_method_access=false",
+            "cleanup.convert_to_enhanced_for_loop=false",
+            "cleanup.format_source_code=false",
+            "cleanup.make_local_variable_final=true",
+            "cleanup.make_parameters_final=false",
+            "cleanup.make_private_fields_final=true",
+            "cleanup.make_variable_declarations_final=false",
+            "cleanup.never_use_blocks=false",
+            "cleanup.never_use_parentheses_in_expressions=true",
+            "cleanup.organize_imports=false",
+            "cleanup.qualify_static_field_accesses_with_declaring_class=false",
+            "cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=true",
+            "cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=true",
+            "cleanup.qualify_static_member_accesses_with_declaring_class=false",
+            "cleanup.qualify_static_method_accesses_with_declaring_class=false",
+            "cleanup.remove_private_constructors=true",
+            "cleanup.remove_trailing_whitespaces=false",
+            "cleanup.remove_trailing_whitespaces_all=true",
+            "cleanup.remove_trailing_whitespaces_ignore_empty=false",
+            "cleanup.remove_unnecessary_casts=false",
+            "cleanup.remove_unnecessary_nls_tags=false",
+            "cleanup.remove_unused_imports=false",
+            "cleanup.remove_unused_local_variables=false",
+            "cleanup.remove_unused_private_fields=true",
+            "cleanup.remove_unused_private_members=false",
+            "cleanup.remove_unused_private_methods=true",
+            "cleanup.remove_unused_private_types=true",
+            "cleanup.sort_members=false",
+            "cleanup.sort_members_all=false",
+            "cleanup.use_blocks=false",
+            "cleanup.use_blocks_only_for_return_and_throw=false",
+            "cleanup.use_parentheses_in_expressions=false",
+            "cleanup.use_this_for_non_static_field_access=false",
+            "cleanup.use_this_for_non_static_field_access_only_if_necessary=true",
+            "cleanup.use_this_for_non_static_method_access=false",
+            "cleanup.use_this_for_non_static_method_access_only_if_necessary=true",
+            "cleanup_profile=_CleanUpAgitarTests",
+            "cleanup_settings_version=2",
+            "comment_clear_blank_lines=false",
+            "comment_format_comments=true",
+            "comment_format_header=true",
+            "comment_format_html=true",
+            "comment_format_source_code=true",
+            "comment_indent_parameter_description=true",
+            "comment_indent_root_tags=true",
+            "comment_line_length=120",
+            "comment_new_line_for_parameter=true",
+            "comment_separate_root_tags=true",
+            "eclipse.preferences.version=1",
+            "editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=true",
+            "formatter_profile=_MaxineJavaCodeStyle",
+            "formatter_settings_version=11",
+            "org.eclipse.jdt.ui.exception.name=e",
+            "org.eclipse.jdt.ui.gettersetter.use.is=true",
+            "org.eclipse.jdt.ui.ignorelowercasenames=true",
+            "org.eclipse.jdt.ui.importorder=java;javax;org;com;",
+            "org.eclipse.jdt.ui.javadoc=false",
+            "org.eclipse.jdt.ui.keywordthis=false",
+            "org.eclipse.jdt.ui.ondemandthreshold=0",
+            "org.eclipse.jdt.ui.overrideannotation=true",
+            "org.eclipse.jdt.ui.staticondemandthreshold=0",
+            "sp_cleanup.add_default_serial_version_id=true",
+            "sp_cleanup.add_generated_serial_version_id=false",
+            "sp_cleanup.add_missing_annotations=false",
+            "sp_cleanup.add_missing_deprecated_annotations=true",
+            "sp_cleanup.add_missing_methods=false",
+            "sp_cleanup.add_missing_nls_tags=false",
+            "sp_cleanup.add_missing_override_annotations=true",
+            "sp_cleanup.add_serial_version_id=false",
+            "sp_cleanup.always_use_blocks=true",
+            "sp_cleanup.always_use_parentheses_in_expressions=false",
+            "sp_cleanup.always_use_this_for_non_static_field_access=false",
+            "sp_cleanup.always_use_this_for_non_static_method_access=false",
+            "sp_cleanup.convert_to_enhanced_for_loop=false",
+            "sp_cleanup.correct_indentation=false",
+            "sp_cleanup.format_source_code=false",
+            "sp_cleanup.format_source_code_changes_only=false",
+            "sp_cleanup.make_local_variable_final=false",
+            "sp_cleanup.make_parameters_final=false",
+            "sp_cleanup.make_private_fields_final=true",
+            "sp_cleanup.make_variable_declarations_final=false",
+            "sp_cleanup.never_use_blocks=false",
+            "sp_cleanup.never_use_parentheses_in_expressions=true",
+            "sp_cleanup.on_save_use_additional_actions=true",
+            "sp_cleanup.organize_imports=false",
+            "sp_cleanup.qualify_static_field_accesses_with_declaring_class=false",
+            "sp_cleanup.qualify_static_member_accesses_through_instances_with_declaring_class=true",
+            "sp_cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=true",
+            "sp_cleanup.qualify_static_member_accesses_with_declaring_class=false",
+            "sp_cleanup.qualify_static_method_accesses_with_declaring_class=false",
+            "sp_cleanup.remove_private_constructors=true",
+            "sp_cleanup.remove_trailing_whitespaces=true",
+            "sp_cleanup.remove_trailing_whitespaces_all=true",
+            "sp_cleanup.remove_trailing_whitespaces_ignore_empty=false",
+            "sp_cleanup.remove_unnecessary_casts=false",
+            "sp_cleanup.remove_unnecessary_nls_tags=false",
+            "sp_cleanup.remove_unused_imports=false",
+            "sp_cleanup.remove_unused_local_variables=false",
+            "sp_cleanup.remove_unused_private_fields=true",
+            "sp_cleanup.remove_unused_private_members=false",
+            "sp_cleanup.remove_unused_private_methods=true",
+            "sp_cleanup.remove_unused_private_types=true",
+            "sp_cleanup.sort_members=false",
+            "sp_cleanup.sort_members_all=false",
+            "sp_cleanup.use_blocks=false",
+            "sp_cleanup.use_blocks_only_for_return_and_throw=false",
+            "sp_cleanup.use_parentheses_in_expressions=false",
+            "sp_cleanup.use_this_for_non_static_field_access=false",
+            "sp_cleanup.use_this_for_non_static_field_access_only_if_necessary=true",
+            "sp_cleanup.use_this_for_non_static_method_access=false",
+            "sp_cleanup.use_this_for_non_static_method_access_only_if_necessary=true"
+        };
+    }
+
+    static class org_eclipse_jdt_core_prefs {
+        static final String[] lines = {
+            "eclipse.preferences.version=1",
+            "org.eclipse.jdt.core.builder.cleanOutputFolder=clean",
+            "org.eclipse.jdt.core.builder.duplicateResourceTask=warning",
+            "org.eclipse.jdt.core.builder.invalidClasspath=abort",
+            "org.eclipse.jdt.core.builder.resourceCopyExclusionFilter=*.launch",
+            "org.eclipse.jdt.core.circularClasspath=error",
+            "org.eclipse.jdt.core.classpath.exclusionPatterns=enabled",
+            "org.eclipse.jdt.core.classpath.multipleOutputLocations=enabled",
+            "org.eclipse.jdt.core.codeComplete.argumentPrefixes=",
+            "org.eclipse.jdt.core.codeComplete.argumentSuffixes=",
+            "org.eclipse.jdt.core.codeComplete.fieldPrefixes=",
+            "org.eclipse.jdt.core.codeComplete.fieldSuffixes=",
+            "org.eclipse.jdt.core.codeComplete.localPrefixes=",
+            "org.eclipse.jdt.core.codeComplete.localSuffixes=",
+            "org.eclipse.jdt.core.codeComplete.staticFieldPrefixes=",
+            "org.eclipse.jdt.core.codeComplete.staticFieldSuffixes=",
+            "org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode=enabled",
+            "org.eclipse.jdt.core.compiler.codegen.targetPlatform=1.6",
+            "org.eclipse.jdt.core.compiler.codegen.unusedLocal=preserve",
+            "org.eclipse.jdt.core.compiler.compliance=1.6",
+            "org.eclipse.jdt.core.compiler.debug.lineNumber=generate",
+            "org.eclipse.jdt.core.compiler.debug.localVariable=generate",
+            "org.eclipse.jdt.core.compiler.debug.sourceFile=generate",
+            "org.eclipse.jdt.core.compiler.doc.comment.support=enabled",
+            "org.eclipse.jdt.core.compiler.maxProblemPerUnit=100",
+            "org.eclipse.jdt.core.compiler.problem.annotationSuperInterface=warning",
+            "org.eclipse.jdt.core.compiler.problem.assertIdentifier=error",
+            "org.eclipse.jdt.core.compiler.problem.autoboxing=ignore",
+            "org.eclipse.jdt.core.compiler.problem.comparingIdentical=warning",
+            "org.eclipse.jdt.core.compiler.problem.deadCode=warning",
+            "org.eclipse.jdt.core.compiler.problem.deprecation=error",
+            "org.eclipse.jdt.core.compiler.problem.deprecationInDeprecatedCode=enabled",
+            "org.eclipse.jdt.core.compiler.problem.deprecationWhenOverridingDeprecatedMethod=enabled",
+            "org.eclipse.jdt.core.compiler.problem.discouragedReference=warning",
+            "org.eclipse.jdt.core.compiler.problem.emptyStatement=warning",
+            "org.eclipse.jdt.core.compiler.problem.enumIdentifier=error",
+            "org.eclipse.jdt.core.compiler.problem.fallthroughCase=ignore",
+            "org.eclipse.jdt.core.compiler.problem.fatalOptionalError=enabled",
+            "org.eclipse.jdt.core.compiler.problem.fieldHiding=warning",
+            "org.eclipse.jdt.core.compiler.problem.finalParameterBound=warning",
+            "org.eclipse.jdt.core.compiler.problem.finallyBlockNotCompletingNormally=warning",
+            "org.eclipse.jdt.core.compiler.problem.forbiddenReference=warning",
+            "org.eclipse.jdt.core.compiler.problem.hiddenCatchBlock=warning",
+            "org.eclipse.jdt.core.compiler.problem.incompatibleNonInheritedInterfaceMethod=warning",
+            "org.eclipse.jdt.core.compiler.problem.incompleteEnumSwitch=error",
+            "org.eclipse.jdt.core.compiler.problem.indirectStaticAccess=ignore",
+            "org.eclipse.jdt.core.compiler.problem.invalidJavadoc=ignore",
+            "org.eclipse.jdt.core.compiler.problem.invalidJavadocTags=enabled",
+            "org.eclipse.jdt.core.compiler.problem.invalidJavadocTagsDeprecatedRef=enabled",
+            "org.eclipse.jdt.core.compiler.problem.invalidJavadocTagsNotVisibleRef=enabled",
+            "org.eclipse.jdt.core.compiler.problem.invalidJavadocTagsVisibility=private",
+            "org.eclipse.jdt.core.compiler.problem.localVariableHiding=ignore",
+            "org.eclipse.jdt.core.compiler.problem.methodWithConstructorName=error",
+            "org.eclipse.jdt.core.compiler.problem.missingDeprecatedAnnotation=error",
+            "org.eclipse.jdt.core.compiler.problem.missingHashCodeMethod=ignore",
+            "org.eclipse.jdt.core.compiler.problem.missingJavadocComments=ignore",
+            "org.eclipse.jdt.core.compiler.problem.missingJavadocCommentsOverriding=enabled",
+            "org.eclipse.jdt.core.compiler.problem.missingJavadocCommentsVisibility=public",
+            "org.eclipse.jdt.core.compiler.problem.missingJavadocTags=ignore",
+            "org.eclipse.jdt.core.compiler.problem.missingJavadocTagsOverriding=enabled",
+            "org.eclipse.jdt.core.compiler.problem.missingJavadocTagsVisibility=private",
+            "org.eclipse.jdt.core.compiler.problem.missingOverrideAnnotation=error",
+            "org.eclipse.jdt.core.compiler.problem.missingOverrideAnnotationForInterfaceMethodImplementation=disabled",
+            "org.eclipse.jdt.core.compiler.problem.missingSerialVersion=ignore",
+            "org.eclipse.jdt.core.compiler.problem.missingSynchronizedOnInheritedMethod=ignore",
+            "org.eclipse.jdt.core.compiler.problem.noEffectAssignment=warning",
+            "org.eclipse.jdt.core.compiler.problem.noImplicitStringConversion=warning",
+            "org.eclipse.jdt.core.compiler.problem.nonExternalizedStringLiteral=ignore",
+            "org.eclipse.jdt.core.compiler.problem.nullReference=error",
+            "org.eclipse.jdt.core.compiler.problem.overridingPackageDefaultMethod=warning",
+            "org.eclipse.jdt.core.compiler.problem.parameterAssignment=warning",
+            "org.eclipse.jdt.core.compiler.problem.possibleAccidentalBooleanAssignment=warning",
+            "org.eclipse.jdt.core.compiler.problem.potentialNullReference=ignore",
+            "org.eclipse.jdt.core.compiler.problem.rawTypeReference=ignore",
+            "org.eclipse.jdt.core.compiler.problem.redundantNullCheck=ignore",
+            "org.eclipse.jdt.core.compiler.problem.redundantSuperinterface=ignore",
+            "org.eclipse.jdt.core.compiler.problem.specialParameterHidingField=disabled",
+            "org.eclipse.jdt.core.compiler.problem.staticAccessReceiver=warning",
+            "org.eclipse.jdt.core.compiler.problem.suppressOptionalErrors=disabled",
+            "org.eclipse.jdt.core.compiler.problem.suppressWarnings=enabled",
+            "org.eclipse.jdt.core.compiler.problem.syntheticAccessEmulation=ignore",
+            "org.eclipse.jdt.core.compiler.problem.typeParameterHiding=warning",
+            "org.eclipse.jdt.core.compiler.problem.uncheckedTypeOperation=warning",
+            "org.eclipse.jdt.core.compiler.problem.undocumentedEmptyBlock=ignore",
+            "org.eclipse.jdt.core.compiler.problem.unhandledWarningToken=error",
+            "org.eclipse.jdt.core.compiler.problem.unnecessaryElse=warning",
+            "org.eclipse.jdt.core.compiler.problem.unnecessaryTypeCheck=warning",
+            "org.eclipse.jdt.core.compiler.problem.unqualifiedFieldAccess=ignore",
+            "org.eclipse.jdt.core.compiler.problem.unsafeTypeOperation=warning",
+            "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownException=warning",
+            "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownExceptionExemptExceptionAndThrowable=enabled",
+            "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownExceptionIncludeDocCommentReference=enabled",
+            "org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownExceptionWhenOverriding=disabled",
+            "org.eclipse.jdt.core.compiler.problem.unusedImport=warning",
+            "org.eclipse.jdt.core.compiler.problem.unusedLabel=warning",
+            "org.eclipse.jdt.core.compiler.problem.unusedLocal=warning",
+            "org.eclipse.jdt.core.compiler.problem.unusedObjectAllocation=ignore",
+            "org.eclipse.jdt.core.compiler.problem.unusedParameter=ignore",
+            "org.eclipse.jdt.core.compiler.problem.unusedParameterIncludeDocCommentReference=enabled",
+            "org.eclipse.jdt.core.compiler.problem.unusedParameterWhenImplementingAbstract=disabled",
+            "org.eclipse.jdt.core.compiler.problem.unusedParameterWhenOverridingConcrete=disabled",
+            "org.eclipse.jdt.core.compiler.problem.unusedPrivateMember=ignore",
+            "org.eclipse.jdt.core.compiler.problem.unusedWarningToken=warning",
+            "org.eclipse.jdt.core.compiler.problem.varargsArgumentNeedCast=warning",
+            "org.eclipse.jdt.core.compiler.processAnnotations=disabled",
+            "org.eclipse.jdt.core.compiler.source=1.6",
+            "org.eclipse.jdt.core.compiler.taskCaseSensitive=enabled",
+            "org.eclipse.jdt.core.compiler.taskPriorities=NORMAL,HIGH,NORMAL",
+            "org.eclipse.jdt.core.compiler.taskTags=TODO,FIXME,XXX",
+            "org.eclipse.jdt.core.formatter.align_type_members_on_columns=false",
+            "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_allocation_expression=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_enum_constant=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_explicit_constructor_call=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_method_invocation=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_qualified_allocation_expression=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_assignment=0",
+            "org.eclipse.jdt.core.formatter.alignment_for_binary_expression=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_compact_if=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_conditional_expression=80",
+            "org.eclipse.jdt.core.formatter.alignment_for_enum_constants=0",
+            "org.eclipse.jdt.core.formatter.alignment_for_expressions_in_array_initializer=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_multiple_fields=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_parameters_in_constructor_declaration=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_parameters_in_method_declaration=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_selector_in_method_invocation=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_superclass_in_type_declaration=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_superinterfaces_in_enum_declaration=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_superinterfaces_in_type_declaration=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_throws_clause_in_constructor_declaration=16",
+            "org.eclipse.jdt.core.formatter.alignment_for_throws_clause_in_method_declaration=16",
+            "org.eclipse.jdt.core.formatter.blank_lines_after_imports=1",
+            "org.eclipse.jdt.core.formatter.blank_lines_after_package=1",
+            "org.eclipse.jdt.core.formatter.blank_lines_before_field=0",
+            "org.eclipse.jdt.core.formatter.blank_lines_before_first_class_body_declaration=1",
+            "org.eclipse.jdt.core.formatter.blank_lines_before_imports=1",
+            "org.eclipse.jdt.core.formatter.blank_lines_before_member_type=1",
+            "org.eclipse.jdt.core.formatter.blank_lines_before_method=1",
+            "org.eclipse.jdt.core.formatter.blank_lines_before_new_chunk=1",
+            "org.eclipse.jdt.core.formatter.blank_lines_before_package=0",
+            "org.eclipse.jdt.core.formatter.blank_lines_between_import_groups=1",
+            "org.eclipse.jdt.core.formatter.blank_lines_between_type_declarations=1",
+            "org.eclipse.jdt.core.formatter.brace_position_for_annotation_type_declaration=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_anonymous_type_declaration=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_array_initializer=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_block=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_block_in_case=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_constructor_declaration=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_enum_constant=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_enum_declaration=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_method_declaration=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_switch=end_of_line",
+            "org.eclipse.jdt.core.formatter.brace_position_for_type_declaration=end_of_line",
+            "org.eclipse.jdt.core.formatter.comment.clear_blank_lines=false",
+            "org.eclipse.jdt.core.formatter.comment.clear_blank_lines_in_block_comment=false",
+            "org.eclipse.jdt.core.formatter.comment.clear_blank_lines_in_javadoc_comment=false",
+            "org.eclipse.jdt.core.formatter.comment.format_block_comments=true",
+            "org.eclipse.jdt.core.formatter.comment.format_comments=true",
+            "org.eclipse.jdt.core.formatter.comment.format_header=true",
+            "org.eclipse.jdt.core.formatter.comment.format_html=true",
+            "org.eclipse.jdt.core.formatter.comment.format_javadoc_comments=true",
+            "org.eclipse.jdt.core.formatter.comment.format_line_comments=true",
+            "org.eclipse.jdt.core.formatter.comment.format_source_code=true",
+            "org.eclipse.jdt.core.formatter.comment.indent_parameter_description=true",
+            "org.eclipse.jdt.core.formatter.comment.indent_root_tags=true",
+            "org.eclipse.jdt.core.formatter.comment.insert_new_line_before_root_tags=insert",
+            "org.eclipse.jdt.core.formatter.comment.insert_new_line_for_parameter=do not insert",
+            "org.eclipse.jdt.core.formatter.comment.line_length=120",
+            "org.eclipse.jdt.core.formatter.compact_else_if=true",
+            "org.eclipse.jdt.core.formatter.continuation_indentation=4",
+            "org.eclipse.jdt.core.formatter.continuation_indentation_for_array_initializer=4",
+            "org.eclipse.jdt.core.formatter.format_guardian_clause_on_one_line=false",
+            "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_annotation_declaration_header=true",
+            "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_enum_constant_header=true",
+            "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_enum_declaration_header=true",
+            "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_type_header=true",
+            "org.eclipse.jdt.core.formatter.indent_breaks_compare_to_cases=true",
+            "org.eclipse.jdt.core.formatter.indent_empty_lines=false",
+            "org.eclipse.jdt.core.formatter.indent_statements_compare_to_block=true",
+            "org.eclipse.jdt.core.formatter.indent_statements_compare_to_body=true",
+            "org.eclipse.jdt.core.formatter.indent_switchstatements_compare_to_cases=true",
+            "org.eclipse.jdt.core.formatter.indent_switchstatements_compare_to_switch=true",
+            "org.eclipse.jdt.core.formatter.indentation.size=8",
+            "org.eclipse.jdt.core.formatter.insert_new_line_after_annotation=insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_local_variable=insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member=insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_parameter=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_after_opening_brace_in_array_initializer=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_at_end_of_file_if_missing=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_before_catch_in_try_statement=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_before_closing_brace_in_array_initializer=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_before_else_in_if_statement=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_before_finally_in_try_statement=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_before_while_in_do_statement=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_annotation_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_anonymous_type_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_block=insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_enum_constant=insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_enum_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_method_body=insert",
+            "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_type_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_and_in_type_parameter=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_assignment_operator=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_at_in_annotation=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_at_in_annotation_type_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_binary_operator=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_closing_angle_bracket_in_type_arguments=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_closing_angle_bracket_in_type_parameters=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_closing_brace_in_block=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_closing_paren_in_cast=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_assert=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_case=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_conditional=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_for=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_labeled_statement=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_allocation_expression=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_annotation=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_array_initializer=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_constructor_declaration_parameters=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_constructor_declaration_throws=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_enum_constant_arguments=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_enum_declarations=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_explicitconstructorcall_arguments=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_for_increments=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_for_inits=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_declaration_parameters=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_declaration_throws=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_invocation_arguments=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_multiple_field_declarations=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_multiple_local_declarations=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_parameterized_type_reference=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_superinterfaces=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_type_arguments=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_type_parameters=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_ellipsis=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_angle_bracket_in_parameterized_type_reference=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_angle_bracket_in_type_arguments=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_angle_bracket_in_type_parameters=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_brace_in_array_initializer=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_bracket_in_array_allocation_expression=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_bracket_in_array_reference=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_annotation=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_cast=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_catch=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_constructor_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_enum_constant=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_for=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_if=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_method_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_method_invocation=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_parenthesized_expression=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_switch=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_synchronized=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_while=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_postfix_operator=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_prefix_operator=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_question_in_conditional=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_question_in_wildcard=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_semicolon_in_for=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_after_unary_operator=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_and_in_type_parameter=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_assignment_operator=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_at_in_annotation_type_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_binary_operator=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_angle_bracket_in_parameterized_type_reference=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_angle_bracket_in_type_arguments=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_angle_bracket_in_type_parameters=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_brace_in_array_initializer=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_bracket_in_array_allocation_expression=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_bracket_in_array_reference=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_annotation=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_cast=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_catch=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_constructor_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_enum_constant=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_for=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_if=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_method_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_method_invocation=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_parenthesized_expression=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_switch=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_synchronized=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_while=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_assert=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_case=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_conditional=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_default=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_for=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_labeled_statement=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_allocation_expression=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_annotation=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_array_initializer=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_constructor_declaration_parameters=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_constructor_declaration_throws=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_enum_constant_arguments=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_enum_declarations=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_explicitconstructorcall_arguments=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_for_increments=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_for_inits=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_method_declaration_parameters=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_method_declaration_throws=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_method_invocation_arguments=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_multiple_field_declarations=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_multiple_local_declarations=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_parameterized_type_reference=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_superinterfaces=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_type_arguments=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_type_parameters=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_ellipsis=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_angle_bracket_in_parameterized_type_reference=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_angle_bracket_in_type_arguments=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_angle_bracket_in_type_parameters=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_annotation_type_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_anonymous_type_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_array_initializer=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_block=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_constructor_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_enum_constant=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_enum_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_method_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_switch=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_type_declaration=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_bracket_in_array_allocation_expression=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_bracket_in_array_reference=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_bracket_in_array_type_reference=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_annotation=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_annotation_type_member_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_catch=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_constructor_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_enum_constant=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_for=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_if=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_method_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_method_invocation=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_parenthesized_expression=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_switch=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_synchronized=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_while=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_parenthesized_expression_in_return=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_parenthesized_expression_in_throw=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_postfix_operator=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_prefix_operator=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_question_in_conditional=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_question_in_wildcard=insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_semicolon=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_semicolon_in_for=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_before_unary_operator=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_between_brackets_in_array_type_reference=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_between_empty_braces_in_array_initializer=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_between_empty_brackets_in_array_allocation_expression=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_annotation_type_member_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_constructor_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_enum_constant=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_method_declaration=do not insert",
+            "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_method_invocation=do not insert",
+            "org.eclipse.jdt.core.formatter.join_lines_in_comments=true",
+            "org.eclipse.jdt.core.formatter.join_wrapped_lines=true",
+            "org.eclipse.jdt.core.formatter.keep_else_statement_on_same_line=false",
+            "org.eclipse.jdt.core.formatter.keep_empty_array_initializer_on_one_line=true",
+            "org.eclipse.jdt.core.formatter.keep_imple_if_on_one_line=false",
+            "org.eclipse.jdt.core.formatter.keep_then_statement_on_same_line=false",
+            "org.eclipse.jdt.core.formatter.lineSplit=200",
+            "org.eclipse.jdt.core.formatter.never_indent_block_comments_on_first_column=true",
+            "org.eclipse.jdt.core.formatter.never_indent_line_comments_on_first_column=true",
+            "org.eclipse.jdt.core.formatter.number_of_blank_lines_at_beginning_of_method_body=0",
+            "org.eclipse.jdt.core.formatter.number_of_empty_lines_to_preserve=1",
+            "org.eclipse.jdt.core.formatter.put_empty_statement_on_new_line=true",
+            "org.eclipse.jdt.core.formatter.tabulation.char=space",
+            "org.eclipse.jdt.core.formatter.tabulation.size=4",
+            "org.eclipse.jdt.core.formatter.use_tabs_only_for_leading_indentations=false",
+            "org.eclipse.jdt.core.formatter.wrap_before_binary_operator=false",
+            "org.eclipse.jdt.core.incompatibleJDKLevel=error",
+            "org.eclipse.jdt.core.incompleteClasspath=error"
+        };
     }
 }
+

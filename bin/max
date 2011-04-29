@@ -1207,9 +1207,9 @@ function run_inspect() {
         run sudo -E -p \
 "Debugging is a privileged operation on Mac OS X.
 Please enter your 'sudo' password:" \
-        ${jvm_exe} $system_props -cp $(jmax classpath):$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+        ${jvm_exe} $system_props -cp $(jmax classpath) com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
     else
-        run ${jvm_exe} $system_props -cp $(jmax classpath):$maxine_dir/Inspector/jlfgr-1_0.jar:$maxine_dir/Inspector/NB3B.jar com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
+        run ${jvm_exe} $system_props -cp $(jmax classpath) com.sun.max.ins.MaxineInspector -trace=$trace_level ${inspector_args} -a="$vm_args"
     fi
 }
 
@@ -1484,6 +1484,16 @@ projects_usage=""
 projects_help="show contents of all projects.properties files"
 function run_projects() {
     run jmax properties 
+}
+
+#=======================================
+# 'eclipseprojects' command
+#=======================================
+
+eclipseprojects_usage=""
+eclipseprojects_help="(re)generate Eclipse project configurations"
+function run_eclipseprojects() {
+    run jmax eclipse "$@"
 }
 
 #=======================================
