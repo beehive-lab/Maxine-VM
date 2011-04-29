@@ -29,7 +29,6 @@ import java.util.*;
 
 import javax.swing.*;
 
-import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
@@ -363,10 +362,8 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      *
      * @param addMenuBar should a menu bar be added to the frame.
      */
-    protected InspectorFrame createTabFrame(TabbedInspector<Inspector_Type> parent) {
-        final Class<Inspector_Type> type = null;
-        final Inspector_Type thisInspector = Utils.cast(type, this);
-        frame = new InspectorRootPane<Inspector_Type>(thisInspector, parent, true);
+    protected InspectorFrame createTabFrame(TabbedInspector parent) {
+        frame = new InspectorRootPane(this, parent, true);
         setTitle();
         createView();
         frame.pack();

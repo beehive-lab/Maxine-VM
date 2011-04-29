@@ -36,10 +36,10 @@ import com.sun.max.ins.util.*;
  *
  * @author Michael Van De Vanter
  */
-final class InspectorRootPane<Inspector_Type extends Inspector> extends JRootPane implements InspectorFrame {
+final class InspectorRootPane extends JRootPane implements InspectorFrame {
 
-    private final Inspector_Type inspector;
-    private final TabbedInspector<Inspector_Type> parent;
+    private final Inspector inspector;
+    private final TabbedInspector parent;
     private final InspectorMenuBar menuBar;
 
     private String title = null;
@@ -56,7 +56,7 @@ final class InspectorRootPane<Inspector_Type extends Inspector> extends JRootPan
      * @param addMenuBar  should the frame have a menu bar installed.
      * @see #makeMenu(MenuKind)
      */
-    public InspectorRootPane(Inspector_Type inspector, TabbedInspector<Inspector_Type> parent, boolean addMenuBar) {
+    public InspectorRootPane(Inspector inspector, TabbedInspector parent, boolean addMenuBar) {
         this.inspector = inspector;
         this.parent = parent;
         menuBar = addMenuBar ? new InspectorMenuBar(inspector.inspection()) : null;

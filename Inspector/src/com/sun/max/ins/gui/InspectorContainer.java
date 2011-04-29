@@ -30,20 +30,20 @@ package com.sun.max.ins.gui;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public interface InspectorContainer<Member_Type extends Inspector> extends Iterable<Member_Type> {
+public interface InspectorContainer extends Iterable<Inspector> {
 
     int length();
 
-    Member_Type inspectorAt(int i);
+    Inspector inspectorAt(int i);
 
     /**
      * Ensures that the inspector is visible and selected.
      */
-    void setSelected(Member_Type inspector);
+    void setSelected(Inspector inspector);
 
-    boolean isSelected(Member_Type inspector);
+    boolean isSelected(Inspector inspector);
 
-    Member_Type getSelected();
+    Inspector getSelected();
 
     int getSelectedIndex();
 }

@@ -29,7 +29,6 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 
@@ -42,9 +41,9 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  *
  * @author Michael Van De Vanter
  */
-public abstract class TabbedInspector<Inspector_Type extends Inspector> extends Inspector implements InspectorContainer<Inspector_Type> {
+public abstract class TabbedInspector<Inspector_Type extends TabbedInspector> extends Inspector<Inspector_Type> implements InspectorContainer {
 
-    private final Set<Inspector_Type> inspectors = new HashSet<Inspector_Type>();
+    private final Set<Inspector> inspectors = new HashSet<Inspector>();
     private final InspectorTabbedPane tabbedPane;
 
     protected void addChangeListener(ChangeListener listener) {
@@ -74,12 +73,13 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
         }
     };
 
-    public Inspector_Type inspectorAt(int i) {
+    public Inspector inspectorAt(int i) {
         final Component component = tabbedPane.getComponentAt(i);
         if (component instanceof InspectorInternalFrame) {
             final InspectorFrame inspectorFrame = (InspectorFrame) component;
-            final Class<Inspector_Type> type = null;
-            return Utils.cast(type, inspectorFrame.inspector());
+            //final Class<Member_Type> type = null;
+            //return Utils.cast(type, inspectorFrame.inspector());
+            return inspectorFrame.inspector();
         }
         return null;
     }
@@ -92,18 +92,18 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
         return tabbedPane.getSelectedIndex();
     }
 
-    public void setSelected(Inspector_Type inspector) {
+    public void setSelected(Inspector inspector) {
         moveToFront();
         tabbedPane.setSelectedComponent(inspector.getJComponent());
     }
 
-    public boolean isSelected(Inspector_Type inspector) {
+    public boolean isSelected(Inspector inspector) {
         return inspector.getJComponent() ==  tabbedPane.getSelectedComponent();
     }
 
-    public Inspector_Type getSelected() {
+    public Inspector getSelected() {
         final Component component =  tabbedPane.getSelectedComponent();
-        for (Inspector_Type  inspector : this) {
+        for (Inspector  inspector : this) {
             if (inspector.getJComponent() == component) {
                 return inspector;
             }
@@ -111,15 +111,15 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
         return null;
     }
 
-    public void add(Inspector_Type inspector) {
+    public void add(Inspector inspector) {
         add(inspector, inspector.getTitle());
     }
 
-    public void add(Inspector_Type inspector, String tabTitle) {
+    public void add(Inspector inspector, String tabTitle) {
         add(inspector, tabTitle, null);
     }
 
-    public void add(Inspector_Type inspector, String tabTitle, String tabToolTipText) {
+    public void add(Inspector inspector, String tabTitle, String tabToolTipText) {
         inspectors.add(inspector);
         final JComponent component = inspector.getJComponent();
         tabbedPane.addTab(tabTitle, component);
@@ -135,9 +135,9 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
      * Using this has the curious side-effect that the tabbed pane has additional children that aren't the actual
      * tabbed frames.
      */
-    public void addCloseIconToTab(Inspector_Type inspector, String toolTipText) {
+    public void addCloseIconToTab(Inspector inspector, String toolTipText) {
 
-        ButtonTabComponent<Inspector_Type> tabRenderer = new ButtonTabComponent<Inspector_Type>(inspection(), this, inspector, toolTipText);
+        ButtonTabComponent tabRenderer = new ButtonTabComponent(inspection(), this, inspector, toolTipText);
         final int index = tabbedPane.indexOfComponent(inspector.getJComponent());
         tabbedPane.setTabComponentAt(index, tabRenderer);
     }
@@ -156,7 +156,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
         tabbedPane.remove(component);
     }
 
-    public Iterator<Inspector_Type> iterator() {
+    public Iterator<Inspector> iterator() {
         return inspectors.iterator();
     }
 
@@ -182,14 +182,14 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
     /**
      * Disposes of all but the specified inspector, presumed to be a tabbed member of this inspector.
      */
-    public void closeOthers(Inspector_Type keepInspector) {
-        final List<Inspector_Type> toClose = new ArrayList<Inspector_Type>();
-        for (Inspector_Type inspector : inspectors) {
+    public void closeOthers(Inspector keepInspector) {
+        final List<Inspector> toClose = new ArrayList<Inspector>();
+        for (Inspector inspector : inspectors) {
             if (inspector != keepInspector) {
                 toClose.add(inspector);
             }
         }
-        for (Inspector_Type inspector : toClose) {
+        for (Inspector inspector : toClose) {
             close(inspector);
         }
     }
@@ -200,7 +200,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
     @Override
     public void inspectorClosing() {
         removeChangeListener(tabChangeListener);
-        for (Inspector_Type inspector : this) {
+        for (Inspector inspector : this) {
             inspector.dispose();
         }
         super.inspectorClosing();
