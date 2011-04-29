@@ -50,6 +50,7 @@ import com.sun.cri.bytecode.Bytecodes.MemoryBarriers;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ri.*;
+import com.sun.cri.util.*;
 import com.sun.cri.xir.CiXirAssembler.XirConstant;
 import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.XirOperand;
@@ -622,7 +623,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
         CiValue resultOperand = resultOperandFor(x.kind);
         CiValue callAddress = load(x.address());
-        CiKind[] signature = Util.signatureToKinds(x.signature, null);
+        CiKind[] signature = CRIUtil.signatureToKinds(x.signature, null);
         CiCallingConvention cc = compilation.frameMap().getCallingConvention(signature, NativeCall);
         List<CiValue> argList = visitInvokeArguments(cc, x.arguments, null);
         argList.add(callAddress);

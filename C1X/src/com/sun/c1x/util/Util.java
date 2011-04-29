@@ -28,7 +28,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
 
 /**
  * The {@code Util} class contains a motley collection of utility methods used throughout the compiler.
@@ -285,23 +284,6 @@ public class Util {
         if (length % bytesPerLine != bytesPerLine) {
             TTY.println();
         }
-    }
-
-    public static CiKind[] signatureToKinds(RiSignature signature, CiKind receiverKind) {
-        int args = signature.argumentCount(false);
-        CiKind[] result;
-        int i = 0;
-        if (receiverKind != null) {
-            result = new CiKind[args + 1];
-            result[0] = receiverKind;
-            i = 1;
-        } else {
-            result = new CiKind[args];
-        }
-        for (int j = 0; j < args; j++) {
-            result[i + j] = signature.argumentKindAt(j);
-        }
-        return result;
     }
 
     public static <T> T nonFatalUnimplemented(T val) {
