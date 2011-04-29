@@ -144,14 +144,6 @@ public final class BytecodeFramesInspector extends Inspector<BytecodeFramesInspe
             Trace.end(TRACE_VALUE, tracePrefix() + "creating");
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         public void notifyViewClosing(Inspector inspector) {
             // TODO (mlvdv)  should be using generics here
@@ -281,10 +273,6 @@ public final class BytecodeFramesInspector extends Inspector<BytecodeFramesInspe
             } while (frame != null);
             setContentPane(panel);
         }
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     @Override

@@ -68,14 +68,6 @@ public final class JavaSourceInspector extends FileInspector<JavaSourceInspector
             Trace.end(TRACE_VALUE, tracePrefix() + "creating");
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         public void notifyViewClosing(Inspector inspector) {
             // TODO (mlvdv)  should be using generics here
@@ -127,10 +119,6 @@ public final class JavaSourceInspector extends FileInspector<JavaSourceInspector
             textArea.moveCaretPosition(textArea.getLineEndOffset(lineNumber));
         } catch (BadLocationException badLocationException) {
         }
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     @Override

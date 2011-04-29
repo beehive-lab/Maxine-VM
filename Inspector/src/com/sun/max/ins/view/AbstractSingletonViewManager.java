@@ -77,6 +77,29 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Singleton view kinds are assumed by default to be supported.
+     * Concrete view manager types should override if this
+     * isn't always so.
+     */
+    public boolean isSupported() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Singleton views are assumed by default to be enabled
+     * if they are supported.
+     * Concrete view manager types should override if this
+     * isn't always so.
+     */
+    public boolean isEnabled() {
+        return isSupported();
+    }
+
     public final boolean isActive() {
         return inspectors.size() > 0;
     }
@@ -98,7 +121,7 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
         inspectors.get(0).dispose();
     }
 
-    public InspectorAction activateSingletonViewAction() {
+    public final InspectorAction activateSingletonViewAction() {
         return activateViewAction;
     }
 
@@ -114,6 +137,9 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
         refresh();
     }
 
+    /**
+     * Creates an instance of the concrete view kind.
+     */
     protected abstract Inspector_Kind createView(Inspection inspection);
 
     /**

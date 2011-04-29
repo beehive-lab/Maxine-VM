@@ -55,14 +55,6 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
             inspection.focus().addListener(MethodInspector.methodFocusListener(inspection));
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected MethodInspectorContainer createView(Inspection inspection) {
             final MethodInspectorContainer methodInspectorContainer = new MethodInspectorContainer(inspection);

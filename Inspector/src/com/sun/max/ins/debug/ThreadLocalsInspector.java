@@ -63,14 +63,6 @@ public final class ThreadLocalsInspector extends Inspector<ThreadLocalsInspector
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected ThreadLocalsInspector createView(Inspection inspection) {
             return new ThreadLocalsInspector(inspection);
@@ -259,10 +251,6 @@ public final class ThreadLocalsInspector extends Inspector<ThreadLocalsInspector
                 }
             }
         };
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     public void tableColumnViewPreferencesChanged() {

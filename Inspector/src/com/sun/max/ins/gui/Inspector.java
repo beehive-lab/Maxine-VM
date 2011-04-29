@@ -546,6 +546,18 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void watchpointSetChanged() {
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Default behavior for any change in view configuration is to just build
+     * the view again from the start.  Concrete inspector types should override
+     * this method if that doesn't work (although it probably ought to be made
+     * to work always).
+     */
+    public void viewConfigurationChanged() {
+        reconstructView();
+    }
+
     public void vmProcessTerminated() {
     }
 

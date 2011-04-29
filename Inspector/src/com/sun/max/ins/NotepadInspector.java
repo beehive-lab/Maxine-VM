@@ -73,14 +73,6 @@ public final class NotepadInspector extends Inspector<NotepadInspector> {
             notepadManager = new NotepadManager(inspection);
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected NotepadInspector createView(Inspection inspection) {
             return new NotepadInspector(inspection, notepadManager.getNotepad());
@@ -270,6 +262,7 @@ public final class NotepadInspector extends Inspector<NotepadInspector> {
         return notepadPrintAction;
     }
 
+    @Override
     public void viewConfigurationChanged() {
         save();
         setDisplayStyle(textArea);

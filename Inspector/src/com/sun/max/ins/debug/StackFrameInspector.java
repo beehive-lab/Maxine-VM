@@ -58,14 +58,6 @@ public final class StackFrameInspector extends Inspector<StackFrameInspector> im
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected StackFrameInspector createView(Inspection inspection) {
             return new StackFrameInspector(inspection);
@@ -243,10 +235,6 @@ public final class StackFrameInspector extends Inspector<StackFrameInspector> im
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<CompiledStackFrameColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
             }
         };
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     public void tableColumnViewPreferencesChanged() {

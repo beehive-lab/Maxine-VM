@@ -49,12 +49,13 @@ public final class WatchpointsInspector extends Inspector<WatchpointsInspector> 
         protected WatchpointsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
-
+        /**
+         * {@inheritDoc}
+         * <p>
+         * Watchpoints are not supported on all platforms.
+         */
+        @Override
         public boolean isSupported() {
-            return vm().watchpointManager() != null;
-        }
-
-        public boolean isEnabled() {
             return vm().watchpointManager() != null;
         }
 
@@ -153,11 +154,6 @@ public final class WatchpointsInspector extends Inspector<WatchpointsInspector> 
     public InspectorAction getPrintAction() {
         return getDefaultPrintAction();
     }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
 
     public void tableColumnViewPreferencesChanged() {
         reconstructView();

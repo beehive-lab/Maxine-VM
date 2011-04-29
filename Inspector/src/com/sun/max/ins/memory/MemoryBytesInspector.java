@@ -90,14 +90,6 @@ public final class MemoryBytesInspector extends Inspector<MemoryBytesInspector> 
             Trace.end(TRACE_VALUE, tracePrefix() + "creating");
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         public void notifyViewClosing(Inspector inspector) {
             // TODO (mlvdv)  should be using generics here
@@ -324,10 +316,6 @@ public final class MemoryBytesInspector extends Inspector<MemoryBytesInspector> 
 
         forceRefresh();
         SpringUtilities.makeCompactGrid(view, numberOfLines * 2, 1 + numberOfGroupsPerLine, 0, 0, 5, 5);
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     private String byteGroupToString(byte[] bytes) {

@@ -93,14 +93,6 @@ public final class MemoryInspector extends Inspector<MemoryInspector> {
             Trace.end(1, tracePrefix() + "initializing");
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         public void notifyViewClosing(Inspector inspector) {
             // TODO (mlvdv)  should be using generics here
@@ -890,10 +882,6 @@ public final class MemoryInspector extends Inspector<MemoryInspector> {
     @Override
     public void vmProcessTerminated() {
         dispose();
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     /**

@@ -78,14 +78,6 @@ public final class StackInspector extends Inspector<StackInspector> {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected StackInspector createView(Inspection inspection) {
             return new StackInspector(inspection);
@@ -392,10 +384,6 @@ public final class StackInspector extends Inspector<StackInspector> {
                 }
             }
         }
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     @Override

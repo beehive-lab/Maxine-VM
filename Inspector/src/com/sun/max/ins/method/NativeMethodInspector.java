@@ -83,6 +83,7 @@ public final class NativeMethodInspector extends MethodInspector<NativeMethodIns
         }
     }
 
+    @Override
     public void viewConfigurationChanged() {
         machineCodeViewer.redisplay();
     }

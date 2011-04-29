@@ -51,14 +51,6 @@ public final class RegistersInspector extends Inspector<RegistersInspector> impl
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected RegistersInspector createView(Inspection inspection) {
             return new RegistersInspector(inspection);
@@ -158,10 +150,6 @@ public final class RegistersInspector extends Inspector<RegistersInspector> impl
     @Override
     public InspectorAction getPrintAction() {
         return getDefaultPrintAction();
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     public void tableColumnViewPreferencesChanged() {

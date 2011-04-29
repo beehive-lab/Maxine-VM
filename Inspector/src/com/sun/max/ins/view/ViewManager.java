@@ -59,22 +59,31 @@ public interface ViewManager<Inspector_Kind extends Inspector>  {
     String longName();
 
     /**
-     * @return whether this kind view is supported by currently running configuration and platform
-     */
-    boolean isSupported();
-
-    /**
-     * @return whether it is possible to create this kind of view under the current circumstances
-     */
-    boolean isEnabled();
-
-    /**
      * @return whether there can only be one instance of this kind of view.
      */
     boolean isSingleton();
 
     /**
-     * @return whether one or more views of this kind are currently active
+     * Determines whether this kind of view is supported by currently
+     * running configuration and platform.
+     *
+     * @return whether this kind view is
+     */
+    boolean isSupported();
+
+    /**
+     * Determines whether this kind of view can be created under the current circumstances.
+     * Implies {@link #isSupported()}.
+     *
+     * @return whether it is possible to create this kind of view
+     */
+    boolean isEnabled();
+
+    /**
+     * Determines whether one or more views of this kind are currently active.
+     * Implies {@link #isEnabled()}.
+     *
+     * @return whether views are currently active
      */
     boolean isActive();
 
