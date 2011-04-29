@@ -22,6 +22,7 @@
  */
 package com.sun.max.ins.method;
 
+import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.*;
@@ -37,7 +38,7 @@ import com.sun.max.tele.*;
  * @author Mick Jordan
  * @author Michael Van De Vanter
  */
-public final class MethodInspectorContainer extends TabbedInspector<MethodInspector> {
+public final class MethodInspectorContainer extends TabbedInspector<MethodInspectorContainer> {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.METHODS;
@@ -91,6 +92,8 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
         return viewManager;
     }
 
+    final Class<MethodInspector> methodInspectorType = null;
+
     private MethodInspectorContainer(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
@@ -100,7 +103,8 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
 
     @Override
     public String getTextForTitle() {
-        final MethodInspector methodInspector = getSelected();
+        final Inspector inspector = getSelected();
+        final MethodInspector methodInspector = Utils.cast(methodInspectorType, inspector);
         return methodInspector == null ? viewManager.shortName() : "Method: " + methodInspector.getToolTip();
     }
 
@@ -123,7 +127,8 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
         return new InspectorAction(inspection(), "Print") {
             @Override
             public void procedure() {
-                final MethodInspector methodInspector = MethodInspectorContainer.this.getSelected();
+                final Inspector inspector = MethodInspectorContainer.this.getSelected();
+                final MethodInspector methodInspector = Utils.cast(methodInspectorType, inspector);
                 if (methodInspector != null) {
                     methodInspector.print();
                 }
@@ -132,7 +137,8 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     }
 
     @Override
-    public void add(MethodInspector methodInspector) {
+    public void add(Inspector inspector) {
+        final MethodInspector methodInspector = Utils.cast(methodInspectorType, inspector);
         final String longTitle = methodInspector.getToolTip();
         add(methodInspector, methodInspector.getTextForTitle(), longTitle);
         addCloseIconToTab(methodInspector, longTitle);
@@ -148,7 +154,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
 
     @Override
     public void vmProcessTerminated() {
-        for (MethodInspector inspector : this) {
+        for (Inspector inspector : this) {
             inspector.dispose();
         }
     }

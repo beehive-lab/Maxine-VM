@@ -43,12 +43,12 @@ import com.sun.max.ins.*;
  *
  * @author Michael Van De Vanter
  */
-class ButtonTabComponent<Inspector_Type extends Inspector> extends InspectorPanel {
-    private final TabbedInspector<Inspector_Type> tabbedInspector;
-    private final Inspector_Type inspector;
+class ButtonTabComponent extends InspectorPanel {
+    private final TabbedInspector tabbedInspector;
+    private final Inspector inspector;
     private final String toolTipText;
 
-    ButtonTabComponent(Inspection inspection, final TabbedInspector<Inspector_Type> tabbedInspector, Inspector_Type inspector, String toolTipText) {
+    ButtonTabComponent(Inspection inspection, final TabbedInspector tabbedInspector, Inspector inspector, String toolTipText) {
         //unset default FlowLayout' gaps
         super(inspection, new FlowLayout(FlowLayout.LEFT, 0, 0));
         this.tabbedInspector = tabbedInspector;

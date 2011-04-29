@@ -48,7 +48,7 @@ import com.sun.max.vm.actor.member.*;
  *
  * @author Michael Van De Vanter
  */
-public class JavaMethodInspector extends MethodInspector {
+public class JavaMethodInspector extends MethodInspector<JavaMethodInspector> {
 
     private final int TRACE_VALUE = 1;
 

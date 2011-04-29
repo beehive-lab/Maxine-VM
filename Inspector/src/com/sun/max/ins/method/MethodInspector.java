@@ -48,7 +48,7 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  * @author Doug Simon
  */
-public abstract class MethodInspector extends Inspector<MethodInspector> {
+public abstract class MethodInspector<Inspector_Kind extends MethodInspector> extends Inspector<Inspector_Kind> {
 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.METHOD_CODE;
@@ -280,7 +280,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     }
 
     @Override
-    public InspectorFrame createTabFrame(TabbedInspector<MethodInspector> parent) {
+    public InspectorFrame createTabFrame(TabbedInspector parent) {
 
         final InspectorFrame frame = super.createTabFrame(parent);
 
