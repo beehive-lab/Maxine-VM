@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.c1x.util.Util.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
@@ -35,8 +34,8 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import java.util.*;
 
 import com.sun.c1x.target.amd64.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -115,15 +114,15 @@ public class Stubs {
                 resolveVirtualCall = new CriticalMethod(Stubs.class, "resolveVirtualCall", null);
                 resolveInterfaceCall = new CriticalMethod(Stubs.class, "resolveInterfaceCall", null);
                 resolveVirtualCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                signatureToKinds(resolveVirtualCall.classMethodActor.signature(), CiKind.Object), target()).locations;
+                                CRIUtil.signatureToKinds(resolveVirtualCall.classMethodActor.signature(), CiKind.Object), target()).locations;
                 resolveInterfaceCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                signatureToKinds(resolveInterfaceCall.classMethodActor.signature(), CiKind.Object), target()).locations;
+                                CRIUtil.signatureToKinds(resolveInterfaceCall.classMethodActor.signature(), CiKind.Object), target()).locations;
                 staticTrampoline = genStaticTrampoline();
                 trapStub = genTrapStub();
 
                 CriticalMethod unwind = new CriticalMethod(Stubs.class, "unwind", null);
                 CiValue[] unwindArgs = registerConfigs.globalStub.getCallingConvention(JavaCall,
-                                signatureToKinds(unwind.classMethodActor.signature(), CiKind.Object), target()).locations;
+                                CRIUtil.signatureToKinds(unwind.classMethodActor.signature(), CiKind.Object), target()).locations;
                 unwind.classMethodActor.targetState = genUnwind(unwindArgs);
             }
         }
@@ -356,7 +355,7 @@ public class Stubs {
             CiRegister scratch = registerConfig.getScratchRegister();
             int frameSize = platform().target.alignFrameSize(csa.size);
             int frameToCSA = 0;
-            CiKind[] handleTrapParameters = Util.signatureToKinds(Trap.handleTrap.classMethodActor.signature(), null);
+            CiKind[] handleTrapParameters = CRIUtil.signatureToKinds(Trap.handleTrap.classMethodActor.signature(), null);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target()).locations;
 
             // the very first instruction must save the flags.

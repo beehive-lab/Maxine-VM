@@ -34,12 +34,12 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
+import com.sun.cri.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -422,7 +422,7 @@ public class T1X implements RuntimeCompiler {
     @HOSTED_ONLY
     private static boolean hasStackParameters(ClassMethodActor classMethodActor) {
         CiKind receiver = !classMethodActor.isStatic() ? classMethodActor.holder().kind() : null;
-        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, Util.signatureToKinds(classMethodActor.signature(), receiver), target()).locations) {
+        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CRIUtil.signatureToKinds(classMethodActor.signature(), receiver), target()).locations) {
             if (!arg.isRegister()) {
                 return true;
             }
