@@ -35,7 +35,7 @@ import com.sun.max.tele.object.*;
  *
  * @author Michael Van De Vanter
  */
-public class EnumInspector extends ObjectInspector {
+public class EnumInspector extends ObjectInspector<EnumInspector> {
 
     private InspectorTabbedPane tabbedPane;
     private ObjectScrollPane fieldsPane;

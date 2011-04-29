@@ -34,7 +34,7 @@ import com.sun.max.vm.*;
  *
  * @author Michael Van De Vanter
  */
-public final class BootImageInspector extends Inspector  implements TableColumnViewPreferenceListener {
+public final class BootImageInspector extends Inspector<BootImageInspector>  implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.BOOT_IMAGE;
@@ -145,7 +145,6 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

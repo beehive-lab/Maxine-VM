@@ -27,6 +27,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import com.sun.max.ins.*;
 import com.sun.max.util.*;
 
 /**
@@ -133,6 +134,11 @@ public interface InspectorGUI {
     void moveToMiddle(Inspector inspector);
 
     /**
+     * Gets an action that sets Inspector frame location to middle of Inspection display.
+     */
+    InspectorAction moveToMiddleAction(Inspector inspector);
+
+    /**
      * Moves Inspector frame location as little as possible to make it fully visible.
      */
     void moveToFullyVisible(Inspector inspector);
@@ -151,14 +157,30 @@ public interface InspectorGUI {
     void resizeToFit(Inspector inspector);
 
     /**
+     * Gets an action that will shrink an inspector in each dimension, without
+     * changing location, to make it fit within the Inspector's frame.
+     */
+    InspectorAction resizeToFitAction(Inspector inspector);
+
+    /**
      * Grow an inspector in each dimension to make it fill the Inspector's frame.
      */
     void resizeToFill(Inspector inspector);
 
     /**
+     * Gets an action that will grow an inspector in each dimension to make it fill the Inspector's frame.
+     */
+    InspectorAction resizeToFillAction(Inspector inspector);
+
+    /**
      * Restores the default size and location of an Inspector.
      */
     void restoreDefaultGeometry(Inspector inspector);
+
+    /**
+     * Gets an action that restores the default size and location of an Inspector.
+     */
+    InspectorAction restoreDefaultGeometryAction(Inspector inspector);
 
     /**
      * Moves a {@link JDialog} frame down and to the right of the current mouse location.

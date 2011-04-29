@@ -47,7 +47,7 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class MemoryBytesInspector extends Inspector {
+public final class MemoryBytesInspector extends Inspector<MemoryBytesInspector> {
 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.MEMORY_BYTES;
@@ -349,8 +349,7 @@ public final class MemoryBytesInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        // don't try to recompute the title, just get the one that's been in use
-        Trace.line(1, tracePrefix() + " closing for " + getTitle() + " - process terminated");
+        // Unsubscribe to view preferences, when we get them.
         super.inspectorClosing();
     }
 

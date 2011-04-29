@@ -49,7 +49,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryInspector extends Inspector {
+public final class MemoryInspector extends Inspector<MemoryInspector> {
 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.MEMORY;
@@ -876,8 +876,7 @@ public final class MemoryInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        // don't try to recompute the title, just get the one that's been in use
-        Trace.line(1, tracePrefix() + " closing for " + getTitle());
+        // Unsubscribe to view preferences, when we get them.
         super.inspectorClosing();
     }
 

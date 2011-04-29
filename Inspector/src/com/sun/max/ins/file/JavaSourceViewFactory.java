@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+
+package com.sun.max.ins.file;
+
+import java.io.*;
+
+import com.sun.max.ins.view.*;
+import com.sun.max.vm.actor.holder.*;
+
 
 /**
- * A marker interface for an {@link Inspector} that contains other inspectors.
- * The contained inspectors have the container as their parent.
-  *
- * @author Mick Jordan
- * @author Doug Simon
+ * Methods for creating views on Java source files.
+ *
  * @author Michael Van De Vanter
  */
-public interface InspectorContainer<Member_Type extends Inspector> extends Iterable<Member_Type> {
-
-    int length();
-
-    Member_Type inspectorAt(int i);
+public interface JavaSourceViewFactory extends InspectionViewFactory<JavaSourceInspector> {
 
     /**
-     * Ensures that the inspector is visible and selected.
+     * Creates a view on a Java source file.
+     *
+     * @param classActor information about the class implemented in the file
+     * @param sourceFile the source file to be viewed
+     * @return a view showing the contents of the file
      */
-    void setSelected(Member_Type inspector);
-
-    boolean isSelected(Member_Type inspector);
-
-    Member_Type getSelected();
-
-    int getSelectedIndex();
+    JavaSourceInspector makeView(ClassActor classActor, File sourceFile);
 }

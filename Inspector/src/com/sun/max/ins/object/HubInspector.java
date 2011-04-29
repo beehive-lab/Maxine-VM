@@ -39,7 +39,7 @@ import com.sun.max.vm.object.*;
  *
  * @author Michael Van De Vanter
  */
-public final class HubInspector extends ObjectInspector {
+public final class HubInspector extends ObjectInspector<HubInspector> {
 
     private final TeleHub teleHub;
 

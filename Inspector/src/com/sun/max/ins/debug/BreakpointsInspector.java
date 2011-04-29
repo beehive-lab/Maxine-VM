@@ -37,7 +37,7 @@ import com.sun.max.tele.*;
  * @author Mick Jordan
  * @author Michael Van De Vanter
  */
-public final class BreakpointsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class BreakpointsInspector extends Inspector<BreakpointsInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.BREAKPOINTS;
@@ -168,7 +168,6 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     @Override
     public void inspectorClosing() {
-        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

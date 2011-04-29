@@ -34,7 +34,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  *
  * @author Michael Van De Vanter
  */
-public abstract class FileInspector extends Inspector {
+public abstract class FileInspector<Inspector_Kind extends FileInspector> extends Inspector<Inspector_Kind> {
 
     private File file;
 
