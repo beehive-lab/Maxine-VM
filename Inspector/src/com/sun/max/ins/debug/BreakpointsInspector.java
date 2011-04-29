@@ -51,14 +51,6 @@ public final class BreakpointsInspector extends Inspector<BreakpointsInspector> 
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected BreakpointsInspector createView(Inspection inspection) {
             return new BreakpointsInspector(inspection);
@@ -156,10 +148,6 @@ public final class BreakpointsInspector extends Inspector<BreakpointsInspector> 
     @Override
     public InspectorAction getPrintAction() {
         return getDefaultPrintAction();
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     public void tableColumnViewPreferencesChanged() {

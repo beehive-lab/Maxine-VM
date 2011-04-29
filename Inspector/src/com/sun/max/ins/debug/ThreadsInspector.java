@@ -51,14 +51,6 @@ public final class ThreadsInspector extends Inspector<ThreadsInspector> implemen
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected ThreadsInspector createView(Inspection inspection) {
             return new ThreadsInspector(inspection);
@@ -152,10 +144,6 @@ public final class ThreadsInspector extends Inspector<ThreadsInspector> implemen
     @Override
     public InspectorAction getPrintAction() {
         return getDefaultPrintAction();
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     public void tableColumnViewPreferencesChanged() {

@@ -50,14 +50,6 @@ public final class UserFocusInspector extends Inspector<UserFocusInspector> {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected UserFocusInspector createView(Inspection inspection) {
             return new UserFocusInspector(inspection);
@@ -125,10 +117,6 @@ public final class UserFocusInspector extends Inspector<UserFocusInspector> {
     @Override
     public InspectorAction getPrintAction() {
         return getDefaultPrintAction();
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     public void tableColumnViewPreferencesChanged() {

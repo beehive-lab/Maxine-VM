@@ -163,14 +163,6 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectInsp
         Trace.end(1, tracePrefix() + "initializing");
     }
 
-    public boolean isSupported() {
-        return true;
-    }
-
-    public boolean isEnabled() {
-        return true;
-    }
-
     public InspectorAction makeViewAction() {
         return interactiveMakeViewAction;
     }

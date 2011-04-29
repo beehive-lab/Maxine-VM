@@ -76,6 +76,29 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Multiple view kinds are assumed by default to be supported.
+     * Concrete view manager types should override if this
+     * isn't always so.
+     */
+    public boolean isSupported() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Multiple view kinds are assumed by default to be enabled
+     * if they are supported.
+     * Concrete view manager types should override if this
+     * isn't always so.
+     */
+    public boolean isEnabled() {
+        return isSupported();
+    }
+
     public final boolean isActive() {
         return inspectors.size() > 0;
     }

@@ -165,6 +165,7 @@ public abstract class TabbedInspector<Inspector_Type extends TabbedInspector> ex
         setContentPane(tabbedPane);
     }
 
+    @Override
     public void viewConfigurationChanged() {
         // These containers generally have no view configurations that need updating.
     }

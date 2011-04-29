@@ -56,14 +56,6 @@ public final class AllocationsInspector extends Inspector<AllocationsInspector> 
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
         @Override
         protected AllocationsInspector createView(Inspection inspection) {
             return new AllocationsInspector(inspection);
@@ -190,10 +182,6 @@ public final class AllocationsInspector extends Inspector<AllocationsInspector> 
     @Override
     public InspectorAction getPrintAction() {
         return getDefaultPrintAction();
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     public void tableColumnViewPreferencesChanged() {

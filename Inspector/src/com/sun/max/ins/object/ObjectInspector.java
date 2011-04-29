@@ -283,7 +283,4 @@ public abstract class ObjectInspector<Inspector_Type extends ObjectInspector> ex
         }
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
 }

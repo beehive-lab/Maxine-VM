@@ -315,10 +315,6 @@ public class JavaMethodInspector extends MethodInspector<JavaMethodInspector> {
         //return classMethodActor.holder().simpleName() + "." + classMethodActor.name().toString() + inspection().nameDisplay().methodCompilationID(_teleTargetMethod);
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     /**
      * Global code selection has been set, though possibly unchanged; update all viewers.
      */
