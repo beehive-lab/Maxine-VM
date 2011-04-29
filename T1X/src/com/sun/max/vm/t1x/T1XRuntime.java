@@ -777,7 +777,7 @@ public class T1XRuntime {
         return arr.clone();
     }
 
-    static void checkArrayDimension(int length) {
+    public static void checkArrayDimension(int length) {
         Snippets.checkArrayDimension(length);
     }
 

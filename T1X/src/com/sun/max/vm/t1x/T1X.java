@@ -64,7 +64,7 @@ import com.sun.max.vm.verifier.*;
  */
 public class T1X implements RuntimeCompiler {
 
-    final T1XTemplate[] templates;
+    public final T1XTemplate[] templates;
 
     static {
         ClassfileReader.bytecodeTemplateClasses.add(T1X_TEMPLATE.class);
@@ -95,31 +95,38 @@ public class T1X implements RuntimeCompiler {
      */
     protected final T1X altT1X;
 
+    /**
+     * Factory that creates the appropriate subclass of {@link T1XCompilation}.
+     */
+    protected final T1XCompilationFactory t1XCompilationFactory;
+
     // TODO(mjj) These are not implemented by vanilla T1X but should they be?
     private static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.of(T1XTemplateTag.GOTO, T1XTemplateTag.GOTO_W,
                     T1XTemplateTag.NULL_CHECK, T1XTemplateTag.WRITEREG$link);
 
     @HOSTED_ONLY
     public T1X() {
-        this(T1XTemplateSource.class, null);
+        this(T1XTemplateSource.class, null, new T1XCompilationFactory());
     }
 
     /**
-     * Creates a compiler in which some template definitiions may be "overridden".
+     * Creates a compiler in which some template definitions may be "overridden".
      * @param templateSource class defining override template definitions
      * @param altT1X compiler providing implementation of non-overridden definitions
+     * @param factory for creating {@link T1XCompilation} instances
      */
     @HOSTED_ONLY
-    protected T1X(Class<?> templateSource, T1X altT1X) {
+    protected T1X(Class<?> templateSource, T1X altT1X, T1XCompilationFactory factory) {
         this.altT1X = altT1X;
         this.templateSource = templateSource;
+        this.t1XCompilationFactory = factory;
         templates = new T1XTemplate[T1XTemplateTag.values().length];
     }
 
     private final ThreadLocal<T1XCompilation> compilation = new ThreadLocal<T1XCompilation>() {
         @Override
         protected T1XCompilation initialValue() {
-            return new T1XCompilation(T1X.this);
+            return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
     };
 
@@ -141,7 +148,7 @@ public class T1X implements RuntimeCompiler {
         if (c.method != null) {
             // Re-entrant call to T1X - use a new compilation object that will be discarded
             // once the compilation is done. This should be a very rare occurrence.
-            c = new T1XCompilation(this);
+            c = t1XCompilationFactory.newT1XCompilation(this);
             reentrant = true;
             Log.println("Created temporary compilation object for re-entrant T1X compilation");
         }
