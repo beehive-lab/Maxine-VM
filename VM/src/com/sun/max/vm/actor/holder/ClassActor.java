@@ -1685,7 +1685,7 @@ public abstract class ClassActor extends Actor implements RiType {
      * The caller must hold the defining class loader's lock.
      */
     public void define() {
-        // FIXME: REVISIT concurrency issues.
+        // FIXME (ld) REVISIT concurrency issues.
         // If we hold the class loader monitor, we may not be exempt of deadlock, and we're way sub-optimal as we may be blocking
         // creation of arrays types from the same class loader, and a lot of other class loading related operations.
         // If we don't, we not multi-thread safe.

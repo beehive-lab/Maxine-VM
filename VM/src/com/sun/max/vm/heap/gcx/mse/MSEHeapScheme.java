@@ -179,7 +179,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
                 "Not enough reserved space to initialize heap scheme");
 
             theHeap.initialize(initSize, applicationHeapMaxSize);
-            // FIXME: We should uncommit what hasn't been committed yet!
+            // FIXME (ld) We should uncommit what hasn't been committed yet!
 
             // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
             if (!VirtualMemory.allocatePageAlignedAtFixedAddress(heapMarkerDataStart, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
@@ -226,7 +226,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
         }
         // We may reach here after a race. Don't run GC if request can be satisfied.
 
-        // FIXME: might be better to try allocate the requested space and save the result for the caller.
+        // TODO (ld) might be better to try allocate the requested space and save the result for the caller.
         // This may avoid starvation case where in concurrent threads allocate the requested space
         // in after this method returns but before the caller allocated the space..
         if (theHeap.canSatisfyAllocation(requestedFreeSpace)) {
@@ -506,8 +506,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the tlab.
             return tlabAllocate(size);
         }
-        // FIXME:
-        // Want to first test against size of next chunk of this TLAB (if any).
+        // FIXME (ld) Want to first test against size of next chunk of this TLAB (if any).
         final Size nextTLABSize = refillPolicy.nextTlabSize();
         if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.

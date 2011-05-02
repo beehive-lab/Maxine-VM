@@ -88,7 +88,7 @@ public class SimpleTLABRefillPolicy extends TLABRefillPolicy {
         // we had a number of allocation failures for the same allocation mark.
         // In that case, let bite the bullet and get a new TLAB.
 
-        // FIXME: a tlab global allocation failure counter is probably better...
+        // TODO (ld) a tlab global allocation failure counter is probably better...
         if (!lastMark.equals(allocationMark)) {
             lastMark = allocationMark;
             allocationFailures = 1;

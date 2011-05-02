@@ -176,8 +176,7 @@ public class FirstFitMarkSweepHeap extends Sweepable implements HeapAccountOwner
         @Override
         @NO_SAFEPOINTS("tlab allocation loop must not be subjected to safepoints")
         Address allocateTLAB(Size tlabSize, Pointer leftover, Size leftoverSize) {
-            // FIXME:
-            // This doesn't refill the TLAB allocator. It just allocate a new one.
+            // FIXME (ld) This doesn't refill the TLAB allocator. It just allocate a new one.
             Address firstChunk = tlabChunkOrZero(leftover, leftoverSize);
             if (!firstChunk.isZero()) {
                 tlabSize = tlabSize.minus(leftoverSize);

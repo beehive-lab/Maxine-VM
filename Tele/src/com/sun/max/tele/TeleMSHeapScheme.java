@@ -69,8 +69,7 @@ public final class TeleMSHeapScheme extends AbstractTeleVMHolder implements Tele
             // what was dead before marking begin should still be dead during marking.
             return true;
         }
-        // TODO:
-        // This requires the inspector to know intimately about the heap structures.
+        // TODO (ld) This requires the inspector to know intimately about the heap structures.
         // The current MS scheme  linearly allocate over chunk of free space discovered during the past MS.
         // However, it doesn't maintain these as "linearly allocating memory region". This could be done by formatting
         // all reusable free space as such (instead of the chunk of free list as is done now). in any case.
@@ -82,7 +81,7 @@ public final class TeleMSHeapScheme extends AbstractTeleVMHolder implements Tele
     }
 
     public List<MaxCodeLocation> inspectableMethods() {
-        // TODO
+        // TODO (ld)
         return Collections.emptyList();
     }
 
