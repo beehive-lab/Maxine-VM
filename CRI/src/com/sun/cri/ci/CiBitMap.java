@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.sun.cri.ci;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -31,7 +32,7 @@ import java.util.*;
  * @author Thomas Wuerthinger
  * @author Doug Simon
  */
-public final class CiBitMap {
+public final class CiBitMap implements Serializable {
 
     private static final int ADDRESS_BITS_PER_WORD = 6;
     private static final int BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
@@ -450,7 +451,7 @@ public final class CiBitMap {
     /**
      * Compares this object against the specified object.
      * The result is {@code true} if and only if {@code obj} is
-     * not {@code null} and is a {@codCiBitMap} object that has
+     * not {@code null} and is a {@code CiBitMap} object that has
      * exactly the same set of bits set to {@code true} as this bit
      * set.
      *

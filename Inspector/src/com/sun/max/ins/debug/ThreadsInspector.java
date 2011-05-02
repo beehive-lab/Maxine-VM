@@ -56,7 +56,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         }
 
         public boolean isEnabled() {
-            return inspection().hasProcess();
+            return true;
         }
 
         public ThreadsInspector activateView(Inspection inspection) {
@@ -105,7 +105,11 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     @Override
     public String getTextForTitle() {
-        return viewManager.shortName();
+        String title = viewManager.shortName();
+        if (!inspection().hasProcess()) {
+            title += ": " + inspection().nameDisplay().noProcessShortText();
+        }
+        return title;
     }
 
     @Override
@@ -115,14 +119,18 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     @Override
     public void createView() {
-        table = new ThreadsTable(inspection(), viewPreferences);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
-        setContentPane(scrollPane);
+        if (inspection().hasProcess()) {
+            table = new ThreadsTable(inspection(), viewPreferences);
+            final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
+            setContentPane(scrollPane);
+        }
     }
 
     @Override
     protected void refreshState(boolean force) {
-        table.refresh(force);
+        if (table != null) {
+            table.refresh(force);
+        }
     }
 
     @Override

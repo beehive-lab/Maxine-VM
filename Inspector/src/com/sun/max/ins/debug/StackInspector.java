@@ -83,7 +83,7 @@ public final class StackInspector extends Inspector {
         }
 
         public boolean isEnabled() {
-            return inspection().hasProcess() && focus().hasThread();
+            return true;
         }
 
         public StackInspector activateView(Inspection inspection) {
@@ -277,7 +277,9 @@ public final class StackInspector extends Inspector {
     @Override
     public String getTextForTitle() {
         String title = viewManager.shortName() + ": ";
-        if (stack != null && stack.thread() != null) {
+        if (!inspection().hasProcess()) {
+            title += inspection().nameDisplay().noProcessShortText();
+        } else if (stack != null && stack.thread() != null) {
             title += inspection().nameDisplay().longNameWithState(stack.thread());
         }
         return title;
@@ -333,8 +335,7 @@ public final class StackInspector extends Inspector {
 
     @Override
     protected void refreshState(boolean force) {
-        InspectorError.check(stack != null);
-        if (stack.thread() != null && stack.thread().isLive()) {
+        if (stack != null && stack.thread() != null && stack.thread().isLive()) {
             if (force || stack.lastUpdated() == null || vm().state().newerThan(lastUpdatedState)) {
                 final List<MaxStackFrame> frames = stack.frames();
                 if (!frames.isEmpty()) {
@@ -375,18 +376,20 @@ public final class StackInspector extends Inspector {
 
     @Override
     public void frameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame newStackFrame) {
-        if (newStackFrame == null || newStackFrame.stack().thread() != this.stack.thread()) {
-            stackFrameList.clearSelection();
-        } else {
-            final int oldIndex = stackFrameList.getSelectedIndex();
-            for (int index = 0; index < stackFrameListModel.getSize(); index++) {
-                final MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(index);
-                if (stackFrame.isSameFrame(newStackFrame)) {
-                    if (index != oldIndex) {
-                        stackFrameList.setSelectedIndex(index);
-                        stackFrameList.ensureIndexIsVisible(index);
+        if (stackFrameList != null) {
+            if (newStackFrame == null || newStackFrame.stack().thread() != this.stack.thread()) {
+                stackFrameList.clearSelection();
+            } else {
+                final int oldIndex = stackFrameList.getSelectedIndex();
+                for (int index = 0; index < stackFrameListModel.getSize(); index++) {
+                    final MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(index);
+                    if (stackFrame.isSameFrame(newStackFrame)) {
+                        if (index != oldIndex) {
+                            stackFrameList.setSelectedIndex(index);
+                            stackFrameList.ensureIndexIsVisible(index);
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }

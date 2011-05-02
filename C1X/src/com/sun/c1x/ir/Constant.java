@@ -144,15 +144,9 @@ public final class Constant extends Instruction {
     public RiType declaredType() {
         RiRuntime runtime = compilation().runtime;
         if (kind.isPrimitive()) {
-            runtime.getRiType(kind.toJavaClass());
+            runtime.asRiType(kind);
         }
-        if (kind.isObject()) {
-            Object object = asConstant().asObject();
-            if (object != null) {
-                return runtime.getRiType(object.getClass());
-            }
-        }
-        return null;
+        return runtime.getTypeOf(asConstant());
     }
 
     @Override
@@ -162,25 +156,6 @@ public final class Constant extends Instruction {
 
     @Override
     public void print(LogStream out) {
-        if (value == CiConstant.NULL_OBJECT) {
-            out.print("null");
-        } else if (value.kind.isPrimitive()) {
-            out.print(asConstant().valueString());
-        } else if (value.kind.isObject()) {
-            Object object = asConstant().asObject();
-            if (object == null) {
-                out.print("null");
-            } else if (object instanceof String) {
-                out.print('"').print(object.toString()).print('"');
-            } else {
-                out.print("<object: ").print(value.kind.format(object)).print('>');
-            }
-        } else if (value.kind.isWord()) {
-            out.print("0x").print(Long.toHexString(value.asLong()));
-        } else if (value.kind.isJsr()) {
-            out.print("bci:").print(asConstant().valueString());
-        } else {
-            out.print("???");
-        }
+        out.print(value.valueString());
     }
 }

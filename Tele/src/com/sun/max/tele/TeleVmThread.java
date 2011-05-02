@@ -23,6 +23,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.data.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.vm.reference.*;
@@ -70,6 +71,8 @@ public class TeleVmThread extends TeleTupleObject {
                     }
                 }
                 lastRefreshedEpoch = vm().teleProcess().epoch();
+            } catch (TerminatedProcessIOException terminatedProcessIOException) {
+                name = "<n/a>";
             } catch (DataIOError dataIOError) {
                 name = "?";
             }

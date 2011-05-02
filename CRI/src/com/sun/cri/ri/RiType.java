@@ -94,6 +94,11 @@ public interface RiType {
      * @return a new compiler interface type representing an array of this type
      */
     RiType arrayOf();
+    
+    /**
+     * Gets the super type of this type or {@code null} if no such type exists.
+     */
+    RiType superType();
 
     /**
      * Gets the kind of this compiler interface type.
@@ -200,7 +205,7 @@ public interface RiType {
      * @param obj the object to test
      * @return {@code true} if the object is an instance of this type
      */
-    boolean isInstance(Object obj);
+    boolean isInstance(CiConstant obj);
 
     /**
      * Attempts to get an exact type for this type. Final classes,

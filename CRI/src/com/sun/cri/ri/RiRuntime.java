@@ -134,12 +134,21 @@ public interface RiRuntime {
     Object registerGlobalStub(CiTargetMethod targetMethod, String name);
 
     /**
-     * Returns the runtime interface representation of the given Java class object.
-     *
-     * @param javaClass the Java class object
-     * @return the runtime interface representation
+     * Returns the RiType object representing the base type for the given kind.
      */
-    RiType getRiType(Class<?> javaClass);
+    RiType asRiType(CiKind kind);
+
+    /**
+     * Returns the type of the given constant object.
+     * 
+     * @return {@code null} if {@code constant.isNull() || !constant.kind.isObject()}
+     */
+    RiType getTypeOf(CiConstant constant);
+    
+    /**
+     * Returns true if the given type is a subtype of java/lang/Throwable.
+     */
+    boolean isExceptionType(RiType type);
 
     /**
      * Returns the runtime interface representation of the given Java method object.
@@ -195,7 +204,7 @@ public interface RiRuntime {
      * 
      * @return true if the two parameters represent the same runtime object, false otherwise
      */
-    boolean compareConstantObjects(Object x, Object y);
+    boolean areConstantObjectsEqual(CiConstant x, CiConstant y);
 
     /**
      * Gets the register configuration to use when compiling a given method.
@@ -214,4 +223,23 @@ public interface RiRuntime {
      * Determines if this runtime wants {@link System#arraycopy} and {@link Arrays#copyOf} intrinsified.
      */
     boolean supportsArrayIntrinsics();
+
+    /**
+     * Gets the length of the array that is wrapped in a CiConstant object.
+     */
+    int getArrayLength(CiConstant array);
+
+    /**
+     * Converts the given CiConstant object to a object.
+     * 
+     * @return {@code null} if the conversion is not possible <b>OR</b> {@code c.isNull() == true}
+     */
+    Object asJavaObject(CiConstant c);
+
+    /**
+     * Converts the given CiConstant object to a {@link Class} object.
+     * 
+     * @return {@code null} if the conversion is not possible.
+     */
+    Class<?> asJavaClass(CiConstant c);
 }

@@ -37,11 +37,9 @@ public final class NewObjectArrayClone extends NewArray {
 
     /**
      * Constructs a new NewObjectArray instruction.
-     * @param elementClass the class of elements in this array
      * @param length the instruction producing the length of the array
+     * @param referenceArray
      * @param stateBefore the state before the allocation
-     * @param cpi the constant pool index
-     * @param constantPool the constant pool
      */
     public NewObjectArrayClone(Value length, Value referenceArray, FrameState stateBefore) {
         super(length, stateBefore);

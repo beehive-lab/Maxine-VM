@@ -601,13 +601,19 @@ public class CompiledPrototype extends Prototype {
                 System.err.println("  which references itself recursively");
                 break;
             }
+            child = null;
             if (link.parent instanceof MethodActor) {
                 child = (MethodActor) link.parent;
-                if (child == null) {
-                    System.err.println("    which is a VM entry point");
-                } else {
-                    System.err.println("    which " + link.relationship.asChild + " " + child.format("%H.%n(%p)"));
+            } else if (link.parent instanceof TargetMethod) {
+                TargetMethod tm = (TargetMethod) link.parent;
+                if (tm.classMethodActor != null) {
+                    child = tm.classMethodActor;
                 }
+            }
+            if (child == null) {
+                System.err.println("    which is a VM entry point");
+            } else {
+                System.err.println("    which " + link.relationship.asChild + " " + child.format("%H.%n(%p)"));
             }
         }
         error.printStackTrace(System.err);

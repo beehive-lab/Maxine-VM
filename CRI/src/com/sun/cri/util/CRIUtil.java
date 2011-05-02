@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.tele.debug;
+package com.sun.cri.util;
+
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
- * Thrown when the VM process has terminated.
- *
- * @author Michael Van De Vanter
+ * A collection of utility methods for the compiler runtime interface.
  */
-public class ProcessTerminatedException extends Exception {
+public class CRIUtil {
 
-    public ProcessTerminatedException(String message) {
-        super(message);
+    public static CiKind[] signatureToKinds(RiSignature signature, CiKind receiverKind) {
+        int args = signature.argumentCount(false);
+        CiKind[] result;
+        int i = 0;
+        if (receiverKind != null) {
+            result = new CiKind[args + 1];
+            result[0] = receiverKind;
+            i = 1;
+        } else {
+            result = new CiKind[args];
+        }
+        for (int j = 0; j < args; j++) {
+            result[i + j] = signature.argumentKindAt(j);
+        }
+        return result;
     }
 
 }

@@ -209,7 +209,10 @@ public final class TeleCodeCache extends AbstractTeleVMHolder implements TeleVMC
                 }
             } catch (MaxVMBusyException maxVMBusyException) {
             } catch (TeleInterpreterException e) {
-                throw TeleError.unexpected(e);
+                // This sometimes happens when the VM process terminates; ignore in those cases
+                if (vm().state().processState() != MaxProcessState.TERMINATED) {
+                    throw TeleError.unexpected(e);
+                }
             }
             // If a new method was discovered, then it will have been added to the registry.
             teleCompiledCode = codeRegistry.getCompiledCode(address);

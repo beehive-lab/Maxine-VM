@@ -477,7 +477,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         } else {
             RiField field = i.field();
             if (i.object().isConstant()) {
-                CiConstant value = field.constantValue(i.object().asConstant().asObject());
+                CiConstant value = field.constantValue(i.object().asConstant());
                 if (value != null) {
                     setConstant(value);
                 }
@@ -523,17 +523,14 @@ public class Canonicalizer extends DefaultValueVisitor {
             // the array is a load of a field; check if it is a constant
             LoadField load = (LoadField) array;
             CiConstant cons = load.constantValue();
-            if (cons != null) {
-                Object obj = cons.asObject();
-                if (obj != null) {
-                    setIntConstant(Array.getLength(obj));
-                }
+            if (cons != null && cons.isNonNull()) {
+                setIntConstant(runtime.getArrayLength(cons));
             }
         } else if (array.isConstant()) {
             // the array itself is a constant object reference
-            Object obj = array.asConstant().asObject();
-            if (obj != null) {
-                setIntConstant(java.lang.reflect.Array.getLength(obj));
+            CiConstant obj = array.asConstant();
+            if (obj.isNonNull()) {
+                setIntConstant(runtime.getArrayLength(obj));
             }
         }
     }
@@ -558,8 +555,8 @@ public class Canonicalizer extends DefaultValueVisitor {
                 i.eliminateStoreCheck();
             } else {
                 RiType exactType = array.exactType();
-                if (exactType != null) {
-                    if (runtime.getRiType(Object[].class).equals(exactType)) {
+                if (exactType != null && exactType.isResolved()) {
+                    if (exactType.componentType().superType() == null) {
                         // the exact type of the array is Object[] => no check is necessary
                         i.eliminateStoreCheck();
                     } else {
@@ -775,7 +772,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         } else if (o.isConstant()) {
             // if the object is a constant, check if it is nonnull
             CiConstant c = o.asConstant();
-            if (c.kind.isObject() && c.asObject() != null) {
+            if (c.kind.isObject() && !c.isNull()) {
                 setCanonical(o);
             }
         }
@@ -810,8 +807,8 @@ public class Canonicalizer extends DefaultValueVisitor {
                 setCanonical(o);
             }
             if (o.isConstant()) {
-                final Object obj = o.asConstant().asObject();
-                if (obj == null) {
+                final CiConstant obj = o.asConstant();
+                if (obj.isNull()) {
                     // checkcast of null is null
                     setCanonical(o);
                 } else if (C1XOptions.CanonicalizeObjectCheckCast) {
@@ -833,8 +830,8 @@ public class Canonicalizer extends DefaultValueVisitor {
             if (exact != null && exact.isResolved() && o.isNonNull()) {
                 setIntConstant(exact.isSubtypeOf(i.targetClass()) ? 1 : 0);
             } else if (o.isConstant()) {
-                final Object obj = o.asConstant().asObject();
-                if (obj == null) {
+                final CiConstant obj = o.asConstant();
+                if (obj.isNull()) {
                     // instanceof of null is false
                     setIntConstant(0);
                 } else if (C1XOptions.CanonicalizeObjectInstanceOf) {
@@ -862,7 +859,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         C1XIntrinsic intrinsic = i.intrinsic();
         if (intrinsic == C1XIntrinsic.java_lang_Class$isInstance) {
             // try to convert a call to Class.isInstance() into an InstanceOf
-            RiType type = asRiType(args[0]);
+            RiType type = getTypeOf(args[0]);
             if (type != null) {
                 setCanonical(new InstanceOf(type, Constant.forObject(type.getEncoding(RiType.Representation.TypeInfo)), args[1], i.stateBefore()));
                 return;
@@ -870,12 +867,12 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
         if (intrinsic == C1XIntrinsic.java_lang_reflect_Array$newArray) {
             // try to convert a call to Array.newInstance() into a NewObjectArray or NewTypeArray
-            RiType type = asRiType(args[0]);
+            RiType type = getTypeOf(args[0]);
             if (type != null) {
                 if (type.kind() == CiKind.Object) {
                     setCanonical(new NewObjectArray(type, args[1], i.stateBefore()));
                 } else {
-                    RiType elementType = runtime.getRiType(type.kind().toJavaClass());
+                    RiType elementType = runtime.asRiType(type.kind());
                     setCanonical(new NewTypeArray(args[1], elementType, i.stateBefore()));
                 }
                 return;
@@ -965,32 +962,6 @@ public class Canonicalizer extends DefaultValueVisitor {
                 Class<?> javaClass = argAsClass(args, 0);
                 if (javaClass != null) {
                     setObjectConstant(javaClass.getComponentType());
-                }
-                return true;
-            }
-
-            // java.lang.String
-            case java_lang_String$compareTo: {
-                String s1 = argAsString(args, 0);
-                String s2 = argAsString(args, 1);
-                if (s1 != null && s2 != null) {
-                    setIntConstant(s1.compareTo(s2));
-                }
-                return true;
-            }
-            case java_lang_String$indexOf: {
-                String s1 = argAsString(args, 0);
-                String s2 = argAsString(args, 1);
-                if (s1 != null && s2 != null) {
-                    setIntConstant(s1.indexOf(s2));
-                }
-                return true;
-            }
-            case java_lang_String$equals: {
-                String s1 = argAsString(args, 0);
-                String s2 = argAsString(args, 1);
-                if (s1 != null && s2 != null) {
-                    setBooleanConstant(s1.equals(s2));
                 }
                 return true;
             }
@@ -1097,7 +1068,7 @@ public class Canonicalizer extends DefaultValueVisitor {
     }
 
     private boolean isNullConstant(Value r) {
-        return r.isConstant() && r.kind.isObject() && r.asConstant().asObject() == null;
+        return r.isConstant() && r.asConstant().isNull();
     }
 
     private void reduceIfCompareOpConstant(If i, CiConstant rtc) {
@@ -1314,15 +1285,19 @@ public class Canonicalizer extends DefaultValueVisitor {
     }
 
     private Object argAsObject(Value[] args, int index) {
-        return args[index].asConstant().asObject();
+        CiConstant c = args[index].asConstant();
+        if (c != null) {
+            return runtime.asJavaObject(c);
+        }
+        return null;
     }
 
     private Class<?> argAsClass(Value[] args, int index) {
-        return (Class<?>) args[index].asConstant().asObject();
-    }
-
-    private String argAsString(Value[] args, int index) {
-        return (String) args[index].asConstant().asObject();
+        CiConstant c = args[index].asConstant();
+        if (c != null) {
+            return runtime.asJavaClass(c);
+        }
+        return null;
     }
 
     private double argAsDouble(Value[] args, int index) {
@@ -1388,12 +1363,9 @@ public class Canonicalizer extends DefaultValueVisitor {
         }
     }
 
-    private RiType asRiType(Value x) {
+    private RiType getTypeOf(Value x) {
         if (x.isConstant()) {
-            Object o = x.asConstant().asObject();
-            if (o instanceof Class<?>) {
-                return runtime.getRiType((Class<?>) o);
-            }
+            return runtime.getTypeOf(x.asConstant());
         }
         return null;
     }

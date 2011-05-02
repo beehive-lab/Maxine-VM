@@ -1527,6 +1527,11 @@ public abstract class ClassActor extends Actor implements RiType {
     }
 
     @INLINE
+    public final boolean isInstance(CiConstant object) {
+        return isInstance(object.asObject());
+    }
+
+    @INLINE
     public final boolean isNullOrInstance(Object object) {
         if (object == null) {
             return true;
@@ -1570,6 +1575,10 @@ public abstract class ClassActor extends Actor implements RiType {
 
     public final RiType arrayOf() {
         return ArrayClassActor.forComponentClassActor(this);
+    }
+
+    public final RiType superType() {
+        return superClassActor;
     }
 
     public final RiType componentType() {

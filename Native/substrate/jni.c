@@ -814,7 +814,14 @@ struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
 };
 
 jint JNICALL jni_GetEnv(JavaVM *javaVM, void **penv, jint version) {
-    *penv = (void *) currentJniEnv();
+    TLA tla = tla_current();
+    if (tla == 0) {
+        *penv = NULL;
+        return JNI_EDETACHED;
+    }
+    JNIEnv *env = (JNIEnv *) tla_addressOf(tla, JNI_ENV);
+    c_ASSERT(env != NULL);
+    *penv = (void *) env;
     /* TODO: check that requested version is supported */
     return JNI_OK;
 }

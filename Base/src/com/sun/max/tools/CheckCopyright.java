@@ -109,13 +109,12 @@ public class CheckCopyright {
         }
 
         /**
-         * Return the modification year from copyright.
+         * Returns a matcher for the modification year from copyright.
          *
          * @param fileContent
-         * @return modification year, or 0 if copyright not expected, or -1 if malformed or missing copyright.
+         * @return modification year matcher or null if copyright not expected
          */
-
-        static int getCopyright(String fileName, String fileContent) {
+        static Matcher getCopyrightMatcher(String fileName, String fileContent) {
             if (copyrightMap == null) {
                 copyrightFilePattern = Pattern.compile(copyrightFiles);
                 copyrightMap = new HashMap<String, CopyrightKind>();
@@ -128,16 +127,12 @@ public class CheckCopyright {
                 copyrightMap.put("", CopyrightKind.HASH);
             }
             if (!copyrightFilePattern.matcher(fileName).matches()) {
-                return 0;
+                return null;
             }
             final String extension = getExtension(fileName);
             CopyrightKind ck = copyrightMap.get(extension);
             assert ck != null;
-            if (ck.copyrightPattern.matcher(fileContent).matches()) {
-                final int lx = getModifiedYearIndex(fileContent);
-                return Integer.parseInt(fileContent.substring(lx, lx + 4));
-            }
-            return -1;
+            return ck.copyrightPattern.matcher(fileContent);
         }
 
         private static String getExtension(String fileName) {
@@ -146,16 +141,6 @@ public class CheckCopyright {
                 return fileName.substring(index + 1);
             }
             return "";
-        }
-
-        static int getModifiedYearIndex(String fileContent) {
-            int firstYearIndex = fileContent.indexOf("20");
-            assert firstYearIndex >= 0;
-            int secondYearIndex = fileContent.indexOf("20", firstYearIndex + 4);
-            if (secondYearIndex == -1) {
-                return firstYearIndex;
-            }
-            return secondYearIndex;
         }
     }
 
@@ -178,6 +163,9 @@ public class CheckCopyright {
     private static final Option<String> FILE_PATTERN = options.newStringOption("filepattern", null, "append additiional file patterns for copyright checks");
     private static final Option<Boolean> REPORT_ERRORS = options.newBooleanOption("reporterrors", true, "report non-fatal errors");
     private static final Option<Boolean> CONTINUE_ON_ERROR = options.newBooleanOption("continueonerror", false, "continue after normally fatal error");
+    private static final Option<String> HG_PATH = options.newStringOption("hgpath", "hg", "path to hg executable");
+    private static final String NON_EXISTENT_FILE = "abort: cannot follow nonexistent file:";
+    private static String hgPath;
     private static boolean error;
     private static File workSpaceDirectory;
 
@@ -190,6 +178,8 @@ public class CheckCopyright {
             options.printHelp(System.out, 100);
             return;
         }
+
+        hgPath = HG_PATH.getValue();
 
         workSpaceDirectory = JavaProject.findWorkspaceDirectory();
 
@@ -332,7 +322,7 @@ public class CheckCopyright {
         if (HG_MODIFIED.getValue()) {
             // We are only looking at modified and, therefore, uncommitted files.
             // This means that the lastYear value will be the current year once the
-            // file is committed, so that is what we want tto check against.
+            // file is committed, so that is what we want to check against.
             lastYear = currentYear;
         }
         return new Info(fileName, firstYear, lastYear);
@@ -357,53 +347,60 @@ public class CheckCopyright {
         is.read(b);
         is.close();
         final String fileContent = new String(b);
-        int yearInCopyright = CopyrightKind.getCopyright(fileName, fileContent);
-        if (yearInCopyright > 0) {
-            if (yearInCopyright != info.lastYear) {
-                System.out.println(fileName + " copyright last modified year " + yearInCopyright + ", hg last modified year " + info.lastYear);
-                if (FIX.getValue()) {
-                    // Use currentYear as that is what it will be when it's checked in!
-                    System.out.println("updating last modified year of " + fileName + " to " + currentYear);
-                    final int lx = CopyrightKind.getModifiedYearIndex(fileContent);
-                    final String newContent = fileContent.substring(0, lx) + info.lastYear + fileContent.substring(lx + 4);
-                    final FileOutputStream os = new FileOutputStream(file);
-                    os.write(newContent.getBytes());
-                    os.close();
-                } else {
-                    error = true;
+        Matcher copyrightMatcher = CopyrightKind.getCopyrightMatcher(fileName, fileContent);
+        if (copyrightMatcher != null) {
+            if (copyrightMatcher.matches()) {
+                int yearInCopyright;
+                int yearInCopyrightIndex;
+                yearInCopyright = Integer.parseInt(copyrightMatcher.group(2));
+                yearInCopyrightIndex = copyrightMatcher.start(2);
+                if (yearInCopyright != info.lastYear) {
+                    System.out.println(fileName + " copyright last modified year " + yearInCopyright + ", hg last modified year " + info.lastYear);
+                    if (FIX.getValue()) {
+                        // Use currentYear as that is what it will be when it's checked in!
+                        System.out.println("updating last modified year of " + fileName + " to " + currentYear);
+                        final int lx = yearInCopyrightIndex;
+                        final String newContent = fileContent.substring(0, lx) + info.lastYear + fileContent.substring(lx + 4);
+                        final FileOutputStream os = new FileOutputStream(file);
+                        os.write(newContent.getBytes());
+                        os.close();
+                    } else {
+                        error = true;
+                    }
                 }
-            }
-        } else {
-            if (yearInCopyright < 0 || EXHAUSTIVE.getValue()) {
+            } else {
                 System.out.println("ERROR: file " + fileName + " has no copyright");
                 error = true;
             }
+        } else if (EXHAUSTIVE.getValue()) {
+            System.out.println("ERROR: file " + fileName + " has no copyright");
+            error = true;
         }
     }
 
 
     private static List<String> hglog(String fileName) throws Exception {
-        final String[] cmd = new String[] {"hg", "log", "-f", fileName};
+        final String[] cmd = new String[] {hgPath, "log", "-f", fileName};
         return exec(null, cmd, true);
     }
 
     private static List<String> getLastNFiles(int n) throws Exception {
-        final String[] cmd = new String[] {"hg", "log", "-v", "-l", Integer.toString(n)};
+        final String[] cmd = new String[] {hgPath, "log", "-v", "-l", Integer.toString(n)};
         return getFilesFiles(exec(null, cmd, false));
     }
 
     private static List<String> getAllFiles(boolean all) throws Exception {
         final String[] cmd;
         if (HG_MODIFIED.getValue()) {
-            cmd = new String[] {"hg",  "status"};
+            cmd = new String[] {hgPath,  "status"};
         } else {
-            cmd = new String[] {"hg",  "status",  "--all"};
+            cmd = new String[] {hgPath,  "status",  "--all"};
         }
         List<String> output = exec(null, cmd, true);
         final List<String> result = new ArrayList<String>(output.size());
         for (String s : output) {
             final char ch = s.charAt(0);
-            if (!(ch == 'I' || ch == '?' ||  ch == '!')) {
+            if (!(ch == 'R' || ch == 'I' || ch == '?' ||  ch == '!')) {
                 result.add(s.substring(2));
             }
         }
@@ -413,9 +410,9 @@ public class CheckCopyright {
     private static List<String> getOutgoingFiles() throws Exception {
         final String[] cmd;
         if (OUTGOING_REPO.getValue() == null) {
-            cmd = new String[] {"hg",  "-v", "outgoing"};
+            cmd = new String[] {hgPath,  "-v", "outgoing"};
         } else {
-            cmd = new String[] {"hg",  "-v", "outgoing", OUTGOING_REPO.getValue()};
+            cmd = new String[] {hgPath,  "-v", "outgoing", OUTGOING_REPO.getValue()};
         }
 
         final List<String> output = exec(null, cmd, false); // no outgoing exits with result 1
@@ -453,8 +450,8 @@ public class CheckCopyright {
             result = readOutput(process.getInputStream());
             final int exitValue = process.waitFor();
             if (exitValue != 0) {
+                final List<String> errorResult = readOutput(process.getErrorStream());
                 if (REPORT_ERRORS.getValue()) {
-                    final List<String> errorResult = readOutput(process.getErrorStream());
                     System.err.print("execution of command: ");
                     for (String c : command) {
                         System.err.print(c);
@@ -465,7 +462,7 @@ public class CheckCopyright {
                         System.err.println(e);
                     }
                 }
-                if (failOnError && !CONTINUE_ON_ERROR.getValue()) {
+                if (failOnError && !(CONTINUE_ON_ERROR.getValue() || cannotFollowNonExistentFile(errorResult))) {
                     ProgramError.unexpected("terminating");
                 }
             }
@@ -473,6 +470,10 @@ public class CheckCopyright {
             process.destroy();
         }
         return result;
+    }
+
+    private static boolean cannotFollowNonExistentFile(List<String> errorResult) {
+        return errorResult.size() == 1 && errorResult.get(0).startsWith(NON_EXISTENT_FILE);
     }
 
     private static List<String> readOutput(InputStream is) throws IOException {

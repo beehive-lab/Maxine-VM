@@ -394,6 +394,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements T
         try {
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
             breakpoint = breakpointManager.getTargetBreakpointAt(breakpointAddress);
+        } catch (TerminatedProcessIOException terminatedProcessIOException) {
         } catch (DataIOError dataIOError) {
             // This is a catch for problems getting accurate state for threads that are not at breakpoints
         }

@@ -41,8 +41,6 @@ public final class NewObjectArray extends NewArray {
      * @param elementClass the class of elements in this array
      * @param length the instruction producing the length of the array
      * @param stateBefore the state before the allocation
-     * @param cpi the constant pool index
-     * @param constantPool the constant pool
      */
     public NewObjectArray(RiType elementClass, Value length, FrameState stateBefore) {
         super(length, stateBefore);

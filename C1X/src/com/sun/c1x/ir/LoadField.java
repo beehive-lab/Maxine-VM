@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.ci.*;
@@ -78,10 +79,13 @@ public final class LoadField extends AccessField {
      * @return {@code null} if this load cannot be reduced to a constant
      */
     public CiConstant constantValue() {
+        if (!C1XOptions.CanonicalizeConstantFields) {
+            return null;
+        }
         if (isStatic()) {
             return field.constantValue(null);
         } else if (object().isConstant()) {
-            CiConstant cons = field.constantValue(object().asConstant().asObject());
+            CiConstant cons = field.constantValue(object().asConstant());
             if (cons != null) {
                 return cons;
             }

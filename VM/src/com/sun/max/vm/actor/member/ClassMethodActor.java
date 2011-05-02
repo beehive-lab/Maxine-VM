@@ -31,11 +31,13 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 
@@ -213,7 +215,7 @@ public abstract class ClassMethodActor extends MethodActor {
                 CodeAttribute codeAttribute = this.codeAttribute;
                 ClassVerifier verifier = null;
 
-                final CodeAttribute processedCodeAttribute = Preprocessor.apply(compilee, codeAttribute);
+                final CodeAttribute processedCodeAttribute = preprocess(compilee, codeAttribute);
                 final boolean modified = processedCodeAttribute != codeAttribute;
                 codeAttribute = processedCodeAttribute;
 
@@ -364,5 +366,64 @@ public abstract class ClassMethodActor extends MethodActor {
             return false;
         }
         return targetMethodCount() > 0;
+    }
+
+    private static BytecodeTransformation transformationClient;
+
+    /**
+     * This needs to be called before any compilation happens.
+     */
+    @HOSTED_ONLY
+    public static void setTransformationClient(BytecodeTransformation client) {
+        assert transformationClient == null : "only one transformation client is allowed";
+        transformationClient = client;
+    }
+
+    private static final int PREPROCESS_TRACE_LEVEL = 6;
+
+    private CodeAttribute preprocess(ClassMethodActor cma, CodeAttribute originalCodeAttribute) {
+        CodeAttribute newCodeAttribute = originalCodeAttribute;
+        ConstantPoolEditor constantPoolEditor = null;
+        String reason = "";
+
+        try {
+            if (cma.isNative()) {
+                assert newCodeAttribute == null;
+                constantPoolEditor = cma.holder().constantPool().edit();
+                newCodeAttribute = new NativeStubGenerator(constantPoolEditor, cma).codeAttribute();
+                reason = "native";
+            }
+            if (transformationClient != null) {
+                if (constantPoolEditor == null) {
+                    constantPoolEditor = cma.holder().constantPool().edit();
+                }
+                newCodeAttribute = transformationClient.transform(constantPoolEditor, cma, newCodeAttribute);
+                reason += "client";
+            }
+        } finally {
+            if (constantPoolEditor != null) {
+                constantPoolEditor.release();
+                constantPoolEditor = null;
+            }
+        }
+
+        if (newCodeAttribute == null) {
+            return null;
+        }
+
+        if (newCodeAttribute != originalCodeAttribute) {
+            if (Trace.hasLevel(PREPROCESS_TRACE_LEVEL)) {
+                Trace.line(PREPROCESS_TRACE_LEVEL);
+                Trace.line(PREPROCESS_TRACE_LEVEL, "bytecode preprocessed [" + reason + "]: " + cma.format("%r %H.%n(%p)"));
+                if (!cma.isNative()) {
+                    Trace.stream().println("--- BEFORE PREPROCESSING ---");
+                    CodeAttributePrinter.print(Trace.stream(), originalCodeAttribute);
+                }
+                Trace.stream().println("--- AFTER PREPROCESSING ---");
+                CodeAttributePrinter.print(Trace.stream(), newCodeAttribute);
+            }
+        }
+
+        return newCodeAttribute;
     }
 }

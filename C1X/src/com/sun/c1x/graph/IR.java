@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.observer.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.value.*;
 
@@ -115,12 +116,6 @@ public class IR {
             verifyAndPrint("After unsafe cast elimination");
         }
 
-        if (compilation.compiler.extensions != null) {
-            for (C1XCompilerExtension ext : compilation.compiler.extensions) {
-                ext.run(this);
-            }
-        }
-
         // do basic optimizations
         if (C1XOptions.PhiSimplify) {
             new PhiSimplifier(this);
@@ -141,6 +136,12 @@ public class IR {
         if (C1XOptions.OptBlockMerging) {
             new BlockMerger(this);
             verifyAndPrint("After block merging");
+        }
+
+        if (compilation.compiler.extensions != null) {
+            for (C1XCompilerExtension ext : compilation.compiler.extensions) {
+                ext.run(this);
+            }
         }
     }
 
@@ -199,21 +200,17 @@ public class IR {
      * @param phase the name of the phase for printing
      */
     public void verifyAndPrint(String phase) {
-        printToCFGFile(phase);
         printToTTY(phase);
+
+        if (compilation.compiler.isObserved()) {
+            compilation.compiler.fireCompilationEvent(new CompilationEvent(compilation, phase, startBlock, true, false));
+        }
     }
 
     private void printToTTY(String phase) {
         if (C1XOptions.PrintHIR && !TTY.isSuppressed()) {
             TTY.println(phase);
             print(false);
-        }
-    }
-
-    private void printToCFGFile(String phase) {
-        CFGPrinter cfgPrinter = compilation.cfgPrinter();
-        if (cfgPrinter != null) {
-            cfgPrinter.printCFG(startBlock, phase, true, false);
         }
     }
 
