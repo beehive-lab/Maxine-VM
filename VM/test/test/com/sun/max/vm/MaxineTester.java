@@ -53,8 +53,6 @@ import com.sun.max.vm.hosted.*;
  * place. It is capable of building images in various configurations and running tests
  * and user programs with the generated images.
  *
- * @author Ben L. Titzer
- * @author Doug Simon
  */
 public class MaxineTester {
 
@@ -982,7 +980,6 @@ public class MaxineTester {
     /**
      * This class implements a harness capable of running the JUnit test cases in another VM.
      *
-     * @author Ben L. Titzer
      */
     public static class JUnitHarness implements Harness {
         final String[] testList;
@@ -1167,8 +1164,6 @@ public class MaxineTester {
      * This class implements a test harness that builds the JTT tests into a Maxine VM image and then
      * runs the JavaTester with that VM in a remote process.
      *
-     * @author Ben L. Titzer
-     * @author Doug Simon
      */
     public static class JTImageHarness implements Harness {
         private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +(\\S+)\\s+next: -XX:TesterStart=(\\d+).*");
@@ -1294,7 +1289,6 @@ public class MaxineTester {
      * a number of Java programs with it, comparing their output to the output obtained
      * from running the same programs on a reference JVM.
      *
-     * @author Ben L. Titzer
      */
     public static class OutputHarness implements Harness {
         final Iterable<Class> testList;
@@ -1356,7 +1350,6 @@ public class MaxineTester {
     /**
      * This class implements a harness that is capable of running C1XTest.
      *
-     * @author Doug Simon
      */
     public static class C1XHarness implements Harness {
         String filter;
@@ -1407,7 +1400,6 @@ public class MaxineTester {
      * These programs can serve as benchmarks and their times can be compared to the reference
      * VM's times.
      *
-     * @author Ben L. Titzer
      */
     abstract static class TimedHarness {
         void reportTiming(String testName, File outputDir) {
@@ -1448,7 +1440,6 @@ public class MaxineTester {
      * itself. For that reason, external timings (i.e. by recording the total time to run the VM process)
      * should be used as well.
      *
-     * @author Ben L. Titzer
      */
     public static class SpecJVM98Harness extends TimedHarness implements Harness {
         final Iterable<String> testList;
@@ -1518,7 +1509,6 @@ public class MaxineTester {
      * itself. For that reason, external timings (i.e. by recording the total time to run the VM process)
      * should be used as well.
      *
-     * @author Ben L. Titzer
      */
     public static class SpecJVM2008Harness extends TimedHarness implements Harness {
         final Iterable<String> testList;
@@ -1616,7 +1606,6 @@ public class MaxineTester {
      * This class implements a test harness that is capable of running the DaCapo 2006 suite of programs
      * and comparing their outputs to that obtained by running each of them on a reference VM.
      *
-     * @author Ben L. Titzer
      */
     private static class DaCapoHarness extends TimedHarness implements Harness {
         protected final Iterable<String> testList;
@@ -1657,6 +1646,7 @@ public class MaxineTester {
         void runDaCapoTest(File outputDir, File imageDir, String test, File dacapoJar) {
             final String testName = "DaCapo-" + variant + " " + test;
             final JavaCommand command = new JavaCommand(dacapoJar);
+            // command.addArgument("--no-validation");
             command.addArgument(test);
             OutputComparison comparison = new OutputComparison();
             if (test.equals("jython")) {
@@ -1698,7 +1688,6 @@ public class MaxineTester {
      * This class implements a test harness that is capable of running the Programming Language Shootout suite of programs
      * and comparing their outputs to that obtained by running each of them on a reference VM.
      *
-     * @author Ben L. Titzer
      */
     public static class ShootoutHarness implements Harness {
         final Iterable<String> testList;

@@ -49,7 +49,6 @@ import com.sun.max.vm.value.*;
 
 /**
  *
- * @author Doug Simon
  */
 public class InvocationStubGenerator<T> {
 
@@ -203,27 +202,24 @@ public class InvocationStubGenerator<T> {
             final InterfaceActor[] interfaceActors = new InterfaceActor[0];
             final FieldActor[] fieldActors = new FieldActor[0];
 
-            final ClassActor stubClassActor;
-            synchronized (declaringClassActor.classLoader) {
-                stubClassActor = ClassActorFactory.createTupleOrHybridClassActor(
-                                constantPool,
-                                declaringClassActor.classLoader,
-                                stubClassName,
-                                ClassfileReader.JAVA_1_5_VERSION,
-                                (char) 0,
-                                Modifier.PUBLIC | Actor.REFLECTION_STUB,
-                                superClassActor,
-                                interfaceActors,
-                                fieldActors,
-                                classMethodActors,
-                                Actor.NO_GENERIC_SIGNATURE,
-                                Actor.NO_RUNTIME_VISIBLE_ANNOTATION_BYTES,
-                                ClassActor.NO_SOURCE_FILE_NAME,
-                                ClassActor.NO_INNER_CLASSES,
-                                ClassActor.NO_OUTER_CLASS,
-                                ClassActor.NO_ENCLOSING_METHOD_INFO);
-                stubClassActor.define();
-            }
+            final ClassActor stubClassActor =
+                ClassRegistry.define(ClassActorFactory.createTupleOrHybridClassActor(
+                    constantPool,
+                    declaringClassActor.classLoader,
+                    stubClassName,
+                    ClassfileReader.JAVA_1_5_VERSION,
+                    (char) 0,
+                    Modifier.PUBLIC | Actor.REFLECTION_STUB,
+                    superClassActor,
+                    interfaceActors,
+                    fieldActors,
+                    classMethodActors,
+                    Actor.NO_GENERIC_SIGNATURE,
+                    Actor.NO_RUNTIME_VISIBLE_ANNOTATION_BYTES,
+                    ClassActor.NO_SOURCE_FILE_NAME,
+                    ClassActor.NO_INNER_CLASSES,
+                    ClassActor.NO_OUTER_CLASS,
+                    ClassActor.NO_ENCLOSING_METHOD_INFO));
 
             try {
                 ClassfileWriter.saveGeneratedClass(new ClassInfo(stubClassActor), constantPoolEditor.copy());

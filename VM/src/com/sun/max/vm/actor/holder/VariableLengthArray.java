@@ -26,12 +26,12 @@ import java.util.*;
 
 import com.sun.max.*;
 /**
- * Variable length array utility.
- * Allows underlying arrays to grow unbounded.
- * Currently used for short number of unique identifier generation.
- * @see ClassID
+ * Variable length array. Accessing elements of such an array with a positive index
+ * will never throw an {@link IndexOutOfBoundsException}. Specifically,
+ * {@linkplain #set(int, Object) inserting} an element will expand the array if necessary.
  *
- * @author Laurent Daynes
+ * @see ClassID
+ * @see ClassDependencyManager
  */
 class VariableLengthArray<E> {
     /*
@@ -59,6 +59,9 @@ class VariableLengthArray<E> {
         variable = newOverflow;
     }
 
+    /**
+     * Sets the element at a given index, expanding the array if necessary first so that {@code this.length() > index}.
+     */
     public E set(int index, E element) {
         final int pl = prefix.length;
         if (index < pl) {

@@ -37,7 +37,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Implements substitutions necessary for {@link ClassLoader}.
- *
  */
 @METHOD_SUBSTITUTIONS(ClassLoader.class)
 public final class JDK_java_lang_ClassLoader {
@@ -191,7 +190,10 @@ public final class JDK_java_lang_ClassLoader {
         } catch (ClassFormatError e) {
             return null;
         }
-        final ClassActor classActor =  ClassRegistry.get(thisClassLoader(), descriptor, false);
+
+        // This query is specific to this class loader and so parents should not be searched.
+        // c.f. SystemDictionary::find(Symbol* class_name, Handle class_loader, Handle protection_domain, TRAPS) in systemDictionary.cpp
+        final ClassActor classActor = ClassRegistry.get(thisClassLoader(), descriptor, false);
         if (classActor == null) {
             return null;
         }

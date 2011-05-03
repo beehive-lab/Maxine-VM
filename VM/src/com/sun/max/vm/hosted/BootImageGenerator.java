@@ -47,9 +47,6 @@ import com.sun.max.vm.type.*;
  * as well as objects and metadata that implement the virtual machine, is called the
  * "image".
  *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Ben L. Titzer
  */
 public final class BootImageGenerator {
 
@@ -210,7 +207,7 @@ public final class BootImageGenerator {
             configurator.create(true);
 
             // Initialize the Java prototype
-            JavaPrototype.initialize(true);
+            JavaPrototype.initialize(true, prototypeGenerator.threadsOption.getValue());
 
             Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
             Heap.useOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.

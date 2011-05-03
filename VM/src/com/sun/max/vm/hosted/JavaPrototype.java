@@ -52,10 +52,8 @@ import com.sun.max.vm.value.*;
  * The {@link ClassActor} context when {@linkplain BootImageGenerator generating} the
  * boot image or otherwise executing code that loads and uses {@link ClassActor}s.
  *
- * There is a single global {@code JavaPrototype} object which is {@linkplain #initialize(boolean) initialized} once.
+ * There is a single global {@code JavaPrototype} object which is {@linkplain #initialize(boolean, int) initialized} once.
  *
- * @author Bernd Mathiske
- * @author Doug Simon
  */
 public final class JavaPrototype extends Prototype {
 
@@ -208,7 +206,6 @@ public final class JavaPrototype extends Prototype {
      * Extends {@link PackageLoader} to ignore classes that are {@link HostOnlyClassError prototype only} or
      * explicitly {@linkplain OmittedClassError omitted} from the boot image.
      *
-     * @author Doug Simon
      */
     static class PrototypePackageLoader extends PackageLoader {
 
@@ -236,20 +233,33 @@ public final class JavaPrototype extends Prototype {
      * @param complete specifies whether to load more than just the VM scheme packages
      */
     public static void initialize(final boolean complete) {
+        initialize(complete, 1);
+    }
+
+    /**
+     * Initializes the global Java prototype. This also initializes the global {@linkplain MaxineVM#vm() VM}
+     * context if it hasn't been set.
+     *
+     * @param complete specifies whether to load more than just the VM scheme packages
+     * @param threadCount the number of threads that can be used to load packages in parallel. Anything less than or
+     *            equal to 1 implies package loading is to be single-threaded.
+     */
+    public static void initialize(final boolean complete, int threadCount) {
         assert theJavaPrototype == null : "Cannot initialize the JavaPrototype more than once";
         if (MaxineVM.vm() == null) {
             new VMConfigurator(null).create(true);
         }
-        theJavaPrototype = new JavaPrototype(complete);
-
+        theJavaPrototype = new JavaPrototype(complete, threadCount);
     }
 
     /**
      * Create a new Java prototype with the specified VM configuration.
      *
      * @param complete specifies whether to load more than just the VM scheme packages
+     * @param threadCount the number of threads that can be used to load packages in parallel. Anything less than or
+     *            equal to 1 impliespackage loading is to be single-threaded.
      */
-    private JavaPrototype(final boolean complete) {
+    private JavaPrototype(final boolean complete, int threadCount) {
         VMConfiguration config = vmConfig();
         packageLoader = new PrototypePackageLoader(HOSTED_BOOT_CLASS_LOADER, HOSTED_BOOT_CLASS_LOADER.classpath());
         theJavaPrototype = this;
@@ -271,7 +281,6 @@ public final class JavaPrototype extends Prototype {
         loadMethodSubstitutions(config);
 
         if (complete) {
-
             for (BootImagePackage maxPackage : config.bootImagePackages) {
                 loadBootImagePackage(maxPackage);
             }
