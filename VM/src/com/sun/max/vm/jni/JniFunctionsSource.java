@@ -142,8 +142,8 @@ public final class JniFunctionsSource {
         }
         // Skip frames for 'getCallerClass' and 'FindClass'
         int realFramesToSkip = 2;
-        ClassActor caller = ClassActor.fromJava(JDK_sun_reflect_Reflection.getCallerClass(realFramesToSkip));
-        ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : caller.classLoader;
+        Class caller = JDK_sun_reflect_Reflection.getCallerClass(realFramesToSkip);
+        ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : ClassActor.fromJava(caller).classLoader;
         final Class javaClass = findClass(classLoader, className);
         Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
         return JniHandles.createLocalHandle(javaClass);

@@ -78,8 +78,6 @@ public final class Code {
     /**
      * Allocates space in a code region for the code-related arrays of a given target method
      * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
-     * The target method cannot be executed. This option exists for the purpose of testing
-     * or benchmarking a compiler at runtime without polluting the code cache.
      *
      * @param targetBundleLayout describes the layout of the arrays in the allocate space
      * @param targetMethod the target method for which the code-related arrays are allocated
@@ -91,6 +89,8 @@ public final class Code {
     /**
      * Allocates space in the heap for the code-related arrays of a given target method
      * and {@linkplain TargetMethod#setCodeArrays(byte[], byte[], Object[]) initializes} them.
+     * The target method cannot be executed. This option exists for the purpose of testing
+     * or benchmarking a compiler at runtime without polluting the code cache.
      *
      * @param targetBundleLayout describes the layout of the arrays in the allocate space
      * @param targetMethod the target method for which the code-related arrays are allocated

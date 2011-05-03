@@ -121,7 +121,7 @@ public abstract class BlockEnd extends Instruction {
      * Searches for the specified successor and returns its index into the
      * successor list if found.
      * @param b the block to search for in the successor list
-     * @return the index of the block in the list if found; </code>-1</code> otherwise
+     * @return the index of the block in the list if found; <code>-1</code> otherwise
      */
     public int successorIndex(BlockBegin b) {
         final int max = successors.size();

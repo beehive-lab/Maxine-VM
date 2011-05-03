@@ -194,8 +194,8 @@ public enum Condition {
             }
             case Object: {
                 switch (this) {
-                    case EQ: return runtime.compareConstantObjects(lt, rt);
-                    case NE: return !runtime.compareConstantObjects(lt, rt);
+                    case EQ: return runtime.areConstantObjectsEqual(lt, rt);
+                    case NE: return !runtime.areConstantObjectsEqual(lt, rt);
                 }
                 break;
             }

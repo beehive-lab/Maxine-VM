@@ -71,9 +71,8 @@ import com.sun.max.vm.verifier.*;
  * This class is designed such that a single instance can be re-used for
  * separate compilations.
  *
- * @author Doug Simon
  */
-public final class T1XCompilation {
+public class T1XCompilation {
 
     // Static info
 
@@ -190,7 +189,7 @@ public final class T1XCompilation {
     /**
      * Constant pool of the method being compiled.
      */
-    ConstantPool cp;
+    protected ConstantPool cp;
 
     /**
      * The bytecode indexes of the basic blocks.
@@ -537,10 +536,30 @@ public final class T1XCompilation {
 
             }
         }
+
+        if (T1XOptions.PrintBytecodeHistogram) {
+            if (compiler.staticBytecodeCount != null) {
+                compiler.staticBytecodeCount[representativeOpcode & 0xff]++;
+            }
+            if (compiler.dynamicBytecodeCount != null) {
+                assignIntTemplateArgument(0, representativeOpcode & 0xff);
+                assignReferenceLiteralTemplateArgument(1, compiler.dynamicBytecodeCount);
+                emitAndRecordStops(getTemplate(COUNT_BYTECODE));
+            }
+        }
+
         prevOpcode = representativeOpcode;
     }
 
-    private T1XTemplate getTemplate(T1XTemplateTag tag) {
+    /**
+     * Returns the template to use for {@code tag}.
+     * By default, returns the template in the associated {@link #compiler compiler}
+     * templates array, but may be overridden by a subclass to make the behavior
+     * more context sensitive.
+     * @param tag
+     * @return
+     */
+    protected T1XTemplate getTemplate(T1XTemplateTag tag) {
         assert tag != null;
         assert compiler.templates[tag.ordinal()] != null;
         return compiler.templates[tag.ordinal()];
@@ -587,34 +606,34 @@ public final class T1XCompilation {
      * Emit template for bytecode instruction with no operands. These bytecode have no dependencies, so emitting the
      * template just consists of copying the target instruction into the code buffer.
      */
-    private void emit(T1XTemplateTag tag) {
+    protected void emit(T1XTemplateTag tag) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         emitAndRecordStops(template);
     }
 
-    private void emitInt(T1XTemplateTag tag, int value) {
+    protected void emitInt(T1XTemplateTag tag, int value) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignIntTemplateArgument(0, value);
         emitAndRecordStops(template);
     }
 
-    private void emitDouble(T1XTemplateTag tag, double value) {
+    protected void emitDouble(T1XTemplateTag tag, double value) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignDoubleTemplateArgument(0, value);
         emitAndRecordStops(template);
     }
 
-    private void emitFloat(T1XTemplateTag tag, float value) {
+    protected void emitFloat(T1XTemplateTag tag, float value) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignFloatTemplateArgument(0, value);
         emitAndRecordStops(template);
     }
 
-    private void emitLong(T1XTemplateTag tag, long value) {
+    protected void emitLong(T1XTemplateTag tag, long value) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignLongTemplateArgument(0, value);
@@ -629,7 +648,7 @@ public final class T1XCompilation {
      * @param localIndex the local variable index to customize the template with.
      * @param kind the kind of the value in the local
      */
-    private void emitVarAccess(T1XTemplateTag tag, int localIndex, Kind kind) {
+    protected void emitVarAccess(T1XTemplateTag tag, int localIndex, Kind kind) {
         T1XTemplate template = getTemplate(tag);
         beginBytecode(tag.opcode);
         assignLocalDisplacementTemplateArgument(0, localIndex, kind);
@@ -641,7 +660,7 @@ public final class T1XCompilation {
      * @param index Index to the field ref constant.
      * @param template one of getfield, putfield, getstatic, putstatic
      */
-    private void emitFieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index) {
+    protected void emitFieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index) {
         FieldRefConstant fieldRefConstant = cp.fieldAt(index);
         Kind fieldKind = fieldRefConstant.type(cp).toKind();
         T1XTemplateTag tag = tags.get(fieldKind.asEnum);
@@ -710,7 +729,7 @@ public final class T1XCompilation {
      * @param index a constant pool index
      * @return
      */
-    private void emitTemplateWithClassConstant(T1XTemplateTag tag, int index) {
+    protected void emitTemplateWithClassConstant(T1XTemplateTag tag, int index) {
         ClassConstant classConstant = cp.classAt(index);
         boolean isArray = tag == ANEWARRAY;
         T1XTemplate template;
@@ -730,7 +749,7 @@ public final class T1XCompilation {
         emitAndRecordStops(template);
     }
 
-    private void emitIinc(int index, int increment) {
+    protected void emitIinc(int index, int increment) {
         beginBytecode(IINC.opcode);
         final T1XTemplate template = getTemplate(IINC);
         assignLocalDisplacementTemplateArgument(0, index, Kind.INT);
@@ -744,9 +763,13 @@ public final class T1XCompilation {
         return enterSize - frame.sizeOfNonParameterLocals();
     }
 
-    private void emitReturn(T1XTemplateTag tag, T1XTemplateTag tagUnlockClass, T1XTemplateTag tagUnlockReceiver) {
+    protected void emitReturn(T1XTemplateTag tag, T1XTemplateTag tagUnlockClass, T1XTemplateTag tagUnlockReceiver) {
         beginBytecode(tag.opcode);
-        if (method.isSynchronized()) {
+        if (method.holder() == ClassRegistry.OBJECT) {
+            T1XTemplate template = getTemplate(RETURN$registerFinalizer);
+            assignLocalDisplacementTemplateArgument(0, 0, Kind.REFERENCE);
+            emitAndRecordStops(template);
+        } else if (method.isSynchronized()) {
             if (method.isStatic()) {
                 T1XTemplate template = getTemplate(tagUnlockClass);
                 assignReferenceLiteralTemplateArgument(0, method.holder().javaClass());
@@ -773,7 +796,7 @@ public final class T1XCompilation {
         }
     }
 
-    private void emitBranch(Object ccObj, T1XTemplateTag tag, int targetBCI) {
+    protected void emitBranch(Object ccObj, T1XTemplateTag tag, int targetBCI) {
         int bci = stream.currentBCI();
         startBlock(targetBCI);
         beginBytecode(tag.opcode);
@@ -840,7 +863,7 @@ public final class T1XCompilation {
         return index;
     }
 
-    private void emitInvokevirtual(int index) {
+    protected void emitInvokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         SignatureDescriptor signature = classMethodRef.signature(cp);
         Kind kind = invokeKind(signature);
@@ -890,7 +913,7 @@ public final class T1XCompilation {
         emitAndRecordStops(template);
     }
 
-    private void emitInvokeinterface(int index) {
+    protected void emitInvokeinterface(int index) {
         InterfaceMethodRefConstant interfaceMethodRef = cp.interfaceMethodAt(index);
         SignatureDescriptor signature = interfaceMethodRef.signature(cp);
         Kind kind = invokeKind(signature);
@@ -929,7 +952,7 @@ public final class T1XCompilation {
         emitAndRecordStops(template);
     }
 
-    private void emitInvokespecial(int index) {
+    protected void emitInvokespecial(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         Kind kind = invokeKind(classMethodRef.signature(cp));
         SignatureDescriptor signature = classMethodRef.signature(cp);
@@ -953,7 +976,7 @@ public final class T1XCompilation {
         emitAndRecordStops(template);
     }
 
-    private void emitInvokestatic(int index) {
+    protected void emitInvokestatic(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         Kind kind = invokeKind(classMethodRef.signature(cp));
         T1XTemplateTag tag = INVOKESTATICS.get(kind.asEnum);
@@ -998,7 +1021,7 @@ public final class T1XCompilation {
         buf.emitBytes(template.code, 0, template.code.length);
     }
 
-    private void emitConstant(int index) {
+    protected void emitConstant(int index) {
         PoolConstant constant = cp.at(index);
         int bytecode = Bytecodes.LDC;
         switch (constant.tag()) {
@@ -1065,7 +1088,7 @@ public final class T1XCompilation {
         }
     }
 
-    private void emitMultianewarray(int index, int numberOfDimensions) {
+    protected void emitMultianewarray(int index, int numberOfDimensions) {
         ClassConstant classRef = cp.classAt(index);
         if (classRef.isResolvableWithoutClassLoading(cp)) {
             T1XTemplate template = getTemplate(MULTIANEWARRAY$resolved);
@@ -1087,7 +1110,7 @@ public final class T1XCompilation {
         emitAndRecordStops(template);
     }
 
-    private void emitNew(int index) {
+    protected void emitNew(int index) {
         ClassConstant classRef = cp.classAt(index);
         if (classRef.isResolvableWithoutClassLoading(cp)) {
             ClassActor classActor = classRef.resolve(cp, index);
@@ -1105,7 +1128,7 @@ public final class T1XCompilation {
         emitAndRecordStops(template);
     }
 
-    private void emitNewarray(int tag) {
+    protected void emitNewarray(int tag) {
         T1XTemplate template = getTemplate(NEWARRAY);
         beginBytecode(Bytecodes.NEWARRAY);
         Kind arrayElementKind = Kind.fromNewArrayTag(tag);
@@ -1113,7 +1136,7 @@ public final class T1XCompilation {
         emitAndRecordStops(template);
     }
 
-    private void emitTableswitch() {
+    protected void emitTableswitch() {
         int bci = stream.currentBCI();
         BytecodeTableSwitch ts = new BytecodeTableSwitch(stream, bci);
         int lowMatch = ts.lowKey();
@@ -1187,7 +1210,7 @@ public final class T1XCompilation {
         }
     }
 
-    private void emitLookupswitch() {
+    protected void emitLookupswitch() {
         int bci = stream.currentBCI();
         BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream, bci);
         beginBytecode(Bytecodes.LOOKUPSWITCH);

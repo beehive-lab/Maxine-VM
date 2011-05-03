@@ -34,12 +34,12 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.bytecode.Bytes;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ri.*;
+import com.sun.cri.util.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -59,13 +59,12 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.verifier.*;
 
 /**
+ * The template JIT compiler based on C1X.
  *
- *
- * @author Doug Simon
  */
 public class T1X implements RuntimeCompiler {
 
-    final T1XTemplate[] templates;
+    public final T1XTemplate[] templates;
 
     static {
         ClassfileReader.bytecodeTemplateClasses.add(T1X_TEMPLATE.class);
@@ -76,15 +75,58 @@ public class T1X implements RuntimeCompiler {
      */
     int templateSlots;
 
+    /**
+     * Support for {@link T1XOptions#PrintBytecodeHistogram}.
+     */
+    long[] dynamicBytecodeCount;
+
+    /**
+     * Support for {@link T1XOptions#PrintBytecodeHistogram}.
+     */
+    long[] staticBytecodeCount;
+
+    /**
+     * Class defining the template definitions, default is {@link T1XTemplateSource}.
+     */
+    private final Class<?> templateSource;
+    /**
+     * When using non-default template definitions, this compiler provides the
+     * default implementation for any non-overridden templates.
+     */
+    protected final T1X altT1X;
+
+    /**
+     * Factory that creates the appropriate subclass of {@link T1XCompilation}.
+     */
+    protected final T1XCompilationFactory t1XCompilationFactory;
+
+    // TODO(mjj) These are not implemented by vanilla T1X but should they be?
+    private static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.of(T1XTemplateTag.GOTO, T1XTemplateTag.GOTO_W,
+                    T1XTemplateTag.NULL_CHECK, T1XTemplateTag.WRITEREG$link);
+
     @HOSTED_ONLY
     public T1X() {
+        this(T1XTemplateSource.class, null, new T1XCompilationFactory());
+    }
+
+    /**
+     * Creates a compiler in which some template definitions may be "overridden".
+     * @param templateSource class defining override template definitions
+     * @param altT1X compiler providing implementation of non-overridden definitions
+     * @param factory for creating {@link T1XCompilation} instances
+     */
+    @HOSTED_ONLY
+    protected T1X(Class<?> templateSource, T1X altT1X, T1XCompilationFactory factory) {
+        this.altT1X = altT1X;
+        this.templateSource = templateSource;
+        this.t1XCompilationFactory = factory;
         templates = new T1XTemplate[T1XTemplateTag.values().length];
     }
 
     private final ThreadLocal<T1XCompilation> compilation = new ThreadLocal<T1XCompilation>() {
         @Override
         protected T1XCompilation initialValue() {
-            return new T1XCompilation(T1X.this);
+            return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
     };
 
@@ -106,7 +148,7 @@ public class T1X implements RuntimeCompiler {
         if (c.method != null) {
             // Re-entrant call to T1X - use a new compilation object that will be discarded
             // once the compilation is done. This should be a very rare occurrence.
-            c = new T1XCompilation(this);
+            c = t1XCompilationFactory.newT1XCompilation(this);
             reentrant = true;
             Log.println("Created temporary compilation object for re-entrant T1X compilation");
         }
@@ -309,7 +351,7 @@ public class T1X implements RuntimeCompiler {
             ClassActor.fromJava(T1XRuntime.class);
             ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(T1XTemplateSource.class));
 
-            final Method[] templateMethods = T1XTemplateSource.class.getDeclaredMethods();
+            final Method[] templateMethods = templateSource.getDeclaredMethods();
             int codeSize = 0;
             for (Method method : templateMethods) {
                 if (Platform.platform().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
@@ -345,23 +387,49 @@ public class T1X implements RuntimeCompiler {
                     }
                 }
             }
+            // ensure everything is implemented
+            for (int i = 0; i < T1XTemplateTag.values().length; i++) {
+                if (templates[i] == null && !UNIMPLEMENTED_TEMPLATES.contains(T1XTemplateTag.values()[i])) {
+                    if (altT1X == null || altT1X.templates[i] == null) {
+                        FatalError.unexpected("Template tag " + T1XTemplateTag.values()[i] + " is not implemented");
+                    } else {
+                        templates[i] = altT1X.templates[i];
+                    }
+                }
+            }
             Trace.end(1, "creating T1X templates [templates code size: " + codeSize + "]", startTime);
             comp.extensions = oldExtensions;
         }
-        if (phase == Phase.TERMINATING) {
+        if (phase == Phase.STARTING) {
+            if (T1XOptions.PrintBytecodeHistogram) {
+                dynamicBytecodeCount = new long[256];
+                staticBytecodeCount = new long[256];
+            }
+        } else if (phase == Phase.TERMINATING) {
+            if (T1XOptions.PrintBytecodeHistogram) {
+                Log.println("Bytecode Histogram: Mnemonic <tab> Dynamic Count <tab> Static Count");
+                for (int i = 0; i < 256; i++) {
+                    String name = Bytecodes.nameOf(i);
+                    if (!name.startsWith("<illegal")) {
+                        Log.println(name + "\t" + dynamicBytecodeCount[i] + "\t" + staticBytecodeCount[i]);
+                    }
+                }
+            }
+
             if (T1XOptions.PrintMetrics) {
                 T1XMetrics.print();
             }
             if (T1XOptions.PrintTimers) {
                 T1XTimer.print();
             }
+
         }
     }
 
     @HOSTED_ONLY
     private static boolean hasStackParameters(ClassMethodActor classMethodActor) {
         CiKind receiver = !classMethodActor.isStatic() ? classMethodActor.holder().kind() : null;
-        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, Util.signatureToKinds(classMethodActor.signature(), receiver), target()).locations) {
+        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CRIUtil.signatureToKinds(classMethodActor.signature(), receiver), target()).locations) {
             if (!arg.isRegister()) {
                 return true;
             }

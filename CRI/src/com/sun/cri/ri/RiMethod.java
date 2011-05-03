@@ -199,7 +199,7 @@ public interface RiMethod {
      * Temporary work-around to support the @ACCESSOR Maxine annotation.
      * Non-Maxine VMs should just return {@code null}.
      */
-    Class<?> accessor();
+    RiType accessor();
     
     /**
      * Temporary work-around to support the @ACCESSOR Maxine annotation.

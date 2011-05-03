@@ -78,7 +78,7 @@ public interface RiField {
     /**
      * Gets the constant value of this field if available.
      * NOTE: ONLY AVAILABLE FOR RESOLVED FIELDS.
-     * @param object object from which this field's value is to be read. This value is ignored if this field is static.
+     * @param receiver object from which this field's value is to be read. This value is ignored if this field is static.
      * @return the constant value of this field or {@code null} if the constant value is not available
      */
     CiConstant constantValue(CiConstant receiver);

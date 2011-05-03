@@ -451,7 +451,7 @@ public final class CiBitMap implements Serializable {
     /**
      * Compares this object against the specified object.
      * The result is {@code true} if and only if {@code obj} is
-     * not {@code null} and is a {@codCiBitMap} object that has
+     * not {@code null} and is a {@code CiBitMap} object that has
      * exactly the same set of bits set to {@code true} as this bit
      * set.
      *
