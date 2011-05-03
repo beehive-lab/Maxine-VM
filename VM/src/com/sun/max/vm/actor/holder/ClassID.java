@@ -67,21 +67,15 @@ public final class ClassID {
      * @return the class denoted by {@code id}
      */
     public static ClassActor toClassActor(int id) {
-        try {
-            if (MaxineVM.isHosted()) {
-                synchronized (mapping) {
-                    if (mapping != null) {
-                        final ClassActor classActor = mapping.idToClassActor(id);
-                        if (classActor != null) {
-                            return classActor;
-                        }
-                    }
+        if (MaxineVM.isHosted() && mapping != null) {
+            synchronized (mapping) {
+                final ClassActor classActor = mapping.idToClassActor(id);
+                if (classActor != null) {
+                    return classActor;
                 }
             }
-            return idToClassActor.get(id);
-        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-            return null;
         }
+        return idToClassActor.get(id);
     }
 
     /**
