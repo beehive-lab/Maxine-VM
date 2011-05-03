@@ -190,7 +190,7 @@ public final class ClassRegistry {
      * Creates a ClassActor for a tuple or interface type.
      */
     @HOSTED_ONLY
-    private static <ClassActor_Type extends ClassActor> ClassActor_Type createClass(Class javaClass) {
+    private static <T extends ClassActor> T createClass(Class javaClass) {
         TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
         ClassActor classActor = BOOT_CLASS_REGISTRY.get(typeDescriptor);
         if (classActor == null) {
@@ -199,7 +199,7 @@ public final class ClassRegistry {
             final ClasspathFile classpathFile = classpath.readClassFile(name);
             classActor = ClassfileReader.defineClassActor(name, HOSTED_BOOT_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry, false);
         }
-        Class<ClassActor_Type> type = null;
+        Class<T> type = null;
         return Utils.cast(type, classActor);
     }
 
@@ -393,8 +393,9 @@ public final class ClassRegistry {
      *
      * @see <a href="http://download.java.net/jdk7/docs/api/java/lang/ClassLoader.html#registerAsParallelCapable()">registerAsParallelCapable</a>
      */
-    public static <ClassActor_Type extends ClassActor> ClassActor_Type define(ClassActor_Type classActor) {
-        return Utils.cast(makeRegistry(classActor.classLoader).define0(classActor));
+    public static <T extends ClassActor> T define(T classActor) {
+        final Class<T> type = null;
+        return Utils.cast(type, makeRegistry(classActor.classLoader).define0(classActor));
     }
 
     /**
