@@ -28,6 +28,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Management of unique integer identifiers for {@link ClassActor}s.
@@ -36,9 +37,6 @@ import com.sun.max.vm.runtime.*;
  * identifier is used in the implementation of interface dispatch, type
  * tests and also serves as the opaque {@code jclass} handle to a
  * class in JNI code.
- *
- * @author Bernd Mathiske
- * @author Laurent Daynes
  */
 public final class ClassID {
 
@@ -55,35 +53,28 @@ public final class ClassID {
     private static VariableLengthArray<ClassActor> idToClassActor = new VariableLengthArray<ClassActor>(MINIMAL_CLASSES_POPULATIONS);
 
     /**
-     * BitSet keeping track of the assigned class identifiers. A bit set to 1 doesn't necessarily means a non-null entry in {@link ClassID#idToClassActor}
-     * because class identifiers are created eagerly for array classes, whereas array class actors are created lazily.
-     * Thus it is possible to encounter a null entry for a used class identifiers.
+     * A bit set keeping track of the assigned class identifiers. A bit set to 1 doesn't necessarily means a
+     * non-null entry in {@link ClassID#idToClassActor} as class identifiers are reserved eagerly for array classes,
+     * whereas the corresponding array class actors are created lazily.
+     * Thus it is possible to encounter a null entry for a used class identifier.
      */
     private static BitSet usedIDs = new BitSet();
 
     /**
-     * Inspector support.
+     * Retrieves the class corresponding to a given identifier.
+     *
+     * @param id a class identifier
+     * @return the class denoted by {@code id}
      */
-    @HOSTED_ONLY
-    public static interface Mapping {
-        ClassActor idToClassActor(int id);
-    }
-
-    @HOSTED_ONLY
-    private static Mapping mapping;
-
-    @HOSTED_ONLY
-    public static void setMapping(Mapping map) {
-        mapping = map;
-    }
-
-    public static synchronized ClassActor toClassActor(int id) {
+    public static ClassActor toClassActor(int id) {
         try {
             if (MaxineVM.isHosted()) {
-                if (mapping != null) {
-                    final ClassActor classActor = mapping.idToClassActor(id);
-                    if (classActor != null) {
-                        return classActor;
+                synchronized (mapping) {
+                    if (mapping != null) {
+                        final ClassActor classActor = mapping.idToClassActor(id);
+                        if (classActor != null) {
+                            return classActor;
+                        }
                     }
                 }
             }
@@ -93,22 +84,65 @@ public final class ClassID {
         }
     }
 
-    static synchronized int create() {
+    /**
+     * Allocates a new, system-wide unique identifier that will subsequently be
+     * {@linkplain #register(ClassActor) bound} to a class actor.
+     */
+    static synchronized int allocate() {
         final int id = usedIDs.nextClearBit(0);
         idToClassActor.set(id, null);
         usedIDs.set(id);
+        if (TraceClassIDs) {
+            Log.println("Allocated class identifier " + id);
+        }
         return id;
     }
 
+    /**
+     * Binds a class actor to its allocated identifier.
+     */
     static synchronized void register(ClassActor classActor) {
         int id = classActor.id;
         FatalError.check(usedIDs.get(id), "Class ID must be allocated");
         idToClassActor.set(id, classActor);
+        if (TraceClassIDs) {
+            Log.println("Bound class identifier " + id + " to " + classActor);
+        }
     }
 
-    static synchronized void clear(int id) {
-        idToClassActor.set(id, null);
+    /**
+     * Removes all identifiers associated with a given class. This must only be
+     * called before a class is registered with its class loader.
+     *
+     * @see ClassRegistry#define0(ClassActor)
+     */
+    public static synchronized void remove(ClassActor classActor) {
+        assert ClassRegistry.get(classActor.classLoader, classActor.typeDescriptor, false) != classActor;
+        int id = classActor.id;
+        FatalError.check(usedIDs.get(id), "Class ID must be allocated");
+        clear(id);
+        if (classActor.arrayClassIDs != null) {
+            for (int arrayId : classActor.arrayClassIDs) {
+                clear(arrayId);
+            }
+        }
+    }
+
+    private static void clear(int id) {
+        ClassActor c = idToClassActor.set(id, null);
         usedIDs.clear(id);
+        if (TraceClassIDs) {
+            Log.print("Released class identifier " + id);
+            if (c != null) {
+                Log.print(" {" + c + "}");
+            }
+            Log.println();
+        }
+    }
+
+    private static boolean TraceClassIDs;
+    static {
+        VMOptions.addFieldOption("-XX:", "TraceClassIDs", "Trace management of class identifiers.");
     }
 
     public static synchronized int largestClassId() {
@@ -172,4 +206,21 @@ public final class ClassID {
             id = usedIDs.nextSetBit(id);
         }
     }
+
+    /**
+     * Inspector support.
+     */
+    @HOSTED_ONLY
+    public static interface Mapping {
+        ClassActor idToClassActor(int id);
+    }
+
+    @HOSTED_ONLY
+    private static Mapping mapping;
+
+    @HOSTED_ONLY
+    public static void setMapping(Mapping map) {
+        mapping = map;
+    }
+
 }
