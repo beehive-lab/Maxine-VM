@@ -414,8 +414,8 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
 #endif
     Address stackEnd = ntl->stackBase + ntl->stackSize;
     int result = (*attachMethod)(
-              (Address) args->name,
-              (Address) args->group,
+              (Address) (args == NULL ? NULL : args->name),
+              (Address) (args == NULL ? NULL : args->group),
               daemon,
               ntl->stackBase,
               stackEnd,

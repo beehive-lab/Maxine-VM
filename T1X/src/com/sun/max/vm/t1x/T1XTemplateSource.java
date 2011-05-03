@@ -35,6 +35,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
@@ -60,6 +61,12 @@ public class T1XTemplateSource {
     private static native int dcmpg(double l, double r);
     @INTRINSIC(Bytecodes.DCMPL)
     private static native int dcmpl(double l, double r);
+
+    @T1X_TEMPLATE(COUNT_BYTECODE)
+    public static void countBytecode(int opcode, long[] array) {
+        // Disable bounds-checking by use of ArrayAccess
+        ArrayAccess.setLong(array, opcode, ArrayAccess.getLong(array, opcode) + 1);
+    }
 
     @T1X_TEMPLATE(LOAD_EXCEPTION)
     public static void loadException() {
@@ -1506,6 +1513,14 @@ public class T1XTemplateSource {
         Monitor.noninlineExit(rcvr);
     }
 
+    @T1X_TEMPLATE(RETURN$registerFinalizer)
+    public static void vreturnRegisterFinalizer(int dispToRcvr) {
+        Object rcvr = getLocalObject(dispToRcvr);
+        if (ObjectAccess.readClassActor(rcvr).hasFinalizer()) {
+            SpecialReferenceManager.registerFinalizee(rcvr);
+        }
+    }
+
     @T1X_TEMPLATE(SALOAD)
     public static void saload() {
         int index = peekInt(0);
@@ -2079,7 +2094,7 @@ public class T1XTemplateSource {
     }
 
     @INLINE
-    private static void nullCheck(Pointer receiver) {
+    public static void nullCheck(Pointer receiver) {
         receiver.readWord(0);
     }
 

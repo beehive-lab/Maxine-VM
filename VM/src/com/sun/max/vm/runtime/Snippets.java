@@ -77,11 +77,7 @@ public class Snippets {
         if (classActor.isHybridClass()) {
             return Heap.createHybrid(classActor.dynamicHub());
         }
-        final Object object = Heap.createTuple(classActor.dynamicHub());
-        if (classActor.hasFinalizer()) {
-            SpecialReferenceManager.registerFinalizee(object);
-        }
-        return object;
+        return Heap.createTuple(classActor.dynamicHub());
     }
 
     @INLINE

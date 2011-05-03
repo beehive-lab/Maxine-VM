@@ -56,7 +56,7 @@ public abstract class NewArray extends StateSplit {
 
     /**
      * Checks whether this instruction can trap.
-     * @return <true>true</code>, conservatively assuming that this instruction can throw such
+     * @return <code>true</code>, conservatively assuming that this instruction can throw such
      * exceptions as {@code OutOfMemoryError}
      */
     @Override

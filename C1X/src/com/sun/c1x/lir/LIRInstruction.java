@@ -141,7 +141,7 @@ public abstract class LIRInstruction {
      *  |       output operands      |       input operands      |      temp operands       |
      *  +----------------------------+---------------------------+--------------------------+
      *
-     * <pre>
+     * </pre>
      */
     final List<CiValue> allocatorOperands;
 
@@ -167,7 +167,7 @@ public abstract class LIRInstruction {
      *  |       input operands     |   input+temp operands     |      temp operands       |
      *  +--------------------------+---------------------------+--------------------------+
      *
-     * <pre>
+     * </pre>
      *
      * @param opcode the opcode of the new instruction
      * @param result the operand that holds the operation result of this instruction. This will be

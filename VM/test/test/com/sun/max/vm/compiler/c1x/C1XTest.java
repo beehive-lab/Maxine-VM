@@ -113,6 +113,7 @@ public class C1XTest {
     static {
         // add all the fields from C1XOptions as options
         options.addFieldOptions(C1XOptions.class, "C1X", C1X.getHelpMap());
+        C1X.optionsRegistered = true;
 
         // add all the fields from T1XOptions as options
         Class t1xOptionsClass = Classes.forName("com.sun.max.vm.t1x.T1XOptions");
@@ -122,6 +123,9 @@ public class C1XTest {
         } catch (Throwable e) {
             //e.printStackTrace();
         }
+
+        // allows one to specify the compiler class exactly
+        options.addOptions(RuntimeCompiler.compilers);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -192,8 +196,10 @@ public class C1XTest {
             MethodInstrumentation.enable(500);
         }
 
-        boolean useBaseline = t1xOption.getValue();
-        if (t1xOption.getValue()) {
+        boolean useBaseline = false;
+        if (RuntimeCompiler.baselineCompilerOption.isAssigned()) {
+            useBaseline = true;
+        } else if (t1xOption.getValue()) {
             RuntimeCompiler.baselineCompilerOption.setValue(RuntimeCompiler.aliases.get("T1X"));
             useBaseline = true;
         }

@@ -24,6 +24,8 @@ package com.sun.c1x.observer;
 
 import java.util.*;
 
+import com.sun.c1x.debug.*;
+
 /**
  * Base class for compilers that notify subscribed {@link CompilationObserver CompilationObservers} of
  * {@link CompilationEvent CompilationEvents} that occur during their compilations.
@@ -39,7 +41,7 @@ public class ObservableCompiler {
      *         {@code false} otherwise.
      */
     public boolean isObserved() {
-        return observers != null;
+        return observers != null && !TTY.isSuppressed();
     }
 
     /**
@@ -57,7 +59,7 @@ public class ObservableCompiler {
     }
 
     public void fireCompilationStarted(CompilationEvent event) {
-        if (observers != null) {
+        if (isObserved()) {
             for (CompilationObserver observer : observers) {
                 observer.compilationStarted(event);
             }
@@ -65,7 +67,7 @@ public class ObservableCompiler {
     }
 
     public void fireCompilationEvent(CompilationEvent event) {
-        if (observers != null) {
+        if (isObserved()) {
             for (CompilationObserver observer : observers) {
                 observer.compilationEvent(event);
             }
@@ -73,7 +75,7 @@ public class ObservableCompiler {
     }
 
     public void fireCompilationFinished(CompilationEvent event) {
-        if (observers != null) {
+        if (isObserved()) {
             for (CompilationObserver observer : observers) {
                 observer.compilationFinished(event);
             }

@@ -109,13 +109,12 @@ public class CheckCopyright {
         }
 
         /**
-         * Return the modification year from copyright.
+         * Returns a matcher for the modification year from copyright.
          *
          * @param fileContent
-         * @return modification year, or 0 if copyright not expected, or -1 if malformed or missing copyright.
+         * @return modification year matcher or null if copyright not expected
          */
-
-        static int getCopyright(String fileName, String fileContent) {
+        static Matcher getCopyrightMatcher(String fileName, String fileContent) {
             if (copyrightMap == null) {
                 copyrightFilePattern = Pattern.compile(copyrightFiles);
                 copyrightMap = new HashMap<String, CopyrightKind>();
@@ -128,16 +127,12 @@ public class CheckCopyright {
                 copyrightMap.put("", CopyrightKind.HASH);
             }
             if (!copyrightFilePattern.matcher(fileName).matches()) {
-                return 0;
+                return null;
             }
             final String extension = getExtension(fileName);
             CopyrightKind ck = copyrightMap.get(extension);
             assert ck != null;
-            if (ck.copyrightPattern.matcher(fileContent).matches()) {
-                final int lx = getModifiedYearIndex(fileContent);
-                return Integer.parseInt(fileContent.substring(lx, lx + 4));
-            }
-            return -1;
+            return ck.copyrightPattern.matcher(fileContent);
         }
 
         private static String getExtension(String fileName) {
@@ -146,16 +141,6 @@ public class CheckCopyright {
                 return fileName.substring(index + 1);
             }
             return "";
-        }
-
-        static int getModifiedYearIndex(String fileContent) {
-            int firstYearIndex = fileContent.indexOf("20");
-            assert firstYearIndex >= 0;
-            int secondYearIndex = fileContent.indexOf("20", firstYearIndex + 4);
-            if (secondYearIndex == -1) {
-                return firstYearIndex;
-            }
-            return secondYearIndex;
         }
     }
 
@@ -362,27 +347,34 @@ public class CheckCopyright {
         is.read(b);
         is.close();
         final String fileContent = new String(b);
-        int yearInCopyright = CopyrightKind.getCopyright(fileName, fileContent);
-        if (yearInCopyright > 0) {
-            if (yearInCopyright != info.lastYear) {
-                System.out.println(fileName + " copyright last modified year " + yearInCopyright + ", hg last modified year " + info.lastYear);
-                if (FIX.getValue()) {
-                    // Use currentYear as that is what it will be when it's checked in!
-                    System.out.println("updating last modified year of " + fileName + " to " + currentYear);
-                    final int lx = CopyrightKind.getModifiedYearIndex(fileContent);
-                    final String newContent = fileContent.substring(0, lx) + info.lastYear + fileContent.substring(lx + 4);
-                    final FileOutputStream os = new FileOutputStream(file);
-                    os.write(newContent.getBytes());
-                    os.close();
-                } else {
-                    error = true;
+        Matcher copyrightMatcher = CopyrightKind.getCopyrightMatcher(fileName, fileContent);
+        if (copyrightMatcher != null) {
+            if (copyrightMatcher.matches()) {
+                int yearInCopyright;
+                int yearInCopyrightIndex;
+                yearInCopyright = Integer.parseInt(copyrightMatcher.group(2));
+                yearInCopyrightIndex = copyrightMatcher.start(2);
+                if (yearInCopyright != info.lastYear) {
+                    System.out.println(fileName + " copyright last modified year " + yearInCopyright + ", hg last modified year " + info.lastYear);
+                    if (FIX.getValue()) {
+                        // Use currentYear as that is what it will be when it's checked in!
+                        System.out.println("updating last modified year of " + fileName + " to " + currentYear);
+                        final int lx = yearInCopyrightIndex;
+                        final String newContent = fileContent.substring(0, lx) + info.lastYear + fileContent.substring(lx + 4);
+                        final FileOutputStream os = new FileOutputStream(file);
+                        os.write(newContent.getBytes());
+                        os.close();
+                    } else {
+                        error = true;
+                    }
                 }
-            }
-        } else {
-            if (yearInCopyright < 0 || EXHAUSTIVE.getValue()) {
+            } else {
                 System.out.println("ERROR: file " + fileName + " has no copyright");
                 error = true;
             }
+        } else if (EXHAUSTIVE.getValue()) {
+            System.out.println("ERROR: file " + fileName + " has no copyright");
+            error = true;
         }
     }
 

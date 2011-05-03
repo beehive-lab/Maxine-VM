@@ -153,7 +153,7 @@ public class CiUnresolvedMethod implements RiMethod {
         return false;
     }
     
-    public Class<?> accessor() {
+    public RiType accessor() {
         return null;
     }
     

@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.c1x.util.Util.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
@@ -35,8 +34,8 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import java.util.*;
 
 import com.sun.c1x.target.amd64.*;
-import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -51,7 +50,6 @@ import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
-import com.sun.max.vm.stack.amd64.*;
 
 /**
  * Stubs are pieces of hand crafted assembly code for expressing semantics that cannot otherwise be expressed as Java.
@@ -116,16 +114,21 @@ public class Stubs {
                 resolveVirtualCall = new CriticalMethod(Stubs.class, "resolveVirtualCall", null);
                 resolveInterfaceCall = new CriticalMethod(Stubs.class, "resolveInterfaceCall", null);
                 resolveVirtualCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                signatureToKinds(resolveVirtualCall.classMethodActor.signature(), CiKind.Object), target()).locations;
+                                CRIUtil.signatureToKinds(resolveVirtualCall.classMethodActor.signature(), CiKind.Object), target()).locations;
                 resolveInterfaceCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall,
-                                signatureToKinds(resolveInterfaceCall.classMethodActor.signature(), CiKind.Object), target()).locations;
+                                CRIUtil.signatureToKinds(resolveInterfaceCall.classMethodActor.signature(), CiKind.Object), target()).locations;
                 staticTrampoline = genStaticTrampoline();
                 trapStub = genTrapStub();
+
+                CriticalMethod unwind = new CriticalMethod(Stubs.class, "unwind", null);
+                CiValue[] unwindArgs = registerConfigs.globalStub.getCallingConvention(JavaCall,
+                                CRIUtil.signatureToKinds(unwind.classMethodActor.signature(), CiKind.Object), target()).locations;
+                unwind.classMethodActor.targetState = genUnwind(unwindArgs);
             }
         }
     }
 
-    private final RegisterConfigs registerConfigs;
+    public final RegisterConfigs registerConfigs;
 
     private int prologueSize = -1;
 
@@ -285,7 +288,7 @@ public class Stubs {
             // compute the static trampoline call site
             CiRegister callSite = registerConfig.getScratchRegister();
             asm.movq(callSite, new CiAddress(CiKind.Word, AMD64.rsp.asValue()));
-            asm.subq(callSite, AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
+            asm.subq(callSite, AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
 
             // now allocate the frame for this method
             asm.subq(AMD64.rsp, frameSize);
@@ -312,7 +315,7 @@ public class Stubs {
 
             // patch the return address to re-execute the static call
             asm.movq(callSite, new CiAddress(CiKind.Word, AMD64.rsp.asValue()));
-            asm.subq(callSite, AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
+            asm.subq(callSite, AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
             asm.movq(new CiAddress(CiKind.Word, AMD64.rsp.asValue()), callSite);
 
             asm.ret(0);
@@ -352,7 +355,7 @@ public class Stubs {
             CiRegister scratch = registerConfig.getScratchRegister();
             int frameSize = platform().target.alignFrameSize(csa.size);
             int frameToCSA = 0;
-            CiKind[] handleTrapParameters = Util.signatureToKinds(Trap.handleTrap.classMethodActor.signature(), null);
+            CiKind[] handleTrapParameters = CRIUtil.signatureToKinds(Trap.handleTrap.classMethodActor.signature(), null);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target()).locations;
 
             // the very first instruction must save the flags.
@@ -398,6 +401,44 @@ public class Stubs {
             asm.ret(0);
 
             return new C1XTargetMethod(Flavor.TrapStub, "trapStub", asm.finishTargetMethod("trapStub", runtime(), -1, true));
+        }
+        throw FatalError.unimplemented();
+    }
+
+    @NEVER_INLINE
+    public static void unwind(Address catchAddress, Pointer sp, Pointer fp) {
+        FatalError.unexpected("stub should be overwritten");
+    }
+
+    @HOSTED_ONLY
+    private TargetMethod genUnwind(CiValue[] unwindArgs) {
+        if (platform().isa == ISA.AMD64) {
+            CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.globalStub;
+            AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
+            int frameSize = platform().target.alignFrameSize(0);
+            asm.setFrameSize(frameSize);
+
+            for (int i = 0; i < prologueSize; ++i) {
+                asm.nop();
+            }
+
+            CiValue[] args = unwindArgs;
+
+            CiRegister catchAddress = args[0].asRegister();
+            CiRegister catchSP = args[1].asRegister();
+            CiRegister catchFP = args[2].asRegister();
+
+            // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
+            // When the RET instruction is executed, the pushed 'catchAddress' will be popped from the stack
+            // and the stack will be in the correct state for the handler.
+            asm.subq(catchSP, Word.size());
+            asm.movq(new CiAddress(CiKind.Word, catchSP.asValue()), catchAddress);
+            asm.movq(AMD64.rbp, catchFP);
+            asm.movq(AMD64.rsp, catchSP);
+            asm.ret(0);
+
+            String stubName = "unwindStub";
+            return new C1XTargetMethod(GlobalStub, stubName, asm.finishTargetMethod(stubName, runtime(), -1, true));
         }
         throw FatalError.unimplemented();
     }

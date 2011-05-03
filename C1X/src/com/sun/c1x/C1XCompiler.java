@@ -127,7 +127,7 @@ public class C1XCompiler extends ObservableCompiler {
             }
         }
 
-        if (C1XOptions.PrintCFGToFile && !TTY.isSuppressed()) {
+        if (C1XOptions.PrintCFGToFile) {
             addCompilationObserver(new CFGPrinterObserver());
         }
     }

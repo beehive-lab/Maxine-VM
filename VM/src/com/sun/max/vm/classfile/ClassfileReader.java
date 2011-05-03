@@ -902,7 +902,7 @@ public final class ClassfileReader {
                                 continue nextMethod;
                             }
                         } else if (isBytecodeTemplate(annotation.annotationType())) {
-                            flags |= TEMPLATE | UNSAFE;
+                            flags |= TEMPLATE | UNSAFE | INLINE;
                         } else if (annotation.annotationType() == INLINE.class) {
                             flags |= INLINE;
                         } else if (annotation.annotationType() == NEVER_INLINE.class) {
