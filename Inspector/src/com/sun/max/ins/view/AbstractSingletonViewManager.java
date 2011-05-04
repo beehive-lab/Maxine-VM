@@ -22,6 +22,8 @@
  */
 package com.sun.max.ins.view;
 
+import java.util.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
@@ -45,13 +47,18 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
     /**
      * The active inspector instance; null when inactive.
      */
-    protected Inspector_Kind inspector = null;
+    private ArrayList<Inspector_Kind> inspectors = new ArrayList<Inspector_Kind>(1);
+
+    private final InspectorAction activateViewAction;
+    private final InspectorAction deactivateAllAction;
 
     protected AbstractSingletonViewManager(Inspection inspection, ViewKind viewKind, String shortName, String longName) {
         super(inspection);
         this.viewKind = viewKind;
         this.shortName = shortName;
         this.longName = longName;
+        this.activateViewAction = new ActivateViewAction(shortName);
+        this.deactivateAllAction = new DeactivateAllAction(shortName);
     }
 
     public final ViewKind viewKind() {
@@ -70,18 +77,149 @@ public abstract class AbstractSingletonViewManager<Inspector_Kind extends Inspec
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Singleton view kinds are assumed by default to be supported.
+     * Concrete view manager types should override if this
+     * isn't always so.
+     */
+    public boolean isSupported() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Singleton views are assumed by default to be enabled
+     * if they are supported.
+     * Concrete view manager types should override if this
+     * isn't always so.
+     */
+    public boolean isEnabled() {
+        return isSupported();
+    }
+
     public final boolean isActive() {
-        return inspector != null;
+        return inspectors.size() > 0;
+    }
+
+    public final List<Inspector_Kind> activeViews() {
+        return inspectors;
+    }
+
+    public Inspector_Kind activateView() {
+        if (inspectors.size() == 0) {
+            inspectors.add(createView(inspection()));
+            refresh();
+        }
+        return inspectors.get(0);
     }
 
     public final void deactivateView() {
-        assert inspector != null;
-        inspector.dispose();
+        assert inspectors.size() == 1;
+        inspectors.get(0).dispose();
+    }
+
+    public final InspectorAction activateSingletonViewAction() {
+        return activateViewAction;
+    }
+
+    public InspectorAction deactivateAllAction(Inspector exception) {
+        if (exception == null) {
+            return deactivateAllAction;
+        }
+        return new DeactivateAllExceptAction(shortName, exception);
     }
 
     public final void notifyViewClosing(Inspector inspector) {
-        assert this.inspector == inspector;
-        this.inspector = null;
+        assert inspectors.remove(inspector);
+        refresh();
     }
 
+    /**
+     * Creates an instance of the concrete view kind.
+     */
+    protected abstract Inspector_Kind createView(Inspection inspection);
+
+    /**
+     * Update any internal state on occasion of view activation/deactivation.
+     */
+    private void refresh() {
+        deactivateAllAction.refresh(true);
+    }
+
+    /**
+     * Action: makes visible and highlights a singleton view.
+     * <p>
+     * Note that this action is enabled, even when the view is already
+     * activated (visible); in that case it serves to bring the view
+     * forward and highlight it.
+     */
+    private final class ActivateViewAction extends InspectorAction {
+
+        public ActivateViewAction(String title) {
+            super(inspection(), "View " + title);
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            activateView().highlight();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(AbstractSingletonViewManager.this.isEnabled());
+        }
+    }
+
+    /**
+     * Action: deactivate all views, which in the case of a singleton
+     * means only the one view, if already activated.
+     */
+    private final class DeactivateAllAction extends InspectorAction {
+
+        public DeactivateAllAction(String title) {
+            super(inspection(), "Close " + title + " view");
+        }
+
+        @Override
+        protected void procedure() {
+            if (isActive()) {
+                deactivateView();
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(isActive());
+        }
+    }
+
+    /**
+     * Action: deactivate the singleton view, with one exception, which might
+     * be the singleton view itself.
+     */
+    private final class DeactivateAllExceptAction extends InspectorAction {
+
+        private final Inspector exceptInspector;
+
+        public DeactivateAllExceptAction(String title, Inspector exceptInspector) {
+            super(inspection(), "Close " + title + " view");
+            this.exceptInspector = exceptInspector;
+        }
+
+        @Override
+        protected void procedure() {
+            if (isActive() && !inspectors.get(0).equals(exceptInspector)) {
+                deactivateView();
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(isActive());
+        }
+    }
 }

@@ -22,13 +22,16 @@
  */
 package com.sun.max.ins.view;
 
+import java.util.*;
+
+import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 
 
 /**
  * A manager for a specific kind of Inspector View, each instance
- * of which is implemented as a subclass of {@Inspector}.  Some kinds
+ * of which is implemented as a subclass of {@link Inspector}.  Some kinds
  * of views are singletons, others may have an unbounded number of
  * instances. The intention is that there be a singleton manager for
  * each kind of view.
@@ -38,7 +41,7 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  *
  * @author Michael Van De Vanter
  */
-public interface ViewManager  {
+public interface ViewManager<Inspector_Kind extends Inspector>  {
 
     /**
      * @return the kind of view being managed by this manager
@@ -56,24 +59,47 @@ public interface ViewManager  {
     String longName();
 
     /**
-     * @return whether this kind view is supported by currently running configuration and platform
-     */
-    boolean isSupported();
-
-    /**
-     * @return whether it is possible to create this kind of view under the current circumstances
-     */
-    boolean isEnabled();
-
-    /**
      * @return whether there can only be one instance of this kind of view.
      */
     boolean isSingleton();
 
     /**
-     * @return whether one or more views of this kind are currently active
+     * Determines whether this kind of view is supported by currently
+     * running configuration and platform.
+     *
+     * @return whether this kind view is
+     */
+    boolean isSupported();
+
+    /**
+     * Determines whether this kind of view can be created under the current circumstances.
+     * Implies {@link #isSupported()}.
+     *
+     * @return whether it is possible to create this kind of view
+     */
+    boolean isEnabled();
+
+    /**
+     * Determines whether one or more views of this kind are currently active.
+     * Implies {@link #isEnabled()}.
+     *
+     * @return whether views are currently active
      */
     boolean isActive();
+
+    /**
+     * @return all active views being managed by this manager.
+     */
+    List<Inspector_Kind> activeViews();
+
+    /**
+     * Gets an action for deactivating all views being managed by this manager,
+     * possibly excepting a single view.
+     *
+     * @param exceptInspector a view that should not be deactivated
+     * @return the action for deactivating views being managed by this manager
+     */
+    InspectorAction deactivateAllAction(Inspector exceptInspector);
 
     /**
      * Notifies the manager that a view under its management is

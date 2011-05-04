@@ -39,9 +39,6 @@ import com.sun.max.vm.thread.*;
 /**
  * Substitutions for {@link Throwable} that collect the stack trace.
  *
- * @author Ben L. Titzer
- * @author Laurent Daynes
- * @author Doug Simon
  */
 @METHOD_SUBSTITUTIONS(Throwable.class)
 public final class JDK_java_lang_Throwable {
@@ -196,14 +193,18 @@ public final class JDK_java_lang_Throwable {
     private synchronized StackTraceElement[] getOurStackTrace() {
         // Initialize stack trace if this is the first call to this method
         if (stackTrace == null) {
-            try {
-                stackTrace = ((Backtrace) backtrace).getTrace();
-            } catch (OutOfMemoryError e) {
-                // Could not build backtrace due to memory shortage
+            if (backtrace == null) {
                 stackTrace = new StackTraceElement[0];
+            } else {
+                try {
+                    stackTrace = ((Backtrace) backtrace).getTrace();
+                } catch (OutOfMemoryError e) {
+                    // Could not build backtrace due to memory shortage
+                    stackTrace = new StackTraceElement[0];
+                }
+                // Let the GC clean up the back trace
+                backtrace = null;
             }
-            // Let the GC clean up the back trace
-            backtrace = null;
         }
         return stackTrace;
     }

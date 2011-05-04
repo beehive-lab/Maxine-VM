@@ -37,39 +37,30 @@ import com.sun.max.program.*;
  *
  * @author Michael Van De Vanter
  */
-public final class UserFocusInspector extends Inspector {
+public final class UserFocusInspector extends Inspector<UserFocusInspector> {
 
     private static final ViewKind VIEW_KIND = ViewKind.USER_FOCUS;
     private static final String SHORT_NAME = "User Focus";
     private static final String LONG_NAME = "User Focus Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "userFocusInspectorGeometry";
 
-    private static final class UserFocusViewManager extends AbstractSingletonViewManager<UserFocusInspector> {
+    public static final class UserFocusViewManager extends AbstractSingletonViewManager<UserFocusInspector> {
 
         protected UserFocusViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected UserFocusInspector createView(Inspection inspection) {
+            return new UserFocusInspector(inspection);
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public UserFocusInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new UserFocusInspector(inspection);
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
     private static UserFocusViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static UserFocusViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new UserFocusViewManager(inspection);
         }
@@ -90,7 +81,7 @@ public final class UserFocusInspector extends Inspector {
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         Trace.end(1,  tracePrefix() + " initializing");
@@ -128,17 +119,12 @@ public final class UserFocusInspector extends Inspector {
         return getDefaultPrintAction();
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         focus().removeListener(table);
         super.inspectorClosing();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+
+package com.sun.max.ins.view;
+
+import com.sun.max.ins.gui.*;
+
 
 /**
- * A marker interface for an {@link Inspector} that contains other inspectors.
- * The contained inspectors have the container as their parent.
-  *
- * @author Mick Jordan
- * @author Doug Simon
+ * Manager for a kind of Inspector view that may have an arbitrary
+ * number of instances active.
+ *
  * @author Michael Van De Vanter
  */
-public interface InspectorContainer extends Iterable<Inspector> {
-
-    int length();
-
-    Inspector inspectorAt(int i);
+public interface MultiViewManager<Inspector_Kind extends Inspector> extends ViewManager<Inspector_Kind> {
 
     /**
-     * Ensures that the inspector is visible and selected.
+     * Disposes all existing views of this kind.
      */
-    void setSelected(Inspector inspector);
+    void deactivateAllViews();
 
-    boolean isSelected(Inspector inspector);
-
-    Inspector getSelected();
-
-    int getSelectedIndex();
 }

@@ -40,18 +40,7 @@ public final class TeleVMState implements MaxVMState {
     private static final List<MaxBreakpointEvent> EMPTY_MAXBREAKPOINTEVENT_LIST = Collections.emptyList();
     private static final List<MaxMemoryRegion> EMPTY_MAXMEMORYREGION_LIST = Collections.emptyList();
 
-    public static final TeleVMState NONE = new TeleVMState(
-        ProcessState.UNKNOWN,
-        -1L,
-        EMPTY_MAXMEMORYREGION_LIST,
-        EMPTY_THREAD_LIST,
-        (TeleNativeThread) null,
-        EMPTY_THREAD_LIST,
-        EMPTY_THREAD_LIST,
-        EMPTY_BREAKPOINTEVENT_LIST,
-        (TeleWatchpointEvent) null,
-        false, (TeleVMState) null);
-
+    private final MaxInspectionMode inspectionMode;
     private final MaxProcessState processState;
     private final long serialID;
     private final long epoch;
@@ -66,6 +55,7 @@ public final class TeleVMState implements MaxVMState {
     private final TeleVMState previous;
 
     /**
+     * @param inspectionMode TODO
      * @param processState current state of the VM
      * @param epoch current process epoch counter
      * @param memoryAllocations memory regions the VM has allocated from the OS
@@ -79,6 +69,7 @@ public final class TeleVMState implements MaxVMState {
      * @param previous previous state
      */
     public TeleVMState(
+                    MaxInspectionMode inspectionMode,
                     ProcessState processState,
                     long epoch,
                     List<MaxMemoryRegion> memoryAllocations,
@@ -87,8 +78,8 @@ public final class TeleVMState implements MaxVMState {
                     List<TeleNativeThread> threadsStarted,
                     List<TeleNativeThread> threadsDied,
                     List<TeleBreakpointEvent> breakpointEvents,
-                    TeleWatchpointEvent teleWatchpointEvent,
-                    boolean isInGC, TeleVMState previous) {
+                    TeleWatchpointEvent teleWatchpointEvent, boolean isInGC, TeleVMState previous) {
+        this.inspectionMode = inspectionMode;
         switch(processState) {
             case RUNNING:
                 this.processState = MaxProcessState.RUNNING;
@@ -271,6 +262,28 @@ public final class TeleVMState implements MaxVMState {
             }
             state = state.previous();
         }
+    }
+
+    /**
+     * Creates a null state that is designed to precede any real states in
+     * a state history.
+     *
+     * @param mode the mode of the inspection in which the history is being
+     * recorded.
+     * @return a null state with no predecessor, unknown process state, and no thread information.
+     */
+    public static TeleVMState nullState(MaxInspectionMode mode) {
+        return new TeleVMState(
+                       mode,
+                       ProcessState.UNKNOWN,
+                       -1L,
+                       EMPTY_MAXMEMORYREGION_LIST,
+                       EMPTY_THREAD_LIST,
+                       (TeleNativeThread) null,
+                       EMPTY_THREAD_LIST,
+                       EMPTY_THREAD_LIST,
+                       EMPTY_BREAKPOINTEVENT_LIST,
+                       (TeleWatchpointEvent) null, false, (TeleVMState) null);
     }
 
 }

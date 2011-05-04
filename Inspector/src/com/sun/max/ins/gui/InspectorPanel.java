@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import java.awt.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 
 /**
@@ -77,6 +78,10 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
 
     public final InspectionFocus focus() {
         return inspection.focus();
+    }
+
+    public final InspectionViews views() {
+        return inspection.views();
     }
 
     public final InspectionActions actions() {

@@ -34,7 +34,7 @@ import com.sun.max.tele.object.*;
  *
  * @author Michael Van De Vanter
  */
-public final class CharacterArrayInspector extends ObjectInspector {
+public final class CharacterArrayInspector extends ObjectInspector<CharacterArrayInspector> {
 
     private InspectorTabbedPane tabbedPane;
     private ObjectScrollPane elementsPane;

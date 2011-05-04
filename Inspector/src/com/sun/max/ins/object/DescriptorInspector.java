@@ -36,7 +36,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Michael Van De Vanter
  */
-public class DescriptorInspector extends ObjectInspector {
+public class DescriptorInspector extends ObjectInspector<DescriptorInspector> {
 
     private InspectorTabbedPane tabbedPane;
     private ObjectScrollPane fieldsPane;

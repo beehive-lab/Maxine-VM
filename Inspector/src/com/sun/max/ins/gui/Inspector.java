@@ -29,7 +29,6 @@ import java.util.*;
 
 import javax.swing.*;
 
-import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
@@ -115,13 +114,13 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             case DEFAULT_MENU:
                 return new AbstractInspectorMenuItems(inspection()) {
                     public void addTo(InspectorMenu menu) {
-                        menu.add(getCloseAction(inspector));
-                        menu.add(actions().closeViews(Inspector.class, inspector, "Close Other Inspectors"));
+                        menu.add(getCloseViewAction());
+                        menu.add(views().deactivateOtherViewsAction(inspector));
                         menu.addSeparator();
-                        menu.add(actions().movedToCenter(inspector));
-                        menu.add(actions().resizeToFit(inspector));
-                        menu.add(actions().resizeToFill(inspector));
-                        menu.add(actions().restoreDefaultGeometry(inspector));
+                        menu.add(gui().moveToMiddleAction(inspector));
+                        menu.add(gui().resizeToFitAction(inspector));
+                        menu.add(gui().resizeToFillAction(inspector));
+                        menu.add(gui().restoreDefaultGeometryAction(inspector));
                         menu.addSeparator();
                         menu.add(getPrintAction());
                     }
@@ -157,10 +156,10 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                     public void addTo(InspectorMenu menu) {
                         menu.addSeparator();
                         menu.add(actions().genericBreakpointMenuItems());
-                        menu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
+                        menu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
                         if (vm().watchpointManager() != null) {
                             menu.add(actions().genericWatchpointMenuItems());
-                            menu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
+                            menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
                         }
                     }
                 };
@@ -197,6 +196,9 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     private InspectorFrame frame;
 
     private final TimedTrace updateTracer;
+
+    private InspectorAction showViewAction = null;
+    private InspectorAction closeViewAction = null;
 
     /**
      * Abstract constructor for all inspector views.
@@ -261,6 +263,16 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public final void setGeometry(Rectangle rectangle) {
         getJComponent().setBounds(rectangle);
     }
+
+    /**
+     * Sets the size of the Inspector in the main frame.
+     *
+     * @param rectangle the new geometry for the Inspector
+     */
+    public final void setSize(int width, int height) {
+        getJComponent().setSize(width, height);
+    }
+
 
     protected void setWarning() {
         //highlight();
@@ -350,10 +362,8 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      *
      * @param addMenuBar should a menu bar be added to the frame.
      */
-    protected InspectorFrame createTabFrame(TabbedInspector<Inspector_Type> parent) {
-        final Class<Inspector_Type> type = null;
-        final Inspector_Type thisInspector = Utils.cast(type, this);
-        frame = new InspectorRootPane<Inspector_Type>(thisInspector, parent, true);
+    protected InspectorFrame createTabFrame(TabbedInspector parent) {
+        frame = new InspectorRootPane(this, parent, true);
         setTitle();
         createView();
         frame.pack();
@@ -519,6 +529,8 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             inspection().settings().removeSaveSettingsListener(saveGeometrySettingsListener);
         }
         inspection().settings().save();
+        // don't try to recompute the title, just get the one that's been in use
+        Trace.line(1, tracePrefix() + " closing for " + getTitle());
     }
 
     public void vmStateChanged(boolean force) {
@@ -532,6 +544,18 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     public void watchpointSetChanged() {
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Default behavior for any change in view configuration is to just build
+     * the view again from the start.  Concrete inspector types should override
+     * this method if that doesn't work (although it probably ought to be made
+     * to work always).
+     */
+    public void viewConfigurationChanged() {
+        reconstructView();
     }
 
     public void vmProcessTerminated() {
@@ -565,6 +589,40 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     }
 
     /**
+     * @return an action that makes visible the inspector and highlights it.
+     */
+    public final InspectorAction getShowViewAction() {
+        // Only need one, but maybe not even that one; create lazily.
+        if (showViewAction == null) {
+            showViewAction = new InspectorAction(inspection(), getTextForTitle()) {
+
+                @Override
+                protected void procedure() {
+                    highlight();
+                }
+            };
+        }
+        return showViewAction;
+    }
+
+    /**
+     * @return an action that closes the view.
+     */
+    public final InspectorAction getCloseViewAction() {
+        // Only need one, but maybe not even that one; create lazily.
+        if (closeViewAction == null) {
+            closeViewAction = new InspectorAction(inspection(), "Close") {
+
+                @Override
+                protected void procedure() {
+                    dispose();
+                }
+            };
+        }
+        return closeViewAction;
+    }
+
+    /**
      * @return an action that will present a dialog that enables selection of view options;
      * returns a disabled dummy action if not overridden.
      */
@@ -587,18 +645,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
             protected void procedure() {
                 Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
                 forceRefresh();
-            }
-        };
-    }
-
-    /**
-     * @return an action that will close this inspector
-     */
-    public InspectorAction getCloseAction(final Inspector inspector) {
-        return new InspectorAction(inspection(), "Close") {
-            @Override
-            protected void procedure() {
-                inspector.dispose();
             }
         };
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,11 @@ public class OptionTypes {
                 return 0L;
             }
             try {
+                if (string.startsWith("0x")) {
+                    return Long.valueOf(string.substring(2), 16);
+                } else if (string.startsWith("-0x")) {
+                    return -Long.valueOf(string.substring(3), 16);
+                }
                 return Long.valueOf(string);
             } catch (NumberFormatException e) {
                 throw new Option.Error("invalid long value: " + string);
@@ -214,7 +219,6 @@ public class OptionTypes {
     };
 
     /**
-     * @author Thomas Wuerthinger
      *
      * @return An option type that takes a class name as its value. It reflectively creates an instance
      * of the specified class. If the class is not found, it tries to prefix the class name with "com.sum.max.".
@@ -248,7 +252,6 @@ public class OptionTypes {
     }
 
     /**
-     * @author Thomas Wuerthinger
      *
      * @return An option type that takes a list of class names as its value. Then it reflectively creates instances
      * of these classes and returns them as a list.
@@ -300,6 +303,11 @@ public class OptionTypes {
                 return 0;
             }
             try {
+                if (string.startsWith("0x")) {
+                    return Integer.valueOf(string.substring(2), 16);
+                } else if (string.startsWith("-0x")) {
+                    return -Integer.valueOf(string.substring(3), 16);
+                }
                 return Integer.valueOf(string);
             } catch (NumberFormatException e) {
                 throw new Option.Error("invalid int value: " + string);

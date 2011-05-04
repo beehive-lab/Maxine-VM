@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins.gui;
+
+package com.sun.max.ins.view;
+
+import javax.swing.*;
+
+import com.sun.max.ins.gui.*;
+
 
 /**
- * A marker interface for an {@link Inspector} that contains other inspectors.
- * The contained inspectors have the container as their parent.
-  *
- * @author Mick Jordan
- * @author Doug Simon
+ * Methods for creating views of a particular kind.
+ *
  * @author Michael Van De Vanter
  */
-public interface InspectorContainer extends Iterable<Inspector> {
-
-    int length();
-
-    Inspector inspectorAt(int i);
+public interface InspectionViewFactory<Inspector_Kind extends Inspector> {
 
     /**
-     * Ensures that the inspector is visible and selected.
+     * Gets a menu that includes actions for creating new views.
+     * If there are existing activated views of the same kind, then
+     * these are listed and selecting one of them causes the view
+     * to be highlighted.
+     * If there are any activated views of the same kind, the menu includes an
+     * entry (at the end, after a separator) that deactivates all
+     * the views.
+     * <p>
+     * Returns null if no such menu is appropriate or supported.  For example,
+     * there is typically only one way to activate a singleton view and so
+     * a menu of commands may not be useful.
+     *
+     * @return the menu that displays all activated views that can be highlighted
      */
-    void setSelected(Inspector inspector);
-
-    boolean isSelected(Inspector inspector);
-
-    Inspector getSelected();
-
-    int getSelectedIndex();
+    JMenu viewMenu();
 }

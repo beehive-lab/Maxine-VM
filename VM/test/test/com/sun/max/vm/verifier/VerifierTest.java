@@ -48,9 +48,6 @@ import com.sun.max.vm.verifier.*;
  * Java prototype.
  *
  * -jcklist=test/test/com/sun/max/vm/verifier/jck.classes.txt
- *
- * @author Doug Simon
- * @author David Liu
  */
 public class VerifierTest extends VmTestCase {
 
@@ -163,7 +160,7 @@ public class VerifierTest extends VmTestCase {
 
         int classActorIndex = 0;
         if (numberOfClassesVerified == 0 || VMCLASSES.getValue()) {
-            ClassActor[] classActors = ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses();
+            ClassActor[] classActors = ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses();
             while (true) {
                 while (classActorIndex != classActors.length) {
                     final ClassActor classActor = classActors[classActorIndex++];
@@ -178,7 +175,7 @@ public class VerifierTest extends VmTestCase {
                 if (classActorIndex == ClassRegistry.BOOT_CLASS_REGISTRY.numberOfClassActors()) {
                     break;
                 }
-                classActors = ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses();
+                classActors = ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses();
             }
         }
     }

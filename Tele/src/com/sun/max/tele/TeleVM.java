@@ -603,7 +603,7 @@ public abstract class TeleVM implements MaxVM {
      * The immutable history of all VM states, as of the last state transition; thread safe
      * for access by client methods on any thread.
      */
-    private volatile TeleVMState teleVMState = TeleVMState.NONE;
+    private volatile TeleVMState teleVMState;
 
     private List<MaxVMStateListener> vmStateListeners = new CopyOnWriteArrayList<MaxVMStateListener>();
 
@@ -703,6 +703,7 @@ public abstract class TeleVM implements MaxVM {
     protected TeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments) throws BootImageException {
         final TimedTrace tracer = new TimedTrace(TRACE_VALUE, tracePrefix() + " creating");
         tracer.begin();
+        this.teleVMState = TeleVMState.nullState(mode);
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
 
@@ -1162,7 +1163,9 @@ public abstract class TeleVM implements MaxVM {
             addNonNull(memoryAllocations, memoryRegion);
         }
 
-        this.teleVMState = new TeleVMState(processState,
+        this.teleVMState = new TeleVMState(
+            mode,
+            processState,
             epoch,
             memoryAllocations,
             threads,
@@ -1171,8 +1174,7 @@ public abstract class TeleVM implements MaxVM {
             threadsDied,
             breakpointEvents,
             teleWatchpointEvent,
-            heap.isInGC(),
-            teleVMState);
+            heap.isInGC(), teleVMState);
         for (final MaxVMStateListener listener : vmStateListeners) {
             listener.stateChanged(teleVMState);
         }

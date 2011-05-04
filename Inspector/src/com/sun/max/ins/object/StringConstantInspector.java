@@ -35,7 +35,7 @@ import com.sun.max.vm.classfile.constant.*;
  *
  * @author Michael Van De Vanter
  */
-public class StringConstantInspector extends ObjectInspector {
+public class StringConstantInspector extends ObjectInspector<StringConstantInspector> {
 
     private InspectorTabbedPane tabbedPane;
     private ObjectScrollPane fieldsPane;

@@ -642,7 +642,7 @@ public class jmax {
                                 out.println("\t<classpathentry exported=\"true\" kind=\"con\" path=\"" + l.eclipseContainer + "\"/>");
                             } else {
                                 File path = l.path();
-                                if (path.exists()) {
+                                if (l.mustExist) {
                                     if (path.isAbsolute()) {
                                         out.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"" + path + "\"/>");
                                     } else {
