@@ -145,12 +145,6 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
     }
 
-    // HACK to get around C1X bug.
-    @NEVER_INLINE
-    private Address getEndOfCodeRegion(Address endOfBootCodeRegion, Address endOfCodeRegion) {
-        final Address result = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
-        return result;
-    }
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
      */
@@ -168,9 +162,7 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
 
-        // FIXME: HACK to get around C1X bugs: the following cause CEE to fail (ends up with wrong type for the two side of the branch here).
-        // final Address  heapLowerBound = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
-        final Address  heapLowerBound = getEndOfCodeRegion(endOfBootCodeRegion, endOfCodeRegion);
+        final Address  heapLowerBound = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
 
 
