@@ -46,7 +46,6 @@ import com.sun.max.vm.type.*;
  * product, a binary image that contains the compiled machine code of the virtual machine
  * as well as objects and metadata that implement the virtual machine, is called the
  * "image".
- *
  */
 public final class BootImageGenerator {
 

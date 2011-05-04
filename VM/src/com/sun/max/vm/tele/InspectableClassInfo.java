@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,8 +34,6 @@ import com.sun.max.vm.actor.holder.*;
  *
  * CAUTION:  When active, this implementation hold references to
  * all dynamically loaded {@link ClassActor}s, and thus prevents class unloading.
- *
- * @author Michael Van De Vanter
  */
 public final class InspectableClassInfo {
 
@@ -53,17 +51,19 @@ public final class InspectableClassInfo {
      */
     public static void notifyClassLoaded(ClassActor classActor) {
         if (Inspectable.isVmInspected()) {
-            if (classActors == null) {
-                classActors = new ClassActor[100];
+            synchronized (InspectableClassInfo.class) {
+                if (classActors == null) {
+                    classActors = new ClassActor[100];
+                }
+                if (classActorCount == classActors.length) {
+                    classActors = Arrays.copyOf(classActors, classActorCount * 2);
+                }
+                // The classActor needs to be set up before we increment classActorCount
+                // otherwise we have a race condition where the Inspector might see
+                // a null classActor.
+                classActors[classActorCount] = classActor;
+                classActorCount++;
             }
-            if (classActorCount == classActors.length) {
-                classActors = Arrays.copyOf(classActors, classActorCount * 2);
-            }
-            // The classActor needs to be set up before we increment classActorCount
-            // otherwise we have a race condition where the Inspector might see
-            // a null classActor.
-            classActors[classActorCount] = classActor;
-            classActorCount++;
         }
     }
 
