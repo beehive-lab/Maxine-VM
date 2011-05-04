@@ -87,8 +87,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
 
     public void close() {
         if (reserve > 0) {
-            // FIXME:
-            // HERE NEED SOME GUARANTEE THAT THE ACCOUNT HOLDS NO LIVE OBJECTS.
+            // TODO (ld) NEED SOME GUARANTEE THAT THE ACCOUNT HOLDS NO LIVE OBJECTS
             // Free all the regions. Should we uncommit them too ?
             theHeapRegionManager.release(reserve);
             reserve = 0;

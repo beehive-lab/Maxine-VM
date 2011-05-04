@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,9 +33,6 @@ import javax.swing.border.*;
  * A dialog for displaying the details of an exception. Initially the dialog only shows the exception's
  * {@linkplain Throwable#getMessage() message}. It includes a button for expanding the dialog to also show the stack
  * trace. When the stack trace is shown, pressing the same button hides the stack trace.
- *
- * @author Doug Simon
- * @author Aritra Bandyopadhyay
  */
 public final class ThrowableDialog extends JDialog {
 
@@ -75,7 +72,7 @@ public final class ThrowableDialog extends JDialog {
      * @param title  the {@code String} to display in the dialog's title bar
      */
     private ThrowableDialog(Throwable throwable, Frame owner, String title) {
-        super(owner, title, true);
+        super(owner, title, false);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setAlwaysOnTop(true);
 

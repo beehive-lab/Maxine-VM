@@ -198,12 +198,12 @@ public final class HeapRegionManager implements HeapAccountOwner {
         final int numRegions = managedSpaceSize.unsignedShiftedRight(log2RegionSizeInBytes).toInt();
         final int regionListSize = numRegions << 1; // 2 entries per regions, one for each link (prev and next).
 
-        // FIXME: have we committed the space that is going to be used by the boot allocator ?
+        // FIXME (ld) have we committed the space that is going to be used by the boot allocator ?
 
         unreserved = numRegions;
         // Estimate conservatively what the heap manager needs initially. This is to commit
         // enough memory to get started.
-        // FIXME: initial size should be made to correspond to some notion of initial heap.
+        // TODO (ld) initial size should be made to correspond to some notion of initial heap.
 
         // 1. The region info table:
         Size initialSize = tupleSize(regionInfoClass).plus(tupleSize(RegionTable.class));
@@ -237,7 +237,7 @@ public final class HeapRegionManager implements HeapAccountOwner {
 
             // Ready to open bootstrap heap accounts now.
             // Start with opening the boot heap account to set the records straight after bootstrap.
-            // FIXME: initialNumRegions may not be the reserve we want here. Need to adjust that to the desired "immortal" size.
+            // TODO (ld) initialNumRegions may not be the reserve we want here. Need to adjust that to the desired "immortal" size.
             FatalError.check(bootHeapAccount.open(initialNumRegions), "Failed to create boot heap account");
             // Now fix up the boot heap account to records the regions used up to now.
             bootHeapAccount.recordAllocated(0, initialNumRegions, null, false);

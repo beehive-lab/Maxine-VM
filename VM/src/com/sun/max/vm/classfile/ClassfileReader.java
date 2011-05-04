@@ -52,17 +52,12 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.ClassfileWriter.MaxineFlags;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.instrument.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.ClassRegistry.Property;
 import com.sun.max.vm.value.*;
 
 /**
  * Reads a class file to create a corresponding {@link ClassActor}.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author David Liu
  */
 public final class ClassfileReader {
 
@@ -1345,9 +1340,6 @@ public final class ClassfileReader {
                     Log.println("[Loaded " + name + " from " + optSource + "]");
                 }
             }
-
-            InspectableClassInfo.notifyClassLoaded(classActor);
-
             return classActor;
         } finally {
             exitContext();
@@ -1417,8 +1409,7 @@ public final class ClassfileReader {
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
-        classActor.define();
-        return classActor;
+        return ClassRegistry.define(classActor);
     }
 
     /**
@@ -1507,14 +1498,14 @@ public final class ClassfileReader {
         if (MaxineVM.isHosted()) {
             synchronized (savedClassfiles) {
                 byte[] existingClassfile = savedClassfiles.put(name, classfileBytes);
-                if (existingClassfile != null) {
+                if (existingClassfile != null && !Arrays.equals(existingClassfile, classfileBytes)) {
                     try {
                         Class<?> javaClass = Class.forName(name);
                         if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
                             // Don't emit messages for host only classes as these class files are only generated
                             // as an unavoidable side effect of bytecode intrinsification (see Intrinsics)
                         } else {
-                            ProgramWarning.message("class with same name generated twice: " + name);
+                            ProgramWarning.message("class with same name but different class file bytes generated twice: " + name);
                         }
                     } catch (ClassNotFoundException e) {
                     }
