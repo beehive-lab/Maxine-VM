@@ -33,7 +33,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A label specialized for displaying information about a {@TypeDescriptor}, even if not yet loaded in the VM.
+ * A label specialized for displaying information about a {@link TypeDescriptor}, even if not yet loaded in the VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -55,7 +55,7 @@ public class TypeLabel extends InspectorLabel {
                 case MouseEvent.BUTTON1: {
                     if (teleClassActor != null) {
                         if (mouseEvent.isControlDown()) {
-                            actions().inspectObjectMemory(teleClassActor).perform();
+                            views().memory().makeView(teleClassActor);
                         } else {
                             focus().setHeapObject(teleClassActor);
                         }
@@ -70,9 +70,9 @@ public class TypeLabel extends InspectorLabel {
                     inspectActorAction.setEnabled(enabled);
                     menu.add(inspectActorAction);
 
-                    final InspectorAction inspectMemoryWordsAction = actions().inspectObjectMemory(teleClassActor, "Inspect memory for this type's ClassActor");
-                    inspectMemoryWordsAction.setEnabled(enabled);
-                    menu.add(inspectMemoryWordsAction);
+                    final InspectorAction inspectMemoryAction = views().memory().makeViewAction(teleClassActor, "Inspect memory for this type's ClassActor");
+                    inspectMemoryAction.setEnabled(enabled);
+                    menu.add(inspectMemoryAction);
 
                     menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     break;

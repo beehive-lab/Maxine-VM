@@ -456,6 +456,52 @@ public class jmax {
         return list.split("\\s*[ ,]\\s*");
     }
 
+    static byte[] readFile(File file) {
+        assert file.isFile();
+        long size = file.length();
+        assert size == (int) size;
+        byte[] buf = new byte[(int) size];
+        try {
+            FileInputStream in = new FileInputStream(file);
+            new DataInputStream(in).readFully(buf);
+            in.close();
+        } catch (IOException e) {
+            throw new Error("Error reading file " + file, e);
+        }
+        return buf;
+    }
+
+    /**
+     * Utility for creating or modifying a file.
+     */
+    static abstract class FileUpdater {
+        public FileUpdater(File file, boolean canOverwrite, PrintStream status) {
+            boolean exists = file.exists();
+            if (exists && !canOverwrite) {
+                return;
+            }
+            try {
+                byte[] old = exists ? readFile(file) : null;
+                ByteArrayOutputStream baos = new ByteArrayOutputStream(old == null ? 8192 : old.length);
+                PrintStream out = new PrintStream(baos);
+                generate(out);
+                out.close();
+                byte[] buf = baos.toByteArray();
+                if (old != null && Arrays.equals(old, buf)) {
+                    return;
+                }
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(buf);
+                fos.close();
+                status.println((exists ? "modified " : "created ") + file);
+            } catch (IOException e) {
+                throw new Error("Error while writing to " + file, e);
+            }
+        }
+
+        abstract void generate(PrintStream out);
+    }
+
     static final class Project extends Dependency {
 
         final File baseDir;
@@ -572,120 +618,103 @@ public class jmax {
          * @param response
          */
         void generateEclipseProject(PrintStream response) {
-            File projectDir = new File(baseDir, name);
+            final File projectDir = new File(baseDir, name);
             makeDirectory(projectDir);
 
-            File file = new File(projectDir, ".classpath");
-            boolean overwrote = file.exists();
-            try {
-                PrintStream out = new PrintStream(new FileOutputStream(file));
-                out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-                out.println("<classpath>");
-                for (String src : sourceDirs) {
-                    File srcDir = new File(projectDir, src);
-                    makeDirectory(srcDir);
-                    out.println("\t<classpathentry kind=\"src\" path=\"" + src + "\"/>");
-                }
+            new FileUpdater(new File(projectDir, ".classpath"), true, response) {
+                @Override
+                void generate(PrintStream out) {
+                    out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                    out.println("<classpath>");
+                    for (String src : sourceDirs) {
+                        File srcDir = new File(projectDir, src);
+                        makeDirectory(srcDir);
+                        out.println("\t<classpathentry kind=\"src\" path=\"" + src + "\"/>");
+                    }
 
-                // Every Java program depends on the JRE
-                out.println("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>");
+                    // Every Java program depends on the JRE
+                    out.println("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>");
 
-                for (String name : dependencies) {
-                    assert !name.equals(this.name);
-                    Library l = jmax.libs.get(name);
-                    if (l != null) {
-                        if (l.eclipseContainer != null) {
-                            out.println("\t<classpathentry exported=\"true\" kind=\"con\" path=\"" + l.eclipseContainer + "\"/>");
-                        } else {
-                            File path = l.path();
-                            if (path.exists()) {
-                                if (path.isAbsolute()) {
-                                    out.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"" + path + "\"/>");
-                                } else {
-                                    out.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/" + path + "\"/>");
+                    for (String name : dependencies) {
+                        Library l = jmax.libs.get(name);
+                        if (l != null) {
+                            if (l.eclipseContainer != null) {
+                                out.println("\t<classpathentry exported=\"true\" kind=\"con\" path=\"" + l.eclipseContainer + "\"/>");
+                            } else {
+                                File path = l.path();
+                                if (l.mustExist) {
+                                    if (path.isAbsolute()) {
+                                        out.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"" + path + "\"/>");
+                                    } else {
+                                        out.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/" + path + "\"/>");
+                                    }
                                 }
                             }
+                        } else {
+                            Project p = project(name);
+                            out.println("\t<classpathentry combineaccessrules=\"false\" exported=\"true\" kind=\"src\" path=\"/" + p.name + "\"/>");
                         }
-                    } else {
-                        Project p = project(name);
-                        out.println("\t<classpathentry combineaccessrules=\"false\" exported=\"true\" kind=\"src\" path=\"/" + p.name + "\"/>");
                     }
+                    out.println("\t<classpathentry kind=\"output\" path=\"" + eclipseOutput + "\"/>");
+                    out.println("</classpath>");
                 }
-                out.println("\t<classpathentry kind=\"output\" path=\"" + eclipseOutput + "\"/>");
-                out.println("</classpath>");
-                out.close();
-                response.println((overwrote ? "overwrote " : "created ") + file);
-            } catch (FileNotFoundException e) {
-                throw new Error("Error while generating  " + file, e);
-            }
+            };
 
-            file = new File(projectDir, ".project");
-            overwrote = file.exists();
-            boolean checkstyle = new File(projectDir, ".checkstyle").exists();
-            try {
-                PrintStream out = new PrintStream(new FileOutputStream(file));
-                out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-                out.println("<projectDescription>");
-                out.println("\t<name>" + name + "</name>");
-                out.println("\t<comment></comment>");
-                out.println("\t<projects>");
-                out.println("\t</projects>");
-                out.println("\t<buildSpec>");
-                out.println("\t\t<buildCommand>");
-                out.println("\t\t\t<name>org.eclipse.jdt.core.javabuilder</name>");
-                out.println("\t\t\t<arguments>");
-                out.println("\t\t\t</arguments>");
-                out.println("\t\t</buildCommand>");
-                if (checkstyle) {
+            new FileUpdater(new File(projectDir, ".project"), true, response) {
+                @Override
+                void generate(PrintStream out) {
+                    boolean checkstyle = new File(projectDir, ".checkstyle").exists();
+                    out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                    out.println("<projectDescription>");
+                    out.println("\t<name>" + name + "</name>");
+                    out.println("\t<comment></comment>");
+                    out.println("\t<projects>");
+                    out.println("\t</projects>");
+                    out.println("\t<buildSpec>");
                     out.println("\t\t<buildCommand>");
-                    out.println("\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>");
+                    out.println("\t\t\t<name>org.eclipse.jdt.core.javabuilder</name>");
                     out.println("\t\t\t<arguments>");
                     out.println("\t\t\t</arguments>");
                     out.println("\t\t</buildCommand>");
+                    if (checkstyle) {
+                        out.println("\t\t<buildCommand>");
+                        out.println("\t\t\t<name>net.sf.eclipsecs.core.CheckstyleBuilder</name>");
+                        out.println("\t\t\t<arguments>");
+                        out.println("\t\t\t</arguments>");
+                        out.println("\t\t</buildCommand>");
+                    }
+                    out.println("\t</buildSpec>");
+                    out.println("\t<natures>");
+                    out.println("\t\t<nature>org.eclipse.jdt.core.javanature</nature>");
+                    if (checkstyle) {
+                        out.println("\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>");
+                    }
+                    out.println("\t</natures>");
+                    out.println("</projectDescription>");
                 }
-                out.println("\t</buildSpec>");
-                out.println("\t<natures>");
-                out.println("\t\t<nature>org.eclipse.jdt.core.javanature</nature>");
-                if (checkstyle) {
-                    out.println("\t\t<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>");
-                }
-                out.println("\t</natures>");
-                out.println("</projectDescription>");
-                out.close();
-                response.println((overwrote ? "overwrote " : "created ") + file);
-            } catch (FileNotFoundException e) {
-                throw new Error("Error while generating  " + file, e);
-            }
+            };
+
 
             File settingsDir = new File(projectDir, ".settings");
             makeDirectory(settingsDir);
-            file = new File(settingsDir, "org.eclipse.jdt.core.prefs");
-            if (!file.exists()) {
-                try {
-                    PrintStream out = new PrintStream(new FileOutputStream(file));
+
+            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.core.prefs"), false, response) {
+                @Override
+                void generate(PrintStream out) {
                     for (String line : org_eclipse_jdt_core_prefs.lines) {
                         out.println(line);
                     }
-                    out.close();
-                    response.println("created " + file);
-                } catch (FileNotFoundException e) {
-                    throw new Error("Error while generating  " + file, e);
                 }
-            }
+            };
 
-            file = new File(settingsDir, "org.eclipse.jdt.ui.prefs");
-            if (!file.exists()) {
-                try {
-                    PrintStream out = new PrintStream(new FileOutputStream(file));
+            new FileUpdater(new File(settingsDir, "org.eclipse.jdt.ui.prefs"), false, response) {
+                @Override
+                void generate(PrintStream out) {
                     for (String line : org_eclipse_jdt_ui_prefs.lines) {
                         out.println(line);
                     }
-                    out.close();
-                    response.println("created " + file);
-                } catch (FileNotFoundException e) {
-                    throw new Error("Error while generating  " + file, e);
                 }
-            }
+            };
         }
     }
 

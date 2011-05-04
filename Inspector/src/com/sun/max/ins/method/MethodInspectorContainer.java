@@ -22,6 +22,7 @@
  */
 package com.sun.max.ins.method;
 
+import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.view.*;
@@ -37,7 +38,7 @@ import com.sun.max.tele.*;
  * @author Mick Jordan
  * @author Michael Van De Vanter
  */
-public final class MethodInspectorContainer extends TabbedInspector<MethodInspector> {
+public final class MethodInspectorContainer extends TabbedInspector<MethodInspectorContainer> {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.METHODS;
@@ -45,7 +46,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     private static final String LONG_NAME = "Methods Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "methodsInspectorGeometry";
 
-    static final class MethodViewManager extends AbstractSingletonViewManager<MethodInspectorContainer> {
+    public static final class MethodViewManager extends AbstractSingletonViewManager<MethodInspectorContainer> {
 
         protected MethodViewManager(final Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
@@ -54,18 +55,9 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
             inspection.focus().addListener(MethodInspector.methodFocusListener(inspection));
         }
 
-        public boolean isSupported() {
-            return true;
-        }
-
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public MethodInspectorContainer activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new MethodInspectorContainer(inspection);
-            }
+        @Override
+        protected MethodInspectorContainer createView(Inspection inspection) {
+            final MethodInspectorContainer methodInspectorContainer = new MethodInspectorContainer(inspection);
             // Creating the container also starts the code focus listener for creating method viewers.
             // If we set the focus now, the newly created container will appear with the currently
             // actively method showing; otherwise the container would initially appear empty.
@@ -77,19 +69,22 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
                     focus().setCodeLocation(thread.ipLocation());
                 }
             }
-            return inspector;
+            return methodInspectorContainer;
         }
+
     }
 
     // Will be non-null before any instances created.
     private static MethodViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static MethodViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new MethodViewManager(inspection);
         }
         return viewManager;
     }
+
+    final Class<MethodInspector> methodInspectorType = null;
 
     private MethodInspectorContainer(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
@@ -100,7 +95,8 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
 
     @Override
     public String getTextForTitle() {
-        final MethodInspector methodInspector = getSelected();
+        final Inspector inspector = getSelected();
+        final MethodInspector methodInspector = Utils.cast(methodInspectorType, inspector);
         return methodInspector == null ? viewManager.shortName() : "Method: " + methodInspector.getToolTip();
     }
 
@@ -123,7 +119,8 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
         return new InspectorAction(inspection(), "Print") {
             @Override
             public void procedure() {
-                final MethodInspector methodInspector = MethodInspectorContainer.this.getSelected();
+                final Inspector inspector = MethodInspectorContainer.this.getSelected();
+                final MethodInspector methodInspector = Utils.cast(methodInspectorType, inspector);
                 if (methodInspector != null) {
                     methodInspector.print();
                 }
@@ -132,7 +129,8 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     }
 
     @Override
-    public void add(MethodInspector methodInspector) {
+    public void add(Inspector inspector) {
+        final MethodInspector methodInspector = Utils.cast(methodInspectorType, inspector);
         final String longTitle = methodInspector.getToolTip();
         add(methodInspector, methodInspector.getTextForTitle(), longTitle);
         addCloseIconToTab(methodInspector, longTitle);
@@ -148,7 +146,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
 
     @Override
     public void vmProcessTerminated() {
-        for (MethodInspector inspector : this) {
+        for (Inspector inspector : this) {
             inspector.dispose();
         }
     }

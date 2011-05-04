@@ -47,7 +47,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ThreadLocalsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class ThreadLocalsInspector extends Inspector<ThreadLocalsInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.THREAD_LOCALS;
@@ -57,32 +57,23 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     private static final Safepoint.State DEFAULT_STATE_SELECTION = Safepoint.State.ENABLED;
     private static final Map<MaxThread, Safepoint.State> stateSelections = new HashMap<MaxThread, Safepoint.State>();
 
-    private static final class ThreadLocalsViewManager extends AbstractSingletonViewManager<ThreadLocalsInspector> {
+    public static final class ThreadLocalsViewManager extends AbstractSingletonViewManager<ThreadLocalsInspector> {
 
         protected ThreadLocalsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected ThreadLocalsInspector createView(Inspection inspection) {
+            return new ThreadLocalsInspector(inspection);
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public ThreadLocalsInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new ThreadLocalsInspector(inspection);
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
     private static ThreadLocalsViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static ThreadLocalsViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new ThreadLocalsViewManager(inspection);
         }
@@ -112,7 +103,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         }
         memoryMenu.add(actions().inspectSelectedThreadStackMemory("Inspect memory for thread's stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
@@ -262,17 +253,12 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         };
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
     @Override
     public void inspectorClosing() {
-        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

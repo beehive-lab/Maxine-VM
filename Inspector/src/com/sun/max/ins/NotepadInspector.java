@@ -51,7 +51,7 @@ import com.sun.max.unsafe.*;
  * @see InspectorNotepad
  * @see NotepadManager
  */
-public final class NotepadInspector extends Inspector {
+public final class NotepadInspector extends Inspector<NotepadInspector> {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.NOTEPAD;
@@ -64,7 +64,7 @@ public final class NotepadInspector extends Inspector {
     // TODO (mlvdv) fix pattern failure at end of contents (if no newline)
     private static final Pattern hexNumberPattern = Pattern.compile("[0-9a-fA-F]+[^a-zA-Z0-9]");
 
-    private static final class NotepadViewManager extends AbstractSingletonViewManager<NotepadInspector> {
+    public static final class NotepadViewManager extends AbstractSingletonViewManager<NotepadInspector> {
 
         private final NotepadManager notepadManager;
 
@@ -73,26 +73,17 @@ public final class NotepadInspector extends Inspector {
             notepadManager = new NotepadManager(inspection);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected NotepadInspector createView(Inspection inspection) {
+            return new NotepadInspector(inspection, notepadManager.getNotepad());
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public NotepadInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new NotepadInspector(inspection, notepadManager.getNotepad());
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
     private static NotepadViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static NotepadViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new NotepadViewManager(inspection);
         }
@@ -243,7 +234,7 @@ public final class NotepadInspector extends Inspector {
         final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
         objectMenu.add(inspectSelectedAddressObjectAction);
         objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
         Trace.end(1,  tracePrefix() + " initializing");
@@ -271,6 +262,7 @@ public final class NotepadInspector extends Inspector {
         return notepadPrintAction;
     }
 
+    @Override
     public void viewConfigurationChanged() {
         save();
         setDisplayStyle(textArea);
@@ -279,7 +271,6 @@ public final class NotepadInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         save();
         super.inspectorClosing();
     }
@@ -373,7 +364,7 @@ public final class NotepadInspector extends Inspector {
 
         @Override
         protected void procedure() {
-            actions().inspectMemory(address).perform();
+            views().memory().makeView(address).highlight();
             focus().setAddress(address);
         }
 
@@ -400,7 +391,7 @@ public final class NotepadInspector extends Inspector {
 
         @Override
         protected void procedure() {
-            actions().inspectMemoryRegion(memoryRegion).perform();
+            views().memory().makeView(memoryRegion, null).highlight();
             focus().setAddress(address);
         }
 

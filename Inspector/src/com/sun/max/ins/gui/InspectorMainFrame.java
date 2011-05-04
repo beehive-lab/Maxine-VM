@@ -30,13 +30,13 @@ import java.io.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.AbstractSaveSettingsListener;
 import com.sun.max.ins.InspectionSettings.SaveSettingsEvent;
 import com.sun.max.ins.InspectionSettings.SaveSettingsListener;
 import com.sun.max.ins.util.*;
-import com.sun.max.ins.view.InspectionViews.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -157,13 +157,13 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 if (support.isDataFlavorSupported(InspectorTransferable.ADDRESS_FLAVOR)) {
                     final Address address = (Address) transferable.getTransferData(InspectorTransferable.ADDRESS_FLAVOR);
                     Trace.line(TRACE_VALUE, tracePrefix + "address dropped on desktop");
-                    InspectorMainFrame.this.inspection.actions().inspectMemory(address).perform();
+                    InspectorMainFrame.this.inspection.views().memory().makeView(address).highlight();
                     return true;
                 }
                 if (support.isDataFlavorSupported(InspectorTransferable.MEMORY_REGION_FLAVOR)) {
                     final MaxMemoryRegion memoryRegion = (MaxMemoryRegion) transferable.getTransferData(InspectorTransferable.MEMORY_REGION_FLAVOR);
                     Trace.line(TRACE_VALUE, tracePrefix + "memory region dropped on desktop");
-                    InspectorMainFrame.this.inspection.actions().inspectMemoryRegion(memoryRegion).perform();
+                    InspectorMainFrame.this.inspection.views().memory().makeView(memoryRegion, null).highlight();
                     return true;
                 }
                 if (support.isDataFlavorSupported(InspectorTransferable.TELE_OBJECT_FLAVOR)) {
@@ -283,19 +283,22 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         menuBar = new InspectorMainMenuBar(actions);
         setJMenuBar(menuBar);
 
-        desktopMenu.add(actions.activateSingletonView(ViewKind.ALLOCATIONS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.BOOT_IMAGE));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.BREAKPOINTS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.FRAME));
-        desktopMenu.add(actions.memoryInspectorsMenu());
-        desktopMenu.add(actions.activateSingletonView(ViewKind.METHODS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.NOTEPAD));
-        desktopMenu.add(actions.objectInspectorsMenu());
-        desktopMenu.add(actions.activateSingletonView(ViewKind.REGISTERS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.STACK));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.THREADS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.THREAD_LOCALS));
-        desktopMenu.add(actions.activateSingletonView(ViewKind.WATCHPOINTS));
+        final InspectionViews views = inspection.views();
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.ALLOCATIONS));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.BOOT_IMAGE));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.BREAKPOINTS));
+        desktopMenu.add(views.bytecodeFrames().viewMenu());
+        desktopMenu.add(views.memory().viewMenu());
+        desktopMenu.add(views.memoryBytes().viewMenu());
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.METHODS));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.NOTEPAD));
+        desktopMenu.add(views.objects().viewMenu());
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.REGISTERS));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.STACK));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.STACK_FRAME));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.THREADS));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.THREAD_LOCALS));
+        desktopMenu.add(views.activateSingletonViewAction(ViewKind.WATCHPOINTS));
 
         desktopPane.addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override
@@ -359,30 +362,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
-    public Inspector findInspector(Predicate<Inspector> predicate) {
-        final int componentCount = desktopPane.getComponentCount();
-        for (int i = 0; i < componentCount; i++) {
-            final Component component = desktopPane.getComponent(i);
-            if (component instanceof InspectorInternalFrame) {
-                final InspectorFrame inspectorFrame = (InspectorFrame) component;
-                final Inspector inspector = inspectorFrame.inspector();
-                if (predicate.evaluate(inspector)) {
-                    return inspector;
-                }
-                // This component may contain other InspectorFrames, e.g. if it is related to a tabbed frame.
-                if (inspector instanceof InspectorContainer) {
-                    final InspectorContainer<? extends Inspector> inspectorContainer = Utils.cast(inspector);
-                    for (Inspector containedInspector : inspectorContainer) {
-                        if (predicate.evaluate(containedInspector)) {
-                            return containedInspector;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
     public void showInspectorBusy(boolean busy) {
         if (busy) {
             desktopPane.setCursor(busyCursor);
@@ -442,6 +421,17 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         moveToMiddle(inspector.getJComponent());
     }
 
+
+    public InspectorAction moveToMiddleAction(final Inspector inspector) {
+        return new InspectorAction(inspection, "Move to center of frame") {
+
+            @Override
+            protected void procedure() {
+                moveToMiddle(inspector);
+            }
+        };
+    }
+
     public void moveToFullyVisible(Inspector inspector) {
         final JComponent component = inspector.getJComponent();
         if (!isFullyVisible(component)) {
@@ -487,8 +477,28 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
+    public InspectorAction resizeToFitAction(final Inspector inspector) {
+        return new InspectorAction(inspection, "Resize to fit inside frame") {
+
+            @Override
+            protected void procedure() {
+                resizeToFit(inspector);
+            }
+        };
+    }
+
     public void resizeToFill(Inspector inspector) {
         inspector.getJComponent().setBounds(0, 0, scrollPane.getWidth(), scrollPane.getHeight());
+    }
+
+    public InspectorAction resizeToFillAction(final Inspector inspector) {
+        return new InspectorAction(inspection, "Resize to fill frame") {
+
+            @Override
+            protected void procedure() {
+                resizeToFill(inspector);
+            }
+        };
     }
 
     public void restoreDefaultGeometry(Inspector inspector) {
@@ -498,6 +508,16 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         } else {
             moveToMiddle(inspector);
         }
+    }
+
+    public InspectorAction restoreDefaultGeometryAction(final Inspector inspector) {
+        return new InspectorAction(inspection, "Restore size/location to default") {
+
+            @Override
+            protected void procedure() {
+                restoreDefaultGeometry(inspector);
+            }
+        };
     }
 
     public void setLocationRelativeToMouse(JDialog dialog, int diagonalOffset) {

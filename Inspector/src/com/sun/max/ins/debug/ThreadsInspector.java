@@ -37,7 +37,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ThreadsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class ThreadsInspector extends Inspector<ThreadsInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.THREADS;
@@ -45,32 +45,23 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     private static final String LONG_NAME = "Threads Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "threadsInspectorGeometry";
 
-    private static final class ThreadsViewManager extends AbstractSingletonViewManager<ThreadsInspector> {
+    public static final class ThreadsViewManager extends AbstractSingletonViewManager<ThreadsInspector> {
 
         protected ThreadsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected ThreadsInspector createView(Inspection inspection) {
+            return new ThreadsInspector(inspection);
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public ThreadsInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new ThreadsInspector(inspection);
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
     private static ThreadsViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static ThreadsViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new ThreadsViewManager(inspection);
         }
@@ -96,7 +87,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         memoryMenu.add(actions().inspectSelectedThreadLocalsBlockMemory(null));
         memoryMenu.add(actions().inspectSelectedThreadStackMemory(null));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
@@ -155,17 +146,12 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         return getDefaultPrintAction();
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

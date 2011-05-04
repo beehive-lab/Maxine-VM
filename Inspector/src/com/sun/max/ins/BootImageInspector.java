@@ -34,7 +34,7 @@ import com.sun.max.vm.*;
  *
  * @author Michael Van De Vanter
  */
-public final class BootImageInspector extends Inspector  implements TableColumnViewPreferenceListener {
+public final class BootImageInspector extends Inspector<BootImageInspector>  implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.BOOT_IMAGE;
@@ -42,26 +42,17 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     private static final String LONG_NAME = "Boot Image Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "bootImageInspectorGeometry";
 
-    private static final class BootImageViewManager extends AbstractSingletonViewManager<BootImageInspector> {
+    public static final class BootImageViewManager extends AbstractSingletonViewManager<BootImageInspector> {
 
         protected BootImageViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected BootImageInspector createView(Inspection inspection) {
+            return new BootImageInspector(inspection);
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public BootImageInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new BootImageInspector(inspection);
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
@@ -89,7 +80,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         Trace.end(1, tracePrefix() + "initializing");
@@ -131,10 +122,6 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
         return getDefaultPrintAction();
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
@@ -146,7 +133,6 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

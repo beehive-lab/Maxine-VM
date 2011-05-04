@@ -33,7 +33,7 @@ import com.sun.max.vm.layout.*;
  *
  * @author Michael Van De Vanter
  */
-public class TupleInspector extends ObjectInspector {
+public class TupleInspector extends ObjectInspector<TupleInspector> {
 
     private ObjectScrollPane fieldsPane;
 

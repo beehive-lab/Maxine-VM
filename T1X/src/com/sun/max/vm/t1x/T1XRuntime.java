@@ -93,41 +93,68 @@ public class T1XRuntime {
      * Inserts any necessary memory barriers before a volatile read as required by the JMM.
      */
     @INLINE
-    private static void preVolatileRead() {
+    public static void preVolatileRead() {
     }
 
     /**
      * Inserts any necessary memory barriers after a volatile read as required by the JMM.
      */
     @INTRINSIC(MEMBAR | ((LOAD_LOAD | LOAD_STORE) << 8))
-    private static native void postVolatileRead();
+    public static native void postVolatileRead();
 
     /**
      * Inserts any necessary memory barriers before a volatile read as required by the JMM.
      */
     @INTRINSIC(MEMBAR | ((LOAD_STORE | STORE_STORE) << 8))
-    private static native void preVolatileWrite();
+    public static native void preVolatileWrite();
 
     /**
      * Inserts any necessary memory barriers after a volatile read as required by the JMM.
      */
     @INTRINSIC(MEMBAR | ((STORE_LOAD | STORE_STORE) << 8))
-    private static native void postVolatileWrite();
+    public static native void postVolatileWrite();
 
     /**
      * Manual macros, Java style, for field access routines.
      */
+
+    /**
+     * Allows customization of the generated methods to support bytecode advising.
+     */
     @HOSTED_ONLY
-    public static void main(String[] args) {
+    public interface Hook {
+        /**
+         * Should return a string that will be inserted after resolving the field.
+         * @param indent current indentation
+         * @param method GetField/PutField/GetStatic/PutStatic
+         * @param t kind string with Reference replaced by Object
+         * @param uK kind string with first char uppercase
+         * @param uT {@code t} with first char uppercase
+         * @return string to include
+         */
+        String getHook(String indent, String method, String t, String uK, String uT);
+        /**
+         * Customizes the methodname to resolveXXXname, where this method returns the XXX.
+         * @return
+         */
+        String getMethodNameModifier();
+    }
+
+    @HOSTED_ONLY
+    public static void generate(Hook hook) {
         PrintStream o = System.out;
         String[] kinds = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "Reference", "Word"};
+        final String mm = hook == null ? "" : hook.getMethodNameModifier();
         for (String k : kinds) {
             String t = k.equals("Reference") ? "Object" : k;
             String uK = k.substring(0, 1).toUpperCase() + k.substring(1);
             String uT = t.substring(0, 1).toUpperCase() + t.substring(1);
             o.printf("    // GENERATED -- EDIT AND RUN main() TO MODIFY%n");
-            o.printf("    public static %s resolveAndGetField%s(ResolutionGuard.InPool guard, Object object) {%n", t, uK);
+            o.printf("    public static %s resolve%sAndGetField%s(ResolutionGuard.InPool guard, Object object) {%n", t, mm, uK);
             o.printf("        FieldActor f = Snippets.resolveInstanceFieldForReading(guard);%n");
+            if (hook != null) {
+                o.printf(hook.getHook("        ", "GetField", t, uK, uT));
+            }
             o.printf("        if (f.isVolatile()) {%n");
             o.printf("            preVolatileRead();%n");
             o.printf("            %s value = TupleAccess.read%s(object, f.offset());%n", t, uT);
@@ -139,8 +166,11 @@ public class T1XRuntime {
             o.printf("    }%n");
             o.printf("%n");
             o.printf("    // GENERATED -- EDIT AND RUN main() TO MODIFY%n");
-            o.printf("    public static void resolveAndPutField%s(ResolutionGuard.InPool guard, Object object, %s value) {%n", uK, t);
+            o.printf("    public static void resolve%sAndPutField%s(ResolutionGuard.InPool guard, Object object, %s value) {%n", mm, uK, t);
             o.printf("        FieldActor f = Snippets.resolveInstanceFieldForWriting(guard);%n");
+            if (hook != null) {
+                o.printf(hook.getHook("        ", "PutField", t, uK, uT));
+            }
             o.printf("        if (f.isVolatile()) {%n");
             o.printf("            preVolatileWrite();%n");
             o.printf("            TupleAccess.write%s(object, f.offset(), value);%n", uT);
@@ -151,9 +181,12 @@ public class T1XRuntime {
             o.printf("    }%n");
             o.printf("%n");
             o.printf("    // GENERATED -- EDIT AND RUN main() TO MODIFY%n");
-            o.printf("    public static %s resolveAndGetStatic%s(ResolutionGuard.InPool guard) {%n", t, uK);
+            o.printf("    public static %s resolve%sAndGetStatic%s(ResolutionGuard.InPool guard) {%n", t, mm, uK);
             o.printf("        FieldActor f = Snippets.resolveStaticFieldForReading(guard);%n");
             o.printf("        Snippets.makeHolderInitialized(f);%n");
+            if (hook != null) {
+                o.printf(hook.getHook("        ", "GetStatic", t, uK, uT));
+            }
             o.printf("        if (f.isVolatile()) {%n");
             o.printf("            preVolatileRead();%n");
             o.printf("            %s value = TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", t, uT);
@@ -165,8 +198,11 @@ public class T1XRuntime {
             o.printf("    }%n");
             o.printf("%n");
             o.printf("    // GENERATED -- EDIT AND RUN main() TO MODIFY%n");
-            o.printf("    public static void resolveAndPutStatic%s(ResolutionGuard.InPool guard, %s value) {%n", uK, t);
+            o.printf("    public static void resolve%sAndPutStatic%s(ResolutionGuard.InPool guard, %s value) {%n", mm, uK, t);
             o.printf("        FieldActor f = Snippets.resolveStaticFieldForWriting(guard);%n");
+            if (hook != null) {
+                o.printf(hook.getHook("        ", "PutStatic", t, uK, uT));
+            }
             o.printf("        Snippets.makeHolderInitialized(f);%n");
             o.printf("        if (f.isVolatile()) {%n");
             o.printf("            preVolatileWrite();%n");
@@ -178,6 +214,11 @@ public class T1XRuntime {
             o.printf("    }%n");
             o.printf("%n");
         }
+    }
+
+    @HOSTED_ONLY
+    public static void main(String[] args) {
+        generate(null);
     }
 
     // GENERATED -- EDIT AND RUN main() TO MODIFY
@@ -734,7 +775,7 @@ public class T1XRuntime {
         return arr.clone();
     }
 
-    static void checkArrayDimension(int length) {
+    public static void checkArrayDimension(int length) {
         Snippets.checkArrayDimension(length);
     }
 

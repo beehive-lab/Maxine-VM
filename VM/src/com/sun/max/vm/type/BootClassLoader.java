@@ -48,8 +48,6 @@ import com.sun.max.vm.jni.*;
  *
  * @see http://java.sun.com/docs/books/jvms/second_edition/html/ConstantPool.doc.html#79383
  *
- * @author Bernd Mathiske
- * @author Doug Simon
  */
 public final class BootClassLoader extends ClassLoader {
 
@@ -91,10 +89,10 @@ public final class BootClassLoader extends ClassLoader {
         }
     }
 
-    protected Class findClass(Classpath classpath, String name) throws ClassNotFoundException {
+    private Class resolveClassOrNull(Classpath classpath, String name) {
         final ClasspathFile classpathFile = classpath.readClassFile(name);
         if (classpathFile == null) {
-            throw new ClassNotFoundException(name);
+            return null;
         }
         ClassActor classActor = ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false);
         int cp = name.lastIndexOf('.');
@@ -107,16 +105,16 @@ public final class BootClassLoader extends ClassLoader {
         return classActor.toJava();
     }
 
-    public synchronized Class<?> findBootstrapClass(String name) throws ClassNotFoundException {
+    public synchronized Class<?> findBootstrapClass(String name) {
         final Class c = findLoadedClass(name);
         if (c != null) {
             return c;
         }
-        return findClass(classpath(), name);
+        return resolveClassOrNull(classpath(), name);
     }
 
     @Override
-    public synchronized Class<?> findClass(String name) throws ClassNotFoundException {
+    public Class<?> findClass(String name) throws ClassNotFoundException {
         if (MaxineVM.isHosted()) {
             try {
                 return super.findClass(name);
@@ -128,7 +126,11 @@ public final class BootClassLoader extends ClassLoader {
                 }
             }
         }
-        return findClass(classpath(), name);
+        Class c = resolveClassOrNull(classpath(), name);
+        if (c == null) {
+            throw new ClassNotFoundException(name);
+        }
+        return c;
     }
 
     @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary", name = "<init>")

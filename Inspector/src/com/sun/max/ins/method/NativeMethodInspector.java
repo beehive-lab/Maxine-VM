@@ -34,7 +34,7 @@ import com.sun.max.tele.object.*;
  * @author Michael Van De Vanter
  * @author Doug Simon
  */
-public final class NativeMethodInspector extends MethodInspector {
+public final class NativeMethodInspector extends MethodInspector<NativeMethodInspector> {
 
     private final MaxExternalCode externalCode;
     private MachineCodeViewer machineCodeViewer = null;
@@ -83,6 +83,7 @@ public final class NativeMethodInspector extends MethodInspector {
         }
     }
 
+    @Override
     public void viewConfigurationChanged() {
         machineCodeViewer.redisplay();
     }

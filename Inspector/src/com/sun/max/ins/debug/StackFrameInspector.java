@@ -44,42 +44,33 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class FrameInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class StackFrameInspector extends Inspector<StackFrameInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
-    private static final ViewKind VIEW_KIND = ViewKind.FRAME;
-    private static final String SHORT_NAME = "Frame";
-    private static final String LONG_NAME = "Frame Inspector";
-    private static final String GEOMETRY_SETTINGS_KEY = "frameInspectorGeometry";
+    private static final ViewKind VIEW_KIND = ViewKind.STACK_FRAME;
+    private static final String SHORT_NAME = "Stack Frame";
+    private static final String LONG_NAME = "Stack Frame Inspector";
+    private static final String GEOMETRY_SETTINGS_KEY = "stackFrameInspectorGeometry";
 
-    private static final class FrameViewManager extends AbstractSingletonViewManager<FrameInspector> {
+    public static final class StackFrameViewManager extends AbstractSingletonViewManager<StackFrameInspector> {
 
-        protected FrameViewManager(Inspection inspection) {
+        protected StackFrameViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected StackFrameInspector createView(Inspection inspection) {
+            return new StackFrameInspector(inspection);
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public FrameInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new FrameInspector(inspection);
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
-    private static FrameViewManager viewManager = null;
+    private static StackFrameViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static StackFrameViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new FrameViewManager(inspection);
+            viewManager = new StackFrameViewManager(inspection);
         }
         return viewManager;
     }
@@ -111,7 +102,7 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
     private final InspectorAction copyStackFrameToClipboardAction = new CopyStackFrameToClipboardAction();
 
 
-    public FrameInspector(Inspection inspection) {
+    public StackFrameInspector(Inspection inspection) {
         super(inspection, VIEW_KIND, GEOMETRY_SETTINGS_KEY);
         Trace.begin(1,  tracePrefix() + " initializing");
 
@@ -136,7 +127,7 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
         memoryMenu.add(actions().inspectSelectedStackFrameMemory("Inspect memory for frame"));
         memoryMenu.add(actions().inspectSelectedThreadStackMemory("Inspect memory for stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
@@ -246,17 +237,12 @@ public final class FrameInspector extends Inspector implements TableColumnViewPr
         };
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

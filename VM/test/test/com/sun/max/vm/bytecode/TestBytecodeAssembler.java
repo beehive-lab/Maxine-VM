@@ -43,7 +43,6 @@ import com.sun.max.vm.type.*;
  * A facility for creating a class method actor via bytecode assembly. A subclass simply has to override
  * {@link #generateCode()} to emit the desired bytecode.
  *
- * @author Doug Simon
  */
 public abstract class TestBytecodeAssembler extends BytecodeAssembler {
 
@@ -181,8 +180,7 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
                 ClassActor.NO_OUTER_CLASS,
                 ClassActor.NO_ENCLOSING_METHOD_INFO);
             try {
-                synchronized (classActor.classLoader) {
-                    classActor.define();
+                if (ClassRegistry.define(classActor) == classActor) {
                     ClassfileWriter.saveGeneratedClass(new ClassInfo(classActor), constantPoolEditor());
                 }
             } catch (IOException e) {
