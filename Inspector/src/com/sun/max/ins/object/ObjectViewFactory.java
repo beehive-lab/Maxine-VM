@@ -21,20 +21,35 @@
  * questions.
  */
 
-package com.sun.max.ins.view;
+package com.sun.max.ins.object;
+
+import com.sun.max.ins.*;
+import com.sun.max.ins.view.*;
 
 
 /**
- * Manager for a kind of Inspector view that may have an arbitrary
- * number of instances active.
+ * Methods for creating views on objects in different variations.  Some are direct
+ * actions; others are for possibly interactive {@link InspectorAction}s
+ * that can be put on menus.
  *
  * @author Michael Van De Vanter
  */
-public interface MultivViewManager extends ViewManager {
+public interface ObjectViewFactory extends InspectionViewFactory<ObjectInspector>{
 
     /**
-     * Disposes all existing views of this kind.
+     * Gets an interactive action that makes a view on an object in
+     * VM memory, starting at a dialog-specified location.
+     *
+     * @return an action that creates an object view
      */
-    void deactivateAllViews();
+    InspectorAction makeViewAction();
+
+    /**
+     * Gets an interactive action that makes a view on an object in
+     * VM memory, identified by a dialog-specified numeric ID.
+     *
+     * @return an action that creates an object view
+     */
+    InspectorAction makeViewByIDAction();
 
 }

@@ -32,7 +32,7 @@ import com.sun.max.tele.object.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ArrayInspector extends ObjectInspector {
+public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
 
     private ObjectScrollPane elementsPane;
 

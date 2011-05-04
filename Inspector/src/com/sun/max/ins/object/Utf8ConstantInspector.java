@@ -35,7 +35,7 @@ import com.sun.max.vm.classfile.constant.*;
  *
  * @author Michael Van De Vanter
  */
-class Utf8ConstantInspector extends ObjectInspector {
+class Utf8ConstantInspector extends ObjectInspector<Utf8ConstantInspector> {
 
     private InspectorTabbedPane tabbedPane;
     private ObjectScrollPane fieldsPane;

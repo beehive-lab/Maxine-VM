@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,52 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.ins;
 
-import com.sun.max.ins.gui.*;
+package com.sun.max.ins.java;
+
+import com.sun.cri.ci.*;
+import com.sun.max.ins.*;
 import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 
+
 /**
- * Convenience methods for access to classes holding various parts of the interactive inspection session.
+ * Methods for creating views on bytecode frames.
  *
- * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public interface InspectionHolder {
+public interface BytecodeFramesViewFactory extends InspectionViewFactory<BytecodeFramesInspector> {
 
     /**
-     * @return holder of the interactive inspection state for this session
+     * Creates a view on a target Java frame descriptor.
+     *
+     * @param bytecodeFrames the java bytecode frames at a given location
+     * @param compiledCode
+     * @return
      */
-    Inspection inspection();
+    BytecodeFramesInspector makeView(CiFrame bytecodeFrames, MaxCompiledCode compiledCode);
 
     /**
-     * @return the VM associated with this inspection
+     * Gets an action that makes view of the bytecode frames available at
+     * the currently selected code location; disabled if there are no
+     * frames available at the currently selected code location.
+     *
+     * @return an action that creates a bytecode frame view
      */
-    MaxVM vm();
-
-    /**
-     * @return access to basic GUI services for the session.
-     */
-    InspectorGUI gui();
-
-    /**
-     * @return visual specifications for user interaction during the session
-     */
-    InspectorStyle style();
-
-    /**
-     * @return information about the user focus of attention in the view state.
-     */
-    InspectionFocus focus();
-
-    /**
-     * @return access to view management
-     */
-    InspectionViews views();
-
-    /**
-     * @return access to {@link InspectorAction}s of general use.
-     */
-    InspectionActions actions();
+    InspectorAction makeViewAction();
 }

@@ -30,7 +30,8 @@ import javax.swing.text.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.view.InspectionViews.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 
@@ -39,25 +40,51 @@ import com.sun.max.vm.actor.holder.*;
  *
  * @author Michael Van De Vanter
  */
-public final class JavaSourceInspector extends FileInspector {
+public final class JavaSourceInspector extends FileInspector<JavaSourceInspector> {
 
+    private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.JAVA_SOURCE;
+    private static final String SHORT_NAME = "Java Source";
+    private static final String LONG_NAME = SHORT_NAME + " Inspector";
 
+    private static JavaSourceViewManager viewManager;
 
-    private static final Map<File, JavaSourceInspector> inspectors =
-        new Hashtable<File, JavaSourceInspector>();
-
-    /**
-     * Displays an inspector containing the source code for a Java class.
-     */
-    public static JavaSourceInspector make(Inspection inspection, ClassActor classActor, File sourceFile) {
-        assert sourceFile != null;
-        JavaSourceInspector inspector = inspectors.get(sourceFile);
-        if (inspector == null) {
-            inspector = new JavaSourceInspector(inspection, sourceFile);
-            inspectors.put(sourceFile, inspector);
+    public static JavaSourceViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new JavaSourceViewManager(inspection);
         }
-        return inspector;
+        return viewManager;
+    }
+
+    public static final class JavaSourceViewManager extends AbstractMultiViewManager<JavaSourceInspector> implements JavaSourceViewFactory {
+
+        private static final Map<File, JavaSourceInspector> inspectors =
+            new Hashtable<File, JavaSourceInspector>();
+
+        protected JavaSourceViewManager(final Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
+            Trace.begin(TRACE_VALUE, tracePrefix() + "creating");
+
+            Trace.end(TRACE_VALUE, tracePrefix() + "creating");
+        }
+
+        @Override
+        public void notifyViewClosing(Inspector inspector) {
+            // TODO (mlvdv)  should be using generics here
+            final JavaSourceInspector javaSourceInspector = (JavaSourceInspector) inspector;
+            assert inspectors.remove(javaSourceInspector.file()) != null;
+            super.notifyViewClosing(inspector);
+        }
+
+        public JavaSourceInspector makeView(ClassActor classActor, File sourceFile) {
+            assert sourceFile != null;
+            JavaSourceInspector inspector = inspectors.get(sourceFile);
+            if (inspector == null) {
+                inspector = new JavaSourceInspector(inspection(), sourceFile);
+                inspectors.put(sourceFile, inspector);
+            }
+            return inspector;
+        }
     }
 
     private JTextArea textArea;
@@ -94,14 +121,9 @@ public final class JavaSourceInspector extends FileInspector {
         }
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing for " + getTitle());
-        inspectors.remove(file());
+        // Unsubscribe to view preferences, when we get them.
         super.inspectorClosing();
     }
 

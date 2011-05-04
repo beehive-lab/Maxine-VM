@@ -23,7 +23,10 @@
 
 package com.sun.max.ins.view;
 
-import java.util.concurrent.*;
+import java.util.*;
+
+import javax.swing.*;
+import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -36,20 +39,25 @@ import com.sun.max.ins.view.InspectionViews.ViewKind;
  *
  * @author Michael Van De Vanter
  */
-public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector> extends AbstractInspectionHolder implements MultivViewManager, InspectionListener {
+public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
+    extends AbstractInspectionHolder
+    implements MultiViewManager, InspectionViewFactory<Inspector_Kind>, InspectionListener {
 
     private final ViewKind viewKind;
     private final String shortName;
     private final String longName;
 
-    protected CopyOnWriteArraySet<Inspector> inspectors = new CopyOnWriteArraySet<Inspector>();
+    private final ArrayList<Inspector_Kind> inspectors = new ArrayList<Inspector_Kind>();
+
+    private final InspectorAction deactivateAllAction;
 
     protected AbstractMultiViewManager(Inspection inspection, ViewKind viewKind, String shortName, String longName) {
         super(inspection);
         this.viewKind = viewKind;
         this.shortName = shortName;
         this.longName = longName;
-        inspection.addInspectionListener(this);
+        this.deactivateAllAction = new DeactivateAllAction(shortName);
+        refresh();
     }
 
     public final ViewKind viewKind() {
@@ -68,24 +76,107 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Multiple view kinds are assumed by default to be supported.
+     * Concrete view manager types should override if this
+     * isn't always so.
+     */
+    public boolean isSupported() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Multiple view kinds are assumed by default to be enabled
+     * if they are supported.
+     * Concrete view manager types should override if this
+     * isn't always so.
+     */
+    public boolean isEnabled() {
+        return isSupported();
+    }
+
     public final boolean isActive() {
         return inspectors.size() > 0;
     }
 
-    public void deactivateAllViews() {
-        for (Inspector inspector : inspectors) {
+    public final List<Inspector_Kind> activeViews() {
+        return inspectors;
+    }
+
+    public final JMenu viewMenu() {
+        final JMenu menu = new JMenu("View " + shortName);
+        menu.addMenuListener(new MenuListener() {
+
+            public void menuCanceled(MenuEvent e) {
+            }
+
+            public void menuDeselected(MenuEvent e) {
+            }
+
+            public void menuSelected(MenuEvent e) {
+                menu.removeAll();
+                final List<Inspector_Kind> views = activeViews();
+                if (views.size() > 0) {
+                    for (Inspector inspector : views) {
+                        menu.add(inspector.getShowViewAction());
+                    }
+                    menu.addSeparator();
+                    for (InspectorAction makeViewAction : makeViewActions()) {
+                        menu.add(makeViewAction);
+                    }
+                    menu.addSeparator();
+                    menu.add(deactivateAllAction);
+                } else {
+                    for (InspectorAction makeViewAction : makeViewActions()) {
+                        menu.add(makeViewAction);
+                    }
+                }
+            }
+        });
+        return menu;
+    }
+
+    public final void deactivateAllViews() {
+        for (Inspector inspector : new ArrayList<Inspector_Kind>(inspectors)) {
             inspector.dispose();
         }
-        inspectors.clear();
+        refresh();
+        assert !isActive();
+    }
+
+    public final InspectorAction deactivateAllAction(Inspector exception) {
+        if (exception == null) {
+            return deactivateAllAction;
+        }
+        return new DeactivateAllExceptAction(shortName, exception);
     }
 
     public void notifyViewClosing(Inspector inspector) {
         assert inspectors.remove(inspector);
+        refresh();
     }
 
-    protected void notifyAddingView(Inspector inspector) {
+    /**
+     * Allows concrete subclasses to register the creation of a new view.
+     */
+    protected final void notifyAddingView(Inspector_Kind inspector) {
         assert inspectors.add(inspector);
+        refresh();
+    }
 
+    /**
+     * Gets a list of interactive (context-independent) actions that
+     * can make a new view.  These will be added to the view menu
+     * for this kind.
+     *
+     * @return actions that can create a new view
+     */
+    protected List<InspectorAction> makeViewActions() {
+        return Collections.emptyList();
     }
 
     public void vmStateChanged(boolean force) {
@@ -104,5 +195,54 @@ public abstract class AbstractMultiViewManager<Inspector_Kind extends Inspector>
     }
 
     public void inspectionEnding() {
+    }
+
+    /**
+     * Update any internal state on occasion of view activation/deactivation.
+     */
+    private void refresh() {
+        deactivateAllAction.refresh(true);
+    }
+
+    private final class DeactivateAllAction extends InspectorAction {
+
+        public DeactivateAllAction(String title) {
+            super(inspection(), "Close all " + title + " views");
+        }
+
+        @Override
+        protected void procedure() {
+            deactivateAllViews();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(isActive());
+        }
+    }
+
+    private final class DeactivateAllExceptAction extends InspectorAction {
+
+        private final Inspector exceptInspector;
+
+        public DeactivateAllExceptAction(String title, Inspector exceptInspector) {
+            super(inspection(), "Close other " + title + " views");
+            this.exceptInspector = exceptInspector;
+        }
+
+        @Override
+        protected void procedure() {
+            for (Inspector inspector : new ArrayList<Inspector_Kind>(inspectors)) {
+                if (!inspector.equals(exceptInspector)) {
+                    inspector.dispose();
+                }
+            }
+            AbstractMultiViewManager.this.refresh();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(isActive());
+        }
     }
 }

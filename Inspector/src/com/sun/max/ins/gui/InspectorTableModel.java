@@ -25,6 +25,7 @@ package com.sun.max.ins.gui;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.view.*;
 import com.sun.max.tele.*;
 
 /**
@@ -60,6 +61,10 @@ public abstract class InspectorTableModel extends AbstractTableModel implements 
 
     public final InspectionFocus focus() {
         return inspection.focus();
+    }
+
+    public final InspectionViews views() {
+        return inspection.views();
     }
 
     public final InspectionActions actions() {

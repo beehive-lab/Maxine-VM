@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import com.sun.max.vm.*;
 /**
  * Implementation of symbol and String interning, the latter of which is a Java language requirement.
  *
- * @author Doug Simon
  */
 public final class SymbolTable {
 
@@ -73,7 +72,7 @@ public final class SymbolTable {
      * Searching and adding entries to this map is only performed by {@linkplain #makeSymbol(String) one method} which
      * is synchronized.
      */
-    private static final Mapping<String, Utf8ConstantEntry> symbolTable = new ChainingValueChainedHashMapping<String, Utf8ConstantEntry>(40000);
+    private static final ChainingValueChainedHashMapping<String, Utf8ConstantEntry> symbolTable = new ChainingValueChainedHashMapping<String, Utf8ConstantEntry>(40000);
 
     public static final Utf8Constant INIT = makeSymbol("<init>");
     public static final Utf8Constant CLINIT = makeSymbol("<clinit>");

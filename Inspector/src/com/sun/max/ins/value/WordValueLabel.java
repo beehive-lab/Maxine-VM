@@ -916,15 +916,15 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
-                    action = actions().inspectMemory(address);
+                    action = views().memory().makeViewAction(address, null);
                     break;
                 }
                 case OBJECT_REFERENCE:
                 case OBJECT_REFERENCE_TEXT: {
                     if (teleObject != null) {
-                        action = actions().inspectObjectMemory(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
+                        action = views().memory().makeViewAction(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
                     } else {
-                        action = actions().inspectMemory(address);
+                        action = views().memory().makeViewAction(address, null);
                     }
                     break;
                 }
@@ -939,7 +939,7 @@ public class WordValueLabel extends ValueLabel {
                 case UNCHECKED_WORD:
                 case INVALID: {
                     if (vm().findMemoryRegion(address) != null) {
-                        action = actions().inspectMemory(address);
+                        action = views().memory().makeViewAction(address, null);
                     }
                     break;
                 }

@@ -2094,7 +2094,7 @@ public class T1XTemplateSource {
     }
 
     @INLINE
-    private static void nullCheck(Pointer receiver) {
+    public static void nullCheck(Pointer receiver) {
         receiver.readWord(0);
     }
 

@@ -34,7 +34,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
-/*
+/**
  * Provides substitutions for native methods in {@link java.lang.Class java.lang.Class}.
  * In particular, the mapping between a {@code Class} and the {@code ClassLoader}
  * that loaded it is not maintained at the Java level (HotSpot maintains this internally).
@@ -81,6 +81,8 @@ final class JDK_java_lang_Class {
     }
 
     private static Class resolveComponent(String name, boolean initialize, ClassLoader classLoader) throws ClassNotFoundException {
+        // TODO (ds) Implement class loader locking as per SystemDictionary::resolve_instance_class_or_null(...) in HotSpot.
+        // In particular, perform any necessary locking.
         final Class javaClass = classLoader.loadClass(name);
         if (initialize) {
             Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));

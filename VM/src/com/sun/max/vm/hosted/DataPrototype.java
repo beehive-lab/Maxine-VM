@@ -61,8 +61,6 @@ import com.sun.max.vm.value.*;
 /**
  * Builds the data prototype from the graph prototype, determining the boot image addresses of objects and copying their
  * representation into a byte buffer.
- *
- * @author Bernd Mathiske
  */
 public final class DataPrototype extends Prototype {
 
@@ -882,7 +880,7 @@ public final class DataPrototype extends Prototype {
             objectToCell.put(object, objectToCell.get(object).plus(delta));
         }
 
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
             if (classActor instanceof ReferenceClassActor) {
                 DynamicHub dynamicHub = classActor.dynamicHub();
                 StaticHub staticHub = classActor.staticHub();
@@ -1061,7 +1059,7 @@ public final class DataPrototype extends Prototype {
     private void assignMethodDispatchTableRelocationFlags() {
         Trace.begin(1, "assignMethodDispatchTableRelocationFlags");
         final ArrayLayout wordArrayLayout = layoutScheme.wordArrayLayout;
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
             if (classActor instanceof ReferenceClassActor) {
                 final DynamicHub dynamicHub = classActor.dynamicHub();
                 final StaticHub staticHub = classActor.staticHub();

@@ -31,17 +31,25 @@ import com.sun.max.ins.gui.*;
  *
  * @author Michael Van De Vanter
  */
-public interface SingletonViewManager extends ViewManager {
+public interface SingletonViewManager<Inspector_Kind extends Inspector> extends ViewManager<Inspector_Kind> {
 
     /**
      * Activates the singleton view, newly created if necessary.
      *
      * @return the instance that implements the singleton view
      */
-    Inspector activateView(Inspection inspection);
+    Inspector_Kind activateView();
 
     /**
-     * Disposes the existing singleton view.
+     * Gets an action that highlights the, newly created if needed, view
+     * managed by this manager.
+     *
+     * @return the action for activating this manager's singleton view.
+     */
+    InspectorAction activateSingletonViewAction();
+
+    /**
+     * Disposes this manager's singleton view.
      */
     void deactivateView();
 }

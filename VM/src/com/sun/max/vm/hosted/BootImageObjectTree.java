@@ -43,9 +43,6 @@ import com.sun.max.vm.object.*;
 /**
  * A mechanism for saving, loading and printing the
  * causality spanning-tree of the object graph in an {@linkplain BootImageGenerator image}.
- *
- * @author Doug Simon
- * @author Michael Haupt
  */
 public final class BootImageObjectTree {
 
@@ -61,7 +58,6 @@ public final class BootImageObjectTree {
     /**
      * The form of an object's {@linkplain Object#toString() string} representation included in the saved tree.
      *
-     * @author Doug Simon
      */
     enum TO_STRING_TAG {
         /**
@@ -703,7 +699,12 @@ public final class BootImageObjectTree {
         @Override
         public String toString() {
             if (treeStringRep == null) {
-                treeStringRep = new StringBuffer(node.className).
+                StringBuilder buf = new StringBuilder();
+                if (node.parentLink != null) {
+                    buf.append(node.parentLink).append(" = ");
+                }
+
+                treeStringRep = buf.append(node.className).
                     append(" @ ").
                     append(Long.toString(node.address + RELOC.getValue(), 10)).
                     append(", 0x").

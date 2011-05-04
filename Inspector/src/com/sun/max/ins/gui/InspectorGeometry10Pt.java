@@ -45,7 +45,7 @@ public class InspectorGeometry10Pt implements InspectorGeometry {
         preferredFrameGeometry.put(ViewKind.ALLOCATIONS, new Rectangle(100, 100, 400, 200));
         preferredFrameGeometry.put(ViewKind.BOOT_IMAGE, new Rectangle(75, 0, 350, 700));
         preferredFrameGeometry.put(ViewKind.BREAKPOINTS, new Rectangle(950, 0, 400, 150));
-        preferredFrameGeometry.put(ViewKind.FRAME, new Rectangle(1175, 450, 275, 450));
+        preferredFrameGeometry.put(ViewKind.STACK_FRAME, new Rectangle(1175, 450, 275, 450));
         preferredFrameGeometry.put(ViewKind.JAVA_SOURCE, new Rectangle(100, 100, 500, 500));
         preferredFrameGeometry.put(ViewKind.METHODS, new Rectangle(275, 0, 800, 800));
         preferredFrameGeometry.put(ViewKind.NOTEPAD, new Rectangle(150, 150, 300, 300));
