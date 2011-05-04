@@ -125,7 +125,7 @@ public final class InspectableHeapInfo {
      * in the dynamic heap.
      * <br>
      * No-op when VM is not being inspected.
-     * @param useImmortalMemory TODO
+     * @param useImmortalMemory true if the {@link InspectableHeapInfo#rootTableMemoryRegion} must be allocated in immortal memory
      * @param memoryRegions regions allocated by the heap implementation
      */
     public static void init(boolean useImmortalMemory, MemoryRegion... memoryRegions) {
