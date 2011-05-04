@@ -89,7 +89,7 @@ public final class BootClassLoader extends ClassLoader {
         }
     }
 
-    private Class resolveClassOrNull(Classpath classpath, String name) throws ClassNotFoundException {
+    private Class resolveClassOrNull(Classpath classpath, String name) {
         final ClasspathFile classpathFile = classpath.readClassFile(name);
         if (classpathFile == null) {
             return null;
@@ -105,7 +105,7 @@ public final class BootClassLoader extends ClassLoader {
         return classActor.toJava();
     }
 
-    public synchronized Class<?> findBootstrapClass(String name) throws ClassNotFoundException {
+    public synchronized Class<?> findBootstrapClass(String name) {
         final Class c = findLoadedClass(name);
         if (c != null) {
             return c;

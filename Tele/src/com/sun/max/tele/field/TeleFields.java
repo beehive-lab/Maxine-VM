@@ -25,6 +25,7 @@ package com.sun.max.tele.field;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -59,10 +60,6 @@ import com.sun.max.vm.value.*;
  * A field of the appropriate {@link TeleFieldAccess} subtype is generated into this file
  * by executing the {@link #main(String[])} method in this class (ensuring that the VM.
  * class path contains all the {@code com.sun.max} classes).
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Michael Van De Vanter
  */
 public class TeleFields extends AbstractTeleVMHolder {
 
@@ -94,7 +91,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ClassActor_typeDescriptor = new TeleInstanceReferenceFieldAccess(ClassActor.class, "typeDescriptor", TypeDescriptor.class);
     public final TeleInstanceReferenceFieldAccess ClassMethodActor_codeAttribute = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "codeAttribute", CodeAttribute.class);
     public final TeleInstanceReferenceFieldAccess ClassMethodActor_targetState = new TeleInstanceReferenceFieldAccess(ClassMethodActor.class, "targetState", Object.class);
-    public final TeleInstanceReferenceFieldAccess ClassRegistry_typeDescriptorToClassActor = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "typeDescriptorToClassActor", HashMap.class);
+    public final TeleInstanceReferenceFieldAccess ClassRegistry_typeDescriptorToClassActor = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "typeDescriptorToClassActor", ConcurrentHashMap.class);
     public final TeleStaticReferenceFieldAccess Code_CODE_BOOT_NAME = new TeleStaticReferenceFieldAccess(Code.class, "CODE_BOOT_NAME", String.class);
     public final TeleStaticReferenceFieldAccess Code_bootCodeRegion = new TeleStaticReferenceFieldAccess(Code.class, "bootCodeRegion", CodeRegion.class);
     public final TeleStaticReferenceFieldAccess Code_codeManager = new TeleStaticReferenceFieldAccess(Code.class, "codeManager", CodeManager.class);
@@ -166,11 +163,12 @@ public class TeleFields extends AbstractTeleVMHolder {
 
     // Other JDK fields:
 
-    private final Class HashMap$Entry = Classes.getInnerClass(HashMap.class, "Entry");
-    public final TeleInstanceReferenceFieldAccess HashMap_table = new TeleInstanceReferenceFieldAccess(HashMap.class, "table", Array.newInstance(HashMap$Entry, 0).getClass());
-    public final TeleInstanceReferenceFieldAccess HashMap$Entry_next = new TeleInstanceReferenceFieldAccess(HashMap$Entry, "next", HashMap$Entry);
-    public final TeleInstanceReferenceFieldAccess HashMap$Entry_value = new TeleInstanceReferenceFieldAccess(HashMap$Entry, "value", Object.class);
-    public final TeleInstanceReferenceFieldAccess ArrayList_elementData = new TeleInstanceReferenceFieldAccess(ArrayList.class, "elementData", Object[].class);
+    private final Class ConcurrentHashMap$Segment = Classes.getInnerClass(ConcurrentHashMap.class, "Segment");
+    private final Class ConcurrentHashMap$HashEntry = Classes.getInnerClass(ConcurrentHashMap.class, "HashEntry");
+    public final TeleInstanceReferenceFieldAccess ConcurrentHashMap_segments = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap.class, "segments", Array.newInstance(ConcurrentHashMap$Segment, 0).getClass());
+    public final TeleInstanceReferenceFieldAccess ConcurrentHashMap$Segment_table = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$Segment, "table", Array.newInstance(ConcurrentHashMap$HashEntry, 0).getClass());
+    public final TeleInstanceReferenceFieldAccess ConcurrentHashMap$HashEntry_next = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$HashEntry, "next", ConcurrentHashMap$HashEntry);
+    public final TeleInstanceReferenceFieldAccess ConcurrentHashMap$HashEntry_value = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$HashEntry, "value", Object.class);
     public final TeleInstanceIntFieldAccess Enum_ordinal = new TeleInstanceIntFieldAccess(Enum.class, "ordinal");
     public final TeleInstanceIntFieldAccess String_count = new TeleInstanceIntFieldAccess(String.class, "count");
     public final TeleInstanceIntFieldAccess String_offset = new TeleInstanceIntFieldAccess(String.class, "offset");

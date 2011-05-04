@@ -59,9 +59,6 @@ import com.sun.max.vm.type.*;
  *
  * This class incorporates a lot of nasty, delicate JDK hacks that are needed to
  * get the JDK reinitialized to the point that it is ready to run a new program.
- *
- * @author Bernd Mathiske
- * @author Mick Jordan
  */
 public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
@@ -106,7 +103,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     public List<? extends MethodActor> gatherNativeInitializationMethods() {
         final List<StaticMethodActor> methods = new LinkedList<StaticMethodActor>();
         final String maxinePackagePrefix = "com.sun.max";
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
             if (!classActor.name.toString().startsWith(maxinePackagePrefix)) { // non-Maxine class => JDK class
                 for (StaticMethodActor method : classActor.localStaticMethodActors()) {
                     if ((method.name.equals("initIDs") || method.name.equals("initNative")) && (method.descriptor().numberOfParameters() == 0) && method.resultKind() == Kind.VOID) {
@@ -334,8 +331,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             final JarFile jarFile = new JarFile(jarFileName);
             mainClassName = findClassAttributeInJarFile(jarFile, "Main-Class");
             if (mainClassName == null) {
-                Log.println("could not find main class in jarfile: " + jarFileName);
-                return null;
+                throw new ClassNotFoundException("Could not find main class in jarfile: " + jarFileName);
             }
         }
         return appClassLoader.loadClass(mainClassName);

@@ -41,8 +41,6 @@ import com.sun.max.vm.type.TypeDescriptor.*;
 /**
  * The {@code JavaTypeDescriptor} class collects together commonly used functionality associated
  * with Java type descriptors, as well as commonly used type descriptor instances.
- *
- * @author Ben L. Titzer
  */
 public final class JavaTypeDescriptor {
 
@@ -51,8 +49,6 @@ public final class JavaTypeDescriptor {
 
     /**
      * A type descriptor for void or a primitive type.
-     *
-     * @author Ben L. Titzer
      */
     public static final class AtomicTypeDescriptor extends TypeDescriptorEntry {
         public final Class javaClass;
@@ -96,8 +92,6 @@ public final class JavaTypeDescriptor {
 
     /**
      * A type descriptor for a {@linkplain Word#getSubclasses() class} in the {@link Word} hierarchy.
-     *
-     * @author Doug Simon
      */
     public static final class WordTypeDescriptor extends TypeDescriptorEntry {
         /**
@@ -170,6 +164,7 @@ public final class JavaTypeDescriptor {
 
     public static final TypeDescriptor THREAD = getDescriptorForTupleType(Thread.class);
     public static final TypeDescriptor CLASS_LOADER = getDescriptorForTupleType(ClassLoader.class);
+    public static final TypeDescriptor CLASS_NOT_FOUND_EXCEPTION = getDescriptorForTupleType(ClassNotFoundException.class);
     public static final TypeDescriptor METHOD = getDescriptorForTupleType(Method.class);
     public static final TypeDescriptor FIELD = getDescriptorForTupleType(Field.class);
     public static final TypeDescriptor CONSTRUCTOR = getDescriptorForTupleType(Constructor.class);
@@ -435,7 +430,7 @@ public final class JavaTypeDescriptor {
      */
     public static TypeDescriptor parseTypeDescriptor(String string, int startIndex, boolean slashes) throws ClassFormatError {
         if (startIndex >= string.length()) {
-            throw classFormatError("invalid type descriptor");
+            throw classFormatError("invalid type descriptor: " + string);
         }
         switch (string.charAt(startIndex)) {
             case 'Z':

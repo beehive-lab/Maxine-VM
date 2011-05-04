@@ -52,14 +52,12 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.ClassfileWriter.MaxineFlags;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.instrument.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.ClassRegistry.Property;
 import com.sun.max.vm.value.*;
 
 /**
  * Reads a class file to create a corresponding {@link ClassActor}.
- *
  */
 public final class ClassfileReader {
 
@@ -1342,9 +1340,6 @@ public final class ClassfileReader {
                     Log.println("[Loaded " + name + " from " + optSource + "]");
                 }
             }
-
-            InspectableClassInfo.notifyClassLoaded(classActor);
-
             return classActor;
         } finally {
             exitContext();

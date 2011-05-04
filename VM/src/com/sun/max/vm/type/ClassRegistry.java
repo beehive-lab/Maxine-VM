@@ -48,6 +48,7 @@ import com.sun.max.vm.jdk.JDK.ClassRef;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.value.*;
 
@@ -114,6 +115,7 @@ public final class ClassRegistry {
     public static final MethodActor VmThread_run = findMethod("run", VmThread.class);
     public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
+    public static final MethodActor ClassLoader_findBootstrapClass = findMethod("findBootstrapClass", ClassLoader.class);
 
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded
@@ -158,6 +160,12 @@ public final class ClassRegistry {
     @INSPECTED
     private final ConcurrentHashMap<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new ConcurrentHashMap<TypeDescriptor, ClassActor>(16384);
 
+    /**
+     * Classes in the boot image.
+     */
+    @HOSTED_ONLY
+    private ClassActor[] bootImageClasses;
+
     private final HashMap<Object, Object>[] propertyMaps;
 
     public final ClassLoader classLoader;
@@ -168,6 +176,9 @@ public final class ClassRegistry {
             propertyMaps[property.ordinal()] = property.createMap();
         }
         this.classLoader = classLoader;
+        if (MaxineVM.isHosted()) {
+            bootImageClasses = new ClassActor[0];
+        }
     }
 
     /**
@@ -331,26 +342,12 @@ public final class ClassRegistry {
         return typeDescriptorToClassActor.size();
     }
 
-    @HOSTED_ONLY
-    private ClassActor[] classesCache;
-
     /**
      * Gets a snapshot of the classes currently in this registry.
      */
     @HOSTED_ONLY
-    public ClassActor[] copyOfClasses() {
-        while (true) {
-            int n = typeDescriptorToClassActor.size();
-            if (classesCache != null && classesCache.length == n) {
-                return classesCache;
-            }
-            classesCache = typeDescriptorToClassActor.values().toArray(new ClassActor[n]);
-            if (n == typeDescriptorToClassActor.size()) {
-                break;
-            }
-            assert classesCache.length == n;
-        }
-        return classesCache;
+    public ClassActor[] bootImageClasses() {
+        return bootImageClasses;
     }
 
     /**
@@ -379,6 +376,15 @@ public final class ClassRegistry {
 
         // Now finally publish the class
         typeDescriptorToClassActor.put(typeDescriptor, classActor);
+
+        if (MaxineVM.isHosted()) {
+            synchronized (this) {
+                bootImageClasses = Arrays.copyOf(bootImageClasses, bootImageClasses.length + 1);
+                bootImageClasses[bootImageClasses.length - 1] = classActor;
+            }
+        }
+
+        InspectableClassInfo.notifyClassLoaded(classActor);
 
         return classActor;
     }
@@ -502,18 +508,18 @@ public final class ClassRegistry {
         /**
          * Sets the value of this property for a given key.
          *
-         * @param mapping the mapping from keys to values for this property
+         * @param map the mapping from keys to values for this property
          * @param object the object for which the value of this property is to be retrieved
          * @param value the value to be set
          */
-        void set(HashMap<Object, Object> mapping, Object object, Object value) {
+        void set(HashMap<Object, Object> map, Object object, Object value) {
             assert keyType.isInstance(object);
-            if (value != null) {
+            if (value != null && value != defaultValue) {
                 assert valueType.isInstance(value);
-                final Object oldValue = mapping.put(object, value);
+                final Object oldValue = map.put(object, value);
                 assert !isFinal || oldValue == null;
             } else {
-                mapping.remove(object);
+                map.remove(object);
             }
         }
 
@@ -535,6 +541,10 @@ public final class ClassRegistry {
 
     /**
      * Sets the value of a given property for a given object.
+     *
+     * @param property the property to set
+     * @param object the object for which the property is to be set
+     * @param value the value of the property
      */
     public synchronized <Key_Type, Value_Type> void set(Property property, Key_Type object, Value_Type value) {
         property.set(propertyMaps[property.ordinal()], object, value);
