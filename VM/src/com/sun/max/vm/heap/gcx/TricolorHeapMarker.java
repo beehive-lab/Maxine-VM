@@ -1790,6 +1790,14 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
     Pointer debugLiveObject;
 
     public void sweep(Sweepable sweepingArea) {
+        if (Sweepable.DoImpreciseSweep) {
+            impreciseSweep(sweepingArea, sweepingArea.minReclaimableSize());
+        } else {
+            preciseSweep(sweepingArea);
+        }
+    }
+
+    private void preciseSweep(Sweepable sweepingArea) {
         final Pointer colorMapBase = base.asPointer();
         final int rightmostBitmapWordIndex =  bitmapWordIndex(bitIndexOf(forwardScanState.rightmost));
         int bitmapWordIndex = bitmapWordIndex(bitIndexOf(coveredAreaStart));
@@ -1846,7 +1854,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
      * @param sweepingArea
      * @param minReclaimableSpace
      */
-    public void impreciseSweep(Sweepable sweepingArea, Size minReclaimableSpace) {
+    private void impreciseSweep(Sweepable sweepingArea, Size minReclaimableSpace) {
         final Pointer colorMapBase = base.asPointer();
         final int minBitsBetweenMark = minReclaimableSpace.toInt() >> log2BytesCoveredPerBit;
         int bitmapWordIndex = 0;

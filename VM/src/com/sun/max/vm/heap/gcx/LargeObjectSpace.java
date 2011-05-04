@@ -460,11 +460,10 @@ public class LargeObjectSpace extends Sweepable {
     }
 
     @Override
-    public Size beginSweep(boolean precise) {
+    public void beginSweep() {
         endOfLastProcessedChunk = committedHeapSpace.start();
         // Drop every list on the floor.
         WordArray.fill(chunkSizeTable,  Pointer.zero());
-        return Size.fromInt(BLOCK_SIZE);
     }
 
     @Override
@@ -501,6 +500,11 @@ public class LargeObjectSpace extends Sweepable {
     @Override
     public void verify(AfterMarkSweepVerifier verifier) {
         FatalError.unimplemented();
+    }
+
+    @Override
+    public Size minReclaimableSize() {
+        return Size.fromInt(BLOCK_SIZE);
     }
 
 }

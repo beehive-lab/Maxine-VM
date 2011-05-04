@@ -563,6 +563,11 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
      */
     private Size minReclaimableSpace;
 
+    @Override
+    public Size minReclaimableSize() {
+        return minReclaimableSpace;
+    }
+
     /**
      * Pointer to the end of the last dead object notified by the sweeper. Used  for precise sweeping.
      */
@@ -698,13 +703,12 @@ public class FreeHeapSpaceManager extends Sweepable implements ResizableSpace {
     }
 
     @Override
-    public Size beginSweep(boolean precise) {
+    public void beginSweep() {
         for (int i = 0; i < freeChunkBins.length; i++) {
             freeChunkBins[i].reset();
         }
         totalFreeChunkSpace = 0;
         endOfLastVisitedObject = committedHeapSpace.start().asPointer();
-        return minReclaimableSpace;
     }
 
     @Override

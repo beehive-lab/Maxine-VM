@@ -40,8 +40,11 @@ import com.sun.max.vm.MaxineVM.Phase;
  */
 public abstract class Sweepable {
 
+    public static boolean DoImpreciseSweep = true;
     static boolean TraceSweep;
+
     static {
+        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", Sweepable.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
         if (MaxineVM.isDebug()) {
             VMOptions.addFieldOption("-XX:", "TraceSweep", Sweepable.class, "Trace heap sweep operations", Phase.PRISTINE);
         }
@@ -82,12 +85,9 @@ public abstract class Sweepable {
     public abstract void processDeadSpace(Address freeChunk, Size size);
 
     /**
-     * Get the space manager ready for a sweep of the space it manages.
-     * @param precise indicate whether the sweeping will be precise.
-     * @return return the minimum amount of byte the space manager is interested in reclaiming. A heap sweeper may not
-     * notify the space manager for free space smaller than this amount.
+     * Prepare the space manager for a sweep of the space it manages.
      */
-    public abstract Size beginSweep(boolean precise);
+    public abstract void beginSweep();
 
     /**
      * Notify the space manager that sweeping is terminated.
@@ -102,4 +102,8 @@ public abstract class Sweepable {
      */
     public abstract void verify(AfterMarkSweepVerifier verifier);
 
+    /**
+     * Minimum size to be considered reclaimable.
+     */
+    public abstract Size minReclaimableSize();
 }

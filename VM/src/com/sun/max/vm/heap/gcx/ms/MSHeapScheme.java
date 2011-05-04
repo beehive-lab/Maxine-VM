@@ -55,10 +55,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
 
-    static boolean DoImpreciseSweep = true;
     static boolean UseLOS = true;
     static {
-        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", MSHeapScheme.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "UseLOS", MSHeapScheme.class, "Use a large object space", Phase.PRISTINE);
     }
 
@@ -147,6 +145,12 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
     }
 
+    // HACK to get around C1X bug.
+    @NEVER_INLINE
+    private Address getEndOfCodeRegion(Address endOfBootCodeRegion, Address endOfCodeRegion) {
+        final Address result = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
+        return result;
+    }
     /**
      * Allocate memory for both the heap and the GC's data structures (mark bitmaps, marking stacks, etc.).
      */
@@ -164,7 +168,9 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         final Address endOfCodeRegion = Code.getCodeManager().getRuntimeCodeRegion().end();
         final Address endOfReservedSpace = Heap.bootHeapRegion.start().plus(reservedSpace);
 
-        final Address  heapLowerBound = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
+        // FIXME: HACK to get around C1X bugs: the following cause CEE to fail (ends up with wrong type for the two side of the branch here).
+        // final Address  heapLowerBound = endOfCodeRegion.greaterEqual(endOfBootCodeRegion) ? endOfCodeRegion : endOfBootCodeRegion;
+        final Address  heapLowerBound = getEndOfCodeRegion(endOfBootCodeRegion, endOfCodeRegion);
         final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
 
 
@@ -348,19 +354,8 @@ public class MSHeapScheme extends HeapSchemeWithTLAB {
         }
 
         private Size reclaim() {
-            Size minReclaimableSpace = objectSpace.beginSweep(DoImpreciseSweep);
-
-            if (Heap.traceGCPhases()) {
-                Log.print(DoImpreciseSweep ? "Imprecise" : "Precise");
-                Log.println(" sweeping of the heap...");
-            }
-
-            if (DoImpreciseSweep) {
-                heapMarker.impreciseSweep(objectSpace, minReclaimableSpace);
-            } else {
-                heapMarker.sweep(objectSpace);
-            }
-
+            objectSpace.beginSweep();
+            heapMarker.sweep(objectSpace);
             return objectSpace.endSweep();
         }
 

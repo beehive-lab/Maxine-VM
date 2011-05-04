@@ -34,7 +34,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.gcx.*;
@@ -55,11 +54,6 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
      * Number of heap words covered by a single mark.
      */
     private static final int WORDS_COVERED_PER_BIT = 1;
-
-    static boolean DoImpreciseSweep = true;
-    static {
-        VMOptions.addFieldOption("-XX:", "DoImpreciseSweep", MSEHeapScheme.class, "Use an imprecise sweeping phase", Phase.PRISTINE);
-    }
 
    /**
      * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
@@ -376,7 +370,7 @@ public class MSEHeapScheme extends HeapSchemeWithTLAB {
             SpecialReferenceManager.processDiscoveredSpecialReferences(heapMarker.getSpecialReferenceGC());
             stopTimer(weakRefTimer);
             startTimer(reclaimTimer);
-            /*Size freeSpaceAfterGC = */theHeap.sweep(heapMarker, DoImpreciseSweep);
+            /*Size freeSpaceAfterGC = */theHeap.sweep(heapMarker);
             stopTimer(reclaimTimer);
             if (MaxineVM.isDebug()) {
                 afterGCVerifier.run();
