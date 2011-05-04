@@ -331,8 +331,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             final JarFile jarFile = new JarFile(jarFileName);
             mainClassName = findClassAttributeInJarFile(jarFile, "Main-Class");
             if (mainClassName == null) {
-                Log.println("could not find main class in jarfile: " + jarFileName);
-                return null;
+                throw new ClassNotFoundException("Could not find main class in jarfile: " + jarFileName);
             }
         }
         return appClassLoader.loadClass(mainClassName);

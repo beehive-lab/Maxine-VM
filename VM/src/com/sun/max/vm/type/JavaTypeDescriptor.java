@@ -164,6 +164,7 @@ public final class JavaTypeDescriptor {
 
     public static final TypeDescriptor THREAD = getDescriptorForTupleType(Thread.class);
     public static final TypeDescriptor CLASS_LOADER = getDescriptorForTupleType(ClassLoader.class);
+    public static final TypeDescriptor CLASS_NOT_FOUND_EXCEPTION = getDescriptorForTupleType(ClassNotFoundException.class);
     public static final TypeDescriptor METHOD = getDescriptorForTupleType(Method.class);
     public static final TypeDescriptor FIELD = getDescriptorForTupleType(Field.class);
     public static final TypeDescriptor CONSTRUCTOR = getDescriptorForTupleType(Constructor.class);
