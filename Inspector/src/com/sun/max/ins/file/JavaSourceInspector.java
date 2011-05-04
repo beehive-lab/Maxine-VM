@@ -68,20 +68,20 @@ public final class JavaSourceInspector extends FileInspector<JavaSourceInspector
             Trace.end(TRACE_VALUE, tracePrefix() + "creating");
         }
 
-        @Override
-        public void notifyViewClosing(Inspector inspector) {
-            // TODO (mlvdv)  should be using generics here
-            final JavaSourceInspector javaSourceInspector = (JavaSourceInspector) inspector;
-            assert inspectors.remove(javaSourceInspector.file()) != null;
-            super.notifyViewClosing(inspector);
-        }
-
         public JavaSourceInspector makeView(ClassActor classActor, File sourceFile) {
             assert sourceFile != null;
             JavaSourceInspector inspector = inspectors.get(sourceFile);
             if (inspector == null) {
                 inspector = new JavaSourceInspector(inspection(), sourceFile);
                 inspectors.put(sourceFile, inspector);
+                inspector.addInspectorEventListener(new InspectorEventListener() {
+
+                    @Override
+                    public void viewClosing(Inspector inspector) {
+                        final JavaSourceInspector javaSourceInspector = (JavaSourceInspector) inspector;
+                        assert inspectors.remove(javaSourceInspector.file()) != null;
+                    }
+                });
             }
             return inspector;
         }

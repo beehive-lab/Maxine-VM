@@ -144,14 +144,6 @@ public final class BytecodeFramesInspector extends Inspector<BytecodeFramesInspe
             Trace.end(TRACE_VALUE, tracePrefix() + "creating");
         }
 
-        @Override
-        public void notifyViewClosing(Inspector inspector) {
-            // TODO (mlvdv)  should be using generics here
-            final BytecodeFramesInspector bytecodeFrameInspector = (BytecodeFramesInspector) inspector;
-            assert inspectors.remove(bytecodeFrameInspector.key) != null;
-            super.notifyViewClosing(bytecodeFrameInspector);
-        }
-
         public InspectorAction makeViewAction() {
             return makeViewAction;
         }
@@ -162,6 +154,14 @@ public final class BytecodeFramesInspector extends Inspector<BytecodeFramesInspe
             if (bytecodeFrameInspector == null) {
                 bytecodeFrameInspector = new BytecodeFramesInspector(inspection(), bytecodeFrames, compiledCode, key);
                 inspectors.put(key, bytecodeFrameInspector);
+                bytecodeFrameInspector.addInspectorEventListener(new InspectorEventListener() {
+
+                    @Override
+                    public void viewClosing(Inspector inspector) {
+                        final BytecodeFramesInspector bytecodeFrameInspector = (BytecodeFramesInspector) inspector;
+                        assert inspectors.remove(bytecodeFrameInspector.key) != null;
+                    }
+                });
                 notifyAddingView(bytecodeFrameInspector);
             }
             return bytecodeFrameInspector;
