@@ -33,7 +33,6 @@ import com.sun.max.vm.type.*;
  * such as registration of only fully initialized (non-static) ClassActors with the {@link ClassRegistry}
  * to be maintained in one place.
  *
- * @author Doug Simon
  */
 public final class ClassActorFactory {
 
@@ -44,7 +43,7 @@ public final class ClassActorFactory {
      * Creates the actor for the type representing an 1-dimensional array of a given {@linkplain ClassActor#componentClassActor() component type}.
      */
     public static ArrayClassActor createArrayClassActor(ClassActor componentClassActor) {
-        return ClassRegistry.put(new ArrayClassActor(componentClassActor));
+        return (ArrayClassActor) ClassRegistry.define(new ArrayClassActor(componentClassActor));
     }
 
     /**

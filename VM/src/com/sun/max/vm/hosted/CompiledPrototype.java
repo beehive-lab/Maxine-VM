@@ -53,10 +53,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * The bootstrapping phase responsible for compiling and linking methods in the target.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Ben L. Titzer
  */
 public class CompiledPrototype extends Prototype {
 
@@ -188,7 +184,7 @@ public class CompiledPrototype extends Prototype {
     private void gatherNewClasses() {
         Trace.begin(1, "gatherNewClasses");
         final LinkedList<ClassActor> newClasses = new LinkedList<ClassActor>();
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.copyOfClasses()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY.bootImageClasses()) {
             if (lookupInfo(classActor) == null) {
                 final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
                 if (enclosingMethod != null) {
@@ -636,7 +632,7 @@ public class CompiledPrototype extends Prototype {
 
     public void compileFoldableMethods() {
         Trace.begin(1, "compiling foldable methods");
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
             forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (classMethodActor.isDeclaredFoldable()) {
@@ -679,7 +675,7 @@ public class CompiledPrototype extends Prototype {
     public void checkRequiredImageMethods() {
         Trace.begin(1, "checking methods that must be compiled");
         final TreeSet<String> missing = new TreeSet<String>();
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
             forAllClassMethodActors(classActor, new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (classMethodActor.mustCompileInImage && classMethodActor.targetMethodCount() == 0) {
@@ -758,7 +754,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkVTableEntries() {
         Trace.begin(1, "linkVTableEntries");
-        for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
+        for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
             if (classActor.isReferenceClassActor()) {
                 linkVTable(classActor);
             }
@@ -786,7 +782,7 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "linkITableEntries");
 
         final IntHashMap<InterfaceActor> serialToInterfaceActor = new IntHashMap<InterfaceActor>();
-        ClassActor[] classes = BOOT_CLASS_REGISTRY.copyOfClasses();
+        ClassActor[] classes = BOOT_CLASS_REGISTRY.bootImageClasses();
         for (ClassActor classActor : classes) {
             if (classActor instanceof InterfaceActor) {
                 final InterfaceActor interfaceActor = (InterfaceActor) classActor;

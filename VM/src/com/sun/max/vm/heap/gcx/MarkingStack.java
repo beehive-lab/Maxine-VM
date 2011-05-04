@@ -84,7 +84,7 @@ public class MarkingStack {
 
     void initialize(MarkingStackCellVisitor cellVisitor) {
         drainingCellVisitor = cellVisitor;
-       // FIXME: a better solution might be to allocate this in the heap, outside of the covered area, as a reference array,
+        // TODO (ld) a better solution might be to allocate this in the heap, outside of the covered area, as a reference array,
         // Root marking will skip it.
         // Same with the other GC data structures (i.e., rescan map and mark bitmap)
         final int length = markingStackSizeOption.getValue();

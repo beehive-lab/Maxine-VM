@@ -61,8 +61,6 @@ import com.sun.max.vm.verifier.*;
  * Every such "Java class" has a specific super class (in the JLS sense) and
  * a mirror, i.e. an instance of java.lang.Class reflecting on it.
  *
- * @author Bernd Mathiske
- * @author Doug Simon
  */
 public abstract class ClassActor extends Actor implements RiType {
 
@@ -484,13 +482,13 @@ public abstract class ClassActor extends Actor implements RiType {
 
     protected final synchronized int makeID(int numberOfDimensions) {
         if (numberOfDimensions <= 0) {
-            return ClassID.create();
+            return ClassID.allocate();
         }
 
         if (arrayClassIDs == null) {
             arrayClassIDs = new int[numberOfDimensions];
             for (int i = 0; i < numberOfDimensions; i++) {
-                arrayClassIDs[i] = ClassID.create();
+                arrayClassIDs[i] = ClassID.allocate();
                 if (MaxineVM.isHosted()) {
                     ClassID.recordArrayClassID(this, i, arrayClassIDs[i]);
                 }
@@ -499,7 +497,7 @@ public abstract class ClassActor extends Actor implements RiType {
             final int[] a = new int[numberOfDimensions];
             Ints.copyAll(arrayClassIDs, a);
             for (int i = arrayClassIDs.length; i < a.length; i++) {
-                a[i] = ClassID.create();
+                a[i] = ClassID.allocate();
                 if (MaxineVM.isHosted()) {
                     ClassID.recordArrayClassID(this, i, a[i]);
                 }
@@ -1678,19 +1676,5 @@ public abstract class ClassActor extends Actor implements RiType {
      */
     public RiMethod uniqueConcreteMethod(RiMethod method) {
         return ClassDependencyManager.getUniqueConcreteMethod(this, method);
-    }
-
-    /**
-     * This must be call to define the class actor, i.e., makes the corresponding class types visible to all.
-     * The caller must hold the defining class loader's lock.
-     */
-    public void define() {
-        // FIXME: REVISIT concurrency issues.
-        // If we hold the class loader monitor, we may not be exempt of deadlock, and we're way sub-optimal as we may be blocking
-        // creation of arrays types from the same class loader, and a lot of other class loading related operations.
-        // If we don't, we not multi-thread safe.
-        FatalError.check(Thread.holdsLock(classLoader),  "must hold the defining class loader's lock");
-        ClassDependencyManager.addToHierarchy(this);
-        ClassRegistry.put(this);
     }
 }

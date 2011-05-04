@@ -33,7 +33,7 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * After mark-sweep verifier for a free space manager with tracing based on TricolorHeapMarker.
- * FIXME: want to make this independent from FreeHeapSpaceManager.
+ * TODO (ld) want to make this independent from FreeHeapSpaceManager.
  * @author Laurent Daynes
  */
 public class AfterMarkSweepVerifier extends PointerIndexVisitor implements CellVisitor {

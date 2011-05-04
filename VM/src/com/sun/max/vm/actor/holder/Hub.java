@@ -205,7 +205,6 @@ public abstract class Hub extends Hybrid {
 
     /**
      * Static Hub.
-     * @param vTableLength TODO
      */
     protected Hub(Size tupleSize, ClassActor classActor, TupleReferenceMap referenceMap, int vTableLength) {
         this.tupleSize = tupleSize;

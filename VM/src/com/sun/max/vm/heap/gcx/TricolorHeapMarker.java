@@ -1047,7 +1047,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
         }
 
         public void visitGreyObjects(int rangeLeftmostWordIndex, int rangeRightmostBitmapWordIndex) {
-            // TODO
+            // TODO (ld)
             FatalError.unimplemented();
         }
 
@@ -1070,8 +1070,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler {
                 while (bitmapWordIndex <= rightmostBitmapWordIndex) {
                     long bitmapWord = colorMapBase.getLong(bitmapWordIndex);
                     if (bitmapWord != 0) {
-                        // FIXME:
-                        // This way of scanning the mark bitmap may cause black objects to end up on the marking stack. Here's how.
+                        // FIXME (ld) this way of scanning the mark bitmap may cause black objects to end up on the marking stack.
+                        // Here's how.
                         // If the object pointed by the finger contains backward references to objects covered by the same word
                         // of the mark bitmap, and its end is covered by the same word, we will end up visiting these objects although
                         // there were pushed on the marking stack.

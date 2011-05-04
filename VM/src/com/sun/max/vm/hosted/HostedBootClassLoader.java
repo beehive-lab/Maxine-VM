@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package com.sun.max.vm.hosted;
 
-import static com.sun.max.vm.type.ClassRegistry.*;
-
 import java.util.*;
 
 import com.sun.max.*;
@@ -40,8 +38,6 @@ import com.sun.max.vm.type.*;
  * singleton {@link BootClassLoader#BOOT_CLASS_LOADER} instance of the {@link BootClassLoader}
  * at runtime thanks to {@link JavaPrototype#hostToTarget(Object)}.
  *
- * @author Bernd Mathiske
- * @author Doug Simon
  */
 public final class HostedBootClassLoader extends ClassLoader {
 
@@ -52,6 +48,8 @@ public final class HostedBootClassLoader extends ClassLoader {
 
     private static final Set<String> omittedClasses = new HashSet<String>();
     private static final Set<String> omittedPackages = new HashSet<String>();
+
+    private final Set<String> loadedPackages = new HashSet<String>();
 
     /**
      * Adds a class that must not be loaded into the VM class registry. Calling {@link #loadClass(String, boolean)} for
@@ -85,8 +83,8 @@ public final class HostedBootClassLoader extends ClassLoader {
      */
     public static void omitPackage(String packageName, boolean retrospective) {
         if (retrospective) {
-            for (ClassActor classActor : BOOT_CLASS_REGISTRY.copyOfClasses()) {
-                ProgramError.check(!classActor.packageName().equals(packageName), "Cannot omit a package that contains a class already in VM class registry: " + classActor.name);
+            synchronized (HOSTED_BOOT_CLASS_LOADER) {
+                ProgramError.check(!HOSTED_BOOT_CLASS_LOADER.loadedPackages.contains(packageName), "Cannot omit a package already in VM class registry: " + packageName);
             }
         }
         omittedPackages.add(packageName);
@@ -173,7 +171,7 @@ public final class HostedBootClassLoader extends ClassLoader {
      * @return the class actor for the specified type descriptor
      * @throws ClassNotFoundException if the class specified by the type descriptor could not be found
      */
-    public synchronized ClassActor makeClassActor(final TypeDescriptor typeDescriptor) throws ClassNotFoundException {
+    public ClassActor makeClassActor(final TypeDescriptor typeDescriptor) throws ClassNotFoundException {
         try {
             final ClassActor classActor = ClassRegistry.get(HostedBootClassLoader.this, typeDescriptor, false);
             if (classActor != null) {
@@ -184,8 +182,13 @@ public final class HostedBootClassLoader extends ClassLoader {
                 return ClassActorFactory.createArrayClassActor(componentClassActor);
             }
             final String name = typeDescriptor.toJavaString();
+
+            synchronized (this) {
+                loadedPackages.add(Classes.getPackageName(name));
+            }
+
             final ClasspathFile classpathFile = readClassFile(classpath(), name);
-            return ClassfileReader.defineClassActor(name, HostedBootClassLoader.this, classpathFile.contents, null, classpathFile.classpathEntry, false);
+            return ClassfileReader.defineClassActor(name, this, classpathFile.contents, null, classpathFile.classpathEntry, false);
         } catch (Exception exception) {
             throw Utils.cast(ClassNotFoundException.class, exception);
         }
@@ -212,7 +215,7 @@ public final class HostedBootClassLoader extends ClassLoader {
      * @param name the name of the class
      * @param classfileBytes a byte array containing the encoded version of the class
      */
-    public synchronized ClassActor makeClassActor(final String name, byte[] classfileBytes) {
+    public ClassActor makeClassActor(final String name, byte[] classfileBytes) {
         defineClass(name, classfileBytes, 0, classfileBytes.length);
         return ClassfileReader.defineClassActor(name, this, classfileBytes, null, null, false);
     }
@@ -256,7 +259,7 @@ public final class HostedBootClassLoader extends ClassLoader {
      * @param name the name of the class as a string
      */
     @Override
-    public synchronized Class<?> findClass(final String name) throws ClassNotFoundException {
+    public Class<?> findClass(final String name) throws ClassNotFoundException {
         try {
             // FIXME: The class loader interface (as specified by the JDK) does not allow one to pass a name of an array class!
             // Specifically, the JDK says: "Class objects for array classes are not created by class loaders, but are created automatically
@@ -287,7 +290,7 @@ public final class HostedBootClassLoader extends ClassLoader {
     @Override
     protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
         try {
-            final Class<?> javaType = HostedBootClassLoader.super.loadClass(name, resolve);
+            final Class<?> javaType = super.loadClass(name, resolve);
             if (MaxineVM.isHostedOnly(javaType)) {
                 throw new HostOnlyClassError(javaType.getName());
             }
