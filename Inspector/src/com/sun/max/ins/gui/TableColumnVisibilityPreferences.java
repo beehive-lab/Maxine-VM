@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.debug.*;
+import com.sun.max.ins.view.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 
@@ -157,6 +158,10 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
 
     public final InspectionFocus focus() {
         return inspection.focus();
+    }
+
+    public final InspectionViews views() {
+        return inspection.views();
     }
 
     public final InspectionActions actions() {

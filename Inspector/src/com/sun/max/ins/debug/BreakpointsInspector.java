@@ -37,7 +37,7 @@ import com.sun.max.tele.*;
  * @author Mick Jordan
  * @author Michael Van De Vanter
  */
-public final class BreakpointsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class BreakpointsInspector extends Inspector<BreakpointsInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.BREAKPOINTS;
@@ -45,32 +45,23 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     private static final String LONG_NAME = "Breakpoints Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "breakpointsInspectorGeometry";
 
-    private static final class BreakpointsViewManager extends AbstractSingletonViewManager<BreakpointsInspector> {
+    public static final class BreakpointsViewManager extends AbstractSingletonViewManager<BreakpointsInspector> {
 
         protected BreakpointsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected BreakpointsInspector createView(Inspection inspection) {
+            return new BreakpointsInspector(inspection);
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public BreakpointsInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new BreakpointsInspector(inspection);
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
     private static BreakpointsViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static BreakpointsViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new BreakpointsViewManager(inspection);
         }
@@ -97,14 +88,14 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
         debugMenu.addSeparator();
         debugMenu.add(actions().genericBreakpointMenuItems());
         if (vm().watchpointManager() != null) {
             debugMenu.add(actions().genericWatchpointMenuItems());
-            debugMenu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
+            debugMenu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
         }
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
@@ -159,17 +150,12 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         return getDefaultPrintAction();
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
     @Override
     public void inspectorClosing() {
-        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

@@ -34,10 +34,8 @@ import com.sun.cri.ci.*;
 import com.sun.max.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.java.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
@@ -54,7 +52,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -247,216 +244,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction refreshAll() {
         return refreshAll;
     }
-
-    /**
-     * Action: causes a specific Inspector to become visible,
-     * even if hidden or iconic.
-     */
-    final class ShowViewAction extends InspectorAction {
-
-        private final Inspector inspector;
-
-        ShowViewAction(Inspector inspector) {
-            super(inspection(), inspector.getTextForTitle());
-            this.inspector = inspector;
-        }
-
-        @Override
-        protected void procedure() {
-            inspector.highlight();
-        }
-
-    }
-
-    /**
-     * @return an action that will make a specified inspector become
-     * visible, even if hidden or iconic.
-     */
-    public final InspectorAction showView(Inspector inspector) {
-        return new ShowViewAction(inspector);
-    }
-
-    /**
-     * Action:  close all open inspectors that match a predicate.
-     */
-    final class CloseViewsAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Close views";
-
-        private final Predicate<Inspector> predicate;
-
-        CloseViewsAction(Predicate<Inspector> predicate, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.predicate = predicate;
-        }
-
-        @Override
-        protected void procedure() {
-            gui().removeInspectors(predicate);
-        }
-    }
-
-    /**
-     * Closes views matching a specified criterion.
-     *
-     * @param predicate a predicate that returns true for all Inspectors to be closed.
-     * @param actionTitle a string name for the Action, uses default name if null.
-     * @return an Action that will close views.
-     */
-    public final InspectorAction closeViews(Predicate<Inspector> predicate, String actionTitle) {
-        return new CloseViewsAction(predicate, actionTitle);
-    }
-
-    /**
-     * Closes all views of a specified type, optionally with an exception.
-     *
-     * @param inspectorType the type of Inspectors to be closed
-     * @param exceptInspector an inspector that should not be closed
-     * @param actionTitle a string name for the Action
-     * @return an action that will close views
-     */
-    public final InspectorAction closeViews(final Class<? extends Inspector> inspectorType, final Inspector exceptInspector, String actionTitle) {
-        Predicate<Inspector> predicate = new Predicate<Inspector>() {
-            public boolean evaluate(Inspector inspector) {
-                return inspectorType.isAssignableFrom(inspector.getClass()) && inspector != exceptInspector;
-            }
-        };
-        return new CloseViewsAction(predicate, actionTitle);
-    }
-
-    /**
-     * Action:  closes all open inspectors.
-     */
-    final class CloseAllViewsAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Close all views";
-
-        CloseAllViewsAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            gui().removeInspectors(Predicate.Static.alwaysTrue(Inspector.class));
-        }
-    }
-
-    private final InspectorAction closeAllViewsAction = new CloseAllViewsAction(null);
-
-    /**
-     * @return Singleton Action that closes all open inspectors.
-     */
-    public final InspectorAction closeAllViews() {
-        return closeAllViewsAction;
-    }
-
-    /**
-     * Action:  resizes an inspector in each dimension to make it fit within the main frame.
-     */
-    final class ResizeToFitAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Resize to fit inside frame";
-        private  final Inspector inspector;
-
-        ResizeToFitAction(Inspector inspector, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.inspector = inspector;
-        }
-
-        @Override
-        protected void procedure() {
-            gui().resizeToFit(inspector);
-        }
-    }
-
-    /**
-     * @return Action that resizes an inspector by shrinking it in each dimension until it
-     * fits completely within the Inspector's frame.
-     */
-    public final InspectorAction resizeToFit(Inspector inspector) {
-        return new ResizeToFitAction(inspector, null);
-    }
-
-    /**
-     * Action:  moves an inspector to the center of the main frame.
-     */
-    final class MoveToCenterAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Move to center of frame";
-        private  final Inspector inspector;
-
-        MoveToCenterAction(Inspector inspector, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.inspector = inspector;
-        }
-
-        @Override
-        protected void procedure() {
-            gui().moveToMiddle(inspector);
-        }
-    }
-
-    /**
-     * @return Action that moves an inspector to the middle of the Inspector's frame.
-     */
-    public final InspectorAction movedToCenter(Inspector inspector) {
-        return new MoveToCenterAction(inspector, null);
-    }
-
-   /**
-     * Action:  resizes an inspector in each dimension to make it fill the main frame.
-     */
-    final class ResizeToFillAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Resize to fill frame";
-        private  final Inspector inspector;
-
-        ResizeToFillAction(Inspector inspector, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.inspector = inspector;
-        }
-
-        @Override
-        protected void procedure() {
-            gui().resizeToFill(inspector);
-        }
-    }
-
-    /**
-     * @return Action that resizes an inspector by shrinking it in each dimension until it
-     * fits completely within the Inspector's frame.
-     */
-    public final InspectorAction resizeToFill(Inspector inspector) {
-        return new ResizeToFillAction(inspector, null);
-    }
-
-
-    /**
-     * Action:  restores the inspector frame to its default geometry.
-     */
-    final class RestoreDefaultGeometryAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Restore size/location to default";
-        private  final Inspector inspector;
-
-        RestoreDefaultGeometryAction(Inspector inspector, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.inspector = inspector;
-        }
-
-        @Override
-        protected void procedure() {
-            gui().restoreDefaultGeometry(inspector);
-        }
-    }
-
-    /**
-     * @return Action that restores the default location and size of an inspector.
-     */
-    public final InspectorAction restoreDefaultGeometry(Inspector inspector) {
-        return new RestoreDefaultGeometryAction(inspector, null);
-    }
-
 
     /**
      * Action:  quits inspector.
@@ -800,17 +587,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * A general purpose action for activating one of the Inspector's singleton
-     * views, creating it anew if needed.
-     *
-     * @param kind the kind of view to be made
-     * @return an action that will produce a possibly new view of the specified kind
-     */
-    public InspectorAction activateSingletonView(ViewKind kind) {
-        return inspection().views().activateSingletonViewAction(kind);
-    }
-
-    /**
      * Action:  copies a hex string version of a {@link Word} to the system clipboard.
      */
     final class CopyWordAction extends InspectorAction {
@@ -858,207 +634,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  inspect a memory region, interactive if no location is specified.
-     */
-    final class InspectMemoryBytesAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect memory as bytes";
-        private final Address address;
-        private final TeleObject teleObject;
-
-        InspectMemoryBytesAction() {
-            super(inspection(), "Inspect memory bytes at address...");
-            this.address = null;
-            this.teleObject = null;
-            refreshableActions.add(this);
-        }
-
-        InspectMemoryBytesAction(Address address, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.address = address;
-            this.teleObject = null;
-        }
-
-        InspectMemoryBytesAction(TeleObject teleObject, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.address = null;
-            this.teleObject = teleObject;
-        }
-
-        @Override
-        protected void procedure() {
-            if (teleObject != null) {
-                MemoryBytesInspector.create(inspection(), teleObject).highlight();
-            } else if (address != null) {
-                MemoryBytesInspector.create(inspection(), address).highlight();
-            } else {
-                new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory bytes at address...", "Inspect") {
-                    @Override
-                    public void entered(Address address) {
-                        MemoryBytesInspector.create(inspection(), address).highlight();
-                    }
-                };
-            }
-        }
-    }
-
-    private final InspectorAction inspectMemoryBytesAction = new InspectMemoryBytesAction();
-
-    /**
-     * @return Singleton interactive Action that will create a Memory Inspector
-     */
-    public final InspectorAction inspectMemoryBytes() {
-        return inspectMemoryBytesAction;
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the VM
-     * @param actionTitle a string name for the action, uses default name if null
-     * @return an interactive Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectMemoryBytes(Address address, String actionTitle) {
-        return new InspectMemoryBytesAction(address, actionTitle);
-    }
-
-    /**
-     * Menu: display a sub-menu of commands to make visible
-     * existing memory inspectors.  It includes a command
-     * that closes all of them.
-     */
-    final class MemoryInspectorsMenu extends JMenu {
-        public MemoryInspectorsMenu() {
-            super("View Memory Inspectors");
-            addMenuListener(new MenuListener() {
-
-                public void menuCanceled(MenuEvent e) {
-                }
-
-                public void menuDeselected(MenuEvent e) {
-                }
-
-                public void menuSelected(MenuEvent e) {
-                    removeAll();
-                    final Set<MemoryInspector> inspectors = inspection().memoryInspectors();
-                    if (inspectors.size() > 0) {
-                        final Set<MemoryInspector> sortedSet  =  new TreeSet<MemoryInspector>(new Comparator<MemoryInspector>() {
-                            public int compare(MemoryInspector inspector1, MemoryInspector inspector2) {
-                                final Long startLocation1 = inspector1.getCurrentMemoryRegion().start().toLong();
-                                final Long startLocation2 = inspector2.getCurrentMemoryRegion().start().toLong();
-                                return startLocation1.compareTo(startLocation2);
-                            }
-                        });
-                        for (MemoryInspector inspector : inspectors) {
-                            sortedSet.add(inspector);
-                        }
-                        for (MemoryInspector inspector : sortedSet) {
-                            add(actions().showView(inspector));
-                        }
-                        addSeparator();
-                        add(actions().closeViews(MemoryInspector.class, null, "Close all memory inspectors"));
-                    }
-                }
-            });
-        }
-    }
-
-    /**
-     * Creates a menu of actions to make visible existing memory inspectors.
-     * <br>
-     * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
-     * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
-     *
-     * @return a dynamically populated menu that contains an action to make visible each
-     * existing memory inspector, even if hidden or iconic.
-     */
-    public final JMenu memoryInspectorsMenu() {
-        return new MemoryInspectorsMenu();
-    }
-
-    /**
-     * Action:   inspect a memory region, interactive if no location specified.
-     */
-    final class InspectMemoryAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect memory";
-        private final Address address;
-        private final MaxMemoryRegion memoryRegion;
-
-        InspectMemoryAction() {
-            super(inspection(), "Inspect memory at address...");
-            this.address = null;
-            this.memoryRegion = null;
-        }
-
-        InspectMemoryAction(MaxMemoryRegion memoryRegion, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.address = null;
-            this.memoryRegion = memoryRegion;
-        }
-
-        InspectMemoryAction(Address address, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.address = address;
-            this.memoryRegion = null;
-        }
-
-        @Override
-        protected void procedure() {
-            if (memoryRegion != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), memoryRegion, memoryRegion.regionName());
-                inspector.highlight();
-            } else  if (address != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10));
-                inspector.highlight();
-            } else {
-                new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory at address...", "Inspect") {
-
-                    @Override
-                    public void entered(Address address) {
-                        final Inspector inspector = new MemoryInspector(inspection(), new InspectorMemoryRegion(vm(), "", address, vm().platform().nBytesInWord() * 10));
-                        inspector.highlight();
-                    }
-                };
-            }
-        }
-    }
-
-    private final InspectorAction inspectMemoryAction = new InspectMemoryAction();
-
-    /**
-     * @return Singleton interactive Action that will create a Memory Inspector
-     */
-    public final InspectorAction inspectMemory() {
-        return inspectMemoryAction;
-    }
-
-    public final InspectorAction inspectMemoryRegion(MaxMemoryRegion memoryRegion) {
-        return new InspectMemoryAction(memoryRegion, null);
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the VM
-     * @param actionTitle a name for the action
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectMemory(Address address, String actionTitle) {
-        return new InspectMemoryAction(address, actionTitle);
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the VM
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectMemory(Address address) {
-        return new InspectMemoryAction(address, null);
-    }
-
-    /**
      * Menu: display a sub-menu of commands to inspect the basic allocation
      * regions of the VM.
      */
     final class InspectMemoryAllocationsMenu extends JMenu {
         public InspectMemoryAllocationsMenu() {
-            super("Inspect memory allocation");
+            super("View Memory allocated for:");
             addMenuListener(new MenuListener() {
 
                 public void menuCanceled(MenuEvent e) {
@@ -1073,7 +654,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     regionSet.addAll(vm().state().memoryAllocations());
                     for (MaxMemoryRegion memoryRegion : regionSet) {
                         //System.out.println(memoryRegion.toString());
-                        add(actions().inspectRegionMemory(memoryRegion, memoryRegion.regionName(), memoryRegion.regionName()));
+                        add(views().memory().makeViewAction(memoryRegion, memoryRegion.regionName(), memoryRegion.regionName()));
                     }
                 }
             });
@@ -1094,85 +675,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action: inspects memory occupied by an object.
-     */
-
-    final class InspectObjectMemoryAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect memory";
-        private final TeleObject teleObject;
-
-        InspectObjectMemoryAction(TeleObject teleObject, String actionTitle) {
-            super(inspection(), (actionTitle == null) ? DEFAULT_TITLE : actionTitle);
-            this.teleObject = teleObject;
-        }
-
-        @Override
-        protected void procedure() {
-            final Inspector inspector = new MemoryInspector(inspection(), teleObject);
-            inspector.highlight();
-        }
-    }
-
-    /**
-     * @param teleObject a surrogate for a valid object in the VM
-     * @param actionTitle a name for the action
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectObjectMemory(TeleObject teleObject, String actionTitle) {
-        return new InspectObjectMemoryAction(teleObject, actionTitle);
-    }
-
-    /**
-     * @param teleObject a surrogate for a valid object in the VM
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public final InspectorAction inspectObjectMemory(TeleObject teleObject) {
-        return new InspectObjectMemoryAction(teleObject, null);
-    }
-
-    /**
-     * Action:  inspect the memory holding a block of machine code.
-     */
-    final class InspectMachineCodeRegionMemoryAction extends InspectorAction {
-
-        private static final String  DEFAULT_TITLE = "Inspect Machine Code memory region";
-        private final MaxMachineCode machineCode;
-
-        private InspectMachineCodeRegionMemoryAction(MaxMachineCode machineCode, String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.machineCode = machineCode;
-        }
-
-        @Override
-        protected void procedure() {
-            final String description = machineCode.entityName();
-            actions().inspectRegionMemory(machineCode.memoryRegion(), description).perform();
-        }
-    }
-
-    /**
-     * Creates an action that will inspect memory containing a block of machine code.
-     *
-     * @param machineCode a block of machine code in the VM, either a Java method or external native
-     * @param actionTitle a name for the action
-     * @return an Action that will create a Memory Inspector for the code
-     */
-    public final InspectorAction inspectMachineCodeRegionMemory(MaxMachineCode machineCode, String actionTitle) {
-        return new InspectMachineCodeRegionMemoryAction(machineCode, actionTitle);
-    }
-
-    /**
-     * Creates an action that will inspect memory containing a block of machine code.
-     *
-     * @param machineCode a block of machine code in the VM, either a Java method or native
-     * @return an Action that will create a Memory Inspector for the code
-     */
-    public final InspectorAction inspectMachineCodeRegionMemory(MaxMachineCode machineCode) {
-        return new InspectMachineCodeRegionMemoryAction(machineCode, null);
-    }
-
-    /**
      *Action:  inspect the memory allocated to the currently selected thread's stack.
      */
     final class InspectSelectedThreadStackMemoryAction extends InspectorAction {
@@ -1185,8 +687,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), thread.stack().memoryRegion(), "Thread " + thread.toShortString());
-                inspector.highlight();
+                views().memory().makeView(thread.stack().memoryRegion(), "Thread " + thread.toShortString()).highlight();
             } else {
                 gui().errorMessage("no thread selected");
             }
@@ -1220,8 +721,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), thread.localsBlock().memoryRegion(), "Thread locals block " + thread.toShortString());
-                inspector.highlight();
+                views().memory().makeView(thread.localsBlock().memoryRegion(), "Thread locals block " + thread.toShortString()).highlight();
             } else {
                 gui().errorMessage("no thread selected");
             }
@@ -1258,9 +758,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxMemoryRegion memoryRegion = getMemoryRegion();
             if (memoryRegion != null) {
-                final String title = "Thread locals area " + state.name() + " for " + focus().thread().toShortString();
-                final Inspector inspector = new MemoryInspector(inspection(), memoryRegion, title);
-                inspector.highlight();
+                final String regionName = "Thread locals area " + state.name() + " for " + focus().thread().toShortString();
+                views().memory().makeView(memoryRegion, regionName).highlight();
             } else {
                 gui().errorMessage("no region found");
             }
@@ -1310,8 +809,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxStackFrame stackFrame = focus().stackFrame();
             if (stackFrame != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName());
-                inspector.highlight();
+                views().memory().makeView(stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName()).highlight();
             } else {
                 gui().errorMessage("no stack frame selected");
             }
@@ -1348,8 +846,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             if (stackFrame.memoryRegion() != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName());
-                inspector.highlight();
+                views().memory().makeView(stackFrame.memoryRegion(), "Stack Frame " + stackFrame.entityName()).highlight();
             } else {
                 gui().errorMessage("stack frame " + stackFrame.entityName() + " null memory region");
             }
@@ -1378,9 +875,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxWatchpoint watchpoint = focus().watchpoint();
             if (watchpoint != null) {
-                final Inspector inspector =
-                    new MemoryInspector(inspection(), watchpoint.memoryRegion(), "Watchpoint " + watchpoint.description());
-                inspector.highlight();
+                views().memory().makeView(watchpoint.memoryRegion(), "Watchpoint " + watchpoint.description()).highlight();
             } else {
                 gui().errorMessage("no watchpoint selected");
             }
@@ -1403,79 +898,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action: inspect memory for a named region.
-     */
-    final class InspectRegionMemoryAction extends InspectorAction {
-
-        private final MaxMemoryRegion memoryRegion;
-        private final String regionName;
-
-        InspectRegionMemoryAction(MaxMemoryRegion memoryRegion, String regionName, String actionTitle) {
-            super(inspection(), actionTitle == null ? ("Inspect memory region \"" + regionName + "\"") : actionTitle);
-            this.memoryRegion = memoryRegion;
-            this.regionName = regionName;
-            refreshableActions.add(this);
-            refresh(true);
-        }
-
-        @Override
-        protected void procedure() {
-            final Inspector inspector = new MemoryInspector(inspection(), memoryRegion, regionName);
-            inspector.highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(!memoryRegion.start().isZero());
-        }
-    }
-
-    /**
-     * @return an Action that will create a Memory Inspector for the boot heap region.
-     */
-    public final InspectorAction inspectBootHeapMemory() {
-        return new InspectRegionMemoryAction(vm().heap().bootHeapRegion().memoryRegion(), "Heap-Boot", null);
-    }
-
-    /**
-     * @return an Action that will create a Memory Inspector for the immortal heap region.
-     */
-    public final InspectorAction inspectImmortalHeapMemory() {
-        return new InspectRegionMemoryAction(vm().heap().immortalHeapRegion().memoryRegion(), "Heap-Immortal", null);
-    }
-
-    /**
-     * @return an Action that will create a Memory Inspector for the boot code region.
-     */
-    public final InspectorAction inspectBootCodeMemory() {
-        return new InspectRegionMemoryAction(vm().codeCache().bootCodeRegion().memoryRegion(), "Heap-Code", null);
-    }
-
-    /**
-     * Creates a Memory Inspector for a named region of memory.
-     *
-     * @param memoryRegion a region of memory in the VM
-     * @param regionName the name of the region to display
-     * @param actionTitle the name of the action that will create the display, default title if null
-     * @return an action that will create a Memory Inspector for the region
-     */
-    public final InspectorAction inspectRegionMemory(MaxMemoryRegion memoryRegion, String regionName, String actionTitle) {
-        final String title = (actionTitle == null) ? ("Inspect memory region \"" + regionName + "\"") : actionTitle;
-        return new InspectRegionMemoryAction(memoryRegion, regionName, title);
-    }
-
-    /**
-     * Creates a Memory Inspector for a named region of memory.
-     *
-     * @param memoryRegion a region of memory in the VM
-     * @param regionName the name of the region to display
-     * @return an action that will create a Memory Inspector for the region
-     */
-    public final InspectorAction inspectRegionMemory(MaxMemoryRegion memoryRegion, String regionName) {
-        return new InspectRegionMemoryAction(memoryRegion, regionName, null);
-    }
-
-    /**
      * Action:  creates a memory inspector for the currently selected memory region, if any.
      */
 
@@ -1493,8 +915,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxMemoryRegion memoryRegion = focus().memoryRegion();
             if (memoryRegion != null) {
-                final Inspector inspector = new MemoryInspector(inspection(), memoryRegion, memoryRegion.regionName());
-                inspector.highlight();
+                views().memory().makeView(memoryRegion, memoryRegion.regionName()).highlight();
             }
         }
 
@@ -1541,93 +962,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action: create an Object Inspector, interactively specified by address..
-     */
-    final class InspectObjectAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect object at address...";
-
-        InspectObjectAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            new AddressInputDialog(inspection(), vm().heap().bootHeapRegion().memoryRegion().start(), "Inspect object at address...", "Inspect") {
-
-                @Override
-                public void entered(Address address) {
-                    try {
-                        final Pointer pointer = address.asPointer();
-                        if (vm().isValidOrigin(pointer)) {
-                            final Reference objectReference = vm().originToReference(pointer);
-                            final TeleObject teleObject = vm().heap().findTeleObject(objectReference);
-                            focus().setHeapObject(teleObject);
-                        } else {
-                            gui().errorMessage("heap object not found at "  + address.to0xHexString());
-                        }
-                    } catch (MaxVMBusyException maxVMBusyException) {
-                        inspection().announceVMBusyFailure(name());
-                    }
-                }
-            };
-        }
-    }
-
-    /**
-     * Menu: display a sub-menu of commands to make visible
-     * existing object inspectors.  It includes a command
-     * that closes all of them.
-     */
-    final class ObjectInspectorsMenu extends JMenu {
-        public ObjectInspectorsMenu() {
-            super("View Object Inspectors");
-            addMenuListener(new MenuListener() {
-
-                public void menuCanceled(MenuEvent e) {
-                }
-
-                public void menuDeselected(MenuEvent e) {
-                }
-
-                public void menuSelected(MenuEvent e) {
-                    removeAll();
-                    final Set<ObjectInspector> inspectors = inspection().objectInspectors();
-                    if (inspectors.size() > 0) {
-                        for (ObjectInspector objectInspector : inspection().objectInspectors()) {
-                            add(actions().showView(objectInspector));
-                        }
-                        addSeparator();
-                        add(actions().closeViews(ObjectInspector.class, null, "Close all object inspectors"));
-                    }
-                }
-            });
-        }
-    }
-
-    /**
-     * Creates a menu of actions to make visible existing object inspectors.
-     * <br>
-     * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
-     * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
-     *
-     * @return a dynamically populated menu that contains an action to make visible each
-     * existing object inspector, even if hidden or iconic.
-     */
-    public final JMenu objectInspectorsMenu() {
-        return new ObjectInspectorsMenu();
-    }
-
-    private final InspectorAction inspectObjectAction = new InspectObjectAction(null);
-
-    /**
-     * @return Singleton Action that will create an Object Inspector interactively, prompting the user for a numeric object ID
-     */
-    public final InspectorAction inspectObject() {
-        return inspectObjectAction;
-    }
-
-    /**
      * Action:  creates an inspector for a specific heap object in the VM.
      */
     final class InspectSpecifiedObjectAction extends InspectorAction {
@@ -1655,46 +989,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new InspectSpecifiedObjectAction(teleObject, actionTitle);
     }
 
-    /**
-     * Action: create an Object Inspector, interactively specified by the inspector's OID.
-     */
-    final class InspectObjectByIDAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Inspect object by ID...";
-
-        InspectObjectByIDAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-        }
-
-        @Override
-        protected void procedure() {
-            final String input = gui().inputDialog("Inspect object by ID..", "");
-            if (input == null) {
-                // User clicked cancel.
-                return;
-            }
-            try {
-                final long oid = Long.parseLong(input);
-                final TeleObject teleObject = vm().heap().findObjectByOID(oid);
-                if (teleObject != null) {
-                    focus().setHeapObject(teleObject);
-                } else {
-                    gui().errorMessage("failed to find heap object for ID: " + input);
-                }
-            } catch (NumberFormatException numberFormatException) {
-                gui().errorMessage("Not a ID: " + input);
-            }
-        }
-    }
-
-    private final InspectorAction inspectObjectByIDAction = new InspectObjectByIDAction(null);
-
-    /**
-     * @return Singleton Action that will create an Object Inspector interactively, prompting the user for a numeric object ID
-     */
-    public final InspectorAction inspectObjectByID() {
-        return inspectObjectByIDAction;
-    }
 
     /**
      * Action: create an Object Inspector for the boot {@link ClassRegistry} in the VM.
@@ -4546,80 +3840,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays and highlights an inspection of the current Java frame descriptor.
-     */
-    final class InspectBytecodeFramesAction extends InspectorAction {
-        private static final String DEFAULT_TITLE = "Inspect Java frames";
-        private CiFrame bytecodeFrames;
-
-        InspectBytecodeFramesAction(String actionTitle) {
-            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            refreshableActions.add(this);
-            focus().addListener(new InspectionFocusAdapter() {
-                @Override
-                public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(false);
-                }
-            });
-        }
-
-        @Override
-        protected void procedure() {
-            assert bytecodeFrames != null;
-            if (focus().hasCodeLocation()) {
-                final Address instructionAddress = focus().codeLocation().address();
-                if (instructionAddress != null && !instructionAddress.isZero()) {
-                    final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
-                    if (compiledCode != null) {
-                        BytecodeFramesInspector.make(inspection(), bytecodeFrames, compiledCode).highlight();
-                    }
-                }
-            } else {
-                gui().errorMessage("Could not locate Java frame descriptor");
-            }
-        }
-
-        /**
-         * @return whether there is bytecode frame info at the focus machine code location
-         */
-        private boolean inspectable() {
-            if (focus().hasCodeLocation()) {
-                final Address instructionAddress = focus().codeLocation().address();
-                if (instructionAddress != null && !instructionAddress.isZero()) {
-                    final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
-                    if (compiledCode != null) {
-                        final InstructionMap instructionMap = compiledCode.getInstructionMap();
-                        final int instructionIndex = instructionMap.findInstructionIndex(instructionAddress);
-                        if (instructionIndex >= 0) {
-                            bytecodeFrames = instructionMap.bytecodeFrames(instructionIndex);
-                            if (bytecodeFrames == null) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-                }
-            }
-            bytecodeFrames = null;
-            return false;
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspectable());
-        }
-    }
-
-    private InspectorAction inspectJavaFrameDescriptor = new InspectBytecodeFramesAction(null);
-
-    /**
-     * @return an Action that will display an inspection of the current Java frame descriptor.
-     */
-    public final InspectorAction inspectJavaFrameDescriptor() {
-        return inspectJavaFrameDescriptor;
-    }
-
-    /**
      * Action:  lists to the console this history of the VM state.
      */
     final class ListVMStateHistoryAction extends InspectorAction {
@@ -4885,9 +4105,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
                 menu.add(inspectMemoryAllocationsMenu());
-                menu.add(inspectMemory());
-                menu.add(inspectMemoryBytes());
-                menu.add(memoryInspectorsMenu());
+                menu.add(views().memory().viewMenu());
+                menu.add(views().memoryBytes().viewMenu());
             }
         };
     }
@@ -4977,12 +4196,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 classActorMenu.add(inspectBootClassRegistry());
                 menu.add(classActorMenu);
 
-                final JMenu objectMenu = new JMenu("Inspect object");
-                objectMenu.add(inspectObject());
-                objectMenu.add(inspectObjectByID());
-                menu.add(objectMenu);
-
-                menu.add(objectInspectorsMenu());
+                menu.add(views().objects().viewMenu());
             }
         };
     }
@@ -4993,19 +4207,21 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public InspectorMenuItems genericViewMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
-                menu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
-                menu.add(actions().activateSingletonView(ViewKind.BOOT_IMAGE));
-                menu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
-                menu.add(actions().activateSingletonView(ViewKind.FRAME));
-                menu.add(actions().memoryInspectorsMenu());
-                menu.add(actions().activateSingletonView(ViewKind.METHODS));
-                menu.add(actions().activateSingletonView(ViewKind.NOTEPAD));
-                menu.add(actions().objectInspectorsMenu());
-                menu.add(actions().activateSingletonView(ViewKind.REGISTERS));
-                menu.add(actions().activateSingletonView(ViewKind.STACK));
-                menu.add(actions().activateSingletonView(ViewKind.THREADS));
-                menu.add(actions().activateSingletonView(ViewKind.THREAD_LOCALS));
-                menu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
+                menu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
+                menu.add(views().activateSingletonViewAction(ViewKind.BOOT_IMAGE));
+                menu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
+                menu.add(views().bytecodeFrames().viewMenu());
+                menu.add(views().memory().viewMenu());
+                menu.add(views().memoryBytes().viewMenu());
+                menu.add(views().activateSingletonViewAction(ViewKind.METHODS));
+                menu.add(views().activateSingletonViewAction(ViewKind.NOTEPAD));
+                menu.add(views().objects().viewMenu());
+                menu.add(views().activateSingletonViewAction(ViewKind.REGISTERS));
+                menu.add(views().activateSingletonViewAction(ViewKind.STACK));
+                menu.add(views().activateSingletonViewAction(ViewKind.STACK_FRAME));
+                menu.add(views().activateSingletonViewAction(ViewKind.THREADS));
+                menu.add(views().activateSingletonViewAction(ViewKind.THREAD_LOCALS));
+                menu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
             }
         };
     }

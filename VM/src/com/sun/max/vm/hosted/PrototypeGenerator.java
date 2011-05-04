@@ -38,13 +38,10 @@ import com.sun.max.vm.type.*;
  *
  * @see Prototype
  *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Ben L. Titzer
  */
 public final class PrototypeGenerator {
 
-    private final Option<Integer> threadsOption;
+    final Option<Integer> threadsOption;
 
     /**
      * Creates a new prototype generator.

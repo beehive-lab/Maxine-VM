@@ -37,7 +37,6 @@ import com.sun.max.vm.type.*;
 
 /**
  * Implements substitutions necessary for {@link ClassLoader}.
- *
  */
 @METHOD_SUBSTITUTIONS(ClassLoader.class)
 public final class JDK_java_lang_ClassLoader {
@@ -171,11 +170,21 @@ public final class JDK_java_lang_ClassLoader {
      * @see java.lang.ClassLoader#findBootstrapClass(String)
      * @param name the name of the class to find
      * @return the class which is found
-     * @throws ClassNotFoundException if the class was not found
+     * @throws ClassNotFoundException if the class was not found and the substituted method declares this checked exception
      */
     @SUBSTITUTE
     private Class findBootstrapClass(String name) throws ClassNotFoundException {
-        return BootClassLoader.BOOT_CLASS_LOADER.findBootstrapClass(name);
+        Class<?> c = BootClassLoader.BOOT_CLASS_LOADER.findBootstrapClass(name);
+        if (c == null) {
+            // Earlier versions of ClassLoader.findBootstrapClass() throw CNFE instead of returning null
+            TypeDescriptor[] checkedExceptions = ClassRegistry.ClassLoader_findBootstrapClass.checkedExceptions();
+            if (checkedExceptions.length != 0) {
+                assert checkedExceptions.length == 1;
+                assert checkedExceptions[0] == JavaTypeDescriptor.CLASS_NOT_FOUND_EXCEPTION;
+                throw new ClassNotFoundException(name);
+            }
+        }
+        return c;
     }
 
     /**
@@ -191,7 +200,10 @@ public final class JDK_java_lang_ClassLoader {
         } catch (ClassFormatError e) {
             return null;
         }
-        final ClassActor classActor =  ClassRegistry.get(thisClassLoader(), descriptor, false);
+
+        // This query is specific to this class loader and so parents should not be searched.
+        // c.f. SystemDictionary::find(Symbol* class_name, Handle class_loader, Handle protection_domain, TRAPS) in systemDictionary.cpp
+        final ClassActor classActor = ClassRegistry.get(thisClassLoader(), descriptor, false);
         if (classActor == null) {
             return null;
         }

@@ -32,7 +32,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.MethodInspectorContainer.MethodViewManager;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -49,7 +48,7 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  * @author Doug Simon
  */
-public abstract class MethodInspector extends Inspector<MethodInspector> {
+public abstract class MethodInspector<Inspector_Kind extends MethodInspector> extends Inspector<Inspector_Kind> {
 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.METHOD_CODE;
@@ -188,7 +187,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         final MethodInspector methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
         if (methodInspector == null) {
             final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
-            final MethodInspectorContainer container = methodViewManager.activateView(inspection);
+            final MethodInspectorContainer container = methodViewManager.activateView();
             inspection.vm().acquireLegacyVMAccess();
             try {
                 javaMethodInspector = new JavaMethodInspector(inspection, container, teleClassMethodActor, codeKind);
@@ -226,7 +225,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                     methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
                 }
                 final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
-                final MethodInspectorContainer container = methodViewManager.activateView(inspection);
+                final MethodInspectorContainer container = methodViewManager.activateView();
                 if (methodInspector == null) {
                     // No existing inspector exists for this method; create new one bound to this compilation
                     javaMethodInspector = new JavaMethodInspector(inspection, container, compiledCode, codeKind);
@@ -261,7 +260,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
             inspection.vm().acquireLegacyVMAccess();
             try {
                 final MethodViewManager methodViewManager = (MethodViewManager) ViewKind.METHODS.viewManager();
-                final MethodInspectorContainer container = methodViewManager.activateView(inspection);
+                final MethodInspectorContainer container = methodViewManager.activateView();
                 container.add(nativeMethodInspector);
                 machineCodeToMethodInspector.put(maxExternalCode, nativeMethodInspector);
             } finally {
@@ -281,7 +280,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     }
 
     @Override
-    public InspectorFrame createTabFrame(TabbedInspector<MethodInspector> parent) {
+    public InspectorFrame createTabFrame(TabbedInspector parent) {
 
         final InspectorFrame frame = super.createTabFrame(parent);
 
@@ -291,9 +290,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         frame.makeMenu(EDIT_MENU);
 
         final InspectorMenu memoryMenu = frame.makeMenu(MEMORY_MENU);
-        memoryMenu.add(actions().inspectMachineCodeRegionMemory(machineCode()));
+        memoryMenu.add(views().memory().makeViewAction(machineCode().memoryRegion(), machineCode().entityName(), "View memory for machine code"));
         memoryMenu.add(defaultMenuItems(MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(OBJECT_MENU);
 
@@ -356,7 +355,6 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing for " + getTitle());
         machineCodeToMethodInspector.remove(machineCode());
         teleClassMethodActorToMethodInspector.remove(teleClassMethodActor());
         super.inspectorClosing();

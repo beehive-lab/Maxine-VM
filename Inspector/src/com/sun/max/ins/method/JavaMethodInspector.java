@@ -48,7 +48,7 @@ import com.sun.max.vm.actor.member.*;
  *
  * @author Michael Van De Vanter
  */
-public class JavaMethodInspector extends MethodInspector {
+public class JavaMethodInspector extends MethodInspector<JavaMethodInspector> {
 
     private final int TRACE_VALUE = 1;
 
@@ -254,10 +254,10 @@ public class JavaMethodInspector extends MethodInspector {
         }
         debugMenu.addSeparator();
         debugMenu.add(actions().genericBreakpointMenuItems());
-        debugMenu.add(actions().activateSingletonView(ViewKind.BREAKPOINTS));
+        debugMenu.add(views().activateSingletonViewAction(ViewKind.BREAKPOINTS));
         if (vm().watchpointManager() != null) {
             debugMenu.add(actions().genericWatchpointMenuItems());
-            debugMenu.add(actions().activateSingletonView(ViewKind.WATCHPOINTS));
+            debugMenu.add(views().activateSingletonViewAction(ViewKind.WATCHPOINTS));
         }
     }
 
@@ -313,10 +313,6 @@ public class JavaMethodInspector extends MethodInspector {
         sb.append(inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor));
         return sb.toString();
         //return classMethodActor.holder().simpleName() + "." + classMethodActor.name().toString() + inspection().nameDisplay().methodCompilationID(_teleTargetMethod);
-    }
-
-    public void viewConfigurationChanged() {
-        reconstructView();
     }
 
     /**

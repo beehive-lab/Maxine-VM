@@ -48,7 +48,7 @@ public abstract class LocationLabel extends InspectorLabel {
         final InspectorPopupMenu menu = new InspectorPopupMenu("Location");
         final Address address = origin.plus(value);
         menu.add(inspection().actions().copyWord(address, null));
-        menu.add(inspection().actions().inspectMemory(address));
+        menu.add(views().memory().makeViewAction(address, null));
         return menu;
     }
 

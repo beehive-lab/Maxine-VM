@@ -44,11 +44,10 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class ObjectInspector extends Inspector {
+public abstract class ObjectInspector<Inspector_Type extends ObjectInspector> extends Inspector<Inspector_Type> {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.OBJECT;
-
 
     private static ObjectViewManager viewManager;
 
@@ -129,16 +128,16 @@ public abstract class ObjectInspector extends Inspector {
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
-        defaultMenu.add(actions().closeViews(ObjectInspector.class, this, "Close other object inspectors"));
-        defaultMenu.add(actions().closeViews(ObjectInspector.class, null, "Close all object inspectors"));
+        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.OBJECT, this));
+        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.OBJECT));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        memoryMenu.add(actions().inspectObjectMemory(teleObject, "Inspect this object's memory"));
+        memoryMenu.add(views().memory().makeViewAction(teleObject, "Inspect this object's memory"));
         if (vm().watchpointManager() != null) {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.OBJECT_MENU);
 
@@ -230,8 +229,6 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        // don't try to recompute the title (it might not be computable),s just get the one that's been in use
-        Trace.line(TRACE_VALUE, tracePrefix() + " closing for " + getTitle());
         if (teleObject == focus().heapObject()) {
             focus().setHeapObject(null);
         }
@@ -286,7 +283,4 @@ public abstract class ObjectInspector extends Inspector {
         }
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
 }

@@ -26,7 +26,6 @@ import static com.sun.max.tele.MaxProcessState.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 
 import javax.swing.*;
 
@@ -43,7 +42,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class AllocationsInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class AllocationsInspector extends Inspector<AllocationsInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 2;
     private static final ViewKind VIEW_KIND = ViewKind.ALLOCATIONS;
@@ -51,34 +50,25 @@ public final class AllocationsInspector extends Inspector implements TableColumn
     private static final String LONG_NAME = "Allocations Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "allocationsInspectorGeometry";
 
-    private static final class MemoryAllocationsViewManager extends AbstractSingletonViewManager<AllocationsInspector> {
+    public static final class AllocationsViewManager extends AbstractSingletonViewManager<AllocationsInspector> {
 
-        protected MemoryAllocationsViewManager(Inspection inspection) {
+        protected AllocationsViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected AllocationsInspector createView(Inspection inspection) {
+            return new AllocationsInspector(inspection);
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public AllocationsInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new AllocationsInspector(inspection);
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
-    private static MemoryAllocationsViewManager viewManager = null;
+    private static AllocationsViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static AllocationsViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
-            viewManager = new MemoryAllocationsViewManager(inspection);
+            viewManager = new AllocationsViewManager(inspection);
         }
         return viewManager;
     }
@@ -194,10 +184,6 @@ public final class AllocationsInspector extends Inspector implements TableColumn
         return getDefaultPrintAction();
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
@@ -207,7 +193,7 @@ public final class AllocationsInspector extends Inspector implements TableColumn
         public void setSearchResult(int[] result) {
             filterMatchingRows = result;
             table.setDisplayedRows(filterMatchingRows);
-            System.out.println("Match=" + Arrays.toString(filterMatchingRows));
+            //System.out.println("Match=" + Arrays.toString(filterMatchingRows));
         }
 
         public void closeRequested() {
@@ -242,7 +228,6 @@ public final class AllocationsInspector extends Inspector implements TableColumn
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }

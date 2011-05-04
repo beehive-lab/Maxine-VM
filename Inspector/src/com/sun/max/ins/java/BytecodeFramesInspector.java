@@ -22,6 +22,7 @@
  */
 package com.sun.max.ins.java;
 
+import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
@@ -30,23 +31,33 @@ import javax.swing.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.view.InspectionViews.*;
+import com.sun.max.ins.view.*;
+import com.sun.max.ins.view.InspectionViews.ViewKind;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxMachineCode.InstructionMap;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.jni.*;
 
 /**
+ * Renders the Java frame descriptors available at a given location
+ * in machine code.
+ *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class BytecodeFramesInspector extends Inspector {
+public final class BytecodeFramesInspector extends Inspector<BytecodeFramesInspector> {
 
     private static final int TRACE_VALUE = 2;
-    private static final ViewKind VIEW_KIND = ViewKind.FRAME_DESCRIPTOR;
+    private static final ViewKind VIEW_KIND = ViewKind.BYTECODE_FRAMES;
+    private static final String SHORT_NAME = "Bytecode Frames";
+    private static final String LONG_NAME = SHORT_NAME + " Inspector";
 
     private static final int MAX_BYTE_CODE_BITS = 20;
+
+    private static BytecodeFrameViewManager viewManager;
 
     private static Long makeKey(CiFrame bytecodeFrames) {
         if (bytecodeFrames == null) {
@@ -55,22 +66,109 @@ public final class BytecodeFramesInspector extends Inspector {
         return (MethodID.fromMethodActor((MethodActor) bytecodeFrames.method).asAddress().toLong() << MAX_BYTE_CODE_BITS) | bytecodeFrames.bci;
     }
 
-    private static Map<Long, BytecodeFramesInspector> inspectors = new Hashtable<Long, BytecodeFramesInspector>();
-
-    /**
-     * Display and highlight a target Java frame descriptor inspector for the frame..
-     * @return The inspector, possibly newly created.
-     */
-    public static BytecodeFramesInspector make(Inspection inspection, CiFrame bytecodeFrames, MaxCompiledCode compiledCode) {
-        final Long key = makeKey(bytecodeFrames);
-        BytecodeFramesInspector inspector = inspectors.get(key);
-        if (inspector == null) {
-            inspector = new BytecodeFramesInspector(inspection, bytecodeFrames, compiledCode, key);
-            inspectors.put(key, inspector);
+    public static BytecodeFrameViewManager makeViewManager(Inspection inspection) {
+        if (viewManager == null) {
+            viewManager = new BytecodeFrameViewManager(inspection);
         }
-        return inspector;
+        return viewManager;
     }
 
+    public static final class BytecodeFrameViewManager extends AbstractMultiViewManager<BytecodeFramesInspector> implements BytecodeFramesViewFactory {
+
+        private static Map<Long, BytecodeFramesInspector> inspectors = new Hashtable<Long, BytecodeFramesInspector>();
+
+        private final InspectorAction makeViewAction;
+
+        protected BytecodeFrameViewManager(final Inspection inspection) {
+            super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
+            Trace.begin(TRACE_VALUE, tracePrefix() + "creating");
+            makeViewAction = new InspectorAction(inspection, "Bytecode frames @ code locn.") {
+
+                private CiFrame bytecodeFrames;
+
+                @Override
+                protected void procedure() {
+                    assert bytecodeFrames != null;
+                    if (focus().hasCodeLocation()) {
+                        final Address instructionAddress = focus().codeLocation().address();
+                        if (instructionAddress != null && !instructionAddress.isZero()) {
+                            final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
+                            if (compiledCode != null) {
+                                makeView(bytecodeFrames, compiledCode).highlight();
+                            }
+                        }
+                    } else {
+                        gui().errorMessage("Could not locate Java frame descriptor");
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}.
+                 * <p>
+                 * Can only create a bytecode frames view if there is bytecode frame info at the focus machine code location
+                 */
+                @Override
+                public void refresh(boolean force) {
+                    if (focus().hasCodeLocation()) {
+                        final Address instructionAddress = focus().codeLocation().address();
+                        if (instructionAddress != null && !instructionAddress.isZero()) {
+                            final MaxCompiledCode compiledCode = vm().codeCache().findCompiledCode(instructionAddress);
+                            if (compiledCode != null) {
+                                final InstructionMap instructionMap = compiledCode.getInstructionMap();
+                                final int instructionIndex = instructionMap.findInstructionIndex(instructionAddress);
+                                if (instructionIndex >= 0) {
+                                    bytecodeFrames = instructionMap.bytecodeFrames(instructionIndex);
+                                    if (bytecodeFrames == null) {
+                                        setEnabled(false);
+                                        return;
+                                    }
+                                }
+                                setEnabled(true);
+                                return;
+                            }
+                        }
+                    }
+                    bytecodeFrames = null;
+                    setEnabled(false);
+                }
+            };
+            makeViewAction.refresh(true);
+            // Check each time the user's code selection changes to see if there are bytecode
+            // frames known for the location.
+            focus().addListener(new InspectionFocusAdapter() {
+                @Override
+                public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
+                    makeViewAction.refresh(true);
+                }
+            });
+            Trace.end(TRACE_VALUE, tracePrefix() + "creating");
+        }
+
+        @Override
+        public void notifyViewClosing(Inspector inspector) {
+            // TODO (mlvdv)  should be using generics here
+            final BytecodeFramesInspector bytecodeFrameInspector = (BytecodeFramesInspector) inspector;
+            assert inspectors.remove(bytecodeFrameInspector.key) != null;
+            super.notifyViewClosing(bytecodeFrameInspector);
+        }
+
+        public InspectorAction makeViewAction() {
+            return makeViewAction;
+        }
+
+        public BytecodeFramesInspector makeView(CiFrame bytecodeFrames, MaxCompiledCode compiledCode) {
+            final Long key = makeKey(bytecodeFrames);
+            BytecodeFramesInspector bytecodeFrameInspector = inspectors.get(key);
+            if (bytecodeFrameInspector == null) {
+                bytecodeFrameInspector = new BytecodeFramesInspector(inspection(), bytecodeFrames, compiledCode, key);
+                inspectors.put(key, bytecodeFrameInspector);
+                notifyAddingView(bytecodeFrameInspector);
+            }
+            return bytecodeFrameInspector;
+        }
+    }
+
+    private final Rectangle originalFrameGeometry;
     private final MaxCompiledCode compiledCode;
     private final CiFrame frames;
     private final Long key;
@@ -80,8 +178,23 @@ public final class BytecodeFramesInspector extends Inspector {
         this.frames = bytecodeFrames;
         this.compiledCode = compiledCode;
         this.key = key;
+        Trace.begin(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
+
         final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        // TODO (mlvdv) Need a better way to size these initially
+        setSize(200, 200);
+
+        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
+        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        defaultMenu.addSeparator();
+        defaultMenu.add(views().deactivateOtherViewsAction(ViewKind.BYTECODE_FRAMES, this));
+        defaultMenu.add(views().deactivateAllViewsAction(ViewKind.BYTECODE_FRAMES));
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        inspection.gui().setLocationRelativeToMouse(this, inspection().geometry().newFrameDiagonalOffset());
+        originalFrameGeometry = getGeometry();
+
+        Trace.end(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
     }
 
     private String shortString(CiCodePos codePos) {
@@ -136,6 +249,11 @@ public final class BytecodeFramesInspector extends Inspector {
     }
 
     @Override
+    protected Rectangle defaultGeometry() {
+        return originalFrameGeometry;
+    }
+
+    @Override
     public String getTextForTitle() {
         if (frames != null) {
             return shortString(frames);
@@ -157,14 +275,9 @@ public final class BytecodeFramesInspector extends Inspector {
         }
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing for " + getTitle());
-        inspectors.remove(key);
+        // Unsubscribe to view preferences, when we get some
         super.inspectorClosing();
     }
 

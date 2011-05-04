@@ -49,7 +49,7 @@ import com.sun.max.vm.actor.member.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class StackInspector extends Inspector {
+public final class StackInspector extends Inspector<StackInspector> {
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.STACK;
     private static final String SHORT_NAME = "Stack";
@@ -72,32 +72,23 @@ public final class StackInspector extends Inspector {
         }
     }
 
-    private static final class StackViewManager extends AbstractSingletonViewManager<StackInspector> {
+    public static final class StackViewManager extends AbstractSingletonViewManager<StackInspector> {
 
         protected StackViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected StackInspector createView(Inspection inspection) {
+            return new StackInspector(inspection);
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public StackInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new StackInspector(inspection);
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
     private static StackViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static StackViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new StackViewManager(inspection);
         }
@@ -266,7 +257,7 @@ public final class StackInspector extends Inspector {
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().inspectSelectedThreadStackMemory("Inspect memory for stack"));
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
 
@@ -395,10 +386,6 @@ public final class StackInspector extends Inspector {
         }
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     @Override
     public void vmProcessTerminated() {
         reconstructView();
@@ -406,7 +393,7 @@ public final class StackInspector extends Inspector {
 
     @Override
     public void inspectorClosing() {
-        Trace.line(TRACE_VALUE, tracePrefix() + " closing");
+        // Unsubscribe to view preferences, when we get them.
         super.inspectorClosing();
     }
 
@@ -445,7 +432,7 @@ public final class StackInspector extends Inspector {
                 @Override
                 protected void procedure() {
                     inspection().focus().setStackFrame(stackFrame, false);
-                    actions().activateSingletonView(ViewKind.FRAME).perform();
+                    views().activateSingletonView(ViewKind.STACK_FRAME).highlight();
                 }
             });
         }

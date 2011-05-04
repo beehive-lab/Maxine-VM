@@ -37,7 +37,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class RegistersInspector extends Inspector implements TableColumnViewPreferenceListener {
+public final class RegistersInspector extends Inspector<RegistersInspector> implements TableColumnViewPreferenceListener {
 
     private static final int TRACE_VALUE = 1;
     private static final ViewKind VIEW_KIND = ViewKind.REGISTERS;
@@ -45,32 +45,23 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     private static final String LONG_NAME = "Registers Inspector";
     private static final String GEOMETRY_SETTINGS_KEY = "registersInspectorGeometry";
 
-    private static final class RegistersViewManager extends AbstractSingletonViewManager<RegistersInspector> {
+    public static final class RegistersViewManager extends AbstractSingletonViewManager<RegistersInspector> {
 
         protected RegistersViewManager(Inspection inspection) {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
         }
 
-        public boolean isSupported() {
-            return true;
+        @Override
+        protected RegistersInspector createView(Inspection inspection) {
+            return new RegistersInspector(inspection);
         }
 
-        public boolean isEnabled() {
-            return true;
-        }
-
-        public RegistersInspector activateView(Inspection inspection) {
-            if (inspector == null) {
-                inspector = new RegistersInspector(inspection);
-            }
-            return inspector;
-        }
     }
 
     // Will be non-null before any instances created.
     private static RegistersViewManager viewManager = null;
 
-    public static ViewManager makeViewManager(Inspection inspection) {
+    public static RegistersViewManager makeViewManager(Inspection inspection) {
         if (viewManager == null) {
             viewManager = new RegistersViewManager(inspection);
         }
@@ -96,7 +87,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
-        memoryMenu.add(actions().activateSingletonView(ViewKind.ALLOCATIONS));
+        memoryMenu.add(views().activateSingletonViewAction(ViewKind.ALLOCATIONS));
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         forceRefresh();
@@ -161,10 +152,6 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         return getDefaultPrintAction();
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
@@ -172,7 +159,6 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
         viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
